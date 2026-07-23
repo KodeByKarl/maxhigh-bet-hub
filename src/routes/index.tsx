@@ -1,24 +1,40 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { useState } from "react";
+import { Navbar } from "@/components/maxhigh/Navbar";
+import { Sidebar } from "@/components/maxhigh/Sidebar";
+import { PromoCarousel } from "@/components/maxhigh/PromoCarousel";
+import { CategoryTabs } from "@/components/maxhigh/CategoryTabs";
+import { GameModeGrid } from "@/components/maxhigh/GameModeGrid";
+import { OriginalsRow } from "@/components/maxhigh/OriginalsRow";
 
-// No head() here: the home route inherits title/description/og/twitter from
-// __root.tsx, and ships no og:image so serve-time hosting can inject the
-// project's social preview (explicit og:image or latest screenshot).
 export const Route = createFileRoute("/")({
+  head: () => ({
+    meta: [
+      { title: "MaxHigh — Casino Dashboard" },
+      { name: "description", content: "MaxHigh dashboard: slots, mines, crash, dice, tower, wheel and daily/weekly races." },
+      { property: "og:title", content: "MaxHigh — Casino Dashboard" },
+      { property: "og:description", content: "Play originals and slots. Join daily and weekly races on MaxHigh." },
+    ],
+  }),
   component: Index,
 });
 
-// IMPORTANT: Replace this placeholder. See ./README.md for routing conventions.
 function Index() {
+  const [sidebarOpen, setSidebarOpen] = useState(false);
   return (
-    <div
-      className="flex min-h-screen items-center justify-center"
-      style={{ backgroundColor: "#fcfbf8" }}
-    >
-      <img
-        data-lovable-blank-page-placeholder="REMOVE_THIS"
-        src="https://cdn.gpteng.co/blank-app-v1.svg"
-        alt="Your app will live here!"
-      />
+    <div className="min-h-screen bg-background text-foreground">
+      <Navbar onToggleSidebar={() => setSidebarOpen((v) => !v)} />
+      <div className="flex">
+        <Sidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)} />
+        <main className="min-w-0 flex-1">
+          <div className="mx-auto flex max-w-[1400px] flex-col gap-8 p-4 sm:p-6">
+            <PromoCarousel />
+            <CategoryTabs />
+            <GameModeGrid />
+            <OriginalsRow />
+          </div>
+        </main>
+      </div>
     </div>
   );
 }
