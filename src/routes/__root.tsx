@@ -7,10 +7,13 @@ import {
   HeadContent,
   Scripts,
 } from "@tanstack/react-router";
-import { useEffect, type ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
+import { Navbar } from "../components/maxhigh/Navbar";
+import { Sidebar } from "../components/maxhigh/Sidebar";
+import { LiveWinsTicker } from "../components/maxhigh/LiveWinsTicker";
 
 function NotFoundComponent() {
   return (
@@ -115,11 +118,22 @@ function RootShell({ children }: { children: ReactNode }) {
 
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   return (
     <QueryClientProvider client={queryClient}>
-      {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
-      <Outlet />
+      <div className="min-h-screen bg-background text-foreground">
+        <Navbar onToggleSidebar={() => setSidebarOpen((v) => !v)} />
+        <LiveWinsTicker />
+        <div className="flex">
+          <Sidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)} />
+          <main className="min-w-0 flex-1">
+            <div className="mx-auto flex max-w-[1400px] flex-col gap-8 p-4 sm:p-6">
+              <Outlet />
+            </div>
+          </main>
+        </div>
+      </div>
     </QueryClientProvider>
   );
 }

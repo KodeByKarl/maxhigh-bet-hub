@@ -9,8 +9,86 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as WeeklyRaceRouteImport } from './routes/weekly-race'
+import { Route as VipRouteImport } from './routes/vip'
+import { Route as SupportRouteImport } from './routes/support'
+import { Route as SlotsRouteImport } from './routes/slots'
+import { Route as PromotionsRouteImport } from './routes/promotions'
+import { Route as OriginalsRouteImport } from './routes/originals'
+import { Route as LotteryRouteImport } from './routes/lottery'
+import { Route as LatestReleasesRouteImport } from './routes/latest-releases'
+import { Route as FavouritesRouteImport } from './routes/favourites'
+import { Route as DailyRaceRouteImport } from './routes/daily-race'
+import { Route as ChallengesRouteImport } from './routes/challenges'
+import { Route as BlogRouteImport } from './routes/blog'
+import { Route as AffiliateRouteImport } from './routes/affiliate'
 import { Route as IndexRouteImport } from './routes/index'
 
+const WeeklyRaceRoute = WeeklyRaceRouteImport.update({
+  id: '/weekly-race',
+  path: '/weekly-race',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const VipRoute = VipRouteImport.update({
+  id: '/vip',
+  path: '/vip',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SupportRoute = SupportRouteImport.update({
+  id: '/support',
+  path: '/support',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SlotsRoute = SlotsRouteImport.update({
+  id: '/slots',
+  path: '/slots',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PromotionsRoute = PromotionsRouteImport.update({
+  id: '/promotions',
+  path: '/promotions',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const OriginalsRoute = OriginalsRouteImport.update({
+  id: '/originals',
+  path: '/originals',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LotteryRoute = LotteryRouteImport.update({
+  id: '/lottery',
+  path: '/lottery',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LatestReleasesRoute = LatestReleasesRouteImport.update({
+  id: '/latest-releases',
+  path: '/latest-releases',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const FavouritesRoute = FavouritesRouteImport.update({
+  id: '/favourites',
+  path: '/favourites',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DailyRaceRoute = DailyRaceRouteImport.update({
+  id: '/daily-race',
+  path: '/daily-race',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ChallengesRoute = ChallengesRouteImport.update({
+  id: '/challenges',
+  path: '/challenges',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const BlogRoute = BlogRouteImport.update({
+  id: '/blog',
+  path: '/blog',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AffiliateRoute = AffiliateRouteImport.update({
+  id: '/affiliate',
+  path: '/affiliate',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
@@ -19,28 +97,214 @@ const IndexRoute = IndexRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/affiliate': typeof AffiliateRoute
+  '/blog': typeof BlogRoute
+  '/challenges': typeof ChallengesRoute
+  '/daily-race': typeof DailyRaceRoute
+  '/favourites': typeof FavouritesRoute
+  '/latest-releases': typeof LatestReleasesRoute
+  '/lottery': typeof LotteryRoute
+  '/originals': typeof OriginalsRoute
+  '/promotions': typeof PromotionsRoute
+  '/slots': typeof SlotsRoute
+  '/support': typeof SupportRoute
+  '/vip': typeof VipRoute
+  '/weekly-race': typeof WeeklyRaceRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/affiliate': typeof AffiliateRoute
+  '/blog': typeof BlogRoute
+  '/challenges': typeof ChallengesRoute
+  '/daily-race': typeof DailyRaceRoute
+  '/favourites': typeof FavouritesRoute
+  '/latest-releases': typeof LatestReleasesRoute
+  '/lottery': typeof LotteryRoute
+  '/originals': typeof OriginalsRoute
+  '/promotions': typeof PromotionsRoute
+  '/slots': typeof SlotsRoute
+  '/support': typeof SupportRoute
+  '/vip': typeof VipRoute
+  '/weekly-race': typeof WeeklyRaceRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/affiliate': typeof AffiliateRoute
+  '/blog': typeof BlogRoute
+  '/challenges': typeof ChallengesRoute
+  '/daily-race': typeof DailyRaceRoute
+  '/favourites': typeof FavouritesRoute
+  '/latest-releases': typeof LatestReleasesRoute
+  '/lottery': typeof LotteryRoute
+  '/originals': typeof OriginalsRoute
+  '/promotions': typeof PromotionsRoute
+  '/slots': typeof SlotsRoute
+  '/support': typeof SupportRoute
+  '/vip': typeof VipRoute
+  '/weekly-race': typeof WeeklyRaceRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths:
+    | '/'
+    | '/affiliate'
+    | '/blog'
+    | '/challenges'
+    | '/daily-race'
+    | '/favourites'
+    | '/latest-releases'
+    | '/lottery'
+    | '/originals'
+    | '/promotions'
+    | '/slots'
+    | '/support'
+    | '/vip'
+    | '/weekly-race'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to:
+    | '/'
+    | '/affiliate'
+    | '/blog'
+    | '/challenges'
+    | '/daily-race'
+    | '/favourites'
+    | '/latest-releases'
+    | '/lottery'
+    | '/originals'
+    | '/promotions'
+    | '/slots'
+    | '/support'
+    | '/vip'
+    | '/weekly-race'
+  id:
+    | '__root__'
+    | '/'
+    | '/affiliate'
+    | '/blog'
+    | '/challenges'
+    | '/daily-race'
+    | '/favourites'
+    | '/latest-releases'
+    | '/lottery'
+    | '/originals'
+    | '/promotions'
+    | '/slots'
+    | '/support'
+    | '/vip'
+    | '/weekly-race'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AffiliateRoute: typeof AffiliateRoute
+  BlogRoute: typeof BlogRoute
+  ChallengesRoute: typeof ChallengesRoute
+  DailyRaceRoute: typeof DailyRaceRoute
+  FavouritesRoute: typeof FavouritesRoute
+  LatestReleasesRoute: typeof LatestReleasesRoute
+  LotteryRoute: typeof LotteryRoute
+  OriginalsRoute: typeof OriginalsRoute
+  PromotionsRoute: typeof PromotionsRoute
+  SlotsRoute: typeof SlotsRoute
+  SupportRoute: typeof SupportRoute
+  VipRoute: typeof VipRoute
+  WeeklyRaceRoute: typeof WeeklyRaceRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/weekly-race': {
+      id: '/weekly-race'
+      path: '/weekly-race'
+      fullPath: '/weekly-race'
+      preLoaderRoute: typeof WeeklyRaceRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/vip': {
+      id: '/vip'
+      path: '/vip'
+      fullPath: '/vip'
+      preLoaderRoute: typeof VipRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/support': {
+      id: '/support'
+      path: '/support'
+      fullPath: '/support'
+      preLoaderRoute: typeof SupportRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/slots': {
+      id: '/slots'
+      path: '/slots'
+      fullPath: '/slots'
+      preLoaderRoute: typeof SlotsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/promotions': {
+      id: '/promotions'
+      path: '/promotions'
+      fullPath: '/promotions'
+      preLoaderRoute: typeof PromotionsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/originals': {
+      id: '/originals'
+      path: '/originals'
+      fullPath: '/originals'
+      preLoaderRoute: typeof OriginalsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/lottery': {
+      id: '/lottery'
+      path: '/lottery'
+      fullPath: '/lottery'
+      preLoaderRoute: typeof LotteryRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/latest-releases': {
+      id: '/latest-releases'
+      path: '/latest-releases'
+      fullPath: '/latest-releases'
+      preLoaderRoute: typeof LatestReleasesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/favourites': {
+      id: '/favourites'
+      path: '/favourites'
+      fullPath: '/favourites'
+      preLoaderRoute: typeof FavouritesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/daily-race': {
+      id: '/daily-race'
+      path: '/daily-race'
+      fullPath: '/daily-race'
+      preLoaderRoute: typeof DailyRaceRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/challenges': {
+      id: '/challenges'
+      path: '/challenges'
+      fullPath: '/challenges'
+      preLoaderRoute: typeof ChallengesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/blog': {
+      id: '/blog'
+      path: '/blog'
+      fullPath: '/blog'
+      preLoaderRoute: typeof BlogRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/affiliate': {
+      id: '/affiliate'
+      path: '/affiliate'
+      fullPath: '/affiliate'
+      preLoaderRoute: typeof AffiliateRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
@@ -53,6 +317,19 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AffiliateRoute: AffiliateRoute,
+  BlogRoute: BlogRoute,
+  ChallengesRoute: ChallengesRoute,
+  DailyRaceRoute: DailyRaceRoute,
+  FavouritesRoute: FavouritesRoute,
+  LatestReleasesRoute: LatestReleasesRoute,
+  LotteryRoute: LotteryRoute,
+  OriginalsRoute: OriginalsRoute,
+  PromotionsRoute: PromotionsRoute,
+  SlotsRoute: SlotsRoute,
+  SupportRoute: SupportRoute,
+  VipRoute: VipRoute,
+  WeeklyRaceRoute: WeeklyRaceRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
