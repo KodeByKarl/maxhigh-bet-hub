@@ -3,42 +3,41 @@ import {
   Sparkles, Dice5, Crown, FileText, Users, Headphones, ChevronRight, X,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
+import { Link } from "@tanstack/react-router";
 
-type NavItem = { label: string; icon: LucideIcon; active?: boolean; badge?: string };
+type NavItem = { label: string; icon: LucideIcon; to: string; badge?: string };
 
 const group1: NavItem[] = [
-  { label: "Home", icon: Home, active: true },
-  { label: "Favourites", icon: Star },
-  { label: "Latest Releases", icon: Zap },
+  { label: "Home", icon: Home, to: "/" },
+  { label: "Favourites", icon: Star, to: "/favourites" },
+  { label: "Latest Releases", icon: Zap, to: "/latest-releases" },
 ];
 const group2: NavItem[] = [
-  { label: "Lottery", icon: Ticket, badge: "30" },
-  { label: "Weekly Race", icon: Trophy },
-  { label: "Daily Race", icon: Timer },
-  { label: "Challenges", icon: Target },
-  { label: "All Promotions", icon: Megaphone },
+  { label: "Lottery", icon: Ticket, to: "/lottery", badge: "30" },
+  { label: "Weekly Race", icon: Trophy, to: "/weekly-race" },
+  { label: "Daily Race", icon: Timer, to: "/daily-race" },
+  { label: "Challenges", icon: Target, to: "/challenges" },
+  { label: "All Promotions", icon: Megaphone, to: "/promotions" },
 ];
 const group3: NavItem[] = [
-  { label: "Originals", icon: Sparkles },
-  { label: "Slots", icon: Dice5 },
+  { label: "Originals", icon: Sparkles, to: "/originals" },
+  { label: "Slots", icon: Dice5, to: "/slots" },
 ];
 const moreItems: NavItem[] = [
-  { label: "VIP", icon: Crown },
-  { label: "Blog", icon: FileText },
-  { label: "Affiliate", icon: Users },
-  { label: "Live Support", icon: Headphones },
+  { label: "VIP", icon: Crown, to: "/vip" },
+  { label: "Blog", icon: FileText, to: "/blog" },
+  { label: "Affiliate", icon: Users, to: "/affiliate" },
+  { label: "Live Support", icon: Headphones, to: "/support" },
 ];
 
-function Row({ item }: { item: NavItem }) {
+function Row({ item, onNavigate }: { item: NavItem; onNavigate?: () => void }) {
   const Icon = item.icon;
   return (
-    <button
-      className={[
-        "flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm font-medium transition-colors",
-        item.active
-          ? "bg-primary text-primary-foreground"
-          : "text-foreground/90 hover:bg-panel-hover",
-      ].join(" ")}
+    <Link
+      to={item.to}
+      onClick={onNavigate}
+      activeOptions={{ exact: item.to === "/" }}
+      className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm font-medium text-foreground/90 transition-colors hover:bg-panel-hover data-[status=active]:bg-primary data-[status=active]:text-primary-foreground"
     >
       <Icon size={18} className="shrink-0" />
       <span className="min-w-0 flex-1 truncate">{item.label}</span>
@@ -47,14 +46,14 @@ function Row({ item }: { item: NavItem }) {
           {item.badge}
         </span>
       )}
-    </button>
+    </Link>
   );
 }
 
-function Group({ items }: { items: NavItem[] }) {
+function Group({ items, onNavigate }: { items: NavItem[]; onNavigate?: () => void }) {
   return (
     <div className="rounded-2xl bg-panel p-1.5">
-      {items.map((it) => <Row key={it.label} item={it} />)}
+      {items.map((it) => <Row key={it.label} item={it} onNavigate={onNavigate} />)}
     </div>
   );
 }
@@ -76,7 +75,7 @@ function SidebarContent({ onClose }: { onClose?: () => void }) {
           <div className="min-w-0 flex-1">
             <div className="truncate text-sm font-semibold text-foreground">MaxHigh</div>
             <div className="mt-0.5 flex items-center gap-2">
-              <span className="text-xs tabular-nums text-muted-foreground">$0.0000</span>
+              <span className="text-xs tabular-nums text-muted-foreground">$1,284.50</span>
               <span className="rounded-full bg-lime px-1.5 py-0.5 text-[10px] font-bold text-[#0A0912]">+10.74%</span>
             </div>
           </div>
@@ -91,13 +90,13 @@ function SidebarContent({ onClose }: { onClose?: () => void }) {
         </div>
       </div>
 
-      <Group items={group1} />
-      <Group items={group2} />
+      <Group items={group1} onNavigate={onClose} />
+      <Group items={group2} onNavigate={onClose} />
 
       <div className="flex flex-col gap-1.5">
         {group3.map((it) => (
           <div key={it.label} className="rounded-2xl bg-panel p-1.5">
-            <Row item={it} />
+            <Row item={it} onNavigate={onClose} />
           </div>
         ))}
       </div>
@@ -107,15 +106,24 @@ function SidebarContent({ onClose }: { onClose?: () => void }) {
       </div>
       <div className="rounded-2xl bg-panel p-1.5">
         {moreItems.map((it) => (
-          <button
+          <Link
             key={it.label}
-            className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm font-medium text-foreground/90 hover:bg-panel-hover"
+            to={it.to}
+            onClick={onClose}
+            className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm font-medium text-foreground/90 hover:bg-panel-hover data-[status=active]:bg-primary data-[status=active]:text-primary-foreground"
           >
             <it.icon size={18} className="shrink-0" />
             <span className="min-w-0 flex-1 truncate">{it.label}</span>
             <ChevronRight size={14} className="text-muted-foreground" />
-          </button>
+          </Link>
         ))}
+      </div>
+
+      {/* Casino jackpot mini card */}
+      <div className="mt-2 rounded-2xl border border-lime bg-panel p-3">
+        <div className="text-[10px] font-bold uppercase tracking-widest text-lime">Mega Jackpot</div>
+        <div className="mt-1 text-xl font-black tabular-nums text-foreground">$248,912</div>
+        <div className="mt-0.5 text-[11px] text-muted-foreground">Ticks every second · Try your luck</div>
       </div>
     </div>
   );

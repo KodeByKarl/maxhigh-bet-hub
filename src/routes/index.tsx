@@ -1,11 +1,10 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useState } from "react";
-import { Navbar } from "@/components/maxhigh/Navbar";
-import { Sidebar } from "@/components/maxhigh/Sidebar";
 import { PromoCarousel } from "@/components/maxhigh/PromoCarousel";
 import { CategoryTabs } from "@/components/maxhigh/CategoryTabs";
 import { GameModeGrid } from "@/components/maxhigh/GameModeGrid";
 import { OriginalsRow } from "@/components/maxhigh/OriginalsRow";
+import { StatsBar } from "@/components/maxhigh/StatsBar";
+import { Leaderboard } from "@/components/maxhigh/Leaderboard";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -20,21 +19,14 @@ export const Route = createFileRoute("/")({
 });
 
 function Index() {
-  const [sidebarOpen, setSidebarOpen] = useState(false);
   return (
-    <div className="min-h-screen bg-background text-foreground">
-      <Navbar onToggleSidebar={() => setSidebarOpen((v) => !v)} />
-      <div className="flex">
-        <Sidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)} />
-        <main className="min-w-0 flex-1">
-          <div className="mx-auto flex max-w-[1400px] flex-col gap-8 p-4 sm:p-6">
-            <PromoCarousel />
-            <CategoryTabs />
-            <GameModeGrid />
-            <OriginalsRow />
-          </div>
-        </main>
-      </div>
-    </div>
+    <>
+      <PromoCarousel />
+      <StatsBar />
+      <CategoryTabs />
+      <GameModeGrid />
+      <OriginalsRow />
+      <Leaderboard />
+    </>
   );
 }
