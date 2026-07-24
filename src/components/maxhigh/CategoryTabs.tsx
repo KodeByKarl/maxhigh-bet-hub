@@ -1,26 +1,67 @@
-import { Search } from "lucide-react";
+import { slotGames, type GameCategory, type SlotGame } from "@/lib/games";
 
-const tabs = ["Lobby", "Originals", "MaxHigh Picks", "Slots", "Latest Releases"];
+export type LobbyTab = "lobby" | "slot" | "cards" | "fishing" | "latest";
 
-export function CategoryTabs() {
+const tabs: { id: LobbyTab; label: string }[] = [
+  { id: "lobby", label: "Lobby" },
+  { id: "slot", label: "Slots" },
+  { id: "cards", label: "Cards" },
+  { id: "fishing", label: "Fishing" },
+  { id: "latest", label: "Latest Releases" },
+];
+
+type Props = {
+  value: LobbyTab;
+  onChange: (tab: LobbyTab) => void;
+};
+
+export function CategoryTabs({ value, onChange }: Props) {
   return (
-    <div className="flex gap-2 overflow-x-auto no-scrollbar">
-      {tabs.map((t, i) => (
-        <button
-          key={t}
-          className={[
-            "shrink-0 rounded-full px-4 py-2 text-sm font-semibold transition-colors",
-            i === 0
-              ? "bg-primary text-primary-foreground"
-              : "bg-panel text-foreground/80 hover:bg-panel-hover",
-          ].join(" ")}
-        >
-          {t}
-        </button>
-      ))}
+    <div className="flex gap-2 overflow-x-auto no-scrollbar" role="tablist" aria-label="Game categories">
+      {tabs.map((t) => {
+        const active = t.id === value;
+        return (
+          <button
+            key={t.id}
+            type="button"
+            role="tab"
+            aria-selected={active}
+            onClick={() => onChange(t.id)}
+            className={[
+              "shrink-0 rounded-full px-4 py-2 text-sm font-semibold transition-colors",
+              active
+                ? "bg-primary text-primary-foreground"
+                : "border border-border bg-muted text-foreground/80 hover:bg-panel-hover",
+            ].join(" ")}
+          >
+            {t.label}
+          </button>
+        );
+      })}
     </div>
   );
 }
 
-// keep the unused Search import silenced during future edits
-void Search;
+export function gamesForTab(
+  tab: LobbyTab,
+  catalog: SlotGame[] = slotGames,
+): { title: string; games: SlotGame[] } {
+  if (tab === "lobby") {
+    return { title: "Popular Games", games: catalog };
+  }
+  if (tab === "latest") {
+    return {
+      title: "Latest Releases",
+      games: catalog.filter((g) => g.tag === "New" || g.tag === "Hot"),
+    };
+  }
+  const labels: Record<GameCategory, string> = {
+    slot: "Slots",
+    cards: "Cards",
+    fishing: "Fishing",
+  };
+  return {
+    title: labels[tab],
+    games: catalog.filter((g) => g.category === tab),
+  };
+}

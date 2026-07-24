@@ -1,32 +1,34 @@
+import { useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { PromoCarousel } from "@/components/maxhigh/PromoCarousel";
-import { CategoryTabs } from "@/components/maxhigh/CategoryTabs";
-import { GameModeGrid } from "@/components/maxhigh/GameModeGrid";
-import { OriginalsRow } from "@/components/maxhigh/OriginalsRow";
+import { CategoryTabs, gamesForTab, type LobbyTab } from "@/components/maxhigh/CategoryTabs";
 import { StatsBar } from "@/components/maxhigh/StatsBar";
-import { Leaderboard } from "@/components/maxhigh/Leaderboard";
+import { SlotGameGrid } from "@/components/maxhigh/SlotGameGrid";
+import { useCatalogGames } from "@/lib/useCatalogGames";
 
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
       { title: "MaxHigh — Casino Dashboard" },
-      { name: "description", content: "MaxHigh dashboard: slots, mines, crash, dice, tower, wheel and daily/weekly races." },
+      { name: "description", content: "MaxHigh casino dashboard — play featured slots with daily and weekly races." },
       { property: "og:title", content: "MaxHigh — Casino Dashboard" },
-      { property: "og:description", content: "Play originals and slots. Join daily and weekly races on MaxHigh." },
+      { property: "og:description", content: "Play featured MaxHigh slots. Join daily and weekly races." },
     ],
   }),
   component: Index,
 });
 
 function Index() {
+  const [tab, setTab] = useState<LobbyTab>("lobby");
+  const { games: catalog } = useCatalogGames();
+  const { title, games } = gamesForTab(tab, catalog);
+
   return (
     <>
       <PromoCarousel />
       <StatsBar />
-      <CategoryTabs />
-      <GameModeGrid />
-      <OriginalsRow />
-      <Leaderboard />
+      <CategoryTabs value={tab} onChange={setTab} />
+      <SlotGameGrid title={title} games={games} />
     </>
   );
 }

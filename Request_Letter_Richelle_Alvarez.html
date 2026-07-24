@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Request Letter - Reopen Student Faculty Evaluation</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Times New Roman', Times, serif;
+      background-color: #f5f5f5;
+      color: #000000;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 40px 20px;
+      min-height: 100vh;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* Print Control Button (Hidden when printed) */
+    .action-bar {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 24px;
+      width: 100%;
+      max-width: 816px;
+      justify-content: flex-end;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 18px;
+      background-color: #000000;
+      color: #ffffff;
+      border: none;
+      border-radius: 4px;
+      font-family: Arial, sans-serif;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+    }
+
+    .btn:hover {
+      background-color: #333333;
+    }
+
+    /* Letter Page Container (Standard 8.5 x 11 in) */
+    .letter-page {
+      background: #ffffff;
+      width: 100%;
+      max-width: 816px; /* 8.5 in at 96 dpi */
+      min-height: 1056px; /* 11 in at 96 dpi */
+      padding: 96px 96px; /* Standard 1 inch (96px) margins */
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+
+    .date {
+      font-size: 12pt;
+      color: #000000;
+      margin-bottom: 32px;
+    }
+
+    .recipient-block {
+      margin-bottom: 32px;
+      font-size: 12pt;
+      line-height: 1.4;
+    }
+
+    .recipient-label {
+      font-weight: bold;
+    }
+
+    .recipient-name {
+      font-weight: bold;
+    }
+
+    .subject-line {
+      font-size: 12pt;
+      font-weight: bold;
+      margin-bottom: 32px;
+      text-transform: uppercase;
+    }
+
+    .salutation {
+      font-size: 12pt;
+      margin-bottom: 24px;
+    }
+
+    .body-paragraph {
+      font-size: 12pt;
+      line-height: 1.5;
+      color: #000000;
+      margin-bottom: 18px;
+      text-align: justify;
+      text-indent: 0;
+    }
+
+    .closing {
+      font-size: 12pt;
+      margin-top: 28px;
+      margin-bottom: 64px;
+    }
+
+    .signature-section {
+      font-size: 12pt;
+      line-height: 1.4;
+    }
+
+    .signature-line {
+      width: 220px;
+      height: 1px;
+      background-color: #000000;
+      margin-bottom: 10px;
+    }
+
+    .sender-name {
+      font-weight: bold;
+      color: #000000;
+    }
+
+    .sender-meta {
+      color: #000000;
+    }
+
+    /* Print Specific Rules */
+    @media print {
+      body {
+        background-color: #ffffff;
+        padding: 0;
+      }
+
+      .action-bar {
+        display: none !important;
+      }
+
+      .letter-page {
+        box-shadow: none;
+        padding: 0;
+        max-width: 100%;
+        min-height: auto;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="action-bar">
+    <button class="btn" onclick="window.print()">
+      <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg>
+      Print / Save as PDF
+    </button>
+  </div>
+
+  <div class="letter-page">
+    <div>
+      <div class="date">July 24, 2026</div>
+
+      <div class="recipient-block">
+        <div><span class="recipient-label">TO:</span> <span class="recipient-name">Information and Communications Technology Office</span></div>
+      </div>
+
+      <div class="subject-line">
+        SUBJECT: Request to Reopen the Student Faculty Evaluation
+      </div>
+
+      <div class="salutation">Dear Sir/Madam,</div>
+
+      <p class="body-paragraph">I hope this letter finds you well.</p>
+
+      <p class="body-paragraph">I am writing to respectfully request the reopening of the Student Faculty Evaluation for my account. Unfortunately, I was unable to complete the evaluation within the given period due to unforeseen circumstances.</p>
+
+      <p class="body-paragraph">I sincerely apologize for missing the deadline and understand the importance of complying with the university's schedules and requirements. I take full responsibility for my oversight and kindly ask for your consideration in allowing me to complete the evaluation.</p>
+
+      <p class="body-paragraph">I would greatly appreciate the opportunity to submit my evaluation, as it is an important academic requirement. I assure you that I will complete it immediately should my request be granted.</p>
+
+      <p class="body-paragraph">Thank you very much for your time, understanding, and consideration. I hope for your favorable response.</p>
+
+      <div class="closing">Respectfully,</div>
+
+      <div class="signature-section">
+        <div class="signature-line"></div>
+        <div class="sender-name">Richelle Lou U. Alvarez</div>
+        <div class="sender-meta">Student ID: 2021-40206</div>
+        <div class="sender-meta">Program: BSBA - FM</div>
+      </div>
+    </div>
+  </div>
+
+</body>
+</html>

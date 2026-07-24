@@ -1,22 +1,21 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { Dice5 } from "lucide-react";
 import { PageHeader } from "@/components/maxhigh/PageHeader";
-import { GameModeGrid } from "@/components/maxhigh/GameModeGrid";
+import { SlotGameGrid } from "@/components/maxhigh/SlotGameGrid";
 
 export const Route = createFileRoute("/slots")({
   head: () => ({
     meta: [
       { title: "Slots — MaxHigh" },
-      { name: "description", content: "Thousands of slot titles from the world's top studios." },
+      { name: "description", content: "MaxHigh slot games with custom thumbnails." },
       { property: "og:title", content: "Slots — MaxHigh" },
-      { property: "og:description", content: "Thousands of slot titles from the world's top studios." },
+      { property: "og:description", content: "MaxHigh slot games with custom thumbnails." },
     ],
   }),
   component: () => (
     <>
-      <PageHeader title="Slots" description="Reels, bonus rounds and jackpots — thousands of titles." icon={Dice5} accent="#A21CAF" />
-      <GameModeGrid />
-      <GameModeGrid />
+      <PageHeader title="Slots" description="Reels, bonus rounds and jackpots." icon={Dice5} accent="#A21CAF" />
+      <SlotGameGrid title="Slots" category="slot" />
     </>
   ),
 });

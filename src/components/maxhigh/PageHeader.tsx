@@ -26,7 +26,7 @@ export function ComingSoonPanel({ label }: { label: string }) {
   return (
     <div className="grid min-h-[300px] place-items-center rounded-2xl border border-border bg-panel p-8 text-center">
       <div>
-        <div className="text-[11px] font-bold uppercase tracking-widest text-lime">Coming soon</div>
+        <div className="text-[11px] font-bold uppercase tracking-widest text-primary">Coming soon</div>
         <div className="mt-2 text-xl font-black text-foreground">{label}</div>
         <p className="mx-auto mt-2 max-w-md text-sm text-muted-foreground">
           This section is being built. Check back soon for a full experience.

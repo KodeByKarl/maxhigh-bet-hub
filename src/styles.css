@@ -36,6 +36,7 @@
   --color-panel: var(--panel);
   --color-panel-hover: var(--panel-hover);
   --color-lime: var(--lime);
+  --color-on-lime: var(--on-lime);
   --color-danger: var(--danger);
 
   --color-tile-slots: #7C3AED;
@@ -79,7 +80,68 @@
   --input: #1B1830;
   --ring: #7C3AED;
   --lime: #C6FF3D;
+  --on-lime: #0A0912;
   --danger: #FF4D6A;
+}
+
+/* Player-facing light theme (applied on <html> via theme-user-light) */
+.theme-user-light {
+  --background: #FFFFFF;
+  --foreground: #1A1030;
+  --sidebar: #F5F3FF;
+  --panel: #FFFFFF;
+  --panel-hover: #EDE9FE;
+  --card: #FFFFFF;
+  --card-foreground: #1A1030;
+  --popover: #FFFFFF;
+  --popover-foreground: #1A1030;
+  --primary: #7C3AED;
+  --primary-foreground: #FFFFFF;
+  --secondary: #F5F3FF;
+  --secondary-foreground: #1A1030;
+  --muted: #F5F3FF;
+  --muted-foreground: #6B6484;
+  --accent: #EDE9FE;
+  --accent-foreground: #1A1030;
+  --destructive: #FF4D6A;
+  --destructive-foreground: #FFFFFF;
+  --border: #DDD6FE;
+  --input: #F5F3FF;
+  --ring: #7C3AED;
+  --lime: #C6FF3D;
+  --on-lime: #0A0912;
+  --danger: #FF4D6A;
+  color-scheme: light;
+}
+
+/* Superadmin Domain 3 — soft dark + amber (easy on eyes) */
+.theme-superadmin {
+  --background: #12100E;
+  --foreground: #F5F0E8;
+  --sidebar: #1A1714;
+  --panel: #1C1916;
+  --panel-hover: #26211C;
+  --card: #1C1916;
+  --card-foreground: #F5F0E8;
+  --popover: #1C1916;
+  --popover-foreground: #F5F0E8;
+  --primary: #F59E0B;
+  --primary-foreground: #12100E;
+  --secondary: #26211C;
+  --secondary-foreground: #F5F0E8;
+  --muted: #1C1916;
+  --muted-foreground: #A8A29E;
+  --accent: #2A241C;
+  --accent-foreground: #F5F0E8;
+  --destructive: #FF4D6A;
+  --destructive-foreground: #FFFFFF;
+  --border: #3D3429;
+  --input: #1C1916;
+  --ring: #F59E0B;
+  --lime: #C6FF3D;
+  --on-lime: #0A0912;
+  --danger: #FF4D6A;
+  color-scheme: dark;
 }
 
 .dark {
@@ -100,6 +162,17 @@ html, body {
     font-family: "Inter", ui-sans-serif, system-ui, sans-serif;
     -webkit-font-smoothing: antialiased;
   }
+
+  /* Native <select> popups inherit page text color — force readable options */
+  select {
+    color: var(--foreground);
+    background-color: var(--input);
+  }
+  select option,
+  select optgroup {
+    color: #1c1917 !important;
+    background-color: #ffffff !important;
+  }
 }
 
 @utility no-scrollbar {
@@ -107,3 +180,65 @@ html, body {
   -ms-overflow-style: none;
   scrollbar-width: none;
 }
+
+/* Hide Lovable publish badge / watermark if injected on hosted previews */
+#lovable-badge,
+[id*="lovable-badge"],
+a[href*="lovable.dev"][target="_blank"]:has(img),
+iframe[src*="lovable"] {
+  display: none !important;
+  visibility: hidden !important;
+  pointer-events: none !important;
+}
+
+.candy-title {
+  background: linear-gradient(180deg, #FFFFFF 0%, #FFE600 22%, #FF2E70 58%, #D946EF 82%, #7E22CE 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  filter: drop-shadow(0 4px 0 #581C87) drop-shadow(0 8px 0 #3B0764) drop-shadow(0 12px 28px rgba(236, 72, 153, 0.7));
+  letter-spacing: 0.05em;
+}
+
+.candy-pct {
+  background: linear-gradient(90deg, #A3E635 0%, #FFFFFF 50%, #FF8C42 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  filter: drop-shadow(0 3px 0 #4C1D95) drop-shadow(0 6px 16px rgba(163, 230, 53, 0.5));
+}
+
+@keyframes candy-float {
+  0%, 100% { transform: translateY(0) rotate(-6deg); }
+  50% { transform: translateY(-16px) rotate(8deg); }
+}
+
+@keyframes candy-pop {
+  0% { transform: scale(0.7); opacity: 0; }
+  60% { transform: scale(1.12); opacity: 1; }
+  100% { transform: scale(1); }
+}
+
+@keyframes candy-pan {
+  from { transform: scale(1.15) translate3d(-2%, -1%, 0); }
+  to { transform: scale(1.15) translate3d(2%, 1%, 0); }
+}
+
+@keyframes candy-pulse-glow {
+  0%, 100% { box-shadow: 0 0 25px rgba(255, 77, 139, 0.4), 0 0 60px rgba(168, 85, 247, 0.3); }
+  50% { box-shadow: 0 0 45px rgba(255, 77, 139, 0.8), 0 0 90px rgba(168, 85, 247, 0.6); }
+}
+
+.candy-float {
+  animation: candy-float 3.2s ease-in-out infinite;
+}
+
+.candy-pop {
+  animation: candy-pop 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.candy-glow {
+  animation: candy-pulse-glow 2.5s ease-in-out infinite;
+}
+
+

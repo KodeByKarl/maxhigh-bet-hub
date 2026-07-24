@@ -4,16 +4,19 @@ import {
   Link,
   createRootRouteWithContext,
   useRouter,
+  useRouterState,
   HeadContent,
   Scripts,
 } from "@tanstack/react-router";
-import { useEffect, useState, type ReactNode } from "react";
+import { type ReactNode, useEffect } from "react";
 
 import appCss from "../styles.css?url";
-import { reportLovableError } from "../lib/lovable-error-reporting";
+import { AuthProvider } from "../lib/auth";
 import { Navbar } from "../components/maxhigh/Navbar";
 import { Sidebar } from "../components/maxhigh/Sidebar";
 import { LiveWinsTicker } from "../components/maxhigh/LiveWinsTicker";
+import { LoginModal } from "../components/maxhigh/LoginModal";
+import { Toaster } from "../components/ui/sonner";
 
 function NotFoundComponent() {
   return (
@@ -40,9 +43,6 @@ function NotFoundComponent() {
 function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
   console.error(error);
   const router = useRouter();
-  useEffect(() => {
-    reportLovableError(error, { boundary: "tanstack_root_error_component" });
-  }, [error]);
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-background px-4">
@@ -93,7 +93,9 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { rel: "preconnect", href: "https://fonts.googleapis.com" },
       { rel: "preconnect", href: "https://fonts.gstatic.com", crossOrigin: "anonymous" },
       { rel: "stylesheet", href: "https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" },
+      { rel: "icon", href: "/favicon.png", type: "image/png" },
       { rel: "icon", href: "/favicon.ico", type: "image/x-icon" },
+      { rel: "apple-touch-icon", href: "/apple-touch-icon.png" },
     ],
   }),
   shellComponent: RootShell,
@@ -118,22 +120,46 @@ function RootShell({ children }: { children: ReactNode }) {
 
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
-  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const pathname = useRouterState({ select: (s) => s.location.pathname });
+  const isStaffPortal = pathname.startsWith("/admin") || pathname.startsWith("/superadmin");
+
+  useEffect(() => {
+    const root = document.documentElement;
+    root.classList.remove("theme-user-light", "theme-superadmin", "theme-superadmin-light");
+    if (pathname.startsWith("/superadmin")) {
+      root.classList.add("theme-superadmin");
+    } else if (!pathname.startsWith("/admin")) {
+      root.classList.add("theme-user-light");
+    }
+    return () => {
+      root.classList.remove("theme-user-light", "theme-superadmin", "theme-superadmin-light");
+    };
+  }, [pathname]);
 
   return (
     <QueryClientProvider client={queryClient}>
-      <div className="min-h-screen bg-background text-foreground">
-        <Navbar onToggleSidebar={() => setSidebarOpen((v) => !v)} />
-        <LiveWinsTicker />
-        <div className="flex">
-          <Sidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)} />
-          <main className="min-w-0 flex-1">
-            <div className="mx-auto flex max-w-[1400px] flex-col gap-8 p-4 sm:p-6">
-              <Outlet />
+      <AuthProvider>
+        {isStaffPortal ? (
+          <Outlet />
+        ) : (
+          <div className="min-h-screen bg-background text-foreground">
+            <Navbar />
+            <div className="flex">
+              <Sidebar />
+              <div className="min-w-0 flex-1">
+                <LiveWinsTicker />
+                <main>
+                  <div className="mx-auto flex max-w-[1400px] flex-col gap-8 p-4 sm:p-6">
+                    <Outlet />
+                  </div>
+                </main>
+              </div>
             </div>
-          </main>
-        </div>
-      </div>
+            <LoginModal />
+            <Toaster />
+          </div>
+        )}
+      </AuthProvider>
     </QueryClientProvider>
   );
 }

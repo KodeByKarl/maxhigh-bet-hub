@@ -9,79 +9,52 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as WeeklyRaceRouteImport } from './routes/weekly-race'
-import { Route as VipRouteImport } from './routes/vip'
-import { Route as SupportRouteImport } from './routes/support'
-import { Route as SlotsRouteImport } from './routes/slots'
-import { Route as PromotionsRouteImport } from './routes/promotions'
-import { Route as OriginalsRouteImport } from './routes/originals'
-import { Route as LotteryRouteImport } from './routes/lottery'
-import { Route as LatestReleasesRouteImport } from './routes/latest-releases'
-import { Route as FavouritesRouteImport } from './routes/favourites'
-import { Route as DailyRaceRouteImport } from './routes/daily-race'
-import { Route as ChallengesRouteImport } from './routes/challenges'
-import { Route as BlogRouteImport } from './routes/blog'
-import { Route as AffiliateRouteImport } from './routes/affiliate'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AdminRouteImport } from './routes/admin'
+import { Route as AffiliateRouteImport } from './routes/affiliate'
+import { Route as BlogRouteImport } from './routes/blog'
+import { Route as CardsRouteImport } from './routes/cards'
+import { Route as ChallengesRouteImport } from './routes/challenges'
+import { Route as DailyRaceRouteImport } from './routes/daily-race'
+import { Route as FavouritesRouteImport } from './routes/favourites'
+import { Route as FishingRouteImport } from './routes/fishing'
+import { Route as LatestReleasesRouteImport } from './routes/latest-releases'
+import { Route as LotteryRouteImport } from './routes/lottery'
+import { Route as OriginalsRouteImport } from './routes/originals'
+import { Route as PromotionsRouteImport } from './routes/promotions'
+import { Route as SlotsRouteImport } from './routes/slots'
+import { Route as SuperadminRouteImport } from './routes/superadmin'
+import { Route as SupportRouteImport } from './routes/support'
+import { Route as VipRouteImport } from './routes/vip'
+import { Route as WeeklyRaceRouteImport } from './routes/weekly-race'
+import { Route as AdminIndexRouteImport } from './routes/admin/index'
+import { Route as AdminAuditRouteImport } from './routes/admin/audit'
+import { Route as AdminFundRouteImport } from './routes/admin/fund'
+import { Route as AdminLoginRouteImport } from './routes/admin/login'
+import { Route as AdminUsersRouteImport } from './routes/admin/users'
+import { Route as SuperadminIndexRouteImport } from './routes/superadmin/index'
+import { Route as SuperadminAdminsRouteImport } from './routes/superadmin/admins'
+import { Route as SuperadminAuditRouteImport } from './routes/superadmin/audit'
+import { Route as SuperadminGamesRouteImport } from './routes/superadmin/games'
+import { Route as SuperadminJackpotRouteImport } from './routes/superadmin/jackpot'
+import { Route as SuperadminLoginRouteImport } from './routes/superadmin/login'
+import { Route as SuperadminPromotionsRouteImport } from './routes/superadmin/promotions'
+import { Route as SuperadminRiskRouteImport } from './routes/superadmin/risk'
+import { Route as SuperadminSettingsRouteImport } from './routes/superadmin/settings'
+import { Route as SuperadminStaffRouteImport } from './routes/superadmin/staff'
+import { Route as SuperadminUsersRouteImport } from './routes/superadmin/users'
+import { Route as SuperadminWalletRouteImport } from './routes/superadmin/wallet'
+import { Route as SuperadminReportsIndexRouteImport } from './routes/superadmin/reports.index'
+import { Route as SuperadminReportsViewRouteImport } from './routes/superadmin/reports.$view'
 
-const WeeklyRaceRoute = WeeklyRaceRouteImport.update({
-  id: '/weekly-race',
-  path: '/weekly-race',
+const IndexRoute = IndexRouteImport.update({
+  id: '/',
+  path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
-const VipRoute = VipRouteImport.update({
-  id: '/vip',
-  path: '/vip',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const SupportRoute = SupportRouteImport.update({
-  id: '/support',
-  path: '/support',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const SlotsRoute = SlotsRouteImport.update({
-  id: '/slots',
-  path: '/slots',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const PromotionsRoute = PromotionsRouteImport.update({
-  id: '/promotions',
-  path: '/promotions',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const OriginalsRoute = OriginalsRouteImport.update({
-  id: '/originals',
-  path: '/originals',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const LotteryRoute = LotteryRouteImport.update({
-  id: '/lottery',
-  path: '/lottery',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const LatestReleasesRoute = LatestReleasesRouteImport.update({
-  id: '/latest-releases',
-  path: '/latest-releases',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const FavouritesRoute = FavouritesRouteImport.update({
-  id: '/favourites',
-  path: '/favourites',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const DailyRaceRoute = DailyRaceRouteImport.update({
-  id: '/daily-race',
-  path: '/daily-race',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ChallengesRoute = ChallengesRouteImport.update({
-  id: '/challenges',
-  path: '/challenges',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const BlogRoute = BlogRouteImport.update({
-  id: '/blog',
-  path: '/blog',
+const AdminRoute = AdminRouteImport.update({
+  id: '/admin',
+  path: '/admin',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AffiliateRoute = AffiliateRouteImport.update({
@@ -89,35 +62,225 @@ const AffiliateRoute = AffiliateRouteImport.update({
   path: '/affiliate',
   getParentRoute: () => rootRouteImport,
 } as any)
-const IndexRoute = IndexRouteImport.update({
+const BlogRoute = BlogRouteImport.update({
+  id: '/blog',
+  path: '/blog',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CardsRoute = CardsRouteImport.update({
+  id: '/cards',
+  path: '/cards',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ChallengesRoute = ChallengesRouteImport.update({
+  id: '/challenges',
+  path: '/challenges',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DailyRaceRoute = DailyRaceRouteImport.update({
+  id: '/daily-race',
+  path: '/daily-race',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const FavouritesRoute = FavouritesRouteImport.update({
+  id: '/favourites',
+  path: '/favourites',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const FishingRoute = FishingRouteImport.update({
+  id: '/fishing',
+  path: '/fishing',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LatestReleasesRoute = LatestReleasesRouteImport.update({
+  id: '/latest-releases',
+  path: '/latest-releases',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LotteryRoute = LotteryRouteImport.update({
+  id: '/lottery',
+  path: '/lottery',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const OriginalsRoute = OriginalsRouteImport.update({
+  id: '/originals',
+  path: '/originals',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PromotionsRoute = PromotionsRouteImport.update({
+  id: '/promotions',
+  path: '/promotions',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SlotsRoute = SlotsRouteImport.update({
+  id: '/slots',
+  path: '/slots',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SuperadminRoute = SuperadminRouteImport.update({
+  id: '/superadmin',
+  path: '/superadmin',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SupportRoute = SupportRouteImport.update({
+  id: '/support',
+  path: '/support',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const VipRoute = VipRouteImport.update({
+  id: '/vip',
+  path: '/vip',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const WeeklyRaceRoute = WeeklyRaceRouteImport.update({
+  id: '/weekly-race',
+  path: '/weekly-race',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminIndexRoute = AdminIndexRouteImport.update({
   id: '/',
   path: '/',
-  getParentRoute: () => rootRouteImport,
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminAuditRoute = AdminAuditRouteImport.update({
+  id: '/audit',
+  path: '/audit',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminFundRoute = AdminFundRouteImport.update({
+  id: '/fund',
+  path: '/fund',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminLoginRoute = AdminLoginRouteImport.update({
+  id: '/login',
+  path: '/login',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminUsersRoute = AdminUsersRouteImport.update({
+  id: '/users',
+  path: '/users',
+  getParentRoute: () => AdminRoute,
+} as any)
+const SuperadminIndexRoute = SuperadminIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => SuperadminRoute,
+} as any)
+const SuperadminAdminsRoute = SuperadminAdminsRouteImport.update({
+  id: '/admins',
+  path: '/admins',
+  getParentRoute: () => SuperadminRoute,
+} as any)
+const SuperadminAuditRoute = SuperadminAuditRouteImport.update({
+  id: '/audit',
+  path: '/audit',
+  getParentRoute: () => SuperadminRoute,
+} as any)
+const SuperadminGamesRoute = SuperadminGamesRouteImport.update({
+  id: '/games',
+  path: '/games',
+  getParentRoute: () => SuperadminRoute,
+} as any)
+const SuperadminJackpotRoute = SuperadminJackpotRouteImport.update({
+  id: '/jackpot',
+  path: '/jackpot',
+  getParentRoute: () => SuperadminRoute,
+} as any)
+const SuperadminLoginRoute = SuperadminLoginRouteImport.update({
+  id: '/login',
+  path: '/login',
+  getParentRoute: () => SuperadminRoute,
+} as any)
+const SuperadminPromotionsRoute = SuperadminPromotionsRouteImport.update({
+  id: '/promotions',
+  path: '/promotions',
+  getParentRoute: () => SuperadminRoute,
+} as any)
+const SuperadminRiskRoute = SuperadminRiskRouteImport.update({
+  id: '/risk',
+  path: '/risk',
+  getParentRoute: () => SuperadminRoute,
+} as any)
+const SuperadminSettingsRoute = SuperadminSettingsRouteImport.update({
+  id: '/settings',
+  path: '/settings',
+  getParentRoute: () => SuperadminRoute,
+} as any)
+const SuperadminStaffRoute = SuperadminStaffRouteImport.update({
+  id: '/staff',
+  path: '/staff',
+  getParentRoute: () => SuperadminRoute,
+} as any)
+const SuperadminUsersRoute = SuperadminUsersRouteImport.update({
+  id: '/users',
+  path: '/users',
+  getParentRoute: () => SuperadminRoute,
+} as any)
+const SuperadminWalletRoute = SuperadminWalletRouteImport.update({
+  id: '/wallet',
+  path: '/wallet',
+  getParentRoute: () => SuperadminRoute,
+} as any)
+const SuperadminReportsIndexRoute = SuperadminReportsIndexRouteImport.update({
+  id: '/reports/',
+  path: '/reports/',
+  getParentRoute: () => SuperadminRoute,
+} as any)
+const SuperadminReportsViewRoute = SuperadminReportsViewRouteImport.update({
+  id: '/reports/$view',
+  path: '/reports/$view',
+  getParentRoute: () => SuperadminRoute,
 } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/admin': typeof AdminRouteWithChildren
   '/affiliate': typeof AffiliateRoute
   '/blog': typeof BlogRoute
+  '/cards': typeof CardsRoute
   '/challenges': typeof ChallengesRoute
   '/daily-race': typeof DailyRaceRoute
   '/favourites': typeof FavouritesRoute
+  '/fishing': typeof FishingRoute
   '/latest-releases': typeof LatestReleasesRoute
   '/lottery': typeof LotteryRoute
   '/originals': typeof OriginalsRoute
   '/promotions': typeof PromotionsRoute
   '/slots': typeof SlotsRoute
+  '/superadmin': typeof SuperadminRouteWithChildren
   '/support': typeof SupportRoute
   '/vip': typeof VipRoute
   '/weekly-race': typeof WeeklyRaceRoute
+  '/admin/audit': typeof AdminAuditRoute
+  '/admin/fund': typeof AdminFundRoute
+  '/admin/login': typeof AdminLoginRoute
+  '/admin/users': typeof AdminUsersRoute
+  '/superadmin/admins': typeof SuperadminAdminsRoute
+  '/superadmin/audit': typeof SuperadminAuditRoute
+  '/superadmin/games': typeof SuperadminGamesRoute
+  '/superadmin/jackpot': typeof SuperadminJackpotRoute
+  '/superadmin/login': typeof SuperadminLoginRoute
+  '/superadmin/promotions': typeof SuperadminPromotionsRoute
+  '/superadmin/risk': typeof SuperadminRiskRoute
+  '/superadmin/settings': typeof SuperadminSettingsRoute
+  '/superadmin/staff': typeof SuperadminStaffRoute
+  '/superadmin/users': typeof SuperadminUsersRoute
+  '/superadmin/wallet': typeof SuperadminWalletRoute
+  '/admin/': typeof AdminIndexRoute
+  '/superadmin/': typeof SuperadminIndexRoute
+  '/superadmin/reports/$view': typeof SuperadminReportsViewRoute
+  '/superadmin/reports/': typeof SuperadminReportsIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/affiliate': typeof AffiliateRoute
   '/blog': typeof BlogRoute
+  '/cards': typeof CardsRoute
   '/challenges': typeof ChallengesRoute
   '/daily-race': typeof DailyRaceRoute
   '/favourites': typeof FavouritesRoute
+  '/fishing': typeof FishingRoute
   '/latest-releases': typeof LatestReleasesRoute
   '/lottery': typeof LotteryRoute
   '/originals': typeof OriginalsRoute
@@ -126,49 +289,116 @@ export interface FileRoutesByTo {
   '/support': typeof SupportRoute
   '/vip': typeof VipRoute
   '/weekly-race': typeof WeeklyRaceRoute
+  '/admin/audit': typeof AdminAuditRoute
+  '/admin/fund': typeof AdminFundRoute
+  '/admin/login': typeof AdminLoginRoute
+  '/admin/users': typeof AdminUsersRoute
+  '/superadmin/admins': typeof SuperadminAdminsRoute
+  '/superadmin/audit': typeof SuperadminAuditRoute
+  '/superadmin/games': typeof SuperadminGamesRoute
+  '/superadmin/jackpot': typeof SuperadminJackpotRoute
+  '/superadmin/login': typeof SuperadminLoginRoute
+  '/superadmin/promotions': typeof SuperadminPromotionsRoute
+  '/superadmin/risk': typeof SuperadminRiskRoute
+  '/superadmin/settings': typeof SuperadminSettingsRoute
+  '/superadmin/staff': typeof SuperadminStaffRoute
+  '/superadmin/users': typeof SuperadminUsersRoute
+  '/superadmin/wallet': typeof SuperadminWalletRoute
+  '/admin': typeof AdminIndexRoute
+  '/superadmin': typeof SuperadminIndexRoute
+  '/superadmin/reports/$view': typeof SuperadminReportsViewRoute
+  '/superadmin/reports': typeof SuperadminReportsIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/admin': typeof AdminRouteWithChildren
   '/affiliate': typeof AffiliateRoute
   '/blog': typeof BlogRoute
+  '/cards': typeof CardsRoute
   '/challenges': typeof ChallengesRoute
   '/daily-race': typeof DailyRaceRoute
   '/favourites': typeof FavouritesRoute
+  '/fishing': typeof FishingRoute
   '/latest-releases': typeof LatestReleasesRoute
   '/lottery': typeof LotteryRoute
   '/originals': typeof OriginalsRoute
   '/promotions': typeof PromotionsRoute
   '/slots': typeof SlotsRoute
+  '/superadmin': typeof SuperadminRouteWithChildren
   '/support': typeof SupportRoute
   '/vip': typeof VipRoute
   '/weekly-race': typeof WeeklyRaceRoute
+  '/admin/audit': typeof AdminAuditRoute
+  '/admin/fund': typeof AdminFundRoute
+  '/admin/login': typeof AdminLoginRoute
+  '/admin/users': typeof AdminUsersRoute
+  '/superadmin/admins': typeof SuperadminAdminsRoute
+  '/superadmin/audit': typeof SuperadminAuditRoute
+  '/superadmin/games': typeof SuperadminGamesRoute
+  '/superadmin/jackpot': typeof SuperadminJackpotRoute
+  '/superadmin/login': typeof SuperadminLoginRoute
+  '/superadmin/promotions': typeof SuperadminPromotionsRoute
+  '/superadmin/risk': typeof SuperadminRiskRoute
+  '/superadmin/settings': typeof SuperadminSettingsRoute
+  '/superadmin/staff': typeof SuperadminStaffRoute
+  '/superadmin/users': typeof SuperadminUsersRoute
+  '/superadmin/wallet': typeof SuperadminWalletRoute
+  '/admin/': typeof AdminIndexRoute
+  '/superadmin/': typeof SuperadminIndexRoute
+  '/superadmin/reports/$view': typeof SuperadminReportsViewRoute
+  '/superadmin/reports/': typeof SuperadminReportsIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/admin'
     | '/affiliate'
     | '/blog'
+    | '/cards'
     | '/challenges'
     | '/daily-race'
     | '/favourites'
+    | '/fishing'
     | '/latest-releases'
     | '/lottery'
     | '/originals'
     | '/promotions'
     | '/slots'
+    | '/superadmin'
     | '/support'
     | '/vip'
     | '/weekly-race'
+    | '/admin/audit'
+    | '/admin/fund'
+    | '/admin/login'
+    | '/admin/users'
+    | '/superadmin/admins'
+    | '/superadmin/audit'
+    | '/superadmin/games'
+    | '/superadmin/jackpot'
+    | '/superadmin/login'
+    | '/superadmin/promotions'
+    | '/superadmin/risk'
+    | '/superadmin/settings'
+    | '/superadmin/staff'
+    | '/superadmin/users'
+    | '/superadmin/wallet'
+    | '/admin/'
+    | '/superadmin/'
+    | '/superadmin/reports/$view'
+    | '/superadmin/reports/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/affiliate'
     | '/blog'
+    | '/cards'
     | '/challenges'
     | '/daily-race'
     | '/favourites'
+    | '/fishing'
     | '/latest-releases'
     | '/lottery'
     | '/originals'
@@ -177,36 +407,82 @@ export interface FileRouteTypes {
     | '/support'
     | '/vip'
     | '/weekly-race'
+    | '/admin/audit'
+    | '/admin/fund'
+    | '/admin/login'
+    | '/admin/users'
+    | '/superadmin/admins'
+    | '/superadmin/audit'
+    | '/superadmin/games'
+    | '/superadmin/jackpot'
+    | '/superadmin/login'
+    | '/superadmin/promotions'
+    | '/superadmin/risk'
+    | '/superadmin/settings'
+    | '/superadmin/staff'
+    | '/superadmin/users'
+    | '/superadmin/wallet'
+    | '/admin'
+    | '/superadmin'
+    | '/superadmin/reports/$view'
+    | '/superadmin/reports'
   id:
     | '__root__'
     | '/'
+    | '/admin'
     | '/affiliate'
     | '/blog'
+    | '/cards'
     | '/challenges'
     | '/daily-race'
     | '/favourites'
+    | '/fishing'
     | '/latest-releases'
     | '/lottery'
     | '/originals'
     | '/promotions'
     | '/slots'
+    | '/superadmin'
     | '/support'
     | '/vip'
     | '/weekly-race'
+    | '/admin/audit'
+    | '/admin/fund'
+    | '/admin/login'
+    | '/admin/users'
+    | '/superadmin/admins'
+    | '/superadmin/audit'
+    | '/superadmin/games'
+    | '/superadmin/jackpot'
+    | '/superadmin/login'
+    | '/superadmin/promotions'
+    | '/superadmin/risk'
+    | '/superadmin/settings'
+    | '/superadmin/staff'
+    | '/superadmin/users'
+    | '/superadmin/wallet'
+    | '/admin/'
+    | '/superadmin/'
+    | '/superadmin/reports/$view'
+    | '/superadmin/reports/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AdminRoute: typeof AdminRouteWithChildren
   AffiliateRoute: typeof AffiliateRoute
   BlogRoute: typeof BlogRoute
+  CardsRoute: typeof CardsRoute
   ChallengesRoute: typeof ChallengesRoute
   DailyRaceRoute: typeof DailyRaceRoute
   FavouritesRoute: typeof FavouritesRoute
+  FishingRoute: typeof FishingRoute
   LatestReleasesRoute: typeof LatestReleasesRoute
   LotteryRoute: typeof LotteryRoute
   OriginalsRoute: typeof OriginalsRoute
   PromotionsRoute: typeof PromotionsRoute
   SlotsRoute: typeof SlotsRoute
+  SuperadminRoute: typeof SuperadminRouteWithChildren
   SupportRoute: typeof SupportRoute
   VipRoute: typeof VipRoute
   WeeklyRaceRoute: typeof WeeklyRaceRoute
@@ -214,88 +490,18 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/weekly-race': {
-      id: '/weekly-race'
-      path: '/weekly-race'
-      fullPath: '/weekly-race'
-      preLoaderRoute: typeof WeeklyRaceRouteImport
+    '/': {
+      id: '/'
+      path: '/'
+      fullPath: '/'
+      preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/vip': {
-      id: '/vip'
-      path: '/vip'
-      fullPath: '/vip'
-      preLoaderRoute: typeof VipRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/support': {
-      id: '/support'
-      path: '/support'
-      fullPath: '/support'
-      preLoaderRoute: typeof SupportRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/slots': {
-      id: '/slots'
-      path: '/slots'
-      fullPath: '/slots'
-      preLoaderRoute: typeof SlotsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/promotions': {
-      id: '/promotions'
-      path: '/promotions'
-      fullPath: '/promotions'
-      preLoaderRoute: typeof PromotionsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/originals': {
-      id: '/originals'
-      path: '/originals'
-      fullPath: '/originals'
-      preLoaderRoute: typeof OriginalsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/lottery': {
-      id: '/lottery'
-      path: '/lottery'
-      fullPath: '/lottery'
-      preLoaderRoute: typeof LotteryRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/latest-releases': {
-      id: '/latest-releases'
-      path: '/latest-releases'
-      fullPath: '/latest-releases'
-      preLoaderRoute: typeof LatestReleasesRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/favourites': {
-      id: '/favourites'
-      path: '/favourites'
-      fullPath: '/favourites'
-      preLoaderRoute: typeof FavouritesRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/daily-race': {
-      id: '/daily-race'
-      path: '/daily-race'
-      fullPath: '/daily-race'
-      preLoaderRoute: typeof DailyRaceRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/challenges': {
-      id: '/challenges'
-      path: '/challenges'
-      fullPath: '/challenges'
-      preLoaderRoute: typeof ChallengesRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/blog': {
-      id: '/blog'
-      path: '/blog'
-      fullPath: '/blog'
-      preLoaderRoute: typeof BlogRouteImport
+    '/admin': {
+      id: '/admin'
+      path: '/admin'
+      fullPath: '/admin'
+      preLoaderRoute: typeof AdminRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/affiliate': {
@@ -305,28 +511,319 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AffiliateRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/': {
-      id: '/'
-      path: '/'
-      fullPath: '/'
-      preLoaderRoute: typeof IndexRouteImport
+    '/blog': {
+      id: '/blog'
+      path: '/blog'
+      fullPath: '/blog'
+      preLoaderRoute: typeof BlogRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/cards': {
+      id: '/cards'
+      path: '/cards'
+      fullPath: '/cards'
+      preLoaderRoute: typeof CardsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/challenges': {
+      id: '/challenges'
+      path: '/challenges'
+      fullPath: '/challenges'
+      preLoaderRoute: typeof ChallengesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/daily-race': {
+      id: '/daily-race'
+      path: '/daily-race'
+      fullPath: '/daily-race'
+      preLoaderRoute: typeof DailyRaceRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/favourites': {
+      id: '/favourites'
+      path: '/favourites'
+      fullPath: '/favourites'
+      preLoaderRoute: typeof FavouritesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/fishing': {
+      id: '/fishing'
+      path: '/fishing'
+      fullPath: '/fishing'
+      preLoaderRoute: typeof FishingRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/latest-releases': {
+      id: '/latest-releases'
+      path: '/latest-releases'
+      fullPath: '/latest-releases'
+      preLoaderRoute: typeof LatestReleasesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/lottery': {
+      id: '/lottery'
+      path: '/lottery'
+      fullPath: '/lottery'
+      preLoaderRoute: typeof LotteryRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/originals': {
+      id: '/originals'
+      path: '/originals'
+      fullPath: '/originals'
+      preLoaderRoute: typeof OriginalsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/promotions': {
+      id: '/promotions'
+      path: '/promotions'
+      fullPath: '/promotions'
+      preLoaderRoute: typeof PromotionsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/slots': {
+      id: '/slots'
+      path: '/slots'
+      fullPath: '/slots'
+      preLoaderRoute: typeof SlotsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/superadmin': {
+      id: '/superadmin'
+      path: '/superadmin'
+      fullPath: '/superadmin'
+      preLoaderRoute: typeof SuperadminRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/support': {
+      id: '/support'
+      path: '/support'
+      fullPath: '/support'
+      preLoaderRoute: typeof SupportRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/vip': {
+      id: '/vip'
+      path: '/vip'
+      fullPath: '/vip'
+      preLoaderRoute: typeof VipRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/weekly-race': {
+      id: '/weekly-race'
+      path: '/weekly-race'
+      fullPath: '/weekly-race'
+      preLoaderRoute: typeof WeeklyRaceRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin/': {
+      id: '/admin/'
+      path: '/'
+      fullPath: '/admin/'
+      preLoaderRoute: typeof AdminIndexRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/audit': {
+      id: '/admin/audit'
+      path: '/audit'
+      fullPath: '/admin/audit'
+      preLoaderRoute: typeof AdminAuditRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/fund': {
+      id: '/admin/fund'
+      path: '/fund'
+      fullPath: '/admin/fund'
+      preLoaderRoute: typeof AdminFundRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/login': {
+      id: '/admin/login'
+      path: '/login'
+      fullPath: '/admin/login'
+      preLoaderRoute: typeof AdminLoginRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/users': {
+      id: '/admin/users'
+      path: '/users'
+      fullPath: '/admin/users'
+      preLoaderRoute: typeof AdminUsersRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/superadmin/': {
+      id: '/superadmin/'
+      path: '/'
+      fullPath: '/superadmin/'
+      preLoaderRoute: typeof SuperadminIndexRouteImport
+      parentRoute: typeof SuperadminRoute
+    }
+    '/superadmin/admins': {
+      id: '/superadmin/admins'
+      path: '/admins'
+      fullPath: '/superadmin/admins'
+      preLoaderRoute: typeof SuperadminAdminsRouteImport
+      parentRoute: typeof SuperadminRoute
+    }
+    '/superadmin/audit': {
+      id: '/superadmin/audit'
+      path: '/audit'
+      fullPath: '/superadmin/audit'
+      preLoaderRoute: typeof SuperadminAuditRouteImport
+      parentRoute: typeof SuperadminRoute
+    }
+    '/superadmin/games': {
+      id: '/superadmin/games'
+      path: '/games'
+      fullPath: '/superadmin/games'
+      preLoaderRoute: typeof SuperadminGamesRouteImport
+      parentRoute: typeof SuperadminRoute
+    }
+    '/superadmin/jackpot': {
+      id: '/superadmin/jackpot'
+      path: '/jackpot'
+      fullPath: '/superadmin/jackpot'
+      preLoaderRoute: typeof SuperadminJackpotRouteImport
+      parentRoute: typeof SuperadminRoute
+    }
+    '/superadmin/login': {
+      id: '/superadmin/login'
+      path: '/login'
+      fullPath: '/superadmin/login'
+      preLoaderRoute: typeof SuperadminLoginRouteImport
+      parentRoute: typeof SuperadminRoute
+    }
+    '/superadmin/promotions': {
+      id: '/superadmin/promotions'
+      path: '/promotions'
+      fullPath: '/superadmin/promotions'
+      preLoaderRoute: typeof SuperadminPromotionsRouteImport
+      parentRoute: typeof SuperadminRoute
+    }
+    '/superadmin/risk': {
+      id: '/superadmin/risk'
+      path: '/risk'
+      fullPath: '/superadmin/risk'
+      preLoaderRoute: typeof SuperadminRiskRouteImport
+      parentRoute: typeof SuperadminRoute
+    }
+    '/superadmin/settings': {
+      id: '/superadmin/settings'
+      path: '/settings'
+      fullPath: '/superadmin/settings'
+      preLoaderRoute: typeof SuperadminSettingsRouteImport
+      parentRoute: typeof SuperadminRoute
+    }
+    '/superadmin/staff': {
+      id: '/superadmin/staff'
+      path: '/staff'
+      fullPath: '/superadmin/staff'
+      preLoaderRoute: typeof SuperadminStaffRouteImport
+      parentRoute: typeof SuperadminRoute
+    }
+    '/superadmin/users': {
+      id: '/superadmin/users'
+      path: '/users'
+      fullPath: '/superadmin/users'
+      preLoaderRoute: typeof SuperadminUsersRouteImport
+      parentRoute: typeof SuperadminRoute
+    }
+    '/superadmin/wallet': {
+      id: '/superadmin/wallet'
+      path: '/wallet'
+      fullPath: '/superadmin/wallet'
+      preLoaderRoute: typeof SuperadminWalletRouteImport
+      parentRoute: typeof SuperadminRoute
+    }
+    '/superadmin/reports/': {
+      id: '/superadmin/reports/'
+      path: '/reports'
+      fullPath: '/superadmin/reports/'
+      preLoaderRoute: typeof SuperadminReportsIndexRouteImport
+      parentRoute: typeof SuperadminRoute
+    }
+    '/superadmin/reports/$view': {
+      id: '/superadmin/reports/$view'
+      path: '/reports/$view'
+      fullPath: '/superadmin/reports/$view'
+      preLoaderRoute: typeof SuperadminReportsViewRouteImport
+      parentRoute: typeof SuperadminRoute
     }
   }
 }
 
+interface AdminRouteChildren {
+  AdminAuditRoute: typeof AdminAuditRoute
+  AdminFundRoute: typeof AdminFundRoute
+  AdminLoginRoute: typeof AdminLoginRoute
+  AdminUsersRoute: typeof AdminUsersRoute
+  AdminIndexRoute: typeof AdminIndexRoute
+}
+
+const AdminRouteChildren: AdminRouteChildren = {
+  AdminAuditRoute: AdminAuditRoute,
+  AdminFundRoute: AdminFundRoute,
+  AdminLoginRoute: AdminLoginRoute,
+  AdminUsersRoute: AdminUsersRoute,
+  AdminIndexRoute: AdminIndexRoute,
+}
+
+const AdminRouteWithChildren = AdminRoute._addFileChildren(AdminRouteChildren)
+
+interface SuperadminRouteChildren {
+  SuperadminAdminsRoute: typeof SuperadminAdminsRoute
+  SuperadminAuditRoute: typeof SuperadminAuditRoute
+  SuperadminGamesRoute: typeof SuperadminGamesRoute
+  SuperadminJackpotRoute: typeof SuperadminJackpotRoute
+  SuperadminLoginRoute: typeof SuperadminLoginRoute
+  SuperadminPromotionsRoute: typeof SuperadminPromotionsRoute
+  SuperadminRiskRoute: typeof SuperadminRiskRoute
+  SuperadminSettingsRoute: typeof SuperadminSettingsRoute
+  SuperadminStaffRoute: typeof SuperadminStaffRoute
+  SuperadminUsersRoute: typeof SuperadminUsersRoute
+  SuperadminWalletRoute: typeof SuperadminWalletRoute
+  SuperadminIndexRoute: typeof SuperadminIndexRoute
+  SuperadminReportsViewRoute: typeof SuperadminReportsViewRoute
+  SuperadminReportsIndexRoute: typeof SuperadminReportsIndexRoute
+}
+
+const SuperadminRouteChildren: SuperadminRouteChildren = {
+  SuperadminAdminsRoute: SuperadminAdminsRoute,
+  SuperadminAuditRoute: SuperadminAuditRoute,
+  SuperadminGamesRoute: SuperadminGamesRoute,
+  SuperadminJackpotRoute: SuperadminJackpotRoute,
+  SuperadminLoginRoute: SuperadminLoginRoute,
+  SuperadminPromotionsRoute: SuperadminPromotionsRoute,
+  SuperadminRiskRoute: SuperadminRiskRoute,
+  SuperadminSettingsRoute: SuperadminSettingsRoute,
+  SuperadminStaffRoute: SuperadminStaffRoute,
+  SuperadminUsersRoute: SuperadminUsersRoute,
+  SuperadminWalletRoute: SuperadminWalletRoute,
+  SuperadminIndexRoute: SuperadminIndexRoute,
+  SuperadminReportsViewRoute: SuperadminReportsViewRoute,
+  SuperadminReportsIndexRoute: SuperadminReportsIndexRoute,
+}
+
+const SuperadminRouteWithChildren = SuperadminRoute._addFileChildren(
+  SuperadminRouteChildren,
+)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AdminRoute: AdminRouteWithChildren,
   AffiliateRoute: AffiliateRoute,
   BlogRoute: BlogRoute,
+  CardsRoute: CardsRoute,
   ChallengesRoute: ChallengesRoute,
   DailyRaceRoute: DailyRaceRoute,
   FavouritesRoute: FavouritesRoute,
+  FishingRoute: FishingRoute,
   LatestReleasesRoute: LatestReleasesRoute,
   LotteryRoute: LotteryRoute,
   OriginalsRoute: OriginalsRoute,
   PromotionsRoute: PromotionsRoute,
   SlotsRoute: SlotsRoute,
+  SuperadminRoute: SuperadminRouteWithChildren,
   SupportRoute: SupportRoute,
   VipRoute: VipRoute,
   WeeklyRaceRoute: WeeklyRaceRoute,
@@ -334,3 +831,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}

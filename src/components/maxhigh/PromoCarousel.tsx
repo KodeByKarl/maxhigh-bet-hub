@@ -1,49 +1,139 @@
-import { Send, Coins, Trophy } from "lucide-react";
+import { useCallback, useEffect, useState } from "react";
+import useEmblaCarousel from "embla-carousel-react";
+import { ChevronLeft, ChevronRight } from "lucide-react";
+
+const promos = [
+  {
+    id: "daily",
+    badge: "Daily",
+    badgeClass: "bg-black/50 text-white",
+    title: "Daily Race",
+    headline: "Daily Race",
+    sub: "Compete for prizes · Coming soon",
+    cta: "Join Race",
+    image: "/promos/promo-daily-race.png",
+  },
+  {
+    id: "weekly",
+    badge: "Weekly",
+    badgeClass: "bg-lime text-on-lime",
+    title: "Weekly Race",
+    headline: "Weekly Race",
+    sub: "Climb the rankings · Coming soon",
+    cta: "Climb Rankings",
+    image: "/promos/promo-weekly-race.png",
+  },
+  {
+    id: "telegram",
+    badge: "Announcement",
+    badgeClass: "bg-black/50 text-white",
+    title: "Telegram Drops",
+    headline: "Join & Claim",
+    sub: "Community rewards & updates",
+    cta: "Open Telegram",
+    image: "/promos/promo-telegram.png",
+  },
+] as const;
 
 export function PromoCarousel() {
+  const [emblaRef, emblaApi] = useEmblaCarousel({ loop: true, align: "start" });
+  const [index, setIndex] = useState(0);
+
+  const onSelect = useCallback(() => {
+    if (!emblaApi) return;
+    setIndex(emblaApi.selectedScrollSnap());
+  }, [emblaApi]);
+
+  useEffect(() => {
+    if (!emblaApi) return;
+    onSelect();
+    emblaApi.on("select", onSelect);
+    emblaApi.on("reInit", onSelect);
+    return () => {
+      emblaApi.off("select", onSelect);
+      emblaApi.off("reInit", onSelect);
+    };
+  }, [emblaApi, onSelect]);
+
+  useEffect(() => {
+    if (!emblaApi) return;
+    const id = window.setInterval(() => emblaApi.scrollNext(), 5500);
+    return () => window.clearInterval(id);
+  }, [emblaApi]);
+
   return (
-    <div className="grid grid-flow-col auto-cols-[85%] gap-4 overflow-x-auto no-scrollbar sm:auto-cols-[60%] md:grid-flow-row md:auto-cols-auto md:grid-cols-3">
-      <div className="relative flex h-44 flex-col justify-between overflow-hidden rounded-2xl bg-primary p-5">
-        <span className="w-fit rounded-full bg-black/30 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wider text-white">
-          Leaderboard
-        </span>
-        <div>
-          <div className="text-[11px] font-semibold uppercase tracking-widest text-white/80">Daily Race</div>
-          <div className="mt-1 text-3xl font-black text-white">$5,000</div>
-          <div className="mt-0.5 text-xs text-white/80">Prize pool · Ends in 12h</div>
-        </div>
-        <div className="absolute -bottom-4 -right-4 grid h-28 w-28 place-items-center rounded-full bg-black/20">
-          <Trophy size={56} className="text-lime" />
+    <section className="relative overflow-hidden rounded-3xl border border-border bg-panel shadow-xl">
+      <div className="overflow-hidden" ref={emblaRef}>
+        <div className="flex">
+          {promos.map((p) => (
+            <div key={p.id} className="relative min-w-0 shrink-0 grow-0 basis-full">
+              <div className="relative h-56 sm:h-72 lg:h-80">
+                <img
+                  src={p.image}
+                  alt=""
+                  className="absolute inset-0 h-full w-full object-cover"
+                  aria-hidden
+                />
+                <div className="absolute inset-0 bg-gradient-to-r from-black/85 via-black/55 to-black/15" />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-black/20" />
+
+                <div className="relative z-10 flex h-full flex-col justify-between p-6 sm:p-8 lg:p-10">
+                  <span
+                    className={`w-fit rounded-full px-3 py-1 text-[11px] font-bold uppercase tracking-wider ${p.badgeClass}`}
+                  >
+                    {p.badge}
+                  </span>
+
+                  <div className="max-w-xl">
+                    <div className="text-xs font-semibold uppercase tracking-[0.2em] text-white/75 sm:text-sm">
+                      {p.title}
+                    </div>
+                    <div className="mt-2 text-4xl font-black tracking-tight text-white drop-shadow-lg sm:text-5xl lg:text-6xl">
+                      {p.headline}
+                    </div>
+                    <p className="mt-2 text-sm text-white/80 sm:text-base">{p.sub}</p>
+                    <button className="mt-5 inline-flex h-11 items-center rounded-full bg-primary px-6 text-sm font-bold uppercase tracking-wider text-primary-foreground transition-colors hover:bg-primary/90">
+                      {p.cta}
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          ))}
         </div>
       </div>
 
-      <div className="relative flex h-44 flex-col justify-between overflow-hidden rounded-2xl border border-lime bg-panel p-5">
-        <span className="w-fit rounded-full bg-lime px-2.5 py-1 text-[11px] font-bold uppercase tracking-wider text-[#0A0912]">
-          Weekly
-        </span>
-        <div>
-          <div className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">Weekly Race</div>
-          <div className="mt-1 text-3xl font-black text-foreground">$50,000</div>
-          <div className="mt-0.5 text-xs text-muted-foreground">Prize pot · 6d 04h left</div>
-        </div>
-        <div className="absolute -bottom-4 -right-4 grid h-28 w-28 place-items-center rounded-full bg-[#221E3A]">
-          <Coins size={56} className="text-lime" />
-        </div>
-      </div>
+      <button
+        type="button"
+        onClick={() => emblaApi?.scrollPrev()}
+        className="absolute left-3 top-1/2 z-20 grid h-10 w-10 -translate-y-1/2 place-items-center rounded-full border border-white/15 bg-black/45 text-white backdrop-blur-sm transition-colors hover:bg-black/70 sm:left-4"
+        aria-label="Previous promotion"
+      >
+        <ChevronLeft size={20} />
+      </button>
+      <button
+        type="button"
+        onClick={() => emblaApi?.scrollNext()}
+        className="absolute right-3 top-1/2 z-20 grid h-10 w-10 -translate-y-1/2 place-items-center rounded-full border border-white/15 bg-black/45 text-white backdrop-blur-sm transition-colors hover:bg-black/70 sm:right-4"
+        aria-label="Next promotion"
+      >
+        <ChevronRight size={20} />
+      </button>
 
-      <div className="relative flex h-44 flex-col justify-between overflow-hidden rounded-2xl bg-[#1E3A8A] p-5">
-        <span className="w-fit rounded-full bg-black/30 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wider text-white">
-          Announcement
-        </span>
-        <div>
-          <div className="text-[11px] font-semibold uppercase tracking-widest text-white/80">Telegram Drops</div>
-          <div className="mt-1 text-2xl font-black text-white">Join & Claim</div>
-          <div className="mt-0.5 text-xs text-white/80">Free rewards every hour</div>
-        </div>
-        <div className="absolute -bottom-4 -right-4 grid h-28 w-28 place-items-center rounded-full bg-black/20">
-          <Send size={56} className="text-white" />
-        </div>
+      <div className="absolute bottom-4 left-1/2 z-20 flex -translate-x-1/2 items-center gap-2">
+        {promos.map((p, i) => (
+          <button
+            key={p.id}
+            type="button"
+            onClick={() => emblaApi?.scrollTo(i)}
+            className={[
+              "h-2 rounded-full transition-all",
+              i === index ? "w-7 bg-lime" : "w-2 bg-white/40 hover:bg-white/70",
+            ].join(" ")}
+            aria-label={`Go to ${p.title}`}
+          />
+        ))}
       </div>
-    </div>
+    </section>
   );
 }

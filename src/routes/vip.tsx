@@ -3,12 +3,12 @@ import { Crown } from "lucide-react";
 import { PageHeader } from "@/components/maxhigh/PageHeader";
 
 const tiers = [
-  { name: "Bronze", color: "#B45309", req: "$0" },
-  { name: "Silver", color: "#8B85A8", req: "$1,000" },
-  { name: "Gold", color: "#EAB308", req: "$10,000" },
-  { name: "Platinum", color: "#0E7490", req: "$50,000" },
-  { name: "Diamond", color: "#A21CAF", req: "$250,000" },
-  { name: "Obsidian", color: "#4C1D95", req: "$1,000,000" },
+  { name: "Bronze", color: "#B45309", req: "₱0" },
+  { name: "Silver", color: "#8B85A8", req: "₱1,000" },
+  { name: "Gold", color: "#EAB308", req: "₱10,000" },
+  { name: "Platinum", color: "#0E7490", req: "₱50,000" },
+  { name: "Diamond", color: "#A21CAF", req: "₱250,000" },
+  { name: "Obsidian", color: "#4C1D95", req: "₱1,000,000" },
 ];
 
 export const Route = createFileRoute("/vip")({
