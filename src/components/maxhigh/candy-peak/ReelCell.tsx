@@ -42,15 +42,22 @@ export const ReelCell = memo(function ReelCell({
     phase === "falling" && !!cell && (isSpawn || isFallen) && fallDist > 0;
   const dropRows = isInitialDrop ? row + 1.35 : fallDist;
 
+  const isScatter = cell?.sym.kind === "scat";
+
   return (
     <div
       className={cn(
         "relative min-h-0 min-w-0",
-        phase === "dropping" || phase === "falling"
+        phase === "dropping" || phase === "falling" || isScatter
           ? "overflow-visible"
           : "overflow-hidden",
-        win && (phase === "glow" || phase === "popping") && "z-[2]",
-        (isInitialDrop || isGravityDrop) && "z-[1]",
+        isScatter
+          ? "z-[30]"
+          : win && (phase === "glow" || phase === "popping")
+            ? "z-[2]"
+            : (isInitialDrop || isGravityDrop)
+              ? "z-[1]"
+              : "",
       )}
     >
       {cell && (

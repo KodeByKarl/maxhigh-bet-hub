@@ -64,7 +64,7 @@ export const slotGames: SlotGame[] = [
     rtp: "96.4%",
     volatility: "Very High",
     maxWin: "15,000x",
-    features: ["Multiplier Orbs", "Free Spins", "Gate Feature", "Ante Bet"],
+    features: ["Cascading Wins", "Ways", "Free Spins", "Buy Bonus", "Progressive Mult"],
   },
   {
     ...defaults,

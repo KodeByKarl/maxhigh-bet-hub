@@ -5,6 +5,8 @@ import type { SuperGameRow } from "@/lib/superadmin-types";
 import { useAuth } from "@/lib/auth";
 import { isSuperadminRole } from "@/lib/user";
 import { CANDY_PEAK_GAME_ID } from "@/lib/candy-peak-config";
+import { GODLY_GATES_GAME_ID } from "@/lib/godly-gates-config";
+import { SUGAR_SURGE_GAME_ID } from "@/lib/sugar-surge-config";
 import { Input } from "@/components/ui/input";
 import {
   Dialog,
@@ -14,6 +16,8 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { CandyPeakConfigModal } from "@/components/superadmin/games/CandyPeakConfigModal";
+import { GodlyGatesConfigModal } from "@/components/superadmin/games/GodlyGatesConfigModal";
+import { SugarSurgeConfigModal } from "@/components/superadmin/games/SugarSurgeConfigModal";
 import { saGlass } from "@/components/superadmin/ui/glass";
 import { toast } from "sonner";
 
@@ -63,13 +67,15 @@ function SuperGamesPage() {
   }
 
   const isCandy = selected?.gameId === CANDY_PEAK_GAME_ID;
+  const isGodly = selected?.gameId === GODLY_GATES_GAME_ID;
+  const isSugar = selected?.gameId === SUGAR_SURGE_GAME_ID;
 
   return (
     <div className="space-y-5 pb-6">
       <div>
         <h1 className="text-3xl font-bold text-foreground">Games control</h1>
         <p className="mt-1 text-sm text-muted-foreground">
-          Click Candy Peak for the full config modal. Other titles use lobby settings only.
+          Click Candy Peak, Sugar Surge, or Godly Gates for full config. Other titles use lobby settings only.
         </p>
       </div>
 
@@ -92,7 +98,11 @@ function SuperGamesPage() {
                 <div className="text-base font-black uppercase leading-tight text-foreground">{g.name}</div>
                 <div className="mt-0.5 text-[11px] uppercase tracking-wide text-muted-foreground">
                   {g.category}
-                  {g.gameId === CANDY_PEAK_GAME_ID ? " · full config" : ""}
+                  {g.gameId === CANDY_PEAK_GAME_ID ||
+                  g.gameId === GODLY_GATES_GAME_ID ||
+                  g.gameId === SUGAR_SURGE_GAME_ID
+                    ? " · full config"
+                    : ""}
                 </div>
               </div>
               {!g.enabled && (
@@ -112,6 +122,24 @@ function SuperGamesPage() {
 
       {selected && isCandy ? (
         <CandyPeakConfigModal
+          game={selected}
+          open
+          onOpenChange={(open) => {
+            if (!open) setSelected(null);
+          }}
+          onPatchLobby={(data) => patch(selected.gameId, data)}
+        />
+      ) : selected && isSugar ? (
+        <SugarSurgeConfigModal
+          game={selected}
+          open
+          onOpenChange={(open) => {
+            if (!open) setSelected(null);
+          }}
+          onPatchLobby={(data) => patch(selected.gameId, data)}
+        />
+      ) : selected && isGodly ? (
+        <GodlyGatesConfigModal
           game={selected}
           open
           onOpenChange={(open) => {

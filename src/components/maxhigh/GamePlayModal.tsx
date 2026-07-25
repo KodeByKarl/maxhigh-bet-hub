@@ -5,6 +5,8 @@ import type { SlotGame } from "@/lib/games";
 import { useAuth } from "@/lib/auth";
 import { recordGameSessionFn } from "@/functions/api";
 import { CandyPeakSlot } from "./CandyPeakSlot";
+import { GodlyGatesSlot } from "./GodlyGatesSlot";
+import { SugarSurgeSlot } from "./SugarSurgeSlot";
 
 type Props = {
   game: SlotGame | null;
@@ -12,50 +14,184 @@ type Props = {
   onOpenChange: (open: boolean) => void;
 };
 
-const LOAD_LINES = [
-  "Unwrapping the secret sweets…",
-  "Stacking frosting mountains…",
-  "Charging the sugar boosters…",
-  "Lighting the candy neon…",
-  "Almost ready to crush the Peak!",
-];
+function getGameThemeConfig(gameId: string, category: string, thumb: string) {
+  if (gameId === "godly-gates") {
+    return {
+      bgImage: "/images/godly-loading/bg.png",
+      bgGradient: "from-[#1E1B4B]/80 via-[#0A0912]/80 to-[#0F172A]/95",
+      titleClass: "godly-title",
+      barGradient: "from-[#FACC15] via-[#38BDF8] to-[#6366F1]",
+      borderGlow: "shadow-[0_0_60px_rgba(250,204,21,0.8)] border-amber-300",
+      badgeGradient: "from-[#FACC15] via-[#38BDF8] to-[#1E40AF]",
+      renderType: "godly-3d" as const,
+      imageParticles: [
+        "/images/godly-loading/lightning_orb.png",
+        "/images/godly-loading/gem.png",
+        "/images/godly-loading/lightning_orb.png",
+        "/images/godly-loading/gem.png",
+      ],
+      badgeText: "DIVINE ARCADE",
+      chargeText: "DIVINE LIGHTNING ACTIVE",
+      lines: [
+        "Summoning Zeus thunderbolts…",
+        "Opening the sacred Olympian gates…",
+        "Forging 15,000x multiplier orbs…",
+        "Awakening divine storm power…",
+        "Ready to unleash Olympus!",
+      ],
+    };
+  }
+  if (gameId === "starlight-ace") {
+    return {
+      bgImage: thumb,
+      bgGradient: "from-[#31103F]/80 via-[#0A0912]/80 to-[#1E1B4B]/95",
+      titleClass: "celestial-title",
+      barGradient: "from-[#F472B6] via-[#C084FC] to-[#38BDF8]",
+      borderGlow: "shadow-[0_0_60px_rgba(244,114,182,0.8)] border-pink-400",
+      badgeGradient: "from-[#F472B6] via-[#A855F7] to-[#38BDF8]",
+      renderType: "standard" as const,
+      imageParticles: ["/images/godly-loading/gem.png"],
+      badgeText: "STARLIGHT ARCADE",
+      chargeText: "STARLIGHT CHARGE ACTIVE",
+      lines: [
+        "Consulting the Star Princess…",
+        "Gathering starlight scatter dust…",
+        "Unlocking winged multiplier wilds…",
+        "Aligning celestial constellations…",
+        "Starlight Ace is ready!",
+      ],
+    };
+  }
+  if (category === "fishing" || gameId === "deep-bass") {
+    return {
+      bgImage: thumb,
+      bgGradient: "from-[#042F2E]/80 via-[#0A0912]/80 to-[#0369A1]/95",
+      titleClass: "ocean-title",
+      barGradient: "from-[#38BDF8] via-[#2DD4BF] to-[#FACC15]",
+      borderGlow: "shadow-[0_0_60px_rgba(56,189,248,0.8)] border-cyan-400",
+      badgeGradient: "from-[#38BDF8] via-[#0D9488] to-[#15803D]",
+      renderType: "standard" as const,
+      imageParticles: ["/images/godly-loading/lightning_orb.png"],
+      badgeText: "DEEP SEA ARCADE",
+      chargeText: "SONAR PULSE ACTIVE",
+      lines: [
+        "Casting titanium fishing reel…",
+        "Sonar scanning deep ocean waters…",
+        "Baiting the golden boss marlin…",
+        "Charging underwater coin cannons…",
+        "Prepare for the big catch!",
+      ],
+    };
+  }
+  if (gameId === "frontier-gold" || gameId === "buffalo-reign") {
+    return {
+      bgImage: thumb,
+      bgGradient: "from-[#451A03]/80 via-[#0A0912]/80 to-[#78350F]/95",
+      titleClass: "western-title",
+      barGradient: "from-[#FBBF24] via-[#F97316] to-[#B45309]",
+      borderGlow: "shadow-[0_0_60px_rgba(251,191,36,0.8)] border-amber-400",
+      badgeGradient: "from-[#FBBF24] via-[#D97706] to-[#78350F]",
+      renderType: "standard" as const,
+      imageParticles: ["/images/godly-loading/gem.png"],
+      badgeText: "WILD WEST ARCADE",
+      chargeText: "GOLD BOUNTY ACTIVE",
+      lines: [
+        "Saddling up for the gold rush…",
+        "Loading saloon cowboy wilds…",
+        "Triggering the buffalo stampede…",
+        "Unlocking 10,000x gold vault…",
+        "Ready to strike gold!",
+      ],
+    };
+  }
+  if (gameId === "fire-spike") {
+    return {
+      bgImage: thumb,
+      bgGradient: "from-[#450A0A]/80 via-[#0A0912]/80 to-[#7F1D1D]/95",
+      titleClass: "fire-title",
+      barGradient: "from-[#F97316] via-[#EF4444] to-[#FACC15]",
+      borderGlow: "shadow-[0_0_60px_rgba(249,115,22,0.8)] border-orange-500",
+      badgeGradient: "from-[#F97316] via-[#DC2626] to-[#991B1B]",
+      renderType: "standard" as const,
+      imageParticles: ["/images/godly-loading/gem.png"],
+      badgeText: "MOLTEN ARCADE",
+      chargeText: "HEAT SURGE ACTIVE",
+      lines: [
+        "Igniting molten lava reels…",
+        "Heating up fire spike respins…",
+        "Charging diamond jackpot heat…",
+        "Blazing maximum heat multipliers…",
+        "Fire Spike is roaring!",
+      ],
+    };
+  }
+  if (category === "cards" || gameId.includes("ace") || gameId.includes("poker") || gameId.includes("blackjack") || gameId.includes("deal")) {
+    return {
+      bgImage: thumb,
+      bgGradient: "from-[#450A0A]/80 via-[#0A0912]/80 to-[#18181B]/95",
+      titleClass: "card-title",
+      barGradient: "from-[#FACC15] via-[#DC2626] to-[#B91C1C]",
+      borderGlow: "shadow-[0_0_60px_rgba(250,204,21,0.8)] border-yellow-400",
+      badgeGradient: "from-[#FACC15] via-[#DC2626] to-[#7F1D1D]",
+      renderType: "standard" as const,
+      imageParticles: ["/images/godly-loading/gem.png"],
+      badgeText: "ROYAL VIP ARCADE",
+      chargeText: "VIP HAND ACTIVE",
+      lines: [
+        "Shuffling royal velvet decks…",
+        "Dealing high-stakes cards…",
+        "Unlocking royal flush multipliers…",
+        "Preparing the VIP high table…",
+        "Place your bets!",
+      ],
+    };
+  }
 
-const CANDIES = ["🍓", "🍭", "🍬", "🍇", "🍋", "🫐", "🍒", "🧁"] as const;
+  // Fallback: Candy Peak / Sugar Surge / Fruit Riot
+  return {
+    bgImage:
+      gameId === "candy-peak" || gameId === "sugar-surge"
+        ? "/images/candy-loading/bg.png"
+        : thumb,
+    bgGradient: "from-[#2A0A3D]/80 via-[#0A0912]/80 to-[#0A0912]/95",
+    titleClass: "candy-title",
+    barGradient: "from-[#FF4D6A] via-[#FACC15] via-[#A3E635] to-[#C084FC]",
+    borderGlow: "shadow-[0_0_60px_rgba(255,77,139,0.8)] border-amber-300",
+    badgeGradient: "from-[#FF4D6A] via-[#FACC15] to-[#A78BFA]",
+    renderType: "candy-3d" as const,
+    imageParticles: [
+      "/images/candy-loading/badge.png",
+      "/images/godly-loading/gem.png",
+    ],
+    badgeText: "MAXHIGH ARCADE",
+    chargeText: "SUGAR CHARGE ACTIVE",
+    lines: [
+      "Unwrapping the secret sweets…",
+      "Stacking frosting mountains…",
+      "Charging the sugar boosters…",
+      "Lighting the candy neon…",
+      "Almost ready to crush the Peak!",
+    ],
+  };
+}
 
-function CandyTrailProgress({ progress }: { progress: number }) {
-  const beads = 12;
-  const filled = Math.round((progress / 100) * beads);
-
+function CandyTrailProgress({
+  progress,
+  config,
+}: {
+  progress: number;
+  config: ReturnType<typeof getGameThemeConfig>;
+}) {
   return (
     <div className="relative mx-auto w-full max-w-lg px-4">
       {/* Sleek 3D Sugar Progress Bar */}
-      <div className="relative h-7 w-full overflow-hidden rounded-full border-2 border-white/60 bg-black/60 p-1 shadow-[0_0_30px_rgba(255,77,139,0.5)] backdrop-blur-md">
+      <div className="relative h-7 w-full overflow-hidden rounded-full border-2 border-white/60 bg-black/60 p-1 shadow-[0_0_35px_rgba(255,255,255,0.35)] backdrop-blur-md">
         <div
-          className="h-full rounded-full bg-gradient-to-r from-[#FF4D6A] via-[#FACC15] via-[#A3E635] to-[#C084FC] transition-all duration-200 ease-out shadow-[0_0_20px_rgba(250,204,21,0.9)]"
+          className={`h-full rounded-full bg-gradient-to-r ${config.barGradient} transition-all duration-200 ease-out shadow-[0_0_25px_rgba(250,204,21,0.9)]`}
           style={{ width: `${progress}%` }}
         />
         {/* Animated Light Reflection */}
         <div className="pointer-events-none absolute inset-0 bg-gradient-to-r from-transparent via-white/40 to-transparent animate-[candy-pan_2.5s_linear_infinite]" />
-      </div>
-
-      {/* Candy Beads Trail */}
-      <div className="mt-3 flex justify-between px-2">
-        {Array.from({ length: beads }).map((_, i) => {
-          const on = i < filled;
-          return (
-            <span
-              key={i}
-              className={[
-                "grid h-8 w-8 place-items-center rounded-full text-base shadow-lg transition-all duration-300 sm:h-9 sm:w-9 sm:text-lg",
-                on
-                  ? "scale-110 bg-white/95 opacity-100 candy-pop shadow-[0_0_12px_rgba(255,255,255,0.9)]"
-                  : "scale-85 bg-black/50 opacity-30 grayscale",
-              ].join(" ")}
-            >
-              {CANDIES[i % CANDIES.length]}
-            </span>
-          );
-        })}
       </div>
 
       {/* Percentage Counter */}
@@ -64,7 +200,7 @@ function CandyTrailProgress({ progress }: { progress: number }) {
           {progress}%
         </span>
         <div className="mt-1 text-xs font-black uppercase tracking-[0.25em] text-amber-300 drop-shadow-md">
-          Sugar Charge Active
+          {config.chargeText}
         </div>
       </div>
     </div>
@@ -72,73 +208,56 @@ function CandyTrailProgress({ progress }: { progress: number }) {
 }
 
 function CreativeLoader({
-  gameName,
+  game,
   progress,
-  background,
-  thumb,
 }: {
-  gameName: string;
+  game: SlotGame;
   progress: number;
-  background: string;
-  thumb: string;
 }) {
-  const line = LOAD_LINES[Math.min(LOAD_LINES.length - 1, Math.floor(progress / 20))];
+  const config = useMemo(
+    () => getGameThemeConfig(game.id, game.category, game.thumb),
+    [game.id, game.category, game.thumb],
+  );
+  const line = config.lines[Math.min(config.lines.length - 1, Math.floor(progress / 20))];
 
   return (
     <div className="relative flex h-full min-h-screen flex-col items-center justify-center overflow-hidden px-4 py-8 text-center sm:px-8">
-      {/* 3D Candy Kingdom Background */}
+      {/* 3D Generated High-End Background */}
       <img
-        src="/images/candy-loading/bg.png"
+        src={config.bgImage}
         alt=""
-        className="absolute inset-0 h-full w-full scale-110 object-cover animate-[candy-pan_25s_ease-in-out_infinite_alternate]"
+        className="absolute inset-0 h-full w-full scale-110 object-cover blur-[2px] animate-[candy-pan_25s_ease-in-out_infinite_alternate]"
         aria-hidden
       />
-      <div className="absolute inset-0 bg-gradient-to-b from-[#2A0A3D]/45 via-[#0A0912]/35 to-[#0A0912]/85" />
-      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_25%,#0A0912f0_90%)]" />
+      <div className={`absolute inset-0 bg-gradient-to-b ${config.bgGradient}`} />
+      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_15%,#0A0912f5_90%)]" />
 
-      {/* Floating 3D Sugar Particles */}
-      <div className="pointer-events-none absolute inset-0 overflow-hidden">
-        {CANDIES.map((c, i) => (
-          <span
-            key={i}
-            className="absolute text-4xl opacity-90 drop-shadow-[0_8px_16px_rgba(0,0,0,0.7)] candy-float sm:text-5xl"
-            style={{
-              left: `${6 + i * 11}%`,
-              top: `${8 + (i % 4) * 22}%`,
-              animationDelay: `${i * 0.4}s`,
-            }}
-          >
-            {c}
-          </span>
-        ))}
-      </div>
-
-      {/* Hero Badge Icon */}
-      <div className="relative z-10 mb-3 overflow-hidden rounded-[2.25rem] border-4 border-amber-300/80 p-1 shadow-[0_0_60px_rgba(255,77,139,0.8)] candy-glow candy-pop">
+      {/* Hero 3D Badge Icon */}
+      <div className={`relative z-10 mb-3 overflow-hidden rounded-[2.25rem] border-4 p-1 candy-glow candy-pop ${config.borderGlow}`}>
         <img
-          src={thumb || "/games/candy-peak.png"}
+          src={game.thumb}
           alt=""
           className="h-32 w-32 object-cover rounded-[2rem] sm:h-40 sm:w-40"
         />
       </div>
 
-      <div className="relative z-10 rounded-full border border-white/30 bg-gradient-to-r from-[#FF4D6A] via-[#FACC15] to-[#A78BFA] px-5 py-1 text-xs font-black uppercase tracking-[0.3em] text-black shadow-[0_4px_20px_rgba(250,204,21,0.5)]">
-        MaxHigh Arcade
+      <div className={`relative z-10 rounded-full border border-white/30 bg-gradient-to-r ${config.badgeGradient} px-6 py-1.5 text-xs font-black uppercase tracking-[0.3em] text-white shadow-2xl backdrop-blur-md`}>
+        {config.badgeText}
       </div>
 
-      {/* 3D Sugar Title */}
-      <h1 className="candy-title relative z-10 mt-4 text-5xl font-black uppercase leading-none tracking-wide sm:text-7xl md:text-8xl drop-shadow-2xl">
-        {gameName}
+      {/* Dynamic 3D Title */}
+      <h1 className={`${config.titleClass} relative z-10 mt-4 text-5xl font-black uppercase leading-none tracking-wide sm:text-7xl md:text-8xl drop-shadow-2xl`}>
+        {game.name}
       </h1>
 
-      <p className="relative z-10 mt-4 max-w-md rounded-2xl border border-white/30 bg-black/60 px-6 py-3 text-base font-bold text-white shadow-2xl backdrop-blur-lg sm:text-lg">
-        <span className="mr-2 inline-block animate-bounce text-amber-300">✨</span>
+      <p className="relative z-10 mt-4 max-w-md rounded-2xl border border-white/30 bg-black/70 px-6 py-3 text-base font-bold text-white shadow-2xl backdrop-blur-xl sm:text-lg">
+        <span className="mr-2 inline-block animate-bounce text-amber-300">⚡</span>
         {line}
-        <span className="ml-2 inline-block animate-bounce [animation-delay:200ms] text-amber-300">✨</span>
+        <span className="ml-2 inline-block animate-bounce [animation-delay:200ms] text-amber-300">⚡</span>
       </p>
 
       <div className="relative z-10 mt-8 w-full">
-        <CandyTrailProgress progress={progress} />
+        <CandyTrailProgress progress={progress} config={config} />
       </div>
     </div>
   );
@@ -150,7 +269,7 @@ function ComingSoonPlay({ game }: { game: SlotGame }) {
       <img src={game.thumb} alt="" className="h-40 w-40 rounded-3xl object-cover shadow-xl" />
       <h2 className="text-2xl font-black uppercase text-white">{game.name}</h2>
       <p className="max-w-md text-sm text-white/80">
-        Full arcade mode for this title is cooking. Candy Peak is playable now — more games soon.
+        Full arcade mode for this title is cooking. Candy Peak and Godly Gates are playable now — more games soon.
       </p>
     </div>
   );
@@ -203,9 +322,14 @@ export function GamePlayModal({ game, open, onOpenChange }: Props) {
   }, [open, game?.id, game?.name, isLoggedIn]);
 
   const isCandyPeak = game?.id === "candy-peak";
+  const isGodlyGates = game?.id === "godly-gates";
+  const isSugarSurge = game?.id === "sugar-surge";
   const background = useMemo(
-    () => (isCandyPeak ? "/images/candy-loading/bg.png" : game?.thumb ?? ""),
-    [game?.thumb, isCandyPeak],
+    () =>
+      isCandyPeak || isSugarSurge
+        ? "/images/candy-loading/bg.png"
+        : game?.thumb ?? "",
+    [game?.thumb, isCandyPeak, isSugarSurge],
   );
 
   if (!mounted || !open || !game || !isLoggedIn) return null;
@@ -226,14 +350,20 @@ export function GamePlayModal({ game, open, onOpenChange }: Props) {
       <div className="relative min-h-0 flex-1 overflow-y-auto">
         {phase === "loading" ? (
           <CreativeLoader
-            gameName={game.name}
+            game={game}
             progress={progress}
-            background={background}
-            thumb={game.thumb}
           />
         ) : isCandyPeak ? (
           <div className="relative h-dvh w-screen overflow-hidden">
             <CandyPeakSlot gameId={game.id} gameName={game.name} />
+          </div>
+        ) : isSugarSurge ? (
+          <div className="relative h-dvh w-screen overflow-hidden">
+            <SugarSurgeSlot gameId={game.id} gameName={game.name} />
+          </div>
+        ) : isGodlyGates ? (
+          <div className="relative h-dvh w-screen overflow-hidden">
+            <GodlyGatesSlot gameId={game.id} gameName={game.name} />
           </div>
         ) : (
           <ComingSoonPlay game={game} />

@@ -40,6 +40,7 @@ import type { BoardCell, SpinScript } from "./candy-peak/types";
 import { CELLS, COLS, ROWS } from "./candy-peak/types";
 import { WinCelebration } from "./candy-peak/WinCelebration";
 import { FreeSpinsCongrats } from "./candy-peak/FreeSpinsCongrats";
+import { FreeSpinsTriggerModal } from "./candy-peak/FreeSpinsTriggerModal";
 import { BuyFeatureModal } from "./candy-peak/BuyFeatureModal";
 import { PaytableModal } from "./candy-peak/PaytableModal";
 import { GameMenuModal } from "./candy-peak/GameMenuModal";
@@ -131,6 +132,7 @@ export function CandyPeakSlot({
   const [banner, setBanner] = useState<string | null>(null);
   const [winPopup, setWinPopup] = useState<WinPopup | null>(null);
   const [fsSummary, setFsSummary] = useState<FsSummary | null>(null);
+  const [triggerModalCount, setTriggerModalCount] = useState<number | null>(null);
   const [buyOpen, setBuyOpen] = useState(false);
   const [buyMode, setBuyMode] = useState<"normal" | "super">("normal");
   const [menuOpen, setMenuOpen] = useState(false);
@@ -389,6 +391,7 @@ export function CandyPeakSlot({
         setLastWin(0);
         setLedger([]);
         setBanner(`${session.freeSpinsLeft} FREE SPINS!`);
+        setTriggerModalCount(session.freeSpinsLeft);
         schedule(() => setBanner(null), ANIM.bannerHold);
       } else if (script.totalWin > 0) {
         showTotalWin(script.totalWin, {
@@ -539,6 +542,8 @@ export function CandyPeakSlot({
       void refreshJackpot();
       applySession(bought.session);
       if (buyMode === "super") setAnte(true);
+      setTriggerModalCount(bought.session.freeSpinsLeft || getFreeSpinsBase());
+      sounds.playFreeSpinsTrigger();
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Buy feature failed");
       return;
@@ -1094,7 +1099,16 @@ export function CandyPeakSlot({
       </AnimatePresence>
 
       <AnimatePresence>
-        {banner && !winPopup && !fsSummary && (
+        {triggerModalCount != null && (
+          <FreeSpinsTriggerModal
+            count={triggerModalCount}
+            onClose={() => setTriggerModalCount(null)}
+          />
+        )}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {banner && !winPopup && !fsSummary && !triggerModalCount && (
           <motion.div
             initial={{ scale: 0.7, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}

@@ -189,6 +189,7 @@ export const playSessions = mysqlTable(
     fsSessionWin: decimal("fs_session_win", { precision: 14, scale: 2 }).notNull().default("0.00"),
     fsBombAcc: decimal("fs_bomb_acc", { precision: 14, scale: 2 }).notNull().default("0.00"),
     fsSpinsPlayed: bigint("fs_spins_played", { mode: "number" }).notNull().default(0),
+    featureState: text("feature_state"),
     createdAt: timestamp("created_at").notNull().default(sql`CURRENT_TIMESTAMP`),
     updatedAt: timestamp("updated_at")
       .notNull()

@@ -200,6 +200,61 @@ iframe[src*="lovable"] {
   letter-spacing: 0.05em;
 }
 
+/* Godly Gates / Mythology Theme */
+.godly-title {
+  background: linear-gradient(180deg, #FFFFFF 0%, #FEF08A 25%, #38BDF8 60%, #1E40AF 85%, #0F172A 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  filter: drop-shadow(0 4px 0 #1E3A8A) drop-shadow(0 8px 0 #0F172A) drop-shadow(0 12px 30px rgba(56, 189, 248, 0.8));
+  letter-spacing: 0.06em;
+}
+
+/* Celestial / Star Theme */
+.celestial-title {
+  background: linear-gradient(180deg, #FFFFFF 0%, #F472B6 35%, #A855F7 70%, #3B82F6 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  filter: drop-shadow(0 4px 0 #581C87) drop-shadow(0 8px 0 #1E1B4B) drop-shadow(0 12px 30px rgba(244, 114, 182, 0.7));
+}
+
+/* Ocean / Fishing Theme */
+.ocean-title {
+  background: linear-gradient(180deg, #FFFFFF 0%, #38BDF8 30%, #0D9488 70%, #064E3B 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  filter: drop-shadow(0 4px 0 #064E3B) drop-shadow(0 8px 0 #022C22) drop-shadow(0 12px 30px rgba(14, 165, 233, 0.8));
+}
+
+/* Western / Gold Mining Theme */
+.western-title {
+  background: linear-gradient(180deg, #FFFFFF 0%, #FBBF24 30%, #D97706 65%, #78350F 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  filter: drop-shadow(0 4px 0 #78350F) drop-shadow(0 8px 0 #451A03) drop-shadow(0 12px 30px rgba(251, 191, 36, 0.8));
+}
+
+/* Fire / Lava Theme */
+.fire-title {
+  background: linear-gradient(180deg, #FFFFFF 0%, #F97316 30%, #EF4444 65%, #7F1D1D 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  filter: drop-shadow(0 4px 0 #7F1D1D) drop-shadow(0 8px 0 #450A0A) drop-shadow(0 12px 30px rgba(249, 115, 22, 0.8));
+}
+
+/* Casino Card / Regal Theme */
+.card-title {
+  background: linear-gradient(180deg, #FFFFFF 0%, #FACC15 35%, #DC2626 70%, #450A0A 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  filter: drop-shadow(0 4px 0 #7F1D1D) drop-shadow(0 8px 0 #18181B) drop-shadow(0 12px 30px rgba(250, 204, 21, 0.7));
+}
+
 .candy-pct {
   background: linear-gradient(90deg, #A3E635 0%, #FFFFFF 50%, #FF8C42 100%);
   -webkit-background-clip: text;

@@ -153,6 +153,32 @@ export const saveCandyPeakEngineConfigFn = createServerFn({ method: "POST" })
     return saveCandyPeakEngineConfig(data.config);
   });
 
+/** Public — Godly Gates math config for the live engine. */
+export const getGodlyGatesEngineConfigFn = createServerFn({ method: "GET" }).handler(async () => {
+  const { getGodlyGatesEngineConfig } = await import("../server/superadmin/services.server");
+  return getGodlyGatesEngineConfig();
+});
+
+export const saveGodlyGatesEngineConfigFn = createServerFn({ method: "POST" })
+  .validator(z.object({ config: z.unknown() }))
+  .handler(async ({ data }) => {
+    const { saveGodlyGatesEngineConfig } = await import("../server/superadmin/services.server");
+    return saveGodlyGatesEngineConfig(data.config);
+  });
+
+/** Public — Sugar Surge math config for the live engine. */
+export const getSugarSurgeEngineConfigFn = createServerFn({ method: "GET" }).handler(async () => {
+  const { getSugarSurgeEngineConfig } = await import("../server/superadmin/services.server");
+  return getSugarSurgeEngineConfig();
+});
+
+export const saveSugarSurgeEngineConfigFn = createServerFn({ method: "POST" })
+  .validator(z.object({ config: z.unknown() }))
+  .handler(async ({ data }) => {
+    const { saveSugarSurgeEngineConfig } = await import("../server/superadmin/services.server");
+    return saveSugarSurgeEngineConfig(data.config);
+  });
+
 const listWalletSchema = z.object({
   status: z.enum(["pending", "approved", "rejected", "all"]).optional(),
   limit: z.number().int().min(1).max(200).optional(),

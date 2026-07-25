@@ -115,6 +115,80 @@ export const getCandyPeakSessionFn = createServerFn({ method: "GET" }).handler(a
   return getCandyPeakOpenSession();
 });
 
+const sugarSurgeSpinSchema = z.object({
+  bet: z.number().finite().positive().max(100_000),
+  ante: z.boolean(),
+});
+
+export const sugarSurgeSpinFn = createServerFn({ method: "POST" })
+  .validator(sugarSurgeSpinSchema)
+  .handler(async ({ data }) => {
+    const { sugarSurgePaidSpin } = await import("../server/games/sugar-surge.server");
+    return sugarSurgePaidSpin(data);
+  });
+
+const sugarSurgeFreeSpinSchema = z.object({
+  sessionId: z.string().uuid(),
+});
+
+export const sugarSurgeFreeSpinFn = createServerFn({ method: "POST" })
+  .validator(sugarSurgeFreeSpinSchema)
+  .handler(async ({ data }) => {
+    const { sugarSurgeFreeSpin } = await import("../server/games/sugar-surge.server");
+    return sugarSurgeFreeSpin(data);
+  });
+
+const sugarSurgeBuySchema = z.object({
+  bet: z.number().finite().positive().max(100_000),
+  mode: z.enum(["normal", "super"]),
+});
+
+export const sugarSurgeBuyFeatureFn = createServerFn({ method: "POST" })
+  .validator(sugarSurgeBuySchema)
+  .handler(async ({ data }) => {
+    const { sugarSurgeBuyFeature } = await import("../server/games/sugar-surge.server");
+    return sugarSurgeBuyFeature(data);
+  });
+
+export const getSugarSurgeSessionFn = createServerFn({ method: "GET" }).handler(async () => {
+  const { getSugarSurgeOpenSession } = await import("../server/games/sugar-surge.server");
+  return getSugarSurgeOpenSession();
+});
+
+const godlyGatesSpinSchema = z.object({
+  bet: z.number().finite().positive().max(100_000),
+});
+
+export const godlyGatesSpinFn = createServerFn({ method: "POST" })
+  .validator(godlyGatesSpinSchema)
+  .handler(async ({ data }) => {
+    const { godlyGatesPaidSpin } = await import("../server/games/godly-gates.server");
+    return godlyGatesPaidSpin(data);
+  });
+
+const godlyGatesFreeSpinSchema = z.object({
+  sessionId: z.string().uuid(),
+});
+
+export const godlyGatesFreeSpinFn = createServerFn({ method: "POST" })
+  .validator(godlyGatesFreeSpinSchema)
+  .handler(async ({ data }) => {
+    const { godlyGatesFreeSpin } = await import("../server/games/godly-gates.server");
+    return godlyGatesFreeSpin(data);
+  });
+
+export const godlyGatesBuyFeatureFn = createServerFn({ method: "POST" })
+  .validator(godlyGatesSpinSchema)
+  .handler(async ({ data }) => {
+    const { godlyGatesBuyFeature } = await import("../server/games/godly-gates.server");
+    return godlyGatesBuyFeature(data);
+  });
+
+export const getGodlyGatesSessionFn = createServerFn({ method: "GET" }).handler(async () => {
+  const { getGodlyGatesOpenSession } = await import("../server/games/godly-gates.server");
+  return getGodlyGatesOpenSession();
+});
+
 const gameSessionSchema = z.object({
   gameId: z.string().min(1).max(64),
   gameName: z.string().min(1).max(128),

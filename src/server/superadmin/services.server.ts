@@ -551,6 +551,159 @@ export async function saveCandyPeakEngineConfig(raw: unknown) {
   return cfg;
 }
 
+/** Public — Sugar Surge engine math (defaults if unset). */
+export async function getSugarSurgeEngineConfig() {
+  const {
+    SUGAR_SURGE_GAME_ID,
+    DEFAULT_SUGAR_SURGE_CONFIG,
+    normalizeSugarSurgeConfig,
+  } = await import("@/lib/sugar-surge-config");
+  const db = getDb();
+  try {
+    const rows = await db
+      .select()
+      .from(gameControls)
+      .where(eq(gameControls.gameId, SUGAR_SURGE_GAME_ID))
+      .limit(1);
+    return normalizeSugarSurgeConfig(parseEngineConfigJson(rows[0]?.engineConfig));
+  } catch {
+    return structuredClone(DEFAULT_SUGAR_SURGE_CONFIG);
+  }
+}
+
+/** Superadmin — save full Sugar Surge math config. */
+export async function saveSugarSurgeEngineConfig(raw: unknown) {
+  const actor = await requireSuperadmin();
+  const {
+    SUGAR_SURGE_GAME_ID,
+    normalizeSugarSurgeConfig,
+  } = await import("@/lib/sugar-surge-config");
+  const catalog = slotGames.find((g) => g.id === SUGAR_SURGE_GAME_ID);
+  if (!catalog) throw new Error("Sugar Surge not in catalog");
+
+  const cfg = normalizeSugarSurgeConfig(raw);
+  const db = getDb();
+  const existing = await db
+    .select()
+    .from(gameControls)
+    .where(eq(gameControls.gameId, SUGAR_SURGE_GAME_ID))
+    .limit(1);
+
+  const payload = JSON.stringify(cfg);
+
+  if (!existing[0]) {
+    await db.insert(gameControls).values({
+      gameId: SUGAR_SURGE_GAME_ID,
+      enabled: "yes",
+      featured: "no",
+      sortOrder: 0,
+      tag: catalog.tag ?? null,
+      rtp: catalog.rtp,
+      volatility: catalog.volatility,
+      minBet: catalog.minBet,
+      maxBet: catalog.maxBet,
+      engineConfig: payload,
+    });
+  } else {
+    await db
+      .update(gameControls)
+      .set({ engineConfig: payload })
+      .where(eq(gameControls.gameId, SUGAR_SURGE_GAME_ID));
+  }
+
+  await writeAuditLog({
+    actor,
+    action: "super.sugar_surge_config",
+    summary: `Updated Sugar Surge engine config (dead spin ${cfg.deadSpinChancePercent}%, FS ${cfg.freeSpinsBase})`,
+    targetType: "game",
+    targetId: SUGAR_SURGE_GAME_ID,
+    meta: {
+      deadSpinChancePercent: cfg.deadSpinChancePercent,
+      bombChanceBasePercent: cfg.bombChanceBasePercent,
+      freeSpinsTriggerCount: cfg.freeSpinsTriggerCount,
+      freeSpinsBase: cfg.freeSpinsBase,
+    },
+  });
+
+  return cfg;
+}
+
+/** Public — Godly Gates engine math (defaults if unset). */
+export async function getGodlyGatesEngineConfig() {
+  const {
+    GODLY_GATES_GAME_ID,
+    DEFAULT_GODLY_GATES_CONFIG,
+    normalizeGodlyGatesConfig,
+  } = await import("@/lib/godly-gates-config");
+  const db = getDb();
+  try {
+    const rows = await db
+      .select()
+      .from(gameControls)
+      .where(eq(gameControls.gameId, GODLY_GATES_GAME_ID))
+      .limit(1);
+    return normalizeGodlyGatesConfig(parseEngineConfigJson(rows[0]?.engineConfig));
+  } catch {
+    return structuredClone(DEFAULT_GODLY_GATES_CONFIG);
+  }
+}
+
+/** Superadmin — save full Godly Gates math config. */
+export async function saveGodlyGatesEngineConfig(raw: unknown) {
+  const actor = await requireSuperadmin();
+  const {
+    GODLY_GATES_GAME_ID,
+    normalizeGodlyGatesConfig,
+  } = await import("@/lib/godly-gates-config");
+  const catalog = slotGames.find((g) => g.id === GODLY_GATES_GAME_ID);
+  if (!catalog) throw new Error("Godly Gates not in catalog");
+
+  const cfg = normalizeGodlyGatesConfig(raw);
+  const db = getDb();
+  const existing = await db
+    .select()
+    .from(gameControls)
+    .where(eq(gameControls.gameId, GODLY_GATES_GAME_ID))
+    .limit(1);
+
+  const payload = JSON.stringify(cfg);
+
+  if (!existing[0]) {
+    await db.insert(gameControls).values({
+      gameId: GODLY_GATES_GAME_ID,
+      enabled: "yes",
+      featured: "no",
+      sortOrder: 0,
+      tag: catalog.tag ?? null,
+      rtp: catalog.rtp,
+      volatility: catalog.volatility,
+      minBet: catalog.minBet,
+      maxBet: catalog.maxBet,
+      engineConfig: payload,
+    });
+  } else {
+    await db
+      .update(gameControls)
+      .set({ engineConfig: payload })
+      .where(eq(gameControls.gameId, GODLY_GATES_GAME_ID));
+  }
+
+  await writeAuditLog({
+    actor,
+    action: "super.godly_gates_config",
+    summary: `Updated Godly Gates engine config (dead spin ${cfg.deadSpinChancePercent}%, buy ${cfg.buyFeatureMult}x)`,
+    targetType: "game",
+    targetId: GODLY_GATES_GAME_ID,
+    meta: {
+      deadSpinChancePercent: cfg.deadSpinChancePercent,
+      buyFeatureMult: cfg.buyFeatureMult,
+      freeSpinsTriggerCount: cfg.freeSpinsTriggerCount,
+    },
+  });
+
+  return cfg;
+}
+
 export async function listWalletRequests(opts?: {
   status?: "pending" | "approved" | "rejected" | "all";
   limit?: number;
