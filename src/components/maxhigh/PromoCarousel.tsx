@@ -1,43 +1,64 @@
 import { useCallback, useEffect, useState } from "react";
 import useEmblaCarousel from "embla-carousel-react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
+import { listCarouselSlidesFn } from "@/functions/superadmin";
+import type { CarouselSlideRow } from "@/lib/superadmin-types";
 
-const promos = [
+const defaultPromos: CarouselSlideRow[] = [
   {
     id: "daily",
     badge: "Daily",
-    badgeClass: "bg-black/50 text-white",
     title: "Daily Race",
     headline: "Daily Race",
     sub: "Compete for prizes · Coming soon",
     cta: "Join Race",
-    image: "/promos/promo-daily-race.png",
+    linkUrl: null,
+    imageUrl: "/promos/promo-daily-race.png",
+    sortOrder: 0,
+    enabled: true,
+    createdAt: new Date().toISOString(),
   },
   {
     id: "weekly",
     badge: "Weekly",
-    badgeClass: "bg-lime text-on-lime",
     title: "Weekly Race",
     headline: "Weekly Race",
     sub: "Climb the rankings · Coming soon",
     cta: "Climb Rankings",
-    image: "/promos/promo-weekly-race.png",
+    linkUrl: null,
+    imageUrl: "/promos/promo-weekly-race.png",
+    sortOrder: 1,
+    enabled: true,
+    createdAt: new Date().toISOString(),
   },
   {
     id: "telegram",
     badge: "Announcement",
-    badgeClass: "bg-black/50 text-white",
     title: "Telegram Drops",
     headline: "Join & Claim",
     sub: "Community rewards & updates",
     cta: "Open Telegram",
-    image: "/promos/promo-telegram.png",
+    linkUrl: null,
+    imageUrl: "/promos/promo-telegram.png",
+    sortOrder: 2,
+    enabled: true,
+    createdAt: new Date().toISOString(),
   },
-] as const;
+];
 
 export function PromoCarousel() {
+  const [slides, setSlides] = useState<CarouselSlideRow[]>(defaultPromos);
   const [emblaRef, emblaApi] = useEmblaCarousel({ loop: true, align: "start" });
   const [index, setIndex] = useState(0);
+
+  useEffect(() => {
+    void listCarouselSlidesFn()
+      .then((res) => {
+        const active = res.filter((s) => s.enabled);
+        if (active.length > 0) setSlides(active);
+      })
+      .catch(() => {});
+  }, []);
 
   const onSelect = useCallback(() => {
     if (!emblaApi) return;
@@ -57,7 +78,10 @@ export function PromoCarousel() {
 
   useEffect(() => {
     if (!emblaApi) return;
-    const id = window.setInterval(() => emblaApi.scrollNext(), 5500);
+    const id = window.setInterval(() => {
+      if (!emblaApi) return;
+      emblaApi.scrollNext();
+    }, 3500);
     return () => window.clearInterval(id);
   }, [emblaApi]);
 
@@ -65,11 +89,11 @@ export function PromoCarousel() {
     <section className="relative overflow-hidden rounded-3xl border border-border bg-panel shadow-xl">
       <div className="overflow-hidden" ref={emblaRef}>
         <div className="flex">
-          {promos.map((p) => (
+          {slides.map((p) => (
             <div key={p.id} className="relative min-w-0 shrink-0 grow-0 basis-full">
               <div className="relative h-56 sm:h-72 lg:h-80">
                 <img
-                  src={p.image}
+                  src={p.imageUrl}
                   alt=""
                   className="absolute inset-0 h-full w-full object-cover"
                   aria-hidden
@@ -79,7 +103,7 @@ export function PromoCarousel() {
 
                 <div className="relative z-10 flex h-full flex-col justify-between p-6 sm:p-8 lg:p-10">
                   <span
-                    className={`w-fit rounded-full px-3 py-1 text-[11px] font-bold uppercase tracking-wider ${p.badgeClass}`}
+                    className="w-fit rounded-full px-3 py-1 text-[11px] font-bold uppercase tracking-wider bg-black/50 text-white border border-white/20"
                   >
                     {p.badge}
                   </span>
@@ -92,9 +116,20 @@ export function PromoCarousel() {
                       {p.headline}
                     </div>
                     <p className="mt-2 text-sm text-white/80 sm:text-base">{p.sub}</p>
-                    <button className="mt-5 inline-flex h-11 items-center rounded-full bg-primary px-6 text-sm font-bold uppercase tracking-wider text-primary-foreground transition-colors hover:bg-primary/90">
-                      {p.cta}
-                    </button>
+                    {p.linkUrl ? (
+                      <a
+                        href={p.linkUrl}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="mt-5 inline-flex h-11 items-center rounded-full bg-primary px-6 text-sm font-bold uppercase tracking-wider text-primary-foreground transition-colors hover:bg-primary/90"
+                      >
+                        {p.cta}
+                      </a>
+                    ) : (
+                      <button className="mt-5 inline-flex h-11 items-center rounded-full bg-primary px-6 text-sm font-bold uppercase tracking-wider text-primary-foreground transition-colors hover:bg-primary/90">
+                        {p.cta}
+                      </button>
+                    )}
                   </div>
                 </div>
               </div>
@@ -121,7 +156,7 @@ export function PromoCarousel() {
       </button>
 
       <div className="absolute bottom-4 left-1/2 z-20 flex -translate-x-1/2 items-center gap-2">
-        {promos.map((p, i) => (
+        {slides.map((p, i) => (
           <button
             key={p.id}
             type="button"

@@ -8,12 +8,12 @@ import {
   HeadContent,
   Scripts,
 } from "@tanstack/react-router";
-import { type ReactNode, useEffect } from "react";
+import { type ReactNode, useEffect, useState } from "react";
 
 import appCss from "../styles.css?url";
 import { AuthProvider } from "../lib/auth";
 import { Navbar } from "../components/maxhigh/Navbar";
-import { Sidebar } from "../components/maxhigh/Sidebar";
+import { Sidebar, MobileSidebar } from "../components/maxhigh/Sidebar";
 import { LiveWinsTicker } from "../components/maxhigh/LiveWinsTicker";
 import { LoginModal } from "../components/maxhigh/LoginModal";
 import { Toaster } from "../components/ui/sonner";
@@ -105,8 +105,20 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
 });
 
 function RootShell({ children }: { children: ReactNode }) {
+  let themeClass = "";
+  try {
+    const pathname = useRouterState({ select: (s) => s.location.pathname });
+    if (pathname.startsWith("/superadmin")) {
+      themeClass = "theme-superadmin";
+    } else if (pathname.startsWith("/admin")) {
+      themeClass = "theme-admin";
+    }
+  } catch {
+    // router state might not be available during static/ssr bootstrap
+  }
+
   return (
-    <html lang="en">
+    <html lang="en" className={themeClass}>
       <head>
         <HeadContent />
       </head>
@@ -122,17 +134,18 @@ function RootComponent() {
   const { queryClient } = Route.useRouteContext();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const isStaffPortal = pathname.startsWith("/admin") || pathname.startsWith("/superadmin");
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   useEffect(() => {
     const root = document.documentElement;
-    root.classList.remove("theme-user-light", "theme-superadmin", "theme-superadmin-light");
+    root.classList.remove("theme-superadmin", "theme-admin", "theme-superadmin-light");
     if (pathname.startsWith("/superadmin")) {
       root.classList.add("theme-superadmin");
-    } else if (!pathname.startsWith("/admin")) {
-      root.classList.add("theme-user-light");
+    } else if (pathname.startsWith("/admin")) {
+      root.classList.add("theme-admin");
     }
     return () => {
-      root.classList.remove("theme-user-light", "theme-superadmin", "theme-superadmin-light");
+      root.classList.remove("theme-superadmin", "theme-admin", "theme-superadmin-light");
     };
   }, [pathname]);
 
@@ -142,14 +155,19 @@ function RootComponent() {
         {isStaffPortal ? (
           <Outlet />
         ) : (
-          <div className="min-h-screen bg-background text-foreground">
-            <Navbar />
+          <div className="min-h-screen dashboard-bg bg-background text-foreground relative">
+            <div className="absolute inset-0 bg-background/85 backdrop-blur-[2px] pointer-events-none -z-10" />
+            <Navbar onOpenMobileMenu={() => setMobileMenuOpen(true)} />
             <div className="flex">
               <Sidebar />
+              <MobileSidebar
+                isOpen={mobileMenuOpen}
+                onClose={() => setMobileMenuOpen(false)}
+              />
               <div className="min-w-0 flex-1">
                 <LiveWinsTicker />
                 <main>
-                  <div className="mx-auto flex max-w-[1400px] flex-col gap-8 p-4 sm:p-6">
+                  <div className="mx-auto flex max-w-[1400px] flex-col gap-8 p-3 sm:p-6">
                     <Outlet />
                   </div>
                 </main>

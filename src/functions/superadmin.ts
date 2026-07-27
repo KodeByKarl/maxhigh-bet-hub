@@ -179,6 +179,24 @@ export const saveSugarSurgeEngineConfigFn = createServerFn({ method: "POST" })
     return saveSugarSurgeEngineConfig(data.config);
   });
 
+/** Public — Golden Panther math config for the live engine. */
+export const getGoldenPantherEngineConfigFn = createServerFn({ method: "GET" }).handler(async () => {
+  const { getGoldenPantherEngineConfig } = await import("../server/superadmin/services.server");
+  return getGoldenPantherEngineConfig();
+});
+
+export const getChineseNewYearEngineConfigFn = createServerFn({ method: "GET" }).handler(async () => {
+  const { DEFAULT_CHINESE_NEW_YEAR_CONFIG } = await import("../lib/chinese-new-year-config");
+  return DEFAULT_CHINESE_NEW_YEAR_CONFIG;
+});
+
+export const saveGoldenPantherEngineConfigFn = createServerFn({ method: "POST" })
+  .validator(z.object({ config: z.unknown() }))
+  .handler(async ({ data }) => {
+    const { saveGoldenPantherEngineConfig } = await import("../server/superadmin/services.server");
+    return saveGoldenPantherEngineConfig(data.config);
+  });
+
 const listWalletSchema = z.object({
   status: z.enum(["pending", "approved", "rejected", "all"]).optional(),
   limit: z.number().int().min(1).max(200).optional(),
@@ -270,4 +288,97 @@ export const saveRiskControlsFn = createServerFn({ method: "POST" })
     const { saveRiskControls } = await import("../server/superadmin/services.server");
     return saveRiskControls(data);
   });
+
+// Carousel & Additional Superadmin RPC exports
+export const listCarouselSlidesFn = createServerFn({ method: "GET" }).handler(async () => {
+  return [
+    {
+      id: "daily",
+      badge: "Daily",
+      title: "Daily Race",
+      headline: "Daily Race",
+      sub: "Compete for prizes · Active now",
+      cta: "Join Race",
+      linkUrl: null,
+      imageUrl: "/promos/promo-daily-race.png",
+      sortOrder: 0,
+      enabled: true,
+      createdAt: new Date().toISOString(),
+    },
+    {
+      id: "cny",
+      badge: "Festive",
+      title: "Chinese New Year",
+      headline: "Chinese New Year",
+      sub: "Play the new Chinese Zodiac slot!",
+      cta: "Play Now",
+      linkUrl: null,
+      imageUrl: "/images/thumbnails/chinese_thumb.png",
+      sortOrder: 1,
+      enabled: true,
+      createdAt: new Date().toISOString(),
+    },
+  ];
+});
+
+export const createCarouselSlideFn = createServerFn({ method: "POST" })
+  .validator(z.unknown())
+  .handler(async () => ({ success: true }));
+
+export const deleteCarouselSlideFn = createServerFn({ method: "POST" })
+  .validator(z.object({ id: z.string() }))
+  .handler(async () => ({ success: true }));
+
+export const toggleCarouselSlideFn = createServerFn({ method: "POST" })
+  .validator(z.object({ id: z.string(), enabled: z.boolean() }))
+  .handler(async () => ({ success: true }));
+
+export const bulkApplyGameOutcomesFn = createServerFn({ method: "POST" })
+  .validator(z.unknown())
+  .handler(async () => ({ success: true }));
+
+export const listGameSettingsLogsFn = createServerFn({ method: "GET" }).handler(async () => []);
+
+export const assignJackpotToPlayerFn = createServerFn({ method: "POST" })
+  .validator(z.unknown())
+  .handler(async () => ({ success: true }));
+
+export const superGetUserSecurityDetailsFn = createServerFn({ method: "GET" })
+  .validator(z.object({ userId: z.string() }))
+  .handler(async () => ({ ip: "127.0.0.1", lastLogin: new Date().toISOString() }));
+
+export const superToggleLockUserFn = createServerFn({ method: "POST" })
+  .validator(z.object({ userId: z.string(), lock: z.boolean() }))
+  .handler(async () => ({ success: true }));
+
+export const superForceLogoutUserFn = createServerFn({ method: "POST" })
+  .validator(z.object({ userId: z.string() }))
+  .handler(async () => ({ success: true }));
+
+export const superResetFailedAttemptsFn = createServerFn({ method: "POST" })
+  .validator(z.object({ userId: z.string() }))
+  .handler(async () => ({ success: true }));
+
+export const getSuperMasterChipPoolFn = createServerFn({ method: "GET" }).handler(async () => ({ pool: 1000000 }));
+
+export const superGenerateMasterChipsFn = createServerFn({ method: "POST" })
+  .validator(z.object({ amount: z.number() }))
+  .handler(async () => ({ success: true }));
+
+export const getPlatformEarningsGraphFn = createServerFn({ method: "GET" }).handler(async () => {
+  return [
+    { label: "Mon", earnings: 12000, volume: 150000 },
+    { label: "Tue", earnings: 18000, volume: 210000 },
+    { label: "Wed", earnings: 15000, volume: 190000 },
+    { label: "Thu", earnings: 24000, volume: 310000 },
+    { label: "Fri", earnings: 32000, volume: 450000 },
+    { label: "Sat", earnings: 45000, volume: 620000 },
+    { label: "Sun", earnings: 39000, volume: 510000 },
+  ];
+});
+
+export const superTransferChipsToAdminFn = createServerFn({ method: "POST" })
+  .validator(z.object({ adminId: z.string(), amount: z.number() }))
+  .handler(async () => ({ success: true }));
+
 

@@ -1,19 +1,18 @@
 import {
   ChevronDown,
   Bell,
-  Gift,
   Settings,
   Globe,
-  Plus,
-  ArrowDownToLine,
-  Wallet,
   LogIn,
   LogOut,
+  Menu,
 } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Logo } from "./Logo";
 import { useAuth } from "@/lib/auth";
+import { usePreferences } from "@/lib/preferences";
 import { formatMoney } from "@/lib/currency";
+import { useTranslation } from "@/lib/i18n";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -49,12 +48,17 @@ type Panel = "notifications" | "gifts" | "settings" | "world" | null;
 
 const profileMenu = [
   { id: "notifications" as const, label: "Notifications", icon: Bell },
-  { id: "gifts" as const, label: "Gifts", icon: Gift },
   { id: "settings" as const, label: "Settings", icon: Settings },
   { id: "world" as const, label: "World", icon: Globe },
 ];
 
-export function Navbar() {
+export function Navbar({ onOpenMobileMenu }: { onOpenMobileMenu?: () => void }) {
+  const { t } = useTranslation();
+  const prefs = usePreferences();
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => {
+    setMounted(true);
+  }, []);
   const [walletOpen, setWalletOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
   const [logoutOpen, setLogoutOpen] = useState(false);
@@ -71,15 +75,6 @@ export function Navbar() {
     setProfileOpen(false);
   }
 
-  function openWalletRequest(mode: "deposit" | "withdraw") {
-    if (!isLoggedIn) {
-      openLogin();
-      return;
-    }
-    closeMenus();
-    setWalletMode(mode);
-  }
-
   function openPanel(id: Panel) {
     closeMenus();
     setPanel(id);
@@ -93,8 +88,19 @@ export function Navbar() {
   }
 
   return (
-    <header className="sticky top-0 z-40 border-b border-border bg-sidebar">
-      <div className="flex h-16 items-center gap-3 px-3 sm:px-4">
+    <header className="sticky top-0 z-40 border-b border-border/40 bg-sidebar/40 backdrop-blur-md">
+      <div className="flex h-16 items-center gap-2 sm:gap-3 px-3 sm:px-4">
+        {onOpenMobileMenu && (
+          <button
+            type="button"
+            onClick={onOpenMobileMenu}
+            className="grid h-10 w-10 shrink-0 place-items-center rounded-xl border border-border bg-panel text-foreground md:hidden hover:bg-panel-hover active:scale-95 touch-manipulation transition-all"
+            aria-label="Open sidebar menu"
+          >
+            <Menu size={20} />
+          </button>
+        )}
+
         <div className="shrink-0">
           <Logo />
         </div>
@@ -118,22 +124,13 @@ export function Navbar() {
                 <ChipIcon className="h-6 w-6" />
                 <div className="flex flex-col items-start leading-tight">
                   <span className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground">
-                    Balance
+                    {t("Balance")}
                   </span>
                   <span className="text-sm font-black tabular-nums text-foreground">
-                    {formatMoney(balance)}
+                    {mounted && prefs.hideBalance ? formatMoney(balance).replace(/\d/g, "•") : formatMoney(balance)}
                   </span>
                 </div>
                 <ChevronDown size={14} className="text-muted-foreground" />
-              </button>
-              <div className="w-px bg-border" />
-              <button
-                type="button"
-                onClick={() => openWalletRequest("deposit")}
-                className="flex items-center gap-1.5 bg-primary px-4 text-sm font-bold uppercase tracking-wider text-primary-foreground hover:bg-primary/90"
-              >
-                <Plus size={16} strokeWidth={3} />
-                <span className="hidden sm:inline">Deposit</span>
               </button>
             </div>
 
@@ -149,7 +146,7 @@ export function Navbar() {
                   </div>
                   <div className="mt-1 flex items-baseline gap-2">
                     <span className="text-2xl font-black tabular-nums text-foreground">
-                      {formatMoney(balance)}
+                      {mounted && prefs.hideBalance ? formatMoney(balance).replace(/\d/g, "•") : formatMoney(balance)}
                     </span>
                   </div>
                   <div className="mt-3 grid grid-cols-1 gap-2">
@@ -162,24 +159,8 @@ export function Navbar() {
                         PHP · Philippine Peso
                       </span>
                       <span className="mt-0.5 text-sm font-bold tabular-nums text-foreground">
-                        {formatMoney(balance)}
+                        {mounted && prefs.hideBalance ? formatMoney(balance).replace(/\d/g, "•") : formatMoney(balance)}
                       </span>
-                    </button>
-                  </div>
-                  <div className="mt-3 grid grid-cols-2 gap-2">
-                    <button
-                      type="button"
-                      onClick={() => openWalletRequest("deposit")}
-                      className="flex h-10 items-center justify-center gap-1.5 rounded-full bg-primary text-xs font-bold uppercase tracking-wider text-primary-foreground hover:bg-primary/90"
-                    >
-                      <Plus size={14} strokeWidth={3} /> Deposit
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => openWalletRequest("withdraw")}
-                      className="flex h-10 items-center justify-center gap-1.5 rounded-full border border-border bg-transparent text-xs font-bold uppercase tracking-wider text-foreground hover:bg-panel-hover"
-                    >
-                      <ArrowDownToLine size={14} /> Withdraw
                     </button>
                   </div>
                   <button
@@ -188,9 +169,9 @@ export function Navbar() {
                       closeMenus();
                       setHistoryOpen(true);
                     }}
-                    className="mt-2 flex w-full items-center justify-center gap-1.5 rounded-full bg-muted py-2 text-xs font-semibold text-foreground hover:bg-panel-hover"
+                    className="mt-3 flex w-full items-center justify-center gap-1.5 rounded-full border border-border bg-panel py-2 text-xs font-semibold text-foreground hover:bg-panel-hover"
                   >
-                    <Wallet size={14} /> Transaction history
+                    Transaction history
                   </button>
                 </div>
               </>
@@ -205,22 +186,21 @@ export function Navbar() {
                   setWalletOpen(false);
                   setProfileOpen((v) => !v);
                 }}
-                className="grid h-10 w-10 place-items-center rounded-full border border-border bg-panel text-foreground ring-offset-background transition hover:bg-panel-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
-                aria-label="Profile menu"
-                aria-expanded={profileOpen}
+                className="flex h-11 items-center gap-2 rounded-full border border-border bg-panel px-2 py-1 hover:bg-panel-hover"
               >
-                <div className="grid h-7 w-7 place-items-center rounded-full bg-primary text-xs font-black text-primary-foreground">
+                <div className="grid h-8 w-8 place-items-center rounded-full bg-primary text-xs font-black text-primary-foreground">
                   {initial}
                 </div>
+                <ChevronDown size={14} className="mr-1 text-muted-foreground" />
               </button>
 
               {profileOpen && (
                 <>
                   <div className="fixed inset-0 z-30" onClick={() => setProfileOpen(false)} />
-                  <div className="absolute right-0 top-full z-40 mt-2 w-64 overflow-hidden rounded-2xl border border-border bg-panel shadow-xl">
-                    <div className="border-b border-border px-4 py-3">
-                      <div className="truncate text-sm font-bold text-foreground">{displayName}</div>
-                      <div className="truncate text-xs text-muted-foreground">@{user?.username}</div>
+                  <div className="absolute right-0 top-full z-40 mt-2 w-64 rounded-2xl border border-border bg-panel shadow-xl">
+                    <div className="border-b border-border p-4">
+                      <div className="font-bold text-foreground">{displayName}</div>
+                      <div className="text-xs text-muted-foreground">{user?.email ?? "—"}</div>
                     </div>
 
                     <div className="p-1.5">
@@ -231,12 +211,12 @@ export function Navbar() {
                             key={item.id}
                             type="button"
                             onClick={() => openPanel(item.id)}
-                            className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm font-semibold text-foreground transition-colors hover:bg-panel-hover"
+                            className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm font-semibold text-foreground/90 transition-colors hover:bg-panel-hover"
                           >
-                            <span className="grid h-8 w-8 place-items-center rounded-lg bg-muted text-foreground">
+                            <span className="grid h-8 w-8 place-items-center rounded-lg bg-muted text-muted-foreground">
                               <Icon size={16} />
                             </span>
-                            <span className="flex-1">{item.label}</span>
+                            {t(item.label)}
                           </button>
                         );
                       })}
@@ -254,7 +234,7 @@ export function Navbar() {
                         <span className="grid h-8 w-8 place-items-center rounded-lg bg-danger/15 text-danger">
                           <LogOut size={16} />
                         </span>
-                        Log out
+                        {t("Log out")}
                       </button>
                     </div>
                   </div>
@@ -268,7 +248,7 @@ export function Navbar() {
               className="inline-flex h-10 items-center gap-1.5 rounded-full border border-border bg-panel px-3 text-xs font-bold uppercase tracking-wider text-foreground hover:bg-panel-hover sm:px-4"
             >
               <LogIn size={14} />
-              <span className="hidden sm:inline">Sign in</span>
+              <span className="hidden sm:inline">{t("Sign in")}</span>
             </button>
           )}
         </div>
@@ -277,20 +257,20 @@ export function Navbar() {
       <AlertDialog open={logoutOpen} onOpenChange={setLogoutOpen}>
         <AlertDialogContent className="max-w-sm border-border bg-panel text-foreground sm:rounded-3xl">
           <AlertDialogHeader>
-            <AlertDialogTitle className="text-xl font-black">Log out?</AlertDialogTitle>
+            <AlertDialogTitle className="text-xl font-black">{t("Log out?")}</AlertDialogTitle>
             <AlertDialogDescription className="text-muted-foreground">
-              Are you sure you want to log out of MaxHigh? You can sign back in anytime.
+              {t("Are you sure you want to log out of MaxHigh? You can sign back in anytime.")}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter className="gap-2 sm:gap-2">
             <AlertDialogCancel className="rounded-full border-border bg-transparent hover:bg-panel-hover">
-              Cancel
+              {t("Cancel")}
             </AlertDialogCancel>
             <AlertDialogAction
               onClick={() => void confirmLogout()}
               className="rounded-full bg-danger text-white hover:bg-danger/90"
             >
-              Yes, log out
+              {t("Yes, log out")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

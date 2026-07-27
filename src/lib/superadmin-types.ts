@@ -29,6 +29,9 @@ export type SuperDashboard = {
   betVolume: number;
   winVolume: number;
   jackpot: number;
+  chipOutflow: number;
+  netEarnings: number;
+  recoveryTarget: number;
   labels: Record<string, string>;
 };
 
@@ -39,6 +42,9 @@ export type SuperUserRow = {
   balance: number;
   role: UserRole;
   displayName: string | null;
+  isLocked: "yes" | "no";
+  parentAgentId?: string | null;
+  parentAgentUsername?: string | null;
   createdAt: string;
 };
 
@@ -81,7 +87,22 @@ export type PromotionRow = {
 export type RiskControlData = {
   maxSingleBet: number;
   maxDailyPayout: number;
+  maxWeeklyLimit: number;
   autoFlagLargeWins: boolean;
   largeWinThreshold: number;
+};
+
+export type CarouselSlideRow = {
+  id: string;
+  badge: string;
+  title: string;
+  headline: string;
+  sub: string | null;
+  cta: string;
+  linkUrl: string | null;
+  imageUrl: string;
+  sortOrder: number;
+  enabled: boolean;
+  createdAt: string;
 };
 

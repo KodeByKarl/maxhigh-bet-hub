@@ -1,4 +1,5 @@
 import { slotGames, type GameCategory, type SlotGame } from "@/lib/games";
+import { useTranslation } from "@/lib/i18n";
 
 export type LobbyTab = "lobby" | "slot" | "cards" | "fishing" | "latest";
 
@@ -16,17 +17,18 @@ type Props = {
 };
 
 export function CategoryTabs({ value, onChange }: Props) {
+  const { t } = useTranslation();
   return (
     <div className="flex gap-2 overflow-x-auto no-scrollbar" role="tablist" aria-label="Game categories">
-      {tabs.map((t) => {
-        const active = t.id === value;
+      {tabs.map((tabItem) => {
+        const active = tabItem.id === value;
         return (
           <button
-            key={t.id}
+            key={tabItem.id}
             type="button"
             role="tab"
             aria-selected={active}
-            onClick={() => onChange(t.id)}
+            onClick={() => onChange(tabItem.id)}
             className={[
               "shrink-0 rounded-full px-4 py-2 text-sm font-semibold transition-colors",
               active
@@ -34,7 +36,7 @@ export function CategoryTabs({ value, onChange }: Props) {
                 : "border border-border bg-muted text-foreground/80 hover:bg-panel-hover",
             ].join(" ")}
           >
-            {t.label}
+            {t(tabItem.label)}
           </button>
         );
       })}

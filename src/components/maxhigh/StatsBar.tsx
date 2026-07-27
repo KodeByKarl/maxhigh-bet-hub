@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Trophy, Flame, Users, Coins } from "lucide-react";
 import { getPlatformStatsFn } from "@/functions/api";
+import { useTranslation } from "@/lib/i18n";
 
 type StatCard = {
   label: string;
@@ -10,6 +11,7 @@ type StatCard = {
 };
 
 export function StatsBar() {
+  const { t } = useTranslation();
   const [cards, setCards] = useState<StatCard[]>([
     { label: "Total Bets", value: "…", icon: Coins, color: "#7C3AED" },
     { label: "Players Online", value: "…", icon: Users, color: "#0E7490" },
@@ -62,7 +64,7 @@ export function StatsBar() {
           </div>
           <div className="min-w-0">
             <div className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
-              {s.label}
+              {t(s.label)}
             </div>
             <div className="mt-0.5 truncate text-lg font-black tabular-nums text-foreground">
               {s.value}

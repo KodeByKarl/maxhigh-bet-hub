@@ -39,6 +39,34 @@ export async function createSession(userId: string) {
   const token = newToken();
   const now = new Date();
   const expiresAt = new Date(Date.now() + SESSION_DAYS * 24 * 60 * 60 * 1000);
+
+  // 1. Fetch user to check role & username
+  const userRows = await db.select().from(users).where(eq(users.id, userId)).limit(1);
+  const targetUser = userRows[0];
+
+  // 2. Single-device restriction: Invalidate all previous active sessions
+  const oldSessions = await db.select().from(sessions).where(eq(sessions.userId, userId));
+  if (oldSessions.length > 0) {
+    await db.delete(sessions).where(eq(sessions.userId, userId));
+
+    // Audit log single-device auto logout
+    if (targetUser) {
+      const { writeAuditLog } = await import("./admin/audit.server");
+      await writeAuditLog({
+        actor: { id: targetUser.id, username: targetUser.username },
+        action: "security.single_device_logout",
+        summary: `@${targetUser.username} previous device session terminated due to new login from another device.`,
+        targetType: "user",
+        targetId: targetUser.id,
+        meta: {
+          terminatedSessionsCount: oldSessions.length,
+          timestamp: now.toISOString(),
+        },
+      });
+    }
+  }
+
+  // 3. Create fresh new single active session
   await db.insert(sessions).values({
     id: newId(),
     userId,

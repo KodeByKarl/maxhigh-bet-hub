@@ -1,7 +1,7 @@
 /**
  * Shared wallet helpers — available balance, pending withdraw reserves, ledger writes.
  */
-import { and, eq, sql } from "drizzle-orm";
+import { and, eq, sql, gte, or } from "drizzle-orm";
 import { getDb } from "./db/client";
 import { jackpot, liveWins, platformSettings, riskControls, transactions, users, walletRequests } from "./db/schema";
 import { money, newId } from "./session";
@@ -9,6 +9,47 @@ import { money, newId } from "./session";
 /** Drizzle tx or db — keep loose to avoid mysql dialect union friction. */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type DbLike = any;
+
+export async function getWeeklyUsageAndLimit(db: DbLike = getDb(), userId?: string): Promise<{ usage: number; limit: number }> {
+  try {
+    const riskRows = await db.select().from(riskControls).where(eq(riskControls.id, "default")).limit(1);
+    const limit = Number(riskRows[0]?.maxWeeklyLimit ?? 20000);
+
+    const weekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+    const filters: any[] = [
+      gte(transactions.createdAt, weekAgo),
+      or(eq(transactions.type, "withdraw"), eq(transactions.type, "win")),
+    ];
+
+    if (userId) {
+      filters.push(eq(transactions.userId, userId));
+    }
+
+    const usageRows = await db
+      .select({
+        total: sql<string>`coalesce(sum(abs(${transactions.amount})), 0)`,
+      })
+      .from(transactions)
+      .where(and(...filters));
+
+    const usage = Number(usageRows[0]?.total ?? 0);
+    return { usage, limit };
+  } catch {
+    return { usage: 0, limit: 20000 };
+  }
+}
+
+export async function assertWeeklyLimitNotExceeded(db: DbLike, userId: string, delta: number) {
+  if (delta <= 0) return;
+  const { usage, limit } = await getWeeklyUsageAndLimit(db, userId);
+  if (usage + delta > limit) {
+    throw new Error(
+      `Transaction rejected: Exceeds configurable weekly limit (Current 7-day exposure: ₱${usage.toLocaleString(
+        "en-PH",
+      )} / ₱${limit.toLocaleString("en-PH")} cap reached).`,
+    );
+  }
+}
 
 export async function sumPendingWithdrawals(db: DbLike, userId: string): Promise<number> {
   const rows = await db
@@ -85,6 +126,10 @@ export async function writeLedgerDelta(
   const current = Number(user.balance);
   const next = +(current + opts.delta).toFixed(2);
   if (next < 0) throw new Error("Insufficient balance");
+
+  if (opts.type === "withdraw") {
+    await assertWeeklyLimitNotExceeded(tx, opts.userId, opts.delta);
+  }
 
   const balanceAfter = money(next);
   await tx.update(users).set({ balance: balanceAfter }).where(eq(users.id, opts.userId));

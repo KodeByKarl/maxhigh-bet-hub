@@ -1,19 +1,11 @@
-/**
- * Seed MaxHigh MariaDB with admin + demo player + mega jackpot.
- *
- * Usage: npm run db:seed
- * Requires .env with MYSQL_* or DATABASE_URL.
- *
- * Sign-in uses username (not email).
- */
 import "dotenv/config";
 import { eq, sql } from "drizzle-orm";
 import { hash } from "bcryptjs";
 import { randomUUID } from "node:crypto";
 import { getDb } from "../src/server/db/client";
-import { jackpot, users } from "../src/server/db/schema";
+import { jackpot, users, transactions, auditLogs, sessions } from "../src/server/db/schema";
 
-async function upsertByUsername(opts: {
+async function upsertUser(opts: {
   username: string;
   email: string | null;
   password: string;
@@ -30,8 +22,9 @@ async function upsertByUsername(opts: {
     .limit(1);
 
   if (!existing[0]) {
+    const userId = randomUUID();
     await db.insert(users).values({
-      id: randomUUID(),
+      id: userId,
       email: opts.email,
       username,
       passwordHash: await hash(opts.password, 10),
@@ -40,62 +33,125 @@ async function upsertByUsername(opts: {
       displayName: opts.displayName,
     });
     console.log(`Created ${opts.role}: ${username} / ${opts.password}`);
-    return;
+    return userId;
   }
 
   await db
     .update(users)
-    .set({ role: opts.role })
+    .set({ role: opts.role, balance: opts.balance })
     .where(eq(users.id, existing[0].id));
-  console.log(`${opts.role} already exists: ${username}`);
+  console.log(`${opts.role} updated: ${username}`);
+  return existing[0].id;
 }
 
 async function main() {
   const db = getDb();
 
-  const adminUser = (process.env.SEED_ADMIN_USERNAME ?? "admin").toLowerCase();
-  const adminPass = process.env.SEED_ADMIN_PASSWORD ?? "admin123";
-  const superUser = (process.env.SEED_SUPERADMIN_USERNAME ?? "superadmin").toLowerCase();
-  const superPass = process.env.SEED_SUPERADMIN_PASSWORD ?? "super123";
-  const playerUser = (process.env.SEED_PLAYER_USERNAME ?? "player1").toLowerCase();
-  const playerPass = process.env.SEED_PLAYER_PASSWORD ?? "player123";
-
-  await upsertByUsername({
-    username: adminUser,
-    email: process.env.SEED_ADMIN_EMAIL ?? null,
-    password: adminPass,
-    role: "admin",
-    displayName: "MaxHigh Admin",
-    balance: "0.00",
-  });
-
-  await upsertByUsername({
-    username: superUser,
-    email: process.env.SEED_SUPERADMIN_EMAIL ?? null,
-    password: superPass,
+  const superId = await upsertUser({
+    username: "superadmin",
+    email: "superadmin@maxhigh.gg",
+    password: "super123",
     role: "superadmin",
     displayName: "MaxHigh Superadmin",
-    balance: "0.00",
+    balance: "100000.00",
   });
 
-  await upsertByUsername({
-    username: playerUser,
-    email: process.env.SEED_PLAYER_EMAIL ?? null,
-    password: playerPass,
-    role: "player",
-    displayName: "Player One",
-    balance: "1000.00",
+  const adminId = await upsertUser({
+    username: "admin",
+    email: "admin@maxhigh.gg",
+    password: "admin123",
+    role: "admin",
+    displayName: "MaxHigh Admin",
+    balance: "50000.00",
   });
 
-  const jp = await db.select().from(jackpot).where(eq(jackpot.id, "mega")).limit(1);
-  if (!jp[0]) {
-    await db.insert(jackpot).values({ id: "mega", amount: "10000.00" });
-    console.log("Seeded Mega Jackpot at ₱10,000.00");
-  } else {
-    console.log(`Mega Jackpot: ₱${jp[0].amount}`);
+  const players = [
+    { username: "player1", email: "player1@maxhigh.gg", pass: "player123", name: "Player One", bal: "15500.00" },
+    { username: "highroller88", email: "vip@maxhigh.gg", pass: "player123", name: "VIP High Roller", bal: "88000.00" },
+    { username: "slotmaster", email: "slots@maxhigh.gg", pass: "player123", name: "Slot Master Pro", bal: "3400.00" },
+    { username: "lucky_ace", email: "ace@maxhigh.gg", pass: "player123", name: "Lucky Ace", bal: "1280.00" },
+  ];
+
+  const games = ["Godly Gates of Olympus", "Candy Peak Bonanza", "Sugar Surge Deluxe"];
+
+  for (const p of players) {
+    const pId = await upsertUser({
+      username: p.username,
+      email: p.email,
+      password: p.pass,
+      role: "player",
+      displayName: p.name,
+      balance: p.bal,
+    });
+
+    // Seed active session
+    await db.insert(sessions).values({
+      id: randomUUID(),
+      userId: pId,
+      token: randomUUID(),
+      expiresAt: new Date(Date.now() + 86400000 * 7),
+      lastSeenAt: new Date(),
+    });
+
+    // Seed transaction history (bets and wins)
+    for (let i = 0; i < 6; i++) {
+      const betAmt = Math.floor(Math.random() * 500) + 100;
+      const winAmt = Math.random() > 0.4 ? Math.floor(betAmt * (Math.random() * 8 + 1)) : 0;
+      const selectedGame = games[i % games.length];
+
+      // Bet transaction
+      await db.insert(transactions).values({
+        id: randomUUID(),
+        userId: pId,
+        type: "bet",
+        amount: String(betAmt.toFixed(2)),
+        balanceAfter: String((Number(p.bal) - betAmt).toFixed(2)),
+        game: selectedGame,
+        note: `Wager spin on ${selectedGame}`,
+      });
+
+      // Win transaction if won
+      if (winAmt > 0) {
+        await db.insert(transactions).values({
+          id: randomUUID(),
+          userId: pId,
+          type: winAmt > 5000 ? "jackpot" : "win",
+          amount: String(winAmt.toFixed(2)),
+          balanceAfter: String((Number(p.bal) + winAmt).toFixed(2)),
+          game: selectedGame,
+          note: winAmt > 5000 ? `MEGA JACKPOT PAYOUT on ${selectedGame}` : `Winning payout on ${selectedGame}`,
+        });
+      }
+
+      // Seed audit log
+      await db.insert(auditLogs).values({
+        id: randomUUID(),
+        actorUsername: p.username,
+        action: winAmt > 5000 ? "game.jackpot_win" : "game.spin",
+        summary: `@${p.username} ${winAmt > 0 ? `WON ₱${winAmt.toLocaleString()}` : "placed wager spin"} on ${selectedGame}`,
+        targetType: "user",
+        targetId: pId,
+        meta: JSON.stringify({ game: selectedGame, betAmt, winAmt }),
+      });
+    }
   }
 
-  console.log("Seed complete. Sign in with username + password.");
+  // Mega jackpot seed
+  const jp = await db.select().from(jackpot).where(eq(jackpot.id, "mega")).limit(1);
+  if (!jp[0]) {
+    await db.insert(jackpot).values({ id: "mega", amount: "50000.00" });
+    console.log("Seeded Mega Jackpot at ₱50,000.00");
+  }
+
+  // Platform settings seed
+  await db.execute(sql`
+    INSERT INTO platform_settings (id, maintenance_mode, min_deposit, max_deposit, min_withdraw, max_withdraw, master_chip_pool)
+    VALUES ('default', 'no', '100.00', '50000.00', '200.00', '100000.00', '1000000.00')
+    ON DUPLICATE KEY UPDATE master_chip_pool = master_chip_pool
+  `);
+  console.log("Seeded platform_settings table.");
+
+  console.log("Full player activities & audit log seed complete!");
   process.exit(0);
 }
 

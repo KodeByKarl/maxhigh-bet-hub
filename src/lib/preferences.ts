@@ -1,3 +1,5 @@
+import { useState, useEffect } from "react";
+
 /** Client preferences (Settings + World) persisted in localStorage. */
 
 export type AppPreferences = {
@@ -60,17 +62,27 @@ export function savePreferences(prefs: AppPreferences) {
   window.dispatchEvent(new CustomEvent("maxhigh:prefs", { detail: prefs }));
 }
 
+export function usePreferences(): AppPreferences {
+  const [prefs, setPrefs] = useState<AppPreferences>(() => loadPreferences());
+
+  useEffect(() => {
+    const handleUpdate = (e: Event) => {
+      const customEvent = e as CustomEvent<AppPreferences>;
+      setPrefs(customEvent.detail);
+    };
+
+    window.addEventListener("maxhigh:prefs", handleUpdate);
+    return () => {
+      window.removeEventListener("maxhigh:prefs", handleUpdate);
+    };
+  }, []);
+
+  return prefs;
+}
+
 export const LANGUAGES = [
   { code: "en", label: "English" },
-  { code: "es", label: "Español" },
-  { code: "pt", label: "Português" },
-  { code: "zh", label: "中文" },
-  { code: "ja", label: "日本語" },
-  { code: "ko", label: "한국어" },
-  { code: "ru", label: "Русский" },
-  { code: "th", label: "ไทย" },
-  { code: "vi", label: "Tiếng Việt" },
-  { code: "id", label: "Bahasa Indonesia" },
+  { code: "tl", label: "Tagalog" },
 ] as const;
 
 export const CURRENCIES = [{ code: "PHP", label: "Philippine Peso (₱)" }] as const;

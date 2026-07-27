@@ -19,16 +19,24 @@ export const users = mysqlTable(
     passwordHash: varchar("password_hash", { length: 255 }).notNull(),
     /** Wallet balance stored as decimal string, e.g. "1284.50" */
     balance: decimal("balance", { precision: 14, scale: 2 }).notNull().default("0.00"),
-    role: mysqlEnum("role", ["player", "admin", "superadmin"]).notNull().default("player"),
+    role: mysqlEnum("role", ["player", "admin", "agent", "master_agent", "superadmin"]).notNull().default("player"),
+    isLocked: mysqlEnum("is_locked", ["yes", "no"]).notNull().default("no"),
+    failedAttempts: bigint("failed_attempts", { mode: "number" }).notNull().default(0),
+    lockedUntil: timestamp("locked_until"),
     displayName: varchar("display_name", { length: 128 }),
     avatarUrl: varchar("avatar_url", { length: 512 }),
+    parentAgentId: varchar("upline_id", { length: 36 }),
     createdAt: timestamp("created_at").notNull().default(sql`CURRENT_TIMESTAMP`),
     updatedAt: timestamp("updated_at")
       .notNull()
       .default(sql`CURRENT_TIMESTAMP`)
       .onUpdateNow(),
   },
-  (t) => [index("users_email_idx").on(t.email), index("users_username_idx").on(t.username)],
+  (t) => [
+    index("users_email_idx").on(t.email),
+    index("users_username_idx").on(t.username),
+    index("users_upline_idx").on(t.parentAgentId),
+  ],
 );
 
 export const sessions = mysqlTable(
@@ -170,6 +178,29 @@ export const gameControls = mysqlTable(
   (t) => [index("game_controls_enabled_idx").on(t.enabled)],
 );
 
+/** Audit history for superadmin bulk game outcome controls */
+export const gameSettingsLogs = mysqlTable(
+  "game_settings_logs",
+  {
+    id: varchar("id", { length: 36 }).primaryKey(),
+    actorId: varchar("actor_id", { length: 36 }).references(() => users.id, { onDelete: "set null" }),
+    actorUsername: varchar("actor_username", { length: 64 }).notNull(),
+    scope: varchar("scope", { length: 64 }).notNull(),
+    affectedCount: bigint("affected_count", { mode: "number" }).notNull().default(0),
+    deadSpinPct: decimal("dead_spin_pct", { precision: 5, scale: 2 }).notNull(),
+    winChancePct: decimal("win_chance_pct", { precision: 5, scale: 2 }).notNull(),
+    maxMultiplier: decimal("max_multiplier", { precision: 10, scale: 2 }).notNull(),
+    rtp: decimal("rtp", { precision: 5, scale: 2 }).notNull(),
+    beforeSnapshot: text("before_snapshot"),
+    afterSnapshot: text("after_snapshot"),
+    createdAt: timestamp("created_at").notNull().default(sql`CURRENT_TIMESTAMP`),
+  },
+  (t) => [
+    index("gsl_created_idx").on(t.createdAt),
+    index("gsl_actor_idx").on(t.actorId),
+  ],
+);
+
 /**
  * Server-authoritative in-progress game sessions (e.g. Candy Peak free spins).
  * Wins are credited only by the game settle path — never by client delta.
@@ -218,10 +249,25 @@ export const platformSettings = mysqlTable("platform_settings", {
   maxDeposit: decimal("max_deposit", { precision: 14, scale: 2 }).notNull().default("50000.00"),
   minWithdraw: decimal("min_withdraw", { precision: 14, scale: 2 }).notNull().default("200.00"),
   maxWithdraw: decimal("max_withdraw", { precision: 14, scale: 2 }).notNull().default("100000.00"),
+  masterChipPool: decimal("master_chip_pool", { precision: 16, scale: 2 }).notNull().default("1000000.00"),
   updatedAt: timestamp("updated_at")
     .notNull()
     .default(sql`CURRENT_TIMESTAMP`)
     .onUpdateNow(),
+});
+
+export const carouselSlides = mysqlTable("carousel_slides", {
+  id: varchar("id", { length: 36 }).primaryKey(),
+  badge: varchar("badge", { length: 64 }).notNull().default("Promo"),
+  title: varchar("title", { length: 128 }).notNull(),
+  headline: varchar("headline", { length: 128 }).notNull(),
+  sub: varchar("sub", { length: 255 }),
+  cta: varchar("cta", { length: 64 }).notNull().default("Claim Now"),
+  linkUrl: varchar("link_url", { length: 512 }),
+  imageUrl: varchar("image_url", { length: 512 }).notNull(),
+  sortOrder: bigint("sort_order", { mode: "number" }).notNull().default(0),
+  enabled: mysqlEnum("enabled", ["yes", "no"]).notNull().default("yes"),
+  createdAt: timestamp("created_at").notNull().default(sql`CURRENT_TIMESTAMP`),
 });
 
 export const promotions = mysqlTable("promotions", {
@@ -239,6 +285,7 @@ export const riskControls = mysqlTable("risk_controls", {
   id: varchar("id", { length: 32 }).primaryKey().default("default"),
   maxSingleBet: decimal("max_single_bet", { precision: 14, scale: 2 }).notNull().default("10000.00"),
   maxDailyPayout: decimal("max_daily_payout", { precision: 14, scale: 2 }).notNull().default("500000.00"),
+  maxWeeklyLimit: decimal("max_weekly_limit", { precision: 14, scale: 2 }).notNull().default("20000.00"),
   autoFlagLargeWins: mysqlEnum("auto_flag_large_wins", ["yes", "no"]).notNull().default("yes"),
   largeWinThreshold: decimal("large_win_threshold", { precision: 14, scale: 2 }).notNull().default("50000.00"),
   updatedAt: timestamp("updated_at")
@@ -247,7 +294,53 @@ export const riskControls = mysqlTable("risk_controls", {
     .onUpdateNow(),
 });
 
+/** Support Ticket for live chat conversations. */
+export const supportTickets = mysqlTable(
+  "support_tickets",
+  {
+    id: varchar("id", { length: 36 }).primaryKey(),
+    userId: varchar("user_id", { length: 36 })
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    username: varchar("username", { length: 64 }).notNull(),
+    playerName: varchar("player_name", { length: 128 }),
+    concern: text("concern"),
+    agentName: varchar("agent_name", { length: 128 }),
+    status: mysqlEnum("status", ["open", "resolved"]).notNull().default("open"),
+    createdAt: timestamp("created_at").notNull().default(sql`CURRENT_TIMESTAMP`),
+    updatedAt: timestamp("updated_at")
+      .notNull()
+      .default(sql`CURRENT_TIMESTAMP`)
+      .onUpdateNow(),
+  },
+  (t) => [
+    index("st_user_idx").on(t.userId),
+    index("st_status_idx").on(t.status),
+  ],
+);
+
+/** Support Message inside a ticket conversation. */
+export const supportMessages = mysqlTable(
+  "support_messages",
+  {
+    id: varchar("id", { length: 36 }).primaryKey(),
+    ticketId: varchar("ticket_id", { length: 36 })
+      .notNull()
+      .references(() => supportTickets.id, { onDelete: "cascade" }),
+    sender: mysqlEnum("sender", ["user", "agent"]).notNull(),
+    text: text("text").notNull(),
+    createdAt: timestamp("created_at").notNull().default(sql`CURRENT_TIMESTAMP`),
+  },
+  (t) => [
+    index("sm_ticket_idx").on(t.ticketId),
+    index("sm_created_idx").on(t.createdAt),
+  ],
+);
+
 export type PlatformSettings = typeof platformSettings.$inferSelect;
+export type CarouselSlide = typeof carouselSlides.$inferSelect;
 export type Promotion = typeof promotions.$inferSelect;
 export type RiskControl = typeof riskControls.$inferSelect;
+export type SupportTicket = typeof supportTickets.$inferSelect;
+export type SupportMessage = typeof supportMessages.$inferSelect;
 

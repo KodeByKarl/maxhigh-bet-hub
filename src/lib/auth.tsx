@@ -16,6 +16,7 @@ import {
   logoutFn,
 } from "@/functions/api";
 import type { PublicUser } from "@/lib/user";
+import { toast } from "sonner";
 
 export type AuthUser = PublicUser;
 
@@ -52,9 +53,27 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const refreshSession = useCallback(async () => {
     try {
       const session = await getSessionFn();
-      setUser(session);
+      setUser((prevUser) => {
+        if (!session && prevUser) {
+          toast.error("You've been logged out because your account was accessed from another device.", {
+            duration: 6000,
+          });
+        }
+        // Preserve object equality if properties haven't changed to prevent re-render loops
+        if (prevUser && session && JSON.stringify(prevUser) === JSON.stringify(session)) {
+          return prevUser;
+        }
+        return session;
+      });
     } catch {
-      setUser(null);
+      setUser((prevUser) => {
+        if (prevUser) {
+          toast.error("You've been logged out because your account was accessed from another device.", {
+            duration: 6000,
+          });
+        }
+        return null;
+      });
     }
   }, []);
 
@@ -85,6 +104,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => window.clearInterval(id);
   }, [refreshJackpot]);
 
+  /** Real-time single-device session validation poll (every 5 seconds) */
+  useEffect(() => {
+    if (!user) return;
+    const id = window.setInterval(() => {
+      void refreshSession();
+    }, 5000);
+    return () => window.clearInterval(id);
+  }, [user, refreshSession]);
+
   /** Keep Players Online accurate while this tab is open and logged in. */
   useEffect(() => {
     if (!user) return;
@@ -93,13 +121,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
     beat();
     const id = window.setInterval(beat, 60_000);
-    const onFocus = () => beat();
+    const onFocus = () => {
+      beat();
+      void refreshSession();
+    };
     window.addEventListener("focus", onFocus);
     return () => {
       window.clearInterval(id);
       window.removeEventListener("focus", onFocus);
     };
-  }, [user]);
+  }, [user, refreshSession]);
 
   const openLogin = useCallback(() => setLoginOpen(true), []);
   const closeLogin = useCallback(() => setLoginOpen(false), []);

@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
+import { useTranslation } from "@/lib/i18n";
 import { type SlotGame } from "@/lib/games";
 import { useCatalogGames } from "@/lib/useCatalogGames";
 import { GameModal } from "./GameModal";
@@ -14,6 +15,7 @@ type Props = {
 };
 
 export function SlotGameGrid({ title = "Slots", games, limit, useCatalog = !games, category }: Props) {
+  const { t } = useTranslation();
   const { games: catalog } = useCatalogGames();
   const source = games ?? (useCatalog ? catalog : catalog);
   const filtered = category ? source.filter((g) => g.category === category) : source;
@@ -23,10 +25,10 @@ export function SlotGameGrid({ title = "Slots", games, limit, useCatalog = !game
   return (
     <section className="flex flex-col gap-4">
       <div className="flex items-center justify-between">
-        <h2 className="text-lg font-bold text-foreground">{title}</h2>
+        <h2 className="text-lg font-bold text-foreground">{t(title)}</h2>
         <div className="flex items-center gap-2">
           <button className="text-xs font-semibold uppercase tracking-wider text-muted-foreground hover:text-foreground">
-            View All
+            {t("View All")}
           </button>
           <button className="grid h-8 w-8 place-items-center rounded-full border border-border bg-muted text-foreground hover:bg-panel-hover">
             <ChevronLeft size={16} />

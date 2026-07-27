@@ -44,6 +44,10 @@ const META: Record<ReportSection, { title: string; blurb: string }> = {
     title: "Outstanding",
     blurb: "Pending deposit and withdraw requests — approve or reject here.",
   },
+  "chip-distribution": {
+    title: "Chip Distribution Log",
+    blurb: "Audit log of all chip allocations transferred from Super Admin to Admin / Staff accounts.",
+  },
 };
 
 export function ReportSectionPage({
@@ -65,6 +69,7 @@ export function ReportSectionPage({
       {view === "by-product" && <ByProductPanel enabled={enabled} />}
       {view === "transactions" && <FundHistoryPanel enabled={enabled} />}
       {view === "outstanding" && <OutstandingPanel enabled={enabled} />}
+      {view === "chip-distribution" && <ChipDistributionPanel enabled={enabled} />}
     </div>
   );
 }
@@ -512,4 +517,91 @@ function StatCard({
 
 function Empty({ children }: { children: ReactNode }) {
   return <div className={`${saGlass} p-8 text-center text-sm text-muted-foreground`}>{children}</div>;
+}
+
+function ChipDistributionPanel({ enabled }: { enabled: boolean }) {
+  const [adminUsername, setAdminUsername] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [logs, setLogs] = useState<
+    Array<{
+      id: string;
+      actorUsername: string;
+      targetId: string | null;
+      targetUsername: string;
+      amount: number;
+      runningBalance: number;
+      summary: string;
+      createdAt: string;
+    }>
+  >([]);
+
+  const load = useCallback(async () => {
+    if (!enabled) return;
+    setLoading(true);
+    try {
+      const { listChipDistributionLogsFn } = await import("@/functions/superadmin");
+      setLogs(await listChipDistributionLogsFn({ data: { adminUsername: adminUsername || undefined, limit: 300 } }));
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Failed to load distribution logs");
+      setLogs([]);
+    } finally {
+      setLoading(false);
+    }
+  }, [enabled, adminUsername]);
+
+  useEffect(() => {
+    void load();
+  }, [load]);
+
+  return (
+    <>
+      <Toolbar
+        q={adminUsername}
+        setQ={setAdminUsername}
+        onRefresh={() => void load()}
+        placeholder="Filter by Admin username..."
+      />
+
+      {loading && <p className="text-sm text-muted-foreground">Loading distribution history...</p>}
+
+      {!loading && logs.length === 0 && (
+        <Empty>No chip transfers recorded yet. Transfer chips to admins from the Admins Management page.</Empty>
+      )}
+
+      {!loading && logs.length > 0 && (
+        <div className={`${saGlass} overflow-x-auto`}>
+          <table className="w-full min-w-[760px] text-left text-sm">
+            <thead className="border-b border-amber-500/20 text-[11px] uppercase text-muted-foreground">
+              <tr>
+                <th className="px-4 py-3">Timestamp</th>
+                <th className="px-4 py-3">Allocated By (Super Admin)</th>
+                <th className="px-4 py-3">Recipient Staff / Admin</th>
+                <th className="px-4 py-3">Amount Transferred</th>
+                <th className="px-4 py-3">Admin Running Balance</th>
+                <th className="px-4 py-3">Summary</th>
+              </tr>
+            </thead>
+            <tbody>
+              {logs.map((r) => (
+                <tr key={r.id} className="border-b border-white/[0.06]">
+                  <td className="px-4 py-3 text-xs text-muted-foreground">
+                    {new Date(r.createdAt).toLocaleString("en-PH")}
+                  </td>
+                  <td className="px-4 py-3 font-semibold text-amber-300">@{r.actorUsername}</td>
+                  <td className="px-4 py-3 font-semibold text-foreground">@{r.targetUsername}</td>
+                  <td className="px-4 py-3 font-bold tabular-nums text-emerald-400">
+                    +{formatMoney(r.amount)}
+                  </td>
+                  <td className="px-4 py-3 font-semibold tabular-nums text-foreground">
+                    {formatMoney(r.runningBalance)}
+                  </td>
+                  <td className="px-4 py-3 text-xs text-muted-foreground">{r.summary}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </>
+  );
 }

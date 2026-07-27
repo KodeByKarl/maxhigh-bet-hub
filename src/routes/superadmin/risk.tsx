@@ -81,7 +81,7 @@ function SuperRiskPage() {
             </div>
           </div>
 
-          <div className="grid gap-4 sm:grid-cols-2">
+          <div className="grid gap-4 sm:grid-cols-3">
             <div className="space-y-1.5">
               <label className="text-xs font-semibold text-muted-foreground">Max Single Bet Limit (₱)</label>
               <Input
@@ -98,6 +98,15 @@ function SuperRiskPage() {
                 value={form.maxDailyPayout}
                 onChange={(e) => setForm((prev) => ({ ...prev, maxDailyPayout: Number(e.target.value) }))}
                 className="h-11 border-amber-500/20 bg-white/[0.06] text-foreground"
+              />
+            </div>
+            <div className="space-y-1.5">
+              <label className="text-xs font-semibold text-amber-400">Weekly Limit Setting (₱)</label>
+              <Input
+                type="number"
+                value={form.maxWeeklyLimit ?? 20000}
+                onChange={(e) => setForm((prev) => ({ ...prev, maxWeeklyLimit: Number(e.target.value) }))}
+                className="h-11 border-amber-500/30 bg-amber-500/10 text-foreground font-bold"
               />
             </div>
           </div>

@@ -31,6 +31,7 @@ import { Route as AdminIndexRouteImport } from './routes/admin/index'
 import { Route as AdminAuditRouteImport } from './routes/admin/audit'
 import { Route as AdminFundRouteImport } from './routes/admin/fund'
 import { Route as AdminLoginRouteImport } from './routes/admin/login'
+import { Route as AdminSupportRouteImport } from './routes/admin/support'
 import { Route as AdminUsersRouteImport } from './routes/admin/users'
 import { Route as SuperadminIndexRouteImport } from './routes/superadmin/index'
 import { Route as SuperadminAdminsRouteImport } from './routes/superadmin/admins'
@@ -157,6 +158,11 @@ const AdminLoginRoute = AdminLoginRouteImport.update({
   path: '/login',
   getParentRoute: () => AdminRoute,
 } as any)
+const AdminSupportRoute = AdminSupportRouteImport.update({
+  id: '/support',
+  path: '/support',
+  getParentRoute: () => AdminRoute,
+} as any)
 const AdminUsersRoute = AdminUsersRouteImport.update({
   id: '/users',
   path: '/users',
@@ -255,6 +261,7 @@ export interface FileRoutesByFullPath {
   '/admin/audit': typeof AdminAuditRoute
   '/admin/fund': typeof AdminFundRoute
   '/admin/login': typeof AdminLoginRoute
+  '/admin/support': typeof AdminSupportRoute
   '/admin/users': typeof AdminUsersRoute
   '/superadmin/admins': typeof SuperadminAdminsRoute
   '/superadmin/audit': typeof SuperadminAuditRoute
@@ -292,6 +299,7 @@ export interface FileRoutesByTo {
   '/admin/audit': typeof AdminAuditRoute
   '/admin/fund': typeof AdminFundRoute
   '/admin/login': typeof AdminLoginRoute
+  '/admin/support': typeof AdminSupportRoute
   '/admin/users': typeof AdminUsersRoute
   '/superadmin/admins': typeof SuperadminAdminsRoute
   '/superadmin/audit': typeof SuperadminAuditRoute
@@ -332,6 +340,7 @@ export interface FileRoutesById {
   '/admin/audit': typeof AdminAuditRoute
   '/admin/fund': typeof AdminFundRoute
   '/admin/login': typeof AdminLoginRoute
+  '/admin/support': typeof AdminSupportRoute
   '/admin/users': typeof AdminUsersRoute
   '/superadmin/admins': typeof SuperadminAdminsRoute
   '/superadmin/audit': typeof SuperadminAuditRoute
@@ -373,6 +382,7 @@ export interface FileRouteTypes {
     | '/admin/audit'
     | '/admin/fund'
     | '/admin/login'
+    | '/admin/support'
     | '/admin/users'
     | '/superadmin/admins'
     | '/superadmin/audit'
@@ -410,6 +420,7 @@ export interface FileRouteTypes {
     | '/admin/audit'
     | '/admin/fund'
     | '/admin/login'
+    | '/admin/support'
     | '/admin/users'
     | '/superadmin/admins'
     | '/superadmin/audit'
@@ -449,6 +460,7 @@ export interface FileRouteTypes {
     | '/admin/audit'
     | '/admin/fund'
     | '/admin/login'
+    | '/admin/support'
     | '/admin/users'
     | '/superadmin/admins'
     | '/superadmin/audit'
@@ -644,6 +656,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminLoginRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/admin/support': {
+      id: '/admin/support'
+      path: '/support'
+      fullPath: '/admin/support'
+      preLoaderRoute: typeof AdminSupportRouteImport
+      parentRoute: typeof AdminRoute
+    }
     '/admin/users': {
       id: '/admin/users'
       path: '/users'
@@ -756,6 +775,7 @@ interface AdminRouteChildren {
   AdminAuditRoute: typeof AdminAuditRoute
   AdminFundRoute: typeof AdminFundRoute
   AdminLoginRoute: typeof AdminLoginRoute
+  AdminSupportRoute: typeof AdminSupportRoute
   AdminUsersRoute: typeof AdminUsersRoute
   AdminIndexRoute: typeof AdminIndexRoute
 }
@@ -764,6 +784,7 @@ const AdminRouteChildren: AdminRouteChildren = {
   AdminAuditRoute: AdminAuditRoute,
   AdminFundRoute: AdminFundRoute,
   AdminLoginRoute: AdminLoginRoute,
+  AdminSupportRoute: AdminSupportRoute,
   AdminUsersRoute: AdminUsersRoute,
   AdminIndexRoute: AdminIndexRoute,
 }

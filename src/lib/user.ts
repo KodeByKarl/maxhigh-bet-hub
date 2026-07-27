@@ -1,5 +1,4 @@
-/** Shared user shape — safe for client + server. */
-export type UserRole = "player" | "admin" | "superadmin";
+export type UserRole = "player" | "agent" | "master_agent" | "superadmin";
 
 export type PublicUser = {
   id: string;
@@ -12,7 +11,7 @@ export type PublicUser = {
 };
 
 export function isStaffRole(role: UserRole | undefined | null): boolean {
-  return role === "admin" || role === "superadmin";
+  return role === "agent" || role === "master_agent" || role === "superadmin" || (role as string) === "admin";
 }
 
 export function isSuperadminRole(role: UserRole | undefined | null): boolean {

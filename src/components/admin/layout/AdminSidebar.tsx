@@ -1,5 +1,5 @@
 import { Link } from "@tanstack/react-router";
-import { LayoutDashboard, Users, ScrollText, Sparkles, Wallet } from "lucide-react";
+import { LayoutDashboard, Users, ScrollText, Sparkles, Wallet, Headphones } from "lucide-react";
 import { adminGlass } from "../ui/glass";
 
 const nav = [
@@ -7,6 +7,7 @@ const nav = [
   { to: "/admin/users" as const, label: "Player List", icon: Users, exact: false },
   { to: "/admin/fund" as const, label: "Fund In/Out", icon: Wallet, exact: false },
   { to: "/admin/audit" as const, label: "Reports", icon: ScrollText, exact: false },
+  { to: "/admin/support" as const, label: "Live Support", icon: Headphones, exact: false },
 ];
 
 export function AdminSidebar() {

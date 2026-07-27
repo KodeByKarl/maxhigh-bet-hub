@@ -7,6 +7,8 @@ import { recordGameSessionFn } from "@/functions/api";
 import { CandyPeakSlot } from "./CandyPeakSlot";
 import { GodlyGatesSlot } from "./GodlyGatesSlot";
 import { SugarSurgeSlot } from "./SugarSurgeSlot";
+import { GoldenPantherSlot } from "./GoldenPantherSlot";
+import { ChineseNewYearSlot } from "./ChineseNewYearSlot";
 
 type Props = {
   game: SlotGame | null;
@@ -15,6 +17,48 @@ type Props = {
 };
 
 function getGameThemeConfig(gameId: string, category: string, thumb: string) {
+  if (gameId === "chinese-new-year") {
+    return {
+      bgImage: thumb,
+      bgGradient: "from-[#7F1D1D]/80 via-[#450A0A]/80 to-[#0A0912]/95",
+      titleClass: "godly-title",
+      barGradient: "from-[#FACC15] via-[#EF4444] to-[#B91C1C]",
+      borderGlow: "shadow-[0_0_60px_rgba(239,68,68,0.8)] border-yellow-400",
+      badgeGradient: "from-[#EF4444] via-[#F59E0B] to-[#7F1D1D]",
+      renderType: "standard" as const,
+      imageParticles: [],
+      badgeText: "FESTIVE DRAGON ARCADE",
+      chargeText: "GONG XI FA CAI ACTIVE",
+      lines: [
+        "Preparing traditional Chinese pagoda temple…",
+        "Awakening the Golden Tiger & Dragon blessings…",
+        "Gathering red envelope scatter bonuses…",
+        "Igniting festive firecracker multipliers…",
+        "Chinese New Year is ready!",
+      ],
+    };
+  }
+  if (gameId === "golden-panther") {
+    return {
+      bgImage: "/images/symbols/panther/loading-bg.png",
+      bgGradient: "from-[#3F2A08]/80 via-[#0A0912]/80 to-[#120800]/95",
+      titleClass: "panther-title",
+      barGradient: "from-[#F59E0B] via-[#FACC15] to-[#D97706]",
+      borderGlow: "shadow-[0_0_60px_rgba(245,158,11,0.8)] border-amber-400",
+      badgeGradient: "from-[#F59E0B] via-[#FACC15] to-[#78350F]",
+      renderType: "standard" as const,
+      imageParticles: ["/images/symbols/panther/wild.png", "/images/symbols/panther/scatter.png"],
+      badgeText: "GOLDEN PANTHER ARCADE",
+      chargeText: "PANTHER POWER ACTIVE",
+      lines: [
+        "Entering the ancient golden jungle temple…",
+        "Awakening the majestic Golden Panther…",
+        "Forging 100x multiplier orb crystals…",
+        "Charging Aztec golden treasures…",
+        "The Golden Panther awaits!",
+      ],
+    };
+  }
   if (gameId === "godly-gates") {
     return {
       bgImage: "/images/godly-loading/bg.png",
@@ -364,6 +408,14 @@ export function GamePlayModal({ game, open, onOpenChange }: Props) {
         ) : isGodlyGates ? (
           <div className="relative h-dvh w-screen overflow-hidden">
             <GodlyGatesSlot gameId={game.id} gameName={game.name} />
+          </div>
+        ) : game.id === "golden-panther" ? (
+          <div className="relative h-dvh w-screen overflow-hidden">
+            <GoldenPantherSlot gameId={game.id} gameName={game.name} />
+          </div>
+        ) : game.id === "chinese-new-year" ? (
+          <div className="relative h-dvh w-screen overflow-hidden">
+            <ChineseNewYearSlot gameId={game.id} gameName={game.name} />
           </div>
         ) : (
           <ComingSoonPlay game={game} />

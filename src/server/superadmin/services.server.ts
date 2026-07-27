@@ -704,6 +704,83 @@ export async function saveGodlyGatesEngineConfig(raw: unknown) {
   return cfg;
 }
 
+/** Public — Golden Panther engine math (defaults if unset). */
+export async function getGoldenPantherEngineConfig() {
+  const {
+    GOLDEN_PANTHER_GAME_ID,
+    DEFAULT_GOLDEN_PANTHER_CONFIG,
+    normalizeGoldenPantherConfig,
+  } = await import("@/lib/golden-panther-config");
+  const db = getDb();
+  try {
+    const rows = await db
+      .select()
+      .from(gameControls)
+      .where(eq(gameControls.gameId, GOLDEN_PANTHER_GAME_ID))
+      .limit(1);
+    return normalizeGoldenPantherConfig(parseEngineConfigJson(rows[0]?.engineConfig));
+  } catch {
+    return structuredClone(DEFAULT_GOLDEN_PANTHER_CONFIG);
+  }
+}
+
+/** Superadmin — save full Golden Panther math config. */
+export async function saveGoldenPantherEngineConfig(raw: unknown) {
+  const actor = await requireSuperadmin();
+  const {
+    GOLDEN_PANTHER_GAME_ID,
+    normalizeGoldenPantherConfig,
+  } = await import("@/lib/golden-panther-config");
+  const catalog = slotGames.find((g) => g.id === GOLDEN_PANTHER_GAME_ID);
+  if (!catalog) throw new Error("Golden Panther not in catalog");
+
+  const cfg = normalizeGoldenPantherConfig(raw);
+  const db = getDb();
+  const existing = await db
+    .select()
+    .from(gameControls)
+    .where(eq(gameControls.gameId, GOLDEN_PANTHER_GAME_ID))
+    .limit(1);
+
+  const payload = JSON.stringify(cfg);
+
+  if (!existing[0]) {
+    await db.insert(gameControls).values({
+      gameId: GOLDEN_PANTHER_GAME_ID,
+      enabled: "yes",
+      featured: "no",
+      sortOrder: 0,
+      tag: catalog.tag ?? null,
+      rtp: catalog.rtp,
+      volatility: catalog.volatility,
+      minBet: catalog.minBet,
+      maxBet: catalog.maxBet,
+      engineConfig: payload,
+    });
+  } else {
+    await db
+      .update(gameControls)
+      .set({ engineConfig: payload })
+      .where(eq(gameControls.gameId, GOLDEN_PANTHER_GAME_ID));
+  }
+
+  await writeAuditLog({
+    actor,
+    action: "super.golden_panther_config",
+    summary: `Updated Golden Panther engine config (dead spin ${cfg.deadSpinChancePercent}%, FS ${cfg.freeSpinsBase})`,
+    targetType: "game",
+    targetId: GOLDEN_PANTHER_GAME_ID,
+    meta: {
+      deadSpinChancePercent: cfg.deadSpinChancePercent,
+      bombChanceBasePercent: cfg.bombChanceBasePercent,
+      freeSpinsTriggerCount: cfg.freeSpinsTriggerCount,
+      freeSpinsBase: cfg.freeSpinsBase,
+    },
+  });
+
+  return cfg;
+}
+
 export async function listWalletRequests(opts?: {
   status?: "pending" | "approved" | "rejected" | "all";
   limit?: number;

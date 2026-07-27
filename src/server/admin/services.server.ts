@@ -231,6 +231,43 @@ export async function adminAdjustUserBalance(data: {
   return updated;
 }
 
+export async function adminToggleUserLock(data: {
+  userId: string;
+  lock?: boolean;
+}): Promise<PublicUser> {
+  const actor = await requireAdmin();
+  const db = getDb();
+
+  const rows = await db.select().from(users).where(eq(users.id, data.userId)).limit(1);
+  const user = rows[0];
+  if (!user) throw new Error("User not found");
+
+  const currentlyLocked = user.isLocked === "yes" || (user.failedAttempts ?? 0) >= 3;
+  const nextLockState = data.lock !== undefined ? data.lock : !currentlyLocked;
+
+  const patch = nextLockState
+    ? { isLocked: "yes" as const, failedAttempts: 3, lockedUntil: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000) }
+    : { isLocked: "no" as const, failedAttempts: 0, lockedUntil: null };
+
+  await db.update(users).set(patch).where(eq(users.id, user.id));
+
+  await writeAuditLog({
+    actor,
+    action: nextLockState ? "user.lock" : "user.unlock",
+    summary: `${nextLockState ? "Locked" : "Unlocked"} user @${user.username}`,
+    targetType: "user",
+    targetId: user.id,
+    meta: {
+      username: user.username,
+      isLocked: nextLockState,
+      unlockedBy: actor.username,
+    },
+  });
+
+  const updatedRows = await db.select().from(users).where(eq(users.id, user.id)).limit(1);
+  return toPublicUser(updatedRows[0]!);
+}
+
 export async function recordAdminLogin(actor: PublicUser) {
   await writeAuditLog({
     actor,

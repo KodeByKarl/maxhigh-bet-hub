@@ -57,6 +57,37 @@
 :root {
   --radius: 1rem;
 
+  /* Glass translucent player theme matching reference UI */
+  --background: #0D081A;
+  --foreground: #FFFFFF;
+  --sidebar: rgba(26, 16, 48, 0.45);
+  --panel: rgba(30, 20, 55, 0.55);
+  --panel-hover: rgba(124, 58, 237, 0.35);
+  --card: rgba(30, 20, 55, 0.55);
+  --card-foreground: #FFFFFF;
+  --popover: #1A1030;
+  --popover-foreground: #FFFFFF;
+  --primary: #7C3AED;
+  --primary-foreground: #FFFFFF;
+  --secondary: rgba(245, 243, 255, 0.1);
+  --secondary-foreground: #FFFFFF;
+  --muted: rgba(245, 243, 255, 0.1);
+  --muted-foreground: rgba(255, 255, 255, 0.65);
+  --accent: rgba(124, 58, 237, 0.3);
+  --accent-foreground: #FFFFFF;
+  --destructive: #FF4D6A;
+  --destructive-foreground: #FFFFFF;
+  --border: rgba(168, 85, 247, 0.3);
+  --input: rgba(26, 16, 48, 0.5);
+  --ring: #7C3AED;
+  --lime: #C6FF3D;
+  --on-lime: #0A0912;
+  --danger: #FF4D6A;
+  color-scheme: dark;
+}
+
+/* Admin Domain 2 — dark violet theme */
+.theme-admin {
   --background: #0A0912;
   --foreground: #F5F3FF;
   --sidebar: #14121F;
@@ -82,65 +113,36 @@
   --lime: #C6FF3D;
   --on-lime: #0A0912;
   --danger: #FF4D6A;
+  color-scheme: dark;
 }
 
-/* Player-facing light theme (applied on <html> via theme-user-light) */
-.theme-user-light {
-  --background: #FFFFFF;
-  --foreground: #1A1030;
-  --sidebar: #F5F3FF;
-  --panel: #FFFFFF;
-  --panel-hover: #EDE9FE;
-  --card: #FFFFFF;
-  --card-foreground: #1A1030;
-  --popover: #FFFFFF;
-  --popover-foreground: #1A1030;
-  --primary: #7C3AED;
-  --primary-foreground: #FFFFFF;
-  --secondary: #F5F3FF;
-  --secondary-foreground: #1A1030;
-  --muted: #F5F3FF;
-  --muted-foreground: #6B6484;
-  --accent: #EDE9FE;
-  --accent-foreground: #1A1030;
-  --destructive: #FF4D6A;
-  --destructive-foreground: #FFFFFF;
-  --border: #DDD6FE;
-  --input: #F5F3FF;
-  --ring: #7C3AED;
-  --lime: #C6FF3D;
-  --on-lime: #0A0912;
-  --danger: #FF4D6A;
-  color-scheme: light;
-}
-
-/* Superadmin Domain 3 — soft dark + amber (easy on eyes) */
+/* Superadmin Domain 3 — Premium Dark Charcoal & Gold Theme (Eye-friendly) */
 .theme-superadmin {
-  --background: #12100E;
-  --foreground: #F5F0E8;
-  --sidebar: #1A1714;
-  --panel: #1C1916;
-  --panel-hover: #26211C;
-  --card: #1C1916;
-  --card-foreground: #F5F0E8;
-  --popover: #1C1916;
-  --popover-foreground: #F5F0E8;
+  --background: #0F0D15;
+  --foreground: #F1F5F9;
+  --sidebar: #161224;
+  --panel: #1A162B;
+  --panel-hover: #221C38;
+  --card: #1A162B;
+  --card-foreground: #F1F5F9;
+  --popover: #1A162B;
+  --popover-foreground: #F1F5F9;
   --primary: #F59E0B;
-  --primary-foreground: #12100E;
-  --secondary: #26211C;
-  --secondary-foreground: #F5F0E8;
-  --muted: #1C1916;
-  --muted-foreground: #A8A29E;
-  --accent: #2A241C;
-  --accent-foreground: #F5F0E8;
-  --destructive: #FF4D6A;
+  --primary-foreground: #0F0D15;
+  --secondary: #221C38;
+  --secondary-foreground: #F1F5F9;
+  --muted: #1A162B;
+  --muted-foreground: #94A3B8;
+  --accent: #2A2345;
+  --accent-foreground: #F1F5F9;
+  --destructive: #EF4444;
   --destructive-foreground: #FFFFFF;
-  --border: #3D3429;
-  --input: #1C1916;
+  --border: rgba(245, 158, 11, 0.15);
+  --input: #161224;
   --ring: #F59E0B;
-  --lime: #C6FF3D;
-  --on-lime: #0A0912;
-  --danger: #FF4D6A;
+  --lime: #10B981;
+  --on-lime: #0F0D15;
+  --danger: #EF4444;
   color-scheme: dark;
 }
 
@@ -152,6 +154,21 @@
 html, body {
   background-color: var(--background);
   color: var(--foreground);
+}
+
+/* Dashboard Responsive Background: desktopbg for PC/large screens, phonebg for mobile */
+.dashboard-bg {
+  background-image: url("/phonebg.jpg");
+  background-size: cover;
+  background-position: center top;
+  background-repeat: no-repeat;
+  background-attachment: fixed;
+}
+
+@media (min-width: 768px) {
+  .dashboard-bg {
+    background-image: url("/desktopbg.jpg");
+  }
 }
 
 @layer base {
@@ -294,6 +311,38 @@ iframe[src*="lovable"] {
 
 .candy-glow {
   animation: candy-pulse-glow 2.5s ease-in-out infinite;
+}
+
+/* Print / Export PDF styles for Reports */
+@media print {
+  body {
+    background-color: #ffffff !important;
+    color: #000000 !important;
+  }
+  aside, nav, header, button:not(.print-keep), .no-print {
+    display: none !important;
+  }
+  .print-only {
+    display: block !important;
+  }
+  table {
+    width: 100% !important;
+    border-collapse: collapse !important;
+    color: #000000 !important;
+    font-size: 11px !important;
+  }
+  th, td {
+    border: 1px solid #dddddd !important;
+    padding: 6px 10px !important;
+    color: #000000 !important;
+    page-break-inside: avoid !important;
+  }
+  thead {
+    display: table-header-group !important;
+  }
+  tr {
+    page-break-inside: avoid !important;
+  }
 }
 
 

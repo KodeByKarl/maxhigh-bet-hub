@@ -24,7 +24,8 @@ import {
   savePreferences,
   type AppPreferences,
 } from "@/lib/preferences";
-import { updateProfileFn } from "@/functions/api";
+import { changePasswordFn } from "@/functions/api";
+import { useTranslation } from "@/lib/i18n";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
@@ -78,20 +79,29 @@ const NAV: { id: Section; label: string; icon: typeof User }[] = [
 ];
 
 export function SettingsModal({ open, onOpenChange }: Props) {
+  const { t } = useTranslation();
   const { user, refreshSession } = useAuth();
   const [section, setSection] = useState<Section>("account");
   const [prefs, setPrefs] = useState<AppPreferences>(() => loadPreferences());
-  const [displayName, setDisplayName] = useState("");
-  const [username, setUsername] = useState("");
+  const [oldPassword, setOldPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [showOld, setShowOld] = useState(false);
+  const [showNew, setShowNew] = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
+  const [autoSave, setAutoSave] = useState(false);
+  const [saveStatus, setSaveStatus] = useState<"idle" | "saving" | "success" | "error">("idle");
   const [busy, setBusy] = useState(false);
 
   useEffect(() => {
     if (!open) return;
     setPrefs(loadPreferences());
-    setDisplayName(user?.displayName ?? "");
-    setUsername(user?.username ?? "");
+    setOldPassword("");
+    setNewPassword("");
+    setConfirmPassword("");
+    setSaveStatus("idle");
     setSection("account");
-  }, [open, user]);
+  }, [open]);
 
   function patchPrefs(partial: Partial<AppPreferences>) {
     const next = { ...prefs, ...partial };
@@ -99,27 +109,83 @@ export function SettingsModal({ open, onOpenChange }: Props) {
     savePreferences(next);
   }
 
-  async function saveAccount() {
-    if (!username.trim()) {
-      toast.error("Username is required");
+  const PASSWORD_RULES = [
+    { id: "length", label: "At least 8 characters", test: (p: string) => p.length >= 8 },
+    { id: "upper", label: "One uppercase letter", test: (p: string) => /[A-Z]/.test(p) },
+    { id: "lower", label: "One lowercase letter", test: (p: string) => /[a-z]/.test(p) },
+    { id: "number", label: "One number", test: (p: string) => /[0-9]/.test(p) },
+    { id: "special", label: "One special character", test: (p: string) => /[^A-Za-z0-9]/.test(p) },
+  ];
+
+  function getPasswordStrength(pwd: string) {
+    if (!pwd) return { score: 0, label: "None", color: "bg-border", textClass: "text-muted-foreground" };
+    let score = 0;
+    if (pwd.length >= 8) score++;
+    if (/[A-Z]/.test(pwd)) score++;
+    if (/[a-z]/.test(pwd)) score++;
+    if (/[0-9]/.test(pwd)) score++;
+    if (/[^A-Za-z0-9]/.test(pwd)) score++;
+
+    if (score <= 2) return { score, label: t("Weak"), color: "bg-rose-500", textClass: "text-rose-400" };
+    if (score <= 4) return { score, label: t("Medium"), color: "bg-amber-500", textClass: "text-amber-400" };
+    return { score, label: t("Strong"), color: "bg-emerald-500", textClass: "text-emerald-400" };
+  }
+
+  const strength = getPasswordStrength(newPassword);
+  const strengthProgress = (strength.score / 5) * 100;
+
+  async function handleSavePassword() {
+    if (!oldPassword) {
+      toast.error("Current password is required");
       return;
     }
+    const allRulesMet = PASSWORD_RULES.every((r) => r.test(newPassword));
+    if (!allRulesMet) {
+      toast.error("Password does not meet all verification rules");
+      return;
+    }
+    if (newPassword !== confirmPassword) {
+      toast.error("Passwords do not match");
+      return;
+    }
+
+    setSaveStatus("saving");
     setBusy(true);
     try {
-      await updateProfileFn({
+      await changePasswordFn({
         data: {
-          displayName: displayName.trim() || undefined,
-          username: username.trim(),
+          oldPassword,
+          newPassword,
         },
       });
-      await refreshSession();
-      toast.success("Profile saved");
+      setSaveStatus("success");
+      toast.success("Password changed successfully");
+      setOldPassword("");
+      setNewPassword("");
+      setConfirmPassword("");
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Could not save profile");
+      setSaveStatus("error");
+      toast.error(err instanceof Error ? err.message : "Failed to change password");
     } finally {
       setBusy(false);
     }
   }
+
+  // AutoSave debounced effect
+  useEffect(() => {
+    if (!autoSave) return;
+    if (!oldPassword || !newPassword || !confirmPassword) return;
+
+    const allRulesMet = PASSWORD_RULES.every((r) => r.test(newPassword));
+    const match = newPassword === confirmPassword;
+
+    if (allRulesMet && match && oldPassword.length >= 1) {
+      const timer = setTimeout(() => {
+        void handleSavePassword();
+      }, 1000);
+      return () => clearTimeout(timer);
+    }
+  }, [oldPassword, newPassword, confirmPassword, autoSave]);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -152,7 +218,7 @@ export function SettingsModal({ open, onOpenChange }: Props) {
                   )}
                 >
                   <Icon size={16} />
-                  {item.label}
+                  {t(item.label)}
                 </button>
               );
             })}
@@ -161,48 +227,150 @@ export function SettingsModal({ open, onOpenChange }: Props) {
           <div className="min-h-0 overflow-y-auto p-4 sm:p-5">
             {section === "account" && (
               <div className="space-y-4">
-                <SectionHead title="Profile" subtitle="How you appear across MaxHigh." />
-                <Field label="Email (optional)">
-                  <Input
-                    value={user?.email ?? ""}
-                    disabled
-                    className="h-11 rounded-xl border-border bg-muted opacity-70"
-                    placeholder="No email on file"
-                  />
+                <SectionHead title={t("Change Password")} subtitle={t("Update your MaxHigh account credentials.")} />
+                
+                <Field label={t("Old Password")}>
+                  <div className="relative">
+                    <Input
+                      type={showOld ? "text" : "password"}
+                      value={oldPassword}
+                      onChange={(e) => setOldPassword(e.target.value)}
+                      placeholder="Enter current password"
+                      className="h-11 rounded-xl border-border bg-muted pr-10"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowOld(!showOld)}
+                      className="absolute inset-y-0 right-0 flex items-center pr-3 text-muted-foreground hover:text-foreground"
+                    >
+                      {showOld ? <EyeOff size={16} /> : <Eye size={16} />}
+                    </button>
+                  </div>
                 </Field>
-                <Field label="Display name">
-                  <Input
-                    value={displayName}
-                    onChange={(e) => setDisplayName(e.target.value)}
-                    placeholder="Optional public name"
-                    className="h-11 rounded-xl border-border bg-muted"
-                    maxLength={128}
-                  />
+
+                <Field label={t("New Password")}>
+                  <div className="relative">
+                    <Input
+                      type={showNew ? "text" : "password"}
+                      value={newPassword}
+                      onChange={(e) => setNewPassword(e.target.value)}
+                      placeholder="Enter new password"
+                      className="h-11 rounded-xl border-border bg-muted pr-10"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowNew(!showNew)}
+                      className="absolute inset-y-0 right-0 flex items-center pr-3 text-muted-foreground hover:text-foreground"
+                    >
+                      {showNew ? <EyeOff size={16} /> : <Eye size={16} />}
+                    </button>
+                  </div>
                 </Field>
-                <Field label="Username">
-                  <Input
-                    value={username}
-                    onChange={(e) => setUsername(e.target.value)}
-                    placeholder="letters, numbers, underscore"
-                    className="h-11 rounded-xl border-border bg-muted"
-                    maxLength={64}
-                  />
+
+                <Field label={t("Confirm Password")}>
+                  <div className="relative">
+                    <Input
+                      type={showConfirm ? "text" : "password"}
+                      value={confirmPassword}
+                      onChange={(e) => setConfirmPassword(e.target.value)}
+                      placeholder="Confirm new password"
+                      className="h-11 rounded-xl border-border bg-muted pr-10"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowConfirm(!showConfirm)}
+                      className="absolute inset-y-0 right-0 flex items-center pr-3 text-muted-foreground hover:text-foreground"
+                    >
+                      {showConfirm ? <EyeOff size={16} /> : <Eye size={16} />}
+                    </button>
+                  </div>
                 </Field>
+
+                {newPassword && (
+                  <div className="space-y-1.5">
+                    <div className="flex items-center justify-between text-xs">
+                      <span className="text-muted-foreground">{t("Password Strength:")}</span>
+                      <span className={cn("font-bold", strength.textClass)}>{strength.label}</span>
+                    </div>
+                    <div className="h-1.5 w-full rounded-full bg-border overflow-hidden">
+                      <div
+                        className={cn("h-full transition-all duration-300", strength.color)}
+                        style={{ width: `${strengthProgress}%` }}
+                      />
+                    </div>
+                  </div>
+                )}
+
+                <div className="rounded-2xl border border-border bg-muted/30 p-3 space-y-2">
+                  <div className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+                    {t("Verification Rules / Hint")}
+                  </div>
+                  <div className="grid grid-cols-1 gap-1.5 sm:grid-cols-2">
+                    {PASSWORD_RULES.map((rule) => {
+                      const passed = rule.test(newPassword);
+                      return (
+                        <div key={rule.id} className="flex items-center gap-2 text-xs">
+                          <span
+                            className={cn(
+                              "flex h-4 w-4 shrink-0 items-center justify-center rounded-full border text-[9px] font-bold",
+                              passed
+                                ? "border-emerald-500 bg-emerald-500/10 text-emerald-500"
+                                : "border-border text-muted-foreground"
+                            )}
+                          >
+                            {passed ? "✓" : "•"}
+                          </span>
+                          <span className={cn(passed ? "text-foreground" : "text-muted-foreground")}>
+                            {t(rule.label)}
+                          </span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                <Toggle
+                  checked={autoSave}
+                  onChange={(v) => setAutoSave(v)}
+                  label={t("Enable AutoSave")}
+                  hint={t("Automatically save password once all rules are met and confirmed.")}
+                />
+
                 <Toggle
                   checked={prefs.hideBalance}
                   onChange={(v) => patchPrefs({ hideBalance: v })}
-                  label="Hide balance in header"
-                  hint="Shows •••• instead of your coin balance."
+                  label={t("Hide balance in header")}
+                  hint={t("Shows •••• instead of your coin balance.")}
                 />
-                <button
-                  type="button"
-                  disabled={busy}
-                  onClick={() => void saveAccount()}
-                  className="inline-flex h-11 items-center gap-2 rounded-full bg-primary px-5 text-sm font-bold uppercase tracking-wider text-primary-foreground hover:bg-primary/90 disabled:opacity-60"
-                >
-                  <Save size={16} />
-                  {busy ? "Saving…" : "Save profile"}
-                </button>
+
+                <div className="flex items-center justify-between gap-4 pt-2">
+                  <button
+                    type="button"
+                    disabled={
+                      busy ||
+                      !oldPassword ||
+                      !newPassword ||
+                      !confirmPassword ||
+                      newPassword !== confirmPassword ||
+                      !PASSWORD_RULES.every((r) => r.test(newPassword))
+                    }
+                    onClick={() => void handleSavePassword()}
+                    className="inline-flex h-11 items-center gap-2 rounded-full bg-primary px-6 text-sm font-bold uppercase tracking-wider text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
+                  >
+                    <Save size={16} />
+                    {busy ? t("Saving…") : t("Save Password")}
+                  </button>
+
+                  {saveStatus === "saving" && (
+                    <span className="text-xs text-muted-foreground animate-pulse">{t("Saving changes…")}</span>
+                  )}
+                  {saveStatus === "success" && (
+                    <span className="text-xs text-emerald-400 font-medium">✓ {t("Saved successfully")}</span>
+                  )}
+                  {saveStatus === "error" && (
+                    <span className="text-xs text-rose-400 font-medium">✗ {t("Failed to save")}</span>
+                  )}
+                </div>
               </div>
             )}
 

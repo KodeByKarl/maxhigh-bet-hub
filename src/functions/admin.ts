@@ -60,6 +60,18 @@ export const adminAdjustBalanceFn = createServerFn({ method: "POST" })
     return adminAdjustUserBalance(data);
   });
 
+const toggleLockSchema = z.object({
+  userId: z.string().uuid(),
+  lock: z.boolean().optional(),
+});
+
+export const adminToggleUserLockFn = createServerFn({ method: "POST" })
+  .validator(toggleLockSchema)
+  .handler(async ({ data }) => {
+    const { adminToggleUserLock } = await import("../server/admin/services.server");
+    return adminToggleUserLock(data);
+  });
+
 const auditListSchema = z.object({
   q: z.string().max(128).optional(),
   action: z.string().max(64).optional(),

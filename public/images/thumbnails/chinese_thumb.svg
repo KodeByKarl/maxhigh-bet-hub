@@ -1,0 +1,149 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 500" width="100%" height="100%">
+  <defs>
+    <!-- Background Gradient -->
+    <radialGradient id="bgGrad" cx="50%" cy="50%" r="75%">
+      <stop offset="0%" stop-color="#ef4444" />
+      <stop offset="45%" stop-color="#991b1b" />
+      <stop offset="85%" stop-color="#450a0a" />
+      <stop offset="100%" stop-color="#180202" />
+    </radialGradient>
+
+    <!-- Gold Foil Metallic Gradient -->
+    <linearGradient id="goldGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#fef08a" />
+      <stop offset="30%" stop-color="#facc15" />
+      <stop offset="65%" stop-color="#eab308" />
+      <stop offset="85%" stop-color="#ca8a04" />
+      <stop offset="100%" stop-color="#854d0e" />
+    </linearGradient>
+
+    <!-- Red Silk Gradient -->
+    <linearGradient id="redSilk" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#f87171" />
+      <stop offset="40%" stop-color="#dc2626" />
+      <stop offset="100%" stop-color="#7f1d1d" />
+    </linearGradient>
+
+    <!-- Glow Filter -->
+    <filter id="goldGlow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="8" result="blur" />
+      <feComposite in="SourceGraphic" in2="blur" operator="over" />
+    </filter>
+  </defs>
+
+  <!-- Deep Imperial Red Backdrop -->
+  <rect width="500" height="500" rx="36" fill="url(#bgGrad)" />
+
+  <!-- Radial Golden Sunburst Rays -->
+  <g opacity="0.25">
+    <path d="M250 250 L0 0 L50 0 Z" fill="url(#goldGrad)" />
+    <path d="M250 250 L150 0 L200 0 Z" fill="url(#goldGrad)" />
+    <path d="M250 250 L300 0 L350 0 Z" fill="url(#goldGrad)" />
+    <path d="M250 250 L450 0 L500 0 Z" fill="url(#goldGrad)" />
+    <path d="M250 250 L500 100 L500 150 Z" fill="url(#goldGrad)" />
+    <path d="M250 250 L500 250 L500 300 Z" fill="url(#goldGrad)" />
+    <path d="M250 250 L500 400 L500 450 Z" fill="url(#goldGrad)" />
+    <path d="M250 250 L450 500 L400 500 Z" fill="url(#goldGrad)" />
+    <path d="M250 250 L300 500 L250 500 Z" fill="url(#goldGrad)" />
+    <path d="M250 250 L150 500 L100 500 Z" fill="url(#goldGrad)" />
+    <path d="M250 250 L0 450 L0 400 Z" fill="url(#goldGrad)" />
+    <path d="M250 250 L0 300 L0 250 Z" fill="url(#goldGrad)" />
+    <path d="M250 250 L0 150 L0 100 Z" fill="url(#goldGrad)" />
+  </g>
+
+  <!-- Chinese Temple Roof Frame Border -->
+  <rect x="15" y="15" width="470" height="470" rx="28" fill="none" stroke="url(#goldGrad)" stroke-width="8" opacity="0.9" />
+  <rect x="25" y="25" width="450" height="450" rx="20" fill="none" stroke="#fef08a" stroke-width="2" opacity="0.5" />
+
+  <!-- Hanging Red Silk Lanterns -->
+  <!-- Left Lantern -->
+  <g transform="translate(60, 40)">
+    <line x1="25" y1="0" x2="25" y2="30" stroke="url(#goldGrad)" stroke-width="3" />
+    <ellipse cx="25" cy="55" rx="22" ry="26" fill="url(#redSilk)" stroke="url(#goldGrad)" stroke-width="3" />
+    <line x1="25" y1="81" x2="25" y2="105" stroke="url(#goldGrad)" stroke-width="4" />
+    <circle cx="25" cy="55" r="8" fill="#fef08a" opacity="0.8" filter="url(#goldGlow)" />
+  </g>
+
+  <!-- Right Lantern -->
+  <g transform="translate(390, 40)">
+    <line x1="25" y1="0" x2="25" y2="30" stroke="url(#goldGrad)" stroke-width="3" />
+    <ellipse cx="25" cy="55" rx="22" ry="26" fill="url(#redSilk)" stroke="url(#goldGrad)" stroke-width="3" />
+    <line x1="25" y1="81" x2="25" y2="105" stroke="url(#goldGrad)" stroke-width="4" />
+    <circle cx="25" cy="55" r="8" fill="#fef08a" opacity="0.8" filter="url(#goldGlow)" />
+  </g>
+
+  <!-- Center Golden Dragon / Lion Dance Crest Halo -->
+  <circle cx="250" cy="220" r="120" fill="none" stroke="url(#goldGrad)" stroke-width="12" filter="url(#goldGlow)" />
+  <circle cx="250" cy="220" r="105" fill="#450a0a" stroke="url(#goldGrad)" stroke-width="4" />
+
+  <!-- Stylized 3D Lion Dance Head Graphic -->
+  <g transform="translate(250, 210)">
+    <!-- Lion Mane Crest -->
+    <path d="M-80 -40 Q0 -110 80 -40 Q100 20 70 70 Q0 110 -70 70 Q-100 20 -80 -40 Z" fill="url(#redSilk)" stroke="url(#goldGrad)" stroke-width="6" />
+    <!-- Golden Horn Orb -->
+    <circle cx="0" cy="-75" r="18" fill="url(#goldGrad)" filter="url(#goldGlow)" />
+    <circle cx="0" cy="-75" r="8" fill="#ffffff" />
+    <!-- Eyes -->
+    <ellipse cx="-35" cy="-20" rx="18" ry="14" fill="#ffffff" stroke="url(#goldGrad)" stroke-width="4" />
+    <circle cx="-35" cy="-20" r="8" fill="#dc2626" />
+    <circle cx="-33" cy="-22" r="3" fill="#ffffff" />
+
+    <ellipse cx="35" cy="-20" rx="18" ry="14" fill="#ffffff" stroke="url(#goldGrad)" stroke-width="4" />
+    <circle cx="35" cy="-20" r="8" fill="#dc2626" />
+    <circle cx="33" cy="-22" r="3" fill="#ffffff" />
+
+    <!-- Snout & Mouth -->
+    <path d="M-40 20 Q0 5 40 20 Q50 65 0 75 Q-50 65 -40 20 Z" fill="url(#goldGrad)" />
+    <path d="M-25 35 Q0 55 25 35" fill="none" stroke="#7f1d1d" stroke-width="5" stroke-linecap="round" />
+    <circle cx="0" cy="25" r="10" fill="#dc2626" />
+  </g>
+
+  <!-- Golden Yuanbao (Ingots) Flanking Lions -->
+  <!-- Left Ingot -->
+  <g transform="translate(90, 310) scale(0.7)">
+    <path d="M-40 10 C-40 -20 40 -20 40 10 C30 35 -30 35 -40 10 Z" fill="url(#goldGrad)" stroke="#fef08a" stroke-width="3" />
+    <ellipse cx="0" cy="-2" rx="20" ry="10" fill="#fef08a" />
+  </g>
+
+  <!-- Right Ingot -->
+  <g transform="translate(410, 310) scale(0.7)">
+    <path d="M-40 10 C-40 -20 40 -20 40 10 C30 35 -30 35 -40 10 Z" fill="url(#goldGrad)" stroke="#fef08a" stroke-width="3" />
+    <ellipse cx="0" cy="-2" rx="20" ry="10" fill="#fef08a" />
+  </g>
+
+  <!-- Exploding Firecrackers & Gold Coins -->
+  <g transform="translate(70, 220)">
+    <rect x="-8" y="-18" width="16" height="36" rx="4" fill="#dc2626" stroke="url(#goldGrad)" stroke-width="2" />
+    <line x1="0" y1="-18" x2="6" y2="-28" stroke="#fef08a" stroke-width="2" />
+  </g>
+  <g transform="translate(430, 220)">
+    <rect x="-8" y="-18" width="16" height="36" rx="4" fill="#dc2626" stroke="url(#goldGrad)" stroke-width="2" />
+    <line x1="0" y1="-18" x2="-6" y2="-28" stroke="#fef08a" stroke-width="2" />
+  </g>
+
+  <!-- Floating 3D Gold Coins with Square Hole -->
+  <g transform="translate(130, 140)">
+    <circle cx="0" cy="0" r="16" fill="url(#goldGrad)" stroke="#ffffff" stroke-width="2" />
+    <rect x="-5" y="-5" width="10" height="10" fill="#7f1d1d" />
+  </g>
+  <g transform="translate(370, 140)">
+    <circle cx="0" cy="0" r="16" fill="url(#goldGrad)" stroke="#ffffff" stroke-width="2" />
+    <rect x="-5" y="-5" width="10" height="10" fill="#7f1d1d" />
+  </g>
+
+  <!-- Bottom Metallic Title Badge Banner -->
+  <g transform="translate(250, 420)">
+    <!-- Outer Golden Banner Plate -->
+    <path d="M-210 -35 L210 -35 L225 0 L210 35 L-210 35 L-225 0 Z" fill="url(#goldGrad)" filter="url(#goldGlow)" />
+    <!-- Inner Crimson Ribbon -->
+    <path d="M-200 -28 L200 -28 L212 0 L200 28 L-200 28 L-212 0 Z" fill="url(#redSilk)" stroke="url(#goldGrad)" stroke-width="3" />
+    
+    <!-- Metallic Title Typography -->
+    <text x="0" y="-3" text-anchor="middle" font-family="'Arial Black', 'Impact', sans-serif" font-weight="900" font-size="28" fill="url(#goldGrad)" stroke="#000000" stroke-width="2" letter-spacing="3">
+      CHINESE NEW YEAR
+    </text>
+    <text x="0" y="20" text-anchor="middle" font-family="'Arial Black', 'Impact', sans-serif" font-weight="900" font-size="16" fill="#fef08a" letter-spacing="6">
+      12,000X MAX WIN
+    </text>
+  </g>
+</svg>

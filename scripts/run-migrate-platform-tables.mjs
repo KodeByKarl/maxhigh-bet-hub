@@ -16,6 +16,18 @@ const conn = process.env.DATABASE_URL
 const sql = fs.readFileSync("scripts/migrate-platform-tables.sql", "utf8");
 await conn.query(sql);
 
+try {
+  await conn.query("ALTER TABLE platform_settings ADD COLUMN master_chip_pool DECIMAL(16,2) NOT NULL DEFAULT 1000000.00 AFTER max_withdraw");
+} catch {
+  // Column already exists
+}
+
+try {
+  await conn.query("ALTER TABLE users ADD COLUMN upline_id VARCHAR(36) NULL");
+} catch {
+  // Column already exists
+}
+
 for (const table of ["platform_settings", "promotions", "risk_controls"]) {
   const [rows] = await conn.query(`SHOW TABLES LIKE '${table}'`);
   console.log(Array.isArray(rows) && rows.length ? `OK: ${table}` : `MISSING: ${table}`);
