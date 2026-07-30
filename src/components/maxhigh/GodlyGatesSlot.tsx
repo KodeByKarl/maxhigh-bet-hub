@@ -128,6 +128,7 @@ export function GodlyGatesSlot({
       });
     return () => {
       alive = false;
+      geAudio.stopAmbient();
     };
   }, []);
 

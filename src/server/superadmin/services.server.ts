@@ -124,6 +124,19 @@ export async function listSuperUsers(opts?: {
       ? await base.where(and(...filters)).orderBy(desc(users.createdAt)).limit(limit)
       : await base.orderBy(desc(users.createdAt)).limit(limit);
 
+  const uplineIds = Array.from(new Set(rows.map((u) => u.parentAgentId).filter(Boolean))) as string[];
+  const agentMap = new Map<string, string>();
+
+  if (uplineIds.length > 0) {
+    const agents = await db
+      .select({ id: users.id, username: users.username, displayName: users.displayName })
+      .from(users)
+      .where(sql`${users.id} in (${sql.join(uplineIds.map((id) => sql`${id}`), sql`, `)})`);
+    for (const a of agents) {
+      agentMap.set(a.id, a.username);
+    }
+  }
+
   return rows.map((u) => ({
     id: u.id,
     email: u.email,
@@ -134,6 +147,7 @@ export async function listSuperUsers(opts?: {
     isLocked: (u.isLocked === "yes" || (u.failedAttempts ?? 0) >= 3 || Boolean(u.lockedUntil && new Date() < new Date(u.lockedUntil))) ? "yes" : "no",
     failedAttempts: u.failedAttempts ?? 0,
     parentAgentId: u.parentAgentId ?? null,
+    parentAgentUsername: u.parentAgentId ? (agentMap.get(u.parentAgentId) ?? "System / Direct") : "System / Direct",
     createdAt: u.createdAt?.toISOString?.() ?? String(u.createdAt),
   }));
 }

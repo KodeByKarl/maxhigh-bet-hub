@@ -47,6 +47,31 @@ export const adminCreateUserFn = createServerFn({ method: "POST" })
     return adminCreatePlayer(data);
   });
 
+const updateUserSchema = z.object({
+  userId: z.string().uuid(),
+  displayName: z.string().max(128).optional(),
+  email: optionalEmail,
+  password: z.string().min(6).max(128).optional(),
+});
+
+export const adminUpdateUserFn = createServerFn({ method: "POST" })
+  .validator(updateUserSchema)
+  .handler(async ({ data }) => {
+    const { adminUpdateUser } = await import("../server/admin/services.server");
+    return adminUpdateUser(data);
+  });
+
+const resetFailedAttemptsSchema = z.object({
+  userId: z.string().uuid(),
+});
+
+export const adminResetFailedAttemptsFn = createServerFn({ method: "POST" })
+  .validator(resetFailedAttemptsSchema)
+  .handler(async ({ data }) => {
+    const { adminResetFailedAttempts } = await import("../server/admin/services.server");
+    return adminResetFailedAttempts(data.userId);
+  });
+
 const adjustUserSchema = z.object({
   userId: z.string().uuid(),
   delta: z.number().finite(),

@@ -146,8 +146,8 @@ export function FundInOutPanel({
                           className={[
                             "inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider",
                             isDeposit
-                              ? "bg-emerald-500/15 text-emerald-700"
-                              : "bg-sky-500/15 text-sky-700",
+                              ? "bg-emerald-500/15 text-emerald-400 border border-emerald-500/30"
+                              : "bg-sky-500/15 text-sky-300 border border-sky-500/30",
                           ].join(" ")}
                         >
                           {isDeposit ? <Plus size={12} strokeWidth={3} /> : <ArrowDownToLine size={12} />}

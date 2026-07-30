@@ -9,9 +9,10 @@ async function upsertUser(opts: {
   username: string;
   email: string | null;
   password: string;
-  role: "player" | "admin" | "superadmin";
+  role: "player" | "admin" | "agent" | "master_agent" | "superadmin";
   displayName: string;
   balance: string;
+  parentAgentId?: string;
 }) {
   const db = getDb();
   const username = opts.username.trim().toLowerCase();
@@ -31,6 +32,7 @@ async function upsertUser(opts: {
       balance: opts.balance,
       role: opts.role,
       displayName: opts.displayName,
+      parentAgentId: opts.parentAgentId,
     });
     console.log(`Created ${opts.role}: ${username} / ${opts.password}`);
     return userId;
@@ -38,7 +40,7 @@ async function upsertUser(opts: {
 
   await db
     .update(users)
-    .set({ role: opts.role, balance: opts.balance })
+    .set({ role: opts.role, balance: opts.balance, parentAgentId: opts.parentAgentId })
     .where(eq(users.id, existing[0].id));
   console.log(`${opts.role} updated: ${username}`);
   return existing[0].id;
@@ -46,6 +48,10 @@ async function upsertUser(opts: {
 
 async function main() {
   const db = getDb();
+
+  // Delete legacy admin account if present
+  await db.delete(users).where(sql`LOWER(${users.username}) = 'admin'`);
+  console.log("Removed legacy 'admin' account.");
 
   const superId = await upsertUser({
     username: "superadmin",
@@ -56,13 +62,23 @@ async function main() {
     balance: "100000.00",
   });
 
-  const adminId = await upsertUser({
-    username: "admin",
-    email: "admin@maxhigh.gg",
-    password: "admin123",
-    role: "admin",
-    displayName: "MaxHigh Admin",
+  const masterAgentId = await upsertUser({
+    username: "masteragent",
+    email: "master@maxhigh.gg",
+    password: "master123",
+    role: "master_agent",
+    displayName: "Master Agent One",
+    balance: "100000.00",
+  });
+
+  const agentId = await upsertUser({
+    username: "agent1",
+    email: "agent1@maxhigh.gg",
+    password: "agent123",
+    role: "agent",
+    displayName: "Agent One",
     balance: "50000.00",
+    parentAgentId: masterAgentId,
   });
 
   const players = [

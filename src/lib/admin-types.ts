@@ -6,16 +6,24 @@ export type AdminDashboardStats = {
   totalAdmins: number;
   totalBets: number;
   betVolume: number;
+  winVolume: number;
+  netEarnings: number;
   biggestWin24h: number;
   liveWins24h: number;
+  agentBalance: number;
+  agentUsername: string;
+  agentRole: string;
   labels: {
     totalUsers: string;
     totalPlayers: string;
     totalAdmins: string;
     totalBets: string;
     betVolume: string;
+    winVolume: string;
+    netEarnings: string;
     biggestWin24h: string;
     liveWins24h: string;
+    agentBalance: string;
   };
 };
 
@@ -32,6 +40,8 @@ export type AdminUserRow = {
   isLocked?: boolean;
   failedAttempts?: number;
   createdAt: string;
+  agentName?: string | null;
+  parentAgentId?: string | null;
 };
 
 export type AdminAuditLogRow = {
