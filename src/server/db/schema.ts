@@ -23,6 +23,11 @@ export const users = mysqlTable(
     isLocked: mysqlEnum("is_locked", ["yes", "no"]).notNull().default("no"),
     failedAttempts: bigint("failed_attempts", { mode: "number" }).notNull().default(0),
     lockedUntil: timestamp("locked_until"),
+    lockedAt: timestamp("locked_at"),
+    lockedBy: varchar("locked_by", { length: 36 }),
+    lockReason: text("lock_reason"),
+    unlockedAt: timestamp("unlocked_at"),
+    unlockedBy: varchar("unlocked_by", { length: 36 }),
     displayName: varchar("display_name", { length: 128 }),
     avatarUrl: varchar("avatar_url", { length: 512 }),
     parentAgentId: varchar("upline_id", { length: 36 }),
@@ -337,10 +342,35 @@ export const supportMessages = mysqlTable(
   ],
 );
 
+export const provablyFairSeeds = mysqlTable(
+  "provably_fair_seeds",
+  {
+    id: varchar("id", { length: 36 }).primaryKey(),
+    userId: varchar("user_id", { length: 36 })
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    serverSeed: varchar("server_seed", { length: 128 }).notNull(),
+    serverSeedHash: varchar("server_seed_hash", { length: 128 }).notNull(),
+    clientSeed: varchar("client_seed", { length: 128 }).notNull(),
+    nonce: bigint("nonce", { mode: "number" }).notNull().default(0),
+    status: mysqlEnum("status", ["active", "revealed"]).notNull().default("active"),
+    createdAt: timestamp("created_at").notNull().default(sql`CURRENT_TIMESTAMP`),
+    updatedAt: timestamp("updated_at")
+      .notNull()
+      .default(sql`CURRENT_TIMESTAMP`)
+      .onUpdateNow(),
+  },
+  (t) => [
+    index("pfs_user_idx").on(t.userId),
+    index("pfs_status_idx").on(t.status),
+  ],
+);
+
 export type PlatformSettings = typeof platformSettings.$inferSelect;
 export type CarouselSlide = typeof carouselSlides.$inferSelect;
 export type Promotion = typeof promotions.$inferSelect;
 export type RiskControl = typeof riskControls.$inferSelect;
 export type SupportTicket = typeof supportTickets.$inferSelect;
 export type SupportMessage = typeof supportMessages.$inferSelect;
+export type ProvablyFairSeed = typeof provablyFairSeeds.$inferSelect;
 

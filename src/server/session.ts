@@ -93,6 +93,12 @@ export async function destroySession() {
   deleteCookie(SESSION_COOKIE, { path: "/" });
 }
 
+export async function destroyUserSessions(userId: string): Promise<number> {
+  const db = getDb();
+  const result = await db.delete(sessions).where(eq(sessions.userId, userId));
+  return result[0]?.affectedRows ?? 0;
+}
+
 /** Mark the current session as active (Players Online). */
 export async function touchPresence(): Promise<boolean> {
   const token = getCookie(SESSION_COOKIE);
@@ -121,6 +127,18 @@ export async function getSessionUser(): Promise<PublicUser | null> {
 
   const row = rows[0];
   if (!row) {
+    deleteCookie(SESSION_COOKIE, { path: "/" });
+    return null;
+  }
+
+  // If user is locked, invalidate active session immediately
+  const isLocked =
+    row.user.isLocked === "yes" ||
+    (row.user.failedAttempts ?? 0) >= 3 ||
+    (row.user.lockedUntil && now < new Date(row.user.lockedUntil));
+
+  if (isLocked) {
+    await db.delete(sessions).where(eq(sessions.id, row.sessionId));
     deleteCookie(SESSION_COOKIE, { path: "/" });
     return null;
   }

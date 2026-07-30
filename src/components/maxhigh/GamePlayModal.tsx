@@ -9,6 +9,7 @@ import { GodlyGatesSlot } from "./GodlyGatesSlot";
 import { SugarSurgeSlot } from "./SugarSurgeSlot";
 import { GoldenPantherSlot } from "./GoldenPantherSlot";
 import { ChineseNewYearSlot } from "./ChineseNewYearSlot";
+import { MahjongWaysSlot } from "./MahjongWaysSlot";
 
 type Props = {
   game: SlotGame | null;
@@ -416,6 +417,10 @@ export function GamePlayModal({ game, open, onOpenChange }: Props) {
         ) : game.id === "chinese-new-year" ? (
           <div className="relative h-dvh w-screen overflow-hidden">
             <ChineseNewYearSlot gameId={game.id} gameName={game.name} />
+          </div>
+        ) : game.id === "mahjong-ways" ? (
+          <div className="relative h-dvh w-screen overflow-hidden flex items-center justify-center p-1 sm:p-3">
+            <MahjongWaysSlot />
           </div>
         ) : (
           <ComingSoonPlay game={game} />

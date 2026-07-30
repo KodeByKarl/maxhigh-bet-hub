@@ -1,5 +1,5 @@
 /**
- * Audit log writer for Domain 2 admin actions.
+ * Audit log writer for Domain 2 admin actions & game audit logs.
  */
 import { getDb } from "../db/client";
 import { auditLogs } from "../db/schema";
@@ -11,7 +11,9 @@ export type AuditAction =
   | "admin.logout"
   | "user.create"
   | "user.balance_adjust"
-  | "user.role_change";
+  | "user.role_change"
+  | "game.bet"
+  | "game.win";
 
 export async function writeAuditLog(opts: {
   actor: Pick<PublicUser, "id" | "username"> | null;
@@ -21,15 +23,20 @@ export async function writeAuditLog(opts: {
   targetId?: string | null;
   meta?: Record<string, unknown> | null;
 }) {
-  const db = getDb();
-  await db.insert(auditLogs).values({
-    id: newId(),
-    actorId: opts.actor?.id ?? null,
-    actorUsername: opts.actor?.username ?? "system",
-    action: opts.action,
-    targetType: opts.targetType ?? null,
-    targetId: opts.targetId ?? null,
-    summary: opts.summary.slice(0, 512),
-    meta: opts.meta ? JSON.stringify(opts.meta) : null,
-  });
+  try {
+    const db = getDb();
+    await db.insert(auditLogs).values({
+      id: newId(),
+      actorId: opts.actor?.id ?? null,
+      actorUsername: opts.actor?.username ?? "system",
+      action: opts.action,
+      targetType: opts.targetType ?? null,
+      targetId: opts.targetId ?? null,
+      summary: opts.summary ? opts.summary.slice(0, 512) : "",
+      meta: opts.meta ? JSON.stringify(opts.meta) : null,
+      createdAt: new Date(),
+    });
+  } catch (err) {
+    console.error("[AuditLog] Failed writing audit log:", err);
+  }
 }

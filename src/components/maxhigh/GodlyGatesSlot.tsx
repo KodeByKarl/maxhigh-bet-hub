@@ -29,8 +29,6 @@ import { COLS, ROWS } from "./godly-gates/types";
 import { SymbolIcon } from "./godly-gates/SymbolIcon";
 import { WaysWinOverlay } from "./godly-gates/WaysWinOverlay";
 import { WinCelebration } from "./godly-gates/WinCelebration";
-import { PharaohMascot, type MascotMood } from "./godly-gates/PharaohMascot";
-import { getGodlyGatesEngineConfigFn } from "@/functions/superadmin";
 import { GODLY_GATES_GAME_ID } from "@/lib/godly-gates-config";
 
 type Phase = "idle" | "dropping" | "glow" | "popping" | "falling" | "scatter";
@@ -133,22 +131,7 @@ export function GodlyGatesSlot({
     };
   }, []);
 
-  useEffect(() => {
-    if (gameId !== GODLY_GATES_GAME_ID && gameId !== "godly-gates") return;
-    void getGodlyGatesEngineConfigFn()
-      .then((cfg) => setGodlyGatesConfig(cfg))
-      .catch(() => undefined);
-  }, [gameId]);
 
-  const refreshEngineConfig = useCallback(async () => {
-    if (gameId !== GODLY_GATES_GAME_ID && gameId !== "godly-gates") return;
-    try {
-      const cfg = await getGodlyGatesEngineConfigFn();
-      setGodlyGatesConfig(cfg);
-    } catch {
-      /* keep last known */
-    }
-  }, [gameId]);
 
   const wait = (ms: number) => rAFWait(turboRef.current ? Math.round(ms * 0.45) : ms);
 
@@ -342,7 +325,6 @@ export function GodlyGatesSlot({
     setFsIntroSpins(null);
 
     try {
-      if (!isFree) await refreshEngineConfig();
       let settled: Awaited<ReturnType<typeof godlyGatesSpinFn>>;
       if (isFree) {
         const sessionId = playSessionIdRef.current;

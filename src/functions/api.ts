@@ -422,3 +422,43 @@ export const assignAgentToTicketFn = createServerFn({ method: "POST" })
     const { assignAgentToTicket } = await import("../server/services.server");
     return assignAgentToTicket(data.ticketId);
   });
+
+const mahjongWaysSpinSchema = z.object({
+  bet: z.number().finite().positive().max(100_000),
+  ante: z.boolean(),
+});
+
+export const mahjongWaysSpinFn = createServerFn({ method: "POST" })
+  .validator(mahjongWaysSpinSchema)
+  .handler(async ({ data }) => {
+    const { mahjongWaysPaidSpin } = await import("../server/games/mahjong-ways.server");
+    return mahjongWaysPaidSpin(data);
+  });
+
+const mahjongWaysFreeSpinSchema = z.object({
+  sessionId: z.string().uuid(),
+});
+
+export const mahjongWaysFreeSpinFn = createServerFn({ method: "POST" })
+  .validator(mahjongWaysFreeSpinSchema)
+  .handler(async ({ data }) => {
+    const { mahjongWaysFreeSpin } = await import("../server/games/mahjong-ways.server");
+    return mahjongWaysFreeSpin(data);
+  });
+
+const mahjongWaysBuySchema = z.object({
+  bet: z.number().finite().positive().max(100_000),
+});
+
+export const mahjongWaysBuyFeatureFn = createServerFn({ method: "POST" })
+  .validator(mahjongWaysBuySchema)
+  .handler(async ({ data }) => {
+    const { mahjongWaysBuyFeature } = await import("../server/games/mahjong-ways.server");
+    return mahjongWaysBuyFeature(data);
+  });
+
+export const getMahjongWaysSessionFn = createServerFn({ method: "GET" }).handler(async () => {
+  const { getMahjongWaysOpenSession } = await import("../server/games/mahjong-ways.server");
+  return getMahjongWaysOpenSession();
+});
+

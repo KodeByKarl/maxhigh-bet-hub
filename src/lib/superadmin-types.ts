@@ -43,6 +43,7 @@ export type SuperUserRow = {
   role: UserRole;
   displayName: string | null;
   isLocked: "yes" | "no";
+  failedAttempts?: number;
   parentAgentId?: string | null;
   parentAgentUsername?: string | null;
   createdAt: string;

@@ -36,7 +36,7 @@ const createUserSchema = z.object({
     .regex(/^[a-zA-Z0-9_]+$/),
   password: z.string().min(6).max(128),
   balance: z.number().finite().nonnegative().optional(),
-  role: z.enum(["player", "admin", "superadmin"]).optional(),
+  role: z.enum(["player", "admin", "agent", "master_agent", "superadmin"]).optional(),
   displayName: z.string().max(128).optional(),
 });
 
@@ -63,6 +63,7 @@ export const adminAdjustBalanceFn = createServerFn({ method: "POST" })
 const toggleLockSchema = z.object({
   userId: z.string().uuid(),
   lock: z.boolean().optional(),
+  reason: z.string().max(500).optional(),
 });
 
 export const adminToggleUserLockFn = createServerFn({ method: "POST" })
@@ -70,6 +71,43 @@ export const adminToggleUserLockFn = createServerFn({ method: "POST" })
   .handler(async ({ data }) => {
     const { adminToggleUserLock } = await import("../server/admin/services.server");
     return adminToggleUserLock(data);
+  });
+
+const lockUserSchema = z.object({
+  userId: z.string().uuid(),
+  reason: z.string().max(500).optional(),
+});
+
+export const adminLockUserFn = createServerFn({ method: "POST" })
+  .validator(lockUserSchema)
+  .handler(async ({ data }) => {
+    const { adminLockUser } = await import("../server/admin/services.server");
+    return adminLockUser(data);
+  });
+
+const userIdOnlySchema = z.object({
+  userId: z.string().uuid(),
+});
+
+export const adminUnlockUserFn = createServerFn({ method: "POST" })
+  .validator(userIdOnlySchema)
+  .handler(async ({ data }) => {
+    const { adminUnlockUser } = await import("../server/admin/services.server");
+    return adminUnlockUser(data);
+  });
+
+export const adminForceLogoutUserFn = createServerFn({ method: "POST" })
+  .validator(userIdOnlySchema)
+  .handler(async ({ data }) => {
+    const { adminForceLogoutUser } = await import("../server/admin/services.server");
+    return adminForceLogoutUser(data);
+  });
+
+export const adminResetFailedAttemptsFn = createServerFn({ method: "POST" })
+  .validator(userIdOnlySchema)
+  .handler(async ({ data }) => {
+    const { adminResetFailedAttempts } = await import("../server/admin/services.server");
+    return adminResetFailedAttempts(data);
   });
 
 const auditListSchema = z.object({

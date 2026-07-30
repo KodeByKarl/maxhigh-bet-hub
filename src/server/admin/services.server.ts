@@ -8,8 +8,9 @@ import { getDb } from "../db/client";
 import { auditLogs, liveWins, transactions, users } from "../db/schema";
 import type { PublicUser, UserRole } from "@/lib/user";
 import type { AdminAuditLogRow, AdminDashboardStats, AdminUserRow, AdminTransactionRow, AdminDayPulse, WinLoseSummary, WinLoseByLevelRow, WinLoseByProductRow } from "@/lib/admin-types";
-import { money, newId, requireAdmin, toPublicUser } from "../session";
+import { destroyUserSessions, money, newId, requireAdmin, toPublicUser } from "../session";
 import { writeAuditLog } from "./audit.server";
+import { requirePermission } from "../auth/rbac.server";
 
 export type { AdminDashboardStats, AdminUserRow, AdminAuditLogRow, AdminTransactionRow, AdminDayPulse, WinLoseSummary, WinLoseByLevelRow, WinLoseByProductRow };
 
@@ -39,7 +40,7 @@ function formatPhp(n: number) {
 }
 
 export async function fetchAdminDashboard(): Promise<AdminDashboardStats> {
-  await requireAdmin();
+  await requirePermission("DASHBOARD_VIEW");
   const db = getDb();
   const dayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
 
@@ -99,7 +100,7 @@ export async function listAdminUsers(opts?: {
   q?: string;
   limit?: number;
 }): Promise<AdminUserRow[]> {
-  await requireAdmin();
+  await requirePermission("USER_LIST");
   const db = getDb();
   const limit = Math.min(Math.max(opts?.limit ?? 50, 1), 200);
   const q = opts?.q?.trim();
@@ -121,6 +122,8 @@ export async function listAdminUsers(opts?: {
 
   return rows.map((u) => ({
     ...toPublicUser(u),
+    isLocked: u.isLocked === "yes" || (u.failedAttempts ?? 0) >= 3 || Boolean(u.lockedUntil && new Date() < new Date(u.lockedUntil)),
+    failedAttempts: u.failedAttempts ?? 0,
     createdAt: u.createdAt?.toISOString?.() ?? String(u.createdAt),
   }));
 }
@@ -133,7 +136,7 @@ export async function adminCreatePlayer(data: {
   role?: UserRole;
   displayName?: string;
 }): Promise<PublicUser> {
-  const actor = await requireAdmin();
+  const actor = await requirePermission("USER_CREATE");
   const role: UserRole = data.role ?? "player";
 
   // Only superadmin may create admin/superadmin accounts
@@ -184,7 +187,7 @@ export async function adminAdjustUserBalance(data: {
   delta: number;
   note?: string;
 }): Promise<PublicUser> {
-  const actor = await requireAdmin();
+  const actor = await requirePermission("USER_ADJUST_BALANCE", { targetType: "user", targetId: data.userId });
   if (!Number.isFinite(data.delta) || data.delta === 0) {
     throw new Error("Invalid amount");
   }
@@ -231,13 +234,157 @@ export async function adminAdjustUserBalance(data: {
   return updated;
 }
 
+export async function adminLockUser(data: {
+  userId: string;
+  reason?: string;
+}): Promise<PublicUser> {
+  const actor = await requirePermission("USER_LOCK", { targetType: "user", targetId: data.userId });
+  const db = getDb();
+  const now = new Date();
+
+  const rows = await db.select().from(users).where(eq(users.id, data.userId)).limit(1);
+  const user = rows[0];
+  if (!user) throw new Error("User not found");
+
+  const lockReason = data.reason?.trim() || "Locked by admin";
+
+  await db
+    .update(users)
+    .set({
+      isLocked: "yes",
+      lockedAt: now,
+      lockedBy: actor.id,
+      lockReason,
+      lockedUntil: new Date(now.getTime() + 365 * 24 * 60 * 60 * 1000),
+    })
+    .where(eq(users.id, user.id));
+
+  // Force logout: immediately terminate all active sessions for this user
+  const terminatedCount = await destroyUserSessions(user.id);
+
+  await writeAuditLog({
+    actor,
+    action: "user.lock",
+    summary: `Locked account @${user.username}. Reason: ${lockReason} (${terminatedCount} sessions terminated)`,
+    targetType: "user",
+    targetId: user.id,
+    meta: {
+      username: user.username,
+      isLocked: true,
+      lockedBy: actor.username,
+      lockReason,
+      terminatedSessionsCount: terminatedCount,
+    },
+  });
+
+  const updatedRows = await db.select().from(users).where(eq(users.id, user.id)).limit(1);
+  return toPublicUser(updatedRows[0]!);
+}
+
+export async function adminUnlockUser(data: {
+  userId: string;
+}): Promise<PublicUser> {
+  const actor = await requirePermission("USER_UNLOCK", { targetType: "user", targetId: data.userId });
+  const db = getDb();
+  const now = new Date();
+
+  const rows = await db.select().from(users).where(eq(users.id, data.userId)).limit(1);
+  const user = rows[0];
+  if (!user) throw new Error("User not found");
+
+  await db
+    .update(users)
+    .set({
+      isLocked: "no",
+      failedAttempts: 0,
+      lockedUntil: null,
+      unlockedAt: now,
+      unlockedBy: actor.id,
+    })
+    .where(eq(users.id, user.id));
+
+  await writeAuditLog({
+    actor,
+    action: "user.unlock",
+    summary: `Unlocked account @${user.username}`,
+    targetType: "user",
+    targetId: user.id,
+    meta: {
+      username: user.username,
+      isLocked: false,
+      unlockedBy: actor.username,
+    },
+  });
+
+  const updatedRows = await db.select().from(users).where(eq(users.id, user.id)).limit(1);
+  return toPublicUser(updatedRows[0]!);
+}
+
+export async function adminForceLogoutUser(data: {
+  userId: string;
+}): Promise<{ ok: boolean; username: string; terminatedSessionsCount: number }> {
+  const actor = await requirePermission("USER_FORCE_LOGOUT", { targetType: "user", targetId: data.userId });
+  const db = getDb();
+
+  const rows = await db.select().from(users).where(eq(users.id, data.userId)).limit(1);
+  const user = rows[0];
+  if (!user) throw new Error("User not found");
+
+  const terminatedCount = await destroyUserSessions(user.id);
+
+  await writeAuditLog({
+    actor,
+    action: "user.force_logout",
+    summary: `Invalidated all active sessions for @${user.username} (${terminatedCount} session(s) destroyed)`,
+    targetType: "user",
+    targetId: user.id,
+    meta: {
+      username: user.username,
+      terminatedSessionsCount: terminatedCount,
+      performedBy: actor.username,
+    },
+  });
+
+  return { ok: true, username: user.username, terminatedSessionsCount: terminatedCount };
+}
+
+export async function adminResetFailedAttempts(data: {
+  userId: string;
+}): Promise<{ ok: boolean; username: string; failedAttempts: number }> {
+  const actor = await requirePermission("USER_RESET_FAILED", { targetType: "user", targetId: data.userId });
+  const db = getDb();
+
+  const rows = await db.select().from(users).where(eq(users.id, data.userId)).limit(1);
+  const user = rows[0];
+  if (!user) throw new Error("User not found");
+
+  await db
+    .update(users)
+    .set({ failedAttempts: 0 })
+    .where(eq(users.id, user.id));
+
+  await writeAuditLog({
+    actor,
+    action: "user.reset_failed_attempts",
+    summary: `Reset failed login attempts counter to 0 for @${user.username}`,
+    targetType: "user",
+    targetId: user.id,
+    meta: {
+      username: user.username,
+      previousFailedAttempts: user.failedAttempts ?? 0,
+      resetBy: actor.username,
+    },
+  });
+
+  return { ok: true, username: user.username, failedAttempts: 0 };
+}
+
 export async function adminToggleUserLock(data: {
   userId: string;
   lock?: boolean;
+  reason?: string;
 }): Promise<PublicUser> {
-  const actor = await requireAdmin();
   const db = getDb();
-
   const rows = await db.select().from(users).where(eq(users.id, data.userId)).limit(1);
   const user = rows[0];
   if (!user) throw new Error("User not found");
@@ -245,27 +392,11 @@ export async function adminToggleUserLock(data: {
   const currentlyLocked = user.isLocked === "yes" || (user.failedAttempts ?? 0) >= 3;
   const nextLockState = data.lock !== undefined ? data.lock : !currentlyLocked;
 
-  const patch = nextLockState
-    ? { isLocked: "yes" as const, failedAttempts: 3, lockedUntil: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000) }
-    : { isLocked: "no" as const, failedAttempts: 0, lockedUntil: null };
-
-  await db.update(users).set(patch).where(eq(users.id, user.id));
-
-  await writeAuditLog({
-    actor,
-    action: nextLockState ? "user.lock" : "user.unlock",
-    summary: `${nextLockState ? "Locked" : "Unlocked"} user @${user.username}`,
-    targetType: "user",
-    targetId: user.id,
-    meta: {
-      username: user.username,
-      isLocked: nextLockState,
-      unlockedBy: actor.username,
-    },
-  });
-
-  const updatedRows = await db.select().from(users).where(eq(users.id, user.id)).limit(1);
-  return toPublicUser(updatedRows[0]!);
+  if (nextLockState) {
+    return adminLockUser({ userId: data.userId, reason: data.reason });
+  } else {
+    return adminUnlockUser({ userId: data.userId });
+  }
 }
 
 export async function recordAdminLogin(actor: PublicUser) {
@@ -290,7 +421,7 @@ export async function listAdminAuditLogs(opts?: {
    */
   scope?: "system" | "all";
 }): Promise<AdminAuditLogRow[]> {
-  await requireAdmin();
+  await requirePermission("AUDIT_LOG_VIEW");
   const db = getDb();
   const limit = Math.min(Math.max(opts?.limit ?? 100, 1), 300);
   const q = opts?.q?.trim();
@@ -345,7 +476,7 @@ export async function listAdminAuditLogs(opts?: {
 }
 
 export async function fetchAdminDayPulse(dayIndex: number): Promise<AdminDayPulse> {
-  await requireAdmin();
+  await requirePermission("DASHBOARD_VIEW");
   const db = getDb();
   const { start, end, idx } = dayBounds(dayIndex);
 
@@ -424,7 +555,7 @@ export async function listAdminTransactions(opts?: {
   game?: string;
   limit?: number;
 }): Promise<AdminTransactionRow[]> {
-  await requireAdmin();
+  await requirePermission("TRANSACTION_LIST");
   const db = getDb();
   const limit = Math.min(Math.max(opts?.limit ?? 200, 1), 500);
   const q = opts?.q?.trim();
@@ -498,7 +629,7 @@ export async function listAdminTransactions(opts?: {
 }
 
 export async function fetchWinLoseSummary(): Promise<WinLoseSummary> {
-  await requireAdmin();
+  await requirePermission("REPORTS_VIEW");
   const db = getDb();
   const [row] = await db
     .select({
@@ -526,7 +657,7 @@ export async function fetchWinLoseSummary(): Promise<WinLoseSummary> {
 
 /** Win/Lose by player account (level = member account). */
 export async function fetchWinLoseByLevel(opts?: { limit?: number }): Promise<WinLoseByLevelRow[]> {
-  await requireAdmin();
+  await requirePermission("REPORTS_VIEW");
   const db = getDb();
   const limit = Math.min(Math.max(opts?.limit ?? 200, 1), 500);
 
@@ -569,7 +700,7 @@ export async function fetchWinLoseByLevel(opts?: { limit?: number }): Promise<Wi
 
 /** Win/Lose by product (game name). */
 export async function fetchWinLoseByProduct(opts?: { limit?: number }): Promise<WinLoseByProductRow[]> {
-  await requireAdmin();
+  await requirePermission("REPORTS_VIEW");
   const db = getDb();
   const limit = Math.min(Math.max(opts?.limit ?? 100, 1), 200);
 

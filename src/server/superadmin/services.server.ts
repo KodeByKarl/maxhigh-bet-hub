@@ -5,7 +5,7 @@
 import { eq, desc, sql, like, or, and, asc } from "drizzle-orm";
 import { hash } from "bcryptjs";
 import { getDb } from "../db/client";
-import { gameControls, jackpot, platformSettings, promotions, riskControls, transactions, users, walletRequests } from "../db/schema";
+import { auditLogs, gameControls, jackpot, platformSettings, promotions, riskControls, sessions, transactions, users, walletRequests } from "../db/schema";
 import type { PublicUser, UserRole } from "@/lib/user";
 import type {
   PlatformSettingsData,
@@ -16,8 +16,9 @@ import type {
   SuperUserRow,
   SuperWalletRequestRow,
 } from "@/lib/superadmin-types";
-import { money, newId, requireAdmin, requireSuperadmin, toPublicUser } from "../session";
+import { destroyUserSessions, money, newId, requireAdmin, requireSuperadmin, toPublicUser } from "../session";
 import { writeAuditLog } from "../admin/audit.server";
+import { requirePermission } from "../auth/rbac.server";
 import { slotGames } from "@/lib/games";
 
 function formatPhp(n: number) {
@@ -130,6 +131,9 @@ export async function listSuperUsers(opts?: {
     balance: Number(u.balance),
     role: u.role as UserRole,
     displayName: u.displayName,
+    isLocked: (u.isLocked === "yes" || (u.failedAttempts ?? 0) >= 3 || Boolean(u.lockedUntil && new Date() < new Date(u.lockedUntil))) ? "yes" : "no",
+    failedAttempts: u.failedAttempts ?? 0,
+    parentAgentId: u.parentAgentId ?? null,
     createdAt: u.createdAt?.toISOString?.() ?? String(u.createdAt),
   }));
 }
@@ -138,7 +142,7 @@ export async function superSetUserRole(data: {
   userId: string;
   role: UserRole;
 }): Promise<PublicUser> {
-  const actor = await requireSuperadmin();
+  const actor = await requirePermission("ROLE_UPDATE", { targetType: "user", targetId: data.userId });
   if (data.userId === actor.id && data.role !== "superadmin") {
     throw new Error("Cannot demote your own superadmin account");
   }
@@ -149,13 +153,17 @@ export async function superSetUserRole(data: {
   if (!target) throw new Error("User not found");
 
   await db.update(users).set({ role: data.role }).where(eq(users.id, data.userId));
+
+  // Immediate privilege revocation: destroy active sessions so demotion takes effect instantly
+  const terminatedSessionsCount = await destroyUserSessions(data.userId);
+
   await writeAuditLog({
     actor,
     action: "super.role_change",
-    summary: `Changed @${target.username} role ${target.role} → ${data.role}`,
+    summary: `Changed @${target.username} role ${target.role} → ${data.role} (${terminatedSessionsCount} session(s) terminated)`,
     targetType: "user",
     targetId: target.id,
-    meta: { from: target.role, to: data.role },
+    meta: { from: target.role, to: data.role, terminatedSessionsCount },
   });
 
   const next = await db.select().from(users).where(eq(users.id, data.userId)).limit(1);
@@ -1137,6 +1145,7 @@ export async function getRiskControls(): Promise<RiskControlData> {
     return {
       maxSingleBet: Number(r.maxSingleBet),
       maxDailyPayout: Number(r.maxDailyPayout),
+      maxWeeklyLimit: Number(r.maxWeeklyLimit ?? 20000),
       autoFlagLargeWins: r.autoFlagLargeWins === "yes",
       largeWinThreshold: Number(r.largeWinThreshold),
     };
@@ -1144,6 +1153,7 @@ export async function getRiskControls(): Promise<RiskControlData> {
     return {
       maxSingleBet: 10000,
       maxDailyPayout: 500000,
+      maxWeeklyLimit: 20000,
       autoFlagLargeWins: true,
       largeWinThreshold: 50000,
     };
@@ -1157,6 +1167,7 @@ export async function saveRiskControls(data: RiskControlData): Promise<RiskContr
   const payload = {
     maxSingleBet: money(data.maxSingleBet),
     maxDailyPayout: money(data.maxDailyPayout),
+    maxWeeklyLimit: money(data.maxWeeklyLimit ?? 20000),
     autoFlagLargeWins: data.autoFlagLargeWins ? ("yes" as const) : ("no" as const),
     largeWinThreshold: money(data.largeWinThreshold),
   };
@@ -1177,5 +1188,222 @@ export async function saveRiskControls(data: RiskControlData): Promise<RiskContr
   });
 
   return data;
+}
+
+export async function superGetUserSecurityDetails(userId: string) {
+  await requireSuperadmin();
+  const db = getDb();
+
+  const userRows = await db.select().from(users).where(eq(users.id, userId)).limit(1);
+  const user = userRows[0];
+  if (!user) throw new Error("User not found");
+
+  const userTx = await db
+    .select()
+    .from(transactions)
+    .where(eq(transactions.userId, userId))
+    .orderBy(desc(transactions.createdAt))
+    .limit(100);
+
+  let totalBets = 0;
+  let totalWins = 0;
+  let largeWinCount = 0;
+
+  for (const tx of userTx) {
+    const amt = Math.abs(Number(tx.amount));
+    if (tx.type === "bet") totalBets += amt;
+    if (tx.type === "win" || tx.type === "jackpot") {
+      totalWins += amt;
+      if (amt >= 10000) largeWinCount++;
+    }
+  }
+
+  const netPnL = totalWins - totalBets;
+  const isSuspicious = largeWinCount > 2 || (user.failedAttempts ?? 0) >= 3 || user.isLocked === "yes";
+
+  const userAudit = await db
+    .select()
+    .from(auditLogs)
+    .where(or(eq(auditLogs.actorId, userId), eq(auditLogs.targetId, userId)))
+    .orderBy(desc(auditLogs.createdAt))
+    .limit(20);
+
+  const sessionRows = await db
+    .select()
+    .from(sessions)
+    .where(eq(sessions.userId, userId))
+    .orderBy(desc(sessions.lastSeenAt))
+    .limit(1);
+  const lastSeenAt = sessionRows[0]?.lastSeenAt?.toISOString() ?? user.createdAt.toISOString();
+
+  return {
+    securityCode: user.id.slice(0, 6).toUpperCase(),
+    totalBets,
+    totalWins,
+    netPnL,
+    totalTransactions: userTx.length,
+    largeWinCount,
+    lastSeenAt,
+    statusText: isSuspicious ? "Elevated Risk — Flagged for inspection" : "Normal Posture",
+    isSuspicious,
+    recentLogs: userAudit.map((l) => ({
+      id: l.id,
+      action: l.action,
+      summary: l.summary,
+      timestamp: l.createdAt?.toISOString?.() ?? String(l.createdAt),
+    })),
+  };
+}
+
+export type EarningsPoint = {
+  label: string;
+  bets: number;
+  wins: number;
+  netEarnings: number;
+};
+
+export type EarningsGraphData = {
+  todayNet: number;
+  thisWeekNet: number;
+  thisMonthNet: number;
+  allTimeNet: number;
+  points: EarningsPoint[];
+};
+
+export async function fetchPlatformEarningsGraph(opts?: {
+  period?: "day" | "week" | "month";
+  gameId?: string;
+}): Promise<EarningsGraphData> {
+  await requirePermission("REPORTS_VIEW");
+  const db = getDb();
+  const period = opts?.period ?? "week";
+  const game = opts?.gameId?.trim();
+
+  // Overall KPI aggregations
+  const now = new Date();
+  const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+
+  const dayOfWeek = (now.getDay() + 6) % 7; // Monday = 0
+  const startOfWeek = new Date(startOfDay.getTime() - dayOfWeek * 24 * 60 * 60 * 1000);
+  const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+
+  const filterGame = game ? like(transactions.game, `%${game}%`) : undefined;
+
+  // 1. Calculate Summary Net Totals directly from immutable transactions ledger table
+  const [summaryRow] = await db
+    .select({
+      todayBets: sql<number>`coalesce(sum(case when ${transactions.type} = 'bet' and ${transactions.createdAt} >= ${startOfDay} then abs(${transactions.amount}) else 0 end), 0)`,
+      todayWins: sql<number>`coalesce(sum(case when ${transactions.type} in ('win','jackpot') and ${transactions.createdAt} >= ${startOfDay} then abs(${transactions.amount}) else 0 end), 0)`,
+
+      weekBets: sql<number>`coalesce(sum(case when ${transactions.type} = 'bet' and ${transactions.createdAt} >= ${startOfWeek} then abs(${transactions.amount}) else 0 end), 0)`,
+      weekWins: sql<number>`coalesce(sum(case when ${transactions.type} in ('win','jackpot') and ${transactions.createdAt} >= ${startOfWeek} then abs(${transactions.amount}) else 0 end), 0)`,
+
+      monthBets: sql<number>`coalesce(sum(case when ${transactions.type} = 'bet' and ${transactions.createdAt} >= ${startOfMonth} then abs(${transactions.amount}) else 0 end), 0)`,
+      monthWins: sql<number>`coalesce(sum(case when ${transactions.type} in ('win','jackpot') and ${transactions.createdAt} >= ${startOfMonth} then abs(${transactions.amount}) else 0 end), 0)`,
+
+      allBets: sql<number>`coalesce(sum(case when ${transactions.type} = 'bet' then abs(${transactions.amount}) else 0 end), 0)`,
+      allWins: sql<number>`coalesce(sum(case when ${transactions.type} in ('win','jackpot') and ${transactions.createdAt} >= ${startOfMonth} then abs(${transactions.amount}) else 0 end), 0)`,
+    })
+    .from(transactions)
+    .where(filterGame ? filterGame : undefined);
+
+  const todayNet = +(Number(summaryRow?.todayBets ?? 0) - Number(summaryRow?.todayWins ?? 0)).toFixed(2);
+  const thisWeekNet = +(Number(summaryRow?.weekBets ?? 0) - Number(summaryRow?.weekWins ?? 0)).toFixed(2);
+  const thisMonthNet = +(Number(summaryRow?.monthBets ?? 0) - Number(summaryRow?.monthWins ?? 0)).toFixed(2);
+  const allTimeNet = +(Number(summaryRow?.allBets ?? 0) - Number(summaryRow?.allWins ?? 0)).toFixed(2);
+
+  // 2. Generate Time Bucket Points based on period
+  let points: EarningsPoint[] = [];
+
+  if (period === "day") {
+    // 24 Hourly Buckets for Today
+    const hours = Array.from({ length: 24 }, (_, i) => i);
+    for (const h of hours) {
+      const hStart = new Date(startOfDay.getTime() + h * 60 * 60 * 1000);
+      const hEnd = new Date(hStart.getTime() + 60 * 60 * 1000);
+
+      const [hRow] = await db
+        .select({
+          bets: sql<number>`coalesce(sum(case when ${transactions.type} = 'bet' then abs(${transactions.amount}) else 0 end), 0)`,
+          wins: sql<number>`coalesce(sum(case when ${transactions.type} in ('win','jackpot') then abs(${transactions.amount}) else 0 end), 0)`,
+        })
+        .from(transactions)
+        .where(
+          and(
+            sql`${transactions.createdAt} >= ${hStart}`,
+            sql`${transactions.createdAt} < ${hEnd}`,
+            filterGame,
+          ),
+        );
+
+      const bets = Number(hRow?.bets ?? 0);
+      const wins = Number(hRow?.wins ?? 0);
+      const netEarnings = +(bets - wins).toFixed(2);
+      const label = `${String(h).padStart(2, "0")}:00`;
+
+      points.push({ label, bets, wins, netEarnings });
+    }
+  } else if (period === "week") {
+    // 7 Daily Buckets (Mon to Sun)
+    const weekLabels = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+    for (let i = 0; i < 7; i++) {
+      const dStart = new Date(startOfWeek.getTime() + i * 24 * 60 * 60 * 1000);
+      const dEnd = new Date(dStart.getTime() + 24 * 60 * 60 * 1000);
+
+      const [dRow] = await db
+        .select({
+          bets: sql<number>`coalesce(sum(case when ${transactions.type} = 'bet' then abs(${transactions.amount}) else 0 end), 0)`,
+          wins: sql<number>`coalesce(sum(case when ${transactions.type} in ('win','jackpot') then abs(${transactions.amount}) else 0 end), 0)`,
+        })
+        .from(transactions)
+        .where(
+          and(
+            sql`${transactions.createdAt} >= ${dStart}`,
+            sql`${transactions.createdAt} < ${dEnd}`,
+            filterGame,
+          ),
+        );
+
+      const bets = Number(dRow?.bets ?? 0);
+      const wins = Number(dRow?.wins ?? 0);
+      const netEarnings = +(bets - wins).toFixed(2);
+      points.push({ label: weekLabels[i]!, bets, wins, netEarnings });
+    }
+  } else {
+    // 12 Monthly Buckets for past year
+    const monthLabels = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+    const currentYear = now.getFullYear();
+    for (let m = 0; m < 12; m++) {
+      const mStart = new Date(currentYear, m, 1);
+      const mEnd = new Date(currentYear, m + 1, 1);
+
+      const [mRow] = await db
+        .select({
+          bets: sql<number>`coalesce(sum(case when ${transactions.type} = 'bet' then abs(${transactions.amount}) else 0 end), 0)`,
+          wins: sql<number>`coalesce(sum(case when ${transactions.type} in ('win','jackpot') then abs(${transactions.amount}) else 0 end), 0)`,
+        })
+        .from(transactions)
+        .where(
+          and(
+            sql`${transactions.createdAt} >= ${mStart}`,
+            sql`${transactions.createdAt} < ${mEnd}`,
+            filterGame,
+          ),
+        );
+
+      const bets = Number(mRow?.bets ?? 0);
+      const wins = Number(mRow?.wins ?? 0);
+      const netEarnings = +(bets - wins).toFixed(2);
+      points.push({ label: monthLabels[m]!, bets, wins, netEarnings });
+    }
+  }
+
+  return {
+    todayNet,
+    thisWeekNet,
+    thisMonthNet,
+    allTimeNet,
+    points,
+  };
 }
 

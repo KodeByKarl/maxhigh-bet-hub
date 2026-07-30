@@ -19,14 +19,18 @@ export type AdminDashboardStats = {
   };
 };
 
+import type { UserRole } from "./user";
+
 export type AdminUserRow = {
   id: string;
   email: string | null;
   username: string;
   balance: number;
-  role: "player" | "admin" | "superadmin";
+  role: UserRole;
   displayName: string | null;
   avatarUrl: string | null;
+  isLocked?: boolean;
+  failedAttempts?: number;
   createdAt: string;
 };
 

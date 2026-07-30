@@ -821,8 +821,9 @@ function PlayerActionModal({
                 onClick={async () => {
                   try {
                     const res = await superToggleLockUserFn({ data: { userId: user.id } });
-                    setIsLocked(res.isLocked === "yes");
-                    toast.success(`Account @${res.username} ${res.isLocked === "yes" ? "Locked" : "Unlocked"} successfully!`);
+                    const lockedNow = Boolean((res as any).isLocked === "yes" || (res as any).isLocked === true);
+                    setIsLocked(lockedNow);
+                    toast.success(`Account @${res.username} ${lockedNow ? "Locked" : "Unlocked"} successfully!`);
                     onActionComplete?.();
                   } catch (e) {
                     toast.error(e instanceof Error ? e.message : "Lock action failed");

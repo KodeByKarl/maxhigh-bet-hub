@@ -1,4 +1,4 @@
-export type UserRole = "player" | "agent" | "master_agent" | "superadmin";
+export type UserRole = "player" | "admin" | "agent" | "master_agent" | "superadmin";
 
 export type PublicUser = {
   id: string;
