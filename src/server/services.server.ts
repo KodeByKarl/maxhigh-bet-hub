@@ -3,6 +3,7 @@ import { compare, hash } from "bcryptjs";
 import { getDb } from "./db/client";
 import { jackpot, liveWins, sessions, transactions, users, walletRequests, auditLogs, supportTickets, supportMessages } from "./db/schema";
 import type { PublicUser } from "@/lib/user";
+import { isStaffRole } from "@/lib/user";
 import {
   createSession,
   destroySession,
@@ -552,7 +553,7 @@ export async function addPlayerSupportMessage(text: string, lang: "en" | "tl") {
 
 export async function addAgentSupportMessage(ticketId: string, text: string) {
   const session = await requireUser();
-  if (session.role !== "admin" && session.role !== "superadmin") {
+  if (!isStaffRole(session.role)) {
     throw new Error("Unauthorized");
   }
   const db = getDb();
@@ -569,7 +570,7 @@ export async function addAgentSupportMessage(ticketId: string, text: string) {
 
 export async function fetchAdminTickets() {
   const session = await requireUser();
-  if (session.role !== "admin" && session.role !== "superadmin") {
+  if (!isStaffRole(session.role)) {
     throw new Error("Unauthorized");
   }
   const db = getDb();
@@ -638,7 +639,7 @@ export async function createPlayerTicket(playerName: string, concern: string) {
 
 export async function assignAgentToTicket(ticketId: string) {
   const session = await requireUser();
-  if (session.role !== "admin" && session.role !== "superadmin") {
+  if (!isStaffRole(session.role)) {
     throw new Error("Unauthorized");
   }
   const db = getDb();
@@ -660,7 +661,7 @@ export async function assignAgentToTicket(ticketId: string) {
 
 export async function fetchAdminTicketMessages(ticketId: string) {
   const session = await requireUser();
-  if (session.role !== "admin" && session.role !== "superadmin") {
+  if (!isStaffRole(session.role)) {
     throw new Error("Unauthorized");
   }
   const db = getDb();
@@ -682,7 +683,7 @@ export async function fetchAdminTicketMessages(ticketId: string) {
 
 export async function resolveSupportTicket(ticketId: string) {
   const session = await requireUser();
-  if (session.role !== "admin" && session.role !== "superadmin") {
+  if (!isStaffRole(session.role)) {
     throw new Error("Unauthorized");
   }
   const db = getDb();

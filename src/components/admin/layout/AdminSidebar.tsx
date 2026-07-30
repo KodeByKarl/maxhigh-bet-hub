@@ -6,7 +6,7 @@ const nav = [
   { to: "/admin" as const, label: "Dashboard", icon: LayoutDashboard, exact: true },
   { to: "/admin/users" as const, label: "Player List", icon: Users, exact: false },
   { to: "/admin/fund" as const, label: "Fund In/Out", icon: Wallet, exact: false },
-  { to: "/admin/audit" as const, label: "Reports", icon: ScrollText, exact: false },
+  { to: "/admin/reports/$view" as const, params: { view: "winlose" }, label: "Reports", icon: ScrollText, exact: false },
   { to: "/admin/support" as const, label: "Live Support", icon: Headphones, exact: false },
 ];
 
@@ -31,6 +31,7 @@ export function AdminSidebar() {
               <Link
                 key={item.to}
                 to={item.to}
+                params={(item as any).params}
                 activeOptions={{ exact: item.exact }}
                 className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-white/50 transition-colors hover:bg-white/[0.05] hover:text-white data-[status=active]:bg-gradient-to-r data-[status=active]:from-violet-600/90 data-[status=active]:to-fuchsia-600/80 data-[status=active]:text-white data-[status=active]:shadow-[0_0_24px_rgba(124,58,237,0.35)]"
               >
@@ -41,7 +42,7 @@ export function AdminSidebar() {
           })}
         </nav>
 
-        <div className="mt-3 rounded-2xl border border-violet-400/20 bg-gradient-to-br from-violet-600/40 via-fuchsia-600/20 to-transparent p-4">
+        <div className="mt-3 rounded-2xl border border-violet-400/15 bg-violet-500/[0.08] p-4">
           <div className="flex items-center gap-2 text-sm font-semibold text-white">
             <Sparkles size={15} className="text-violet-200" />
             Staff tip

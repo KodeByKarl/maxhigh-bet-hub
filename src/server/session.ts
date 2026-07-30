@@ -137,9 +137,11 @@ export async function requireUser(): Promise<PublicUser> {
   return user;
 }
 
+import { isStaffRole } from "../lib/user";
+
 export async function requireAdmin(): Promise<PublicUser> {
   const user = await requireUser();
-  if (user.role !== "admin" && user.role !== "superadmin") {
+  if (!isStaffRole(user.role)) {
     throw new Error("Admin access only");
   }
   return user;

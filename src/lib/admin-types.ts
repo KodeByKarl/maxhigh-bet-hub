@@ -6,28 +6,42 @@ export type AdminDashboardStats = {
   totalAdmins: number;
   totalBets: number;
   betVolume: number;
+  winVolume: number;
+  netEarnings: number;
   biggestWin24h: number;
   liveWins24h: number;
+  agentBalance: number;
+  agentUsername: string;
+  agentRole: string;
   labels: {
     totalUsers: string;
     totalPlayers: string;
     totalAdmins: string;
     totalBets: string;
     betVolume: string;
+    winVolume: string;
+    netEarnings: string;
     biggestWin24h: string;
     liveWins24h: string;
+    agentBalance: string;
   };
 };
+
+import type { UserRole } from "./user";
 
 export type AdminUserRow = {
   id: string;
   email: string | null;
   username: string;
   balance: number;
-  role: "player" | "admin" | "superadmin";
+  role: UserRole;
   displayName: string | null;
   avatarUrl: string | null;
   createdAt: string;
+  isLocked?: boolean;
+  failedAttempts?: number;
+  agentName?: string | null;
+  parentAgentId?: string | null;
 };
 
 export type AdminAuditLogRow = {

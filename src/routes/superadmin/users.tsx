@@ -157,9 +157,10 @@ function SuperUsersPage() {
           <thead className="border-b border-amber-500/20 text-[11px] uppercase text-muted-foreground bg-white/[0.02]">
             <tr>
               <th className="w-[20%] px-4 py-3.5">Player</th>
-              <th className="w-[15%] px-4 py-3.5 text-center">Role</th>
+              <th className="w-[18%] px-4 py-3.5 text-center">Created By / Agent</th>
+              <th className="w-[12%] px-4 py-3.5 text-center">Role</th>
               <th className="w-[15%] px-4 py-3.5 text-center">Balance</th>
-              <th className="w-[50%] px-4 py-3.5 text-center">Actions Grid</th>
+              <th className="w-[35%] px-4 py-3.5 text-center">Actions Grid</th>
             </tr>
           </thead>
           <tbody>
@@ -184,7 +185,13 @@ function SuperUsersPage() {
                   <div className="mt-0.5 text-[10px] text-muted-foreground font-mono">ID: {u.id.slice(0, 8)}…</div>
                 </td>
 
-                <td className="w-[15%] px-4 py-4 align-middle text-center">
+                <td className="w-[18%] px-4 py-4 align-middle text-center">
+                  <span className="inline-flex items-center gap-1 rounded-lg border border-amber-500/30 bg-amber-500/10 px-2.5 py-1 text-xs font-bold text-amber-300">
+                    🛡️ @{u.parentAgentUsername || "System / Direct"}
+                  </span>
+                </td>
+
+                <td className="w-[12%] px-4 py-4 align-middle text-center">
                   <select
                     value={u.role}
                     onChange={(e) => void setUserRole(u.id, e.target.value as UserRole)}

@@ -21,7 +21,7 @@ export function AdminTopBar() {
           <Link to="/admin/fund" className="rounded-lg p-2 text-white/50 hover:bg-white/5 hover:text-white">
             <Wallet size={18} />
           </Link>
-          <Link to="/admin/audit" className="rounded-lg p-2 text-white/50 hover:bg-white/5 hover:text-white">
+          <Link to="/admin/reports/$view" params={{ view: "winlose" }} className="rounded-lg p-2 text-white/50 hover:bg-white/5 hover:text-white">
             <ScrollText size={18} />
           </Link>
         </div>

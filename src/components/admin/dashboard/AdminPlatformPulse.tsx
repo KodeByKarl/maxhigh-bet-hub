@@ -3,12 +3,22 @@ import { Link } from "@tanstack/react-router";
 import { getAdminDayPulseFn } from "@/functions/admin";
 import type { AdminDayPulse } from "@/lib/admin-types";
 import { adminGlass } from "../ui/glass";
+import { BarChart2, ExternalLink } from "lucide-react";
 
 const DAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"] as const;
 
 function todayIndex() {
-  const jsDay = new Date().getDay(); // 0 Sun
+  const jsDay = new Date().getDay();
   return jsDay === 0 ? 6 : jsDay - 1;
+}
+
+interface PulseBar {
+  label: string;
+  value: number;
+  display: string;
+  color: string;
+  bgColor: string;
+  pct: number;
 }
 
 export function AdminPlatformPulse({
@@ -20,115 +30,156 @@ export function AdminPlatformPulse({
 }) {
   const [pulse, setPulse] = useState<AdminDayPulse | null>(null);
   const [loading, setLoading] = useState(false);
+  const [animate, setAnimate] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
     setLoading(true);
+    setAnimate(false);
     (async () => {
       try {
         const data = await getAdminDayPulseFn({ data: { dayIndex: selectedDay } });
-        if (!cancelled) setPulse(data);
+        if (!cancelled) {
+          setPulse(data);
+          // Trigger bar animation after data loads
+          setTimeout(() => { if (!cancelled) setAnimate(true); }, 80);
+        }
       } catch {
         if (!cancelled) setPulse(null);
       } finally {
         if (!cancelled) setLoading(false);
       }
     })();
-    return () => {
-      cancelled = true;
-    };
+    return () => { cancelled = true; };
   }, [selectedDay]);
 
-  const bars = [
+  const allVals = [
+    pulse?.bets ?? 0,
+    pulse?.wins ?? 0,
+    pulse?.betVolume ?? 0,
+    pulse?.playersActive ?? 0,
+  ];
+  const globalMax = Math.max(1, ...allVals);
+
+  const bars: PulseBar[] = [
     {
       label: "Bets / Losses",
       value: pulse?.bets ?? 0,
       display: pulse?.labels.bets ?? "—",
-      max: Math.max(pulse?.bets ?? 1, 1),
-      color: "from-rose-500 to-orange-400",
+      color: "bg-rose-500",
+      bgColor: "rgba(244,63,94,0.10)",
+      pct: Math.min(100, Math.round(((pulse?.bets ?? 0) / globalMax) * 100)),
     },
     {
-      label: "Wins",
+      label: "Player Wins",
       value: pulse?.wins ?? 0,
       display: pulse?.labels.wins ?? "—",
-      max: Math.max(pulse?.wins ?? 1, 1),
-      color: "from-emerald-400 to-lime-400",
+      color: "bg-emerald-500",
+      bgColor: "rgba(16,185,129,0.10)",
+      pct: Math.min(100, Math.round(((pulse?.wins ?? 0) / globalMax) * 100)),
     },
     {
-      label: "Bet volume",
+      label: "Bet Volume",
       value: pulse?.betVolume ?? 0,
       display: pulse?.labels.betVolume ?? "—",
-      max: Math.max(pulse?.betVolume ?? 1, 1),
-      color: "from-violet-500 to-fuchsia-400",
+      color: "bg-violet-500",
+      bgColor: "rgba(139,92,246,0.10)",
+      pct: Math.min(100, Math.round(((pulse?.betVolume ?? 0) / globalMax) * 100)),
     },
     {
-      label: "Players active",
+      label: "Active Players",
       value: pulse?.playersActive ?? 0,
       display: pulse?.labels.playersActive ?? "—",
-      max: Math.max(pulse?.playersActive ?? 1, 1),
-      color: "from-cyan-400 to-blue-500",
+      color: "bg-cyan-500",
+      bgColor: "rgba(34,211,238,0.10)",
+      pct: Math.min(100, Math.round(((pulse?.playersActive ?? 0) / globalMax) * 100)),
     },
   ];
 
   const isToday = selectedDay === todayIndex();
 
   return (
-    <section className={`${adminGlass} flex h-full flex-col p-5`}>
-      <div className="flex items-center justify-between gap-2">
-        <h2 className="text-lg font-semibold text-white">Platform pulse</h2>
-        <span className="rounded-full bg-violet-500/20 px-2.5 py-1 text-[11px] font-semibold text-violet-200">
+    <section className={`${adminGlass} flex h-full flex-col p-5 overflow-hidden`}>
+      {/* Header */}
+      <div className="flex items-center justify-between gap-2 mb-1">
+        <div className="flex items-center gap-2.5">
+          <div className="grid h-8 w-8 place-items-center rounded-lg bg-violet-500/15 border border-violet-400/20">
+            <BarChart2 size={15} className="text-violet-300" />
+          </div>
+          <div>
+            <h2 className="text-sm font-bold text-white leading-none">Platform Pulse</h2>
+            <p className="text-[10px] text-white/35 mt-0.5">
+              {isToday ? "Live today" : DAYS[selectedDay]} · audit data
+            </p>
+          </div>
+        </div>
+        <span className="rounded-full border border-white/10 bg-white/[0.04] px-2.5 py-1 text-[11px] font-semibold text-white/50">
           {loading ? "Loading…" : pulse?.dateLabel ?? "—"}
         </span>
       </div>
 
-      <p className="mt-1 text-xs text-white/40">
-        {isToday ? "Today" : DAYS[selectedDay]} · bets, wins & sessions from audit DB
-      </p>
-
-      <div className="mt-5 flex flex-1 flex-col justify-center gap-5">
-        {bars.map((b) => {
-          const pct = Math.min(100, Math.round((b.value / b.max) * 100));
-          return (
-            <div key={b.label}>
-              <div className="mb-2 flex items-center justify-between text-xs">
-                <span className="text-white/50">{b.label}</span>
-                <span className="font-semibold tabular-nums text-white">{b.display}</span>
-              </div>
-              <div className="h-2.5 overflow-hidden rounded-full bg-white/[0.06]">
-                <div
-                  className={`h-full rounded-full bg-gradient-to-r ${b.color} transition-all duration-500`}
-                  style={{ width: `${loading ? 8 : Math.max(pct, b.value > 0 ? 6 : 0)}%` }}
-                />
-              </div>
+      {/* Bars */}
+      <div className="mt-5 flex flex-1 flex-col justify-center gap-4">
+        {bars.map((b) => (
+          <div key={b.label}>
+            <div className="mb-2 flex items-center justify-between">
+              <span className="text-[11px] font-semibold text-white/45">{b.label}</span>
+              <span className="text-[11px] font-bold tabular-nums text-white">{b.display}</span>
             </div>
-          );
-        })}
-      </div>
-
-      <div className="mt-4 grid grid-cols-2 gap-2 text-center text-[11px]">
-        <div className="rounded-xl bg-white/[0.03] px-2 py-2">
-          <div className="font-bold text-white">{pulse?.labels.winVolume ?? "—"}</div>
-          <div className="text-white/35">Win volume</div>
-        </div>
-        <div className="rounded-xl bg-white/[0.03] px-2 py-2">
-          <div className="font-bold text-white">{pulse?.labels.sessions ?? "—"}</div>
-          <div className="text-white/35">Game opens</div>
-        </div>
-      </div>
-
-      <div className="mt-5 border-t border-white/[0.06] pt-4">
-        <div className="mb-2 flex items-center justify-between">
-          <div className="text-[11px] font-semibold uppercase tracking-wide text-white/35">
-            This week
+            {/* Track */}
+            <div className="h-3 overflow-hidden rounded-full" style={{ background: b.bgColor }}>
+              <div
+                className={`h-full rounded-full ${b.color} transition-all duration-700 ease-out`}
+                style={{
+                  width: `${animate && !loading ? Math.max(b.pct, b.value > 0 ? 5 : 0) : 0}%`,
+                }}
+              />
+            </div>
           </div>
+        ))}
+      </div>
+
+      {/* Mini summary */}
+      <div className="mt-4 grid grid-cols-3 gap-2">
+        {[
+          { label: "Win Vol.", value: pulse?.labels.winVolume ?? "—" },
+          { label: "Sessions", value: pulse?.labels.sessions ?? "—" },
+          {
+            label: "Net",
+            value:
+              pulse
+                ? `₱${Math.max(0, pulse.betVolume - pulse.winVolume).toLocaleString("en-PH", { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`
+                : "—",
+          },
+        ].map(({ label, value }) => (
+          <div key={label} className="rounded-xl border border-white/[0.06] bg-white/[0.03] px-2.5 py-2.5 text-center">
+            <div className="text-sm font-black text-white tabular-nums">{value}</div>
+            <div className="text-[10px] text-white/30 mt-0.5">{label}</div>
+          </div>
+        ))}
+      </div>
+
+      {/* Day Selector */}
+      <div className="mt-4 border-t border-white/[0.06] pt-4">
+        <div className="mb-2 flex items-center justify-between">
+          <span className="text-[10px] font-bold uppercase tracking-widest text-white/25">
+            This Week
+          </span>
           <Link
             to="/admin/audit"
-            className="text-[11px] font-semibold text-violet-300 hover:text-violet-200"
+            className="inline-flex items-center gap-1 text-[11px] font-semibold text-violet-300 hover:text-violet-200 transition-colors"
           >
-            Open audit
+            Audit log
+            <ExternalLink size={10} />
           </Link>
         </div>
-        <div className="flex justify-between gap-1" role="tablist" aria-label="Select day">
+
+        {/* Segmented control */}
+        <div
+          className="flex gap-1 rounded-xl border border-white/[0.07] bg-white/[0.03] p-1"
+          role="tablist"
+          aria-label="Select day"
+        >
           {DAYS.map((d, i) => {
             const active = i === selectedDay;
             const isFuture = i > todayIndex();
@@ -141,15 +192,18 @@ export function AdminPlatformPulse({
                 disabled={isFuture}
                 title={isFuture ? "Future day" : d}
                 onClick={() => onSelectDay(i)}
-                className={`flex h-9 flex-1 items-center justify-center rounded-lg text-[10px] font-semibold transition ${
+                className={`relative flex h-8 flex-1 items-center justify-center rounded-lg text-[10px] font-bold transition-all duration-200 ${
                   active
-                    ? "bg-violet-500/40 text-violet-100 shadow-[0_0_16px_rgba(139,92,246,0.45)]"
+                    ? "bg-violet-600 text-white"
                     : isFuture
-                      ? "cursor-not-allowed bg-white/[0.02] text-white/20"
-                      : "bg-white/[0.04] text-white/45 hover:bg-white/[0.08] hover:text-white"
+                      ? "cursor-not-allowed text-white/15"
+                      : "text-white/40 hover:bg-white/[0.07] hover:text-white"
                 }`}
               >
                 {d[0]}
+                {i === todayIndex() && !active && (
+                  <span className="absolute -top-0.5 -right-0.5 h-1.5 w-1.5 rounded-full bg-emerald-400" />
+                )}
               </button>
             );
           })}

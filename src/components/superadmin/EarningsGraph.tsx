@@ -40,7 +40,8 @@ export function EarningsGraph() {
     void loadGraph();
   }, [loadGraph]);
 
-  const maxVal = Math.max(1, ...(data?.points.map((p) => Math.abs(p.netEarnings)) ?? [1000]));
+  const points = data?.points ?? [];
+  const maxVal = Math.max(1, ...(points.length > 0 ? points.map((p) => Math.abs(p.netEarnings)) : [1000]));
 
   return (
     <div className={`${saGlass} p-5 space-y-4`}>
@@ -110,7 +111,7 @@ export function EarningsGraph() {
       <div className="pt-2">
         {loading ? (
           <div className="h-44 flex items-center justify-center text-xs text-muted-foreground">Loading earnings chart…</div>
-        ) : !data || data.points.length === 0 ? (
+        ) : !data || !data.points || data.points.length === 0 ? (
           <div className="h-44 flex items-center justify-center text-xs text-muted-foreground">No earnings data recorded yet.</div>
         ) : (
           <div className="space-y-2">

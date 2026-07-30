@@ -74,6 +74,9 @@ class ChineseNewYearAudio {
 
   preload() {
     if (!this.ctx) this.ensureCtx();
+    if (!this.muted && !this.isAmbientPlaying) {
+      this.startAmbient();
+    }
   }
 
   private ensureCtx(): AudioContext | null {
@@ -117,7 +120,6 @@ class ChineseNewYearAudio {
       const ctx = this.ensureCtx();
       if (ctx?.state === "suspended") void ctx.resume();
       this.unlocked = true;
-      if (!this.muted) this.startAmbient();
       window.removeEventListener("pointerdown", unlock);
       window.removeEventListener("keydown", unlock);
     };

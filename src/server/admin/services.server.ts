@@ -39,18 +39,21 @@ function formatPhp(n: number) {
 }
 
 export async function fetchAdminDashboard(): Promise<AdminDashboardStats> {
-  await requireAdmin();
+  const actor = await requireAdmin();
   const db = getDb();
   const dayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
 
-  const [userCounts] = await db
+  const [actorRow] = await db.select().from(users).where(eq(users.id, actor.id)).limit(1);
+  const agentBalance = actorRow ? Number(actorRow.balance) : actor.balance;
+
+  // Count all players on the platform (superadmin handles staff/admin counts)
+  const [playerCountRow] = await db
     .select({
-      totalUsers: sql<number>`count(*)`,
       totalPlayers: sql<number>`sum(case when ${users.role} = 'player' then 1 else 0 end)`,
-      totalAdmins: sql<number>`sum(case when ${users.role} in ('admin','superadmin') then 1 else 0 end)`,
     })
     .from(users);
 
+  // All player bets & wins platform-wide
   const [betRow] = await db
     .select({
       totalBets: sql<number>`count(*)`,
@@ -61,36 +64,51 @@ export async function fetchAdminDashboard(): Promise<AdminDashboardStats> {
 
   const [winRow] = await db
     .select({
+      winVolume: sql<string>`coalesce(sum(${transactions.amount}), 0)`,
+    })
+    .from(transactions)
+    .where(eq(transactions.type, "win"));
+
+  const [liveWinRow] = await db
+    .select({
       biggest: sql<string>`coalesce(max(${liveWins.amount}), 0)`,
       count: sql<number>`count(*)`,
     })
     .from(liveWins)
     .where(sql`${liveWins.createdAt} >= ${dayAgo}`);
 
-  const totalUsers = Number(userCounts?.totalUsers ?? 0);
-  const totalPlayers = Number(userCounts?.totalPlayers ?? 0);
-  const totalAdmins = Number(userCounts?.totalAdmins ?? 0);
+  const totalPlayers = Number(playerCountRow?.totalPlayers ?? 0);
   const totalBets = Number(betRow?.totalBets ?? 0);
   const betVolume = Number(betRow?.betVolume ?? 0);
-  const biggestWin24h = Number(winRow?.biggest ?? 0);
-  const liveWins24h = Number(winRow?.count ?? 0);
+  const winVolume = Number(winRow?.winVolume ?? 0);
+  const netEarnings = +(betVolume - winVolume).toFixed(2);
+  const biggestWin24h = Number(liveWinRow?.biggest ?? 0);
+  const liveWins24h = Number(liveWinRow?.count ?? 0);
 
   return {
-    totalUsers,
+    totalUsers: totalPlayers,   // admin sees players only; admin/staff counts are superadmin scope
     totalPlayers,
-    totalAdmins,
+    totalAdmins: 0,             // hidden from admin — superadmin only
     totalBets,
     betVolume,
+    winVolume,
+    netEarnings,
     biggestWin24h,
     liveWins24h,
+    agentBalance,
+    agentUsername: actor.username,
+    agentRole: actor.role,
     labels: {
-      totalUsers: totalUsers.toLocaleString("en-PH"),
+      totalUsers: totalPlayers.toLocaleString("en-PH"),
       totalPlayers: totalPlayers.toLocaleString("en-PH"),
-      totalAdmins: totalAdmins.toLocaleString("en-PH"),
+      totalAdmins: "—",
       totalBets: totalBets.toLocaleString("en-PH"),
       betVolume: formatPhp(betVolume),
+      winVolume: formatPhp(winVolume),
+      netEarnings: formatPhp(netEarnings),
       biggestWin24h: formatPhp(biggestWin24h),
       liveWins24h: liveWins24h.toLocaleString("en-PH"),
+      agentBalance: formatPhp(agentBalance),
     },
   };
 }
@@ -119,10 +137,82 @@ export async function listAdminUsers(opts?: {
         .limit(limit)
     : await db.select().from(users).orderBy(desc(users.createdAt)).limit(limit);
 
+  const uplineIds = Array.from(new Set(rows.map((u) => u.parentAgentId).filter(Boolean))) as string[];
+  const agentMap = new Map<string, string>();
+
+  if (uplineIds.length > 0) {
+    const agents = await db
+      .select({ id: users.id, username: users.username, displayName: users.displayName })
+      .from(users)
+      .where(sql`${users.id} in (${sql.join(uplineIds.map((id) => sql`${id}`), sql`, `)})`);
+    for (const a of agents) {
+      agentMap.set(a.id, a.displayName || a.username);
+    }
+  }
+
   return rows.map((u) => ({
     ...toPublicUser(u),
+    isLocked: u.isLocked === "yes" || (u.failedAttempts ?? 0) >= 3,
+    failedAttempts: u.failedAttempts ?? 0,
+    parentAgentId: u.parentAgentId ?? null,
+    agentName: u.parentAgentId ? (agentMap.get(u.parentAgentId) ?? "System / Direct") : "System / Direct",
     createdAt: u.createdAt?.toISOString?.() ?? String(u.createdAt),
   }));
+}
+
+export async function adminUpdateUser(data: {
+  userId: string;
+  displayName?: string;
+  email?: string;
+  password?: string;
+}): Promise<PublicUser> {
+  const actor = await requireAdmin();
+  const db = getDb();
+
+  const rows = await db.select().from(users).where(eq(users.id, data.userId)).limit(1);
+  const user = rows[0];
+  if (!user) throw new Error("User not found");
+
+  const updates: Record<string, unknown> = {};
+  if (data.displayName !== undefined) updates.displayName = data.displayName.trim() || null;
+  if (data.email !== undefined) updates.email = data.email.trim().toLowerCase() || null;
+  if (data.password && data.password.trim().length >= 6) {
+    updates.passwordHash = await hash(data.password.trim(), 10);
+  }
+
+  if (Object.keys(updates).length > 0) {
+    await db.update(users).set(updates).where(eq(users.id, user.id));
+    await writeAuditLog({
+      actor,
+      action: "user.update",
+      summary: `Updated profile for @${user.username}`,
+      targetType: "user",
+      targetId: user.id,
+      meta: updates,
+    });
+  }
+
+  const updatedRows = await db.select().from(users).where(eq(users.id, user.id)).limit(1);
+  return toPublicUser(updatedRows[0]!);
+}
+
+export async function adminResetFailedAttempts(userId: string): Promise<PublicUser> {
+  const actor = await requireAdmin();
+  const db = getDb();
+  await db
+    .update(users)
+    .set({ failedAttempts: 0, isLocked: "no", lockedUntil: null })
+    .where(eq(users.id, userId));
+  const rows = await db.select().from(users).where(eq(users.id, userId)).limit(1);
+  const updated = toPublicUser(rows[0]!);
+  await writeAuditLog({
+    actor,
+    action: "user.unlock",
+    summary: `Reset failed login attempts for @${updated.username}`,
+    targetType: "user",
+    targetId: updated.id,
+  });
+  return updated;
 }
 
 export async function adminCreatePlayer(data: {
@@ -142,6 +232,18 @@ export async function adminCreatePlayer(data: {
   }
 
   const db = getDb();
+  const initialBalance = data.balance ?? 0;
+
+  // Deduct initial balance from agent's own wallet if actor is agent/master_agent
+  if (initialBalance > 0 && actor.role !== "superadmin") {
+    const agentRows = await db.select().from(users).where(eq(users.id, actor.id)).limit(1);
+    const agentBal = Number(agentRows[0]?.balance ?? 0);
+    if (agentBal < initialBalance) {
+      throw new Error(`Insufficient wallet balance. You have ₱${agentBal.toFixed(2)}, but need ₱${initialBalance.toFixed(2)} to create account.`);
+    }
+    await db.update(users).set({ balance: money(agentBal - initialBalance) }).where(eq(users.id, actor.id));
+  }
+
   const id = newId();
   const email = data.email?.trim().toLowerCase() || null;
   const username = data.username.trim().toLowerCase();
@@ -151,9 +253,10 @@ export async function adminCreatePlayer(data: {
       email,
       username,
       passwordHash: await hash(data.password, 10),
-      balance: money(data.balance ?? 0),
+      balance: money(initialBalance),
       role,
       displayName: data.displayName?.trim() || null,
+      parentAgentId: actor.id,
     });
   } catch {
     throw new Error("Username or email already exists");
@@ -165,7 +268,7 @@ export async function adminCreatePlayer(data: {
   await writeAuditLog({
     actor,
     action: "user.create",
-    summary: `Created ${created.role} account @${created.username}`,
+    summary: `Created ${created.role} account @${created.username} with ₱${initialBalance.toFixed(2)} initial balance`,
     targetType: "user",
     targetId: created.id,
     meta: {
@@ -173,6 +276,7 @@ export async function adminCreatePlayer(data: {
       username: created.username,
       role: created.role,
       balance: created.balance,
+      deductedFromAgent: actor.username,
     },
   });
 
@@ -190,6 +294,21 @@ export async function adminAdjustUserBalance(data: {
   }
 
   const db = getDb();
+
+  // Enforce Agent wallet deduction when crediting player
+  if (actor.role !== "superadmin" && actor.id !== data.userId) {
+    const agentRows = await db.select().from(users).where(eq(users.id, actor.id)).limit(1);
+    const agentUser = agentRows[0];
+    if (agentUser) {
+      const agentBal = Number(agentUser.balance);
+      if (data.delta > 0 && agentBal < data.delta) {
+        throw new Error(`Insufficient agent wallet balance. You have ₱${agentBal.toFixed(2)}, but are attempting to issue ₱${data.delta.toFixed(2)}.`);
+      }
+      const newAgentBal = +(agentBal - data.delta).toFixed(2);
+      await db.update(users).set({ balance: money(newAgentBal) }).where(eq(users.id, actor.id));
+    }
+  }
+
   const result = await db.transaction(async (tx) => {
     const rows = await tx.select().from(users).where(eq(users.id, data.userId)).limit(1);
     const user = rows[0];
@@ -217,7 +336,7 @@ export async function adminAdjustUserBalance(data: {
   await writeAuditLog({
     actor,
     action: "user.balance_adjust",
-    summary: `Adjusted @${result.username} balance by ${data.delta > 0 ? "+" : ""}${data.delta.toFixed(2)} → ₱${Number(result.balance).toFixed(2)}`,
+    summary: `Adjusted @${result.username} balance by ${data.delta > 0 ? "+" : ""}${data.delta.toFixed(2)} (Deducted/Credited from Agent @${actor.username})`,
     targetType: "user",
     targetId: result.id,
     meta: {
@@ -225,6 +344,7 @@ export async function adminAdjustUserBalance(data: {
       previousBalance: result.previousBalance,
       newBalance: Number(result.balance),
       note: data.note ?? null,
+      agentUsername: actor.username,
     },
   });
 

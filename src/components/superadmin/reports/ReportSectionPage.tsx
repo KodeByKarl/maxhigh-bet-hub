@@ -53,16 +53,18 @@ const META: Record<ReportSection, { title: string; blurb: string }> = {
 export function ReportSectionPage({
   view,
   enabled,
+  prefix = "/superadmin",
 }: {
   view: ReportSection;
   enabled: boolean;
+  prefix?: "/superadmin" | "/admin";
 }) {
   const meta = META[view];
 
   return (
     <div className="space-y-5 pb-6">
       <ReportPageHeader title={meta.title} blurb={meta.blurb} />
-      <ReportSubnav active={view} />
+      <ReportSubnav active={view} prefix={prefix} />
 
       {view === "winlose" && <WinLosePanel enabled={enabled} />}
       {view === "by-level" && <ByLevelPanel enabled={enabled} />}

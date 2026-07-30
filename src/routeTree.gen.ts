@@ -45,6 +45,8 @@ import { Route as SuperadminSettingsRouteImport } from './routes/superadmin/sett
 import { Route as SuperadminStaffRouteImport } from './routes/superadmin/staff'
 import { Route as SuperadminUsersRouteImport } from './routes/superadmin/users'
 import { Route as SuperadminWalletRouteImport } from './routes/superadmin/wallet'
+import { Route as AdminReportsIndexRouteImport } from './routes/admin/reports.index'
+import { Route as AdminReportsViewRouteImport } from './routes/admin/reports.$view'
 import { Route as SuperadminReportsIndexRouteImport } from './routes/superadmin/reports.index'
 import { Route as SuperadminReportsViewRouteImport } from './routes/superadmin/reports.$view'
 
@@ -228,6 +230,16 @@ const SuperadminWalletRoute = SuperadminWalletRouteImport.update({
   path: '/wallet',
   getParentRoute: () => SuperadminRoute,
 } as any)
+const AdminReportsIndexRoute = AdminReportsIndexRouteImport.update({
+  id: '/reports/',
+  path: '/reports/',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminReportsViewRoute = AdminReportsViewRouteImport.update({
+  id: '/reports/$view',
+  path: '/reports/$view',
+  getParentRoute: () => AdminRoute,
+} as any)
 const SuperadminReportsIndexRoute = SuperadminReportsIndexRouteImport.update({
   id: '/reports/',
   path: '/reports/',
@@ -276,7 +288,9 @@ export interface FileRoutesByFullPath {
   '/superadmin/wallet': typeof SuperadminWalletRoute
   '/admin/': typeof AdminIndexRoute
   '/superadmin/': typeof SuperadminIndexRoute
+  '/admin/reports/$view': typeof AdminReportsViewRoute
   '/superadmin/reports/$view': typeof SuperadminReportsViewRoute
+  '/admin/reports/': typeof AdminReportsIndexRoute
   '/superadmin/reports/': typeof SuperadminReportsIndexRoute
 }
 export interface FileRoutesByTo {
@@ -314,7 +328,9 @@ export interface FileRoutesByTo {
   '/superadmin/wallet': typeof SuperadminWalletRoute
   '/admin': typeof AdminIndexRoute
   '/superadmin': typeof SuperadminIndexRoute
+  '/admin/reports/$view': typeof AdminReportsViewRoute
   '/superadmin/reports/$view': typeof SuperadminReportsViewRoute
+  '/admin/reports': typeof AdminReportsIndexRoute
   '/superadmin/reports': typeof SuperadminReportsIndexRoute
 }
 export interface FileRoutesById {
@@ -355,7 +371,9 @@ export interface FileRoutesById {
   '/superadmin/wallet': typeof SuperadminWalletRoute
   '/admin/': typeof AdminIndexRoute
   '/superadmin/': typeof SuperadminIndexRoute
+  '/admin/reports/$view': typeof AdminReportsViewRoute
   '/superadmin/reports/$view': typeof SuperadminReportsViewRoute
+  '/admin/reports/': typeof AdminReportsIndexRoute
   '/superadmin/reports/': typeof SuperadminReportsIndexRoute
 }
 export interface FileRouteTypes {
@@ -397,7 +415,9 @@ export interface FileRouteTypes {
     | '/superadmin/wallet'
     | '/admin/'
     | '/superadmin/'
+    | '/admin/reports/$view'
     | '/superadmin/reports/$view'
+    | '/admin/reports/'
     | '/superadmin/reports/'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -435,7 +455,9 @@ export interface FileRouteTypes {
     | '/superadmin/wallet'
     | '/admin'
     | '/superadmin'
+    | '/admin/reports/$view'
     | '/superadmin/reports/$view'
+    | '/admin/reports'
     | '/superadmin/reports'
   id:
     | '__root__'
@@ -475,7 +497,9 @@ export interface FileRouteTypes {
     | '/superadmin/wallet'
     | '/admin/'
     | '/superadmin/'
+    | '/admin/reports/$view'
     | '/superadmin/reports/$view'
+    | '/admin/reports/'
     | '/superadmin/reports/'
   fileRoutesById: FileRoutesById
 }
@@ -754,6 +778,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SuperadminWalletRouteImport
       parentRoute: typeof SuperadminRoute
     }
+    '/admin/reports/': {
+      id: '/admin/reports/'
+      path: '/reports'
+      fullPath: '/admin/reports/'
+      preLoaderRoute: typeof AdminReportsIndexRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/reports/$view': {
+      id: '/admin/reports/$view'
+      path: '/reports/$view'
+      fullPath: '/admin/reports/$view'
+      preLoaderRoute: typeof AdminReportsViewRouteImport
+      parentRoute: typeof AdminRoute
+    }
     '/superadmin/reports/': {
       id: '/superadmin/reports/'
       path: '/reports'
@@ -778,6 +816,8 @@ interface AdminRouteChildren {
   AdminSupportRoute: typeof AdminSupportRoute
   AdminUsersRoute: typeof AdminUsersRoute
   AdminIndexRoute: typeof AdminIndexRoute
+  AdminReportsViewRoute: typeof AdminReportsViewRoute
+  AdminReportsIndexRoute: typeof AdminReportsIndexRoute
 }
 
 const AdminRouteChildren: AdminRouteChildren = {
@@ -787,6 +827,8 @@ const AdminRouteChildren: AdminRouteChildren = {
   AdminSupportRoute: AdminSupportRoute,
   AdminUsersRoute: AdminUsersRoute,
   AdminIndexRoute: AdminIndexRoute,
+  AdminReportsViewRoute: AdminReportsViewRoute,
+  AdminReportsIndexRoute: AdminReportsIndexRoute,
 }
 
 const AdminRouteWithChildren = AdminRoute._addFileChildren(AdminRouteChildren)
