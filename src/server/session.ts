@@ -13,6 +13,7 @@ const SESSION_DAYS = 14;
 export function toPublicUser(u: User): PublicUser {
   return {
     id: u.id,
+    publicUserId: u.publicUserId,
     email: u.email,
     username: u.username,
     balance: Number(u.balance),

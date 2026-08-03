@@ -34,7 +34,7 @@ function SuperUsersPage() {
   const [editing, setEditing] = useState<SuperUserRow | null>(null);
   const [showAddModal, setShowAddModal] = useState(false);
   const [activeModal, setActiveModal] = useState<{
-    type: "menu" | "view" | "profile" | "edit" | "copy" | "password" | "security" | "winLimit" | "suspicious";
+    type: "menu" | "view" | "profile" | "edit" | "copy" | "password" | "security" | "winLimit" | "suspicious" | "addChips";
     user: SuperUserRow;
   } | null>(null);
 
@@ -62,16 +62,6 @@ function SuperUsersPage() {
     try {
       await superSetUserRoleFn({ data: { userId, role: next } });
       toast.success("Role updated");
-      await load();
-    } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Failed");
-    }
-  }
-
-  async function credit(userId: string, delta: number) {
-    try {
-      await superAdjustBalanceFn({ data: { userId, delta, note: "Superadmin credit" } });
-      toast.success("Balance updated");
       await load();
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Failed");
@@ -241,6 +231,14 @@ function SuperUsersPage() {
                       className="rounded-xl border border-emerald-500/30 bg-emerald-500/10 px-3 py-1.5 text-emerald-400 hover:bg-emerald-500/20 active:scale-95 transition-all"
                     >
                       Edit
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => setActiveModal({ type: "addChips", user: u })}
+                      className="rounded-xl border border-emerald-500/40 bg-emerald-500/15 px-3 py-1.5 text-emerald-300 hover:bg-emerald-500/25 active:scale-95 transition-all"
+                    >
+                      Add / Withdraw
                     </button>
 
                     <button
@@ -662,7 +660,7 @@ function PlayerActionModal({
   onActionComplete,
 }: {
   modal: {
-    type: "menu" | "view" | "profile" | "edit" | "copy" | "password" | "security" | "winLimit" | "suspicious";
+    type: "menu" | "view" | "profile" | "edit" | "copy" | "password" | "security" | "winLimit" | "suspicious" | "addChips";
     user: SuperUserRow;
   };
   onClose: () => void;
@@ -673,6 +671,11 @@ function PlayerActionModal({
   const [winLimitInput, setWinLimitInput] = useState("20000");
   const [securityCode, setSecurityCode] = useState("");
   const [loading, setLoading] = useState(false);
+  const [chipAmount, setChipAmount] = useState("1000");
+  const [chipNote, setChipNote] = useState("");
+  const [chipMode, setChipMode] = useState<"add" | "withdraw">("add");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [chipBusy, setChipBusy] = useState(false);
 
   const [auditDetails, setAuditDetails] = useState<{
     totalBets: number;
@@ -710,6 +713,49 @@ function PlayerActionModal({
     security: "Player Security Code",
     winLimit: "Set Weekly Win Limit",
     suspicious: "Full Audit Summary & Risk Inspection",
+    addChips: "Manage Player Chips",
+  };
+
+  const handleChipTransfer = async (e: FormEvent) => {
+    e.preventDefault();
+    const val = Number(chipAmount);
+    if (!val || val <= 0) {
+      toast.error("Enter a valid chip amount");
+      return;
+    }
+    if (chipMode === "withdraw" && val > user.balance) {
+      toast.error(`@${user.username} only has ₱${user.balance.toLocaleString("en-PH")}`);
+      return;
+    }
+    if (!confirmPassword.trim()) {
+      toast.error("Enter your password to confirm this chip action");
+      return;
+    }
+    const delta = chipMode === "add" ? val : -val;
+    setChipBusy(true);
+    try {
+      await superAdjustBalanceFn({
+        data: {
+          userId: user.id,
+          delta,
+          confirmPassword,
+          note:
+            chipNote.trim() ||
+            (chipMode === "add" ? "Superadmin chip credit" : "Superadmin chip withdrawal"),
+        },
+      });
+      toast.success(
+        chipMode === "add"
+          ? `Added ₱${val.toLocaleString("en-PH")} chips to @${user.username}`
+          : `Withdrew ₱${val.toLocaleString("en-PH")} chips from @${user.username}`,
+      );
+      onActionComplete?.();
+      onClose();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Transfer failed");
+    } finally {
+      setChipBusy(false);
+    }
   };
 
   return (
@@ -727,6 +773,86 @@ function PlayerActionModal({
             <X size={20} />
           </button>
         </div>
+
+        {/* Chip Add / Withdraw */}
+        {type === "addChips" && (
+          <form onSubmit={handleChipTransfer} className="space-y-4">
+            <div className="flex gap-2">
+              <button
+                type="button"
+                onClick={() => setChipMode("add")}
+                className={`h-9 flex-1 rounded-lg text-xs font-black uppercase ${
+                  chipMode === "add" ? "bg-emerald-500 text-black" : "border border-white/10 text-muted-foreground"
+                }`}
+              >
+                Add Chips
+              </button>
+              <button
+                type="button"
+                onClick={() => setChipMode("withdraw")}
+                className={`h-9 flex-1 rounded-lg text-xs font-black uppercase ${
+                  chipMode === "withdraw" ? "bg-rose-500 text-white" : "border border-white/10 text-muted-foreground"
+                }`}
+              >
+                Withdraw
+              </button>
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Current balance: <span className="font-bold text-emerald-400">{formatMoney(user.balance)}</span>
+            </p>
+            <div>
+              <label className="block text-[11px] font-bold uppercase text-muted-foreground mb-1">Amount (₱)</label>
+              <Input
+                type="number"
+                min={1}
+                step="any"
+                max={chipMode === "withdraw" ? user.balance : undefined}
+                value={chipAmount}
+                onChange={(e) => setChipAmount(e.target.value)}
+                required
+                className="h-10 bg-white/[0.06] text-foreground font-bold"
+              />
+            </div>
+            <div>
+              <label className="block text-[11px] font-bold uppercase text-muted-foreground mb-1">Note</label>
+              <Input
+                value={chipNote}
+                onChange={(e) => setChipNote(e.target.value)}
+                placeholder="Optional"
+                className="h-10 bg-white/[0.06] text-foreground"
+              />
+            </div>
+            <div>
+              <label className="block text-[11px] font-bold uppercase text-muted-foreground mb-1">
+                Confirm with your password
+              </label>
+              <Input
+                type="password"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                required
+                autoComplete="current-password"
+                placeholder="Super Admin password"
+                className="h-10 bg-white/[0.06] text-foreground"
+              />
+            </div>
+            <button
+              type="submit"
+              disabled={chipBusy}
+              className={`h-11 w-full rounded-xl text-xs font-black uppercase disabled:opacity-60 ${
+                chipMode === "add"
+                  ? "bg-emerald-500 text-black"
+                  : "bg-rose-500 text-white"
+              }`}
+            >
+              {chipBusy
+                ? "Processing…"
+                : chipMode === "add"
+                  ? `Add ₱${Number(chipAmount || 0).toLocaleString("en-PH")}`
+                  : `Withdraw ₱${Number(chipAmount || 0).toLocaleString("en-PH")}`}
+            </button>
+          </form>
+        )}
 
         {/* Win Limit Form */}
         {type === "winLimit" && (
@@ -827,8 +953,10 @@ function PlayerActionModal({
                 type="button"
                 onClick={async () => {
                   try {
-                    const res = await superToggleLockUserFn({ data: { userId: user.id } });
-                    const lockedNow = Boolean((res as any).isLocked === "yes" || (res as any).isLocked === true);
+                    const res = await superToggleLockUserFn({
+                      data: { userId: user.id, lock: !isLocked },
+                    });
+                    const lockedNow = res.isLocked === "yes";
                     setIsLocked(lockedNow);
                     toast.success(`Account @${res.username} ${lockedNow ? "Locked" : "Unlocked"} successfully!`);
                     onActionComplete?.();

@@ -13,6 +13,8 @@ const DICTIONARY: Record<string, Record<string, string>> = {
     "VIP": "VIP",
     "Live Support": "Live Support",
     "Mega Jackpot": "Mega Jackpot",
+    "Ultra Mega Jackpot": "Ultra Mega Jackpot",
+    "Display only · Not winnable": "Display only · Not winnable",
     
     // Navbar
     "Balance": "Balance",
@@ -109,6 +111,8 @@ const DICTIONARY: Record<string, Record<string, string>> = {
     "VIP": "VIP",
     "Live Support": "Tulong",
     "Mega Jackpot": "Mega Jackpot",
+    "Ultra Mega Jackpot": "Ultra Mega Jackpot",
+    "Display only · Not winnable": "Display lang · Hindi mapanalunan",
     
     // Navbar
     "Balance": "Balanse",

@@ -2,6 +2,8 @@ export type UserRole = "player" | "admin" | "agent" | "master_agent" | "superadm
 
 export type PublicUser = {
   id: string;
+  /** Globally unique public account code */
+  publicUserId: string;
   email: string | null;
   username: string;
   balance: number;

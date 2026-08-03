@@ -29,7 +29,6 @@ import { Route as VipRouteImport } from './routes/vip'
 import { Route as WeeklyRaceRouteImport } from './routes/weekly-race'
 import { Route as AdminIndexRouteImport } from './routes/admin/index'
 import { Route as AdminAuditRouteImport } from './routes/admin/audit'
-import { Route as AdminFundRouteImport } from './routes/admin/fund'
 import { Route as AdminLoginRouteImport } from './routes/admin/login'
 import { Route as AdminSupportRouteImport } from './routes/admin/support'
 import { Route as AdminUsersRouteImport } from './routes/admin/users'
@@ -44,7 +43,6 @@ import { Route as SuperadminRiskRouteImport } from './routes/superadmin/risk'
 import { Route as SuperadminSettingsRouteImport } from './routes/superadmin/settings'
 import { Route as SuperadminStaffRouteImport } from './routes/superadmin/staff'
 import { Route as SuperadminUsersRouteImport } from './routes/superadmin/users'
-import { Route as SuperadminWalletRouteImport } from './routes/superadmin/wallet'
 import { Route as AdminReportsIndexRouteImport } from './routes/admin/reports.index'
 import { Route as AdminReportsViewRouteImport } from './routes/admin/reports.$view'
 import { Route as SuperadminReportsIndexRouteImport } from './routes/superadmin/reports.index'
@@ -150,11 +148,6 @@ const AdminAuditRoute = AdminAuditRouteImport.update({
   path: '/audit',
   getParentRoute: () => AdminRoute,
 } as any)
-const AdminFundRoute = AdminFundRouteImport.update({
-  id: '/fund',
-  path: '/fund',
-  getParentRoute: () => AdminRoute,
-} as any)
 const AdminLoginRoute = AdminLoginRouteImport.update({
   id: '/login',
   path: '/login',
@@ -225,11 +218,6 @@ const SuperadminUsersRoute = SuperadminUsersRouteImport.update({
   path: '/users',
   getParentRoute: () => SuperadminRoute,
 } as any)
-const SuperadminWalletRoute = SuperadminWalletRouteImport.update({
-  id: '/wallet',
-  path: '/wallet',
-  getParentRoute: () => SuperadminRoute,
-} as any)
 const AdminReportsIndexRoute = AdminReportsIndexRouteImport.update({
   id: '/reports/',
   path: '/reports/',
@@ -271,7 +259,6 @@ export interface FileRoutesByFullPath {
   '/vip': typeof VipRoute
   '/weekly-race': typeof WeeklyRaceRoute
   '/admin/audit': typeof AdminAuditRoute
-  '/admin/fund': typeof AdminFundRoute
   '/admin/login': typeof AdminLoginRoute
   '/admin/support': typeof AdminSupportRoute
   '/admin/users': typeof AdminUsersRoute
@@ -285,7 +272,6 @@ export interface FileRoutesByFullPath {
   '/superadmin/settings': typeof SuperadminSettingsRoute
   '/superadmin/staff': typeof SuperadminStaffRoute
   '/superadmin/users': typeof SuperadminUsersRoute
-  '/superadmin/wallet': typeof SuperadminWalletRoute
   '/admin/': typeof AdminIndexRoute
   '/superadmin/': typeof SuperadminIndexRoute
   '/admin/reports/$view': typeof AdminReportsViewRoute
@@ -311,7 +297,6 @@ export interface FileRoutesByTo {
   '/vip': typeof VipRoute
   '/weekly-race': typeof WeeklyRaceRoute
   '/admin/audit': typeof AdminAuditRoute
-  '/admin/fund': typeof AdminFundRoute
   '/admin/login': typeof AdminLoginRoute
   '/admin/support': typeof AdminSupportRoute
   '/admin/users': typeof AdminUsersRoute
@@ -325,7 +310,6 @@ export interface FileRoutesByTo {
   '/superadmin/settings': typeof SuperadminSettingsRoute
   '/superadmin/staff': typeof SuperadminStaffRoute
   '/superadmin/users': typeof SuperadminUsersRoute
-  '/superadmin/wallet': typeof SuperadminWalletRoute
   '/admin': typeof AdminIndexRoute
   '/superadmin': typeof SuperadminIndexRoute
   '/admin/reports/$view': typeof AdminReportsViewRoute
@@ -354,7 +338,6 @@ export interface FileRoutesById {
   '/vip': typeof VipRoute
   '/weekly-race': typeof WeeklyRaceRoute
   '/admin/audit': typeof AdminAuditRoute
-  '/admin/fund': typeof AdminFundRoute
   '/admin/login': typeof AdminLoginRoute
   '/admin/support': typeof AdminSupportRoute
   '/admin/users': typeof AdminUsersRoute
@@ -368,7 +351,6 @@ export interface FileRoutesById {
   '/superadmin/settings': typeof SuperadminSettingsRoute
   '/superadmin/staff': typeof SuperadminStaffRoute
   '/superadmin/users': typeof SuperadminUsersRoute
-  '/superadmin/wallet': typeof SuperadminWalletRoute
   '/admin/': typeof AdminIndexRoute
   '/superadmin/': typeof SuperadminIndexRoute
   '/admin/reports/$view': typeof AdminReportsViewRoute
@@ -398,7 +380,6 @@ export interface FileRouteTypes {
     | '/vip'
     | '/weekly-race'
     | '/admin/audit'
-    | '/admin/fund'
     | '/admin/login'
     | '/admin/support'
     | '/admin/users'
@@ -412,7 +393,6 @@ export interface FileRouteTypes {
     | '/superadmin/settings'
     | '/superadmin/staff'
     | '/superadmin/users'
-    | '/superadmin/wallet'
     | '/admin/'
     | '/superadmin/'
     | '/admin/reports/$view'
@@ -438,7 +418,6 @@ export interface FileRouteTypes {
     | '/vip'
     | '/weekly-race'
     | '/admin/audit'
-    | '/admin/fund'
     | '/admin/login'
     | '/admin/support'
     | '/admin/users'
@@ -452,7 +431,6 @@ export interface FileRouteTypes {
     | '/superadmin/settings'
     | '/superadmin/staff'
     | '/superadmin/users'
-    | '/superadmin/wallet'
     | '/admin'
     | '/superadmin'
     | '/admin/reports/$view'
@@ -480,7 +458,6 @@ export interface FileRouteTypes {
     | '/vip'
     | '/weekly-race'
     | '/admin/audit'
-    | '/admin/fund'
     | '/admin/login'
     | '/admin/support'
     | '/admin/users'
@@ -494,7 +471,6 @@ export interface FileRouteTypes {
     | '/superadmin/settings'
     | '/superadmin/staff'
     | '/superadmin/users'
-    | '/superadmin/wallet'
     | '/admin/'
     | '/superadmin/'
     | '/admin/reports/$view'
@@ -666,13 +642,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminAuditRouteImport
       parentRoute: typeof AdminRoute
     }
-    '/admin/fund': {
-      id: '/admin/fund'
-      path: '/fund'
-      fullPath: '/admin/fund'
-      preLoaderRoute: typeof AdminFundRouteImport
-      parentRoute: typeof AdminRoute
-    }
     '/admin/login': {
       id: '/admin/login'
       path: '/login'
@@ -771,13 +740,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SuperadminUsersRouteImport
       parentRoute: typeof SuperadminRoute
     }
-    '/superadmin/wallet': {
-      id: '/superadmin/wallet'
-      path: '/wallet'
-      fullPath: '/superadmin/wallet'
-      preLoaderRoute: typeof SuperadminWalletRouteImport
-      parentRoute: typeof SuperadminRoute
-    }
     '/admin/reports/': {
       id: '/admin/reports/'
       path: '/reports'
@@ -811,7 +773,6 @@ declare module '@tanstack/react-router' {
 
 interface AdminRouteChildren {
   AdminAuditRoute: typeof AdminAuditRoute
-  AdminFundRoute: typeof AdminFundRoute
   AdminLoginRoute: typeof AdminLoginRoute
   AdminSupportRoute: typeof AdminSupportRoute
   AdminUsersRoute: typeof AdminUsersRoute
@@ -822,7 +783,6 @@ interface AdminRouteChildren {
 
 const AdminRouteChildren: AdminRouteChildren = {
   AdminAuditRoute: AdminAuditRoute,
-  AdminFundRoute: AdminFundRoute,
   AdminLoginRoute: AdminLoginRoute,
   AdminSupportRoute: AdminSupportRoute,
   AdminUsersRoute: AdminUsersRoute,
@@ -844,7 +804,6 @@ interface SuperadminRouteChildren {
   SuperadminSettingsRoute: typeof SuperadminSettingsRoute
   SuperadminStaffRoute: typeof SuperadminStaffRoute
   SuperadminUsersRoute: typeof SuperadminUsersRoute
-  SuperadminWalletRoute: typeof SuperadminWalletRoute
   SuperadminIndexRoute: typeof SuperadminIndexRoute
   SuperadminReportsViewRoute: typeof SuperadminReportsViewRoute
   SuperadminReportsIndexRoute: typeof SuperadminReportsIndexRoute
@@ -861,7 +820,6 @@ const SuperadminRouteChildren: SuperadminRouteChildren = {
   SuperadminSettingsRoute: SuperadminSettingsRoute,
   SuperadminStaffRoute: SuperadminStaffRoute,
   SuperadminUsersRoute: SuperadminUsersRoute,
-  SuperadminWalletRoute: SuperadminWalletRoute,
   SuperadminIndexRoute: SuperadminIndexRoute,
   SuperadminReportsViewRoute: SuperadminReportsViewRoute,
   SuperadminReportsIndexRoute: SuperadminReportsIndexRoute,

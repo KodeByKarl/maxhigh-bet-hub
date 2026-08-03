@@ -1,16 +1,13 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useCallback, useEffect, useMemo, useState, type FormEvent } from "react";
 import {
-  getSuperMasterChipPoolFn,
   listSuperUsersFn,
   superCreateUserFn,
-  superGenerateMasterChipsFn,
   superSetUserRoleFn,
-  superTransferChipsToAdminFn,
+  superAdjustBalanceFn,
   superGetUserSecurityDetailsFn,
   superToggleLockUserFn,
   superForceLogoutUserFn,
-  superResetFailedAttemptsFn,
 } from "@/functions/superadmin";
 import type { SuperUserRow } from "@/lib/superadmin-types";
 import type { UserRole } from "@/lib/user";
@@ -34,7 +31,6 @@ function SuperAdminsPage() {
   const [sortBy, setSortBy] = useState<"newest" | "oldest" | "az" | "za">("newest");
   
   const [showAddModal, setShowAddModal] = useState(false);
-  const [showChipModal, setShowChipModal] = useState(false);
   const [activeModal, setActiveModal] = useState<{
     type: "menu" | "view" | "profile" | "addChips" | "copy" | "security" | "suspicious";
     user: SuperUserRow;
@@ -95,7 +91,7 @@ function SuperAdminsPage() {
       <div>
         <h1 className="text-3xl font-bold text-foreground">Admin & Staff Management</h1>
         <p className="mt-1 text-sm text-muted-foreground">
-          Manage Admin, Master Agent, and SuperAdmin accounts, permissions, security details, and chip allocations.
+          Manage Admin, Master Agent, and SuperAdmin accounts, permissions, and security details.
         </p>
       </div>
 
@@ -154,7 +150,7 @@ function SuperAdminsPage() {
             <tr>
               <th className="w-[20%] px-4 py-3.5">Staff Account</th>
               <th className="w-[15%] px-4 py-3.5 text-center">Role</th>
-              <th className="w-[15%] px-4 py-3.5 text-center">Chip Balance</th>
+              <th className="w-[15%] px-4 py-3.5 text-center">Balance</th>
               <th className="w-[50%] px-4 py-3.5 text-center">Actions Grid</th>
             </tr>
           </thead>
@@ -189,7 +185,9 @@ function SuperAdminsPage() {
                         👑 Upline: @{u.parentAgentUsername}
                       </div>
                     )}
-                    <div className="mt-0.5 text-[10px] text-muted-foreground font-mono">ID: {u.id.slice(0, 8)}…</div>
+                    <div className="mt-0.5 text-[10px] text-muted-foreground font-mono">
+                      ID: {u.publicUserId || u.id.slice(0, 8)}…
+                    </div>
                   </td>
 
                   <td className="w-[15%] px-4 py-4 align-middle text-center">
@@ -240,7 +238,7 @@ function SuperAdminsPage() {
                         onClick={() => setActiveModal({ type: "addChips", user: u })}
                         className="rounded-xl border border-emerald-500/40 bg-emerald-500/15 px-2 py-1.5 text-emerald-300 hover:bg-emerald-500/25 active:scale-95 transition-all"
                       >
-                        Add Chips
+                        Add / Withdraw
                       </button>
 
                       <button
@@ -279,17 +277,6 @@ function SuperAdminsPage() {
         />
       )}
 
-      {showChipModal && (
-        <MasterChipModal
-          admins={users}
-          onClose={() => setShowChipModal(false)}
-          onUpdated={() => {
-            setShowChipModal(false);
-            void load();
-          }}
-        />
-      )}
-
       {activeModal && (
         <StaffActionModal
           modal={activeModal}
@@ -314,6 +301,7 @@ function AddAdminModal({
 }) {
   const [busy, setBusy] = useState(false);
   const [username, setUsername] = useState("");
+  const [publicUserId, setPublicUserId] = useState("");
   const [password, setPassword] = useState("");
   const [role, setRole] = useState<UserRole>("agent");
   const [displayName, setDisplayName] = useState("");
@@ -335,6 +323,7 @@ function AddAdminModal({
       await superCreateUserFn({
         data: {
           username,
+          publicUserId: publicUserId.trim() || undefined,
           password,
           role,
           displayName: displayName || undefined,
@@ -375,6 +364,18 @@ function AddAdminModal({
               className="h-10 rounded-xl bg-white/[0.06] text-foreground"
             />
             {isUsernameTaken && <div className="mt-1 text-[11px] font-semibold text-rose-400">❌ Username already taken!</div>}
+          </div>
+
+          <div>
+            <label className="block text-[11px] font-bold uppercase text-muted-foreground mb-1">
+              User ID (optional)
+            </label>
+            <Input
+              value={publicUserId}
+              onChange={(e) => setPublicUserId(e.target.value)}
+              placeholder="Defaults to username if empty"
+              className="h-10 rounded-xl bg-white/[0.06] text-foreground"
+            />
           </div>
 
           <div>
@@ -460,6 +461,8 @@ function StaffActionModal({
   const [isLocked, setIsLocked] = useState(user.isLocked === "yes");
   const [chipAmount, setChipAmount] = useState("10000");
   const [chipNote, setChipNote] = useState("");
+  const [chipMode, setChipMode] = useState<"add" | "withdraw">("add");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [busy, setBusy] = useState(false);
 
   const [auditDetails, setAuditDetails] = useState<{
@@ -480,19 +483,41 @@ function StaffActionModal({
       .catch(() => setAuditDetails(null));
   }, [user.id]);
 
-  const handleTransfer = async (e: FormEvent) => {
+  const handleAddChips = async (e: FormEvent) => {
     e.preventDefault();
     const val = Number(chipAmount);
     if (!val || val <= 0) {
-      toast.error("Enter a valid chip transfer amount");
+      toast.error("Enter a valid chip amount");
       return;
     }
+    if (chipMode === "withdraw" && val > user.balance) {
+      toast.error(`@${user.username} only has ₱${user.balance.toLocaleString("en-PH")}`);
+      return;
+    }
+    if (!confirmPassword.trim()) {
+      toast.error("Enter your password to confirm this chip action");
+      return;
+    }
+    const delta = chipMode === "add" ? val : -val;
     setBusy(true);
     try {
-      await superTransferChipsToAdminFn({
-        data: { adminUserId: user.id, amount: val, note: chipNote || undefined },
+      await superAdjustBalanceFn({
+        data: {
+          userId: user.id,
+          delta,
+          confirmPassword,
+          note:
+            chipNote.trim() ||
+            (chipMode === "add"
+              ? "Superadmin chip credit (unlimited)"
+              : "Superadmin chip withdrawal"),
+        },
       });
-      toast.success(`Transferred ₱${val.toLocaleString("en-PH")} chips to @${user.username}!`);
+      toast.success(
+        chipMode === "add"
+          ? `Added ₱${val.toLocaleString("en-PH")} chips to @${user.username}`
+          : `Withdrew ₱${val.toLocaleString("en-PH")} chips from @${user.username}`,
+      );
       onActionComplete?.();
       onClose();
     } catch (err) {
@@ -515,16 +540,53 @@ function StaffActionModal({
           </button>
         </div>
 
-        {/* ADD CHIPS FORM */}
         {type === "addChips" && (
-          <form onSubmit={handleTransfer} className="space-y-4">
-            <p className="text-xs text-muted-foreground">Allocate chips directly to staff account <span className="text-amber-400 font-bold">@{user.username}</span>:</p>
+          <form onSubmit={handleAddChips} className="space-y-4">
+            <div className="flex gap-2">
+              <button
+                type="button"
+                onClick={() => setChipMode("add")}
+                className={`h-9 flex-1 rounded-lg text-xs font-black uppercase ${
+                  chipMode === "add"
+                    ? "bg-emerald-500 text-black"
+                    : "border border-white/10 text-muted-foreground hover:bg-white/[0.06]"
+                }`}
+              >
+                Add Chips
+              </button>
+              <button
+                type="button"
+                onClick={() => setChipMode("withdraw")}
+                className={`h-9 flex-1 rounded-lg text-xs font-black uppercase ${
+                  chipMode === "withdraw"
+                    ? "bg-rose-500 text-white"
+                    : "border border-white/10 text-muted-foreground hover:bg-white/[0.06]"
+                }`}
+              >
+                Withdraw
+              </button>
+            </div>
+            <div className={`rounded-xl border p-3 text-xs ${
+              chipMode === "add"
+                ? "border-amber-500/30 bg-amber-500/10 text-amber-200"
+                : "border-rose-500/30 bg-rose-500/10 text-rose-200"
+            }`}>
+              {chipMode === "add" ? (
+                <>Superadmin can <span className="font-black">add unlimited</span> chips to this account.</>
+              ) : (
+                <>Withdraw chips from this account (balance cannot go below ₱0).</>
+              )}
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Current balance: <span className="font-bold text-emerald-400">{formatMoney(user.balance)}</span>
+            </p>
             <div>
-              <label className="block text-[11px] font-bold uppercase text-muted-foreground mb-1">Chip Transfer Amount (₱)</label>
+              <label className="block text-[11px] font-bold uppercase text-muted-foreground mb-1">Chip Amount (₱)</label>
               <Input
                 type="number"
                 min={1}
                 step="any"
+                max={chipMode === "withdraw" ? user.balance : undefined}
                 value={chipAmount}
                 onChange={(e) => setChipAmount(e.target.value)}
                 required
@@ -532,20 +594,42 @@ function StaffActionModal({
               />
             </div>
             <div>
-              <label className="block text-[11px] font-bold uppercase text-muted-foreground mb-1">Note / Reference (Optional)</label>
+              <label className="block text-[11px] font-bold uppercase text-muted-foreground mb-1">Note (Optional)</label>
               <Input
                 value={chipNote}
                 onChange={(e) => setChipNote(e.target.value)}
-                placeholder="e.g. Weekly staff distribution"
+                placeholder={chipMode === "add" ? "e.g. Weekly agent float" : "e.g. Recall unused chips"}
+                className="h-10 bg-white/[0.06] text-foreground"
+              />
+            </div>
+            <div>
+              <label className="block text-[11px] font-bold uppercase text-muted-foreground mb-1">
+                Confirm with your password
+              </label>
+              <Input
+                type="password"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                required
+                autoComplete="current-password"
+                placeholder="Super Admin password"
                 className="h-10 bg-white/[0.06] text-foreground"
               />
             </div>
             <button
               type="submit"
               disabled={busy}
-              className="h-11 w-full rounded-xl bg-gradient-to-r from-emerald-500 to-emerald-600 text-xs font-black uppercase text-black hover:brightness-110 disabled:opacity-60"
+              className={`h-11 w-full rounded-xl text-xs font-black uppercase disabled:opacity-60 ${
+                chipMode === "add"
+                  ? "bg-gradient-to-r from-emerald-500 to-emerald-600 text-black hover:brightness-110"
+                  : "bg-gradient-to-r from-rose-500 to-rose-600 text-white hover:brightness-110"
+              }`}
             >
-              {busy ? "Transferring…" : `Confirm Transfer ₱${Number(chipAmount || 0).toLocaleString("en-PH")} Chips`}
+              {busy
+                ? "Processing…"
+                : chipMode === "add"
+                  ? `Add ₱${Number(chipAmount || 0).toLocaleString("en-PH")} Chips`
+                  : `Withdraw ₱${Number(chipAmount || 0).toLocaleString("en-PH")} Chips`}
             </button>
           </form>
         )}
@@ -565,7 +649,9 @@ function StaffActionModal({
                 type="button"
                 onClick={async () => {
                   try {
-                    const res = await superToggleLockUserFn({ data: { userId: user.id } });
+                    const res = await superToggleLockUserFn({
+                      data: { userId: user.id, lock: !isLocked },
+                    });
                     setIsLocked(res.isLocked === "yes");
                     toast.success(`Account @${res.username} ${res.isLocked === "yes" ? "Locked" : "Unlocked"}!`);
                     onActionComplete?.();
@@ -614,7 +700,7 @@ function StaffActionModal({
 
               <div className="rounded-xl border border-white/10 bg-white/[0.03] p-4 space-y-2.5 text-xs">
                 <div className="flex justify-between border-b border-white/5 pb-2">
-                  <span className="text-muted-foreground">Chip Balance:</span>
+                  <span className="text-muted-foreground">Balance:</span>
                   <span className="font-bold text-emerald-400">{formatMoney(user.balance)}</span>
                 </div>
                 <div className="flex justify-between">
@@ -661,89 +747,11 @@ function StaffActionModal({
               <span className="font-bold text-amber-300 uppercase">{user.role}</span>
             </div>
             <div className="flex justify-between">
-              <span className="text-muted-foreground font-semibold">Chip Balance:</span>
+              <span className="text-muted-foreground font-semibold">Balance:</span>
               <span className="font-bold text-emerald-400 text-sm">{formatMoney(user.balance)}</span>
             </div>
           </div>
         )}
-      </div>
-    </div>
-  );
-}
-
-function MasterChipModal({
-  admins,
-  onClose,
-  onUpdated,
-}: {
-  admins: SuperUserRow[];
-  onClose: () => void;
-  onUpdated: () => void;
-}) {
-  const [masterPool, setMasterPool] = useState<number>(0);
-  const [genAmount, setGenAmount] = useState<string>("50000");
-  const [genBusy, setGenBusy] = useState(false);
-
-  useEffect(() => {
-    void getSuperMasterChipPoolFn()
-      .then((res) => setMasterPool(res.masterChipPool))
-      .catch(() => setMasterPool(0));
-  }, []);
-
-  const handleGenerate = async (e: FormEvent) => {
-    e.preventDefault();
-    const val = Number(genAmount);
-    if (!val || val <= 0) return;
-    setGenBusy(true);
-    try {
-      const res = await superGenerateMasterChipsFn({ data: { amount: val } });
-      setMasterPool(res.masterChipPool);
-      toast.success(`Generated ₱${val.toLocaleString("en-PH")} chips into Master Pool!`);
-      onUpdated();
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Failed");
-    } finally {
-      setGenBusy(false);
-    }
-  };
-
-  return (
-    <div className="fixed inset-0 z-50 grid place-items-center bg-black/65 backdrop-blur-md p-4 overflow-y-auto" onClick={onClose}>
-      <div onClick={(e) => e.stopPropagation()} className={`${saGlass} w-full max-w-xl space-y-4 p-6 border border-amber-500/30 shadow-2xl my-auto`}>
-        <div className="flex items-center justify-between border-b border-amber-500/20 pb-3">
-          <div>
-            <h2 className="text-xl font-black text-foreground">SuperAdmin Master Chip Pool</h2>
-            <p className="text-xs text-muted-foreground">Generate chips into sole platform vault.</p>
-          </div>
-          <button type="button" onClick={onClose} className="rounded-lg p-1.5 text-muted-foreground hover:bg-white/[0.06]">
-            <X size={20} />
-          </button>
-        </div>
-
-        <div className="rounded-xl border border-amber-500/30 bg-amber-500/10 p-4 text-center">
-          <div className="text-xs font-bold uppercase text-amber-300">Master Chip Vault Balance</div>
-          <div className="text-2xl font-black text-amber-400 mt-1">{formatMoney(masterPool)}</div>
-        </div>
-
-        <form onSubmit={handleGenerate} className="space-y-3">
-          <label className="block text-[11px] font-bold uppercase text-muted-foreground">Generate Additional Chips (₱)</label>
-          <Input
-            type="number"
-            min={1}
-            step="any"
-            value={genAmount}
-            onChange={(e) => setGenAmount(e.target.value)}
-            required
-            className="h-10 bg-white/[0.06] text-foreground font-bold"
-          />
-          <button
-            type="submit"
-            disabled={genBusy}
-            className="h-11 w-full rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 text-xs font-black uppercase text-black hover:brightness-110 disabled:opacity-60"
-          >
-            {genBusy ? "Generating…" : "+ Generate Chips to Master Vault"}
-          </button>
-        </form>
       </div>
     </div>
   );

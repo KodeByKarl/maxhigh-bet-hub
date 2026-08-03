@@ -155,7 +155,12 @@ export async function writeLedgerDelta(
     if (jpRows[0]) {
       await tx.update(jackpot).set({ amount: money(jpAmount) }).where(eq(jackpot.id, "mega"));
     } else {
-      await tx.insert(jackpot).values({ id: "mega", amount: money(jpAmount) });
+      await tx.insert(jackpot).values({
+        id: "mega",
+        amount: money(jpAmount),
+        enabled: "yes",
+        displayAmount: money(500_000_000),
+      });
     }
   }
 
@@ -166,7 +171,12 @@ export async function writeLedgerDelta(
     if (jpRows[0]) {
       await tx.update(jackpot).set({ amount: money(jpAmount) }).where(eq(jackpot.id, "mega"));
     } else {
-      await tx.insert(jackpot).values({ id: "mega", amount: money(Math.max(jpAmount, 10000)) });
+      await tx.insert(jackpot).values({
+        id: "mega",
+        amount: money(Math.max(jpAmount, 10000)),
+        enabled: "yes",
+        displayAmount: money(500_000_000),
+      });
     }
   }
 

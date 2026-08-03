@@ -1,8 +1,13 @@
+import { calcFreeSpinsAward } from "@/lib/mahjong-ways-config";
 import { getMahjongWaysConfig } from "./runtimeConfig";
 import { applyGravity, generateInitialBoard } from "./tumbleEngine";
 import type { CascadeStep, SpinScript } from "./types";
 import { evaluateWays } from "./waysEngine";
 
+/**
+ * Server-authoritative spin resolution (Section 8).
+ * Full cascade sequence, multipliers, gold→wild, scatter FS, and max-win cap in one pass.
+ */
 export function resolveMahjongSpin(opts: {
   bet: number;
   ante: boolean;
@@ -13,7 +18,6 @@ export function resolveMahjongSpin(opts: {
   const ante = opts.ante;
   const isFreeSpins = opts.isFreeSpins;
 
-  // Generate dynamic reel heights for 5 reels (e.g. 2 to 4 symbols per reel)
   const initialReelHeights: number[] = Array.from({ length: config.reelsCount }, () => {
     const minH = config.minReelHeight;
     const maxH = config.maxReelHeight;
@@ -24,26 +28,54 @@ export function resolveMahjongSpin(opts: {
   let currentBoard = generateInitialBoard(initialReelHeights, ante, isFreeSpins);
 
   const steps: CascadeStep[] = [];
-  const MAX_CASCADE_LIMIT = 50; // Safety cap guaranteeing termination
+  const MAX_CASCADE_LIMIT = 50;
   let cascadeIndex = 0;
   let baseWin = 0;
   let totalWin = 0;
+  let peakScatterCount = 0;
+  let scatterPaid = false;
+  let hitCap = false;
+
   const multipliersTable = isFreeSpins
     ? config.freeSpinsCascadeMultipliers
     : config.baseCascadeMultipliers;
 
+  const maxPayout =
+    config.maxWinMult > 0 ? +(bet * config.maxWinMult).toFixed(2) : Number.POSITIVE_INFINITY;
+
   while (cascadeIndex < MAX_CASCADE_LIMIT) {
-    const evalResult = evaluateWays(currentBoard, bet, initialReelHeights);
+    // Scatter cash pays once — the first time we see 3+ during the sequence
+    const scatterCountPreview = currentBoard.filter((c) => c.sym.scatter).length;
+    const shouldPayScatter =
+      !scatterPaid && scatterCountPreview >= config.freeSpinsTriggerCount;
+
+    const evalResult = evaluateWays(currentBoard, bet, initialReelHeights, {
+      payScatter: shouldPayScatter,
+    });
+
+    if (evalResult.scatterCount > peakScatterCount) {
+      peakScatterCount = evalResult.scatterCount;
+    }
+    if (shouldPayScatter && evalResult.scatterCount >= config.freeSpinsTriggerCount) {
+      scatterPaid = true;
+    }
+
     const multiplierIdx = Math.min(cascadeIndex, multipliersTable.length - 1);
     const multiplier = multipliersTable[multiplierIdx];
-    const stepWin = +(evalResult.winAmount * multiplier).toFixed(2);
+    let stepWin = +(evalResult.winAmount * multiplier).toFixed(2);
+
+    // Max-win cap: trim this step if needed, then stop further cascade value
+    if (totalWin + stepWin > maxPayout) {
+      stepWin = +Math.max(0, maxPayout - totalWin).toFixed(2);
+      hitCap = true;
+    }
 
     baseWin += evalResult.winAmount;
     totalWin += stepWin;
 
     steps.push({
       stepIndex: cascadeIndex,
-      board: currentBoard.map((c) => ({ ...c })),
+      board: currentBoard.map((c) => ({ ...c, sym: c.sym })),
       evalResult,
       multiplier,
       stepWin,
@@ -51,14 +83,14 @@ export function resolveMahjongSpin(opts: {
       fallenKeys: [],
     });
 
-    if (evalResult.winningKeys.size === 0) {
-      break; // Chain terminates — no more winning combinations
+    // Only tumble on ways wins (scatter-only steps end the chain)
+    if (evalResult.winningKeys.length === 0 || hitCap) {
+      break;
     }
 
-    // Advance to next cascade step with gravity & replenishment
     const tumble = applyGravity(
       currentBoard,
-      evalResult.winningKeys,
+      new Set(evalResult.winningKeys),
       initialReelHeights,
       ante,
       isFreeSpins,
@@ -71,16 +103,7 @@ export function resolveMahjongSpin(opts: {
     cascadeIndex++;
   }
 
-  // Count total scatters present on initial grid step
-  const initialEval = steps[0]?.evalResult;
-  const scattersCount = initialEval ? initialEval.scatterCount : 0;
-
-  let freeSpinsAwarded = 0;
-  if (scattersCount >= config.freeSpinsTriggerCount) {
-    const extraScatters = scattersCount - config.freeSpinsTriggerCount;
-    freeSpinsAwarded =
-      config.freeSpinsBaseCount + extraScatters * config.freeSpinsExtraPerScatter;
-  }
+  const freeSpinsAwarded = calcFreeSpinsAward(peakScatterCount, config);
 
   return {
     initialReelHeights,
@@ -89,7 +112,8 @@ export function resolveMahjongSpin(opts: {
     totalWays,
     baseWin: +baseWin.toFixed(2),
     totalWin: +totalWin.toFixed(2),
-    scattersCount,
+    scattersCount: peakScatterCount,
     freeSpinsAwarded,
+    hitCap: hitCap || undefined,
   };
 }

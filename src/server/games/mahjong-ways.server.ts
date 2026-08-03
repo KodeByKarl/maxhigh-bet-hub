@@ -27,6 +27,12 @@ import { resolveMahjongSpin } from "@/components/maxhigh/mahjong-ways/spinResolv
 const GAME_NAME = "Mahjong Ways";
 
 let cachedConfig: { cfg: MahjongWaysConfig; time: number } | null = null;
+
+/** Invalidate after Superadmin saves engine config. */
+export function clearMahjongWaysEngineCache() {
+  cachedConfig = null;
+}
+
 async function loadEngineConfig(): Promise<MahjongWaysConfig> {
   const now = Date.now();
   if (cachedConfig && now - cachedConfig.time < 30000) {
@@ -205,7 +211,7 @@ export async function mahjongWaysPaidSpin(data: {
       });
     }
 
-    // 3. Persist Free Spins session if triggered
+    // 4. Persist Free Spins session if triggered
     let sessionRow: typeof playSessions.$inferSelect | null = null;
     if (script.freeSpinsAwarded > 0) {
       // Close old open sessions
@@ -248,27 +254,28 @@ export async function mahjongWaysPaidSpin(data: {
       sessionRow = updated[0] ?? null;
     }
 
-    // 4. Record Audit Log
-    await recordGameEngineAuditLog({
-      gameId: MAHJONG_WAYS_GAME_ID,
-      roundId,
-      userId: user.id,
-      username: row.username,
-      betAmount: cost,
-      payoutAmount: script.totalWin,
-      multiplier: cost > 0 ? script.totalWin / cost : 0,
-      resultMeta: {
-        reelsHeights: script.initialReelHeights,
-        totalWays: script.totalWays,
-        cascadeStepsCount: script.steps.length,
-        freeSpinsAwarded: script.freeSpinsAwarded,
-      },
-    });
-
     return {
       balance: ledger.balance,
       sessionRow,
+      username: row.username,
     };
+  });
+
+  // Audit AFTER commit — never inside the wallet tx (FK to users deadlocks on a second connection).
+  void recordGameEngineAuditLog({
+    gameId: MAHJONG_WAYS_GAME_ID,
+    roundId,
+    userId: user.id,
+    username: result.username,
+    betAmount: cost,
+    payoutAmount: script.totalWin,
+    multiplier: cost > 0 ? script.totalWin / cost : 0,
+    resultMeta: {
+      reelsHeights: script.initialReelHeights,
+      totalWays: script.totalWays,
+      cascadeStepsCount: script.steps.length,
+      freeSpinsAwarded: script.freeSpinsAwarded,
+    },
   });
 
   return {
@@ -360,27 +367,31 @@ export async function mahjongWaysFreeSpin(data: {
       .where(eq(playSessions.id, currentSession.id))
       .limit(1);
 
-    await recordGameEngineAuditLog({
-      gameId: MAHJONG_WAYS_GAME_ID,
-      roundId,
-      userId: user.id,
-      username: row.username,
-      betAmount: 0,
-      payoutAmount: script.totalWin,
-      multiplier: bet > 0 ? script.totalWin / bet : 0,
-      resultMeta: {
-        isFreeSpin: true,
-        freeSpinsLeft: left,
-        fsSpinsPlayed: played,
-        fsAccumulatedWin: accumulatedWin,
-      },
-    });
-
     return {
       balance: currentBalance,
       sessionRow: updatedSession[0] ?? null,
       fsPayout,
+      username: row.username,
+      left,
+      played,
+      accumulatedWin,
     };
+  });
+
+  void recordGameEngineAuditLog({
+    gameId: MAHJONG_WAYS_GAME_ID,
+    roundId,
+    userId: user.id,
+    username: result.username,
+    betAmount: 0,
+    payoutAmount: script.totalWin,
+    multiplier: bet > 0 ? script.totalWin / bet : 0,
+    resultMeta: {
+      isFreeSpin: true,
+      freeSpinsLeft: result.left,
+      fsSpinsPlayed: result.played,
+      fsAccumulatedWin: result.accumulatedWin,
+    },
   });
 
   return {
@@ -468,24 +479,25 @@ export async function mahjongWaysBuyFeature(data: {
 
     const updated = await tx.select().from(playSessions).where(eq(playSessions.id, sid)).limit(1);
 
-    await recordGameEngineAuditLog({
-      gameId: MAHJONG_WAYS_GAME_ID,
-      roundId,
-      userId: user.id,
-      username: row.username,
-      betAmount: cost,
-      payoutAmount: script.totalWin,
-      multiplier: script.totalWin / cost,
-      resultMeta: {
-        isBuyFeature: true,
-        freeSpinsAwarded: script.freeSpinsAwarded,
-      },
-    });
-
     return {
       balance: ledger.balance,
       sessionRow: updated[0] ?? null,
+      username: row.username,
     };
+  });
+
+  void recordGameEngineAuditLog({
+    gameId: MAHJONG_WAYS_GAME_ID,
+    roundId,
+    userId: user.id,
+    username: result.username,
+    betAmount: cost,
+    payoutAmount: script.totalWin,
+    multiplier: cost > 0 ? script.totalWin / cost : 0,
+    resultMeta: {
+      isBuyFeature: true,
+      freeSpinsAwarded: script.freeSpinsAwarded,
+    },
   });
 
   return {

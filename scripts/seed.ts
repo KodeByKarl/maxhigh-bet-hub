@@ -26,6 +26,7 @@ async function upsertUser(opts: {
     const userId = randomUUID();
     await db.insert(users).values({
       id: userId,
+      publicUserId: username,
       email: opts.email,
       username,
       passwordHash: await hash(opts.password, 10),
@@ -40,7 +41,12 @@ async function upsertUser(opts: {
 
   await db
     .update(users)
-    .set({ role: opts.role, balance: opts.balance, parentAgentId: opts.parentAgentId })
+    .set({
+      role: opts.role,
+      balance: opts.balance,
+      parentAgentId: opts.parentAgentId,
+      publicUserId: existing[0].publicUserId || username,
+    })
     .where(eq(users.id, existing[0].id));
   console.log(`${opts.role} updated: ${username}`);
   return existing[0].id;
@@ -53,7 +59,7 @@ async function main() {
   await db.delete(users).where(sql`LOWER(${users.username}) = 'admin'`);
   console.log("Removed legacy 'admin' account.");
 
-  const superId = await upsertUser({
+  const _superId = await upsertUser({
     username: "superadmin",
     email: "superadmin@maxhigh.gg",
     password: "super123",
@@ -61,6 +67,7 @@ async function main() {
     displayName: "MaxHigh Superadmin",
     balance: "100000.00",
   });
+  void _superId;
 
   const masterAgentId = await upsertUser({
     username: "masteragent",
@@ -69,6 +76,15 @@ async function main() {
     role: "master_agent",
     displayName: "Master Agent One",
     balance: "100000.00",
+  });
+
+  await upsertUser({
+    username: "masteragent2",
+    email: "master2@maxhigh.gg",
+    password: "master123",
+    role: "master_agent",
+    displayName: "Master Agent Two",
+    balance: "75000.00",
   });
 
   const agentId = await upsertUser({
@@ -81,11 +97,21 @@ async function main() {
     parentAgentId: masterAgentId,
   });
 
+  await upsertUser({
+    username: "agent2",
+    email: "agent2@maxhigh.gg",
+    password: "agent123",
+    role: "agent",
+    displayName: "Agent Two",
+    balance: "35000.00",
+    parentAgentId: masterAgentId,
+  });
+
   const players = [
-    { username: "player1", email: "player1@maxhigh.gg", pass: "player123", name: "Player One", bal: "15500.00" },
-    { username: "highroller88", email: "vip@maxhigh.gg", pass: "player123", name: "VIP High Roller", bal: "88000.00" },
-    { username: "slotmaster", email: "slots@maxhigh.gg", pass: "player123", name: "Slot Master Pro", bal: "3400.00" },
-    { username: "lucky_ace", email: "ace@maxhigh.gg", pass: "player123", name: "Lucky Ace", bal: "1280.00" },
+    { username: "player1", email: "player1@maxhigh.gg", pass: "player123", name: "Player One", bal: "15500.00", upline: agentId },
+    { username: "highroller88", email: "vip@maxhigh.gg", pass: "player123", name: "VIP High Roller", bal: "88000.00", upline: agentId },
+    { username: "slotmaster", email: "slots@maxhigh.gg", pass: "player123", name: "Slot Master Pro", bal: "3400.00", upline: agentId },
+    { username: "lucky_ace", email: "ace@maxhigh.gg", pass: "player123", name: "Lucky Ace", bal: "1280.00", upline: agentId },
   ];
 
   const games = ["Godly Gates of Olympus", "Candy Peak Bonanza", "Sugar Surge Deluxe"];
@@ -98,6 +124,7 @@ async function main() {
       role: "player",
       displayName: p.name,
       balance: p.bal,
+      parentAgentId: p.upline,
     });
 
     // Seed active session
@@ -161,12 +188,19 @@ async function main() {
 
   // Platform settings seed
   await db.execute(sql`
-    INSERT INTO platform_settings (id, maintenance_mode, min_deposit, max_deposit, min_withdraw, max_withdraw, master_chip_pool)
-    VALUES ('default', 'no', '100.00', '50000.00', '200.00', '100000.00', '1000000.00')
-    ON DUPLICATE KEY UPDATE master_chip_pool = master_chip_pool
+    INSERT INTO platform_settings (id, maintenance_mode, min_deposit, max_deposit, min_withdraw, max_withdraw)
+    VALUES ('default', 'no', '100.00', '50000.00', '200.00', '100000.00')
+    ON DUPLICATE KEY UPDATE id = id
   `);
   console.log("Seeded platform_settings table.");
 
+  console.log("\n=== Seeded staff login accounts ===");
+  console.log("superadmin   / super123   (superadmin)");
+  console.log("masteragent  / master123  (master_agent)");
+  console.log("masteragent2 / master123  (master_agent)");
+  console.log("agent1       / agent123   (agent → masteragent)");
+  console.log("agent2       / agent123   (agent → masteragent)");
+  console.log("player1      / player123  (player → agent1)");
   console.log("Full player activities & audit log seed complete!");
   process.exit(0);
 }

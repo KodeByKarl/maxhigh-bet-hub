@@ -1,6 +1,6 @@
 import { useAuth } from "@/lib/auth";
 import { Link } from "@tanstack/react-router";
-import { Gamepad2, LayoutDashboard, LogOut, ScrollText, UserCog, Users, Wallet } from "lucide-react";
+import { Gamepad2, LayoutDashboard, LogOut, ScrollText, UserCog, Users } from "lucide-react";
 import { saGlass } from "../ui/glass";
 
 export function SuperTopBar() {
@@ -14,9 +14,6 @@ export function SuperTopBar() {
         <div className="flex items-center gap-1 lg:hidden">
           <Link to="/superadmin" className="rounded-lg p-2 text-muted-foreground hover:bg-white/[0.06] hover:text-foreground">
             <LayoutDashboard size={18} />
-          </Link>
-          <Link to="/superadmin/wallet" className="rounded-lg p-2 text-muted-foreground hover:bg-white/[0.06] hover:text-foreground">
-            <Wallet size={18} />
           </Link>
           <Link to="/superadmin/users" className="rounded-lg p-2 text-muted-foreground hover:bg-white/[0.06] hover:text-foreground">
             <Users size={18} />

@@ -259,10 +259,27 @@ export async function fetchJackpot() {
   const rows = await db.select().from(jackpot).where(eq(jackpot.id, "mega")).limit(1);
   let row = rows[0];
   if (!row) {
-    await db.insert(jackpot).values({ id: "mega", amount: "10000.00" });
-    row = { id: "mega", amount: "10000.00", updatedAt: new Date() };
+    await db.insert(jackpot).values({
+      id: "mega",
+      amount: "10000.00",
+      enabled: "yes",
+      displayAmount: "500000000.00",
+    });
+    row = {
+      id: "mega",
+      amount: "10000.00",
+      enabled: "yes",
+      displayAmount: "500000000.00",
+      updatedAt: new Date(),
+    };
   }
-  return { amount: Number(row.amount), updatedAt: row.updatedAt?.toISOString?.() ?? null };
+  // Player Board shows cosmetic Ultra Mega Jackpot only (not the real pool).
+  return {
+    amount: Number(row.displayAmount ?? 0),
+    poolAmount: Number(row.amount),
+    enabled: (row.enabled ?? "yes") === "yes",
+    updatedAt: row.updatedAt?.toISOString?.() ?? null,
+  };
 }
 
 export async function listLiveWins() {

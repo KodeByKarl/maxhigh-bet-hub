@@ -14,6 +14,8 @@ export const users = mysqlTable(
   "users",
   {
     id: varchar("id", { length: 36 }).primaryKey(),
+    /** Globally unique public account code (distinct from UUID primary key). */
+    publicUserId: varchar("public_user_id", { length: 64 }).notNull().unique(),
     email: varchar("email", { length: 255 }).unique(),
     username: varchar("username", { length: 64 }).notNull().unique(),
     passwordHash: varchar("password_hash", { length: 255 }).notNull(),
@@ -40,6 +42,7 @@ export const users = mysqlTable(
   (t) => [
     index("users_email_idx").on(t.email),
     index("users_username_idx").on(t.username),
+    index("users_public_user_id_idx").on(t.publicUserId),
     index("users_upline_idx").on(t.parentAgentId),
   ],
 );
@@ -67,6 +70,13 @@ export const sessions = mysqlTable(
 export const jackpot = mysqlTable("jackpot", {
   id: varchar("id", { length: 32 }).primaryKey().default("mega"),
   amount: decimal("amount", { precision: 16, scale: 2 }).notNull().default("0.00"),
+  /** When "no", Mega Jackpot win condition never triggers. */
+  enabled: mysqlEnum("enabled", ["yes", "no"]).notNull().default("yes"),
+  /**
+   * Cosmetic Ultra Mega Jackpot display amount for the Player Board.
+   * Not tied to win/payout logic.
+   */
+  displayAmount: decimal("display_amount", { precision: 18, scale: 2 }).notNull().default("0.00"),
   updatedAt: timestamp("updated_at")
     .notNull()
     .default(sql`CURRENT_TIMESTAMP`)
@@ -254,7 +264,6 @@ export const platformSettings = mysqlTable("platform_settings", {
   maxDeposit: decimal("max_deposit", { precision: 14, scale: 2 }).notNull().default("50000.00"),
   minWithdraw: decimal("min_withdraw", { precision: 14, scale: 2 }).notNull().default("200.00"),
   maxWithdraw: decimal("max_withdraw", { precision: 14, scale: 2 }).notNull().default("100000.00"),
-  masterChipPool: decimal("master_chip_pool", { precision: 16, scale: 2 }).notNull().default("1000000.00"),
   updatedAt: timestamp("updated_at")
     .notNull()
     .default(sql`CURRENT_TIMESTAMP`)

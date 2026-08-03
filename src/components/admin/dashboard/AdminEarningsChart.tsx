@@ -60,8 +60,14 @@ export function AdminEarningsChart() {
     setTooltip(null);
     (async () => {
       try {
-        const res = await getPlatformEarningsGraphFn();
-        if (!cancelled) setPoints(res as EarningsPoint[]);
+        const res = await getPlatformEarningsGraphFn({ data: { period } });
+        const rawPoints = Array.isArray(res?.points) ? res.points : [];
+        const mapped: EarningsPoint[] = rawPoints.map((p) => ({
+          label: p.label,
+          earnings: Number(p.netEarnings ?? 0),
+          volume: Number(p.bets ?? 0),
+        }));
+        if (!cancelled) setPoints(mapped);
       } catch {
         if (!cancelled) setPoints([]);
       } finally {

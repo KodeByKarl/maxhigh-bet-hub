@@ -10,6 +10,15 @@ import { SugarSurgeSlot } from "./SugarSurgeSlot";
 import { GoldenPantherSlot } from "./GoldenPantherSlot";
 import { ChineseNewYearSlot } from "./ChineseNewYearSlot";
 import { MahjongWaysSlot } from "./MahjongWaysSlot";
+import { StarlightAceSlot } from "./StarlightAceSlot";
+import { SuperAceSlot } from "./SuperAceSlot";
+import { FrontierGoldSlot } from "./FrontierGoldSlot";
+import { WildFrontierStampedeSlot } from "./WildFrontierStampedeSlot";
+import { FireSpikeSlot } from "./FireSpikeSlot";
+import { FortuneGemsSlot } from "./FortuneGemsSlot";
+import { PugLifeSlot } from "./PugLifeSlot";
+import { ReelRiotSlot } from "./ReelRiotSlot";
+import { PinataWinsSlot } from "./PinataWinsSlot";
 
 type Props = {
   game: SlotGame | null;
@@ -107,6 +116,27 @@ function getGameThemeConfig(gameId: string, category: string, thumb: string) {
       ],
     };
   }
+  if (gameId === "super-ace") {
+    return {
+      bgImage: thumb,
+      bgGradient: "from-[#7F1D1D]/80 via-[#1C1917]/85 to-[#450A0A]/95",
+      titleClass: "celestial-title",
+      barGradient: "from-[#F59E0B] via-[#EF4444] to-[#B91C1C]",
+      borderGlow: "shadow-[0_0_60px_rgba(239,68,68,0.75)] border-amber-400",
+      badgeGradient: "from-[#F59E0B] via-[#EF4444] to-[#991B1B]",
+      renderType: "standard" as const,
+      imageParticles: ["/images/symbols/fire-spike/diamond.png"],
+      badgeText: "LUCKY POKER",
+      chargeText: "GOLDEN CARD CHARGE",
+      lines: [
+        "Shuffling the Lucky Poker deck…",
+        "Charging Golden Card transformations…",
+        "Calling Little & Big Jokers…",
+        "Stacking combo multipliers…",
+        "Super Ace is ready!",
+      ],
+    };
+  }
   if (category === "fishing" || gameId === "deep-bass") {
     return {
       bgImage: thumb,
@@ -151,22 +181,85 @@ function getGameThemeConfig(gameId: string, category: string, thumb: string) {
   }
   if (gameId === "fire-spike") {
     return {
-      bgImage: thumb,
-      bgGradient: "from-[#450A0A]/80 via-[#0A0912]/80 to-[#7F1D1D]/95",
+      bgImage: "/images/fire-spike-bg.png",
+      bgGradient: "from-[#450A0A]/55 via-[#0A0912]/70 to-[#7F1D1D]/85",
       titleClass: "fire-title",
       barGradient: "from-[#F97316] via-[#EF4444] to-[#FACC15]",
       borderGlow: "shadow-[0_0_60px_rgba(249,115,22,0.8)] border-orange-500",
       badgeGradient: "from-[#F97316] via-[#DC2626] to-[#991B1B]",
       renderType: "standard" as const,
-      imageParticles: ["/images/godly-loading/gem.png"],
+      imageParticles: ["/images/symbols/fire-spike/scatter.png", "/images/symbols/fire-spike/wild.png"],
       badgeText: "MOLTEN ARCADE",
       chargeText: "HEAT SURGE ACTIVE",
       lines: [
         "Igniting molten lava reels…",
-        "Heating up fire spike respins…",
-        "Charging diamond jackpot heat…",
-        "Blazing maximum heat multipliers…",
+        "Heating Wild + Scatter mix prizes…",
+        "Charging the 25,000× Grand Jackpot…",
+        "Blazing 10-line fire strike…",
         "Fire Spike is roaring!",
+      ],
+    };
+  }
+  if (gameId === "fortune-gems") {
+    return {
+      bgImage: "/images/fortune-gems-bg.png",
+      bgGradient: "from-[#4A1D0A]/55 via-[#0C0814]/70 to-[#7C2D12]/85",
+      titleClass: "fortune-title",
+      barGradient: "from-[#FBBF24] via-[#F43F5E] to-[#A16207]",
+      borderGlow: "shadow-[0_0_60px_rgba(251,191,36,0.75)] border-amber-500",
+      badgeGradient: "from-[#FBBF24] via-[#F43F5E] to-[#7C2D12]",
+      renderType: "standard" as const,
+      imageParticles: [],
+      badgeText: "TEMPLE GEMS",
+      chargeText: "MULTIPLIER REEL ACTIVE",
+      lines: [
+        "Opening the temple vault…",
+        "Spinning the gemstone grid…",
+        "Charging the multiplier reel…",
+        "Aligning five fortune lines…",
+        "Fortune Gems is ready!",
+      ],
+    };
+  }
+  if (gameId === "pug-den" || gameId === "pup-den") {
+    return {
+      bgImage: thumb,
+      bgGradient: "from-[#431407]/60 via-[#1c1917]/75 to-[#78350f]/85",
+      titleClass: "godly-title",
+      barGradient: "from-[#F59E0B] via-[#F97316] to-[#FB7185]",
+      borderGlow: "shadow-[0_0_60px_rgba(245,158,11,0.7)] border-amber-500",
+      badgeGradient: "from-[#D97706] via-[#EA580C] to-[#BE123C]",
+      renderType: "standard" as const,
+      imageParticles: [] as string[],
+      badgeText: "THE PUG DEN",
+      chargeText: "TREAT ENERGY HIGH",
+      lines: [
+        "Walking the pug reels…",
+        "Stacking Treat Wild multipliers…",
+        "Warming the Dawg's Den toaster…",
+        "Sticky Treats locking in…",
+        "Welcome to the Pug Den!",
+      ],
+    };
+  }
+  if (gameId === "fruit-riot") {
+    return {
+      bgImage: thumb,
+      bgGradient: "from-[#7c3aed]/70 via-[#db2777]/65 to-[#ea580c]/75",
+      titleClass: "godly-title",
+      barGradient: "from-[#ffe566] via-[#ff4d9e] to-[#a78bfa]",
+      borderGlow: "shadow-[0_0_50px_rgba(244,114,182,0.55)] border-pink-300",
+      badgeGradient: "from-[#ff4d9e] via-[#c026d3] to-[#f59e0b]",
+      renderType: "standard" as const,
+      imageParticles: [] as string[],
+      badgeText: "FRUIT RIOT",
+      chargeText: "PARTY MODE",
+      lines: [
+        "Cranking up the fruit party…",
+        "Loading glossy icons…",
+        "Igniting the jackpot glow…",
+        "Warming Hold switches…",
+        "Fruit Riot is ready!",
       ],
     };
   }
@@ -192,7 +285,7 @@ function getGameThemeConfig(gameId: string, category: string, thumb: string) {
     };
   }
 
-  // Fallback: Candy Peak / Sugar Surge / Fruit Riot
+  // Fallback: Candy Peak / Sugar Surge
   return {
     bgImage:
       gameId === "candy-peak" || gameId === "sugar-surge"
@@ -419,8 +512,44 @@ export function GamePlayModal({ game, open, onOpenChange }: Props) {
             <ChineseNewYearSlot gameId={game.id} gameName={game.name} />
           </div>
         ) : game.id === "mahjong-ways" ? (
-          <div className="relative h-dvh w-screen overflow-hidden flex items-center justify-center p-1 sm:p-3">
+          <div className="relative h-dvh w-screen overflow-hidden">
             <MahjongWaysSlot />
+          </div>
+        ) : game.id === "starlight-ace" ? (
+          <div className="relative h-dvh w-screen overflow-hidden">
+            <StarlightAceSlot />
+          </div>
+        ) : game.id === "super-ace" ? (
+          <div className="relative h-dvh w-screen overflow-hidden">
+            <SuperAceSlot />
+          </div>
+        ) : game.id === "frontier-gold" ? (
+          <div className="relative h-dvh w-screen overflow-hidden">
+            <FrontierGoldSlot />
+          </div>
+        ) : game.id === "buffalo-reign" ? (
+          <div className="relative h-dvh w-screen overflow-hidden">
+            <WildFrontierStampedeSlot />
+          </div>
+        ) : game.id === "fire-spike" ? (
+          <div className="relative h-dvh w-screen overflow-hidden">
+            <FireSpikeSlot gameId={game.id} gameName={game.name} />
+          </div>
+        ) : game.id === "fortune-gems" ? (
+          <div className="relative h-dvh w-screen overflow-hidden">
+            <FortuneGemsSlot gameId={game.id} gameName={game.name} />
+          </div>
+        ) : game.id === "pug-den" || game.id === "pup-den" ? (
+          <div className="relative h-dvh w-screen overflow-hidden">
+            <PugLifeSlot gameId={game.id} gameName={game.name} />
+          </div>
+        ) : game.id === "fruit-riot" ? (
+          <div className="relative h-dvh w-screen overflow-hidden">
+            <ReelRiotSlot gameId={game.id} gameName={game.name} />
+          </div>
+        ) : game.id === "pinata-wins" ? (
+          <div className="relative h-dvh w-screen overflow-hidden">
+            <PinataWinsSlot gameId={game.id} gameName={game.name} />
           </div>
         ) : (
           <ComingSoonPlay game={game} />

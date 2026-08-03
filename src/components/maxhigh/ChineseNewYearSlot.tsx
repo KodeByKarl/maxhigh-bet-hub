@@ -1,60 +1,54 @@
+/**
+ * Chinese New Year — fixed-payline slot UI.
+ * Server resolves outcomes; this component plays back the spin script.
+ */
 import { useCallback, useEffect, useRef, useState } from "react";
-import { AnimatePresence } from "framer-motion";
-import { FastForward, Info, RotateCcw, RotateCw, Square } from "lucide-react";
+import { AnimatePresence, motion } from "framer-motion";
+import { FastForward, Info, RotateCcw } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/lib/auth";
 import { formatMoney, formatMoneyCompact } from "@/lib/currency";
-import { chineseAudio } from "./chinese-new-year/audio";
 import {
-  chineseNewYearBuyFeatureFn,
-  chineseNewYearFreeSpinFn,
+  CHINESE_NEW_YEAR_GAME_ID,
+  SYMBOL_NAMES,
+  type CnySymKind,
+} from "@/lib/chinese-new-year-config";
+import { getChineseNewYearEngineConfigFn } from "@/functions/superadmin";
+import {
+  chineseNewYearCollectFn,
+  chineseNewYearGambleFn,
   chineseNewYearSpinFn,
   getChineseNewYearSessionFn,
 } from "@/functions/api";
 import { ANIM } from "./chinese-new-year/animationConfig";
-import { initialBoard, nextKey, buildBoard } from "./chinese-new-year/gridState";
-import {
-  BET_STEPS,
-  ICON_SRC,
-  getAnteMult,
-  getBuyFeatureMult,
-  getFreeSpinsBase,
-  getSuperBuyFeatureMult,
-} from "./chinese-new-year/paytable";
-import { getRuntimeSymbols, setChineseNewYearConfig } from "./chinese-new-year/runtimeConfig";
-import type { BoardCell, SpinScript } from "./chinese-new-year/types";
-import { CELLS, COLS, MAIN_CELLS, ROWS, TOP_COLS } from "./chinese-new-year/types";
-import { WinCelebration } from "./chinese-new-year/WinCelebration";
-import { ReelCell, type ReelPhase } from "./chinese-new-year/ReelCell";
+import { chineseAudio } from "./chinese-new-year/audio";
+import { ICON_SRC, BET_STEPS } from "./chinese-new-year/paytable";
+import { BetSelectModal } from "./chinese-new-year/BetSelectModal";
+import { getChineseNewYearConfig, setChineseNewYearConfig } from "./chinese-new-year/runtimeConfig";
 import { PaytableModal } from "./chinese-new-year/PaytableModal";
-import { getChineseNewYearEngineConfigFn } from "@/functions/superadmin";
-import { CHINESE_NEW_YEAR_GAME_ID } from "@/lib/chinese-new-year-config";
-
-type Phase = ReelPhase;
-type Slot = BoardCell | null;
-type WinPopup = {
-  amount: number;
-  baseEarn?: number | null;
-  multiplier?: number | null;
-};
+import { ReelCell, type ReelPhase } from "./chinese-new-year/ReelCell";
+import { WinCelebration } from "./chinese-new-year/WinCelebration";
+import type { CnyGrid, GambleChoice, SpinScript } from "./chinese-new-year/types";
+import { cellKey } from "./chinese-new-year/types";
 
 const EMPTY_SET = new Set<string>();
-const EMPTY_PAY = new Map<string, number>();
-const EMPTY_FALL: Record<string, number> = Object.freeze({}) as Record<string, number>;
-const TOP_INDICES = Object.freeze([0, 1, 2, 3]);
-const MAIN_INDICES = Object.freeze(Array.from({ length: MAIN_CELLS }, (_, i) => i + TOP_COLS));
-const ALL_BOARD_INDICES = Object.freeze(Array.from({ length: CELLS }, (_, i) => i));
 
-function scatterSym() {
-  return getRuntimeSymbols().find((s) => s.scatter)!;
+function idleGrid(): CnyGrid {
+  const cfg = getChineseNewYearConfig();
+  const kinds: CnySymKind[] = ["lantern", "lion", "fish", "coins", "jug", "sym_a", "sym_k", "sym_q"];
+  return Array.from({ length: cfg.reelsCount }, (_, r) =>
+    Array.from({ length: cfg.rowsCount }, (_, row) => kinds[(r + row * 2) % kinds.length]!),
+  );
 }
 
-function asSlots(board: BoardCell[]): Slot[] {
-  const slots: Slot[] = Array.from({ length: CELLS }, () => null);
-  const n = Math.min(board.length, slots.length);
-  for (let i = 0; i < n; i++) slots[i] = board[i];
-  return slots;
+function preloadAssets() {
+  if (typeof Image === "undefined") return;
+  for (const src of Object.values(ICON_SRC)) {
+    const img = new Image();
+    img.decoding = "async";
+    img.src = src;
+  }
 }
 
 function betIndex(bet: number) {
@@ -64,58 +58,54 @@ function betIndex(bet: number) {
 }
 
 export function ChineseNewYearSlot({
-  gameId = "chinese-new-year",
+  gameId = CHINESE_NEW_YEAR_GAME_ID,
 }: {
   gameId?: string;
   gameName?: string;
 } = {}) {
-  const { user, setBalanceLocal, refreshJackpot } = useAuth();
+  const { user, setBalanceLocal } = useAuth();
   const balance = user?.balance ?? 0;
-  const playSessionIdRef = useRef<string | null>(null);
+
   const [bet, setBet] = useState(5);
-  const [ante, setAnte] = useState(false);
-  const [slots, setSlots] = useState<Slot[]>(() => asSlots(initialBoard()));
-  const [phase, setPhase] = useState<Phase>("idle");
+  const [grid, setGrid] = useState<CnyGrid>(() => idleGrid());
+  const [phase, setPhase] = useState<ReelPhase>("idle");
   const [winningKeys, setWinningKeys] = useState<Set<string>>(EMPTY_SET);
-  const [payoutByKey, setPayoutByKey] = useState<Map<string, number>>(EMPTY_PAY);
-  const [spawnedKeys, setSpawnedKeys] = useState<Set<string>>(EMPTY_SET);
-  const [fallenKeys, setFallenKeys] = useState<Set<string>>(EMPTY_SET);
-  const [fallDistance, setFallDistance] = useState<Record<string, number>>(EMPTY_FALL);
   const [autoSpin, setAutoSpin] = useState(false);
   const [turbo, setTurbo] = useState(false);
   const [lastWin, setLastWin] = useState(0);
-  const [freeSpins, setFreeSpins] = useState(0);
-  const [inFree, setInFree] = useState(false);
-  const [fsBombAcc, setFsBombAcc] = useState(0);
-  const [fsSessionWin, setFsSessionWin] = useState(0);
-  const [dropTotal, setDropTotal] = useState(0);
   const [banner, setBanner] = useState<string | null>(null);
-  const [winPopup, setWinPopup] = useState<WinPopup | null>(null);
+  const [winPopup, setWinPopup] = useState<number | null>(null);
   const [infoOpen, setInfoOpen] = useState(false);
+  const [betPickerOpen, setBetPickerOpen] = useState(false);
+  const [dragonOverlay, setDragonOverlay] = useState<{
+    launch: number;
+    total: number;
+    label: string;
+  } | null>(null);
+  const [monkeyOverlay, setMonkeyOverlay] = useState<{
+    extra: CnySymKind;
+    spins: number;
+  } | null>(null);
+  const [gambleOpen, setGambleOpen] = useState(false);
+  const [pendingWin, setPendingWin] = useState(0);
+  const [sessionId, setSessionId] = useState<string | null>(null);
+  const [fsProgress, setFsProgress] = useState<string | null>(null);
+  const [extraScatter, setExtraScatter] = useState<CnySymKind | null>(null);
+  const [spinId, setSpinId] = useState(0);
 
-  const busy = phase !== "idle";
-  const totalBet = +(bet * (ante ? getAnteMult() : 1)).toFixed(2);
-  const buyCost = +(bet * getBuyFeatureMult()).toFixed(2);
-  const superBuyCost = +(bet * getSuperBuyFeatureMult()).toFixed(2);
-
+  const busy = phase !== "idle" || gambleOpen;
   const busyRef = useRef(false);
-  const skipRef = useRef(false);
   const turboRef = useRef(turbo);
+  const autoRef = useRef(autoSpin);
   const mountedRef = useRef(true);
   const playbackGen = useRef(0);
-  const freeSpinsRef = useRef(freeSpins);
-  const fsSessionRef = useRef(fsSessionWin);
-  const fsBombRef = useRef(fsBombAcc);
-  const spinRef = useRef<(asFree?: boolean) => Promise<void>>(async () => undefined);
+  const spinRef = useRef<() => Promise<void>>(async () => undefined);
 
   turboRef.current = turbo;
-  freeSpinsRef.current = freeSpins;
-  fsSessionRef.current = fsSessionWin;
-  fsBombRef.current = fsBombAcc;
+  autoRef.current = autoSpin;
 
   const wait = useCallback((ms: number, gen: number) => {
-    if (skipRef.current) return Promise.resolve();
-    const scaled = turboRef.current ? Math.min(ms, 60) : ms;
+    const scaled = turboRef.current ? Math.min(ms, 55) : ms;
     return new Promise<void>((resolve, reject) => {
       setTimeout(() => {
         if (!mountedRef.current || gen !== playbackGen.current) {
@@ -130,415 +120,554 @@ export function ChineseNewYearSlot({
   useEffect(() => {
     mountedRef.current = true;
     chineseAudio.preload();
+    preloadAssets();
     void getChineseNewYearEngineConfigFn()
       .then((cfg) => {
-        if (mountedRef.current) setChineseNewYearConfig(cfg);
+        if (mountedRef.current) {
+          setChineseNewYearConfig(cfg);
+          setGrid(idleGrid());
+        }
+      })
+      .catch(() => undefined);
+    void getChineseNewYearSessionFn()
+      .then((s) => {
+        if (!mountedRef.current) return;
+        if (s.sessionId && s.pendingWin > 0) {
+          setSessionId(s.sessionId);
+          setPendingWin(s.pendingWin);
+          setGambleOpen(true);
+        }
       })
       .catch(() => undefined);
     return () => {
       mountedRef.current = false;
       playbackGen.current += 1;
-      chineseAudio.stopSpinLoop();
       chineseAudio.stopAmbient();
     };
   }, []);
 
   const playScript = useCallback(
-    async (script: SpinScript, isFree: boolean, gen: number, startBalance: number) => {
-      setDropTotal(0);
+    async (script: SpinScript, gen: number) => {
+      const cfg = getChineseNewYearConfig();
       setWinningKeys(EMPTY_SET);
-      setPayoutByKey(EMPTY_PAY);
-      setSpawnedKeys(EMPTY_SET);
-      setFallenKeys(EMPTY_SET);
-      let running = 0;
-      let currentBal = startBalance;
+      setWinPopup(null);
+      setDragonOverlay(null);
+      setMonkeyOverlay(null);
+      setFsProgress(null);
+      setExtraScatter(null);
+      setSpinId((n) => n + 1);
+      setPhase("spinning");
+      chineseAudio.unlock();
+      chineseAudio.startSpinLoop();
 
-      if (skipRef.current) {
-        const lastStep = script.steps[script.steps.length - 1];
-        const finalBoard = lastStep ? lastStep.afterFall : script.initialBoard;
-        setSlots(asSlots(finalBoard));
-        running = script.totalWin;
-        currentBal = startBalance + script.totalWin;
-        setBalanceLocal(currentBal);
-        setDropTotal(running);
-      } else {
-        setPhase("dropping");
-        setSlots(asSlots(script.initialBoard));
-        chineseAudio.startSpinLoop();
-        await wait(
-          ANIM.dropDuration + COLS * ANIM.dropStaggerCol + ROWS * ANIM.dropStaggerRow,
-          gen,
-        );
-        chineseAudio.stopSpinLoop();
-        chineseAudio.playReelStop(5);
+      // Spin blur, then reveal final grid with staggered drop-stop
+      await wait(ANIM.reelSpin, gen);
+      chineseAudio.playReelStop();
+      setGrid(script.grid);
+      setPhase("stopping");
+      await wait(ANIM.reelStagger * (cfg.reelsCount - 1) + ANIM.reelSettle, gen);
+
+      // Payline highlights
+      if (script.paylineWins.length > 0) {
+        const keys = new Set<string>();
+        for (const w of script.paylineWins) {
+          for (const [reel, row] of w.positions) keys.add(cellKey(reel, row));
+        }
+        setWinningKeys(keys);
+        setPhase("win");
+        setWinPopup(script.paylineWin);
+        chineseAudio.playWin();
+        await wait(ANIM.lineHighlight, gen);
       }
 
-      for (const step of script.steps) {
-        if (gen !== playbackGen.current) break;
-
-        if (skipRef.current) {
-          const lastStep = script.steps[script.steps.length - 1];
-          const finalBoard = lastStep ? lastStep.afterFall : script.initialBoard;
-          setSlots(asSlots(finalBoard));
-          running = script.totalWin;
-          currentBal = startBalance + script.totalWin;
-          setBalanceLocal(currentBal);
-          setDropTotal(running);
-          break;
+      // Dragon Fireworks
+      if (script.dragonBonus?.triggered) {
+        setBanner("Dragon Fireworks!");
+        let running = 0;
+        for (const launch of script.dragonBonus.launches) {
+          if (launch.success) {
+            running += launch.coins;
+            chineseAudio.playDragonFirework();
+            setDragonOverlay({
+              launch: launch.index + 1,
+              total: running,
+              label: launch.awardLabel ?? "Coins",
+            });
+            await wait(ANIM.dragonLaunch, gen);
+          } else {
+            chineseAudio.playDragonBust();
+            setDragonOverlay({ launch: launch.index + 1, total: running, label: "BUST!" });
+            await wait(ANIM.dragonBust, gen);
+          }
         }
-
-        setSpawnedKeys(EMPTY_SET);
-        setFallenKeys(EMPTY_SET);
-        setFallDistance(EMPTY_FALL);
-        setSlots(asSlots(step.board));
-        setWinningKeys(new Set(step.winningKeys));
-        const payMap = new Map<string, number>();
-        for (const c of step.clusters) {
-          for (const k of c.keys) payMap.set(k, c.perSymbol);
-        }
-        setPayoutByKey(payMap);
-        running += step.tumbleWin;
-        if (step.tumbleWin > 0) {
-          currentBal += step.tumbleWin;
-          setBalanceLocal(currentBal);
-        }
-        setDropTotal(running);
-
-        setPhase("glow");
-        await wait(ANIM.glowDuration, gen);
-
-        setPhase("popping");
-        chineseAudio.playCascadeTick();
-        await wait(
-          ANIM.popDuration + Math.min(step.winningKeys.length, 12) * ANIM.popStagger,
-          gen,
-        );
-
-        setSlots(
-          step.afterPop.length === CELLS ? step.afterPop : asSlots(step.board),
-        );
-        setWinningKeys(EMPTY_SET);
-        setPayoutByKey(EMPTY_PAY);
-        await wait(ANIM.holeHold, gen);
-
-        setFallenKeys(new Set(step.fallenKeys));
-        setSpawnedKeys(new Set(step.spawnedKeys));
-        setFallDistance(step.fallDistance ?? EMPTY_FALL);
-        setSlots(asSlots(step.afterFall));
-        setPhase("falling");
-        await wait(
-          ANIM.refillDuration + COLS * ANIM.fallStaggerCol + ANIM.fallStaggerRow * 2,
-          gen,
-        );
-        await wait(ANIM.betweenTumbles, gen);
+        setDragonOverlay(null);
+        setBanner(null);
       }
 
-      if (gen === playbackGen.current) {
-        setPhase("idle");
+      // Monkey Free Spins intro
+      if (script.monkeyBonus?.triggered) {
+        chineseAudio.playMonkeyTrigger();
+        setMonkeyOverlay({
+          extra: script.monkeyBonus.extraScatterSymbol,
+          spins: script.monkeyBonus.freeSpinsAwarded,
+        });
+        setBanner(`Monkey! +${formatMoney(script.monkeyBonus.triggerPayout)}`);
+        setExtraScatter(script.monkeyBonus.extraScatterSymbol);
+        await wait(ANIM.monkeyIntro + ANIM.wheelSpin, gen);
+        setMonkeyOverlay(null);
+        setBanner(null);
+
+        for (const fs of script.freeSpins) {
+          setFsProgress(`Free Spin ${fs.spinIndex + 1}/${script.freeSpins.length}`);
+          setSpinId((n) => n + 1);
+          setPhase("spinning");
+          chineseAudio.startSpinLoop();
+          await wait(ANIM.reelSpin * 0.65, gen);
+          chineseAudio.playReelStop();
+          setGrid(fs.grid);
+          setPhase("stopping");
+          await wait(ANIM.reelStagger * (cfg.reelsCount - 1) + ANIM.reelSettle * 0.75, gen);
+          const keys = new Set<string>();
+          for (const w of fs.paylineWins) {
+            for (const [reel, row] of w.positions) keys.add(cellKey(reel, row));
+          }
+          setWinningKeys(keys);
+          if (fs.spinWin > 0) {
+            setPhase("win");
+            setWinPopup(fs.spinWin);
+            chineseAudio.playWin();
+          }
+          await wait(ANIM.freeSpinGap + (fs.spinWin > 0 ? ANIM.lineHighlight : 200), gen);
+        }
+        setFsProgress(null);
+        setExtraScatter(null);
       }
-      return script;
+
+      setLastWin(script.totalWin);
+      if (script.totalWin > 0) {
+        setWinPopup(script.totalWin);
+        await wait(ANIM.winTally, gen);
+      }
+      setWinningKeys(EMPTY_SET);
+      setWinPopup(null);
+      setPhase("idle");
     },
-    [wait, setBalanceLocal],
+    [wait],
   );
 
-  const spin = useCallback(
-    async (asFree = false) => {
-      if (busyRef.current) return;
-      const isFree = asFree || (inFree && freeSpinsRef.current > 0);
-      const cost = isFree ? 0 : totalBet;
-
-      if (!isFree && balance < cost) {
-        toast.error("Insufficient balance");
+  const doSpin = useCallback(async () => {
+    if (busyRef.current) return;
+    busyRef.current = true;
+    const gen = ++playbackGen.current;
+    try {
+      // Autoplay always auto-collects (declines gamble by default)
+      const res = await chineseNewYearSpinFn({
+        data: { bet, autoCollect: autoRef.current },
+      });
+      setBalanceLocal(res.balance);
+      await playScript(res.script, gen);
+      if (!res.collected && res.session.sessionId && res.session.pendingWin > 0) {
+        setSessionId(res.session.sessionId);
+        setPendingWin(res.session.pendingWin);
+        setGambleOpen(true);
         setAutoSpin(false);
+      } else if (autoRef.current) {
+        // continue autoplay
+        busyRef.current = false;
+        setTimeout(() => {
+          if (mountedRef.current && autoRef.current) void spinRef.current();
+        }, turboRef.current ? 80 : 350);
         return;
       }
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : "Spin failed";
+      toast.error(msg);
+      setPhase("idle");
+      setAutoSpin(false);
+    } finally {
+      busyRef.current = false;
+    }
+  }, [bet, playScript, setBalanceLocal]);
 
-      const gen = ++playbackGen.current;
-      busyRef.current = true;
-      skipRef.current = false;
-      setBanner(null);
-      setWinPopup(null);
-      setLastWin(0);
+  spinRef.current = doSpin;
 
-      try {
-        if (!isFree) setBalanceLocal(balance - cost);
+  const onCollect = async () => {
+    if (!sessionId) return;
+    try {
+      chineseAudio.unlock();
+      chineseAudio.playCollect();
+      const res = await chineseNewYearCollectFn({ data: { sessionId } });
+      setBalanceLocal(res.balance);
+      setPendingWin(0);
+      setSessionId(null);
+      setGambleOpen(false);
+      setLastWin(res.amount);
+      toast.success(`Collected ${formatMoney(res.amount)}`);
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Collect failed");
+    }
+  };
 
-        let settled: Awaited<ReturnType<typeof chineseNewYearSpinFn>>;
-        if (isFree) {
-          const sessionId = playSessionIdRef.current;
-          if (!sessionId) {
-            toast.error("Free spin session expired");
-            return;
-          }
-          settled = await chineseNewYearFreeSpinFn({ data: { sessionId } });
+  const onGamble = async (choice: GambleChoice) => {
+    if (!sessionId) return;
+    try {
+      chineseAudio.unlock();
+      chineseAudio.playGambleFlip();
+      const res = await chineseNewYearGambleFn({ data: { sessionId, choice } });
+      setBalanceLocal(res.balance);
+      if (res.result.won) {
+        setPendingWin(res.result.amount);
+        chineseAudio.playCollect();
+        toast.success(`Gamble win! ${formatMoney(res.result.amount)}`);
+        if (res.collected) {
+          setGambleOpen(false);
+          setSessionId(null);
+          setPendingWin(0);
+          setLastWin(res.result.amount);
         } else {
-          settled = await chineseNewYearSpinFn({ data: { bet, ante } });
+          setSessionId(res.session.sessionId);
         }
-
-        void refreshJackpot();
-        const script = await playScript(settled.script, isFree, gen, isFree ? balance : balance - cost);
-        if (gen !== playbackGen.current || !mountedRef.current) return;
-
-        if (script.totalWin > 0) {
-          setLastWin(script.totalWin);
-          chineseAudio.playWin(script.totalWin, totalBet);
-          if (script.totalWin / totalBet >= 8) {
-            setWinPopup({
-              amount: script.totalWin,
-              baseEarn: script.rawWin,
-              multiplier: script.displayMult,
-            });
-          }
-        }
-      } catch (err) {
-        if (!isFree) setBalanceLocal(balance);
-      } finally {
-        if (gen === playbackGen.current) {
-          busyRef.current = false;
-          if (mountedRef.current) setPhase("idle");
-        }
+      } else {
+        chineseAudio.playDragonBust();
+        toast.error(`Bust — drew ${res.result.drawn}`);
+        setGambleOpen(false);
+        setSessionId(null);
+        setPendingWin(0);
+        setLastWin(0);
       }
-    },
-    [ante, balance, bet, playScript, refreshJackpot, setBalanceLocal, totalBet, inFree],
-  );
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Gamble failed");
+    }
+  };
 
-  spinRef.current = spin;
-
-  const nudgeBet = useCallback(
-    (dir: -1 | 1) => {
-      if (busy) return;
-      const i = betIndex(bet);
-      const next = BET_STEPS[i + dir];
-      if (next != null) setBet(next);
-    },
-    [bet, busy],
-  );
+  const cfg = getChineseNewYearConfig();
+  const bi = betIndex(bet);
 
   return (
-    <div className="relative flex h-dvh w-full flex-col overflow-hidden select-none bg-[#120404]">
-      {/* Traditional Chinese Pagoda & Dragon Frame Backdrop */}
+    <div
+      className="relative flex h-full min-h-0 w-full flex-col overflow-hidden bg-[#1a0505]"
+      data-game={gameId}
+    >
+      {/* Atmosphere */}
+      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_top,_rgba(185,28,28,0.45),_transparent_55%),radial-gradient(ellipse_at_bottom,_rgba(120,53,15,0.35),_transparent_50%)]" />
       <div
-        className="absolute inset-0 size-full bg-cover bg-center opacity-40 blur-[1px]"
+        className="pointer-events-none absolute inset-0 opacity-[0.12]"
         style={{
-          backgroundImage: "radial-gradient(circle at center, #991b1b 0%, #450a0a 60%, #000 100%)",
+          backgroundImage:
+            "url(\"data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M30 5 L35 25 L55 30 L35 35 L30 55 L25 35 L5 30 L25 25 Z' fill='%23fbbf24' fill-opacity='0.4'/%3E%3C/svg%3E\")",
         }}
       />
 
-      {/* Playfield Container */}
-      <div className="relative z-10 flex min-h-0 flex-1 items-center justify-center px-2 py-1.5 sm:px-3 sm:py-2">
-        <div className="flex h-full max-h-full w-full max-w-[1200px] flex-col items-center gap-1.5 sm:gap-2">
-          
-          {/* Pagoda Header Banner */}
-          <div className="flex shrink-0 items-center justify-between w-full max-w-[840px] px-4 py-1 rounded-t-2xl border-b-2 border-yellow-400 bg-gradient-to-r from-red-950 via-red-800 to-red-950 shadow-xl">
-            <div className="flex items-center gap-2 text-yellow-300 font-black text-sm uppercase tracking-wider">
-              <span>🧧</span>
-              <span>CHINESE NEW YEAR</span>
-              <span>🏮</span>
+      {/* Themed header — centered title, clear of close (X) */}
+      <header className="relative z-20 shrink-0">
+        <div
+          className="relative border-b-2 border-yellow-600/70"
+          style={{
+            background:
+              "linear-gradient(180deg, #7f1d1d 0%, #450a0a 48%, #1c0808 100%)",
+          }}
+        >
+          <div
+            className="h-[3px] w-full"
+            style={{
+              background:
+                "linear-gradient(90deg, transparent 0%, #B8860B 12%, #F5D76E 50%, #B8860B 88%, transparent 100%)",
+            }}
+          />
+
+          <div className="flex items-center justify-center px-12 py-2.5 sm:px-14 sm:py-3">
+            <div className="flex min-w-0 max-w-full flex-col items-center text-center">
+              <div className="text-[9px] font-bold uppercase tracking-[0.28em] text-amber-200/75 sm:text-[10px]">
+                Gong Xi Fa Cai
+              </div>
+              <h1
+                className="truncate text-base font-black tracking-wide text-transparent sm:text-lg"
+                style={{
+                  backgroundImage:
+                    "linear-gradient(180deg, #FFF6C8 0%, #F5D76E 42%, #D4A017 78%, #8B6914 100%)",
+                  WebkitBackgroundClip: "text",
+                  backgroundClip: "text",
+                  filter: "drop-shadow(0 0 10px rgba(245,158,11,0.35))",
+                }}
+              >
+                Chinese New Year
+              </h1>
+              <div className="mt-0.5 flex items-center justify-center gap-1.5">
+                <span className="h-px w-6 bg-gradient-to-r from-transparent to-yellow-500/70" />
+                <span className="text-[9px] font-semibold tracking-widest text-yellow-200/60">
+                  新 年 快 乐
+                </span>
+                <span className="h-px w-6 bg-gradient-to-l from-transparent to-yellow-500/70" />
+              </div>
             </div>
+          </div>
+
+          {fsProgress && (
+            <div className="absolute bottom-0 left-1/2 z-10 -translate-x-1/2 translate-y-1/2">
+              <span className="rounded-full border border-amber-300/80 bg-gradient-to-r from-red-800 via-amber-700 to-red-800 px-3 py-0.5 text-[10px] font-black text-yellow-50 shadow-[0_0_14px_rgba(220,38,38,0.55)]">
+                {fsProgress}
+              </span>
+            </div>
+          )}
+
+          <div
+            className="h-[3px] w-full"
+            style={{
+              background:
+                "linear-gradient(90deg, transparent 0%, #B8860B 12%, #F5D76E 50%, #B8860B 88%, transparent 100%)",
+            }}
+          />
+        </div>
+      </header>
+
+      {/* Reels — fill available space (5×3) */}
+      <div className="relative z-10 flex min-h-0 flex-1 items-center justify-center overflow-hidden px-2 py-1 sm:px-3 sm:py-2">
+        <div
+          className="relative h-full max-h-full max-w-full"
+          style={{
+            aspectRatio: `${cfg.reelsCount} / ${cfg.rowsCount}`,
+            width: "auto",
+            // Cap extreme ultrawide; height drives size so symbols grow with the play area
+            maxWidth: "min(100%, 1280px)",
+          }}
+        >
+          <div className="box-border flex h-full w-full flex-col rounded-2xl border-[3px] border-yellow-600/80 bg-gradient-to-b from-red-950/95 to-black/90 p-0.5 shadow-[0_0_48px_rgba(185,28,28,0.4)] sm:border-4 sm:p-1">
+            <div
+              className="grid h-full min-h-0 w-full flex-1 gap-[2px] sm:gap-[3px]"
+              style={{
+                gridTemplateColumns: `repeat(${cfg.reelsCount}, minmax(0, 1fr))`,
+                gridTemplateRows: `repeat(${cfg.rowsCount}, minmax(0, 1fr))`,
+              }}
+            >
+              {grid.map((col, reel) =>
+                col.map((kind, row) => {
+                  const key = cellKey(reel, row);
+                  return (
+                    <div
+                      key={key}
+                      className="min-h-0 min-w-0 p-px"
+                      style={{ gridColumn: reel + 1, gridRow: row + 1 }}
+                    >
+                      <ReelCell
+                        kind={kind}
+                        phase={phase}
+                        reel={reel}
+                        row={row}
+                        spinId={spinId}
+                        winning={winningKeys.has(key)}
+                        dimmed={winningKeys.size > 0 && !winningKeys.has(key)}
+                        extraLabel={
+                          kind === "extra_scatter" && extraScatter
+                            ? SYMBOL_NAMES[extraScatter]
+                            : null
+                        }
+                        className="!aspect-auto h-full w-full"
+                      />
+                    </div>
+                  );
+                }),
+              )}
+            </div>
+          </div>
+
+          <WinCelebration amount={winPopup} label={banner} />
+
+          <AnimatePresence>
+            {dragonOverlay && (
+              <motion.div
+                className="absolute inset-0 z-30 grid place-items-center rounded-2xl bg-black/55"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+              >
+                <div className="text-center">
+                  <div className="text-4xl">🎆</div>
+                  <div className="mt-1 text-sm font-bold uppercase text-yellow-200">
+                    Launch #{dragonOverlay.launch} · {dragonOverlay.label}
+                  </div>
+                  <div className="text-2xl font-black text-amber-300">
+                    {formatMoney(dragonOverlay.total)}
+                  </div>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          <AnimatePresence>
+            {monkeyOverlay && (
+              <motion.div
+                className="absolute inset-0 z-30 grid place-items-center rounded-2xl bg-black/60"
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0 }}
+              >
+                <div className="mx-4 max-w-xs rounded-2xl border-2 border-yellow-400 bg-gradient-to-b from-red-800 to-amber-950 p-4 text-center shadow-xl">
+                  <div className="text-xs font-bold uppercase tracking-widest text-yellow-200">
+                    Fireworks Wheel
+                  </div>
+                  <div className="mx-auto mt-2 size-20">
+                    <img
+                      src={ICON_SRC[monkeyOverlay.extra]}
+                      alt=""
+                      className="size-full object-contain drop-shadow-lg"
+                    />
+                  </div>
+                  <div className="mt-2 text-sm font-black text-yellow-100">
+                    Extra Scatter: {SYMBOL_NAMES[monkeyOverlay.extra]}
+                  </div>
+                  <div className="text-xs text-amber-200/90">{monkeyOverlay.spins} Free Spins</div>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
+      </div>
+
+      {/* Controls — centered cluster */}
+      <div className="relative z-20 border-t border-yellow-800/40 bg-black/55 px-3 py-2.5 backdrop-blur-sm">
+        <div className="mx-auto flex w-full max-w-lg flex-col items-center gap-2">
+          <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-0.5 text-[11px] text-yellow-100/80">
+            <span>Bal {formatMoneyCompact(balance)}</span>
+            <span className="text-amber-300/90">Win {formatMoneyCompact(lastWin)}</span>
+            <span>
+              {cfg.paylineCount} lines · {formatMoneyCompact(bet)}
+            </span>
+          </div>
+
+          <div className="flex flex-wrap items-center justify-center gap-2">
+            <button
+              type="button"
+              disabled={busy}
+              onClick={() => setBet(BET_STEPS[Math.max(0, bi - 1)]!)}
+              className="grid size-9 place-items-center rounded-[5px] border border-yellow-700/50 bg-red-950/60 text-yellow-100 disabled:opacity-40"
+            >
+              −
+            </button>
+            <button
+              type="button"
+              disabled={busy}
+              onClick={() => !busy && setBetPickerOpen(true)}
+              className="min-w-[3.75rem] rounded-[5px] border border-yellow-600/50 bg-black/35 px-2 py-1.5 text-center text-sm font-black tabular-nums text-yellow-100 transition hover:border-yellow-400/70 hover:bg-red-950/50 disabled:opacity-40"
+              title="Select bet"
+              aria-label="Open bet picker"
+            >
+              {formatMoneyCompact(bet)}
+            </button>
+            <button
+              type="button"
+              disabled={busy}
+              onClick={() => setBet(BET_STEPS[Math.min(BET_STEPS.length - 1, bi + 1)]!)}
+              className="grid size-9 place-items-center rounded-[5px] border border-yellow-700/50 bg-red-950/60 text-yellow-100 disabled:opacity-40"
+            >
+              +
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setTurbo((t) => !t)}
+              className={cn(
+                "grid size-9 place-items-center rounded-[5px] border",
+                turbo
+                  ? "border-amber-400 bg-amber-600/40 text-amber-100"
+                  : "border-yellow-800/50 bg-black/40 text-yellow-200/70",
+              )}
+              title="Turbo"
+            >
+              <FastForward className="size-4" />
+            </button>
+
+            <button
+              type="button"
+              onClick={() => {
+                setAutoSpin((a) => !a);
+                if (!autoSpin && !busyRef.current) void doSpin();
+              }}
+              className={cn(
+                "grid h-9 place-items-center rounded-[5px] border px-2.5 text-[10px] font-bold uppercase",
+                autoSpin
+                  ? "border-red-400 bg-red-700/50 text-white"
+                  : "border-yellow-800/50 bg-black/40 text-yellow-200/70",
+              )}
+            >
+              Auto
+            </button>
+
             <button
               type="button"
               onClick={() => setInfoOpen(true)}
-              className="flex items-center gap-1 text-xs font-bold text-yellow-300 bg-red-900/80 px-2.5 py-1 rounded-full border border-yellow-400/40 hover:bg-red-800"
+              className="grid size-9 place-items-center rounded-[5px] border border-yellow-800/50 bg-black/40 text-yellow-200/80"
+              title="Paytable"
+              aria-label="Info"
             >
-              <Info size={14} /> Paytable
+              <Info className="size-4" />
             </button>
-          </div>
 
-          <div className="flex min-h-0 w-full flex-1 flex-col items-center justify-center">
-            <div className="flex h-full min-h-0 min-w-0 w-full flex-col items-center">
-              <div
-                className="flex h-full min-h-0 w-full max-w-[840px] flex-col items-center justify-center"
-                style={{ width: "min(100%, 800px)" }}
-              >
-                {/* 1ST LAYER: TOP 4 REEL TRACKER */}
-                <div className="-mb-[2px] relative z-10 flex shrink-0 justify-center w-full">
-                  <div
-                    className="relative flex items-center justify-center rounded-t-2xl rounded-b-none p-1.5 shadow-[0_10px_30px_rgba(0,0,0,0.8)]"
-                    style={{
-                      width: "calc(100% * (4 / 6))",
-                      background: "linear-gradient(135deg, #b91c1c 0%, #7f1d1d 100%)",
-                      border: "2px solid #facc15",
-                      borderBottom: "none",
-                    }}
-                  >
-                    <div
-                      className="grid size-full rounded-t-xl overflow-hidden bg-red-950/90"
-                      style={{
-                        gridTemplateColumns: "repeat(4, minmax(0, 1fr))",
-                        aspectRatio: "4 / 1",
-                      }}
-                    >
-                      {TOP_INDICES.map((i) => {
-                        const cell = slots[i] ?? null;
-                        const win = cell ? winningKeys.has(cell.key) : false;
-                        return (
-                          <ReelCell
-                            key={`top-slot-${i}`}
-                            index={i}
-                            cell={cell}
-                            phase={phase}
-                            win={win}
-                            perPay={cell ? payoutByKey.get(cell.key) : undefined}
-                            isSpawn={cell ? spawnedKeys.has(cell.key) : false}
-                            isFallen={cell ? fallenKeys.has(cell.key) : false}
-                            fallDist={cell ? (fallDistance[cell.key] ?? 0) : 0}
-                            cols={4}
-                            isTop={true}
-                          />
-                        );
-                      })}
-                    </div>
-                  </div>
-                </div>
-
-                {/* 2ND LAYER: MAIN 6x7 GRID */}
-                <div className="relative flex min-h-0 w-full flex-1 items-center justify-center">
-                  <div
-                    className="relative mx-auto size-full max-h-full"
-                    style={{
-                      aspectRatio: `${COLS} / ${ROWS}`,
-                      width: "100%",
-                      height: "auto",
-                    }}
-                  >
-                    <div
-                      className="relative size-full rounded-3xl p-2.5 shadow-[0_20px_60px_rgba(0,0,0,0.9)]"
-                      style={{
-                        background: "linear-gradient(135deg, #dc2626 0%, #7f1d1d 100%)",
-                        border: "3px solid #facc15",
-                      }}
-                    >
-                      <div
-                        className="relative size-full overflow-hidden rounded-2xl bg-gradient-to-b from-red-950 to-black p-1"
-                      >
-                        <div
-                          className="grid size-full"
-                          style={{
-                            gridTemplateColumns: `repeat(${COLS}, minmax(0, 1fr))`,
-                            gridTemplateRows: `repeat(${ROWS}, minmax(0, 1fr))`,
-                          }}
-                        >
-                          {MAIN_INDICES.map((i) => {
-                            const cell = slots[i] ?? null;
-                            const win = cell ? winningKeys.has(cell.key) : false;
-                            return (
-                              <ReelCell
-                                key={`slot-${i}`}
-                                index={i - TOP_COLS}
-                                cell={cell}
-                                phase={phase}
-                                win={win}
-                                perPay={cell ? payoutByKey.get(cell.key) : undefined}
-                                isSpawn={cell ? spawnedKeys.has(cell.key) : false}
-                                isFallen={cell ? fallenKeys.has(cell.key) : false}
-                                fallDist={cell ? (fallDistance[cell.key] ?? 0) : 0}
-                                cols={COLS}
-                                isTop={false}
-                              />
-                            );
-                          })}
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* BOTTOM CONTROL BAR */}
-                <div className="mt-2 w-full shrink-0 max-w-[1100px] mx-auto">
-                  <div className="flex flex-wrap items-center justify-between gap-2 rounded-2xl bg-red-950/90 p-2 backdrop-blur-md border-2 border-yellow-400 shadow-2xl">
-                    
-                    {/* LEFT SECTION */}
-                    <div className="flex items-center gap-2">
-                      <button
-                        type="button"
-                        onClick={() => setInfoOpen(true)}
-                        className="grid size-9 place-items-center rounded-full bg-red-900 text-yellow-300 border border-yellow-400/40 hover:bg-red-800 transition"
-                      >
-                        <Info size={18} />
-                      </button>
-
-                      <div className="flex items-center gap-1.5 bg-red-900/90 rounded-full px-3 py-1 border border-yellow-400/30">
-                        <button
-                          type="button"
-                          disabled={busy}
-                          onClick={() => nudgeBet(-1)}
-                          className="grid size-6 place-items-center rounded-full bg-red-800 text-yellow-300 font-bold text-sm"
-                        >
-                          −
-                        </button>
-                        <span className="text-xs font-black tabular-nums text-yellow-300 px-1">
-                          {totalBet.toFixed(2)}
-                        </span>
-                        <button
-                          type="button"
-                          disabled={busy}
-                          onClick={() => nudgeBet(1)}
-                          className="grid size-6 place-items-center rounded-full bg-red-800 text-yellow-300 font-bold text-sm"
-                        >
-                          +
-                        </button>
-                      </div>
-                    </div>
-
-                    {/* CENTER SECTION */}
-                    <div className="flex flex-1 items-center justify-center max-w-[450px]">
-                      <div className="flex w-full items-center justify-between rounded-full bg-gradient-to-r from-yellow-500 via-amber-400 to-yellow-500 p-1 font-black text-xs text-red-950 shadow-md">
-                        <span className="px-3">Bet: ₱{totalBet.toFixed(2)}</span>
-                        <span className="truncate px-2 text-red-900">
-                          {dropTotal > 0 ? `Win ₱${dropTotal.toFixed(2)}` : "Gong Xi Fa Cai!"}
-                        </span>
-                        <span className="px-3">Bal: ₱{balance.toFixed(2)}</span>
-                      </div>
-                    </div>
-
-                    {/* RIGHT SECTION */}
-                    <div className="flex items-center gap-2">
-                      <button
-                        type="button"
-                        onClick={() => setTurbo((v) => !v)}
-                        className={cn(
-                          "grid size-9 place-items-center rounded-full border transition",
-                          turbo
-                            ? "border-yellow-300 bg-yellow-400/30 text-yellow-300"
-                            : "border-white/20 bg-red-900 text-white/70"
-                        )}
-                      >
-                        <FastForward size={18} />
-                      </button>
-
-                      <button
-                        type="button"
-                        disabled={busy}
-                        onClick={() => void spin(false)}
-                        className="relative grid size-14 place-items-center rounded-full border-2 border-yellow-300 bg-gradient-to-b from-yellow-400 via-red-600 to-red-900 text-yellow-200 shadow-lg active:scale-95 hover:brightness-110"
-                      >
-                        <RotateCw size={24} className={cn(busy && "animate-spin")} />
-                      </button>
-                    </div>
-
-                  </div>
-                </div>
-
-              </div>
-            </div>
+            <button
+              type="button"
+              disabled={busy}
+              onClick={() => void doSpin()}
+              className="flex items-center gap-1.5 rounded-[5px] border-2 border-yellow-400 bg-gradient-to-b from-red-600 to-red-900 px-5 py-2 text-sm font-black uppercase tracking-wide text-yellow-50 shadow-[0_0_20px_rgba(220,38,38,0.5)] disabled:opacity-50"
+            >
+              <RotateCcw className="size-4" />
+              Spin
+            </button>
           </div>
         </div>
       </div>
 
+      {/* Gamble modal */}
       <AnimatePresence>
-        {infoOpen && (
-          <PaytableModal bet={totalBet} onClose={() => setInfoOpen(false)} />
+        {gambleOpen && (
+          <motion.div
+            className="absolute inset-0 z-50 grid place-items-center bg-black/75 p-4"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+          >
+            <div className="w-full max-w-sm rounded-2xl border-2 border-yellow-500 bg-gradient-to-b from-red-950 to-stone-950 p-5 shadow-2xl">
+              <h3 className="text-center text-lg font-black text-yellow-200">Gamble?</h3>
+              <p className="mt-1 text-center text-xs text-yellow-100/70">
+                Red / Black · double or nothing (format pending design sign-off)
+              </p>
+              <div className="mt-3 text-center text-2xl font-black text-amber-300">
+                {formatMoney(pendingWin)}
+              </div>
+              <div className="mt-4 grid grid-cols-2 gap-2">
+                <button
+                  type="button"
+                  onClick={() => void onGamble("red")}
+                  className="rounded-xl bg-red-700 py-3 font-black text-white"
+                >
+                  Red
+                </button>
+                <button
+                  type="button"
+                  onClick={() => void onGamble("black")}
+                  className="rounded-xl bg-stone-900 py-3 font-black text-white ring-1 ring-white/30"
+                >
+                  Black
+                </button>
+              </div>
+              <button
+                type="button"
+                onClick={() => void onCollect()}
+                className="mt-3 w-full rounded-xl border border-yellow-500/70 bg-amber-700/40 py-2.5 text-sm font-bold text-yellow-100"
+              >
+                Collect
+              </button>
+            </div>
+          </motion.div>
         )}
       </AnimatePresence>
 
+      <PaytableModal open={infoOpen} onClose={() => setInfoOpen(false)} />
+
       <AnimatePresence>
-        {winPopup && (
-          <WinCelebration
-            amount={winPopup.amount}
-            bet={bet}
-            baseEarn={winPopup.baseEarn}
-            multiplier={winPopup.multiplier}
-            onDismiss={() => setWinPopup(null)}
+        {betPickerOpen && (
+          <BetSelectModal
+            currentBet={bet}
+            onSelectBet={setBet}
+            onClose={() => setBetPickerOpen(false)}
           />
         )}
       </AnimatePresence>

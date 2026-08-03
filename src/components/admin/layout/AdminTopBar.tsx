@@ -1,6 +1,6 @@
 import { useAuth } from "@/lib/auth";
 import { Link } from "@tanstack/react-router";
-import { Bell, LayoutDashboard, LogOut, ScrollText, Search, Users, Wallet } from "lucide-react";
+import { Bell, LayoutDashboard, LogOut, ScrollText, Search, Users } from "lucide-react";
 import { adminGlass } from "../ui/glass";
 
 export function AdminTopBar() {
@@ -17,9 +17,6 @@ export function AdminTopBar() {
           </Link>
           <Link to="/admin/users" className="rounded-lg p-2 text-white/50 hover:bg-white/5 hover:text-white">
             <Users size={18} />
-          </Link>
-          <Link to="/admin/fund" className="rounded-lg p-2 text-white/50 hover:bg-white/5 hover:text-white">
-            <Wallet size={18} />
           </Link>
           <Link to="/admin/reports/$view" params={{ view: "winlose" }} className="rounded-lg p-2 text-white/50 hover:bg-white/5 hover:text-white">
             <ScrollText size={18} />

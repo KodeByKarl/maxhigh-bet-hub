@@ -8,7 +8,6 @@ import {
   ScrollText,
   Gem,
   Shield,
-  Wallet,
   ChevronDown,
   BarChart3,
   Settings,
@@ -20,7 +19,6 @@ import { REPORT_SECTIONS, type ReportSection } from "../reports/ReportNav";
 
 const topNav = [
   { to: "/superadmin" as const, label: "Command center", icon: LayoutDashboard, exact: true },
-  { to: "/superadmin/wallet" as const, label: "Fund In/Out", icon: Wallet, exact: false },
   { to: "/superadmin/users" as const, label: "Player List", icon: Users, exact: false },
   { to: "/superadmin/admins" as const, label: "Admins", icon: UserCog, exact: false },
   { to: "/superadmin/games" as const, label: "Games control", icon: Gamepad2, exact: false },

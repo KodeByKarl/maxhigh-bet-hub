@@ -1,14 +1,17 @@
+/** Playback timing (ms). Turbo mode scales these in the slot UI. */
 export const ANIM = {
-  dropDuration: 350,
-  dropStaggerCol: 45,
-  dropStaggerRow: 30,
-  glowDuration: 400,
-  popDuration: 350,
-  popStagger: 25,
-  holeHold: 120,
-  refillDuration: 320,
-  fallStaggerCol: 35,
-  fallStaggerRow: 20,
-  betweenTumbles: 150,
-  bannerHold: 1600,
-};
+  /** Base spin duration before first reel lands */
+  reelSpin: 700,
+  /** Extra delay per reel (L→R stop stagger) */
+  reelStagger: 140,
+  /** Brief settle after last reel drops */
+  reelSettle: 280,
+  lineHighlight: 700,
+  winTally: 600,
+  dragonLaunch: 550,
+  dragonBust: 800,
+  monkeyIntro: 1200,
+  wheelSpin: 1600,
+  freeSpinGap: 400,
+  gambleReveal: 700,
+} as const;

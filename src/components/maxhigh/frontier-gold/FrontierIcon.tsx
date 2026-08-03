@@ -1,0 +1,76 @@
+import { memo } from "react";
+import { cn } from "@/lib/utils";
+import type { FgSymKind } from "@/lib/frontier-gold-config";
+
+export const TILE_IMAGE_MAP: Record<FgSymKind, string> = {
+  sym_j: "/images/symbols/frontier-gold/j.png",
+  sym_q: "/images/symbols/frontier-gold/q.png",
+  sym_k: "/images/symbols/frontier-gold/k.png",
+  sym_a: "/images/symbols/frontier-gold/a.png",
+  sheriff: "/images/symbols/frontier-gold/sheriff.png",
+  bartender: "/images/symbols/frontier-gold/bartender.png",
+  banker: "/images/symbols/frontier-gold/banker.png",
+  bandit: "/images/symbols/frontier-gold/bandit.png",
+  safe: "/images/symbols/frontier-gold/safe.png",
+  wild: "/images/symbols/frontier-gold/wild.png",
+  scatter: "/images/symbols/frontier-gold/scatter.png",
+  bonus: "/images/symbols/frontier-gold/bonus.png",
+};
+
+type Props = { kind: FgSymKind; className?: string; coinLabel?: string };
+
+/**
+ * Frontier Gold symbol tile — generated western card art.
+ */
+export const FrontierIcon = memo(function FrontierIcon({ kind, className, coinLabel }: Props) {
+  const isBonus = kind === "bonus";
+  const isWild = kind === "wild";
+  const isScatter = kind === "scatter";
+  const src = TILE_IMAGE_MAP[kind] ?? TILE_IMAGE_MAP.sym_j;
+
+  return (
+    <div
+      className={cn(
+        "relative grid size-full place-items-center overflow-visible bg-transparent select-none",
+        className,
+      )}
+    >
+      <img
+        src={src}
+        alt=""
+        draggable={false}
+        decoding="async"
+        className={cn(
+          "pointer-events-none size-[96%] object-contain transition-all duration-300",
+          isScatter
+            ? "scale-105 drop-shadow-[0_0_18px_rgba(251,191,36,0.95)]"
+            : isWild
+              ? "drop-shadow-[0_0_16px_rgba(234,179,8,0.9)]"
+              : isBonus
+                ? "drop-shadow-[0_0_14px_rgba(250,204,21,0.85)]"
+                : "drop-shadow-[0_3px_6px_rgba(0,0,0,0.45)]",
+        )}
+      />
+      {isBonus && coinLabel && (
+        <span className="absolute inset-0 z-10 grid place-items-center rounded-full bg-black/35 text-[clamp(0.65rem,2.8vw,1.1rem)] font-black text-amber-100 drop-shadow-[0_2px_4px_rgba(0,0,0,0.9)]">
+          {coinLabel}
+        </span>
+      )}
+      {isWild && (
+        <span className="absolute -bottom-1.5 left-1/2 z-[30] -translate-x-1/2 whitespace-nowrap rounded-full border border-yellow-200 bg-gradient-to-r from-yellow-600 via-amber-400 to-yellow-600 px-1.5 py-0.5 text-[8px] font-black uppercase text-amber-950 shadow sm:text-[9px]">
+          WILD
+        </span>
+      )}
+      {isScatter && (
+        <span className="absolute -bottom-1.5 left-1/2 z-[30] -translate-x-1/2 whitespace-nowrap rounded-full border border-yellow-200 bg-gradient-to-r from-amber-600 via-yellow-400 to-amber-600 px-1.5 py-0.5 text-[8px] font-black uppercase text-amber-950 shadow sm:text-[9px]">
+          SCATTER
+        </span>
+      )}
+      {isBonus && !coinLabel && (
+        <span className="absolute -bottom-1.5 left-1/2 z-[30] -translate-x-1/2 whitespace-nowrap rounded-full border border-amber-300 bg-gradient-to-r from-amber-700 via-amber-400 to-amber-700 px-1.5 py-0.5 text-[8px] font-black uppercase text-white shadow sm:text-[9px]">
+          COIN
+        </span>
+      )}
+    </div>
+  );
+});

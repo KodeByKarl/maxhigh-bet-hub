@@ -31,6 +31,7 @@ import type { UserRole } from "./user";
 
 export type AdminUserRow = {
   id: string;
+  publicUserId: string;
   email: string | null;
   username: string;
   balance: number;
@@ -90,7 +91,7 @@ export type WinLoseSummary = {
 export type WinLoseByLevelRow = {
   userId: string;
   username: string;
-  role: "player" | "admin" | "superadmin";
+  role: UserRole;
   betVolume: number;
   winVolume: number;
   net: number;

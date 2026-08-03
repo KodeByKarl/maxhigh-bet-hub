@@ -66,7 +66,7 @@ async function main() {
   `);
   await addColumnIfNotExists("sessions", "last_seen_at", "DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP");
 
-  // Ensure platform_settings table has master_chip_pool
+  // Ensure platform_settings table exists
   await conn.query(`
     CREATE TABLE IF NOT EXISTS \`platform_settings\` (
       \`id\` VARCHAR(32) PRIMARY KEY DEFAULT 'default',
@@ -76,11 +76,9 @@ async function main() {
       \`max_deposit\` DECIMAL(14,2) NOT NULL DEFAULT '50000.00',
       \`min_withdraw\` DECIMAL(14,2) NOT NULL DEFAULT '200.00',
       \`max_withdraw\` DECIMAL(14,2) NOT NULL DEFAULT '100000.00',
-      \`master_chip_pool\` DECIMAL(16,2) NOT NULL DEFAULT '1000000.00',
       \`updated_at\` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
   `);
-  await addColumnIfNotExists("platform_settings", "master_chip_pool", "DECIMAL(16,2) NOT NULL DEFAULT '1000000.00'");
 
   // Ensure risk_controls table has max_weekly_limit
   await conn.query(`

@@ -1,9 +1,9 @@
-/**
+﻿/**
  * Domain 3 — Superadmin server logic.
  * Full control: users, admins, games, jackpot.
  */
-import { eq, desc, sql, like, or, and, asc } from "drizzle-orm";
-import { hash } from "bcryptjs";
+import { eq, desc, sql, like, or, and, asc, inArray } from "drizzle-orm";
+import { compare, hash } from "bcryptjs";
 import { getDb } from "../db/client";
 import { auditLogs, gameControls, jackpot, platformSettings, promotions, riskControls, sessions, transactions, users, walletRequests } from "../db/schema";
 import type { PublicUser, UserRole } from "@/lib/user";
@@ -19,7 +19,59 @@ import type {
 import { destroyUserSessions, money, newId, requireAdmin, requireSuperadmin, toPublicUser } from "../session";
 import { writeAuditLog } from "../admin/audit.server";
 import { requirePermission } from "../auth/rbac.server";
+import { assertCanManageChips, scopeToDownline } from "../auth/network-scope.server";
 import { slotGames } from "@/lib/games";
+
+/** Max failed chip-confirm password attempts before temporary lockout. */
+const CHIP_CONFIRM_MAX_FAILURES = 5;
+const CHIP_CONFIRM_LOCK_MS = 15 * 60 * 1000;
+
+/**
+ * Re-verify Super Admin password before chip add/withdraw.
+ * Rate-limits via users.failedAttempts / lockedUntil.
+ */
+export async function verifySuperadminChipPassword(
+  actorId: string,
+  confirmPassword: string | undefined,
+): Promise<void> {
+  if (!confirmPassword || confirmPassword.length === 0) {
+    throw new Error("Unauthorized — password confirmation required for chip actions");
+  }
+
+  const db = getDb();
+  const [row] = await db.select().from(users).where(eq(users.id, actorId)).limit(1);
+  if (!row) throw new Error("Unauthorized — please sign in");
+
+  const now = new Date();
+  if (row.lockedUntil && now < new Date(row.lockedUntil)) {
+    throw new Error("Forbidden — too many failed password attempts; try again later");
+  }
+
+  const ok = await compare(confirmPassword, row.passwordHash);
+  if (!ok) {
+    const nextAttempts = (row.failedAttempts ?? 0) + 1;
+    const willLock = nextAttempts >= CHIP_CONFIRM_MAX_FAILURES;
+    await db
+      .update(users)
+      .set({
+        failedAttempts: nextAttempts,
+        lockedUntil: willLock ? new Date(Date.now() + CHIP_CONFIRM_LOCK_MS) : row.lockedUntil,
+      })
+      .where(eq(users.id, actorId));
+    throw new Error(
+      willLock
+        ? "Forbidden — incorrect password; account temporarily locked"
+        : "Unauthorized — incorrect password",
+    );
+  }
+
+  if ((row.failedAttempts ?? 0) > 0 || row.lockedUntil) {
+    await db
+      .update(users)
+      .set({ failedAttempts: 0, lockedUntil: null })
+      .where(eq(users.id, actorId));
+  }
+}
 
 function formatPhp(n: number) {
   return `₱${n.toLocaleString("en-PH", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
@@ -62,6 +114,8 @@ export async function fetchSuperDashboard(): Promise<SuperDashboard> {
 
   const jp = await db.select().from(jackpot).where(eq(jackpot.id, "mega")).limit(1);
   const jackpotAmt = Number(jp[0]?.amount ?? 0);
+  const jackpotEnabled = (jp[0]?.enabled ?? "yes") === "yes";
+  const ultraMegaJackpot = Number(jp[0]?.displayAmount ?? 0);
 
   const totalUsers = Number(userCounts?.totalUsers ?? 0);
   const totalPlayers = Number(userCounts?.totalPlayers ?? 0);
@@ -84,6 +138,11 @@ export async function fetchSuperDashboard(): Promise<SuperDashboard> {
     betVolume,
     winVolume,
     jackpot: jackpotAmt,
+    jackpotEnabled,
+    ultraMegaJackpot,
+    chipOutflow: 0,
+    netEarnings: +(betVolume - winVolume).toFixed(2),
+    recoveryTarget: 0,
     labels: {
       totalUsers: totalUsers.toLocaleString("en-PH"),
       totalPlayers: totalPlayers.toLocaleString("en-PH"),
@@ -95,6 +154,8 @@ export async function fetchSuperDashboard(): Promise<SuperDashboard> {
       betVolume: formatPhp(betVolume),
       winVolume: formatPhp(winVolume),
       jackpot: formatPhp(jackpotAmt),
+      ultraMegaJackpot: formatPhp(ultraMegaJackpot),
+      jackpotEnabled: jackpotEnabled ? "ON" : "OFF",
     },
   };
 }
@@ -139,6 +200,7 @@ export async function listSuperUsers(opts?: {
 
   return rows.map((u) => ({
     id: u.id,
+    publicUserId: u.publicUserId,
     email: u.email,
     username: u.username,
     balance: Number(u.balance),
@@ -191,24 +253,51 @@ export async function superCreateUser(data: {
   balance?: number;
   role: UserRole;
   displayName?: string;
+  parentAgentId?: string;
+  publicUserId?: string;
 }): Promise<PublicUser> {
   const actor = await requireSuperadmin();
   const db = getDb();
   const id = newId();
   const email = data.email?.trim().toLowerCase() || null;
   const username = data.username.trim().toLowerCase();
+  const publicUserId = (data.publicUserId?.trim() || username).toLowerCase();
+  if (publicUserId.length < 3) throw new Error("User ID must be at least 3 characters");
+  if (!/^[a-z0-9_]+$/.test(publicUserId)) throw new Error("User ID must be letters, numbers, or _");
+
+  let parentAgentId: string | null = null;
+  if (data.parentAgentId) {
+    const [upline] = await db.select().from(users).where(eq(users.id, data.parentAgentId)).limit(1);
+    if (!upline) throw new Error("Selected upline account not found");
+    if (upline.role !== "master_agent" && upline.role !== "superadmin") {
+      throw new Error("Upline must be a Master Agent");
+    }
+    parentAgentId = upline.id;
+  }
+
+  const [existingUsername] = await db.select({ id: users.id }).from(users).where(eq(users.username, username)).limit(1);
+  if (existingUsername) throw new Error("Username already exists");
+  const [existingPublicId] = await db
+    .select({ id: users.id })
+    .from(users)
+    .where(eq(users.publicUserId, publicUserId))
+    .limit(1);
+  if (existingPublicId) throw new Error("User ID already exists");
+
   try {
     await db.insert(users).values({
       id,
+      publicUserId,
       email,
       username,
       passwordHash: await hash(data.password, 10),
       balance: money(data.balance ?? 0),
       role: data.role,
       displayName: data.displayName?.trim() || null,
+      parentAgentId,
     });
   } catch {
-    throw new Error("Username or email already exists");
+    throw new Error("Username or User ID already exists");
   }
 
   const rows = await db.select().from(users).where(eq(users.id, id)).limit(1);
@@ -219,7 +308,7 @@ export async function superCreateUser(data: {
     summary: `Created ${created.role} @${created.username}`,
     targetType: "user",
     targetId: created.id,
-    meta: { role: created.role, email: created.email },
+    meta: { role: created.role, email: created.email, parentAgentId, publicUserId },
   });
   return created;
 }
@@ -304,15 +393,32 @@ export async function superAdjustBalance(data: {
   userId: string;
   delta: number;
   note?: string;
+  confirmPassword?: string;
 }): Promise<PublicUser> {
   const actor = await requireSuperadmin();
   if (!Number.isFinite(data.delta) || data.delta === 0) throw new Error("Invalid amount");
 
   const db = getDb();
+
+  // Password re-auth for Super Admin chip actions (Task 4)
+  await verifySuperadminChipPassword(actor.id, data.confirmPassword);
+
   const result = await db.transaction(async (tx) => {
     const rows = await tx.select().from(users).where(eq(users.id, data.userId)).limit(1);
     const user = rows[0];
     if (!user) throw new Error("User not found");
+
+    await assertCanManageChips(
+      actor,
+      {
+        id: user.id,
+        role: user.role,
+        parentAgentId: user.parentAgentId ?? null,
+        username: user.username,
+      },
+      tx,
+    );
+
     const current = Number(user.balance);
     const next = +(current + data.delta).toFixed(2);
     if (next < 0) throw new Error("Balance cannot go negative");
@@ -329,13 +435,23 @@ export async function superAdjustBalance(data: {
     return { ...user, balance: money(next), previous: current };
   });
 
+  const timestamp = new Date().toISOString();
   await writeAuditLog({
     actor,
     action: "super.balance_adjust",
     summary: `Adjusted @${result.username} by ${data.delta > 0 ? "+" : ""}${data.delta.toFixed(2)}`,
     targetType: "user",
     targetId: result.id,
-    meta: { delta: data.delta, previous: result.previous, next: Number(result.balance) },
+    meta: {
+      actorId: actor.id,
+      targetId: result.id,
+      amount: Math.abs(data.delta),
+      delta: data.delta,
+      timestamp,
+      role: actor.role,
+      previous: result.previous,
+      next: Number(result.balance),
+    },
   });
   return toPublicUser(result);
 }
@@ -346,25 +462,25 @@ export async function listSuperGames(): Promise<SuperGameRow[]> {
   const controls = await db.select().from(gameControls).orderBy(asc(gameControls.sortOrder));
   const byId = new Map(controls.map((c) => [c.gameId, c]));
 
-  // Ensure every catalog game appears (even if not yet seeded)
-  const ids = new Set([...slotGames.map((g) => g.id), ...controls.map((c) => c.gameId)]);
+  // Catalog is the source of truth — dropped titles leave the list even if
+  // stale game_controls rows remain in MySQL.
   const rows: SuperGameRow[] = [];
-  for (const id of ids) {
-    const catalog = slotGames.find((g) => g.id === id);
+  for (const catalog of slotGames) {
+    const id = catalog.id;
     const c = byId.get(id);
     rows.push({
       gameId: id,
-      name: catalog?.name ?? id,
-      category: catalog?.category ?? "slot",
-      thumb: catalog?.thumb ?? "/games/candy-peak.png",
+      name: catalog.name,
+      category: catalog.category ?? "slot",
+      thumb: catalog.thumb ?? "/games/candy-peak.png",
       enabled: (c?.enabled ?? "yes") === "yes",
       featured: (c?.featured ?? "no") === "yes",
       sortOrder: Number(c?.sortOrder ?? 0),
-      tag: c?.tag ?? catalog?.tag ?? null,
-      rtp: c?.rtp ?? catalog?.rtp ?? null,
-      volatility: c?.volatility ?? catalog?.volatility ?? null,
-      minBet: c?.minBet ?? catalog?.minBet ?? null,
-      maxBet: c?.maxBet ?? catalog?.maxBet ?? null,
+      tag: c?.tag ?? catalog.tag ?? null,
+      rtp: c?.rtp ?? catalog.rtp ?? null,
+      volatility: c?.volatility ?? catalog.volatility ?? null,
+      minBet: c?.minBet ?? catalog.minBet ?? null,
+      maxBet: c?.maxBet ?? catalog.maxBet ?? null,
       notes: c?.notes ?? null,
       updatedAt: c?.updatedAt?.toISOString?.() ?? null,
     });
@@ -442,7 +558,12 @@ export async function superSetJackpot(amount: number): Promise<{ amount: number 
   if (rows[0]) {
     await db.update(jackpot).set({ amount: money(amount) }).where(eq(jackpot.id, "mega"));
   } else {
-    await db.insert(jackpot).values({ id: "mega", amount: money(amount) });
+    await db.insert(jackpot).values({
+      id: "mega",
+      amount: money(amount),
+      enabled: "yes",
+      displayAmount: money(500_000_000),
+    });
   }
   await writeAuditLog({
     actor,
@@ -453,6 +574,122 @@ export async function superSetJackpot(amount: number): Promise<{ amount: number 
     meta: { amount },
   });
   return { amount };
+}
+
+export async function superSetJackpotEnabled(enabled: boolean): Promise<{ enabled: boolean }> {
+  const actor = await requireSuperadmin();
+  const db = getDb();
+  const rows = await db.select().from(jackpot).where(eq(jackpot.id, "mega")).limit(1);
+  if (rows[0]) {
+    await db.update(jackpot).set({ enabled: enabled ? "yes" : "no" }).where(eq(jackpot.id, "mega"));
+  } else {
+    await db.insert(jackpot).values({
+      id: "mega",
+      amount: money(0),
+      enabled: enabled ? "yes" : "no",
+      displayAmount: money(500_000_000),
+    });
+  }
+  await writeAuditLog({
+    actor,
+    action: "super.jackpot_enabled",
+    summary: `Mega Jackpot ${enabled ? "ON" : "OFF"}`,
+    targetType: "jackpot",
+    targetId: "mega",
+    meta: { enabled },
+  });
+  return { enabled };
+}
+
+export async function superSetUltraMegaJackpot(amount: number): Promise<{ amount: number }> {
+  const actor = await requireSuperadmin();
+  if (!Number.isFinite(amount) || amount < 0) throw new Error("Invalid Ultra Mega Jackpot amount");
+  const db = getDb();
+  const rows = await db.select().from(jackpot).where(eq(jackpot.id, "mega")).limit(1);
+  if (rows[0]) {
+    await db.update(jackpot).set({ displayAmount: money(amount) }).where(eq(jackpot.id, "mega"));
+  } else {
+    await db.insert(jackpot).values({
+      id: "mega",
+      amount: money(0),
+      enabled: "yes",
+      displayAmount: money(amount),
+    });
+  }
+  await writeAuditLog({
+    actor,
+    action: "super.ultra_mega_jackpot_set",
+    summary: `Set Ultra Mega Jackpot display to ₱${amount.toFixed(2)}`,
+    targetType: "jackpot",
+    targetId: "mega",
+    meta: { displayAmount: amount },
+  });
+  return { amount };
+}
+
+/** True when Mega Jackpot wins are allowed (Task 6). */
+export async function isMegaJackpotEnabled(): Promise<boolean> {
+  const db = getDb();
+  const rows = await db.select().from(jackpot).where(eq(jackpot.id, "mega")).limit(1);
+  return (rows[0]?.enabled ?? "yes") === "yes";
+}
+
+/**
+ * Award the real Mega Jackpot pool to a player (manual assign).
+ * Blocked when Mega Jackpot toggle is Off.
+ */
+export async function assignJackpotToPlayer(data: {
+  username: string;
+  resetAmount?: number;
+}): Promise<{ success: true; amountAwarded: number; playerUsername: string }> {
+  const actor = await requireSuperadmin();
+  if (!(await isMegaJackpotEnabled())) {
+    throw new Error("Forbidden — Mega Jackpot is currently OFF and cannot be won or assigned");
+  }
+
+  const db = getDb();
+  const username = data.username.trim().toLowerCase();
+  const [player] = await db.select().from(users).where(eq(users.username, username)).limit(1);
+  if (!player || player.role !== "player") {
+    throw new Error("Player not found");
+  }
+
+  const result = await db.transaction(async (tx) => {
+    const [jp] = await tx.select().from(jackpot).where(eq(jackpot.id, "mega")).limit(1);
+    if (!jp || (jp.enabled ?? "yes") !== "yes") {
+      throw new Error("Forbidden — Mega Jackpot is currently OFF and cannot be won or assigned");
+    }
+    const amountAwarded = Number(jp.amount);
+    if (amountAwarded <= 0) throw new Error("Mega Jackpot pool is empty");
+
+    const nextBal = +(Number(player.balance) + amountAwarded).toFixed(2);
+    await tx.update(users).set({ balance: money(nextBal) }).where(eq(users.id, player.id));
+    await tx.insert(transactions).values({
+      id: newId(),
+      userId: player.id,
+      type: "jackpot",
+      amount: money(amountAwarded),
+      balanceAfter: money(nextBal),
+      game: "MegaJackpot",
+      note: `Mega Jackpot awarded by @${actor.username}`,
+    });
+
+    const reset = data.resetAmount ?? 10000;
+    await tx.update(jackpot).set({ amount: money(reset) }).where(eq(jackpot.id, "mega"));
+
+    return { amountAwarded, playerUsername: player.username };
+  });
+
+  await writeAuditLog({
+    actor,
+    action: "super.jackpot_assign",
+    summary: `Awarded Mega Jackpot ₱${result.amountAwarded.toFixed(2)} to @${result.playerUsername}`,
+    targetType: "user",
+    targetId: player.id,
+    meta: { amountAwarded: result.amountAwarded, resetAmount: data.resetAmount ?? 10000 },
+  });
+
+  return { success: true, ...result };
 }
 
 /** Public catalog merge — only enabled games for the casino site. */
@@ -720,6 +957,963 @@ export async function saveGodlyGatesEngineConfig(raw: unknown) {
       deadSpinChancePercent: cfg.deadSpinChancePercent,
       buyFeatureMult: cfg.buyFeatureMult,
       freeSpinsTriggerCount: cfg.freeSpinsTriggerCount,
+    },
+  });
+
+  return cfg;
+}
+
+/** Public — Mahjong Ways engine math (defaults if unset). */
+export async function getMahjongWaysEngineConfig() {
+  const {
+    MAHJONG_WAYS_GAME_ID,
+    DEFAULT_MAHJONG_WAYS_CONFIG,
+    normalizeMahjongWaysConfig,
+  } = await import("@/lib/mahjong-ways-config");
+  const db = getDb();
+  try {
+    const rows = await db
+      .select()
+      .from(gameControls)
+      .where(eq(gameControls.gameId, MAHJONG_WAYS_GAME_ID))
+      .limit(1);
+    return normalizeMahjongWaysConfig(parseEngineConfigJson(rows[0]?.engineConfig));
+  } catch {
+    return structuredClone(DEFAULT_MAHJONG_WAYS_CONFIG);
+  }
+}
+
+/** Superadmin — save full Mahjong Ways math config. */
+export async function saveMahjongWaysEngineConfig(raw: unknown) {
+  const actor = await requireSuperadmin();
+  const {
+    MAHJONG_WAYS_GAME_ID,
+    normalizeMahjongWaysConfig,
+  } = await import("@/lib/mahjong-ways-config");
+  const catalog = slotGames.find((g) => g.id === MAHJONG_WAYS_GAME_ID);
+  if (!catalog) throw new Error("Mahjong Ways not in catalog");
+
+  const cfg = normalizeMahjongWaysConfig(raw);
+  const db = getDb();
+  const existing = await db
+    .select()
+    .from(gameControls)
+    .where(eq(gameControls.gameId, MAHJONG_WAYS_GAME_ID))
+    .limit(1);
+
+  const payload = JSON.stringify(cfg);
+
+  if (!existing[0]) {
+    await db.insert(gameControls).values({
+      gameId: MAHJONG_WAYS_GAME_ID,
+      enabled: "yes",
+      featured: "no",
+      sortOrder: 0,
+      tag: catalog.tag ?? null,
+      rtp: catalog.rtp,
+      volatility: catalog.volatility,
+      minBet: catalog.minBet,
+      maxBet: catalog.maxBet,
+      engineConfig: payload,
+    });
+  } else {
+    await db
+      .update(gameControls)
+      .set({ engineConfig: payload })
+      .where(eq(gameControls.gameId, MAHJONG_WAYS_GAME_ID));
+  }
+
+  try {
+    const { clearMahjongWaysEngineCache } = await import("../games/mahjong-ways.server");
+    clearMahjongWaysEngineCache();
+  } catch {
+    /* ignore */
+  }
+
+  await writeAuditLog({
+    actor,
+    action: "super.mahjong_ways_config",
+    summary: `Updated Mahjong Ways engine (FS ${cfg.freeSpinsBaseCount}, maxWin ${cfg.maxWinMult}x, target RTP ${cfg.targetRtp}%)`,
+    targetType: "game",
+    targetId: MAHJONG_WAYS_GAME_ID,
+    meta: {
+      freeSpinsBaseCount: cfg.freeSpinsBaseCount,
+      freeSpinsTriggerCount: cfg.freeSpinsTriggerCount,
+      buyFeatureMult: cfg.buyFeatureMult,
+      maxWinMult: cfg.maxWinMult,
+      targetRtp: cfg.targetRtp,
+      goldChanceInitial: cfg.goldChanceInitial,
+    },
+  });
+
+  return cfg;
+}
+
+/** Public — Starlight Ace engine math (defaults if unset). */
+export async function getStarlightAceEngineConfig() {
+  const {
+    STARLIGHT_ACE_GAME_ID,
+    DEFAULT_STARLIGHT_ACE_CONFIG,
+    normalizeStarlightAceConfig,
+  } = await import("@/lib/starlight-ace-config");
+  const db = getDb();
+  try {
+    const rows = await db
+      .select()
+      .from(gameControls)
+      .where(eq(gameControls.gameId, STARLIGHT_ACE_GAME_ID))
+      .limit(1);
+    return normalizeStarlightAceConfig(parseEngineConfigJson(rows[0]?.engineConfig));
+  } catch {
+    return structuredClone(DEFAULT_STARLIGHT_ACE_CONFIG);
+  }
+}
+
+/** Superadmin — save full Starlight Ace math config. */
+export async function saveStarlightAceEngineConfig(raw: unknown) {
+  const actor = await requireSuperadmin();
+  const {
+    STARLIGHT_ACE_GAME_ID,
+    normalizeStarlightAceConfig,
+  } = await import("@/lib/starlight-ace-config");
+  const catalog = slotGames.find((g) => g.id === STARLIGHT_ACE_GAME_ID);
+  if (!catalog) throw new Error("Starlight Ace not in catalog");
+
+  const cfg = normalizeStarlightAceConfig(raw);
+  const db = getDb();
+  const existing = await db
+    .select()
+    .from(gameControls)
+    .where(eq(gameControls.gameId, STARLIGHT_ACE_GAME_ID))
+    .limit(1);
+
+  const payload = JSON.stringify(cfg);
+
+  if (!existing[0]) {
+    await db.insert(gameControls).values({
+      gameId: STARLIGHT_ACE_GAME_ID,
+      enabled: "yes",
+      featured: "no",
+      sortOrder: 0,
+      tag: catalog.tag ?? null,
+      rtp: String(cfg.targetRtp),
+      volatility: catalog.volatility,
+      minBet: catalog.minBet,
+      maxBet: catalog.maxBet,
+      engineConfig: payload,
+    });
+  } else {
+    await db
+      .update(gameControls)
+      .set({
+        engineConfig: payload,
+        rtp: String(cfg.targetRtp),
+      })
+      .where(eq(gameControls.gameId, STARLIGHT_ACE_GAME_ID));
+  }
+
+  try {
+    const { clearStarlightAceEngineCache } = await import("../games/starlight-ace.server");
+    clearStarlightAceEngineCache();
+  } catch {
+    /* ignore */
+  }
+
+  await writeAuditLog({
+    actor,
+    action: "super.starlight_ace_config",
+    summary: `Updated Starlight Ace engine (FS ${cfg.freeSpinsBaseCount}, maxWin ${cfg.maxWinMult}x, target RTP ${cfg.targetRtp}%)`,
+    targetType: "game",
+    targetId: STARLIGHT_ACE_GAME_ID,
+    meta: {
+      freeSpinsBaseCount: cfg.freeSpinsBaseCount,
+      freeSpinsTriggerCount: cfg.freeSpinsTriggerCount,
+      buyFeatureMult: cfg.buyFeatureMult,
+      maxWinMult: cfg.maxWinMult,
+      targetRtp: cfg.targetRtp,
+      goldChanceInitial: cfg.goldChanceInitial,
+      guaranteedGoldenReelIndex: cfg.guaranteedGoldenReelIndex,
+    },
+  });
+
+  return cfg;
+}
+
+/** Public — Super Ace engine math (defaults if unset). */
+export async function getSuperAceEngineConfig() {
+  const {
+    SUPER_ACE_GAME_ID,
+    DEFAULT_SUPER_ACE_CONFIG,
+    normalizeSuperAceConfig,
+  } = await import("@/lib/super-ace-config");
+  const db = getDb();
+  try {
+    const rows = await db
+      .select()
+      .from(gameControls)
+      .where(eq(gameControls.gameId, SUPER_ACE_GAME_ID))
+      .limit(1);
+    return normalizeSuperAceConfig(parseEngineConfigJson(rows[0]?.engineConfig));
+  } catch {
+    return structuredClone(DEFAULT_SUPER_ACE_CONFIG);
+  }
+}
+
+/** Superadmin — save full Super Ace math config. */
+export async function saveSuperAceEngineConfig(raw: unknown) {
+  const actor = await requireSuperadmin();
+  const {
+    SUPER_ACE_GAME_ID,
+    normalizeSuperAceConfig,
+  } = await import("@/lib/super-ace-config");
+  const catalog = slotGames.find((g) => g.id === SUPER_ACE_GAME_ID);
+  if (!catalog) throw new Error("Super Ace not in catalog");
+
+  const cfg = normalizeSuperAceConfig(raw);
+  const db = getDb();
+  const existing = await db
+    .select()
+    .from(gameControls)
+    .where(eq(gameControls.gameId, SUPER_ACE_GAME_ID))
+    .limit(1);
+
+  const payload = JSON.stringify(cfg);
+
+  if (!existing[0]) {
+    await db.insert(gameControls).values({
+      gameId: SUPER_ACE_GAME_ID,
+      enabled: "yes",
+      featured: "no",
+      sortOrder: 0,
+      tag: catalog.tag ?? null,
+      rtp: String(cfg.targetRtp),
+      volatility: cfg.volatility || catalog.volatility,
+      minBet: catalog.minBet,
+      maxBet: catalog.maxBet,
+      engineConfig: payload,
+    });
+  } else {
+    await db
+      .update(gameControls)
+      .set({
+        engineConfig: payload,
+        rtp: String(cfg.targetRtp),
+        volatility: cfg.volatility || existing[0].volatility || catalog.volatility,
+      })
+      .where(eq(gameControls.gameId, SUPER_ACE_GAME_ID));
+  }
+
+  try {
+    const { clearSuperAceEngineCache } = await import("../games/super-ace.server");
+    clearSuperAceEngineCache();
+  } catch {
+    /* ignore */
+  }
+
+  await writeAuditLog({
+    actor,
+    action: "super.super_ace_config",
+    summary: `Updated Super Ace engine (FS ${cfg.freeSpinsBaseCount}/+${cfg.freeSpinsRetriggerCount}, maxWin ${cfg.maxWinMult}x, RTP ${cfg.activeRtpProfile} ${cfg.targetRtp}%)`,
+    targetType: "game",
+    targetId: SUPER_ACE_GAME_ID,
+    meta: {
+      freeSpinsBaseCount: cfg.freeSpinsBaseCount,
+      freeSpinsRetriggerCount: cfg.freeSpinsRetriggerCount,
+      freeSpinsTriggerCount: cfg.freeSpinsTriggerCount,
+      buyFeatureMult: cfg.buyFeatureMult,
+      maxWinMult: cfg.maxWinMult,
+      targetRtp: cfg.targetRtp,
+      activeRtpProfile: cfg.activeRtpProfile,
+      goldChanceInitial: cfg.goldChanceInitial,
+      jokerTransformWeights: cfg.jokerTransformWeights,
+    },
+  });
+
+  return cfg;
+}
+
+/** Public — Frontier Gold engine math (defaults if unset). */
+export async function getFrontierGoldEngineConfig() {
+  const {
+    FRONTIER_GOLD_GAME_ID,
+    DEFAULT_FRONTIER_GOLD_CONFIG,
+    normalizeFrontierGoldConfig,
+  } = await import("@/lib/frontier-gold-config");
+  const db = getDb();
+  try {
+    const rows = await db
+      .select()
+      .from(gameControls)
+      .where(eq(gameControls.gameId, FRONTIER_GOLD_GAME_ID))
+      .limit(1);
+    return normalizeFrontierGoldConfig(parseEngineConfigJson(rows[0]?.engineConfig));
+  } catch {
+    return structuredClone(DEFAULT_FRONTIER_GOLD_CONFIG);
+  }
+}
+
+/** Superadmin — save full Frontier Gold math config. */
+export async function saveFrontierGoldEngineConfig(raw: unknown) {
+  const actor = await requireSuperadmin();
+  const {
+    FRONTIER_GOLD_GAME_ID,
+    normalizeFrontierGoldConfig,
+  } = await import("@/lib/frontier-gold-config");
+  const catalog = slotGames.find((g) => g.id === FRONTIER_GOLD_GAME_ID);
+  if (!catalog) throw new Error("Frontier Gold not in catalog");
+
+  const cfg = normalizeFrontierGoldConfig(raw);
+  const db = getDb();
+  const existing = await db
+    .select()
+    .from(gameControls)
+    .where(eq(gameControls.gameId, FRONTIER_GOLD_GAME_ID))
+    .limit(1);
+
+  const payload = JSON.stringify(cfg);
+
+  if (!existing[0]) {
+    await db.insert(gameControls).values({
+      gameId: FRONTIER_GOLD_GAME_ID,
+      enabled: "yes",
+      featured: "no",
+      sortOrder: 0,
+      tag: catalog.tag ?? null,
+      rtp: String(cfg.targetRtp),
+      volatility: catalog.volatility,
+      minBet: catalog.minBet,
+      maxBet: catalog.maxBet,
+      engineConfig: payload,
+    });
+  } else {
+    await db
+      .update(gameControls)
+      .set({ engineConfig: payload, rtp: String(cfg.targetRtp) })
+      .where(eq(gameControls.gameId, FRONTIER_GOLD_GAME_ID));
+  }
+
+  try {
+    const { clearFrontierGoldEngineCache } = await import("../games/frontier-gold.server");
+    clearFrontierGoldEngineCache();
+  } catch {
+    /* ignore */
+  }
+
+  await writeAuditLog({
+    actor,
+    action: "super.frontier_gold_config",
+    summary: `Updated Frontier Gold engine (FS ${cfg.freeSpinsBaseCount}, H&W ${cfg.holdWinTriggerCount}+ coins, maxWin ${cfg.maxWinMult}x, RTP ${cfg.targetRtp}%)`,
+    targetType: "game",
+    targetId: FRONTIER_GOLD_GAME_ID,
+    meta: {
+      freeSpinsBaseCount: cfg.freeSpinsBaseCount,
+      holdWinTriggerCount: cfg.holdWinTriggerCount,
+      maxWinMult: cfg.maxWinMult,
+      targetRtp: cfg.targetRtp,
+    },
+  });
+
+  return cfg;
+}
+
+/** Public — Buffalo Reign engine math. */
+export async function getBuffaloReignEngineConfig() {
+  const {
+    BUFFALO_REIGN_GAME_ID,
+    DEFAULT_BUFFALO_REIGN_CONFIG,
+    normalizeBuffaloReignConfig,
+  } = await import("@/lib/buffalo-reign-config");
+  const db = getDb();
+  try {
+    const rows = await db
+      .select()
+      .from(gameControls)
+      .where(eq(gameControls.gameId, BUFFALO_REIGN_GAME_ID))
+      .limit(1);
+    return normalizeBuffaloReignConfig(parseEngineConfigJson(rows[0]?.engineConfig));
+  } catch {
+    return structuredClone(DEFAULT_BUFFALO_REIGN_CONFIG);
+  }
+}
+
+/** Superadmin — save Buffalo Reign math config. */
+export async function saveBuffaloReignEngineConfig(raw: unknown) {
+  const actor = await requireSuperadmin();
+  const {
+    BUFFALO_REIGN_GAME_ID,
+    normalizeBuffaloReignConfig,
+  } = await import("@/lib/buffalo-reign-config");
+  const catalog = slotGames.find((g) => g.id === BUFFALO_REIGN_GAME_ID);
+  if (!catalog) throw new Error("Buffalo Reign not in catalog");
+
+  const cfg = normalizeBuffaloReignConfig(raw);
+  const db = getDb();
+  const existing = await db
+    .select()
+    .from(gameControls)
+    .where(eq(gameControls.gameId, BUFFALO_REIGN_GAME_ID))
+    .limit(1);
+
+  const payload = JSON.stringify(cfg);
+
+  if (!existing[0]) {
+    await db.insert(gameControls).values({
+      gameId: BUFFALO_REIGN_GAME_ID,
+      enabled: "yes",
+      featured: "no",
+      sortOrder: 0,
+      tag: catalog.tag ?? null,
+      rtp: String(cfg.targetRtp),
+      volatility: cfg.volatility,
+      minBet: catalog.minBet,
+      maxBet: catalog.maxBet,
+      engineConfig: payload,
+    });
+  } else {
+    await db
+      .update(gameControls)
+      .set({ engineConfig: payload, rtp: String(cfg.targetRtp), volatility: cfg.volatility })
+      .where(eq(gameControls.gameId, BUFFALO_REIGN_GAME_ID));
+  }
+
+  try {
+    const { clearBuffaloReignEngineCache } = await import("../games/buffalo-reign.server");
+    clearBuffaloReignEngineCache();
+  } catch {
+    /* ignore */
+  }
+
+  await writeAuditLog({
+    actor,
+    action: "super.buffalo_reign_config",
+    summary: `Updated Buffalo Reign (FS ${cfg.freeSpinsBaseCount}, chests ${cfg.chestTriggerCount}+, maxWin ${cfg.maxWinMult}x, RTP ${cfg.targetRtp}%)`,
+    targetType: "game",
+    targetId: BUFFALO_REIGN_GAME_ID,
+    meta: {
+      freeSpinsBaseCount: cfg.freeSpinsBaseCount,
+      chestTriggerCount: cfg.chestTriggerCount,
+      maxWinMult: cfg.maxWinMult,
+      targetRtp: cfg.targetRtp,
+    },
+  });
+
+  return cfg;
+}
+
+/** Public — Chinese New Year engine math (defaults if unset). */
+export async function getChineseNewYearEngineConfig() {
+  const {
+    CHINESE_NEW_YEAR_GAME_ID,
+    DEFAULT_CHINESE_NEW_YEAR_CONFIG,
+    normalizeChineseNewYearConfig,
+  } = await import("@/lib/chinese-new-year-config");
+  const db = getDb();
+  try {
+    const rows = await db
+      .select()
+      .from(gameControls)
+      .where(eq(gameControls.gameId, CHINESE_NEW_YEAR_GAME_ID))
+      .limit(1);
+    return normalizeChineseNewYearConfig(parseEngineConfigJson(rows[0]?.engineConfig));
+  } catch {
+    return structuredClone(DEFAULT_CHINESE_NEW_YEAR_CONFIG);
+  }
+}
+
+/** Superadmin — save full Chinese New Year math config. */
+export async function saveChineseNewYearEngineConfig(raw: unknown) {
+  const actor = await requireSuperadmin();
+  const {
+    CHINESE_NEW_YEAR_GAME_ID,
+    normalizeChineseNewYearConfig,
+  } = await import("@/lib/chinese-new-year-config");
+  const catalog = slotGames.find((g) => g.id === CHINESE_NEW_YEAR_GAME_ID);
+  if (!catalog) throw new Error("Chinese New Year not in catalog");
+
+  const cfg = normalizeChineseNewYearConfig(raw);
+  const db = getDb();
+  const existing = await db
+    .select()
+    .from(gameControls)
+    .where(eq(gameControls.gameId, CHINESE_NEW_YEAR_GAME_ID))
+    .limit(1);
+
+  const payload = JSON.stringify(cfg);
+
+  if (!existing[0]) {
+    await db.insert(gameControls).values({
+      gameId: CHINESE_NEW_YEAR_GAME_ID,
+      enabled: "yes",
+      featured: "no",
+      sortOrder: 0,
+      tag: catalog.tag ?? null,
+      rtp: catalog.rtp,
+      volatility: catalog.volatility,
+      minBet: catalog.minBet,
+      maxBet: catalog.maxBet,
+      engineConfig: payload,
+    });
+  } else {
+    await db
+      .update(gameControls)
+      .set({ engineConfig: payload })
+      .where(eq(gameControls.gameId, CHINESE_NEW_YEAR_GAME_ID));
+  }
+
+  try {
+    const { clearChineseNewYearEngineCache } = await import("../games/chinese-new-year.server");
+    clearChineseNewYearEngineCache();
+  } catch {
+    /* ignore */
+  }
+
+  await writeAuditLog({
+    actor,
+    action: "super.chinese_new_year_config",
+    summary: `Updated Chinese New Year engine (FS ${cfg.freeSpinsAward}, maxWin ${cfg.maxWinMult}x, target RTP ${cfg.targetRtp}%)`,
+    targetType: "game",
+    targetId: CHINESE_NEW_YEAR_GAME_ID,
+    meta: {
+      freeSpinsAward: cfg.freeSpinsAward,
+      monkeyTriggerMult: cfg.monkeyTriggerMult,
+      dragonSuccessChancePercent: cfg.dragonSuccessChancePercent,
+      maxWinMult: cfg.maxWinMult,
+      targetRtp: cfg.targetRtp,
+      paylineCount: cfg.paylineCount,
+    },
+  });
+
+  return cfg;
+}
+
+/** Public — Fire Spike engine math (defaults if unset). */
+export async function getFireSpikeEngineConfig() {
+  const {
+    FIRE_SPIKE_GAME_ID,
+    DEFAULT_FIRE_SPIKE_CONFIG,
+    normalizeFireSpikeConfig,
+  } = await import("@/lib/fire-spike-config");
+  const db = getDb();
+  try {
+    const rows = await db
+      .select()
+      .from(gameControls)
+      .where(eq(gameControls.gameId, FIRE_SPIKE_GAME_ID))
+      .limit(1);
+    return normalizeFireSpikeConfig(parseEngineConfigJson(rows[0]?.engineConfig));
+  } catch {
+    return structuredClone(DEFAULT_FIRE_SPIKE_CONFIG);
+  }
+}
+
+/** Superadmin — save full Fire Spike math config. */
+export async function saveFireSpikeEngineConfig(raw: unknown) {
+  const actor = await requireSuperadmin();
+  const { FIRE_SPIKE_GAME_ID, normalizeFireSpikeConfig } = await import("@/lib/fire-spike-config");
+  const catalog = slotGames.find((g) => g.id === FIRE_SPIKE_GAME_ID);
+  if (!catalog) throw new Error("Fire Spike not in catalog");
+
+  const cfg = normalizeFireSpikeConfig(raw);
+  const db = getDb();
+  const existing = await db
+    .select()
+    .from(gameControls)
+    .where(eq(gameControls.gameId, FIRE_SPIKE_GAME_ID))
+    .limit(1);
+
+  const payload = JSON.stringify(cfg);
+
+  if (!existing[0]) {
+    await db.insert(gameControls).values({
+      gameId: FIRE_SPIKE_GAME_ID,
+      enabled: "yes",
+      featured: "no",
+      sortOrder: 0,
+      tag: catalog.tag ?? null,
+      rtp: String(cfg.targetRtp),
+      volatility: catalog.volatility,
+      minBet: catalog.minBet,
+      maxBet: catalog.maxBet,
+      engineConfig: payload,
+    });
+  } else {
+    await db
+      .update(gameControls)
+      .set({ engineConfig: payload, rtp: String(cfg.targetRtp) })
+      .where(eq(gameControls.gameId, FIRE_SPIKE_GAME_ID));
+  }
+
+  try {
+    const { clearFireSpikeEngineCache } = await import("../games/fire-spike.server");
+    clearFireSpikeEngineCache();
+  } catch {
+    /* ignore */
+  }
+
+  await writeAuditLog({
+    actor,
+    action: "super.fire_spike_config",
+    summary: `Updated Fire Spike engine (profile ${cfg.activeRtpProfile}, maxWin ${cfg.maxWinMult}x, JP ${cfg.grandJackpotMult}x, RTP ${cfg.targetRtp}%)`,
+    targetType: "game",
+    targetId: FIRE_SPIKE_GAME_ID,
+    meta: {
+      activeRtpProfile: cfg.activeRtpProfile,
+      maxWinMult: cfg.maxWinMult,
+      grandJackpotMult: cfg.grandJackpotMult,
+      targetRtp: cfg.targetRtp,
+      paylineCount: cfg.paylineCount,
+      minBet: cfg.minBet,
+      maxBet: cfg.maxBet,
+    },
+  });
+
+  return cfg;
+}
+
+/** Public — Fortune Gems engine math (defaults if unset). */
+export async function getFortuneGemsEngineConfig() {
+  const {
+    FORTUNE_GEMS_GAME_ID,
+    DEFAULT_FORTUNE_GEMS_CONFIG,
+    normalizeFortuneGemsConfig,
+  } = await import("@/lib/fortune-gems-config");
+  const db = getDb();
+  try {
+    const rows = await db
+      .select()
+      .from(gameControls)
+      .where(eq(gameControls.gameId, FORTUNE_GEMS_GAME_ID))
+      .limit(1);
+    return normalizeFortuneGemsConfig(parseEngineConfigJson(rows[0]?.engineConfig));
+  } catch {
+    return structuredClone(DEFAULT_FORTUNE_GEMS_CONFIG);
+  }
+}
+
+/** Superadmin — save full Fortune Gems math config. */
+export async function saveFortuneGemsEngineConfig(raw: unknown) {
+  const actor = await requireSuperadmin();
+  const { FORTUNE_GEMS_GAME_ID, normalizeFortuneGemsConfig } = await import(
+    "@/lib/fortune-gems-config"
+  );
+  const catalog = slotGames.find((g) => g.id === FORTUNE_GEMS_GAME_ID);
+  if (!catalog) throw new Error("Fortune Gems not in catalog");
+
+  const cfg = normalizeFortuneGemsConfig(raw);
+  const db = getDb();
+  const existing = await db
+    .select()
+    .from(gameControls)
+    .where(eq(gameControls.gameId, FORTUNE_GEMS_GAME_ID))
+    .limit(1);
+
+  const payload = JSON.stringify(cfg);
+
+  if (!existing[0]) {
+    await db.insert(gameControls).values({
+      gameId: FORTUNE_GEMS_GAME_ID,
+      enabled: "yes",
+      featured: "no",
+      sortOrder: 0,
+      tag: catalog.tag ?? null,
+      rtp: String(cfg.targetRtp),
+      volatility: catalog.volatility,
+      minBet: `₱${cfg.minBet.toFixed(2)}`,
+      maxBet: `₱${cfg.maxBet.toFixed(2)}`,
+      engineConfig: payload,
+    });
+  } else {
+    await db
+      .update(gameControls)
+      .set({
+        engineConfig: payload,
+        rtp: String(cfg.targetRtp),
+        minBet: `₱${cfg.minBet.toFixed(2)}`,
+        maxBet: `₱${cfg.maxBet.toFixed(2)}`,
+      })
+      .where(eq(gameControls.gameId, FORTUNE_GEMS_GAME_ID));
+  }
+
+  try {
+    const { clearFortuneGemsEngineCache } = await import("../games/fortune-gems.server");
+    clearFortuneGemsEngineCache();
+  } catch {
+    /* ignore */
+  }
+
+  await writeAuditLog({
+    actor,
+    action: "super.fortune_gems_config",
+    summary: `Updated Fortune Gems engine (profile ${cfg.activeRtpProfile}, maxWin ${cfg.maxWinMult}x, EX ${cfg.exBetMult}x, RTP ${cfg.targetRtp}%)`,
+    targetType: "game",
+    targetId: FORTUNE_GEMS_GAME_ID,
+    meta: {
+      activeRtpProfile: cfg.activeRtpProfile,
+      maxWinMult: cfg.maxWinMult,
+      exBetMult: cfg.exBetMult,
+      targetRtp: cfg.targetRtp,
+      paylineCount: cfg.paylineCount,
+      minBet: cfg.minBet,
+      maxBet: cfg.maxBet,
+    },
+  });
+
+  return cfg;
+}
+
+/** Public — Pug Den engine math (defaults if unset). */
+export async function getPugLifeEngineConfig() {
+  const {
+    PUG_LIFE_GAME_ID,
+    DEFAULT_PUG_LIFE_CONFIG,
+    normalizePugLifeConfig,
+  } = await import("@/lib/pug-life-config");
+  const db = getDb();
+  try {
+    const rows = await db
+      .select()
+      .from(gameControls)
+      .where(eq(gameControls.gameId, PUG_LIFE_GAME_ID))
+      .limit(1);
+    return normalizePugLifeConfig(parseEngineConfigJson(rows[0]?.engineConfig));
+  } catch {
+    return structuredClone(DEFAULT_PUG_LIFE_CONFIG);
+  }
+}
+
+/** Superadmin — save full Pug Den math config. */
+export async function savePugLifeEngineConfig(raw: unknown) {
+  const actor = await requireSuperadmin();
+  const { PUG_LIFE_GAME_ID, normalizePugLifeConfig } = await import("@/lib/pug-life-config");
+  const catalog = slotGames.find((g) => g.id === PUG_LIFE_GAME_ID);
+  if (!catalog) throw new Error("Pug Den not in catalog");
+
+  const cfg = normalizePugLifeConfig(raw);
+  const db = getDb();
+  const existing = await db
+    .select()
+    .from(gameControls)
+    .where(eq(gameControls.gameId, PUG_LIFE_GAME_ID))
+    .limit(1);
+
+  const payload = JSON.stringify(cfg);
+
+  if (!existing[0]) {
+    await db.insert(gameControls).values({
+      gameId: PUG_LIFE_GAME_ID,
+      enabled: "yes",
+      featured: "no",
+      sortOrder: 0,
+      tag: catalog.tag ?? null,
+      rtp: String(cfg.targetRtp),
+      volatility: catalog.volatility,
+      minBet: catalog.minBet,
+      maxBet: catalog.maxBet,
+      engineConfig: payload,
+    });
+  } else {
+    await db
+      .update(gameControls)
+      .set({ engineConfig: payload, rtp: String(cfg.targetRtp) })
+      .where(eq(gameControls.gameId, PUG_LIFE_GAME_ID));
+  }
+
+  try {
+    const { clearPugLifeEngineCache } = await import("../games/pug-life.server");
+    clearPugLifeEngineCache();
+  } catch {
+    /* ignore */
+  }
+
+  await writeAuditLog({
+    actor,
+    action: "super.pug_life_config",
+    summary: `Updated Pug Den engine (profile ${cfg.activeRtpProfile}, maxWin ${cfg.maxWinMult}x, RTP ${cfg.targetRtp}%)`,
+    targetType: "game",
+    targetId: PUG_LIFE_GAME_ID,
+    meta: {
+      activeRtpProfile: cfg.activeRtpProfile,
+      maxWinMult: cfg.maxWinMult,
+      targetRtp: cfg.targetRtp,
+      paylineCount: cfg.paylineCount,
+      buyOptions: cfg.buyOptions.map((b) => ({
+        id: b.id,
+        costMult: b.costMult,
+        configStatus: b.configStatus,
+      })),
+    },
+  });
+
+  return cfg;
+}
+
+/** Public — Reel Riot engine math (defaults if unset). */
+export async function getReelRiotEngineConfig() {
+  const {
+    REEL_RIOT_GAME_ID,
+    DEFAULT_REEL_RIOT_CONFIG,
+    normalizeReelRiotConfig,
+  } = await import("@/lib/reel-riot-config");
+  const db = getDb();
+  try {
+    const rows = await db
+      .select()
+      .from(gameControls)
+      .where(eq(gameControls.gameId, REEL_RIOT_GAME_ID))
+      .limit(1);
+    return normalizeReelRiotConfig(parseEngineConfigJson(rows[0]?.engineConfig));
+  } catch {
+    return structuredClone(DEFAULT_REEL_RIOT_CONFIG);
+  }
+}
+
+/** Superadmin — save full Reel Riot math config. */
+export async function saveReelRiotEngineConfig(raw: unknown) {
+  const actor = await requireSuperadmin();
+  const { REEL_RIOT_GAME_ID, normalizeReelRiotConfig } = await import("@/lib/reel-riot-config");
+  const catalog = slotGames.find((g) => g.id === REEL_RIOT_GAME_ID);
+  if (!catalog) throw new Error("Reel Riot not in catalog");
+
+  const cfg = normalizeReelRiotConfig(raw);
+  const db = getDb();
+  const existing = await db
+    .select()
+    .from(gameControls)
+    .where(eq(gameControls.gameId, REEL_RIOT_GAME_ID))
+    .limit(1);
+
+  const payload = JSON.stringify(cfg);
+
+  if (!existing[0]) {
+    await db.insert(gameControls).values({
+      gameId: REEL_RIOT_GAME_ID,
+      enabled: "yes",
+      featured: "no",
+      sortOrder: 0,
+      tag: catalog.tag ?? null,
+      rtp: String(cfg.targetRtp),
+      volatility: catalog.volatility,
+      minBet: catalog.minBet,
+      maxBet: catalog.maxBet,
+      engineConfig: payload,
+    });
+  } else {
+    await db
+      .update(gameControls)
+      .set({ engineConfig: payload, rtp: String(cfg.targetRtp) })
+      .where(eq(gameControls.gameId, REEL_RIOT_GAME_ID));
+  }
+
+  try {
+    const { clearReelRiotEngineCache } = await import("../games/reel-riot.server");
+    clearReelRiotEngineCache();
+  } catch {
+    /* ignore */
+  }
+
+  await writeAuditLog({
+    actor,
+    action: "super.reel_riot_config",
+    summary: `Updated Reel Riot engine (maxBet ${cfg.maxBet}, twoWild ${cfg.twoWildPayMult}x, RTP placeholder ${cfg.targetRtp}%)`,
+    targetType: "game",
+    targetId: REEL_RIOT_GAME_ID,
+    meta: {
+      maxBet: cfg.maxBet,
+      twoWildPayMult: cfg.twoWildPayMult,
+      targetRtp: cfg.targetRtp,
+      jackpotFloor: cfg.jackpot.floorAmount,
+      rtpConfigStatus: cfg.rtpConfigStatus,
+    },
+  });
+
+  return cfg;
+}
+
+/** Public — Piñata Wins engine math (defaults if unset). */
+export async function getPinataWinsEngineConfig() {
+  const {
+    PINATA_WINS_GAME_ID,
+    DEFAULT_PINATA_WINS_CONFIG,
+    normalizePinataWinsConfig,
+  } = await import("@/lib/pinata-wins-config");
+  const db = getDb();
+  try {
+    const rows = await db
+      .select()
+      .from(gameControls)
+      .where(eq(gameControls.gameId, PINATA_WINS_GAME_ID))
+      .limit(1);
+    return normalizePinataWinsConfig(parseEngineConfigJson(rows[0]?.engineConfig));
+  } catch {
+    return structuredClone(DEFAULT_PINATA_WINS_CONFIG);
+  }
+}
+
+/** Superadmin — save full Piñata Wins math config. */
+export async function savePinataWinsEngineConfig(raw: unknown) {
+  const actor = await requireSuperadmin();
+  const { PINATA_WINS_GAME_ID, normalizePinataWinsConfig } = await import(
+    "@/lib/pinata-wins-config"
+  );
+  const catalog = slotGames.find((g) => g.id === PINATA_WINS_GAME_ID);
+  if (!catalog) throw new Error("Piñata Wins not in catalog");
+
+  const cfg = normalizePinataWinsConfig(raw);
+  const db = getDb();
+  const existing = await db
+    .select()
+    .from(gameControls)
+    .where(eq(gameControls.gameId, PINATA_WINS_GAME_ID))
+    .limit(1);
+
+  const payload = JSON.stringify(cfg);
+
+  if (!existing[0]) {
+    await db.insert(gameControls).values({
+      gameId: PINATA_WINS_GAME_ID,
+      enabled: "yes",
+      featured: "no",
+      sortOrder: 0,
+      tag: catalog.tag ?? null,
+      rtp: String(cfg.targetRtp),
+      volatility: catalog.volatility,
+      minBet: `₱${cfg.minBet.toFixed(2)}`,
+      maxBet: `₱${cfg.maxBet.toFixed(2)}`,
+      engineConfig: payload,
+    });
+  } else {
+    await db
+      .update(gameControls)
+      .set({
+        engineConfig: payload,
+        rtp: String(cfg.targetRtp),
+        minBet: `₱${cfg.minBet.toFixed(2)}`,
+        maxBet: `₱${cfg.maxBet.toFixed(2)}`,
+      })
+      .where(eq(gameControls.gameId, PINATA_WINS_GAME_ID));
+  }
+
+  try {
+    const { clearPinataWinsEngineCache } = await import("../games/pinata-wins.server");
+    clearPinataWinsEngineCache();
+  } catch {
+    /* ignore */
+  }
+
+  await writeAuditLog({
+    actor,
+    action: "super.pinata_wins_config",
+    summary: `Updated Piñata Wins engine (buy ${cfg.buyFeatureMult}x, maxWin ${cfg.maxWinMult}x, RTP ${cfg.targetRtp}%)`,
+    targetType: "game",
+    targetId: PINATA_WINS_GAME_ID,
+    meta: {
+      buyFeatureMult: cfg.buyFeatureMult,
+      maxWinMult: cfg.maxWinMult,
+      targetRtp: cfg.targetRtp,
+      paylineCount: cfg.paylineCount,
+      goldFrameChanceInitial: cfg.goldFrameChanceInitial,
+      minBet: cfg.minBet,
+      maxBet: cfg.maxBet,
     },
   });
 
@@ -1288,10 +2482,15 @@ export async function fetchPlatformEarningsGraph(opts?: {
   period?: "day" | "week" | "month";
   gameId?: string;
 }): Promise<EarningsGraphData> {
-  await requirePermission("REPORTS_VIEW");
+  const actor = await requirePermission("REPORTS_VIEW");
   const db = getDb();
   const period = opts?.period ?? "week";
   const game = opts?.gameId?.trim();
+  const networkIds = await scopeToDownline(actor, { playersOnly: true });
+
+  if (networkIds !== null && networkIds.length === 0) {
+    return { todayNet: 0, thisWeekNet: 0, thisMonthNet: 0, allTimeNet: 0, points: [] };
+  }
 
   // Overall KPI aggregations
   const now = new Date();
@@ -1302,6 +2501,8 @@ export async function fetchPlatformEarningsGraph(opts?: {
   const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
 
   const filterGame = game ? like(transactions.game, `%${game}%`) : undefined;
+  const filterNetwork = networkIds !== null ? inArray(transactions.userId, networkIds) : undefined;
+  const baseWhere = and(filterGame, filterNetwork);
 
   // 1. Calculate Summary Net Totals directly from immutable transactions ledger table
   const [summaryRow] = await db
@@ -1319,7 +2520,7 @@ export async function fetchPlatformEarningsGraph(opts?: {
       allWins: sql<number>`coalesce(sum(case when ${transactions.type} in ('win','jackpot') and ${transactions.createdAt} >= ${startOfMonth} then abs(${transactions.amount}) else 0 end), 0)`,
     })
     .from(transactions)
-    .where(filterGame ? filterGame : undefined);
+    .where(baseWhere);
 
   const todayNet = +(Number(summaryRow?.todayBets ?? 0) - Number(summaryRow?.todayWins ?? 0)).toFixed(2);
   const thisWeekNet = +(Number(summaryRow?.weekBets ?? 0) - Number(summaryRow?.weekWins ?? 0)).toFixed(2);
@@ -1347,6 +2548,7 @@ export async function fetchPlatformEarningsGraph(opts?: {
             sql`${transactions.createdAt} >= ${hStart}`,
             sql`${transactions.createdAt} < ${hEnd}`,
             filterGame,
+            filterNetwork,
           ),
         );
 
@@ -1375,6 +2577,7 @@ export async function fetchPlatformEarningsGraph(opts?: {
             sql`${transactions.createdAt} >= ${dStart}`,
             sql`${transactions.createdAt} < ${dEnd}`,
             filterGame,
+            filterNetwork,
           ),
         );
 
@@ -1402,6 +2605,7 @@ export async function fetchPlatformEarningsGraph(opts?: {
             sql`${transactions.createdAt} >= ${mStart}`,
             sql`${transactions.createdAt} < ${mEnd}`,
             filterGame,
+            filterNetwork,
           ),
         );
 

@@ -27,8 +27,6 @@ import { NotificationsModal } from "./profile/NotificationsModal";
 import { GiftsModal } from "./profile/GiftsModal";
 import { SettingsModal } from "./profile/SettingsModal";
 import { WorldModal } from "./profile/WorldModal";
-import { WalletRequestModal } from "./WalletRequestModal";
-import { WalletHistoryModal } from "./WalletHistoryModal";
 import { toast } from "sonner";
 
 function ChipIcon({ className }: { className?: string }) {
@@ -63,8 +61,6 @@ export function Navbar({ onOpenMobileMenu }: { onOpenMobileMenu?: () => void }) 
   const [profileOpen, setProfileOpen] = useState(false);
   const [logoutOpen, setLogoutOpen] = useState(false);
   const [panel, setPanel] = useState<Panel>(null);
-  const [walletMode, setWalletMode] = useState<"deposit" | "withdraw" | null>(null);
-  const [historyOpen, setHistoryOpen] = useState(false);
   const { user, isLoggedIn, openLogin, logout } = useAuth();
   const balance = user?.balance ?? 0;
   const initial = (user?.username?.[0] ?? "?").toUpperCase();
@@ -163,16 +159,6 @@ export function Navbar({ onOpenMobileMenu }: { onOpenMobileMenu?: () => void }) 
                       </span>
                     </button>
                   </div>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      closeMenus();
-                      setHistoryOpen(true);
-                    }}
-                    className="mt-3 flex w-full items-center justify-center gap-1.5 rounded-full border border-border bg-panel py-2 text-xs font-semibold text-foreground hover:bg-panel-hover"
-                  >
-                    Transaction history
-                  </button>
                 </div>
               </>
             )}
@@ -286,15 +272,6 @@ export function Navbar({ onOpenMobileMenu }: { onOpenMobileMenu?: () => void }) 
         onOpenChange={(o) => setPanel(o ? "settings" : null)}
       />
       <WorldModal open={panel === "world"} onOpenChange={(o) => setPanel(o ? "world" : null)} />
-      <WalletRequestModal
-        open={walletMode !== null}
-        mode={walletMode ?? "deposit"}
-        balance={balance}
-        onOpenChange={(o) => {
-          if (!o) setWalletMode(null);
-        }}
-      />
-      <WalletHistoryModal open={historyOpen} onOpenChange={setHistoryOpen} />
     </header>
   );
 }

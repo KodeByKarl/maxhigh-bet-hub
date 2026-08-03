@@ -9,7 +9,7 @@ export const Route = createFileRoute("/superadmin/audit")({
     if (search.view === "staff") {
       throw redirect({ to: "/superadmin/staff" });
     }
-    const allowed = ["winlose", "by-level", "by-product", "transactions", "outstanding", "chip-distribution"] as const;
+    const allowed = ["winlose", "by-level", "by-product", "transactions", "chip-distribution"] as const;
     const view =
       search.view && (allowed as readonly string[]).includes(search.view)
         ? search.view

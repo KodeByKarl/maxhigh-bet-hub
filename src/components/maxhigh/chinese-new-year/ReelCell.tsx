@@ -1,190 +1,169 @@
-import { memo } from "react";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
-import { ANIM } from "./animationConfig";
+import type { CnySymKind } from "@/lib/chinese-new-year-config";
 import { ChineseIcon } from "./ChineseIcon";
-import type { BoardCell } from "./types";
+import { ICON_SRC } from "./paytable";
 
-export type ReelPhase = "idle" | "dropping" | "glow" | "popping" | "falling";
+export type ReelPhase = "idle" | "spinning" | "stopping" | "win";
+
+/** Full-size frames in the spin strip (same visual weight as idle icons). */
+const SPIN_STRIP: CnySymKind[] = [
+  "lantern",
+  "lion",
+  "fish",
+  "coins",
+  "jug",
+  "sym_a",
+  "sym_k",
+  "sym_q",
+];
 
 type ReelCellProps = {
-  index: number;
-  cell: BoardCell | null;
+  kind: CnySymKind;
   phase: ReelPhase;
-  win: boolean;
-  perPay?: number;
-  isSpawn: boolean;
-  isFallen: boolean;
-  fallDist: number;
-  cols: number;
-  isTop?: boolean;
+  reel: number;
+  row: number;
+  /** Bumps each spin so stop/drop animation remounts. */
+  spinId: number;
+  winning?: boolean;
+  dimmed?: boolean;
+  extraLabel?: string | null;
+  className?: string;
 };
 
-export const ReelCell = memo(function ReelCell({
-  index,
-  cell,
+/**
+ * Classic vertical reel motion:
+ * spinning → full-cell downward scroll + blur (same icon size as idle)
+ * stopping → drop-in from above with bounce (staggered per reel)
+ */
+export function ReelCell({
+  kind,
   phase,
-  win,
-  perPay,
-  isSpawn,
-  isFallen,
-  fallDist,
-  cols,
-  isTop,
+  reel,
+  row,
+  spinId,
+  winning,
+  dimmed,
+  extraLabel,
+  className,
 }: ReelCellProps) {
-  const col = index % cols;
-  const row = Math.floor(index / cols);
-  const popping = phase === "popping" && win;
-  const isInitialDrop = phase === "dropping" && !!cell;
-  const isGravityDrop =
-    phase === "falling" && !!cell && (isSpawn || isFallen) && fallDist > 0;
-  const dropRows = isInitialDrop ? row + 1.35 : fallDist;
+  const spinning = phase === "spinning";
+  const stopping = phase === "stopping";
+  const win = phase === "win" && !!winning;
 
-  const isScatter = cell?.sym.kind === "monkey";
+  const stopDelay = reel * 0.11 + row * 0.035;
+  // Two loops of the strip → scroll exactly one loop (-50%)
+  const strip = [...SPIN_STRIP, ...SPIN_STRIP];
+  const framePct = 100 / strip.length;
 
   return (
     <div
       className={cn(
-        "relative min-h-0 min-w-0 p-0.5",
-        phase === "dropping" || phase === "falling" || isScatter
-          ? "overflow-visible"
-          : "overflow-hidden",
-        isScatter
-          ? "z-[30]"
-          : win && (phase === "glow" || phase === "popping")
-            ? "z-[2]"
-            : isInitialDrop || isGravityDrop
-              ? "z-[1]"
-              : "",
+        "relative h-full w-full overflow-hidden rounded-[5px]",
+        "border border-amber-500/45 bg-gradient-to-b from-[#2a0a0a]/90 to-[#0c0404]/95",
+        "shadow-[inset_0_1px_0_rgba(255,220,120,0.18)]",
+        dimmed && !winning && "opacity-40",
+        winning && "z-10 border-yellow-300/90 shadow-[0_0_16px_rgba(250,204,21,0.75)]",
+        className,
       )}
     >
-      {cell && (
+      <div className="pointer-events-none absolute inset-[1px] z-[2] rounded-[4px] border border-yellow-200/15" />
+      {winning && (
+        <div className="pointer-events-none absolute inset-0 z-[5] rounded-[5px] ring-2 ring-yellow-300/90" />
+      )}
+
+      {/* Full-width / full-cell-height spin strip — size matches idle icons */}
+      {spinning && (
         <motion.div
-          key={cell.key}
-          className="absolute inset-[4%] flex items-center justify-center will-change-transform"
+          className="absolute left-0 top-0 z-[1] w-full will-change-transform"
+          style={{
+            height: `${strip.length * 100}%`,
+            filter: "blur(2px) saturate(1.08) brightness(1.06)",
+          }}
+          animate={{ y: ["0%", "-50%"] }}
+          transition={{
+            duration: 0.2 + (reel % 3) * 0.03,
+            repeat: Infinity,
+            ease: "linear",
+          }}
+        >
+          {strip.map((sym, i) => (
+            <div
+              key={`${spinId}-spin-${i}`}
+              className="relative w-full"
+              style={{ height: `${framePct}%` }}
+            >
+              <img
+                src={ICON_SRC[sym]}
+                alt=""
+                draggable={false}
+                className="pointer-events-none size-full scale-[1.55] object-contain object-center"
+              />
+            </div>
+          ))}
+        </motion.div>
+      )}
+
+      {/* Landing / idle / win glyph — same scale as spin frames */}
+      {!spinning && (
+        <motion.div
+          key={`land-${spinId}-${reel}-${row}`}
+          className="absolute inset-0 z-[1] will-change-transform"
           initial={
-            isInitialDrop || isGravityDrop
-              ? {
-                  x: isTop ? `${(dropRows || cols) * 100}%` : 0,
-                  y: isTop ? 0 : `${-dropRows * 100}%`,
-                  opacity: isSpawn || isInitialDrop ? 0.55 : 1,
-                  scale: isSpawn || isInitialDrop ? 0.92 : 1,
-                }
+            stopping || phase === "win"
+              ? { y: "-120%", opacity: 0.35, scale: 0.92, filter: "blur(4px)" }
               : false
           }
           animate={
-            popping
+            win
               ? {
-                  scale: [1.08, 1.22, 0],
-                  opacity: [1, 1, 0],
-                  rotate: [0, -10, 14],
-                  y: [0, -8, 12],
+                  y: 0,
+                  opacity: 1,
+                  scale: [1, 1.08, 1.02],
+                  filter: [
+                    "blur(0px) brightness(1)",
+                    "blur(0px) brightness(1.25)",
+                    "blur(0px) brightness(1.08)",
+                  ],
                 }
-              : phase === "glow" && win
-                ? {
-                    x: 0,
-                    y: 0,
-                    opacity: 1,
-                    scale: [1, 1.1, 1.06],
-                  }
-                : {
-                    x: 0,
-                    y: 0,
-                    opacity: 1,
-                    scale: 1,
-                    rotate: 0,
-                  }
+              : {
+                  y: 0,
+                  opacity: 1,
+                  scale: 1,
+                  filter: "blur(0px) brightness(1)",
+                }
           }
           transition={
-            popping
-              ? {
-                  duration: ANIM.popDuration / 1000,
-                  delay: (col * 0.55 + row * 0.35) * (ANIM.popStagger / 1000),
-                  ease: [0.4, 0, 0.2, 1],
-                  times: [0, 0.35, 1],
-                }
-              : phase === "glow" && win
+            win
+              ? { duration: 0.55, repeat: 2, ease: "easeInOut" }
+              : stopping
                 ? {
-                    duration: 0.5,
-                    repeat: Infinity,
-                    repeatType: "mirror",
-                    ease: "easeInOut",
+                    y: {
+                      type: "spring",
+                      stiffness: 380,
+                      damping: 22,
+                      mass: 0.9,
+                      delay: stopDelay,
+                    },
+                    opacity: { duration: 0.15, delay: stopDelay },
+                    scale: {
+                      type: "spring",
+                      stiffness: 460,
+                      damping: 18,
+                      delay: stopDelay + 0.05,
+                    },
+                    filter: { duration: 0.2, delay: stopDelay },
                   }
-                : isInitialDrop || isGravityDrop
-                  ? {
-                      ...(isTop
-                        ? {
-                            x: {
-                              type: "spring",
-                              stiffness: 420,
-                              damping: 26,
-                              mass: 0.85,
-                              delay: col * ((isInitialDrop ? ANIM.dropStaggerCol : ANIM.fallStaggerCol) / 1000),
-                            },
-                          }
-                        : {
-                            y: {
-                              type: "spring",
-                              stiffness: 420,
-                              damping: 26,
-                              mass: 0.85,
-                              delay:
-                                col * ((isInitialDrop ? ANIM.dropStaggerCol : ANIM.fallStaggerCol) / 1000) +
-                                row * ((isInitialDrop ? ANIM.dropStaggerRow : ANIM.fallStaggerRow) / 1000) * 0.45,
-                            },
-                          }),
-                      opacity: {
-                        duration: 0.18,
-                        delay:
-                          col *
-                          ((isInitialDrop
-                            ? ANIM.dropStaggerCol
-                            : ANIM.fallStaggerCol) /
-                            1000),
-                      },
-                      scale: {
-                        type: "spring",
-                        stiffness: 520,
-                        damping: 20,
-                        delay:
-                          col *
-                            ((isInitialDrop
-                              ? ANIM.dropStaggerCol
-                              : ANIM.fallStaggerCol) /
-                              1000) +
-                          0.1,
-                      },
-                    }
-                  : {
-                      duration: 0.22,
-                      ease: [0.22, 1, 0.36, 1],
-                    }
+                : { duration: 0.2 }
           }
         >
-          <ChineseIcon
-            kind={cell.sym.kind}
-            mult={cell.mult}
-            className={cn(
-              "size-full",
-              win &&
-                (phase === "glow" || phase === "popping") &&
-                "drop-shadow-[0_0_14px_rgba(239,68,68,0.95)]",
-            )}
-          />
-          {win &&
-            perPay != null &&
-            perPay > 0 &&
-            (phase === "glow" || phase === "popping") && (
-              <motion.span
-                initial={{ y: 6, opacity: 0, scale: 0.8 }}
-                animate={{ y: 0, opacity: 1, scale: 1 }}
-                className="absolute top-0 left-1/2 z-[2] -translate-x-1/2 rounded-full border border-white bg-gradient-to-b from-yellow-300 to-red-600 px-1 py-0.5 text-[8px] font-black text-white shadow"
-              >
-                +₱{perPay.toFixed(2)}
-              </motion.span>
-            )}
+          <ChineseIcon kind={kind} extraLabel={extraLabel} />
         </motion.div>
+      )}
+
+      {spinning && (
+        <div className="pointer-events-none absolute inset-0 z-[3] bg-[linear-gradient(to_bottom,rgba(0,0,0,0.4)_0%,transparent_18%,transparent_82%,rgba(0,0,0,0.4)_100%)]" />
       )}
     </div>
   );
-});
+}

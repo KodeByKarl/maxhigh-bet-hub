@@ -11,7 +11,6 @@ import { isStaffRole } from "@/lib/user";
 import { adminGlass, adminGlassElevated } from "@/components/admin/ui/glass";
 import {
   Plus,
-  Wallet,
   ScrollText,
   Users,
   Headphones,
@@ -135,14 +134,6 @@ function AdminDashboardPage() {
               <Plus size={15} />
               Add Player
             </Link>
-
-            <Link
-              to="/admin/fund"
-              className="inline-flex h-10 items-center gap-2 rounded-xl border border-amber-500/40 bg-amber-500/[0.10] px-4 text-sm font-bold text-amber-300 hover:bg-amber-500/20 active:scale-95 transition-all"
-            >
-              <Wallet size={15} />
-              Fund / Top-up
-            </Link>
           </div>
         </div>
       </div>
@@ -188,14 +179,6 @@ function AdminDashboardPage() {
                 color: "bg-emerald-500/15 border-emerald-400/20 text-emerald-300",
                 label: "Reports Suite",
                 sub: "Win/Lose & Payouts",
-              },
-              {
-                to: "/admin/fund" as const,
-                params: undefined,
-                icon: Wallet,
-                color: "bg-amber-500/15 border-amber-400/20 text-amber-300",
-                label: "Fund In / Out",
-                sub: "Request chip refills",
               },
               {
                 to: "/admin/support" as const,

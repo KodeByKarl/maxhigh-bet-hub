@@ -7,7 +7,6 @@ export const REPORT_SECTIONS = [
   { slug: "by-level", label: "Win/Lose By Level" },
   { slug: "by-product", label: "Win/Lose By Product" },
   { slug: "transactions", label: "Transaction History" },
-  { slug: "outstanding", label: "Outstanding" },
   { slug: "chip-distribution", label: "Chip Distribution Log" },
 ] as const;
 

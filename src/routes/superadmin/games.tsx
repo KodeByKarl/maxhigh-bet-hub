@@ -8,6 +8,17 @@ import { CANDY_PEAK_GAME_ID } from "@/lib/candy-peak-config";
 import { GODLY_GATES_GAME_ID } from "@/lib/godly-gates-config";
 import { SUGAR_SURGE_GAME_ID } from "@/lib/sugar-surge-config";
 import { GOLDEN_PANTHER_GAME_ID } from "@/lib/golden-panther-config";
+import { MAHJONG_WAYS_GAME_ID } from "@/lib/mahjong-ways-config";
+import { STARLIGHT_ACE_GAME_ID } from "@/lib/starlight-ace-config";
+import { SUPER_ACE_GAME_ID } from "@/lib/super-ace-config";
+import { FRONTIER_GOLD_GAME_ID } from "@/lib/frontier-gold-config";
+import { BUFFALO_REIGN_GAME_ID } from "@/lib/buffalo-reign-config";
+import { CHINESE_NEW_YEAR_GAME_ID } from "@/lib/chinese-new-year-config";
+import { FIRE_SPIKE_GAME_ID } from "@/lib/fire-spike-config";
+import { FORTUNE_GEMS_GAME_ID } from "@/lib/fortune-gems-config";
+import { PUG_LIFE_GAME_ID } from "@/lib/pug-life-config";
+import { REEL_RIOT_GAME_ID } from "@/lib/reel-riot-config";
+import { PINATA_WINS_GAME_ID } from "@/lib/pinata-wins-config";
 import { Input } from "@/components/ui/input";
 import {
   Dialog,
@@ -20,6 +31,17 @@ import { CandyPeakConfigModal } from "@/components/superadmin/games/CandyPeakCon
 import { GodlyGatesConfigModal } from "@/components/superadmin/games/GodlyGatesConfigModal";
 import { SugarSurgeConfigModal } from "@/components/superadmin/games/SugarSurgeConfigModal";
 import { GoldenPantherConfigModal } from "@/components/superadmin/games/GoldenPantherConfigModal";
+import { MahjongWaysConfigModal } from "@/components/superadmin/games/MahjongWaysConfigModal";
+import { StarlightAceConfigModal } from "@/components/superadmin/games/StarlightAceConfigModal";
+import { SuperAceConfigModal } from "@/components/superadmin/games/SuperAceConfigModal";
+import { FrontierGoldConfigModal } from "@/components/superadmin/games/FrontierGoldConfigModal";
+import { BuffaloReignConfigModal } from "@/components/superadmin/games/BuffaloReignConfigModal";
+import { ChineseNewYearConfigModal } from "@/components/superadmin/games/ChineseNewYearConfigModal";
+import { FireSpikeConfigModal } from "@/components/superadmin/games/FireSpikeConfigModal";
+import { FortuneGemsConfigModal } from "@/components/superadmin/games/FortuneGemsConfigModal";
+import { PugDenConfigModal } from "@/components/superadmin/games/PugDenConfigModal";
+import { FruitRiotConfigModal } from "@/components/superadmin/games/FruitRiotConfigModal";
+import { PinataWinsConfigModal } from "@/components/superadmin/games/PinataWinsConfigModal";
 import { saGlass } from "@/components/superadmin/ui/glass";
 import { toast } from "sonner";
 import { Sliders, ShieldCheck, Zap, History, Search } from "lucide-react";
@@ -351,11 +373,53 @@ function SuperGamesPage() {
       g.gameId.toLowerCase().includes(searchQuery.toLowerCase()),
   );
 
-  const isCandy = selected?.gameId === CANDY_PEAK_GAME_ID;
-  const isGodly = selected?.gameId === GODLY_GATES_GAME_ID;
-  const isSugar = selected?.gameId === SUGAR_SURGE_GAME_ID;
-  const isPanther = selected?.gameId === GOLDEN_PANTHER_GAME_ID || selected?.gameId === "golden-panther";
+  const FULL_ENGINE_IDS = new Set([
+    CANDY_PEAK_GAME_ID,
+    GODLY_GATES_GAME_ID,
+    SUGAR_SURGE_GAME_ID,
+    GOLDEN_PANTHER_GAME_ID,
+    "golden-panther",
+    MAHJONG_WAYS_GAME_ID,
+    "mahjong-ways",
+    STARLIGHT_ACE_GAME_ID,
+    "starlight-ace",
+    SUPER_ACE_GAME_ID,
+    "super-ace",
+    FRONTIER_GOLD_GAME_ID,
+    "frontier-gold",
+    BUFFALO_REIGN_GAME_ID,
+    "buffalo-reign",
+    CHINESE_NEW_YEAR_GAME_ID,
+    "chinese-new-year",
+    FIRE_SPIKE_GAME_ID,
+    "fire-spike",
+    FORTUNE_GEMS_GAME_ID,
+    "fortune-gems",
+    PUG_LIFE_GAME_ID,
+    "pug-den",
+    REEL_RIOT_GAME_ID,
+    "fruit-riot",
+    PINATA_WINS_GAME_ID,
+    "pinata-wins",
+  ]);
 
+  const selectedId = selected?.gameId ?? "";
+  const isCandy = selectedId === CANDY_PEAK_GAME_ID;
+  const isGodly = selectedId === GODLY_GATES_GAME_ID;
+  const isSugar = selectedId === SUGAR_SURGE_GAME_ID;
+  const isPanther = selectedId === GOLDEN_PANTHER_GAME_ID || selectedId === "golden-panther";
+  const isMahjong = selectedId === MAHJONG_WAYS_GAME_ID || selectedId === "mahjong-ways";
+  const isStarlight = selectedId === STARLIGHT_ACE_GAME_ID || selectedId === "starlight-ace";
+  const isSuperAce = selectedId === SUPER_ACE_GAME_ID || selectedId === "super-ace";
+  const isFrontier = selectedId === FRONTIER_GOLD_GAME_ID || selectedId === "frontier-gold";
+  const isBuffalo = selectedId === BUFFALO_REIGN_GAME_ID || selectedId === "buffalo-reign";
+  const isCny = selectedId === CHINESE_NEW_YEAR_GAME_ID || selectedId === "chinese-new-year";
+  const isFireSpike = selectedId === FIRE_SPIKE_GAME_ID || selectedId === "fire-spike";
+  const isFortuneGems = selectedId === FORTUNE_GEMS_GAME_ID || selectedId === "fortune-gems";
+  const isPugDen = selectedId === PUG_LIFE_GAME_ID || selectedId === "pug-den";
+  const isFruitRiot = selectedId === REEL_RIOT_GAME_ID || selectedId === "fruit-riot";
+  const isPinataWins = selectedId === PINATA_WINS_GAME_ID || selectedId === "pinata-wins";
+  const hasFullEngine = selectedId !== "" && FULL_ENGINE_IDS.has(selectedId);
   return (
     <div className="space-y-6 pb-8">
       <div>
@@ -407,12 +471,7 @@ function SuperGamesPage() {
                   <div className="text-base font-black uppercase leading-tight text-foreground">{g.name}</div>
                   <div className="mt-0.5 text-[11px] uppercase tracking-wide text-muted-foreground">
                     {g.category}
-                    {g.gameId === CANDY_PEAK_GAME_ID ||
-                    g.gameId === GODLY_GATES_GAME_ID ||
-                    g.gameId === SUGAR_SURGE_GAME_ID ||
-                    g.gameId === GOLDEN_PANTHER_GAME_ID
-                      ? " · full config"
-                      : ""}
+                    {FULL_ENGINE_IDS.has(g.gameId) ? " · full config" : ""}
                   </div>
                 </div>
                 {!g.enabled && (
@@ -467,7 +526,106 @@ function SuperGamesPage() {
           }}
           onPatchLobby={(data) => patch(selected.gameId, data)}
         />
-      ) : (
+      ) : selected && isMahjong ? (
+        <MahjongWaysConfigModal
+          game={selected}
+          open
+          onOpenChange={(open) => {
+            if (!open) setSelected(null);
+          }}
+          onPatchLobby={(data) => patch(selected.gameId, data)}
+        />
+      ) : selected && isStarlight ? (
+        <StarlightAceConfigModal
+          game={selected}
+          open
+          onOpenChange={(open) => {
+            if (!open) setSelected(null);
+          }}
+          onPatchLobby={(data) => patch(selected.gameId, data)}
+        />
+      ) : selected && isSuperAce ? (
+        <SuperAceConfigModal
+          game={selected}
+          open
+          onOpenChange={(open) => {
+            if (!open) setSelected(null);
+          }}
+          onPatchLobby={(data) => patch(selected.gameId, data)}
+        />
+      ) : selected && isFrontier ? (
+        <FrontierGoldConfigModal
+          game={selected}
+          open
+          onOpenChange={(open) => {
+            if (!open) setSelected(null);
+          }}
+          onPatchLobby={(data) => patch(selected.gameId, data)}
+        />
+      ) : selected && isBuffalo ? (
+        <BuffaloReignConfigModal
+          game={selected}
+          open
+          onOpenChange={(open) => {
+            if (!open) setSelected(null);
+          }}
+          onPatchLobby={(data) => patch(selected.gameId, data)}
+        />
+      ) : selected && isCny ? (
+        <ChineseNewYearConfigModal
+          game={selected}
+          open
+          onOpenChange={(open) => {
+            if (!open) setSelected(null);
+          }}
+          onPatchLobby={(data) => patch(selected.gameId, data)}
+        />
+      ) : selected && isFireSpike ? (
+        <FireSpikeConfigModal
+          game={selected}
+          open
+          onOpenChange={(open) => {
+            if (!open) setSelected(null);
+          }}
+          onPatchLobby={(data) => patch(selected.gameId, data)}
+        />
+      ) : selected && isFortuneGems ? (
+        <FortuneGemsConfigModal
+          game={selected}
+          open
+          onOpenChange={(open) => {
+            if (!open) setSelected(null);
+          }}
+          onPatchLobby={(data) => patch(selected.gameId, data)}
+        />
+      ) : selected && isPugDen ? (
+        <PugDenConfigModal
+          game={selected}
+          open
+          onOpenChange={(open) => {
+            if (!open) setSelected(null);
+          }}
+          onPatchLobby={(data) => patch(selected.gameId, data)}
+        />
+      ) : selected && isFruitRiot ? (
+        <FruitRiotConfigModal
+          game={selected}
+          open
+          onOpenChange={(open) => {
+            if (!open) setSelected(null);
+          }}
+          onPatchLobby={(data) => patch(selected.gameId, data)}
+        />
+      ) : selected && isPinataWins ? (
+        <PinataWinsConfigModal
+          game={selected}
+          open
+          onOpenChange={(open) => {
+            if (!open) setSelected(null);
+          }}
+          onPatchLobby={(data) => patch(selected.gameId, data)}
+        />
+      ) : selected && !hasFullEngine ? (
         <GameControlModal
           game={selected}
           open={!!selected}
@@ -476,7 +634,7 @@ function SuperGamesPage() {
           }}
           onPatch={patch}
         />
-      )}
+      ) : null}
     </div>
   );
 }

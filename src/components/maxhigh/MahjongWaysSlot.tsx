@@ -1,56 +1,47 @@
-import React, { useCallback, useEffect, useState } from "react";
+/**
+ * Mahjong Ways — polished layout matching Candy Peak chrome.
+ * Engine resolves spins instantly; this file plays back the animation script.
+ */
+import { useCallback, useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import {
-  Flame,
-  Minus,
-  Plus,
-  RotateCcw,
-  Sparkles,
-  Volume2,
-  VolumeX,
-  Zap,
-} from "lucide-react";
+import { Info, Menu, Zap } from "lucide-react";
 import { toast } from "sonner";
-import type { BoardCell, SpinScript } from "./mahjong-ways/types";
-import type { MahjongSymKind } from "@/lib/mahjong-ways-config";
+import { cn } from "@/lib/utils";
+import { useAuth } from "@/lib/auth";
+import { formatMoney, formatMoneyCompact } from "@/lib/currency";
 import { DEFAULT_MAHJONG_WAYS_CONFIG } from "@/lib/mahjong-ways-config";
+import { getMahjongWaysEngineConfigFn } from "@/functions/superadmin";
 import {
   getMahjongWaysSessionFn,
   mahjongWaysBuyFeatureFn,
   mahjongWaysFreeSpinFn,
   mahjongWaysSpinFn,
 } from "@/functions/api";
+import { ANIM } from "./mahjong-ways/animationConfig";
+import { mahjongAudio } from "./mahjong-ways/audio";
+import { TILE_IMAGE_MAP } from "./mahjong-ways/MahjongIcon";
+import { MahjongSidePanel } from "./mahjong-ways/MahjongSidePanel";
+import { ReelCell, type ReelPhase } from "./mahjong-ways/ReelCell";
+import { getMahjongWaysConfig, setMahjongWaysConfig } from "./mahjong-ways/runtimeConfig";
+import type { BoardCell, SpinScript } from "./mahjong-ways/types";
 
 type MahjongWaysSlotProps = {
   onBalanceUpdate?: () => void;
 };
 
-// High-definition 3D Mahjong tile graphics map
-const TILE_IMAGE_MAP: Record<MahjongSymKind, string> = {
-  sym_10: "/images/symbols/mahjong/10.png",
-  sym_j: "/images/symbols/mahjong/j.png",
-  sym_q: "/images/symbols/mahjong/q.png",
-  sym_k: "/images/symbols/mahjong/k.png",
-  sym_a: "/images/symbols/mahjong/a.png",
-  bamboo: "/images/symbols/mahjong/bamboo.png",
-  character: "/images/symbols/mahjong/character.png",
-  dot: "/images/symbols/mahjong/dot.png",
-  red_dragon: "/images/symbols/mahjong/red_dragon.png",
-  green_dragon: "/images/symbols/mahjong/green_dragon.png",
-  wild: "/images/symbols/mahjong/wild.png",
-  scatter: "/images/symbols/mahjong/scatter.png",
-};
+const COLS = 5;
+const ROWS = 4;
+const EMPTY_SET = new Set<string>();
+const EMPTY_FALL: Record<string, number> = Object.freeze({}) as Record<string, number>;
+const BET_STEPS = [1, 2, 5, 10, 20, 50, 100];
 
-// Initial board helper so 3D tiles/cards are immediately visible on load
 function createInitialBoard(): BoardCell[] {
-  const reelHeights = [4, 4, 4, 4, 4];
   const symbols = DEFAULT_MAHJONG_WAYS_CONFIG.symbols;
   const board: BoardCell[] = [];
   let keyCounter = 1;
 
-  for (let r = 0; r < 5; r++) {
-    const height = reelHeights[r];
-    for (let row = 0; row < height; row++) {
+  for (let r = 0; r < COLS; r++) {
+    for (let row = 0; row < ROWS; row++) {
       const symIndex = (r * 3 + row * 2) % (symbols.length - 2);
       const sym = symbols[symIndex];
       const isGold = r >= 1 && r <= 3 && (r + row) % 3 === 0 && !sym.wild && !sym.scatter;
@@ -63,517 +54,897 @@ function createInitialBoard(): BoardCell[] {
       });
     }
   }
-
   return board;
 }
 
-// 3D Mahjong Tile Symbol Renderer matching authentic carved 3D Mahjong bone blocks on green felt
-function renderTileSymbol(cell: BoardCell) {
-  const { kind, name } = cell.sym;
-  const isGoldTile = cell.isGold;
-
-  // 1. SCATTER TILE
-  if (cell.sym.scatter) {
-    return (
-      <div className="relative flex flex-col items-center justify-center w-full h-full rounded-2xl bg-gradient-to-b from-amber-300 via-yellow-400 to-amber-600 shadow-[0_5px_0_#78350f,0_8px_15px_rgba(245,158,11,0.6)] border-2 border-yellow-100 select-none overflow-hidden p-1 animate-pulse">
-        <span className="absolute top-0.5 right-0.5 z-20 bg-yellow-950 text-amber-200 text-[8px] font-black px-1 rounded shadow">
-          SCATTER
-        </span>
-        <div className="flex flex-col items-center justify-center">
-          <span className="text-3xl sm:text-4xl font-black text-red-600 drop-shadow-[0_2px_4px_rgba(0,0,0,0.4)]">胡</span>
-          <span className="text-[10px] font-black text-amber-950 tracking-wider">SCATTER</span>
-        </div>
-      </div>
-    );
+function preloadAssets() {
+  if (typeof Image === "undefined") return;
+  const urls = ["/games/mahjong-ways.png", ...Object.values(TILE_IMAGE_MAP)];
+  for (const src of urls) {
+    const img = new Image();
+    img.decoding = "async";
+    img.src = src;
   }
+}
 
-  // 2. WILD TILE
-  if (cell.sym.wild) {
-    return (
-      <div className="relative flex flex-col items-center justify-center w-full h-full rounded-2xl bg-gradient-to-b from-yellow-200 via-amber-400 to-yellow-600 shadow-[0_5px_0_#78350f,0_8px_15px_rgba(245,158,11,0.6)] border-2 border-amber-100 select-none overflow-hidden p-1">
-        <span className="absolute top-0.5 right-0.5 z-20 bg-amber-950 text-yellow-200 text-[8px] font-black px-1 rounded shadow">
-          WILD
-        </span>
-        <div className="flex flex-col items-center justify-center">
-          <span className="text-2xl sm:text-3xl">🪷</span>
-          <span className="text-xs font-black text-amber-950 tracking-widest uppercase">WILD</span>
-        </div>
-      </div>
-    );
+function betIndex(bet: number) {
+  const i = BET_STEPS.findIndex((v) => v >= bet);
+  if (i === -1) return BET_STEPS.length - 1;
+  return i;
+}
+
+function buildFallMap(
+  step: SpinScript["steps"][number],
+  nextBoard: BoardCell[],
+): Record<string, number> {
+  const map: Record<string, number> = {};
+  for (const key of step.fallenKeys) map[key] = 1;
+  for (const key of step.spawnedKeys) {
+    const cell = nextBoard.find((c) => c.key === key);
+    map[key] = cell ? cell.rowIndex + 1.2 : 1.5;
   }
-
-  // Helper for carved symbol faces on bone block
-  const renderSymbolFace = () => {
-    switch (kind) {
-      case "green_dragon":
-        return (
-          <span className="text-3xl sm:text-4xl font-black text-emerald-600 drop-shadow-[0_2px_3px_rgba(0,0,0,0.3)]">
-            發
-          </span>
-        );
-      case "red_dragon":
-        return (
-          <span className="text-3xl sm:text-4xl font-black text-rose-600 drop-shadow-[0_2px_3px_rgba(0,0,0,0.3)]">
-            中
-          </span>
-        );
-      case "character":
-        return (
-          <div className="flex flex-col items-center leading-none font-black text-indigo-700 drop-shadow-[0_2px_3px_rgba(0,0,0,0.3)]">
-            <span className="text-lg sm:text-xl text-purple-700">八</span>
-            <span className="text-base sm:text-lg text-rose-600">萬</span>
-          </div>
-        );
-      case "bamboo":
-        return (
-          <div className="flex flex-col items-center gap-0.5">
-            <div className="flex gap-1 text-emerald-600 text-xs font-black">
-              <span>🎋</span><span>🎋</span>
-            </div>
-            <span className="text-[9px] font-extrabold text-emerald-800 tracking-wider">五條</span>
-          </div>
-        );
-      case "dot":
-        return (
-          <div className="grid grid-cols-2 gap-1 items-center justify-center p-1">
-            <span className="w-3 h-3 rounded-full bg-blue-600 border border-white shadow-sm" />
-            <span className="w-3 h-3 rounded-full bg-emerald-600 border border-white shadow-sm" />
-            <span className="w-3.5 h-3.5 col-span-2 mx-auto bg-rose-600 border border-white shadow-sm rounded-full" />
-          </div>
-        );
-      case "sym_a":
-        return <span className="text-2xl sm:text-3xl font-black text-rose-600 drop-shadow">A</span>;
-      case "sym_k":
-        return <span className="text-2xl sm:text-3xl font-black text-amber-600 drop-shadow">K</span>;
-      case "sym_q":
-        return <span className="text-2xl sm:text-3xl font-black text-purple-600 drop-shadow">Q</span>;
-      case "sym_j":
-        return <span className="text-2xl sm:text-3xl font-black text-blue-600 drop-shadow">J</span>;
-      case "sym_10":
-      default:
-        return <span className="text-2xl sm:text-3xl font-black text-emerald-600 drop-shadow">10</span>;
-    }
-  };
-
-  return (
-    <div
-      className={`relative flex items-center justify-center w-full h-full rounded-2xl p-1 select-none transition-transform hover:scale-105 overflow-hidden ${
-        isGoldTile
-          ? "bg-gradient-to-b from-yellow-100 via-amber-300 to-yellow-500 border-2 border-yellow-200 shadow-[0_5px_0_#78350f,0_8px_12px_rgba(245,158,11,0.5)]"
-          : "bg-gradient-to-b from-[#fefefe] via-[#f8fafc] to-[#e2e8f0] border border-slate-200 shadow-[0_5px_0_#14532d,0_8px_12px_rgba(0,0,0,0.4)]"
-      }`}
-    >
-      {isGoldTile && (
-        <span className="absolute top-0.5 right-0.5 z-20 text-[8px] font-black bg-amber-700 text-yellow-100 px-1 rounded shadow-md border border-yellow-200">
-          GOLD
-        </span>
-      )}
-
-      {/* Clean 3D Mahjong bone face */}
-      <div className="w-full h-full rounded-xl bg-gradient-to-b from-white/95 to-slate-100/95 border border-slate-200/80 flex items-center justify-center shadow-inner p-1">
-        {renderSymbolFace()}
-      </div>
-    </div>
-  );
+  return map;
 }
 
 export function MahjongWaysSlot({ onBalanceUpdate }: MahjongWaysSlotProps) {
-  const [bet, setBet] = useState<number>(5.0);
-  const [ante, setAnte] = useState<boolean>(false);
-  const [isSpinning, setIsSpinning] = useState<boolean>(false);
-  const [autoSpinsLeft, setAutoSpinsLeft] = useState<number>(0);
-  const [soundEnabled, setSoundEnabled] = useState<boolean>(true);
+  const { user } = useAuth();
+  const balance = user?.balance ?? 0;
 
-  // Session & free spin state
+  const [bet, setBet] = useState(5);
+  const [ante, setAnte] = useState(false);
+  const [phase, setPhase] = useState<ReelPhase>("idle");
+  const [autoSpin, setAutoSpin] = useState(false);
+  const [turbo, setTurbo] = useState(false);
+
   const [sessionId, setSessionId] = useState<string | null>(null);
-  const [freeSpinsLeft, setFreeSpinsLeft] = useState<number>(0);
-  const [fsSessionWin, setFsSessionWin] = useState<number>(0);
-  const [inFree, setInFree] = useState<boolean>(false);
+  const [freeSpinsLeft, setFreeSpinsLeft] = useState(0);
+  const [fsSessionWin, setFsSessionWin] = useState(0);
+  const [inFree, setInFree] = useState(false);
 
-  // Reel & cascade render state (initial board populated with 3D tiles)
   const [reelHeights, setReelHeights] = useState<number[]>([4, 4, 4, 4, 4]);
   const [board, setBoard] = useState<BoardCell[]>(() => createInitialBoard());
-  const [winningKeys, setWinningKeys] = useState<Set<string>>(new Set());
-  const [currentMult, setCurrentMult] = useState<number>(1);
-  const [totalWays, setTotalWays] = useState<number>(1024);
-  const [lastWin, setLastWin] = useState<number>(0);
-  const [showBuyModal, setShowBuyModal] = useState<boolean>(false);
+  const [winningKeys, setWinningKeys] = useState<Set<string>>(EMPTY_SET);
+  const [spawnedKeys, setSpawnedKeys] = useState<Set<string>>(EMPTY_SET);
+  const [fallenKeys, setFallenKeys] = useState<Set<string>>(EMPTY_SET);
+  const [fallDistance, setFallDistance] = useState<Record<string, number>>(EMPTY_FALL);
+  const [currentMult, setCurrentMult] = useState(1);
+  const [totalWays, setTotalWays] = useState(1024);
+  const [lastWin, setLastWin] = useState(0);
+  const [dropTotal, setDropTotal] = useState(0);
+  const [showBuyModal, setShowBuyModal] = useState(false);
+  const [banner, setBanner] = useState<string | null>(null);
+  const [cfgTick, setCfgTick] = useState(0);
 
-  // Rehydrate open session on mount
+  const busy = phase !== "idle";
+  const engineCfg = getMahjongWaysConfig();
+  const anteMult = engineCfg.anteBetMult;
+  const buyMult = engineCfg.buyFeatureMult;
+  const totalBet = +(bet * (ante ? anteMult : 1)).toFixed(2);
+  const buyCost = +(bet * buyMult).toFixed(2);
+  const multList = inFree
+    ? engineCfg.freeSpinsCascadeMultipliers
+    : engineCfg.baseCascadeMultipliers;
+  const displayWin = inFree ? fsSessionWin : lastWin;
+  void cfgTick; // force re-read of module config after Superadmin sync
+
+  const busyRef = useRef(false);
+  const turboRef = useRef(turbo);
+  const autoSpinRef = useRef(autoSpin);
+  const mountedRef = useRef(true);
+  const playbackGen = useRef(0);
+  const spinRef = useRef<() => Promise<void>>(async () => undefined);
+  const timersRef = useRef<Set<ReturnType<typeof setTimeout>>>(new Set());
+
+  turboRef.current = turbo;
+  autoSpinRef.current = autoSpin;
+
+  const wait = useCallback((ms: number, gen: number) => {
+    const scaled = turboRef.current ? Math.round(ms * 0.45) : ms;
+    return new Promise<void>((resolve, reject) => {
+      const id = setTimeout(() => {
+        timersRef.current.delete(id);
+        if (!mountedRef.current || gen !== playbackGen.current) {
+          reject(new DOMException("Aborted", "AbortError"));
+          return;
+        }
+        resolve();
+      }, scaled);
+      timersRef.current.add(id);
+    });
+  }, []);
+
   useEffect(() => {
+    mountedRef.current = true;
+    preloadAssets();
+    mahjongAudio.preload();
+    void getMahjongWaysEngineConfigFn()
+      .then((cfg) => {
+        if (!mountedRef.current) return;
+        setMahjongWaysConfig(cfg);
+        setCfgTick((n) => n + 1);
+      })
+      .catch(() => undefined);
     getMahjongWaysSessionFn()
       .then((sess) => {
-        if (sess && sess.inFree) {
+        if (sess && sess.inFree && mountedRef.current) {
           setSessionId(sess.sessionId);
           setFreeSpinsLeft(sess.freeSpinsLeft);
           setFsSessionWin(sess.fsSessionWin);
           setInFree(true);
-          toast.info(`Resuming Free Spins session (${sess.freeSpinsLeft} spins left)`);
+          toast.info(`Resuming Free Spins (${sess.freeSpinsLeft} left)`);
         }
       })
       .catch(() => {});
+    return () => {
+      mountedRef.current = false;
+      playbackGen.current += 1;
+      mahjongAudio.stopSpinLoop();
+      for (const id of timersRef.current) clearTimeout(id);
+      timersRef.current.clear();
+    };
   }, []);
 
-  const multList = inFree ? [2, 4, 6, 10] : [1, 2, 3, 5];
+  const refreshEngineConfig = useCallback(async () => {
+    try {
+      const cfg = await getMahjongWaysEngineConfigFn();
+      if (!mountedRef.current) return;
+      setMahjongWaysConfig(cfg);
+      setCfgTick((n) => n + 1);
+    } catch {
+      /* keep current */
+    }
+  }, []);
 
-  // Helper to play script cascade steps with smooth column tumble animation
   const animateScript = useCallback(
-    async (script: SpinScript) => {
+    async (script: SpinScript, gen: number) => {
       setReelHeights(script.initialReelHeights);
       setTotalWays(script.totalWays);
+      setDropTotal(0);
+      setWinningKeys(EMPTY_SET);
+      setSpawnedKeys(EMPTY_SET);
+      setFallenKeys(EMPTY_SET);
+      setFallDistance(EMPTY_FALL);
+      setCurrentMult(1);
+      setLastWin(0);
 
-      // 1. Reel Spin Tumble Phase: generate staggered dropping board
-      for (let spinFrame = 0; spinFrame < 2; spinFrame++) {
-        setBoard(createInitialBoard());
-        await new Promise((r) => setTimeout(r, 180));
-      }
-
-      // 2. Land Initial Spin Board
+      // Force a clean drop: clear → land new board (remounts every tile spring)
+      setPhase("dropping");
+      mahjongAudio.playSpin();
+      setBoard([]);
+      await wait(32, gen);
       setBoard(script.initialBoard);
-      await new Promise((r) => setTimeout(r, 350)); // Initial land pause
+      await wait(
+        ANIM.dropDuration + COLS * ANIM.dropStaggerCol + ROWS * ANIM.dropStaggerRow,
+        gen,
+      );
+      mahjongAudio.playReelStop();
 
-      // 3. Process Tumble Cascade Steps
+      let cascadeWin = 0;
+
       for (let i = 0; i < script.steps.length; i++) {
+        if (gen !== playbackGen.current) break;
         const step = script.steps[i];
+        const winKeys = Array.isArray(step.evalResult.winningKeys)
+          ? step.evalResult.winningKeys
+          : [];
+
+        setSpawnedKeys(EMPTY_SET);
+        setFallenKeys(EMPTY_SET);
+        setFallDistance(EMPTY_FALL);
         setBoard(step.board);
         setCurrentMult(step.multiplier);
 
-        if (step.evalResult.winningKeys.size > 0) {
-          // Highlight winning tiles
-          setWinningKeys(step.evalResult.winningKeys);
-          await new Promise((r) => setTimeout(r, 650));
+        if (winKeys.length === 0) {
+          break;
+        }
 
-          // Pop winning tiles and allow tumble gravity drop
-          setWinningKeys(new Set());
-          await new Promise((r) => setTimeout(r, 300));
+        setWinningKeys(new Set(winKeys));
+        cascadeWin += step.stepWin;
+        setDropTotal(cascadeWin);
+        setPhase("glow");
+        await wait(ANIM.glowDuration, gen);
+
+        setPhase("popping");
+        await wait(
+          ANIM.popDuration + Math.min(winKeys.length, 12) * ANIM.popStagger,
+          gen,
+        );
+
+        setWinningKeys(EMPTY_SET);
+        await wait(ANIM.holeHold, gen);
+
+        const nextBoard = script.steps[i + 1]?.board;
+        if (nextBoard) {
+          setFallenKeys(new Set(step.fallenKeys ?? []));
+          setSpawnedKeys(new Set(step.spawnedKeys ?? []));
+          setFallDistance(buildFallMap(step, nextBoard));
+          setBoard(nextBoard);
+          setPhase("falling");
+          await wait(
+            ANIM.refillDuration + COLS * ANIM.fallStaggerCol + ANIM.fallStaggerRow * 2,
+            gen,
+          );
+          await wait(ANIM.betweenTumbles, gen);
         }
       }
 
-      setLastWin(script.totalWin);
-      if (onBalanceUpdate) onBalanceUpdate();
+      if (gen === playbackGen.current) {
+        setLastWin(script.totalWin);
+        setPhase("idle");
+        setSpawnedKeys(EMPTY_SET);
+        setFallenKeys(EMPTY_SET);
+        setFallDistance(EMPTY_FALL);
+      }
+      onBalanceUpdate?.();
     },
-    [onBalanceUpdate],
+    [onBalanceUpdate, wait],
   );
 
-  const handleSpin = async () => {
-    if (isSpinning) return;
-    setIsSpinning(true);
-    setWinningKeys(new Set());
+  const handleSpin = useCallback(async () => {
+    if (busyRef.current) return;
+    busyRef.current = true;
+    playbackGen.current += 1;
+    const gen = playbackGen.current;
+    setWinningKeys(EMPTY_SET);
     setLastWin(0);
+    setBanner(null);
+    // Lock UI immediately so the spin button disables while the API resolves
+    setPhase("dropping");
+    mahjongAudio.playSpin();
+
+    const abortIfStale = () => {
+      if (!mountedRef.current) return true;
+      if (gen !== playbackGen.current) return true;
+      return false;
+    };
 
     try {
+      await refreshEngineConfig();
       if (inFree && sessionId) {
-        // Free Spin Step
         const res = await mahjongWaysFreeSpinFn({ data: { sessionId } });
+        if (abortIfStale()) return;
         setSessionId(res.session.sessionId);
         setFreeSpinsLeft(res.session.freeSpinsLeft);
         setFsSessionWin(res.session.fsSessionWin);
         setInFree(res.session.inFree);
-
-        await animateScript(res.script);
-
+        await animateScript(res.script, gen);
+        if (abortIfStale()) return;
         if (res.fsPayout) {
-          toast.success(`🎉 Free Spins Complete! Total Won: ₱${res.fsPayout.amount.toFixed(2)}`, {
+          setBanner(`Free Spins Complete! ${formatMoney(res.fsPayout.amount)}`);
+          toast.success(`Free Spins Complete! Won ${formatMoney(res.fsPayout.amount)}`, {
             duration: 6000,
           });
         }
       } else {
-        // Regular Paid Spin
         const res = await mahjongWaysSpinFn({ data: { bet, ante } });
-        if (res.session.inFree) {
+        if (abortIfStale()) return;
+        const triggeredFs = res.session.inFree;
+        if (triggeredFs) {
           setSessionId(res.session.sessionId);
           setFreeSpinsLeft(res.session.freeSpinsLeft);
           setFsSessionWin(0);
           setInFree(true);
-          toast.success(`🔥 SCATTER TRIGGERED! Awarded ${res.session.freeSpinsLeft} Free Spins!`);
         }
-        await animateScript(res.script);
+        await animateScript(res.script, gen);
+        if (abortIfStale()) return;
+        if (triggeredFs) {
+          setBanner(`${res.session.freeSpinsLeft} Free Spins!`);
+          toast.success(`Scatter! ${res.session.freeSpinsLeft} Free Spins awarded`);
+        }
       }
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : "Spin failed";
-      toast.error(msg);
-      setAutoSpinsLeft(0);
+      if (err instanceof DOMException && err.name === "AbortError") {
+        // superseded / unmounted — ignore
+      } else {
+        const msg = err instanceof Error ? err.message : "Spin failed";
+        toast.error(msg);
+        setAutoSpin(false);
+      }
+      if (mountedRef.current && gen === playbackGen.current) {
+        setPhase("idle");
+        mahjongAudio.stopSpinLoop();
+      }
     } finally {
-      setIsSpinning(false);
+      if (gen === playbackGen.current) {
+        busyRef.current = false;
+      }
     }
-  };
+  }, [animateScript, ante, bet, inFree, refreshEngineConfig, sessionId]);
+
+  spinRef.current = handleSpin;
 
   const handleBuyFeature = async () => {
-    if (isSpinning) return;
-    setIsSpinning(true);
+    if (busyRef.current) return;
+    busyRef.current = true;
     setShowBuyModal(false);
+    playbackGen.current += 1;
+    const gen = playbackGen.current;
+    setBanner(null);
+    setPhase("dropping");
+    mahjongAudio.playSpin();
 
     try {
       const res = await mahjongWaysBuyFeatureFn({ data: { bet } });
+      if (!mountedRef.current || gen !== playbackGen.current) return;
       if (res.session.inFree) {
         setSessionId(res.session.sessionId);
         setFreeSpinsLeft(res.session.freeSpinsLeft);
         setFsSessionWin(0);
         setInFree(true);
       }
-      await animateScript(res.script);
-      toast.success(`🚀 Feature Buy Activated! ${res.session.freeSpinsLeft} Free Spins Awarded!`);
+      await animateScript(res.script, gen);
+      if (!mountedRef.current || gen !== playbackGen.current) return;
+      toast.success(`Feature Buy! ${res.session.freeSpinsLeft} Free Spins`);
+      setBanner(`${res.session.freeSpinsLeft} Free Spins!`);
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : "Buy Feature failed";
-      toast.error(msg);
+      if (!(err instanceof DOMException && err.name === "AbortError")) {
+        const msg = err instanceof Error ? err.message : "Buy Feature failed";
+        toast.error(msg);
+      }
+      if (mountedRef.current && gen === playbackGen.current) {
+        setPhase("idle");
+        mahjongAudio.stopSpinLoop();
+      }
     } finally {
-      setIsSpinning(false);
+      if (gen === playbackGen.current) {
+        busyRef.current = false;
+      }
     }
   };
 
-  // Auto spin trigger loop
   useEffect(() => {
-    if (autoSpinsLeft > 0 && !isSpinning) {
-      const timer = setTimeout(() => {
-        setAutoSpinsLeft((prev) => prev - 1);
-        handleSpin();
-      }, 500);
-      return () => clearTimeout(timer);
-    }
-  }, [autoSpinsLeft, isSpinning]);
+    if (!banner) return;
+    const id = setTimeout(() => setBanner(null), 2800);
+    return () => clearTimeout(id);
+  }, [banner]);
+
+  useEffect(() => {
+    if (!autoSpin || busy || inFree) return;
+    const id = setTimeout(() => {
+      void spinRef.current();
+    }, 420);
+    return () => clearTimeout(id);
+  }, [autoSpin, busy, inFree, lastWin]);
+
+  useEffect(() => {
+    if (!inFree || busy || freeSpinsLeft <= 0) return;
+    const id = setTimeout(() => {
+      void spinRef.current();
+    }, 500);
+    return () => clearTimeout(id);
+  }, [inFree, busy, freeSpinsLeft, lastWin]);
+
+  const nudgeBet = (dir: -1 | 1) => {
+    const i = betIndex(bet);
+    const next = BET_STEPS[Math.max(0, Math.min(BET_STEPS.length - 1, i + dir))];
+    setBet(next);
+  };
+
+  const showTumbleBadge =
+    dropTotal > 0 && (phase === "glow" || phase === "popping" || phase === "falling");
 
   return (
-    <div className="relative w-full max-w-2xl h-full max-h-[98dvh] mx-auto flex flex-col justify-between items-center bg-[#450a0a] rounded-3xl border-4 border-[#b45309] shadow-2xl overflow-hidden font-sans select-none">
-      {/* Wooden Top Header Banner */}
-      <div className="w-full shrink-0 bg-gradient-to-b from-[#7f1d1d] via-[#991b1b] to-[#450a0a] border-b-2 border-[#b45309] px-4 py-2 flex flex-col items-center justify-center shadow-lg relative">
-        <div className="flex items-center justify-between w-full">
-          <span className="text-xs font-bold text-amber-200 tracking-wider">Mahjong Ways</span>
-          <span className="text-xs font-black text-amber-300 tracking-widest uppercase">{totalWays} WAYS</span>
-          <button
-            onClick={() => setSoundEnabled(!soundEnabled)}
-            className="p-1 rounded-lg bg-black/40 text-amber-300 hover:bg-black/60 transition"
-          >
-            {soundEnabled ? <Volume2 className="w-4 h-4" /> : <VolumeX className="w-4 h-4" />}
-          </button>
-        </div>
+    <div className="relative flex h-dvh w-full flex-col overflow-hidden select-none">
+      {/* Full-bleed themed backdrop */}
+      <img
+        src="/games/mahjong-ways.png"
+        alt=""
+        className="absolute inset-0 size-full object-cover"
+        aria-hidden
+        decoding="async"
+        fetchPriority="high"
+      />
+      <div
+        className="absolute inset-0"
+        style={{
+          background:
+            "radial-gradient(ellipse at 50% 30%, rgba(127,29,29,0.35) 0%, rgba(15,23,42,0.72) 55%, rgba(0,0,0,0.88) 100%)",
+        }}
+        aria-hidden
+      />
 
-        {/* Multipliers Progression Bar */}
-        <div className="flex items-center justify-center gap-6 mt-1">
-          {multList.map((m, idx) => {
-            const isActive = currentMult === m;
-            return (
-              <span
-                key={idx}
-                className={`text-xl sm:text-2xl font-black transition-all duration-300 ${
-                  isActive
-                    ? "text-yellow-300 scale-125 drop-shadow-[0_2px_10px_rgba(250,204,21,0.9)] italic"
-                    : "text-amber-700/70"
-                }`}
-              >
-                x{m}
-              </span>
-            );
-          })}
-        </div>
-      </div>
-
-      {/* Free Spins Active Banner */}
-      {inFree && (
-        <motion.div
-          initial={{ opacity: 0, y: -5 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="w-full shrink-0 bg-gradient-to-r from-amber-600 via-yellow-500 to-amber-600 text-yellow-950 p-1 text-center font-black text-xs shadow flex items-center justify-between px-4 border-y border-yellow-200"
-        >
-          <span>🔥 FREE SPINS ACTIVE</span>
-          <span className="bg-yellow-950 text-amber-300 px-2 py-0.5 rounded-full text-[10px] font-bold">
-            {freeSpinsLeft} SPINS LEFT
-          </span>
-          <span>WIN: ₱{fsSessionWin.toFixed(2)}</span>
-        </motion.div>
-      )}
-
-      {/* 5-Reel Casino Green Felt Table Grid — Fits strictly inside Viewport */}
-      <div className="w-full flex-1 min-h-0 bg-gradient-to-b from-[#14532d] via-[#15803d] to-[#14532d] p-2 sm:p-3 overflow-hidden flex items-center justify-center relative">
-        {/* Subtle Felt Fabric Glow & Coins */}
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(255,255,255,0.15)_0%,transparent_70%)] pointer-events-none" />
-
-        <div className="w-full h-full grid grid-cols-5 gap-1.5 sm:gap-2 items-center justify-center relative z-10">
-          {Array.from({ length: 5 }).map((_, rIdx) => {
-            const height = reelHeights[rIdx] || 4;
-            const reelCells = board.filter((c) => c.reelIndex === rIdx);
-
-            return (
-              <div key={rIdx} className="flex flex-col gap-1.5 sm:gap-2 justify-center h-full max-h-full overflow-hidden">
-                {Array.from({ length: height }).map((_, rowIdx) => {
-                  const cell = reelCells.find((c) => c.rowIndex === rowIdx);
-                  const isWinning = cell ? winningKeys.has(cell.key) : false;
-
-                  return (
+      <div className="relative z-10 flex min-h-0 flex-1 items-center justify-center px-2 py-1.5 sm:px-3 sm:py-2">
+        <div className="flex h-full max-h-full w-full max-w-[1600px] flex-col items-center gap-1.5 sm:gap-2">
+          <div className="grid min-h-0 w-full flex-1 grid-cols-1 items-stretch gap-2 sm:grid-cols-[160px_minmax(0,1fr)_160px] sm:gap-3 lg:grid-cols-[180px_minmax(0,1fr)_180px]">
+            {/* LEFT RAIL */}
+            <div className="hidden h-full min-w-0 items-center justify-end sm:flex">
+              <div className="flex w-full flex-col items-stretch justify-center gap-2.5">
+                {inFree ? (
+                  <>
                     <div
-                      key={cell?.key || `empty_${rIdx}_${rowIdx}`}
-                      className="relative w-full flex-1 max-h-[16dvh] aspect-square flex items-center justify-center mx-auto"
+                      className="w-full rounded-[1.2rem] p-[4px] shadow-[0_10px_28px_rgba(212,160,23,0.4)]"
+                      style={{
+                        background:
+                          "linear-gradient(180deg,#FFF3B0 0%,#F5D76E 18%,#D4A017 48%,#B8860B 100%)",
+                      }}
                     >
-                      <AnimatePresence mode="popLayout">
-                        {cell ? (
-                          <motion.div
-                            key={cell.key}
-                            initial={{ y: -60, opacity: 0 }}
-                            animate={{
-                              y: 0,
-                              opacity: 1,
-                              scale: isWinning ? [1, 1.15, 0.95, 1] : 1,
-                            }}
-                            exit={{ scale: 0, opacity: 0 }}
-                            transition={{
-                              duration: 0.35,
-                              ease: "easeOut",
-                              delay: rIdx * 0.05,
-                            }}
-                            className={`w-full h-full ${
-                              isWinning ? "ring-4 ring-yellow-400 ring-offset-1 ring-offset-[#14532d] z-20 rounded-2xl" : ""
-                            }`}
-                          >
-                            {renderTileSymbol(cell)}
-                          </motion.div>
-                        ) : (
-                          <div className="w-full h-full rounded-2xl bg-[#14532d]/40 border border-[#15803d]/40" />
-                        )}
-                      </AnimatePresence>
+                      <div
+                        className="rounded-[1rem] px-3 py-2.5 text-center"
+                        style={{
+                          background: "linear-gradient(180deg, #dc2626 0%, #7f1d1d 100%)",
+                        }}
+                      >
+                        <div className="text-[10px] font-black uppercase tracking-wide text-white/90">
+                          Multiplier
+                        </div>
+                        <div className="text-xl font-black tabular-nums leading-tight text-[#F5D76E]">
+                          ×{currentMult}
+                        </div>
+                      </div>
                     </div>
-                  );
-                })}
+                    <div
+                      className="w-full rounded-[1.2rem] p-[4px] shadow-[0_10px_28px_rgba(212,160,23,0.4)]"
+                      style={{
+                        background:
+                          "linear-gradient(180deg,#FFF3B0 0%,#F5D76E 18%,#D4A017 48%,#B8860B 100%)",
+                      }}
+                    >
+                      <div
+                        className="rounded-[1rem] px-3 py-2.5 text-center"
+                        style={{
+                          background: "linear-gradient(180deg, #b45309 0%, #7c2d12 100%)",
+                        }}
+                      >
+                        <div className="text-[10px] font-black uppercase tracking-wide text-white/90">
+                          Total Win
+                        </div>
+                        <div className="text-xl font-black tabular-nums leading-tight text-[#F5D76E]">
+                          {formatMoney(fsSessionWin)}
+                        </div>
+                      </div>
+                    </div>
+                    <div
+                      className="w-full rounded-[1.2rem] p-[4px]"
+                      style={{
+                        background:
+                          "linear-gradient(180deg,#FFF3B0 0%,#F5D76E 18%,#D4A017 48%,#B8860B 100%)",
+                      }}
+                    >
+                      <div
+                        className="rounded-[1rem] px-3 py-2.5 text-center"
+                        style={{
+                          background: "linear-gradient(180deg, #15803d 0%, #14532d 100%)",
+                        }}
+                      >
+                        <div className="text-[10px] font-black uppercase tracking-wide text-white/90">
+                          Free Spins
+                        </div>
+                        <div className="text-xl font-black tabular-nums leading-tight text-[#F5D76E]">
+                          {freeSpinsLeft}
+                        </div>
+                      </div>
+                    </div>
+                  </>
+                ) : (
+                  <MahjongSidePanel
+                    buyCost={buyCost}
+                    totalBet={totalBet}
+                    ante={ante}
+                    busy={busy}
+                    onBuy={() => setShowBuyModal(true)}
+                    onAnteChange={setAnte}
+                  />
+                )}
               </div>
-            );
-          })}
-        </div>
-      </div>
-
-      {/* Win Display Bar */}
-      <div className="w-full shrink-0 bg-[#292524] border-t-2 border-[#b45309] px-4 py-1.5 flex items-center justify-center h-10 shadow-inner">
-        {lastWin > 0 ? (
-          <motion.div
-            initial={{ scale: 0.8, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            className="text-center font-black text-lg sm:text-xl text-amber-300 drop-shadow-[0_2px_8px_rgba(245,158,11,0.8)]"
-          >
-            WIN ₱{lastWin.toFixed(2)}
-          </motion.div>
-        ) : (
-          <div className="text-xs text-amber-400/60 font-semibold tracking-wider uppercase">Good Luck!</div>
-        )}
-      </div>
-
-      {/* Wooden Bottom Control Panel */}
-      <div className="w-full shrink-0 bg-gradient-to-b from-[#450a0a] via-[#292524] to-[#1c1917] border-t-2 border-[#b45309] p-2 sm:p-3 flex flex-col gap-2">
-        {/* Balance & Bet Information strip */}
-        <div className="grid grid-cols-3 gap-2 text-center bg-black/50 rounded-xl p-1.5 border border-amber-900/40 text-xs">
-          <div>
-            <span className="text-[10px] text-amber-400/70 block uppercase font-bold">Balance</span>
-            <span className="font-extrabold text-cyan-300">₱{fsSessionWin > 0 ? fsSessionWin.toFixed(2) : "1,000.00"}</span>
-          </div>
-          <div>
-            <span className="text-[10px] text-amber-400/70 block uppercase font-bold">Bet</span>
-            <span className="font-black text-amber-300">₱{(bet * (ante ? 1.25 : 1)).toFixed(2)}</span>
-          </div>
-          <div>
-            <span className="text-[10px] text-amber-400/70 block uppercase font-bold">Win</span>
-            <span className="font-extrabold text-emerald-400">₱{lastWin.toFixed(2)}</span>
-          </div>
-        </div>
-
-        {/* Action Controls & Big Spin Button */}
-        <div className="flex items-center justify-between gap-2 px-1">
-          {/* Left Buttons: Ante & Buy Feature */}
-          <div className="flex items-center gap-1.5">
-            <button
-              onClick={() => setAnte(!ante)}
-              disabled={isSpinning || inFree}
-              className={`p-2 rounded-xl text-[10px] font-bold border transition ${
-                ante
-                  ? "bg-amber-500 text-yellow-950 border-yellow-200 shadow"
-                  : "bg-stone-800 text-amber-200 border-stone-700 hover:bg-stone-700"
-              } disabled:opacity-50`}
-            >
-              ANTE {ante ? "+25%" : "OFF"}
-            </button>
-
-            <button
-              onClick={() => setShowBuyModal(true)}
-              disabled={isSpinning || inFree}
-              className="p-2 rounded-xl text-[10px] font-bold bg-gradient-to-r from-amber-500 to-yellow-600 text-yellow-950 border border-yellow-200 hover:brightness-110 transition shadow flex items-center gap-1 disabled:opacity-50"
-            >
-              <Zap className="w-3 h-3 fill-current" /> BUY
-            </button>
-          </div>
-
-          {/* Center: Circular Golden Spin Button */}
-          <button
-            onClick={handleSpin}
-            disabled={isSpinning}
-            className="w-14 h-14 sm:w-16 sm:h-16 rounded-full bg-gradient-to-br from-yellow-300 via-amber-400 to-yellow-600 border-4 border-yellow-200 shadow-[0_4px_15px_rgba(245,158,11,0.7)] flex items-center justify-center text-amber-950 font-black text-lg hover:brightness-110 active:scale-95 transition disabled:opacity-60 shrink-0"
-          >
-            {isSpinning ? (
-              <RotateCcw className="w-7 h-7 animate-spin text-amber-950" />
-            ) : (
-              <span className="text-xl sm:text-2xl">🀄</span>
-            )}
-          </button>
-
-          {/* Right Buttons: Bet Adjustment & Auto Spin */}
-          <div className="flex items-center gap-1.5">
-            <div className="flex items-center bg-stone-800 rounded-xl border border-stone-700 p-0.5">
-              <button
-                onClick={() => setBet((b) => Math.max(1.0, +(b - 1.0).toFixed(2)))}
-                disabled={isSpinning || inFree}
-                className="p-1.5 text-amber-300 hover:bg-stone-700 rounded-lg disabled:opacity-50"
-              >
-                <Minus className="w-3.5 h-3.5" />
-              </button>
-              <button
-                onClick={() => setBet((b) => +(b + 1.0).toFixed(2))}
-                disabled={isSpinning || inFree}
-                className="p-1.5 text-amber-300 hover:bg-stone-700 rounded-lg disabled:opacity-50"
-              >
-                <Plus className="w-3.5 h-3.5" />
-              </button>
             </div>
 
-            <button
-              onClick={() => setAutoSpinsLeft(autoSpinsLeft > 0 ? 0 : 10)}
-              disabled={isSpinning || inFree}
-              className={`p-2 rounded-xl font-bold text-[10px] border transition ${
-                autoSpinsLeft > 0
-                  ? "bg-rose-600 text-white border-rose-400"
-                  : "bg-stone-800 text-amber-200 border-stone-700 hover:bg-stone-700"
-              } disabled:opacity-50`}
-            >
-              {autoSpinsLeft > 0 ? `${autoSpinsLeft}` : "AUTO"}
-            </button>
+            {/* GRID COLUMN */}
+            <div className="flex h-full min-h-0 min-w-0 w-full flex-col items-center">
+              <div
+                className="flex h-full min-h-0 w-full max-w-full flex-col items-center"
+                style={{
+                  width: `min(100%, calc(82dvh * ${COLS} / ${ROWS}))`,
+                }}
+              >
+                {/* Title / ways pill */}
+                <div
+                  className="mb-1.5 flex shrink-0 items-center gap-2 rounded-full px-4 py-1 shadow-[0_8px_22px_rgba(212,160,23,0.45)] sm:px-5"
+                  style={{
+                    background:
+                      "linear-gradient(180deg,#FFF3B0 0%,#F5D76E 25%,#D4A017 70%,#B8860B 100%)",
+                    border: "2px solid #7f1d1d",
+                  }}
+                >
+                  <span
+                    className="text-sm font-black tracking-wide sm:text-base"
+                    style={{
+                      color: "#450a0a",
+                      textShadow: "0 1px 0 rgba(255,255,255,0.45)",
+                    }}
+                  >
+                    Mahjong Ways
+                  </span>
+                  <span className="text-[10px] font-black uppercase tracking-widest text-[#7f1d1d]/80">
+                    {totalWays} Ways
+                  </span>
+                </div>
+
+                {/* Multiplier strip */}
+                <div className="mb-1.5 flex shrink-0 items-center justify-center gap-3 sm:gap-5">
+                  {multList.map((m) => {
+                    const isActive = currentMult === m;
+                    return (
+                      <span
+                        key={m}
+                        className={cn(
+                          "text-lg font-black italic transition-all duration-300 sm:text-2xl",
+                          isActive
+                            ? "scale-125 text-[#F5D76E] drop-shadow-[0_0_12px_rgba(250,204,21,0.9)]"
+                            : "text-amber-700/55",
+                        )}
+                      >
+                        x{m}
+                      </span>
+                    );
+                  })}
+                </div>
+
+                <div className="relative flex min-h-0 w-full flex-1 items-center justify-center">
+                  <div
+                    className="relative mx-auto size-full max-h-full"
+                    style={{
+                      aspectRatio: `${COLS} / ${ROWS}`,
+                      width: "100%",
+                      height: "auto",
+                      maxHeight: "100%",
+                    }}
+                  >
+                    {showTumbleBadge && (
+                      <div className="pointer-events-none absolute left-1/2 top-0 z-20 -translate-x-1/2 -translate-y-1/2">
+                        <div
+                          className="rounded-full border-2 border-yellow-300 px-4 py-1.5 text-center shadow-[0_0_20px_rgba(250,204,21,0.65)]"
+                          style={{
+                            background:
+                              "linear-gradient(180deg, #dc2626 0%, #991b1b 55%, #450a0a 100%)",
+                          }}
+                        >
+                          <div className="text-[9px] font-black uppercase tracking-[0.18em] text-white">
+                            Cascade Win
+                          </div>
+                          <div className="text-lg font-black leading-none text-yellow-300 tabular-nums">
+                            {formatMoney(dropTotal)}
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Lacquer red–gold frame */}
+                    <div
+                      className="relative size-full rounded-[1rem] p-[7px] shadow-[0_18px_50px_rgba(127,29,29,0.55)] sm:rounded-[1.25rem] sm:p-[9px]"
+                      style={{
+                        background:
+                          "repeating-linear-gradient(135deg, #F5D76E 0 10px, #B8860B 10px 20px, #7f1d1d 20px 30px, #F5D76E 30px 40px)",
+                      }}
+                    >
+                      <div
+                        className="relative size-full overflow-hidden rounded-[0.65rem] sm:rounded-[0.9rem]"
+                        style={{
+                          background:
+                            "linear-gradient(180deg, #166534 0%, #14532d 40%, #052e16 100%)",
+                          boxShadow: "inset 0 0 40px rgba(0,0,0,0.45)",
+                        }}
+                      >
+                        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(255,255,255,0.12)_0%,transparent_65%)]" />
+                        <div
+                          className="relative grid size-full gap-[2px] p-[3px] sm:gap-1 sm:p-1"
+                          style={{
+                            gridTemplateColumns: `repeat(${COLS}, minmax(0, 1fr))`,
+                            gridTemplateRows: `repeat(${ROWS}, minmax(0, 1fr))`,
+                          }}
+                        >
+                          {Array.from({ length: COLS * ROWS }, (_, i) => {
+                            const col = i % COLS;
+                            const row = Math.floor(i / COLS);
+                            const height = reelHeights[col] || ROWS;
+                            if (row >= height) {
+                              return <div key={`empty-${i}`} className="min-h-0 min-w-0" />;
+                            }
+                            const cell =
+                              board.find((c) => c.reelIndex === col && c.rowIndex === row) ??
+                              null;
+                            const win = cell ? winningKeys.has(cell.key) : false;
+                            return (
+                              <ReelCell
+                                key={`slot-${i}`}
+                                cell={cell}
+                                col={col}
+                                row={row}
+                                phase={phase}
+                                win={win}
+                                isSpawn={cell ? spawnedKeys.has(cell.key) : false}
+                                isFallen={cell ? fallenKeys.has(cell.key) : false}
+                                fallDist={cell ? (fallDistance[cell.key] ?? 0) : 0}
+                              />
+                            );
+                          })}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Mobile buy / ante */}
+                {!inFree && (
+                  <div className="mt-1 flex shrink-0 gap-2 sm:hidden">
+                    <button
+                      type="button"
+                      disabled={busy}
+                      onClick={() => setShowBuyModal(true)}
+                      className="rounded-lg border-2 border-[#E8C547] bg-[#b91c1c] px-3 py-1.5 text-[10px] font-black uppercase text-white"
+                    >
+                      Buy FS {formatMoneyCompact(buyCost)}
+                    </button>
+                    <button
+                      type="button"
+                      disabled={busy}
+                      onClick={() => setAnte((v) => !v)}
+                      className={cn(
+                        "rounded-lg border-2 border-[#E8C547] px-3 py-1.5 text-[10px] font-black uppercase",
+                        ante
+                          ? "bg-[#F5D76E] text-[#450a0a]"
+                          : "bg-[#14532d] text-[#F5D76E]",
+                      )}
+                    >
+                      Ante {ante ? "ON" : "OFF"}
+                    </button>
+                  </div>
+                )}
+
+                {/* BOTTOM BAR — gold lacquer chrome */}
+                <div
+                  className="mt-2 w-full shrink-0 rounded-[1.15rem] p-[4px] shadow-[0_12px_36px_rgba(69,10,10,0.55)]"
+                  style={{
+                    background:
+                      "repeating-linear-gradient(135deg, #FFF3B0 0 8px, #F5D76E 8px 16px, #D4A017 16px 24px, #FFF3B0 24px 32px)",
+                  }}
+                >
+                  <div
+                    className="flex flex-col gap-2 rounded-[0.95rem] px-3 py-2.5 sm:flex-row sm:items-center sm:justify-between sm:gap-3 sm:px-4 sm:py-3"
+                    style={{
+                      background:
+                        "linear-gradient(180deg, rgba(153,27,27,0.97) 0%, rgba(69,10,10,0.98) 100%)",
+                    }}
+                  >
+                    <div className="flex min-w-0 flex-col gap-1.5 sm:min-w-[150px]">
+                      <div className="flex flex-wrap items-baseline gap-x-3 gap-y-0.5 font-black tracking-wide sm:gap-x-4">
+                        <div>
+                          <span className="text-[10px] uppercase text-[#F5D76E]/90 sm:text-xs">
+                            Credit{" "}
+                          </span>
+                          <span className="text-sm tabular-nums text-[#F5D76E] sm:text-base">
+                            {formatMoney(balance)}
+                          </span>
+                        </div>
+                        <div>
+                          <span className="text-[10px] uppercase text-[#F5D76E]/90 sm:text-xs">
+                            Bet{" "}
+                          </span>
+                          <span className="text-sm tabular-nums text-[#F5D76E] sm:text-base">
+                            {formatMoney(totalBet)}
+                          </span>
+                        </div>
+                        <div>
+                          <span className="text-[10px] uppercase text-[#F5D76E]/90 sm:text-xs">
+                            Win{" "}
+                          </span>
+                          <span className="text-sm tabular-nums text-[#F5D76E] sm:text-base">
+                            {formatMoney(displayWin)}
+                          </span>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-1.5">
+                        <button
+                          type="button"
+                          onClick={() => setShowBuyModal(true)}
+                          disabled={busy || inFree}
+                          className="grid size-8 place-items-center rounded-full border-2 border-[#E8C547]/70 bg-[#450a0a] text-[#F5D76E] shadow transition hover:brightness-110 disabled:opacity-40"
+                          aria-label="Buy feature"
+                        >
+                          <Menu size={14} />
+                        </button>
+                        <button
+                          type="button"
+                          className="grid size-8 place-items-center rounded-full border-2 border-[#E8C547]/70 bg-[#450a0a] text-[#F5D76E] shadow transition hover:brightness-110"
+                          aria-label="Info"
+                          title={`${totalWays} ways · gold tiles turn wild`}
+                        >
+                          <Info size={14} />
+                        </button>
+                      </div>
+                    </div>
+
+                    <div className="flex flex-1 items-center justify-center gap-2">
+                      <button
+                        type="button"
+                        onClick={() => setTurbo((v) => !v)}
+                        className={cn(
+                          "inline-flex items-center gap-1.5 rounded-full border-2 px-3 py-1.5 text-[10px] font-black uppercase tracking-wider shadow transition sm:text-xs",
+                          turbo
+                            ? "border-[#E8C547] bg-gradient-to-b from-[#FFF3B0] to-[#D4A017] text-[#450a0a]"
+                            : "border-[#E8C547]/80 bg-[#450a0a] text-[#F5D76E]",
+                        )}
+                        aria-pressed={turbo}
+                      >
+                        <Zap size={12} />
+                        Turbo
+                      </button>
+                    </div>
+
+                    <div className="flex flex-col items-center gap-1 self-center">
+                      <div className="flex items-center gap-2 sm:gap-2.5">
+                        <button
+                          type="button"
+                          disabled={busy || inFree}
+                          onClick={() => nudgeBet(-1)}
+                          className="grid size-10 place-items-center rounded-full border-[3px] border-[#E8C547] text-xl font-black text-white shadow-lg disabled:opacity-40 sm:size-11"
+                          style={{
+                            background: "linear-gradient(180deg,#dc2626 0%,#7f1d1d 100%)",
+                          }}
+                          aria-label="Decrease bet"
+                        >
+                          −
+                        </button>
+
+                        <button
+                          type="button"
+                          disabled={busy}
+                          onClick={() => void handleSpin()}
+                          className="relative grid size-[68px] place-items-center rounded-full border-[4px] border-[#E8C547] shadow-[0_8px_28px_rgba(212,160,23,0.45)] disabled:opacity-60 sm:size-[76px]"
+                          style={{
+                            background:
+                              "radial-gradient(circle at 35% 28%, #f87171 0%, #b91c1c 42%, #450a0a 100%)",
+                          }}
+                          aria-label="Spin"
+                        >
+                          {busy ? (
+                            <svg
+                              viewBox="0 0 24 24"
+                              className="size-8 animate-spin text-[#F5D76E] sm:size-9"
+                              fill="none"
+                              stroke="currentColor"
+                              strokeWidth="2.4"
+                            >
+                              <path d="M21 12a9 9 0 1 1-3-6.7" strokeLinecap="round" />
+                              <path
+                                d="M21 3v6h-6"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                              />
+                            </svg>
+                          ) : (
+                            <svg
+                              viewBox="0 0 24 24"
+                              className="size-8 text-[#F5D76E] sm:size-9"
+                              fill="none"
+                              stroke="currentColor"
+                              strokeWidth="2.4"
+                            >
+                              <path d="M21 12a9 9 0 1 1-3-6.7" strokeLinecap="round" />
+                              <path
+                                d="M21 3v6h-6"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                              />
+                            </svg>
+                          )}
+                        </button>
+
+                        <button
+                          type="button"
+                          disabled={busy || inFree}
+                          onClick={() => nudgeBet(1)}
+                          className="grid size-10 place-items-center rounded-full border-[3px] border-[#E8C547] text-xl font-black text-white shadow-lg disabled:opacity-40 sm:size-11"
+                          style={{
+                            background: "linear-gradient(180deg,#dc2626 0%,#7f1d1d 100%)",
+                          }}
+                          aria-label="Increase bet"
+                        >
+                          +
+                        </button>
+                      </div>
+
+                      <button
+                        type="button"
+                        disabled={inFree}
+                        onClick={() => setAutoSpin((v) => !v)}
+                        className={cn(
+                          "rounded-full border-2 px-5 py-1 text-[10px] font-black uppercase tracking-wider shadow sm:text-xs",
+                          autoSpin
+                            ? "border-[#E8C547] bg-gradient-to-b from-[#FFF3B0] to-[#D4A017] text-[#450a0a]"
+                            : "border-[#E8C547]/80 bg-[#450a0a] text-[#F5D76E]",
+                        )}
+                      >
+                        Autoplay
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="hidden sm:block" aria-hidden />
           </div>
         </div>
       </div>
+
+      {/* Banner overlay */}
+      <AnimatePresence>
+        {banner && (
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0 }}
+            className="absolute inset-0 z-40 grid place-items-center bg-black/50 backdrop-blur-[2px]"
+            onClick={() => setBanner(null)}
+          >
+            <div className="rounded-2xl border-4 border-[#F5D76E] bg-gradient-to-b from-red-500 to-red-900 px-10 py-5 text-center shadow-2xl">
+              <h2 className="font-black uppercase tracking-widest text-[#F5D76E] drop-shadow-md sm:text-lg">
+                {banner}
+              </h2>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Feature Buy Modal */}
-      {showBuyModal && (
-        <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-          <div className="bg-stone-900 border border-yellow-500/40 rounded-2xl p-5 max-w-md w-full shadow-2xl text-center">
-            <h3 className="text-lg font-black text-yellow-300 mb-1">BUY FREE SPINS FEATURE</h3>
-            <p className="text-xs text-slate-300 mb-3">
-              Instantly trigger 10 Free Spins with guaranteed Scatters and progressive cascade multipliers!
-            </p>
-
-            <div className="bg-stone-950 rounded-xl p-3 mb-4 border border-stone-800">
-              <span className="text-[10px] text-amber-400 font-semibold block uppercase">Cost</span>
-              <span className="text-2xl font-black text-yellow-400">₱{(bet * 100).toFixed(2)}</span>
-            </div>
-
-            <div className="flex gap-3">
-              <button
-                onClick={() => setShowBuyModal(false)}
-                className="flex-1 py-2 rounded-xl font-bold bg-stone-800 text-slate-300 hover:bg-stone-700 transition text-xs"
+      <AnimatePresence>
+        {showBuyModal && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="absolute inset-0 z-50 flex items-center justify-center bg-slate-950/80 p-4 backdrop-blur-sm"
+          >
+            <motion.div
+              initial={{ scale: 0.92, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.92, opacity: 0 }}
+              className="w-full max-w-md rounded-2xl border-2 border-[#E8C547]/50 p-[4px] shadow-2xl"
+              style={{
+                background:
+                  "linear-gradient(180deg,#FFF3B0 0%,#F5D76E 25%,#D4A017 70%,#B8860B 100%)",
+              }}
+            >
+              <div
+                className="rounded-[0.9rem] p-5 text-center"
+                style={{
+                  background: "linear-gradient(180deg, #7f1d1d 0%, #450a0a 100%)",
+                }}
               >
-                CANCEL
-              </button>
-              <button
-                onClick={handleBuyFeature}
-                className="flex-1 py-2 rounded-xl font-black bg-gradient-to-r from-amber-500 to-yellow-500 text-yellow-950 hover:brightness-110 transition shadow-lg shadow-yellow-500/30 text-xs"
-              >
-                CONFIRM BUY
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+                <h3 className="mb-1 text-lg font-black text-[#F5D76E]">BUY FREE SPINS</h3>
+                <p className="mb-3 text-xs text-amber-100/80">
+                  Instantly trigger Free Spins (12 base +2 per extra scatter) with progressive cascade
+                  multipliers (×2 → ×10).
+                </p>
+                <div className="mb-4 rounded-xl border border-[#E8C547]/30 bg-black/40 p-3">
+                  <span className="block text-[10px] font-semibold uppercase text-amber-400">
+                    Cost
+                  </span>
+                  <span className="text-2xl font-black text-[#F5D76E]">
+                    {formatMoney(buyCost)}
+                  </span>
+                </div>
+                <div className="flex gap-3">
+                  <button
+                    type="button"
+                    onClick={() => setShowBuyModal(false)}
+                    className="flex-1 rounded-xl bg-black/40 py-2 text-xs font-bold text-amber-100/80 transition hover:bg-black/60"
+                  >
+                    CANCEL
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => void handleBuyFeature()}
+                    className="flex-1 rounded-xl border border-[#E8C547] bg-gradient-to-b from-[#FFF3B0] to-[#D4A017] py-2 text-xs font-black text-[#450a0a] shadow-lg transition hover:brightness-110"
+                  >
+                    CONFIRM BUY
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

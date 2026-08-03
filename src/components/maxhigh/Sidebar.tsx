@@ -145,11 +145,11 @@ export function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
       <Group items={supportItems} onNavigate={onNavigate} />
 
       <div className="mt-2 rounded-2xl border-2 border-lime bg-panel/70 backdrop-blur-md p-3 shadow-[0_0_0_1px_rgba(198,255,61,0.25)]">
-        <div className="text-[10px] font-bold uppercase tracking-widest text-primary">{t("Mega Jackpot")}</div>
+        <div className="text-[10px] font-bold uppercase tracking-widest text-primary">{t("Ultra Mega Jackpot")}</div>
         <div className="mt-1 text-xl font-black tabular-nums text-foreground">
           {formatMoney(jackpot)}
         </div>
-        <div className="mt-0.5 text-[11px] text-muted-foreground">{t("Live jackpot · Updates as you play")}</div>
+        <div className="mt-0.5 text-[11px] text-muted-foreground">{t("Display only · Not winnable")}</div>
       </div>
     </div>
   );

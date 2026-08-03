@@ -22,7 +22,7 @@ export const Route = createFileRoute("/admin/users")({
 });
 
 function AdminUsersPage() {
-  const { user, isReady } = useAuth();
+  const { user, isReady, refreshSession } = useAuth();
   const [rows, setRows] = useState<AdminUserRow[]>([]);
   const [q, setQ] = useState("");
   const [role, setRole] = useState<UserRole | "all">("all");
@@ -31,7 +31,7 @@ function AdminUsersPage() {
   const [busyId, setBusyId] = useState<string | null>(null);
 
   const [activeModal, setActiveModal] = useState<{
-    type: "menu" | "view" | "edit" | "password" | "security";
+    type: "menu" | "view" | "edit" | "password" | "security" | "addChips";
     user: AdminUserRow;
   } | null>(null);
 
@@ -69,19 +69,6 @@ function AdminUsersPage() {
     void load();
   }, [isReady, user, load]);
 
-  async function adjustBalance(userId: string, delta: number) {
-    setBusyId(userId);
-    try {
-      await adminAdjustBalanceFn({ data: { userId, delta, note: delta > 0 ? "Admin credit" : "Admin debit" } });
-      toast.success(delta > 0 ? "Balance credited" : "Balance deducted");
-      await load();
-    } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Balance adjustment failed");
-    } finally {
-      setBusyId(null);
-    }
-  }
-
   async function toggleLock(userId: string, currentlyLocked: boolean) {
     setBusyId(userId);
     try {
@@ -101,8 +88,14 @@ function AdminUsersPage() {
         <div>
           <h1 className="text-2xl sm:text-3xl font-black text-foreground">Player List</h1>
           <p className="mt-1 text-sm text-muted-foreground">
-            Manage player accounts, security status, reset passwords, and adjust balances.
+            Manage player accounts, security status, reset passwords, and add chips from your wallet.
           </p>
+          {user && (user.role === "agent" || user.role === "master_agent") && (
+            <p className="mt-2 text-xs font-semibold text-amber-300">
+              Your chip wallet: <span className="text-emerald-400 font-black">{formatMoney(user.balance)}</span>
+              <span className="text-muted-foreground font-normal"> — you can only give what you have</span>
+            </p>
+          )}
         </div>
 
         <button
@@ -210,6 +203,9 @@ function AdminUsersPage() {
                       {u.displayName && (
                         <div className="text-xs text-primary/90 font-medium truncate">{u.displayName}</div>
                       )}
+                      <div className="text-[10px] text-muted-foreground font-mono truncate">
+                        User ID: {u.publicUserId}
+                      </div>
                       <div className="text-xs text-muted-foreground truncate">{u.email ?? "No email"}</div>
                     </td>
 
@@ -261,6 +257,14 @@ function AdminUsersPage() {
                           className="rounded-xl border border-emerald-500/30 bg-emerald-500/10 px-3 py-1.5 text-emerald-400 hover:bg-emerald-500/20 active:scale-95 transition-all"
                         >
                           Edit
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() => setActiveModal({ type: "addChips", user: u })}
+                          className="rounded-xl border border-emerald-500/40 bg-emerald-500/15 px-3 py-1.5 text-emerald-300 hover:bg-emerald-500/25 active:scale-95 transition-all"
+                        >
+                          Chips
                         </button>
 
                         <button
@@ -368,6 +372,193 @@ function AdminUsersPage() {
           }}
         />
       )}
+
+      {activeModal?.type === "addChips" && user && (
+        <AddChipsModal
+          target={activeModal.user}
+          actorBalance={user.balance}
+          actorRole={user.role}
+          onClose={() => setActiveModal(null)}
+          onSuccess={async () => {
+            setActiveModal(null);
+            await refreshSession();
+            await load();
+          }}
+        />
+      )}
+    </div>
+  );
+}
+
+/** Modal to create new Player or Agent accounts */
+function AddChipsModal({
+  target,
+  actorBalance,
+  actorRole,
+  onClose,
+  onSuccess,
+}: {
+  target: AdminUserRow;
+  actorBalance: number;
+  actorRole: UserRole;
+  onClose: () => void;
+  onSuccess: () => void;
+}) {
+  const [mode, setMode] = useState<"add" | "withdraw">("add");
+  const [amount, setAmount] = useState("1000");
+  const [note, setNote] = useState("");
+  const [busy, setBusy] = useState(false);
+  const unlimited = actorRole === "superadmin";
+
+  async function handleSubmit(e: FormEvent) {
+    e.preventDefault();
+    const val = Number(amount);
+    if (!val || val <= 0) {
+      toast.error("Enter a valid chip amount");
+      return;
+    }
+    if (mode === "add" && !unlimited && val > actorBalance) {
+      toast.error(`You only have ₱${actorBalance.toLocaleString("en-PH")} chips available`);
+      return;
+    }
+    if (mode === "withdraw" && val > target.balance) {
+      toast.error(`@${target.username} only has ₱${target.balance.toLocaleString("en-PH")}`);
+      return;
+    }
+    const delta = mode === "add" ? val : -val;
+    setBusy(true);
+    try {
+      await adminAdjustBalanceFn({
+        data: {
+          userId: target.id,
+          delta,
+          note:
+            note.trim() ||
+            (mode === "add"
+              ? `Chip transfer to @${target.username}`
+              : `Chip withdrawal from @${target.username}`),
+        },
+      });
+      toast.success(
+        mode === "add"
+          ? `Added ₱${val.toLocaleString("en-PH")} chips to @${target.username}`
+          : `Withdrew ₱${val.toLocaleString("en-PH")} chips from @${target.username}`,
+      );
+      onSuccess();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Transfer failed");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 p-4 backdrop-blur-sm" onClick={onClose}>
+      <form
+        onSubmit={handleSubmit}
+        onClick={(e) => e.stopPropagation()}
+        className="w-full max-w-md space-y-4 rounded-2xl border border-border bg-panel p-6 shadow-2xl"
+      >
+        <div className="flex items-center justify-between border-b border-border pb-3">
+          <div>
+            <h3 className="font-bold text-foreground">Manage Chips</h3>
+            <p className="text-xs text-primary font-medium">@{target.username}</p>
+          </div>
+          <button type="button" onClick={onClose} className="rounded-lg p-1.5 text-muted-foreground hover:bg-panel-hover">
+            <X size={18} />
+          </button>
+        </div>
+
+        <div className="flex gap-2">
+          <button
+            type="button"
+            onClick={() => setMode("add")}
+            className={`h-9 flex-1 rounded-lg text-xs font-black uppercase ${
+              mode === "add" ? "bg-emerald-500 text-black" : "border border-border text-muted-foreground"
+            }`}
+          >
+            Add
+          </button>
+          <button
+            type="button"
+            onClick={() => setMode("withdraw")}
+            className={`h-9 flex-1 rounded-lg text-xs font-black uppercase ${
+              mode === "withdraw" ? "bg-rose-500 text-white" : "border border-border text-muted-foreground"
+            }`}
+          >
+            Withdraw
+          </button>
+        </div>
+
+        <div className={`rounded-xl border p-3 text-xs ${
+          mode === "add"
+            ? unlimited
+              ? "border-amber-500/30 bg-amber-500/10 text-amber-200"
+              : "border-emerald-500/30 bg-emerald-500/10 text-emerald-200"
+            : "border-rose-500/30 bg-rose-500/10 text-rose-200"
+        }`}>
+          {mode === "add" ? (
+            unlimited ? (
+              <>Superadmin credit is <span className="font-black">unlimited</span>.</>
+            ) : (
+              <>
+                Your wallet: <span className="font-black">{formatMoney(actorBalance)}</span>
+                <div className="mt-1 text-muted-foreground">Chips leave your wallet and go to the target.</div>
+              </>
+            )
+          ) : (
+            <>
+              Withdraw chips from <span className="font-black">@{target.username}</span>
+              {!unlimited && (
+                <div className="mt-1 text-muted-foreground">Withdrawn chips return to your wallet.</div>
+              )}
+            </>
+          )}
+        </div>
+
+        <p className="text-xs text-muted-foreground">
+          Target balance: <span className="font-bold text-emerald-400">{formatMoney(target.balance)}</span>
+        </p>
+
+        <div>
+          <label className="mb-1 block text-[11px] font-bold uppercase text-muted-foreground">Chip Amount (₱)</label>
+          <Input
+            type="number"
+            min={1}
+            step="any"
+            max={mode === "withdraw" ? target.balance : unlimited ? undefined : actorBalance}
+            value={amount}
+            onChange={(e) => setAmount(e.target.value)}
+            required
+            className="h-11 font-bold"
+          />
+        </div>
+
+        <div>
+          <label className="mb-1 block text-[11px] font-bold uppercase text-muted-foreground">Note (Optional)</label>
+          <Input
+            value={note}
+            onChange={(e) => setNote(e.target.value)}
+            placeholder={mode === "add" ? "e.g. Reload for weekend play" : "e.g. Collect unused chips"}
+          />
+        </div>
+
+        <button
+          type="submit"
+          disabled={busy}
+          className={`h-11 w-full rounded-xl text-sm font-black uppercase disabled:opacity-50 ${
+            mode === "add"
+              ? "bg-primary text-primary-foreground hover:bg-primary/90"
+              : "bg-rose-500 text-white hover:bg-rose-600"
+          }`}
+        >
+          {busy
+            ? "Processing…"
+            : mode === "add"
+              ? `Add ₱${Number(amount || 0).toLocaleString("en-PH")} Chips`
+              : `Withdraw ₱${Number(amount || 0).toLocaleString("en-PH")} Chips`}
+        </button>
+      </form>
     </div>
   );
 }
@@ -376,6 +567,7 @@ function AdminUsersPage() {
 function CreateUserModal({ onClose, onSuccess }: { onClose: () => void; onSuccess: () => void }) {
   const [displayName, setDisplayName] = useState("");
   const [username, setUsername] = useState("");
+  const [publicUserId, setPublicUserId] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [balance, setBalance] = useState("0");
@@ -393,6 +585,7 @@ function CreateUserModal({ onClose, onSuccess }: { onClose: () => void; onSucces
       await adminCreateUserFn({
         data: {
           username: username.trim(),
+          publicUserId: publicUserId.trim() || undefined,
           displayName: displayName.trim() || undefined,
           email: email.trim() || undefined,
           password,
@@ -440,6 +633,18 @@ function CreateUserModal({ onClose, onSuccess }: { onClose: () => void; onSucces
               onChange={(e) => setUsername(e.target.value)}
               placeholder="e.g. player88"
               required
+              className="h-11 rounded-xl border-border bg-background"
+            />
+          </div>
+
+          <div>
+            <label className="block text-xs font-semibold uppercase text-muted-foreground mb-1">
+              User ID (optional — defaults to username)
+            </label>
+            <Input
+              value={publicUserId}
+              onChange={(e) => setPublicUserId(e.target.value)}
+              placeholder="Globally unique account code"
               className="h-11 rounded-xl border-border bg-background"
             />
           </div>

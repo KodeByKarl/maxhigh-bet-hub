@@ -5,6 +5,9 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 
+/** Matches users.id varchar(36) — UUIDs and legacy custom ids. */
+const userIdSchema = z.string().min(1).max(36);
+
 export const getAdminDashboardFn = createServerFn({ method: "GET" }).handler(async () => {
   const { fetchAdminDashboard } = await import("../server/admin/services.server");
   return fetchAdminDashboard();
@@ -38,6 +41,12 @@ const createUserSchema = z.object({
   balance: z.number().finite().nonnegative().optional(),
   role: z.enum(["player", "admin", "agent", "master_agent", "superadmin"]).optional(),
   displayName: z.string().max(128).optional(),
+  publicUserId: z
+    .string()
+    .min(3)
+    .max(64)
+    .regex(/^[a-zA-Z0-9_]+$/)
+    .optional(),
 });
 
 export const adminCreateUserFn = createServerFn({ method: "POST" })
@@ -48,7 +57,7 @@ export const adminCreateUserFn = createServerFn({ method: "POST" })
   });
 
 const updateUserSchema = z.object({
-  userId: z.string().uuid(),
+  userId: userIdSchema,
   displayName: z.string().max(128).optional(),
   email: optionalEmail,
   password: z.string().min(6).max(128).optional(),
@@ -61,21 +70,11 @@ export const adminUpdateUserFn = createServerFn({ method: "POST" })
     return adminUpdateUser(data);
   });
 
-const resetFailedAttemptsSchema = z.object({
-  userId: z.string().uuid(),
-});
-
-export const adminResetFailedAttemptsFn = createServerFn({ method: "POST" })
-  .validator(resetFailedAttemptsSchema)
-  .handler(async ({ data }) => {
-    const { adminResetFailedAttempts } = await import("../server/admin/services.server");
-    return adminResetFailedAttempts(data.userId);
-  });
-
 const adjustUserSchema = z.object({
-  userId: z.string().uuid(),
+  userId: userIdSchema,
   delta: z.number().finite(),
   note: z.string().max(500).optional(),
+  confirmPassword: z.string().min(1).max(128).optional(),
 });
 
 export const adminAdjustBalanceFn = createServerFn({ method: "POST" })
@@ -86,7 +85,7 @@ export const adminAdjustBalanceFn = createServerFn({ method: "POST" })
   });
 
 const toggleLockSchema = z.object({
-  userId: z.string().uuid(),
+  userId: userIdSchema,
   lock: z.boolean().optional(),
   reason: z.string().max(500).optional(),
 });
@@ -99,7 +98,7 @@ export const adminToggleUserLockFn = createServerFn({ method: "POST" })
   });
 
 const lockUserSchema = z.object({
-  userId: z.string().uuid(),
+  userId: userIdSchema,
   reason: z.string().max(500).optional(),
 });
 
@@ -111,7 +110,7 @@ export const adminLockUserFn = createServerFn({ method: "POST" })
   });
 
 const userIdOnlySchema = z.object({
-  userId: z.string().uuid(),
+  userId: userIdSchema,
 });
 
 export const adminUnlockUserFn = createServerFn({ method: "POST" })
@@ -208,28 +207,15 @@ export const getWinLoseByProductFn = createServerFn({ method: "GET" })
     return fetchWinLoseByProduct(data);
   });
 
-const listWalletSchema = z.object({
-  status: z.enum(["pending", "approved", "rejected", "all"]).optional(),
-  limit: z.number().int().min(1).max(200).optional(),
+const chipDistSchema = z.object({
+  adminUsername: z.string().max(64).optional(),
+  limit: z.number().int().min(1).max(300).optional(),
 });
 
-/** Fund In/Out — shared with Superadmin (any staff can approve). */
-export const listAdminWalletRequestsFn = createServerFn({ method: "GET" })
-  .validator(listWalletSchema)
+/** Chip add/withdraw history — scoped to caller's network for agent/master_agent. */
+export const listChipDistributionLogsFn = createServerFn({ method: "GET" })
+  .validator(chipDistSchema)
   .handler(async ({ data }) => {
-    const { listWalletRequests } = await import("../server/superadmin/services.server");
-    return listWalletRequests(data);
-  });
-
-const reviewWalletSchema = z.object({
-  id: z.string().uuid(),
-  decision: z.enum(["approve", "reject"]),
-  note: z.string().max(500).optional(),
-});
-
-export const reviewAdminWalletRequestFn = createServerFn({ method: "POST" })
-  .validator(reviewWalletSchema)
-  .handler(async ({ data }) => {
-    const { reviewWalletRequest } = await import("../server/superadmin/services.server");
-    return reviewWalletRequest(data);
+    const { listChipDistributionLogs } = await import("../server/admin/services.server");
+    return listChipDistributionLogs(data);
   });

@@ -2,7 +2,7 @@
  * Admin portal server logic (Domain 2).
  * Keep all admin-only DB operations here — not in player services.
  */
-import { eq, desc, sql, like, or, and } from "drizzle-orm";
+import { eq, desc, sql, like, or, and, inArray } from "drizzle-orm";
 import { hash } from "bcryptjs";
 import { getDb } from "../db/client";
 import { auditLogs, liveWins, transactions, users } from "../db/schema";
@@ -11,6 +11,7 @@ import type { AdminAuditLogRow, AdminDashboardStats, AdminUserRow, AdminTransact
 import { destroyUserSessions, money, newId, requireAdmin, toPublicUser } from "../session";
 import { writeAuditLog } from "./audit.server";
 import { requirePermission } from "../auth/rbac.server";
+import { assertCanManageChips, scopeToDownline, isInDownline } from "../auth/network-scope.server";
 
 export type { AdminDashboardStats, AdminUserRow, AdminAuditLogRow, AdminTransactionRow, AdminDayPulse, WinLoseSummary, WinLoseByLevelRow, WinLoseByProductRow };
 
@@ -118,24 +119,32 @@ export async function listAdminUsers(opts?: {
   q?: string;
   limit?: number;
 }): Promise<AdminUserRow[]> {
-  await requirePermission("USER_LIST");
+  const actor = await requirePermission("USER_LIST");
   const db = getDb();
   const limit = Math.min(Math.max(opts?.limit ?? 50, 1), 200);
   const q = opts?.q?.trim();
 
-  const rows = q
-    ? await db
-        .select()
-        .from(users)
-        .where(
-          or(
-            like(users.email, `%${q}%`),
-            like(users.username, `%${q}%`),
-            like(users.displayName, `%${q}%`),
-          ),
-        )
-        .orderBy(desc(users.createdAt))
-        .limit(limit)
+  const filters = [];
+  if (q) {
+    filters.push(
+      or(
+        like(users.email, `%${q}%`),
+        like(users.username, `%${q}%`),
+        like(users.displayName, `%${q}%`),
+      ),
+    );
+  }
+
+  // Agents only see their direct players; master agents see their network.
+  const networkIds = await scopeToDownline(actor);
+  if (networkIds !== null) {
+    if (networkIds.length === 0) return [];
+    filters.push(inArray(users.id, networkIds));
+  }
+
+  const whereClause = filters.length > 0 ? and(...filters) : undefined;
+  const rows = whereClause
+    ? await db.select().from(users).where(whereClause).orderBy(desc(users.createdAt)).limit(limit)
     : await db.select().from(users).orderBy(desc(users.createdAt)).limit(limit);
 
   const uplineIds = Array.from(new Set(rows.map((u) => u.parentAgentId).filter(Boolean))) as string[];
@@ -174,6 +183,10 @@ export async function adminUpdateUser(data: {
   const user = rows[0];
   if (!user) throw new Error("User not found");
 
+  if (!(await isInDownline(actor, user.id))) {
+    throw new Error("Forbidden — user is outside your downline");
+  }
+
   const updates: Record<string, unknown> = {};
   if (data.displayName !== undefined) updates.displayName = data.displayName.trim() || null;
   if (data.email !== undefined) updates.email = data.email.trim().toLowerCase() || null;
@@ -197,25 +210,6 @@ export async function adminUpdateUser(data: {
   return toPublicUser(updatedRows[0]!);
 }
 
-export async function adminResetFailedAttempts(userId: string): Promise<PublicUser> {
-  const actor = await requireAdmin();
-  const db = getDb();
-  await db
-    .update(users)
-    .set({ failedAttempts: 0, isLocked: "no", lockedUntil: null })
-    .where(eq(users.id, userId));
-  const rows = await db.select().from(users).where(eq(users.id, userId)).limit(1);
-  const updated = toPublicUser(rows[0]!);
-  await writeAuditLog({
-    actor,
-    action: "user.unlock",
-    summary: `Reset failed login attempts for @${updated.username}`,
-    targetType: "user",
-    targetId: updated.id,
-  });
-  return updated;
-}
-
 export async function adminCreatePlayer(data: {
   email?: string;
   username: string;
@@ -223,6 +217,7 @@ export async function adminCreatePlayer(data: {
   balance?: number;
   role?: UserRole;
   displayName?: string;
+  publicUserId?: string;
 }): Promise<PublicUser> {
   const actor = await requirePermission("USER_CREATE");
   const role: UserRole = data.role ?? "player";
@@ -248,9 +243,23 @@ export async function adminCreatePlayer(data: {
   const id = newId();
   const email = data.email?.trim().toLowerCase() || null;
   const username = data.username.trim().toLowerCase();
+  const publicUserId = (data.publicUserId?.trim() || username).toLowerCase();
+  if (publicUserId.length < 3) throw new Error("User ID must be at least 3 characters");
+  if (!/^[a-z0-9_]+$/.test(publicUserId)) throw new Error("User ID must be letters, numbers, or _");
+
+  const [existingUsername] = await db.select({ id: users.id }).from(users).where(eq(users.username, username)).limit(1);
+  if (existingUsername) throw new Error("Username already exists");
+  const [existingPublicId] = await db
+    .select({ id: users.id })
+    .from(users)
+    .where(eq(users.publicUserId, publicUserId))
+    .limit(1);
+  if (existingPublicId) throw new Error("User ID already exists");
+
   try {
     await db.insert(users).values({
       id,
+      publicUserId,
       email,
       username,
       passwordHash: await hash(data.password, 10),
@@ -260,7 +269,7 @@ export async function adminCreatePlayer(data: {
       parentAgentId: actor.id,
     });
   } catch {
-    throw new Error("Username or email already exists");
+    throw new Error("Username or User ID already exists");
   }
 
   const rows = await db.select().from(users).where(eq(users.id, id)).limit(1);
@@ -275,6 +284,7 @@ export async function adminCreatePlayer(data: {
     meta: {
       email: created.email,
       username: created.username,
+      publicUserId: created.publicUserId,
       role: created.role,
       balance: created.balance,
       deductedFromAgent: actor.username,
@@ -288,64 +298,118 @@ export async function adminAdjustUserBalance(data: {
   userId: string;
   delta: number;
   note?: string;
+  confirmPassword?: string;
 }): Promise<PublicUser> {
   const actor = await requirePermission("USER_ADJUST_BALANCE", { targetType: "user", targetId: data.userId });
   if (!Number.isFinite(data.delta) || data.delta === 0) {
     throw new Error("Invalid amount");
   }
 
-  const db = getDb();
-
-  // Enforce Agent wallet deduction when crediting player
-  if (actor.role !== "superadmin" && actor.id !== data.userId) {
-    const agentRows = await db.select().from(users).where(eq(users.id, actor.id)).limit(1);
-    const agentUser = agentRows[0];
-    if (agentUser) {
-      const agentBal = Number(agentUser.balance);
-      if (data.delta > 0 && agentBal < data.delta) {
-        throw new Error(`Insufficient agent wallet balance. You have ₱${agentBal.toFixed(2)}, but are attempting to issue ₱${data.delta.toFixed(2)}.`);
-      }
-      const newAgentBal = +(agentBal - data.delta).toFixed(2);
-      await db.update(users).set({ balance: money(newAgentBal) }).where(eq(users.id, actor.id));
-    }
+  if (actor.role === "superadmin") {
+    const { verifySuperadminChipPassword } = await import("../superadmin/services.server");
+    await verifySuperadminChipPassword(actor.id, data.confirmPassword);
   }
 
+  const db = getDb();
+  const unlimited = actor.role === "superadmin";
+
   const result = await db.transaction(async (tx) => {
-    const rows = await tx.select().from(users).where(eq(users.id, data.userId)).limit(1);
-    const user = rows[0];
-    if (!user) throw new Error("User not found");
+    const targetRows = await tx.select().from(users).where(eq(users.id, data.userId)).limit(1);
+    const target = targetRows[0];
+    if (!target) throw new Error("User not found");
 
-    const current = Number(user.balance);
+    await assertCanManageChips(
+      actor,
+      {
+        id: target.id,
+        role: target.role,
+        parentAgentId: target.parentAgentId ?? null,
+        username: target.username,
+      },
+      tx,
+    );
+
+    const actorRows = await tx.select().from(users).where(eq(users.id, actor.id)).limit(1);
+    const actorUser = actorRows[0];
+    if (!actorUser) throw new Error("Actor not found");
+
+    // Non-superadmin: add = deduct from actor wallet; withdraw = credit actor wallet
+    let actorNextBalance = Number(actorUser.balance);
+    if (!unlimited) {
+      if (data.delta > 0 && Number(actorUser.balance) < data.delta) {
+        throw new Error(
+          `Insufficient chip balance. You have ₱${Number(actorUser.balance).toFixed(2)}, but need ₱${data.delta.toFixed(2)} to add chips.`,
+        );
+      }
+      actorNextBalance = +(Number(actorUser.balance) - data.delta).toFixed(2);
+      if (actorNextBalance < 0) {
+        throw new Error(`Insufficient chip balance. You have ₱${Number(actorUser.balance).toFixed(2)}.`);
+      }
+      await tx.update(users).set({ balance: money(actorNextBalance) }).where(eq(users.id, actor.id));
+      await tx.insert(transactions).values({
+        id: newId(),
+        userId: actor.id,
+        type: "adjust",
+        amount: money(-data.delta),
+        balanceAfter: money(actorNextBalance),
+        game: "ChipTransfer",
+        note:
+          data.note?.trim() ||
+          (data.delta > 0
+            ? `Chip transfer to @${target.username}`
+            : `Chip withdrawal from @${target.username}`),
+      });
+    }
+
+    const current = Number(target.balance);
     const next = +(current + data.delta).toFixed(2);
-    if (next < 0) throw new Error("Balance cannot go negative");
+    if (next < 0) {
+      throw new Error(
+        `@${target.username} only has ₱${current.toFixed(2)} — cannot withdraw ₱${Math.abs(data.delta).toFixed(2)}.`,
+      );
+    }
 
-    await tx.update(users).set({ balance: money(next) }).where(eq(users.id, user.id));
+    await tx.update(users).set({ balance: money(next) }).where(eq(users.id, target.id));
     await tx.insert(transactions).values({
       id: newId(),
-      userId: user.id,
+      userId: target.id,
       type: "adjust",
       amount: money(data.delta),
       balanceAfter: money(next),
-      game: "Admin",
-      note: data.note?.trim() || "Admin balance adjust",
+      game: "ChipTransfer",
+      note: data.note?.trim() || `Chip transfer from @${actor.username}`,
     });
 
-    return { ...user, balance: money(next), previousBalance: current };
+    return {
+      ...target,
+      balance: money(next),
+      previousBalance: current,
+      actorNextBalance,
+    };
   });
 
   const updated = toPublicUser(result);
+  const timestamp = new Date().toISOString();
   await writeAuditLog({
     actor,
     action: "user.balance_adjust",
-    summary: `Adjusted @${result.username} balance by ${data.delta > 0 ? "+" : ""}${data.delta.toFixed(2)} (Deducted/Credited from Agent @${actor.username})`,
+    summary: `@${actor.username} ${data.delta > 0 ? "added" : "withdrew"} ₱${Math.abs(data.delta).toFixed(2)} chips ${data.delta > 0 ? "to" : "from"} @${result.username}`,
     targetType: "user",
     targetId: result.id,
     meta: {
+      actorId: actor.id,
+      targetId: result.id,
+      amount: Math.abs(data.delta),
       delta: data.delta,
+      timestamp,
+      role: actor.role,
       previousBalance: result.previousBalance,
       newBalance: Number(result.balance),
       note: data.note ?? null,
-      agentUsername: actor.username,
+      fromUsername: actor.username,
+      fromRole: actor.role,
+      unlimited,
+      actorBalanceAfter: unlimited ? null : result.actorNextBalance,
     },
   });
 
@@ -673,13 +737,18 @@ export async function listAdminTransactions(opts?: {
   game?: string;
   limit?: number;
 }): Promise<AdminTransactionRow[]> {
-  await requirePermission("TRANSACTION_LIST");
+  const actor = await requirePermission("TRANSACTION_LIST");
   const db = getDb();
   const limit = Math.min(Math.max(opts?.limit ?? 200, 1), 500);
   const q = opts?.q?.trim();
   const game = opts?.game?.trim();
+  const networkIds = await scopeToDownline(actor, { playersOnly: true });
 
   const filters = [];
+  if (networkIds !== null) {
+    if (networkIds.length === 0) return [];
+    filters.push(inArray(transactions.userId, networkIds));
+  }
   if (opts?.type === "fund") {
     filters.push(or(eq(transactions.type, "deposit"), eq(transactions.type, "withdraw"))!);
   } else if (opts?.type === "game") {
@@ -747,8 +816,24 @@ export async function listAdminTransactions(opts?: {
 }
 
 export async function fetchWinLoseSummary(): Promise<WinLoseSummary> {
-  await requirePermission("REPORTS_VIEW");
+  const actor = await requirePermission("REPORTS_VIEW");
   const db = getDb();
+  const networkIds = await scopeToDownline(actor, { playersOnly: true });
+
+  if (networkIds !== null && networkIds.length === 0) {
+    return {
+      betVolume: 0,
+      winVolume: 0,
+      net: 0,
+      depositVolume: 0,
+      withdrawVolume: 0,
+      betCount: 0,
+      winCount: 0,
+    };
+  }
+
+  const scope = networkIds !== null ? inArray(transactions.userId, networkIds) : undefined;
+
   const [row] = await db
     .select({
       betVolume: sql<number>`coalesce(sum(case when ${transactions.type} = 'bet' then abs(${transactions.amount}) else 0 end), 0)`,
@@ -758,7 +843,8 @@ export async function fetchWinLoseSummary(): Promise<WinLoseSummary> {
       betCount: sql<number>`coalesce(sum(case when ${transactions.type} = 'bet' then 1 else 0 end), 0)`,
       winCount: sql<number>`coalesce(sum(case when ${transactions.type} in ('win','jackpot') then 1 else 0 end), 0)`,
     })
-    .from(transactions);
+    .from(transactions)
+    .where(scope);
 
   const betVolume = Number(row?.betVolume ?? 0);
   const winVolume = Number(row?.winVolume ?? 0);
@@ -775,9 +861,15 @@ export async function fetchWinLoseSummary(): Promise<WinLoseSummary> {
 
 /** Win/Lose by player account (level = member account). */
 export async function fetchWinLoseByLevel(opts?: { limit?: number }): Promise<WinLoseByLevelRow[]> {
-  await requirePermission("REPORTS_VIEW");
+  const actor = await requirePermission("REPORTS_VIEW");
   const db = getDb();
   const limit = Math.min(Math.max(opts?.limit ?? 200, 1), 500);
+  const networkIds = await scopeToDownline(actor, { playersOnly: true });
+
+  if (networkIds !== null && networkIds.length === 0) return [];
+
+  const filters = [eq(users.role, "player")];
+  if (networkIds !== null) filters.push(inArray(users.id, networkIds));
 
   const rows = await db
     .select({
@@ -791,7 +883,7 @@ export async function fetchWinLoseByLevel(opts?: { limit?: number }): Promise<Wi
     })
     .from(users)
     .leftJoin(transactions, eq(transactions.userId, users.id))
-    .where(eq(users.role, "player"))
+    .where(and(...filters))
     .groupBy(users.id, users.username, users.role)
     .orderBy(
       desc(
@@ -818,9 +910,17 @@ export async function fetchWinLoseByLevel(opts?: { limit?: number }): Promise<Wi
 
 /** Win/Lose by product (game name). */
 export async function fetchWinLoseByProduct(opts?: { limit?: number }): Promise<WinLoseByProductRow[]> {
-  await requirePermission("REPORTS_VIEW");
+  const actor = await requirePermission("REPORTS_VIEW");
   const db = getDb();
   const limit = Math.min(Math.max(opts?.limit ?? 100, 1), 200);
+  const networkIds = await scopeToDownline(actor, { playersOnly: true });
+
+  if (networkIds !== null && networkIds.length === 0) return [];
+
+  const filters = [
+    or(eq(transactions.type, "bet"), eq(transactions.type, "win"), eq(transactions.type, "jackpot"))!,
+  ];
+  if (networkIds !== null) filters.push(inArray(transactions.userId, networkIds));
 
   const rows = await db
     .select({
@@ -831,7 +931,7 @@ export async function fetchWinLoseByProduct(opts?: { limit?: number }): Promise<
       winCount: sql<number>`coalesce(sum(case when ${transactions.type} in ('win','jackpot') then 1 else 0 end), 0)`,
     })
     .from(transactions)
-    .where(or(eq(transactions.type, "bet"), eq(transactions.type, "win"), eq(transactions.type, "jackpot")))
+    .where(and(...filters))
     .groupBy(sql`coalesce(nullif(${transactions.game}, ''), 'Unknown')`)
     .orderBy(
       desc(
@@ -850,6 +950,83 @@ export async function fetchWinLoseByProduct(opts?: { limit?: number }): Promise<
       net: +(winVolume - betVolume).toFixed(2),
       betCount: Number(r.betCount),
       winCount: Number(r.winCount),
+    };
+  });
+}
+
+export type ChipDistributionLogRow = {
+  id: string;
+  actorUsername: string;
+  targetId: string | null;
+  targetUsername: string;
+  amount: number;
+  runningBalance: number;
+  summary: string;
+  createdAt: string;
+};
+
+/** Add/withdraw chip history scoped to the caller's network. */
+export async function listChipDistributionLogs(opts?: {
+  adminUsername?: string;
+  limit?: number;
+}): Promise<ChipDistributionLogRow[]> {
+  const actor = await requirePermission("TRANSACTION_LIST");
+  const db = getDb();
+  const limit = Math.min(Math.max(opts?.limit ?? 200, 1), 300);
+  const adminUsername = opts?.adminUsername?.trim().toLowerCase();
+  const networkIds = await scopeToDownline(actor, { playersOnly: true });
+
+  if (networkIds !== null && networkIds.length === 0) return [];
+
+  const filters = [
+    or(
+      eq(auditLogs.action, "user.balance_adjust"),
+      eq(auditLogs.action, "super.balance_adjust"),
+    )!,
+  ];
+  if (networkIds !== null) {
+    filters.push(inArray(auditLogs.targetId, networkIds));
+  }
+  if (adminUsername) {
+    filters.push(like(auditLogs.actorUsername, `%${adminUsername}%`));
+  }
+
+  const rows = await db
+    .select()
+    .from(auditLogs)
+    .where(and(...filters))
+    .orderBy(desc(auditLogs.createdAt))
+    .limit(limit);
+
+  const targetIds = Array.from(new Set(rows.map((r) => r.targetId).filter(Boolean))) as string[];
+  const nameMap = new Map<string, string>();
+  if (targetIds.length > 0) {
+    const targets = await db
+      .select({ id: users.id, username: users.username })
+      .from(users)
+      .where(inArray(users.id, targetIds));
+    for (const t of targets) nameMap.set(t.id, t.username);
+  }
+
+  return rows.map((r) => {
+    let amount = 0;
+    let runningBalance = 0;
+    try {
+      const meta = r.meta ? (JSON.parse(r.meta) as Record<string, unknown>) : {};
+      amount = Number(meta.delta ?? meta.amount ?? 0);
+      runningBalance = Number(meta.newBalance ?? meta.next ?? meta.adminBalance ?? 0);
+    } catch {
+      /* ignore */
+    }
+    return {
+      id: r.id,
+      actorUsername: r.actorUsername,
+      targetId: r.targetId,
+      targetUsername: (r.targetId && nameMap.get(r.targetId)) || "unknown",
+      amount: Math.abs(amount),
+      runningBalance,
+      summary: r.summary,
+      createdAt: r.createdAt?.toISOString?.() ?? String(r.createdAt),
     };
   });
 }

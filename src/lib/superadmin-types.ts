@@ -29,6 +29,8 @@ export type SuperDashboard = {
   betVolume: number;
   winVolume: number;
   jackpot: number;
+  jackpotEnabled: boolean;
+  ultraMegaJackpot: number;
   chipOutflow: number;
   netEarnings: number;
   recoveryTarget: number;
@@ -37,6 +39,7 @@ export type SuperDashboard = {
 
 export type SuperUserRow = {
   id: string;
+  publicUserId: string;
   email: string | null;
   username: string;
   balance: number;

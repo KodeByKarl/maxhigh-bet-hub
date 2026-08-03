@@ -21,7 +21,8 @@ export type WaysWin = {
 
 export type EvalResult = {
   waysWins: WaysWin[];
-  winningKeys: Set<string>;
+  /** Serializable array — Sets do not survive server-fn JSON. */
+  winningKeys: string[];
   winAmount: number;
   scatterCount: number;
   scatterKeys: string[];
@@ -45,8 +46,11 @@ export type SpinScript = {
   totalWays: number;
   baseWin: number;
   totalWin: number;
+  /** Peak scatter count across the whole cascade sequence */
   scattersCount: number;
   freeSpinsAwarded: number;
+  /** True when maxWinMult capped further payout */
+  hitCap?: boolean;
 };
 
 export type MahjongSessionState = {

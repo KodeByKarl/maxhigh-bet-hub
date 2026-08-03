@@ -43,7 +43,7 @@ function SuperDashboardPage() {
     {
       label: "Total Chip Outflow (Nailabas na Chips)",
       value: dash?.labels.chipOutflow ?? "₱0.00",
-      sub: "Total deposits & staff chip allocations",
+      sub: "Total deposits across the platform",
       icon: Coins,
       tone: "text-amber-400 border-amber-500/30 bg-amber-500/10",
     },

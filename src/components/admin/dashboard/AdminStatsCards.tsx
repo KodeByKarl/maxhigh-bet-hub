@@ -5,14 +5,12 @@ import {
   Wallet,
   TrendingUp,
   TrendingDown,
-  Plus,
   Users,
   Zap,
   Target,
 } from "lucide-react";
 import { adminGlassElevated } from "../ui/glass";
 import { AdminSparkline } from "./AdminSparkline";
-import { Link } from "@tanstack/react-router";
 
 // Sparkline seed data per card (decorative)
 const SPARKLINE_SEEDS = {
@@ -124,15 +122,7 @@ export function AdminStatsCards({ stats }: { stats: AdminDashboardStats | null }
                 </div>
 
                 {/* Badge or action */}
-                {c.isHero ? (
-                  <Link
-                    to="/admin/fund"
-                    className="inline-flex items-center gap-1 rounded-md border border-amber-500/30 bg-amber-500/10 px-2.5 py-1 text-[11px] font-bold text-amber-400 hover:bg-amber-500/20 transition-colors"
-                  >
-                    <Plus size={11} />
-                    Top-up
-                  </Link>
-                ) : c.trendUp !== null ? (
+                {c.trendUp !== null ? (
                   <span
                     className={`inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-[11px] font-bold ${
                       c.trendUp

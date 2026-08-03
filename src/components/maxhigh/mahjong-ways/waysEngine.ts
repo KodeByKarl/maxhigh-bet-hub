@@ -2,15 +2,31 @@ import { getSymbolPayoutMultiplier } from "./paytable";
 import { getMahjongWaysConfig } from "./runtimeConfig";
 import type { BoardCell, EvalResult, WaysWin } from "./types";
 
-export function evaluateWays(board: BoardCell[], bet: number, reelHeights: number[]): EvalResult {
+export type EvaluateWaysOpts = {
+  /**
+   * When true, 3+ scatters contribute cash payout (once per spin — resolver controls this).
+   * Scatters never enter winningKeys (they do not tumble off).
+   */
+  payScatter?: boolean;
+};
+
+/**
+ * Pure ways-to-win evaluation (1,024 ways on a full 5×4 grid).
+ * Wins = 3+ matching symbols on consecutive reels from reel 1; wild substitutes (not for scatter).
+ */
+export function evaluateWays(
+  board: BoardCell[],
+  bet: number,
+  reelHeights: number[],
+  opts: EvaluateWaysOpts = {},
+): EvalResult {
   const config = getMahjongWaysConfig();
   const reelsCount = config.reelsCount;
   const minConsecutive = config.minConsecutiveReels;
+  const payScatter = opts.payScatter === true;
 
-  // Calculate total ways for the grid layout
   const totalWays = reelHeights.reduce((acc, h) => acc * h, 1);
 
-  // Group cells by reelIndex
   const reelCells: BoardCell[][] = Array.from({ length: reelsCount }, () => []);
   let scatterCount = 0;
   const scatterKeys: string[] = [];
@@ -30,7 +46,6 @@ export function evaluateWays(board: BoardCell[], bet: number, reelHeights: numbe
   const winningKeys = new Set<string>();
   let winAmount = 0;
 
-  // Evaluate ways wins for each regular non-scatter symbol
   for (const symConfig of config.symbols) {
     if (symConfig.scatter || symConfig.wild) continue;
 
@@ -39,15 +54,13 @@ export function evaluateWays(board: BoardCell[], bet: number, reelHeights: numbe
     const matchingCellsPerReel: BoardCell[][] = [];
 
     for (let r = 0; r < reelsCount; r++) {
-      const matchesOnReel = reelCells[r].filter(
-        (c) => c.sym.id === symbolId || c.sym.wild,
-      );
+      const matchesOnReel = reelCells[r].filter((c) => c.sym.id === symbolId || c.sym.wild);
 
       if (matchesOnReel.length > 0) {
         consecutiveReels++;
         matchingCellsPerReel.push(matchesOnReel);
       } else {
-        break; // Sequence broken
+        break;
       }
     }
 
@@ -60,6 +73,8 @@ export function evaluateWays(board: BoardCell[], bet: number, reelHeights: numbe
         const symbolWinningKeys: string[] = [];
         for (const list of matchingCellsPerReel) {
           for (const cell of list) {
+            // Scatters never tumble; skip if a wild somehow flagged scatter
+            if (cell.sym.scatter) continue;
             symbolWinningKeys.push(cell.key);
             winningKeys.add(cell.key);
           }
@@ -81,8 +96,7 @@ export function evaluateWays(board: BoardCell[], bet: number, reelHeights: numbe
     }
   }
 
-  // Scatter pay evaluation (3+ scatters award scatter cash payout; scatters do NOT pop on cascade)
-  if (scatterCount >= 3) {
+  if (payScatter && scatterCount >= 3) {
     const scatterConfig = config.symbols.find((s) => s.scatter);
     if (scatterConfig) {
       const scatterPayMult = getSymbolPayoutMultiplier(scatterConfig, scatterCount);
@@ -96,7 +110,7 @@ export function evaluateWays(board: BoardCell[], bet: number, reelHeights: numbe
           waysCount: 1,
           basePayMultiplier: scatterPayMult,
           totalWinAmount: scatterWin,
-          winningKeys: scatterKeys,
+          winningKeys: [], // never tumble scatters
         });
         winAmount += scatterWin;
       }
@@ -105,7 +119,7 @@ export function evaluateWays(board: BoardCell[], bet: number, reelHeights: numbe
 
   return {
     waysWins,
-    winningKeys,
+    winningKeys: [...winningKeys],
     winAmount: +winAmount.toFixed(2),
     scatterCount,
     scatterKeys,

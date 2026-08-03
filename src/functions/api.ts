@@ -174,49 +174,43 @@ export const getGoldenPantherEngineConfigFn = createServerFn({ method: "GET" }).
 
 const chineseNewYearSpinSchema = z.object({
   bet: z.number().finite().positive().max(100_000),
-  ante: z.boolean(),
+  autoCollect: z.boolean().optional(),
 });
 
 export const chineseNewYearSpinFn = createServerFn({ method: "POST" })
   .validator(chineseNewYearSpinSchema)
   .handler(async ({ data }) => {
-    const { resolveSpinScript } = await import("../components/maxhigh/chinese-new-year/spinResolver");
-    const script = resolveSpinScript(data.bet, data.ante, false);
-    return {
-      script,
-      session: { sessionId: "demo-session", freeSpinsLeft: script.freeSpinsAwarded, fsSessionWin: 0, fsBombAcc: 0, fsSpinsPlayed: 0, inFree: script.freeSpinsAwarded > 0 },
-      balance: 10000 + script.totalWin,
-    };
+    const { chineseNewYearPaidSpin } = await import("../server/games/chinese-new-year.server");
+    return chineseNewYearPaidSpin(data);
   });
 
-export const chineseNewYearFreeSpinFn = createServerFn({ method: "POST" })
-  .validator(z.object({ sessionId: z.string() }))
-  .handler(async () => {
-    const { resolveSpinScript } = await import("../components/maxhigh/chinese-new-year/spinResolver");
-    const script = resolveSpinScript(5, false, true);
-    return {
-      script,
-      session: { sessionId: "demo-session", freeSpinsLeft: 0, fsSessionWin: script.totalWin, fsBombAcc: script.bombAccumulator, fsSpinsPlayed: 1, inFree: false },
-      balance: 10000 + script.totalWin,
-    };
-  });
-
-export const chineseNewYearBuyFeatureFn = createServerFn({ method: "POST" })
-  .validator(z.object({ bet: z.number(), mode: z.enum(["normal", "super"]) }))
+export const chineseNewYearCollectFn = createServerFn({ method: "POST" })
+  .validator(z.object({ sessionId: z.string().min(1) }))
   .handler(async ({ data }) => {
-    return {
-      balance: 10000 - data.bet * 100,
-      session: { sessionId: "demo-session", freeSpinsLeft: 10, fsSessionWin: 0, fsBombAcc: 0, fsSpinsPlayed: 0, inFree: true },
-    };
+    const { chineseNewYearCollect } = await import("../server/games/chinese-new-year.server");
+    return chineseNewYearCollect(data);
+  });
+
+export const chineseNewYearGambleFn = createServerFn({ method: "POST" })
+  .validator(
+    z.object({
+      sessionId: z.string().min(1),
+      choice: z.enum(["red", "black"]),
+    }),
+  )
+  .handler(async ({ data }) => {
+    const { chineseNewYearGamble } = await import("../server/games/chinese-new-year.server");
+    return chineseNewYearGamble(data);
   });
 
 export const getChineseNewYearSessionFn = createServerFn({ method: "GET" }).handler(async () => {
-  return { sessionId: null, freeSpinsLeft: 0, fsSessionWin: 0, fsBombAcc: 0, fsSpinsPlayed: 0, inFree: false, bet: 5, ante: false };
+  const { getChineseNewYearOpenSession } = await import("../server/games/chinese-new-year.server");
+  return getChineseNewYearOpenSession();
 });
 
 export const getChineseNewYearEngineConfigFn = createServerFn({ method: "GET" }).handler(async () => {
-  const { DEFAULT_CHINESE_NEW_YEAR_CONFIG } = await import("../lib/chinese-new-year-config");
-  return DEFAULT_CHINESE_NEW_YEAR_CONFIG;
+  const { getChineseNewYearEngineConfig } = await import("../server/superadmin/services.server");
+  return getChineseNewYearEngineConfig();
 });
 
 const sugarSurgeSpinSchema = z.object({
@@ -324,24 +318,6 @@ export const getPlatformStatsFn = createServerFn({ method: "GET" }).handler(asyn
 export const heartbeatFn = createServerFn({ method: "POST" }).handler(async () => {
   const { heartbeatPresence } = await import("../server/services.server");
   return heartbeatPresence();
-});
-
-const walletRequestSchema = z.object({
-  type: z.enum(["deposit", "withdraw"]),
-  amount: z.number().finite().positive().max(1_000_000),
-  note: z.string().max(300).optional(),
-});
-
-export const createWalletRequestFn = createServerFn({ method: "POST" })
-  .validator(walletRequestSchema)
-  .handler(async ({ data }) => {
-    const { createWalletRequest } = await import("../server/services.server");
-    return createWalletRequest(data);
-  });
-
-export const listMyWalletRequestsFn = createServerFn({ method: "GET" }).handler(async () => {
-  const { listMyWalletRequests } = await import("../server/services.server");
-  return listMyWalletRequests();
 });
 
 export const getSupportTicketFn = createServerFn({ method: "GET" }).handler(async () => {
@@ -460,5 +436,307 @@ export const mahjongWaysBuyFeatureFn = createServerFn({ method: "POST" })
 export const getMahjongWaysSessionFn = createServerFn({ method: "GET" }).handler(async () => {
   const { getMahjongWaysOpenSession } = await import("../server/games/mahjong-ways.server");
   return getMahjongWaysOpenSession();
+});
+
+const starlightAceSpinSchema = z.object({
+  bet: z.number().finite().positive().max(100_000),
+  ante: z.boolean(),
+});
+
+export const starlightAceSpinFn = createServerFn({ method: "POST" })
+  .validator(starlightAceSpinSchema)
+  .handler(async ({ data }) => {
+    const { starlightAcePaidSpin } = await import("../server/games/starlight-ace.server");
+    return starlightAcePaidSpin(data);
+  });
+
+const starlightAceFreeSpinSchema = z.object({
+  sessionId: z.string().uuid(),
+});
+
+export const starlightAceFreeSpinFn = createServerFn({ method: "POST" })
+  .validator(starlightAceFreeSpinSchema)
+  .handler(async ({ data }) => {
+    const { starlightAceFreeSpin } = await import("../server/games/starlight-ace.server");
+    return starlightAceFreeSpin(data);
+  });
+
+const starlightAceBuySchema = z.object({
+  bet: z.number().finite().positive().max(100_000),
+});
+
+export const starlightAceBuyFeatureFn = createServerFn({ method: "POST" })
+  .validator(starlightAceBuySchema)
+  .handler(async ({ data }) => {
+    const { starlightAceBuyFeature } = await import("../server/games/starlight-ace.server");
+    return starlightAceBuyFeature(data);
+  });
+
+export const getStarlightAceSessionFn = createServerFn({ method: "GET" }).handler(async () => {
+  const { getStarlightAceOpenSession } = await import("../server/games/starlight-ace.server");
+  return getStarlightAceOpenSession();
+});
+
+const superAceSpinSchema = z.object({
+  bet: z.number().finite().positive().max(100_000),
+  ante: z.boolean(),
+});
+
+export const superAceSpinFn = createServerFn({ method: "POST" })
+  .validator(superAceSpinSchema)
+  .handler(async ({ data }) => {
+    const { superAcePaidSpin } = await import("../server/games/super-ace.server");
+    return superAcePaidSpin(data);
+  });
+
+const superAceFreeSpinSchema = z.object({
+  sessionId: z.string().uuid(),
+});
+
+export const superAceFreeSpinFn = createServerFn({ method: "POST" })
+  .validator(superAceFreeSpinSchema)
+  .handler(async ({ data }) => {
+    const { superAceFreeSpin } = await import("../server/games/super-ace.server");
+    return superAceFreeSpin(data);
+  });
+
+const superAceBuySchema = z.object({
+  bet: z.number().finite().positive().max(100_000),
+});
+
+export const superAceBuyFeatureFn = createServerFn({ method: "POST" })
+  .validator(superAceBuySchema)
+  .handler(async ({ data }) => {
+    const { superAceBuyFeature } = await import("../server/games/super-ace.server");
+    return superAceBuyFeature(data);
+  });
+
+export const getSuperAceSessionFn = createServerFn({ method: "GET" }).handler(async () => {
+  const { getSuperAceOpenSession } = await import("../server/games/super-ace.server");
+  return getSuperAceOpenSession();
+});
+
+const frontierGoldSpinSchema = z.object({
+  bet: z.number().finite().positive().max(100_000),
+});
+
+export const frontierGoldSpinFn = createServerFn({ method: "POST" })
+  .validator(frontierGoldSpinSchema)
+  .handler(async ({ data }) => {
+    const { frontierGoldPaidSpin } = await import("../server/games/frontier-gold.server");
+    return frontierGoldPaidSpin(data);
+  });
+
+const frontierGoldFreeSpinSchema = z.object({
+  sessionId: z.string().uuid(),
+});
+
+export const frontierGoldFreeSpinFn = createServerFn({ method: "POST" })
+  .validator(frontierGoldFreeSpinSchema)
+  .handler(async ({ data }) => {
+    const { frontierGoldFreeSpin } = await import("../server/games/frontier-gold.server");
+    return frontierGoldFreeSpin(data);
+  });
+
+const frontierGoldBuySchema = z.object({
+  bet: z.number().finite().positive().max(100_000),
+});
+
+export const frontierGoldBuyFeatureFn = createServerFn({ method: "POST" })
+  .validator(frontierGoldBuySchema)
+  .handler(async ({ data }) => {
+    const { frontierGoldBuyFeature } = await import("../server/games/frontier-gold.server");
+    return frontierGoldBuyFeature(data);
+  });
+
+export const getFrontierGoldSessionFn = createServerFn({ method: "GET" }).handler(async () => {
+  const { getFrontierGoldOpenSession } = await import("../server/games/frontier-gold.server");
+  return getFrontierGoldOpenSession();
+});
+
+const pinataWinsSpinSchema = z.object({
+  bet: z.number().finite().positive().max(100_000),
+});
+
+export const pinataWinsSpinFn = createServerFn({ method: "POST" })
+  .validator(pinataWinsSpinSchema)
+  .handler(async ({ data }) => {
+    const { pinataWinsPaidSpin } = await import("../server/games/pinata-wins.server");
+    return pinataWinsPaidSpin(data);
+  });
+
+const pinataWinsFreeSpinSchema = z.object({
+  sessionId: z.string().min(1),
+});
+
+export const pinataWinsFreeSpinFn = createServerFn({ method: "POST" })
+  .validator(pinataWinsFreeSpinSchema)
+  .handler(async ({ data }) => {
+    const { pinataWinsFreeSpin } = await import("../server/games/pinata-wins.server");
+    return pinataWinsFreeSpin(data);
+  });
+
+const pinataWinsBuySchema = z.object({
+  bet: z.number().finite().positive().max(100_000),
+});
+
+export const pinataWinsBuyFeatureFn = createServerFn({ method: "POST" })
+  .validator(pinataWinsBuySchema)
+  .handler(async ({ data }) => {
+    const { pinataWinsBuyFeature } = await import("../server/games/pinata-wins.server");
+    return pinataWinsBuyFeature(data);
+  });
+
+export const getPinataWinsSessionFn = createServerFn({ method: "GET" }).handler(async () => {
+  const { getPinataWinsOpenSession } = await import("../server/games/pinata-wins.server");
+  return getPinataWinsOpenSession();
+});
+
+export const getPinataWinsEngineConfigFn = createServerFn({ method: "GET" }).handler(async () => {
+  const { getPinataWinsEngineConfigPublic } = await import("../server/games/pinata-wins.server");
+  return getPinataWinsEngineConfigPublic();
+});
+
+const buffaloReignSpinSchema = z.object({
+  bet: z.number().finite().positive().max(100_000),
+  ante: z.boolean().optional().default(false),
+});
+
+export const buffaloReignSpinFn = createServerFn({ method: "POST" })
+  .validator(buffaloReignSpinSchema)
+  .handler(async ({ data }) => {
+    const { buffaloReignPaidSpin } = await import("../server/games/buffalo-reign.server");
+    return buffaloReignPaidSpin({ bet: data.bet, ante: !!data.ante });
+  });
+
+const buffaloReignFreeSpinSchema = z.object({
+  sessionId: z.string().min(1),
+});
+
+export const buffaloReignFreeSpinFn = createServerFn({ method: "POST" })
+  .validator(buffaloReignFreeSpinSchema)
+  .handler(async ({ data }) => {
+    const { buffaloReignFreeSpin } = await import("../server/games/buffalo-reign.server");
+    return buffaloReignFreeSpin(data);
+  });
+
+const buffaloReignBuySchema = z.object({
+  bet: z.number().finite().positive().max(100_000),
+});
+
+export const buffaloReignBuyFeatureFn = createServerFn({ method: "POST" })
+  .validator(buffaloReignBuySchema)
+  .handler(async ({ data }) => {
+    const { buffaloReignBuyFeature } = await import("../server/games/buffalo-reign.server");
+    return buffaloReignBuyFeature(data);
+  });
+
+export const getBuffaloReignSessionFn = createServerFn({ method: "GET" }).handler(async () => {
+  const { getBuffaloReignOpenSession } = await import("../server/games/buffalo-reign.server");
+  return getBuffaloReignOpenSession();
+});
+
+const fireSpikeSpinSchema = z.object({
+  bet: z.number().finite().positive().max(100_000),
+});
+
+export const fireSpikeSpinFn = createServerFn({ method: "POST" })
+  .validator(fireSpikeSpinSchema)
+  .handler(async ({ data }) => {
+    const { fireSpikePaidSpin } = await import("../server/games/fire-spike.server");
+    return fireSpikePaidSpin(data);
+  });
+
+export const getFireSpikeEngineConfigFn = createServerFn({ method: "GET" }).handler(async () => {
+  const { getFireSpikeEngineConfigPublic } = await import("../server/games/fire-spike.server");
+  return getFireSpikeEngineConfigPublic();
+});
+
+const fortuneGemsSpinSchema = z.object({
+  bet: z.number().finite().positive().max(100_000),
+  exMode: z.boolean().optional(),
+});
+
+export const fortuneGemsSpinFn = createServerFn({ method: "POST" })
+  .validator(fortuneGemsSpinSchema)
+  .handler(async ({ data }) => {
+    const { fortuneGemsPaidSpin } = await import("../server/games/fortune-gems.server");
+    return fortuneGemsPaidSpin(data);
+  });
+
+export const getFortuneGemsEngineConfigFn = createServerFn({ method: "GET" }).handler(async () => {
+  const { getFortuneGemsEngineConfigPublic } = await import("../server/games/fortune-gems.server");
+  return getFortuneGemsEngineConfigPublic();
+});
+
+const pugLifeSpinSchema = z.object({
+  bet: z.number().finite().positive().max(100_000),
+  entryPath: z.enum(["base", "featurespins"]).optional(),
+  marketCode: z.string().max(8).nullable().optional(),
+});
+
+export const pugLifeSpinFn = createServerFn({ method: "POST" })
+  .validator(pugLifeSpinSchema)
+  .handler(async ({ data }) => {
+    const { pugLifePaidSpin } = await import("../server/games/pug-life.server");
+    // Clone to a plain JSON-safe payload for TanStack Start serialization.
+    return JSON.parse(JSON.stringify(await pugLifePaidSpin(data))) as Awaited<
+      ReturnType<typeof pugLifePaidSpin>
+    >;
+  });
+
+const pugLifeBuySchema = z.object({
+  bet: z.number().finite().positive().max(100_000),
+  buyId: z.enum(["featurespins", "treat_yoself", "dawgs_den"]),
+  marketCode: z.string().max(8).nullable().optional(),
+});
+
+export const pugLifeBuyFeatureFn = createServerFn({ method: "POST" })
+  .validator(pugLifeBuySchema)
+  .handler(async ({ data }) => {
+    const { pugLifeBuyFeature } = await import("../server/games/pug-life.server");
+    return JSON.parse(JSON.stringify(await pugLifeBuyFeature(data))) as Awaited<
+      ReturnType<typeof pugLifeBuyFeature>
+    >;
+  });
+
+export const getPugLifeEngineConfigFn = createServerFn({ method: "GET" }).handler(async () => {
+  const { getPugLifeEngineConfigPublic } = await import("../server/games/pug-life.server");
+  return getPugLifeEngineConfigPublic();
+});
+
+const reelRiotSpinSchema = z.object({
+  bet: z.number().finite().positive().max(100_000),
+  held: z.array(z.boolean()).max(3).optional(),
+  previousReels: z
+    .array(z.string())
+    .length(3)
+    .nullable()
+    .optional(),
+});
+
+export const reelRiotSpinFn = createServerFn({ method: "POST" })
+  .validator(reelRiotSpinSchema)
+  .handler(async ({ data }) => {
+    const { reelRiotPaidSpin } = await import("../server/games/reel-riot.server");
+    return JSON.parse(
+      JSON.stringify(
+        await reelRiotPaidSpin({
+          bet: data.bet,
+          held: data.held,
+          previousReels: (data.previousReels as import("@/components/maxhigh/reel-riot/types").RrReels | null) ?? null,
+        }),
+      ),
+    ) as Awaited<ReturnType<typeof reelRiotPaidSpin>>;
+  });
+
+export const getReelRiotEngineConfigFn = createServerFn({ method: "GET" }).handler(async () => {
+  const { getReelRiotEngineConfigPublic } = await import("../server/games/reel-riot.server");
+  return getReelRiotEngineConfigPublic();
+});
+
+export const getReelRiotJackpotFn = createServerFn({ method: "GET" }).handler(async () => {
+  const { getReelRiotJackpotPool } = await import("../server/games/reel-riot.server");
+  return getReelRiotJackpotPool();
 });
 

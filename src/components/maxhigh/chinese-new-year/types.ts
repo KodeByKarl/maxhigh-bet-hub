@@ -1,71 +1,97 @@
-/** Shared types for Chinese New Year slot engine. */
+/** Shared types for Chinese New Year fixed-payline engine. */
 
-export type SymKind =
-  | "rat"
-  | "snake"
-  | "horse"
-  | "goat"
-  | "pig"
-  | "dog"
-  | "rooster"
-  | "tiger"
-  | "monkey"
-  | "dragon";
+import type { CnySymKind } from "@/lib/chinese-new-year-config";
 
-export type CellSym = {
-  id: string;
-  kind: SymKind;
-  weight: number;
-  pay: [number, number, number];
-  scatter?: boolean;
-  bomb?: boolean;
-};
+/** Grid[reel][row] */
+export type CnyGrid = CnySymKind[][];
 
-export type BoardCell = {
-  key: string;
-  sym: CellSym;
-  mult?: number;
-};
-
-export type ClusterWin = {
-  id: string;
-  kind: SymKind;
+export type PaylineWin = {
+  lineIndex: number;
+  symbol: CnySymKind;
+  /** Underlying paying symbol when Extra Scatter substituted. */
+  paySymbol: CnySymKind;
   count: number;
-  pay: number;
-  perSymbol: number;
-  keys: string[];
+  /** Positions [reel, row] */
+  positions: Array<[number, number]>;
+  payout: number;
 };
 
-export type TumbleStep = {
-  board: BoardCell[];
-  winningKeys: string[];
-  clusters: ClusterWin[];
-  tumbleWin: number;
-  bombSum: number;
-  afterPop: (BoardCell | null)[];
-  afterFall: BoardCell[];
-  spawnedKeys: string[];
-  fallenKeys: string[];
-  fallDistance: Record<string, number>;
+export type DragonLaunch = {
+  index: number;
+  success: boolean;
+  awardId: string | null;
+  awardLabel: string | null;
+  /** × total bet for this launch (0 on bust) */
+  mult: number;
+  coins: number;
+};
+
+export type DragonBonusResult = {
+  triggered: boolean;
+  launches: DragonLaunch[];
+  totalCoins: number;
+  busted: boolean;
+};
+
+export type MonkeyBonusResult = {
+  triggered: boolean;
+  /** Immediate 5× total bet (configurable). */
+  triggerPayout: number;
+  extraScatterSymbol: CnySymKind;
+  freeSpinsAwarded: number;
+};
+
+export type FreeSpinScript = {
+  spinIndex: number;
+  seed: string;
+  grid: CnyGrid;
+  paylineWins: PaylineWin[];
+  paylineWin: number;
+  /** No dragon/monkey during FS — always null. */
+  dragonBonus: null;
+  monkeyBonus: null;
+  spinWin: number;
 };
 
 export type SpinScript = {
-  initialBoard: BoardCell[];
-  steps: TumbleStep[];
+  seed: string;
+  totalBet: number;
+  betPerLine: number;
+  grid: CnyGrid;
+  paylineWins: PaylineWin[];
+  paylineWin: number;
+  dragonBonus: DragonBonusResult | null;
+  monkeyBonus: MonkeyBonusResult | null;
+  freeSpins: FreeSpinScript[];
+  freeSpinsTotalWin: number;
+  /** Sum before max-win trim. */
+  rawTotalWin: number;
   totalWin: number;
-  rawWin: number;
-  displayMult: number;
-  scatters: number;
-  scatterPay: number;
-  freeSpinsAwarded: number;
-  retriggerSpins: number;
+  hitCap: boolean;
+  gambleAvailable: boolean;
   isFreeSpins: boolean;
-  bombAccumulator: number;
+  /** Active Extra Scatter paying kind during FS (null in base). */
+  extraScatterSymbol: CnySymKind | null;
 };
 
-export const COLS = 6;
-export const ROWS = 7;
-export const TOP_COLS = 4;
-export const MAIN_CELLS = COLS * ROWS; // 42
-export const CELLS = TOP_COLS + MAIN_CELLS; // 46 total cells
-export const MIN_CLUSTER = 8;
+export type GambleChoice = "red" | "black";
+
+export type GambleResult = {
+  choice: GambleChoice;
+  drawn: GambleChoice;
+  won: boolean;
+  /** Stake going into this gamble. */
+  stake: number;
+  /** Amount after this round (0 if lost). */
+  amount: number;
+  roundsUsed: number;
+  maxRounds: number;
+  hitCap: boolean;
+  canGambleAgain: boolean;
+};
+
+export type CellKey = string;
+
+export function cellKey(reel: number, row: number): CellKey {
+  return `${reel}:${row}`;
+}

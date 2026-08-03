@@ -9,7 +9,6 @@ CREATE TABLE IF NOT EXISTS platform_settings (
   max_deposit DECIMAL(14,2) NOT NULL DEFAULT 50000.00,
   min_withdraw DECIMAL(14,2) NOT NULL DEFAULT 200.00,
   max_withdraw DECIMAL(14,2) NOT NULL DEFAULT 100000.00,
-  master_chip_pool DECIMAL(16,2) NOT NULL DEFAULT 1000000.00,
   updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE=InnoDB;
 
@@ -54,3 +53,7 @@ ON DUPLICATE KEY UPDATE id = id;
 INSERT INTO risk_controls (id, max_single_bet, max_daily_payout, auto_flag_large_wins, large_win_threshold)
 VALUES ('default', 10000.00, 500000.00, 'yes', 50000.00)
 ON DUPLICATE KEY UPDATE id = id;
+
+-- Hierarchy: globally unique public user id + mega jackpot controls
+-- (applied idempotently in run-migrate-platform-tables.mjs)
+
