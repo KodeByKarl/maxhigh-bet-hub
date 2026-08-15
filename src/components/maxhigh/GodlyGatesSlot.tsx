@@ -29,6 +29,7 @@ import { COLS, ROWS } from "./godly-gates/types";
 import { SymbolIcon } from "./godly-gates/SymbolIcon";
 import { WaysWinOverlay } from "./godly-gates/WaysWinOverlay";
 import { WinCelebration } from "./godly-gates/WinCelebration";
+import { PharaohMascot, type MascotMood } from "./godly-gates/PharaohMascot";
 import { GODLY_GATES_GAME_ID } from "@/lib/godly-gates-config";
 
 type Phase = "idle" | "dropping" | "glow" | "popping" | "falling" | "scatter";
@@ -677,7 +678,7 @@ export function GodlyGatesSlot({
                   {slots.map((cell, i) => {
                     const col = i % COLS;
                     const row = Math.floor(i / COLS);
-                    const key = cell?.key ?? `empty-${i}-${animTick}`;
+                    const key = cell?.key ?? `empty-${i}`;
                     const winning = cell ? winningKeys.has(cell.key) : false;
                     const spawned = cell ? spawnedKeys.has(cell.key) : false;
                     const fallen = cell ? fallenKeys.has(cell.key) : false;
@@ -698,7 +699,8 @@ export function GodlyGatesSlot({
                       ? row + ROWS + 2.25
                       : Math.max(fallDist, row + ROWS + 2);
                     const dropFrom = `${-dropRows * 100}%`;
-                    const motionKey = shouldDropIn ? `${key}-${phase}-${animTick}` : key;
+                    // Remount only for new drop-ins — reuse node for glow/pop/idle.
+                    const motionKey = shouldDropIn ? `${key}-drop-${animTick}` : key;
 
                     return (
                       <div

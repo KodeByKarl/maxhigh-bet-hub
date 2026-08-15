@@ -246,6 +246,8 @@ export const playSessions = mysqlTable(
     index("play_sessions_user_idx").on(t.userId),
     index("play_sessions_status_idx").on(t.status),
     index("play_sessions_user_game_status_idx").on(t.userId, t.gameId, t.status),
+    /** Speeds D1 stale-close / closed purge by (status, updated_at). */
+    index("play_sessions_status_updated_idx").on(t.status, t.updatedAt),
   ],
 );
 

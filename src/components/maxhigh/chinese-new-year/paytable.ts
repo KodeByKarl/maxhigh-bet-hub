@@ -2,19 +2,19 @@ import type { CnySymKind } from "@/lib/chinese-new-year-config";
 import { getChineseNewYearConfig } from "./runtimeConfig";
 
 export const ICON_SRC: Record<CnySymKind, string> = {
-  sym_10: "/images/symbols/chinese/10.png",
-  sym_j: "/images/symbols/chinese/j.png",
-  sym_q: "/images/symbols/chinese/q.png",
-  sym_k: "/images/symbols/chinese/k.png",
-  sym_a: "/images/symbols/chinese/a.png",
-  jug: "/images/symbols/chinese/jug.png",
-  coins: "/images/symbols/chinese/coins.png",
-  fish: "/images/symbols/chinese/fish.png",
-  lion: "/images/symbols/chinese/lion.png",
-  lantern: "/images/symbols/chinese/lantern.png",
-  dragon: "/images/symbols/chinese/dragon.png",
-  monkey: "/images/symbols/chinese/monkey.png",
-  extra_scatter: "/images/symbols/chinese/extra_scatter.png",
+  sym_10: "/images/symbols/cny/10.webp?v=3",
+  sym_j: "/images/symbols/cny/j.webp?v=3",
+  sym_q: "/images/symbols/cny/q.webp?v=3",
+  sym_k: "/images/symbols/cny/k.webp?v=3",
+  sym_a: "/images/symbols/cny/a.webp?v=3",
+  jug: "/images/symbols/cny/jug.webp?v=3",
+  coins: "/images/symbols/cny/coins.png?v=3",
+  fish: "/images/symbols/cny/fish.webp?v=3",
+  lion: "/images/symbols/cny/lion.webp?v=3",
+  lantern: "/images/symbols/cny/lantern.png?v=3",
+  dragon: "/images/symbols/cny/dragon.webp?v=3",
+  monkey: "/images/symbols/cny/monkey.webp?v=3",
+  extra_scatter: "/images/symbols/cny/extra_scatter.webp?v=3",
 };
 
 /** Full +/- ladder (includes quick picks + higher stakes). */

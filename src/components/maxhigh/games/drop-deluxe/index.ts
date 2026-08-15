@@ -1,0 +1,1 @@
+export { DropDeluxeTable } from "./DropDeluxeTable";

@@ -55,6 +55,18 @@ export async function fetchAdminDashboard(): Promise<AdminDashboardStats> {
     })
     .from(users);
 
+  let downlinePlayers = Number(playerCountRow?.totalPlayers ?? 0);
+  if (actor.role === "agent") {
+    const [own] = await db
+      .select({ n: sql<number>`count(*)` })
+      .from(users)
+      .where(and(eq(users.parentAgentId, actor.id), eq(users.role, "player")));
+    downlinePlayers = Number(own?.n ?? 0);
+  } else if (actor.role === "master_agent") {
+    const networkIds = await scopeToDownline(actor, { playersOnly: true });
+    downlinePlayers = networkIds?.length ?? 0;
+  }
+
   // All player bets & wins platform-wide
   const [betRow] = await db
     .select({
@@ -100,6 +112,7 @@ export async function fetchAdminDashboard(): Promise<AdminDashboardStats> {
     agentBalance,
     agentUsername: actor.username,
     agentRole: actor.role,
+    downlinePlayers,
     labels: {
       totalUsers: totalPlayers.toLocaleString("en-PH"),
       totalPlayers: totalPlayers.toLocaleString("en-PH"),
@@ -222,22 +235,24 @@ export async function adminCreatePlayer(data: {
   const actor = await requirePermission("USER_CREATE");
   const role: UserRole = data.role ?? "player";
 
-  // Only superadmin may create admin/superadmin accounts
-  if (role !== "player" && actor.role !== "superadmin") {
+  // Role create matrix:
+  // - superadmin: any role
+  // - agent / master_agent: player or agent only (domain downline)
+  // - admin: players only
+  if (actor.role === "superadmin") {
+    // ok
+  } else if (actor.role === "agent" || actor.role === "master_agent") {
+    if (role !== "player" && role !== "agent") {
+      throw new Error("You can only create Player or Agent accounts");
+    }
+  } else if (role !== "player") {
     throw new Error("Only superadmin can create staff accounts");
   }
 
   const db = getDb();
   const initialBalance = data.balance ?? 0;
-
-  // Deduct initial balance from agent's own wallet if actor is agent/master_agent
-  if (initialBalance > 0 && actor.role !== "superadmin") {
-    const agentRows = await db.select().from(users).where(eq(users.id, actor.id)).limit(1);
-    const agentBal = Number(agentRows[0]?.balance ?? 0);
-    if (agentBal < initialBalance) {
-      throw new Error(`Insufficient wallet balance. You have ₱${agentBal.toFixed(2)}, but need ₱${initialBalance.toFixed(2)} to create account.`);
-    }
-    await db.update(users).set({ balance: money(agentBal - initialBalance) }).where(eq(users.id, actor.id));
+  if (!Number.isFinite(initialBalance) || initialBalance < 0) {
+    throw new Error("Invalid initial balance");
   }
 
   const id = newId();
@@ -256,24 +271,64 @@ export async function adminCreatePlayer(data: {
     .limit(1);
   if (existingPublicId) throw new Error("User ID already exists");
 
-  try {
-    await db.insert(users).values({
-      id,
-      publicUserId,
-      email,
-      username,
-      passwordHash: await hash(data.password, 10),
-      balance: money(initialBalance),
-      role,
-      displayName: data.displayName?.trim() || null,
-      parentAgentId: actor.id,
-    });
-  } catch {
-    throw new Error("Username or User ID already exists");
-  }
+  // Hash outside the transaction so we don't hold row locks during bcrypt.
+  const passwordHash = await hash(data.password, 10);
+  const { writeLedgerDelta } = await import("../wallet.server");
 
-  const rows = await db.select().from(users).where(eq(users.id, id)).limit(1);
-  const created = toPublicUser(rows[0]!);
+  let created: PublicUser;
+  try {
+    created = await db.transaction(async (tx) => {
+      // Agent/master_agent: deduct opening chips atomically with ledger + user insert.
+      if (initialBalance > 0 && actor.role !== "superadmin") {
+        await writeLedgerDelta(tx, {
+          userId: actor.id,
+          username: actor.username,
+          delta: -initialBalance,
+          type: "adjust",
+          game: "ChipTransfer",
+          note: `Initial chips for @${username}`,
+        });
+      }
+
+      await tx.insert(users).values({
+        id,
+        publicUserId,
+        email,
+        username,
+        passwordHash,
+        // Start at 0; credit via ledger below so balance + transactions stay consistent.
+        balance: money(0),
+        role,
+        displayName: data.displayName?.trim() || null,
+        parentAgentId: actor.id,
+      });
+
+      if (initialBalance > 0) {
+        await writeLedgerDelta(tx, {
+          userId: id,
+          username,
+          delta: initialBalance,
+          type: "adjust",
+          game: "ChipTransfer",
+          note: `Opening balance from @${actor.username}`,
+        });
+      }
+
+      const rows = await tx.select().from(users).where(eq(users.id, id)).limit(1);
+      return toPublicUser(rows[0]!);
+    });
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : "";
+    if (msg.includes("Insufficient balance")) {
+      throw new Error(
+        `Insufficient wallet balance. You need ₱${initialBalance.toFixed(2)} to create this account.`,
+      );
+    }
+    if (msg.includes("Duplicate") || msg.includes("already exists")) {
+      throw new Error("Username or User ID already exists");
+    }
+    throw err instanceof Error ? err : new Error("Username or User ID already exists");
+  }
 
   await writeAuditLog({
     actor,
@@ -287,11 +342,35 @@ export async function adminCreatePlayer(data: {
       publicUserId: created.publicUserId,
       role: created.role,
       balance: created.balance,
-      deductedFromAgent: actor.username,
+      deductedFromAgent: actor.role === "superadmin" ? null : actor.username,
     },
   });
 
-  return created;
+  // Agent earns Master Agent by creating another Agent under their domain.
+  let agentPromoted = false;
+  if (created.role === "agent" && actor.role === "agent") {
+    await db
+      .update(users)
+      .set({ role: "master_agent" })
+      .where(and(eq(users.id, actor.id), eq(users.role, "agent")));
+    agentPromoted = true;
+    await writeAuditLog({
+      actor,
+      action: "agent.promoted",
+      summary: `Agent @${actor.username} earned Master Agent after creating Agent @${created.username}`,
+      targetType: "user",
+      targetId: actor.id,
+      meta: {
+        from: "agent",
+        to: "master_agent",
+        reason: "created_sub_agent",
+        subAgentId: created.id,
+        subAgentUsername: created.username,
+      },
+    });
+  }
+
+  return { ...created, agentPromoted };
 }
 
 export async function adminAdjustUserBalance(data: {

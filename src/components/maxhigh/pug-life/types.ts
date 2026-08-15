@@ -1,4 +1,4 @@
-/** Shared types for Pug Den 1-2-3-4-3-2-1 connecting-ways engine. */
+/** Shared types for Pug Den 3-4-5-4-3 connecting-ways engine. */
 
 import type { PlSymKind } from "@/lib/pug-life-config";
 import type { PooledPayoutState } from "@/lib/slot-primitives/pooledPayout";

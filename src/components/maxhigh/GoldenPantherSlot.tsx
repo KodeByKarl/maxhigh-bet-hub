@@ -25,7 +25,6 @@ import {
 import { ANIM } from "./golden-panther/animationConfig";
 import { PantherFeatureBadge } from "./golden-panther/PantherFeatureBadge";
 import { FreeSpinsBadge } from "./golden-panther/FreeSpinsBadge";
-import { GoldenPantherSidePanel } from "./golden-panther/GoldenPantherSidePanel";
 import { BetSelectModal } from "./golden-panther/BetSelectModal";
 import { initialBoard, nextKey, buildBoard } from "./golden-panther/gridState";
 import {
@@ -96,8 +95,8 @@ function preloadAssets() {
   pantherAudio.preload();
   if (typeof Image === "undefined") return;
   const urls = [
-    "/images/symbols/panther/backdrop.png",
-    "/images/symbols/panther/loading-bg.png",
+    "/images/symbols/panther/backdrop.webp",
+    "/images/symbols/panther/loading-bg.webp",
     ...Object.values(ICON_SRC),
   ];
   for (const src of urls) {
@@ -218,9 +217,16 @@ export function GoldenPantherSlot({
         });
       void getGoldenPantherSessionFn()
         .then((session) => {
-          if (!mountedRef.current || !session.sessionId) return;
+          if (!mountedRef.current) return;
+          if (!session.sessionId || session.freeSpinsLeft <= 0) {
+            playSessionIdRef.current = null;
+            setInFree(false);
+            setFreeSpins(0);
+            freeSpinsRef.current = 0;
+            return;
+          }
           playSessionIdRef.current = session.sessionId;
-          setInFree(session.inFree);
+          setInFree(true);
           setFreeSpins(session.freeSpinsLeft);
           setFsBombAcc(session.fsBombAcc);
           setFsSessionWin(session.fsSessionWin);
@@ -342,7 +348,8 @@ export function GoldenPantherSlot({
         const payMap = new Map<string, number>();
         const stepRows: LedgerRow[] = [];
         for (const c of step.clusters) {
-          for (const k of c.keys) payMap.set(k, c.perSymbol);
+          const badgeKey = c.keys[0];
+          if (badgeKey) payMap.set(badgeKey, c.pay);
           const row = { id: c.id, kind: c.kind, count: c.count, pay: c.pay };
           stepRows.push(row);
           rows.push(row);
@@ -458,7 +465,49 @@ export function GoldenPantherSlot({
   const spin = useCallback(
     async (asFree = false) => {
       if (busyRef.current) return;
-      const isFree = asFree || (inFree && freeSpinsRef.current > 0);
+
+      // Prefer free-spin path whenever local OR server still has FS left.
+      // (inFree state can desync after HMR / modal / skip — freeSpinsRef is source of truth.)
+      let preferFree = asFree || freeSpinsRef.current > 0;
+
+      if (!preferFree || (preferFree && !playSessionIdRef.current)) {
+        try {
+          const session = await getGoldenPantherSessionFn();
+          if (session.sessionId && session.freeSpinsLeft > 0) {
+            applySession({
+              sessionId: session.sessionId,
+              freeSpinsLeft: session.freeSpinsLeft,
+              fsSessionWin: session.fsSessionWin,
+              fsBombAcc: session.fsBombAcc,
+              fsSpinsPlayed: session.fsSpinsPlayed,
+              inFree: true,
+            });
+            preferFree = true;
+          } else if (!session.sessionId || session.freeSpinsLeft <= 0) {
+            playSessionIdRef.current = null;
+            if (freeSpinsRef.current > 0 || inFree) {
+              setInFree(false);
+              setFreeSpins(0);
+              freeSpinsRef.current = 0;
+            }
+            preferFree = false;
+          }
+        } catch {
+          /* keep local flags */
+        }
+      }
+
+      const isFree = preferFree && freeSpinsRef.current > 0 && !!playSessionIdRef.current;
+      if (preferFree && !isFree) {
+        toast.error("Free spin session expired — refresh and try again");
+        setInFree(false);
+        setFreeSpins(0);
+        freeSpinsRef.current = 0;
+        playSessionIdRef.current = null;
+        setAutoSpin(false);
+        return;
+      }
+
       const cost = isFree ? 0 : totalBet;
 
       if (!isFree && balance < cost) {
@@ -473,6 +522,7 @@ export function GoldenPantherSlot({
       setBanner(null);
       setWinPopup(null);
       setLastWin(0);
+      let recoveredToFree = false;
 
       try {
         if (!isFree) {
@@ -519,6 +569,7 @@ export function GoldenPantherSlot({
             setInFree(false);
             setFreeSpins(0);
             freeSpinsRef.current = 0;
+            playSessionIdRef.current = null;
             setLastWin(settled.fsPayout.amount);
             setFsSummary({
               amount: settled.fsPayout.amount,
@@ -551,12 +602,38 @@ export function GoldenPantherSlot({
           setBalanceLocal(balance);
         }
         if (!(err instanceof DOMException && err.name === "AbortError")) {
+          const msg = err instanceof Error ? err.message : "Spin failed — try again";
+          // Server still has open FS — restore and continue as free spins
+          if (/finish free spins/i.test(msg)) {
+            try {
+              const session = await getGoldenPantherSessionFn();
+              if (session.sessionId && session.freeSpinsLeft > 0) {
+                applySession({
+                  sessionId: session.sessionId,
+                  freeSpinsLeft: session.freeSpinsLeft,
+                  fsSessionWin: session.fsSessionWin,
+                  fsBombAcc: session.fsBombAcc,
+                  fsSpinsPlayed: session.fsSpinsPlayed,
+                  inFree: true,
+                });
+                toast.message(`Resuming ${session.freeSpinsLeft} free spins`);
+                recoveredToFree = true;
+                busyRef.current = false;
+                skipRef.current = false;
+                if (mountedRef.current) setPhase("idle");
+                void spin(true);
+                return;
+              }
+            } catch {
+              /* fall through */
+            }
+          }
           console.error("[GoldenPanther] spin failed", err);
-          toast.error(err instanceof Error ? err.message : "Spin failed — try again");
+          toast.error(msg);
           setAutoSpin(false);
         }
       } finally {
-        if (gen === playbackGen.current) {
+        if (!recoveredToFree && gen === playbackGen.current) {
           busyRef.current = false;
           skipRef.current = false;
           if (mountedRef.current) setPhase("idle");
@@ -786,7 +863,7 @@ export function GoldenPantherSlot({
   return (
     <div className="relative flex h-dvh w-full flex-col overflow-hidden select-none">
       <img
-        src="/images/symbols/panther/backdrop.png"
+        src="/images/symbols/panther/backdrop.webp"
         alt=""
         className="absolute inset-0 size-full object-cover"
         aria-hidden
@@ -794,359 +871,334 @@ export function GoldenPantherSlot({
         fetchPriority="high"
       />
 
-      {/* Centered playfield */}
-      <div className="relative z-10 flex min-h-0 flex-1 items-center justify-center px-2 py-1.5 sm:px-3 sm:py-2">
-        <div className="flex h-full max-h-full w-full max-w-[1200px] flex-col items-center gap-1.5 sm:gap-2">
-          <div className="flex min-h-0 w-full flex-1 flex-col items-center justify-center">
-
-            {/* GRID COLUMN */}
-            <div className="flex h-full min-h-0 min-w-0 w-full flex-col items-center">
+      {/* Playfield — mobile-first, elder-readable */}
+      <div className="relative z-10 flex min-h-0 flex-1 flex-col px-1.5 pt-[max(0.25rem,env(safe-area-inset-top))] pb-[max(0.35rem,env(safe-area-inset-bottom))] sm:items-center sm:justify-center sm:px-3 sm:py-2">
+        <div className="mx-auto flex h-full min-h-0 w-full max-w-[840px] flex-col">
+          {/* Open temple well — thin gold rim, no heavy metal box */}
+          <div className="relative flex min-h-0 w-full flex-1 flex-col">
+            <div
+              className="relative mx-auto flex h-full min-h-0 w-full flex-col overflow-hidden rounded-[1.25rem] sm:rounded-2xl"
+              style={{
+                maxWidth: "min(100%, 800px)",
+                background:
+                  "linear-gradient(180deg, rgba(12,8,4,0.55) 0%, rgba(8,5,3,0.72) 100%)",
+                boxShadow:
+                  "inset 0 0 0 1.5px rgba(245,215,110,0.55), inset 0 0 40px rgba(0,0,0,0.35), 0 12px 36px rgba(0,0,0,0.45)",
+              }}
+            >
+              {/* Soft top glow */}
               <div
-                className="flex h-full min-h-0 w-full max-w-[840px] flex-col items-center justify-center"
+                className="pointer-events-none absolute inset-x-0 top-0 z-0 h-24"
                 style={{
-                  width: "min(100%, 800px)",
+                  background:
+                    "radial-gradient(ellipse at 50% 0%, rgba(245,158,11,0.18) 0%, transparent 70%)",
                 }}
-              >
-                {/* 1ST LAYER: 4 COLUMNS TOP TRACKER REEL */}
-                <div className="-mb-[2px] relative z-10 flex shrink-0 justify-center w-full">
-                  <div
-                    className="relative flex items-center justify-center rounded-t-2xl rounded-b-none p-1 sm:p-1.5 shadow-[0_10px_30px_rgba(0,0,0,0.8)]"
-                    style={{
-                      width: "calc(100% * (4 / 6))",
-                      background: "linear-gradient(135deg, #4b5563 0%, #1f2937 100%)",
-                      border: "2px solid #6b7280",
-                      borderBottom: "none",
-                    }}
-                  >
+                aria-hidden
+              />
+
+              {/* TOP TRACKER — same well, no nested frame */}
+              <div className="relative z-20 flex w-full shrink-0 justify-center pt-1">
+                <div
+                  className="grid w-[66.666%] overflow-visible"
+                  style={{
+                    gridTemplateColumns: "repeat(4, minmax(0, 1fr))",
+                    aspectRatio: "4 / 1",
+                  }}
+                >
+                  {TOP_INDICES.map((i) => {
+                    const cell = slots[i] ?? null;
+                    const win = cell ? winningKeys.has(cell.key) : false;
+                    return (
+                      <ReelCell
+                        key={`top-slot-${i}`}
+                        index={i}
+                        cell={cell}
+                        phase={phase}
+                        win={win}
+                        perPay={cell ? payoutByKey.get(cell.key) : undefined}
+                        isSpawn={cell ? spawnedKeys.has(cell.key) : false}
+                        isFallen={cell ? fallenKeys.has(cell.key) : false}
+                        fallDist={cell ? (fallDistance[cell.key] ?? 0) : 0}
+                        cols={4}
+                        isTop={true}
+                      />
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Thin gold divider under top reel */}
+              <div
+                className="relative z-10 mx-auto my-0.5 h-px w-[92%] shrink-0 opacity-80"
+                style={{
+                  background:
+                    "linear-gradient(90deg, transparent, rgba(245,215,110,0.65), transparent)",
+                }}
+                aria-hidden
+              />
+
+              {/* MAIN 6×7 — open grid, no cell boxes */}
+              <div className="relative z-10 min-h-0 w-full flex-1 px-0.5 pb-1">
+                {showTumbleBadge && (
+                  <div className="pointer-events-none absolute left-1/2 top-0 z-20 -translate-x-1/2 -translate-y-1/2">
                     <div
-                      className="grid size-full rounded-t-xl rounded-b-none overflow-hidden"
+                      className="rounded-full border-2 border-yellow-300 px-4 py-1.5 text-center shadow-[0_0_20px_rgba(250,204,21,0.8)]"
                       style={{
-                        background: "linear-gradient(180deg, #111827 0%, #030712 100%)",
-                        boxShadow: "inset 0 0 20px rgba(0,0,0,0.8)",
-                        gridTemplateColumns: "repeat(4, minmax(0, 1fr))",
-                        gridTemplateRows: "repeat(1, minmax(0, 1fr))",
-                        aspectRatio: "4 / 1",
+                        background: "linear-gradient(180deg, #D97706 0%, #78350F 100%)",
                       }}
                     >
-                      {TOP_INDICES.map((i) => {
-                        const cell = slots[i] ?? null;
-                        const win = cell ? winningKeys.has(cell.key) : false;
-                        return (
-                          <ReelCell
-                            key={`top-slot-${i}`}
-                            index={i}
-                            cell={cell}
-                            phase={phase}
-                            win={win}
-                            perPay={cell ? payoutByKey.get(cell.key) : undefined}
-                            isSpawn={cell ? spawnedKeys.has(cell.key) : false}
-                            isFallen={cell ? fallenKeys.has(cell.key) : false}
-                            fallDist={cell ? (fallDistance[cell.key] ?? 0) : 0}
-                            cols={4}
-                            isTop={true}
-                          />
-                        );
-                      })}
-                    </div>
-                  </div>
-                </div>
-
-                {/* 2ND LAYER: 6 COLUMNS x 7 ROWS MAIN GRID */}
-                <div className="relative flex min-h-0 w-full flex-1 items-center justify-center">
-                  <div
-                    className="relative mx-auto size-full max-h-full"
-                    style={{
-                      aspectRatio: `${COLS} / ${ROWS}`,
-                      width: "100%",
-                      height: "auto",
-                      maxHeight: "100%",
-                    }}
-                  >
-                    {showTumbleBadge && (
-                      <div className="pointer-events-none absolute left-1/2 top-0 z-20 -translate-x-1/2 -translate-y-1/2">
-                        <div
-                          className="rounded-full border-2 border-yellow-300 px-4 py-1.5 text-center shadow-[0_0_20px_rgba(250,204,21,0.8)]"
-                          style={{
-                            background:
-                              "linear-gradient(180deg, #D97706 0%, #78350F 100%)",
-                          }}
-                        >
-                          <div className="text-[9px] font-black uppercase tracking-[0.18em] text-amber-200">
-                            Tumble Win
-                          </div>
-                          <div className="text-lg font-black leading-none text-yellow-300 tabular-nums">
-                            {formatMoney(dropTotal)}
-                          </div>
-                        </div>
+                      <div className="text-[10px] font-black uppercase tracking-[0.18em] text-amber-200">
+                        Tumble Win
                       </div>
-                    )}
-
-                    {/* Reel Grid Concrete Frame */}
-                    <div
-                      className="relative size-full rounded-3xl p-2 sm:p-2.5 shadow-[0_20px_60px_rgba(0,0,0,0.8)]"
-                      style={{
-                        background: "linear-gradient(135deg, #4b5563 0%, #1f2937 100%)",
-                        border: "2px solid #6b7280",
-                      }}
-                    >
-                      <div
-                        className="relative size-full overflow-hidden rounded-2xl"
-                        style={{
-                          background: "linear-gradient(180deg, #111827 0%, #030712 100%)",
-                          boxShadow: "inset 0 0 30px rgba(0,0,0,0.9)",
-                        }}
-                      >
-                        <div
-                          className="grid size-full"
-                          style={{
-                            gridTemplateColumns: `repeat(${COLS}, minmax(0, 1fr))`,
-                            gridTemplateRows: `repeat(${ROWS}, minmax(0, 1fr))`,
-                          }}
-                        >
-                          {MAIN_INDICES.map((i) => {
-                            const cell = slots[i] ?? null;
-                            const win = cell ? winningKeys.has(cell.key) : false;
-                            return (
-                              <ReelCell
-                                key={`slot-${i}`}
-                                index={i - TOP_COLS}
-                                cell={cell}
-                                phase={phase}
-                                win={win}
-                                perPay={cell ? payoutByKey.get(cell.key) : undefined}
-                                isSpawn={cell ? spawnedKeys.has(cell.key) : false}
-                                isFallen={cell ? fallenKeys.has(cell.key) : false}
-                                fallDist={cell ? (fallDistance[cell.key] ?? 0) : 0}
-                                cols={COLS}
-                                isTop={false}
-                              />
-                            );
-                          })}
-                        </div>
+                      <div className="text-lg font-black leading-none text-yellow-300 tabular-nums sm:text-xl">
+                        {formatMoney(dropTotal)}
                       </div>
                     </div>
-                  </div>
-                </div>
-
-                {!inFree && (
-                  <div className="mt-1 flex shrink-0 gap-2 sm:hidden">
-                    <button
-                      type="button"
-                      disabled={busy}
-                      onClick={() => openBuyFeature("normal")}
-                      className="rounded-lg border-2 border-[#E8C547] bg-[#1A1A1A] px-3 py-1.5 text-[10px] font-black uppercase text-[#F5D76E]"
-                    >
-                      Buy FS {formatMoneyCompact(buyCost)}
-                    </button>
-                    <button
-                      type="button"
-                      disabled={busy}
-                      onClick={() => openBuyFeature("super")}
-                      className="rounded-lg border-2 border-[#E8C547] bg-[#1A1A1A] px-3 py-1.5 text-[10px] font-black uppercase text-[#F5D76E]"
-                    >
-                      Super {formatMoneyCompact(superBuyCost)}
-                    </button>
                   </div>
                 )}
 
-                {/* BOTTOM CONTROL BAR (Spadegaming Style) */}
-                <div className="mt-2 w-full shrink-0 max-w-[1100px] mx-auto">
-                  <div className="flex flex-wrap items-center justify-between gap-2 rounded-2xl bg-black/85 p-2 backdrop-blur-md border border-amber-500/25 shadow-2xl">
-                    
-                    {/* LEFT SECTION: Info Button & Bet Adjuster */}
-                    <div className="flex items-center gap-2 sm:gap-3">
-                      <button
-                        type="button"
-                        onClick={() => setInfoOpen(true)}
-                        className="grid size-9 place-items-center rounded-full bg-neutral-800 text-white/80 border border-white/20 hover:bg-neutral-700 hover:text-white transition shadow sm:size-10"
-                        aria-label="Paytable Info"
-                      >
-                        <Info size={18} />
-                      </button>
+                {/* Subtle column guides only */}
+                <div
+                  className="pointer-events-none absolute inset-x-0 top-0 bottom-1 z-[1] grid opacity-[0.12]"
+                  style={{ gridTemplateColumns: `repeat(${COLS}, minmax(0, 1fr))` }}
+                  aria-hidden
+                >
+                  {Array.from({ length: COLS }).map((_, c) => (
+                    <div
+                      key={c}
+                      className="border-r border-amber-200/80 last:border-r-0"
+                    />
+                  ))}
+                </div>
 
-                      <div className="flex items-center gap-1.5 bg-neutral-900/90 rounded-full px-2.5 py-1 border border-white/10 shadow-inner sm:px-3 sm:py-1.5">
-                        <button
-                          type="button"
-                          disabled={busy}
-                          onClick={() => nudgeBet(-1)}
-                          className="grid size-6 place-items-center rounded-full bg-neutral-700 text-white font-bold text-sm hover:bg-neutral-600 disabled:opacity-40 transition sm:size-7 sm:text-base"
-                          aria-label="Decrease Bet"
-                        >
-                          −
-                        </button>
+                <div
+                  className="relative z-[2] grid size-full overflow-visible"
+                  style={{
+                    gridTemplateColumns: `repeat(${COLS}, minmax(0, 1fr))`,
+                    gridTemplateRows: `repeat(${ROWS}, minmax(0, 1fr))`,
+                  }}
+                >
+                  {MAIN_INDICES.map((i) => {
+                    const cell = slots[i] ?? null;
+                    const win = cell ? winningKeys.has(cell.key) : false;
+                    return (
+                      <ReelCell
+                        key={`slot-${i}`}
+                        index={i - TOP_COLS}
+                        cell={cell}
+                        phase={phase}
+                        win={win}
+                        perPay={cell ? payoutByKey.get(cell.key) : undefined}
+                        isSpawn={cell ? spawnedKeys.has(cell.key) : false}
+                        isFallen={cell ? fallenKeys.has(cell.key) : false}
+                        fallDist={cell ? (fallDistance[cell.key] ?? 0) : 0}
+                        cols={COLS}
+                        isTop={false}
+                      />
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+          </div>
 
-                        <button
-                          type="button"
-                          disabled={busy}
-                          onClick={() => setBetModalOpen(true)}
-                          className="flex flex-col items-center px-1 hover:opacity-80 transition cursor-pointer disabled:cursor-not-allowed"
-                          aria-label="Select Bet Amount"
-                        >
-                          <span className="text-[9px] uppercase tracking-wider text-white/60 font-bold">
-                            Bet
-                          </span>
-                          <span className="text-xs font-black tabular-nums text-yellow-300 border-b-2 border-purple-500 px-1 sm:text-sm">
-                            {totalBet.toFixed(2)}
-                          </span>
-                        </button>
+          {/* Buy feature — larger taps on mobile */}
+          {!inFree && (
+            <div className="mt-2 flex shrink-0 justify-center gap-2 sm:mt-2 sm:gap-3">
+              <button
+                type="button"
+                disabled={busy}
+                onClick={() => openBuyFeature("normal")}
+                className="min-h-11 rounded-xl border-2 border-amber-400/80 bg-black/70 px-4 py-2 text-xs font-black uppercase tracking-wide text-amber-200 disabled:opacity-40 sm:min-h-10 sm:text-[11px]"
+              >
+                Buy FS {formatMoneyCompact(buyCost)}
+              </button>
+              <button
+                type="button"
+                disabled={busy}
+                onClick={() => openBuyFeature("super")}
+                className="min-h-11 rounded-xl border-2 border-amber-400/80 bg-black/70 px-4 py-2 text-xs font-black uppercase tracking-wide text-amber-200 disabled:opacity-40 sm:min-h-10 sm:text-[11px]"
+              >
+                Super {formatMoneyCompact(superBuyCost)}
+              </button>
+            </div>
+          )}
 
-                        <button
-                          type="button"
-                          disabled={busy}
-                          onClick={() => nudgeBet(1)}
-                          className="grid size-6 place-items-center rounded-full bg-neutral-700 text-white font-bold text-sm hover:bg-neutral-600 disabled:opacity-40 transition sm:size-7 sm:text-base"
-                          aria-label="Increase Bet"
-                        >
-                          +
-                        </button>
-                      </div>
-                    </div>
-
-                    {/* CENTER SECTION: Total Bet | Good Luck! | Balance */}
-                    <div className="flex flex-1 items-center justify-center max-w-[500px] min-w-[240px] mx-auto">
-                      <div className="flex w-full items-stretch rounded-full bg-gradient-to-r from-amber-200 via-amber-400 to-amber-500 p-0.5 shadow-lg">
-                        {/* Total Bet Pill */}
-                        <div className="flex flex-col justify-center rounded-l-full bg-gradient-to-b from-amber-300 via-amber-400 to-amber-500 px-3 py-1 text-center text-amber-950 min-w-[80px] sm:px-4 sm:min-w-[95px]">
-                          <span className="text-[9px] font-black uppercase tracking-tight opacity-80">
-                            Total Bet
-                          </span>
-                          <span className="text-xs font-black tabular-nums leading-none sm:text-sm">
-                            {totalBet.toFixed(2)}
-                          </span>
-                        </div>
-
-                        {/* Status Message */}
-                        <div className="flex flex-1 items-center justify-center bg-gradient-to-r from-purple-950 via-indigo-950 to-purple-950 px-3 py-1.5 text-center text-white min-h-[38px] sm:px-4">
-                          <span className="text-xs font-black tracking-wide text-yellow-200 sm:text-sm">
-                            {displayWin > 0
-                              ? `Win ₱${displayWin.toFixed(2)}`
-                              : busy
-                              ? "Spinning..."
-                              : "Good Luck!"}
-                          </span>
-                        </div>
-
-                        {/* Balance Pill */}
-                        <div className="flex flex-col justify-center rounded-r-full bg-gradient-to-b from-amber-300 via-amber-400 to-amber-500 px-3 py-1 text-center text-amber-950 min-w-[95px] sm:px-4 sm:min-w-[115px]">
-                          <span className="text-[9px] font-black uppercase tracking-tight opacity-80">
-                            Balance
-                          </span>
-                          <span className="text-xs font-black tabular-nums leading-none sm:text-sm">
-                            {balance.toLocaleString("en-US", {
-                              minimumFractionDigits: 2,
-                              maximumFractionDigits: 2,
-                            })}
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* RIGHT SECTION: Turbo + Circular Spin (with count) + AutoSpin */}
-                    <div className="flex items-center gap-2 sm:gap-3">
-                      {/* Turbo Fast Button */}
-                      <button
-                        type="button"
-                        onClick={() => setTurbo((v) => !v)}
-                        className={cn(
-                          "grid size-9 place-items-center rounded-full border transition shadow sm:size-10",
-                          turbo
-                            ? "border-amber-400 bg-amber-400/20 text-yellow-300 shadow-[0_0_12px_rgba(250,204,21,0.5)]"
-                            : "border-white/20 bg-neutral-800 text-white/60 hover:bg-neutral-700 hover:text-white"
-                        )}
-                        aria-label="Turbo Fast Mode"
-                      >
-                        <FastForward size={18} />
-                      </button>
-
-                      {/* Main Spin / STOP Button */}
-                      <button
-                        type="button"
-                        disabled={!busy && !autoSpin && inFree && freeSpins === 0}
-                        onClick={() => {
-                          if (busy) {
-                            skipRef.current = true;
-                            if (inFree) setFsPaused(true);
-                          } else if (autoSpin) {
-                            setAutoSpin(false);
-                            setAutoSpinConfig(null);
-                          } else if (inFree) {
-                            setFsPaused(false);
-                            void spin(true);
-                          } else {
-                            void spin(false);
-                          }
-                        }}
-                        className="relative grid size-14 place-items-center rounded-full border-[3px] border-amber-300 bg-gradient-to-b from-amber-400 via-amber-600 to-amber-800 text-amber-950 shadow-[0_6px_20px_rgba(217,119,6,0.6)] transition sm:size-16 active:scale-95 hover:brightness-110"
-                        aria-label="Spin"
-                      >
-                        <div className="absolute inset-1 rounded-full bg-gradient-to-b from-neutral-900 to-black flex items-center justify-center shadow-inner">
-                          {inFree ? (
-                            <div className="flex flex-col items-center justify-center -space-y-0.5">
-                              <span className="text-xl font-black tabular-nums leading-none text-yellow-300 sm:text-2xl">
-                                {freeSpins}
-                              </span>
-                              <span className="text-[8px] font-black uppercase tracking-widest text-amber-500 sm:text-[9px]">
-                                Spins
-                              </span>
-                            </div>
-                          ) : autoSpin ? (
-                            <div className="flex flex-col items-center justify-center -space-y-0.5">
-                              <span className="text-xl font-black tabular-nums leading-none text-yellow-300 sm:text-2xl">
-                                {remainingAutoSpins === "infinity" ? "∞" : remainingAutoSpins}
-                              </span>
-                              <span className="text-[8px] font-black uppercase tracking-widest text-amber-500 sm:text-[9px]">
-                                Auto
-                              </span>
-                            </div>
-                          ) : busy ? (
-                            <RotateCw
-                              size={24}
-                              className="text-yellow-300 animate-spin"
-                            />
-                          ) : (
-                            <RotateCw
-                              size={24}
-                              className="text-yellow-300"
-                            />
-                          )}
-                        </div>
-                      </button>
-
-                      {/* STOP / Auto Spin Button */}
-                      <button
-                        type="button"
-                        onClick={() => {
-                          if (busy || autoSpin || inFree) {
-                            setAutoSpin(false);
-                            setAutoSpinConfig(null);
-                            skipRef.current = true;
-                            if (inFree) setFsPaused(true);
-                          } else {
-                            setAutoSpinModalOpen(true);
-                          }
-                        }}
-                        className={cn(
-                          "grid size-9 place-items-center rounded-full border transition shadow sm:size-10",
-                          busy || autoSpin || (inFree && !fsPaused)
-                            ? "border-red-500 bg-red-600 text-white shadow-[0_0_15px_rgba(239,68,68,0.9)] animate-pulse cursor-pointer hover:bg-red-700"
-                            : "border-white/20 bg-neutral-800 text-white/60 hover:bg-neutral-700 hover:text-white"
-                        )}
-                        aria-label={busy || autoSpin || inFree ? "Stop Game" : "Auto Spin Settings"}
-                      >
-                        {busy || autoSpin || (inFree && !fsPaused) ? (
-                          <Square size={16} className="fill-white text-white" />
-                        ) : (
-                          <RotateCcw size={18} />
-                        )}
-                      </button>
-                    </div>
-
-                  </div>
+          {/* Elder-friendly HUD */}
+          <div className="mt-2 w-full shrink-0 sm:mt-3">
+            {/* Meters — large readable values */}
+            <div className="mb-2 grid grid-cols-3 gap-1.5 sm:gap-2">
+              <div className="rounded-xl border border-amber-500/40 bg-black/75 px-2 py-2 text-center sm:py-2.5">
+                <div className="text-[10px] font-bold uppercase tracking-wider text-amber-200/70 sm:text-[11px]">
+                  Bet
+                </div>
+                <div className="text-base font-black tabular-nums text-amber-100 sm:text-lg">
+                  {totalBet.toFixed(2)}
+                </div>
+              </div>
+              <div className="rounded-xl border border-fuchsia-400/50 bg-gradient-to-b from-purple-900/90 to-black/80 px-2 py-2 text-center sm:py-2.5">
+                <div className="text-[10px] font-bold uppercase tracking-wider text-fuchsia-200/80 sm:text-[11px]">
+                  Win
+                </div>
+                <div className="truncate text-base font-black tabular-nums text-yellow-200 sm:text-lg">
+                  {displayWin > 0 ? formatMoneyCompact(displayWin) : "—"}
+                </div>
+              </div>
+              <div className="rounded-xl border border-amber-500/40 bg-black/75 px-2 py-2 text-center sm:py-2.5">
+                <div className="text-[10px] font-bold uppercase tracking-wider text-amber-200/70 sm:text-[11px]">
+                  Balance
+                </div>
+                <div className="truncate text-base font-black tabular-nums text-amber-100 sm:text-lg">
+                  {formatMoneyCompact(balance)}
                 </div>
               </div>
             </div>
 
-            <div className="hidden sm:block" aria-hidden />
+            {/* Actions — big touch targets */}
+            <div className="flex items-center justify-between gap-2 rounded-2xl border border-amber-500/35 bg-black/80 px-2 py-2 backdrop-blur-md sm:gap-3 sm:px-3 sm:py-2.5">
+              <button
+                type="button"
+                onClick={() => setInfoOpen(true)}
+                className="grid size-12 shrink-0 place-items-center rounded-xl border border-white/20 bg-neutral-800 text-white sm:size-11"
+                aria-label="Paytable Info"
+              >
+                <Info size={22} />
+              </button>
+
+              <div className="flex items-center gap-1.5 rounded-xl border border-white/15 bg-neutral-900/90 px-1.5 py-1">
+                <button
+                  type="button"
+                  disabled={busy}
+                  onClick={() => nudgeBet(-1)}
+                  className="grid size-11 place-items-center rounded-lg bg-neutral-700 text-xl font-black text-white disabled:opacity-40 sm:size-10"
+                  aria-label="Decrease Bet"
+                >
+                  −
+                </button>
+                <button
+                  type="button"
+                  disabled={busy}
+                  onClick={() => setBetModalOpen(true)}
+                  className="min-w-[4.25rem] px-1 text-center disabled:opacity-40"
+                  aria-label="Select Bet Amount"
+                >
+                  <div className="text-[10px] font-bold uppercase tracking-wider text-white/55">
+                    Bet
+                  </div>
+                  <div className="text-sm font-black tabular-nums text-yellow-300 sm:text-base">
+                    {totalBet.toFixed(2)}
+                  </div>
+                </button>
+                <button
+                  type="button"
+                  disabled={busy}
+                  onClick={() => nudgeBet(1)}
+                  className="grid size-11 place-items-center rounded-lg bg-neutral-700 text-xl font-black text-white disabled:opacity-40 sm:size-10"
+                  aria-label="Increase Bet"
+                >
+                  +
+                </button>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => setTurbo((v) => !v)}
+                className={cn(
+                  "grid size-12 shrink-0 place-items-center rounded-xl border sm:size-11",
+                  turbo
+                    ? "border-amber-400 bg-amber-400/25 text-yellow-200"
+                    : "border-white/20 bg-neutral-800 text-white/70",
+                )}
+                aria-label="Turbo Fast Mode"
+              >
+                <FastForward size={22} />
+              </button>
+
+              <button
+                type="button"
+                disabled={!busy && !autoSpin && inFree && freeSpins === 0}
+                onClick={() => {
+                  if (busy) {
+                    skipRef.current = true;
+                    if (inFree || freeSpins > 0) setFsPaused(true);
+                  } else if (autoSpin) {
+                    setAutoSpin(false);
+                    setAutoSpinConfig(null);
+                  } else if (inFree || freeSpins > 0) {
+                    setFsPaused(false);
+                    void spin(true);
+                  } else {
+                    void spin(false);
+                  }
+                }}
+                className="relative grid size-[4.25rem] shrink-0 place-items-center rounded-full border-[3px] border-amber-300 bg-gradient-to-b from-amber-400 via-amber-600 to-amber-800 text-amber-950 shadow-[0_6px_22px_rgba(217,119,6,0.65)] active:scale-95 sm:size-16"
+                aria-label="Spin"
+              >
+                <div className="absolute inset-1.5 flex items-center justify-center rounded-full bg-gradient-to-b from-neutral-900 to-black shadow-inner">
+                  {inFree ? (
+                    <div className="flex flex-col items-center -space-y-0.5">
+                      <span className="text-2xl font-black tabular-nums leading-none text-yellow-300">
+                        {freeSpins}
+                      </span>
+                      <span className="text-[9px] font-black uppercase tracking-widest text-amber-500">
+                        Spins
+                      </span>
+                    </div>
+                  ) : autoSpin ? (
+                    <div className="flex flex-col items-center -space-y-0.5">
+                      <span className="text-2xl font-black tabular-nums leading-none text-yellow-300">
+                        {remainingAutoSpins === "infinity" ? "∞" : remainingAutoSpins}
+                      </span>
+                      <span className="text-[9px] font-black uppercase tracking-widest text-amber-500">
+                        Auto
+                      </span>
+                    </div>
+                  ) : busy ? (
+                    <RotateCw size={28} className="animate-spin text-yellow-300" />
+                  ) : (
+                    <RotateCw size={28} className="text-yellow-300" />
+                  )}
+                </div>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  if (busy || autoSpin || inFree) {
+                    setAutoSpin(false);
+                    setAutoSpinConfig(null);
+                    skipRef.current = true;
+                    if (inFree) setFsPaused(true);
+                  } else {
+                    setAutoSpinModalOpen(true);
+                  }
+                }}
+                className={cn(
+                  "grid size-12 shrink-0 place-items-center rounded-xl border sm:size-11",
+                  busy || autoSpin || (inFree && !fsPaused)
+                    ? "border-red-500 bg-red-600 text-white shadow-[0_0_14px_rgba(239,68,68,0.85)]"
+                    : "border-white/20 bg-neutral-800 text-white/70",
+                )}
+                aria-label={busy || autoSpin || inFree ? "Stop Game" : "Auto Spin Settings"}
+              >
+                {busy || autoSpin || (inFree && !fsPaused) ? (
+                  <Square size={18} className="fill-white text-white" />
+                ) : (
+                  <RotateCcw size={22} />
+                )}
+              </button>
+            </div>
+
+            {busy && displayWin <= 0 && (
+              <p className="mt-1.5 text-center text-xs font-bold uppercase tracking-[0.2em] text-amber-200/70">
+                Spinning…
+              </p>
+            )}
+            {!busy && displayWin <= 0 && !inFree && (
+              <p className="mt-1.5 text-center text-xs font-bold uppercase tracking-[0.2em] text-amber-200/55">
+                Good luck
+              </p>
+            )}
           </div>
         </div>
       </div>

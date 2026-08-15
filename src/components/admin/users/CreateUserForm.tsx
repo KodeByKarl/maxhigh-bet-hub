@@ -18,7 +18,7 @@ export function CreateUserForm({ onCreated }: { onCreated: () => void }) {
     e.preventDefault();
     setBusy(true);
     try {
-      await adminCreateUserFn({
+      const created = await adminCreateUserFn({
         data: {
           email: email.trim() || undefined,
           username,
@@ -27,7 +27,11 @@ export function CreateUserForm({ onCreated }: { onCreated: () => void }) {
           role: isSuper ? role : "player",
         },
       });
-      toast.success("User created");
+      toast.success(
+        created.agentPromoted
+          ? "User created — you earned Master Agent"
+          : "User created",
+      );
       setEmail("");
       setUsername("");
       setPassword("");

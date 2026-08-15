@@ -379,8 +379,8 @@ export function FireSpikeSlot({
           to { transform: translateY(0); opacity: 1; }
         }
         @keyframes fs-win-pulse-kf {
-          0%, 100% { transform: scale(1); filter: brightness(1); }
-          50% { transform: scale(1.06); filter: brightness(1.2); }
+          0%, 100% { transform: scale(1); }
+          50% { transform: scale(1.06); }
         }
         .fs-reel-scroll { animation: fs-reel-scroll-kf 0.22s linear infinite; }
         .fs-reel-land { animation: fs-reel-land-kf 0.35s ease-out both; }
@@ -388,7 +388,7 @@ export function FireSpikeSlot({
       `}</style>
       <div
         className="pointer-events-none absolute inset-0 bg-cover bg-center bg-no-repeat"
-        style={{ backgroundImage: "url(/images/fire-spike-bg.png)" }}
+        style={{ backgroundImage: "url(/images/fire-spike-bg.webp)" }}
       />
       <div
         className="pointer-events-none absolute inset-0"
@@ -432,21 +432,15 @@ export function FireSpikeSlot({
 
       <div className="relative z-10 mx-auto flex min-h-0 w-full max-w-[1100px] flex-1 flex-col items-center justify-center px-2 py-2 sm:px-4">
         <div
-          className="flex h-full min-h-0 max-h-full w-full flex-col items-stretch"
+          className="flex w-full flex-col items-stretch"
           style={{
-            width: `min(100%, calc((100dvh - 11rem) * ${cfg.reelsCount} / ${cfg.rowsCount}))`,
+            width: `min(100%, calc((100dvh - 14rem) * ${cfg.reelsCount} / ${cfg.rowsCount}))`,
           }}
         >
-          <div className="relative min-h-0 w-full flex-1 overflow-hidden">
-            <div
-              className="relative mx-auto size-full max-h-full"
-              style={{
-                aspectRatio: `${cfg.reelsCount} / ${cfg.rowsCount}`,
-                width: "100%",
-                height: "auto",
-                maxHeight: "100%",
-              }}
-            >
+          <div
+            className="relative w-full shrink-0"
+            style={{ aspectRatio: `${cfg.reelsCount} / ${cfg.rowsCount}` }}
+          >
               <div
                 className="relative size-full rounded-[0.85rem] p-[5px] shadow-[0_18px_50px_rgba(234,88,12,0.55)] sm:rounded-[1.15rem] sm:p-[8px]"
                 style={{
@@ -521,7 +515,6 @@ export function FireSpikeSlot({
               {ui.jackpot && (
                 <div className="pointer-events-none absolute inset-0 z-20 animate-pulse rounded-[0.85rem] bg-gradient-to-b from-yellow-400/30 via-orange-500/20 to-transparent sm:rounded-[1.15rem]" />
               )}
-            </div>
           </div>
 
           <p className="mt-1.5 shrink-0 text-center text-[10px] font-semibold uppercase tracking-wider text-orange-200/55 sm:text-[11px]">

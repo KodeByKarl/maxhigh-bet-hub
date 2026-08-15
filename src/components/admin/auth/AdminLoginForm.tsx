@@ -55,7 +55,7 @@ export function AdminLoginForm() {
         <div className="relative hidden h-full min-h-0 overflow-hidden md:block">
           <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_30%_20%,#4C1D95_0%,transparent_55%),radial-gradient(ellipse_at_80%_80%,#1E3A8A_0%,transparent_50%),linear-gradient(160deg,#0A0912_0%,#1A1030_50%,#0A0912_100%)]" />
           <img
-            src="/games/candy-peak-bg.png"
+            src="/games/candy-peak-bg.webp"
             alt=""
             className="absolute inset-0 h-full w-full object-cover opacity-35"
             aria-hidden

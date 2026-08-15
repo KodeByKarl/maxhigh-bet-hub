@@ -38,15 +38,15 @@ export const SYM_COLOR: Record<FgSymKind, string> = {
 
 /** Glyph fallback until art is supplied under /images/symbols/fortune-gems/. */
 export const ICON_SRC: Record<FgSymKind, string> = {
-  ruby: "/images/symbols/fortune-gems/ruby.png",
-  emerald: "/images/symbols/fortune-gems/emerald.png",
-  sapphire: "/images/symbols/fortune-gems/sapphire.png",
-  amethyst: "/images/symbols/fortune-gems/amethyst.png",
-  topaz: "/images/symbols/fortune-gems/topaz.png",
-  temple: "/images/symbols/fortune-gems/temple.png",
-  wild: "/images/symbols/fortune-gems/wild.png",
+  ruby: "/images/symbols/fortune-gems/ruby.webp",
+  emerald: "/images/symbols/fortune-gems/emerald.webp",
+  sapphire: "/images/symbols/fortune-gems/sapphire.webp",
+  amethyst: "/images/symbols/fortune-gems/amethyst.webp",
+  topaz: "/images/symbols/fortune-gems/topaz.webp",
+  temple: "/images/symbols/fortune-gems/temple.webp",
+  wild: "/images/symbols/fortune-gems/wild.webp",
 };
 
 export const CARD_FRAME_SRC = "/images/symbols/fortune-gems/card-frame.png";
 
-export const BG_SRC = "/images/fortune-gems-bg.png";
+export const BG_SRC = "/images/fortune-gems-bg.webp";

@@ -8,16 +8,16 @@ export const SYMBOLS: CellSym[] = getRuntimeSymbols().map((s) => ({
 }));
 
 export const ICON_SRC: Record<SymKind, string> = {
-  grape: "/images/symbols/panther/10.png",
-  plum: "/images/symbols/panther/J.png",
-  melon: "/images/symbols/panther/Q.png",
-  apple: "/images/symbols/panther/K.png",
-  blue: "/images/symbols/panther/A.png",
-  green: "/images/symbols/panther/owl.png",
-  purple: "/images/symbols/panther/wolf.png",
-  heart: "/images/symbols/panther/ram.png",
-  lollipop: "/images/symbols/panther/scatter.png",
-  bomb: "/images/symbols/panther/wild.png",
+  grape: "/images/symbols/gp/10.png?v=1",
+  plum: "/images/symbols/gp/J.png?v=1",
+  melon: "/images/symbols/gp/Q.png?v=1",
+  apple: "/images/symbols/gp/K.webp?v=1",
+  blue: "/images/symbols/gp/A.png?v=1",
+  green: "/images/symbols/gp/owl.png?v=1",
+  purple: "/images/symbols/gp/wolf.png?v=1",
+  heart: "/images/symbols/gp/ram.png?v=1",
+  lollipop: "/images/symbols/gp/scatter.webp?v=1",
+  bomb: "/images/symbols/gp/wild.webp?v=1",
 };
 
 export function payForCount(sym: CellSym, count: number): number {
@@ -60,4 +60,6 @@ export const ANTE_MULT = 1.25;
 export const FREE_SPINS_BASE = 10;
 export const FREE_SPINS_RETRIGGER = 5;
 
-export const BET_STEPS = [0.2, 0.4, 0.6, 0.8, 1, 1.2, 1.6, 2, 2.4, 3, 4, 5, 6.25, 8, 10];
+export const BET_STEPS = [
+  0.2, 0.4, 0.6, 0.8, 1, 1.2, 1.6, 2, 2.4, 3, 4, 5, 6.25, 8, 10, 20, 50, 100,
+];

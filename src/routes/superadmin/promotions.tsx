@@ -42,7 +42,7 @@ function SuperPromotionsPage() {
   const [sub, setSub] = useState("");
   const [cta, setCta] = useState("Claim Now");
   const [linkUrl, setLinkUrl] = useState("");
-  const [imageUrl, setImageUrl] = useState("/promos/promo-daily-race.png");
+  const [imageUrl, setImageUrl] = useState("/promos/promo-daily-race.webp");
   const [creatingSlide, setCreatingSlide] = useState(false);
 
   const load = async () => {
@@ -156,8 +156,11 @@ function SuperPromotionsPage() {
   return (
     <div className="space-y-8 pb-8">
       <div>
-        <h1 className="text-3xl font-bold text-foreground">Promotions & Dashboard Carousel Engine</h1>
-        <p className="mt-1 text-sm text-muted-foreground">
+        <h1 className="text-xl font-bold text-foreground sm:text-3xl">
+          <span className="sm:hidden">Promotions</span>
+          <span className="hidden sm:inline">Promotions & Dashboard Carousel Engine</span>
+        </h1>
+        <p className="mt-1 text-xs text-muted-foreground sm:text-sm">
           Manage promotional bonus codes, match caps, and live home/promotions page carousel banners.
         </p>
       </div>

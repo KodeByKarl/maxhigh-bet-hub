@@ -3,6 +3,10 @@
 @import "tw-animate-css";
 
 @custom-variant dark (&:is(.dark *));
+/* Baccarat: short viewports (landscape phones / short tablets) */
+@custom-variant short-h (@media (max-height: 700px));
+/* Baccarat: desktop side betting rail (wide + tall enough) */
+@custom-variant bc-rail (@media (min-width: 1024px) and (min-height: 560px));
 
 @theme inline {
   --radius-sm: calc(var(--radius) - 4px);
@@ -217,6 +221,44 @@ iframe[src*="lovable"] {
   letter-spacing: 0.05em;
 }
 
+/* Mahjong Ways — lacquer gold / jade */
+.mahjong-title {
+  background: linear-gradient(180deg, #FFF8E7 0%, #F5D76E 28%, #C9A227 58%, #8B1A1A 88%, #3F0A0A 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  filter: drop-shadow(0 3px 0 #3F0A0A) drop-shadow(0 8px 24px rgba(201, 162, 39, 0.45));
+  letter-spacing: 0.04em;
+}
+
+/* Neutral arcade fallback */
+.arcade-title {
+  background: linear-gradient(180deg, #FFFFFF 0%, #F5D76E 40%, #E8A838 75%, #9A3412 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  filter: drop-shadow(0 3px 0 #431407) drop-shadow(0 8px 22px rgba(232, 168, 56, 0.4));
+  letter-spacing: 0.05em;
+}
+
+/* Golden Panther */
+.panther-title {
+  background: linear-gradient(180deg, #FFFBEB 0%, #FACC15 30%, #F59E0B 65%, #78350F 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  filter: drop-shadow(0 3px 0 #451A03) drop-shadow(0 8px 24px rgba(245, 158, 11, 0.5));
+}
+
+/* Fortune Gems */
+.fortune-title {
+  background: linear-gradient(180deg, #FFF7ED 0%, #FBBF24 30%, #F43F5E 70%, #7C2D12 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  filter: drop-shadow(0 3px 0 #7C2D12) drop-shadow(0 8px 24px rgba(251, 191, 36, 0.45));
+}
+
 /* Godly Gates / Mythology Theme */
 .godly-title {
   background: linear-gradient(180deg, #FFFFFF 0%, #FEF08A 25%, #38BDF8 60%, #1E40AF 85%, #0F172A 100%);
@@ -296,9 +338,34 @@ iframe[src*="lovable"] {
   to { transform: scale(1.15) translate3d(2%, 1%, 0); }
 }
 
+@keyframes loader-drift {
+  from { transform: scale(1.06) translate3d(-1.5%, 0, 0); }
+  to { transform: scale(1.06) translate3d(1.5%, -1%, 0); }
+}
+
+@keyframes loader-float {
+  0%, 100% { transform: translateY(0) rotate(-4deg); }
+  50% { transform: translateY(-14px) rotate(5deg); }
+}
+
+@keyframes loader-fade {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
 @keyframes candy-pulse-glow {
   0%, 100% { box-shadow: 0 0 25px rgba(255, 77, 139, 0.4), 0 0 60px rgba(168, 85, 247, 0.3); }
   50% { box-shadow: 0 0 45px rgba(255, 77, 139, 0.8), 0 0 90px rgba(168, 85, 247, 0.6); }
+}
+
+/* Ace High — lightweight chip pop-in (no Framer Motion on phones) */
+@keyframes ah-chip-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
 }
 
 .candy-float {
@@ -409,6 +476,58 @@ iframe[src*="lovable"] {
   mix-blend-mode: screen;
   animation: fs-fire-scroll 3.2s linear infinite reverse;
   opacity: 0.55;
+}
+
+@keyframes db-swim-glide {
+  /* Soft lateral drift — NOT nose-up/down nodding */
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0);
+  }
+  50% {
+    transform: translate3d(0, -1.5%, 0);
+  }
+}
+
+@keyframes db-tail-wag {
+  0%,
+  100% {
+    transform: rotate(-9deg);
+  }
+  50% {
+    transform: rotate(9deg);
+  }
+}
+
+@keyframes db-fin-flutter {
+  0%,
+  100% {
+    transform: rotate(-4deg);
+  }
+  50% {
+    transform: rotate(5deg);
+  }
+}
+
+@keyframes db-crate-bob {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0);
+  }
+  50% {
+    transform: translate3d(0, -3%, 0);
+  }
+}
+
+@keyframes db-body-undulate {
+  /* Gentle side-to-side S-bend for top-down swim (not tip up/down) */
+  0%,
+  100% {
+    transform: skewY(-0.8deg) rotate(0deg);
+  }
+  50% {
+    transform: skewY(0.8deg) rotate(0deg);
+  }
 }
 
 /* Print / Export PDF styles for Reports */

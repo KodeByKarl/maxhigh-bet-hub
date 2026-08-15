@@ -456,7 +456,7 @@ export function ReelRiotSlot({
       <style>{REEL_RIOT_CSS}</style>
 
       <img
-        src="/games/fruit-riot.png"
+        src="/games/fruit-riot.webp"
         alt=""
         className="absolute inset-0 h-full w-full scale-105 object-cover object-center"
         draggable={false}

@@ -18,6 +18,17 @@ if not exist ".env" (
   exit /b 1
 )
 
+if not exist "node_modules\drizzle-kit" (
+  echo [0/2] Installing npm dependencies...
+  call npm install
+  if errorlevel 1 (
+    echo [!] npm install failed.
+    pause
+    exit /b 1
+  )
+  echo.
+)
+
 echo [1/2] Pushing Drizzle schema to MariaDB...
 call npm run db:push
 if errorlevel 1 (

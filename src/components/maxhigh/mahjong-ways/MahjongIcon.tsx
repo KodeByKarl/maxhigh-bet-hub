@@ -3,18 +3,18 @@ import { cn } from "@/lib/utils";
 import type { MahjongSymKind } from "@/lib/mahjong-ways-config";
 
 export const TILE_IMAGE_MAP: Record<MahjongSymKind, string> = {
-  sym_10: "/images/symbols/mahjong/10.png",
-  sym_j: "/images/symbols/mahjong/j.png",
-  sym_q: "/images/symbols/mahjong/q.png",
-  sym_k: "/images/symbols/mahjong/k.png",
-  sym_a: "/images/symbols/mahjong/a.png",
-  bamboo: "/images/symbols/mahjong/bamboo.png",
-  character: "/images/symbols/mahjong/character.png",
-  dot: "/images/symbols/mahjong/dot.png",
-  red_dragon: "/images/symbols/mahjong/red_dragon.png",
-  green_dragon: "/images/symbols/mahjong/green_dragon.png",
-  wild: "/images/symbols/mahjong/wild.png",
-  scatter: "/images/symbols/mahjong/scatter.png",
+  sym_10: "/images/symbols/mahjong/10.webp?v=2",
+  sym_j: "/images/symbols/mahjong/j.png?v=2",
+  sym_q: "/images/symbols/mahjong/q.png?v=2",
+  sym_k: "/images/symbols/mahjong/k.png?v=2",
+  sym_a: "/images/symbols/mahjong/a.png?v=2",
+  bamboo: "/images/symbols/mahjong/bamboo.png?v=2",
+  character: "/images/symbols/mahjong/character.png?v=2",
+  dot: "/images/symbols/mahjong/dot.webp?v=2",
+  red_dragon: "/images/symbols/mahjong/red_dragon.png?v=2",
+  green_dragon: "/images/symbols/mahjong/green_dragon.png?v=2",
+  wild: "/images/symbols/mahjong/wild.webp?v=2",
+  scatter: "/images/symbols/mahjong/scatter.webp?v=2",
 };
 
 type MahjongIconProps = {
@@ -49,11 +49,11 @@ export const MahjongIcon = memo(function MahjongIcon({
         draggable={false}
         decoding="async"
         className={cn(
-          "pointer-events-none size-full object-contain transition-all duration-300",
+          "pointer-events-none size-full scale-[1.12] object-contain transition-all duration-300",
           isScatter
-            ? "scale-110 drop-shadow-[0_0_22px_rgba(250,204,21,0.95)] drop-shadow-[0_0_28px_rgba(220,38,38,0.7)]"
+            ? "scale-[1.18] drop-shadow-[0_0_22px_rgba(250,204,21,0.95)] drop-shadow-[0_0_28px_rgba(220,38,38,0.7)]"
             : isWild
-              ? "drop-shadow-[0_0_16px_rgba(234,179,8,0.85)]"
+              ? "scale-[1.14] drop-shadow-[0_0_16px_rgba(234,179,8,0.85)]"
               : isGold
                 ? "drop-shadow-[0_0_14px_rgba(245,158,11,0.75)]"
                 : "drop-shadow-[0_3px_6px_rgba(0,0,0,0.4)]",

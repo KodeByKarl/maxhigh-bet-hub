@@ -107,7 +107,12 @@ export async function assertNotInMaintenanceForBets(db: DbLike = getDb()) {
   }
 }
 
-/** Internal ledger write used by game settle + staff adjust paths. */
+/**
+ * Internal ledger write used by game settle + staff adjust paths.
+ * MUST be called inside an open DB transaction. Locks the user row (FOR UPDATE)
+ * so concurrent bets cannot race/overdraft; balance update + transactions insert
+ * share that same transaction boundary.
+ */
 export async function writeLedgerDelta(
   tx: DbLike,
   opts: {
@@ -119,7 +124,12 @@ export async function writeLedgerDelta(
     note?: string | null;
   },
 ): Promise<{ balance: number }> {
-  const rows = await tx.select().from(users).where(eq(users.id, opts.userId)).limit(1);
+  const rows = await tx
+    .select()
+    .from(users)
+    .where(eq(users.id, opts.userId))
+    .for("update")
+    .limit(1);
   const user = rows[0];
   if (!user) throw new Error("User not found");
 

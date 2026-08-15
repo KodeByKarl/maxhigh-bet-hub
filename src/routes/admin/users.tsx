@@ -12,10 +12,11 @@ import type { AdminUserRow } from "@/lib/admin-types";
 import type { UserRole } from "@/lib/user";
 import { useAuth } from "@/lib/auth";
 import { isStaffRole } from "@/lib/user";
+import { AGENT_MASTER_PROMOTE_HINT } from "@/lib/agent-promotion";
 import { formatMoney } from "@/lib/currency";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
-import { Pencil, X, KeyRound, ShieldAlert, UserPlus, RefreshCw, Lock, Unlock } from "lucide-react";
+import { MoreHorizontal, Pencil, X, KeyRound, ShieldAlert, UserPlus, RefreshCw, Lock, Unlock } from "lucide-react";
 
 export const Route = createFileRoute("/admin/users")({
   component: AdminUsersPage,
@@ -83,41 +84,35 @@ function AdminUsersPage() {
   }
 
   return (
-    <div className="space-y-6 pb-6">
-      <div className="flex flex-wrap items-center justify-between gap-4">
+    <div className="space-y-4 pb-2 sm:space-y-6 sm:pb-6">
+      <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-black text-foreground">Player List</h1>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Manage player accounts, security status, reset passwords, and add chips from your wallet.
+          <h1 className="text-xl font-black text-foreground sm:text-3xl">Player List</h1>
+          <p className="mt-1 text-xs text-muted-foreground sm:text-sm">
+            Manage accounts, security, passwords, and chips from your wallet.
           </p>
           {user && (user.role === "agent" || user.role === "master_agent") && (
-            <p className="mt-2 text-xs font-semibold text-amber-300">
-              Your chip wallet: <span className="text-emerald-400 font-black">{formatMoney(user.balance)}</span>
-              <span className="text-muted-foreground font-normal"> — you can only give what you have</span>
+            <p className="mt-1.5 text-xs font-semibold text-amber-300">
+              Wallet: <span className="font-black text-emerald-400">{formatMoney(user.balance)}</span>
+              <span className="hidden font-normal text-muted-foreground sm:inline"> — you can only give what you have</span>
+            </p>
+          )}
+          {user?.role === "agent" && (
+            <p className="mt-2 text-xs font-semibold text-violet-300">
+              {AGENT_MASTER_PROMOTE_HINT}
             </p>
           )}
         </div>
-
-        <button
-          type="button"
-          onClick={() => setShowAddModal(true)}
-          className="inline-flex items-center gap-2 h-11 rounded-xl bg-primary px-5 text-sm font-bold text-primary-foreground hover:bg-primary/90 active:scale-95 transition-all shadow-md"
-        >
-          <UserPlus size={18} />
-          <span>+ Add Account</span>
-        </button>
       </div>
 
-      {/* Filter & Toolbar */}
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div className="flex flex-wrap items-center gap-2 flex-1">
-          <Input
-            value={q}
-            onChange={(e) => setQ(e.target.value)}
-            placeholder="Search username or email…"
-            className="h-11 min-w-[200px] max-w-xs rounded-xl border-border bg-panel text-foreground"
-          />
-
+      <div className="grid grid-cols-1 gap-2 sm:flex sm:flex-wrap sm:items-center">
+        <Input
+          value={q}
+          onChange={(e) => setQ(e.target.value)}
+          placeholder="Search username or email…"
+          className="h-11 w-full rounded-xl border-border bg-panel text-foreground sm:min-w-[200px] sm:max-w-xs"
+        />
+        <div className="grid grid-cols-2 gap-2 sm:contents">
           <select
             value={role}
             onChange={(e) => setRole(e.target.value as UserRole | "all")}
@@ -128,7 +123,6 @@ function AdminUsersPage() {
             <option value="agent">Agent</option>
             <option value="master_agent">Master Agent</option>
           </select>
-
           <select
             value={sortBy}
             onChange={(e) => setSortBy(e.target.value as "newest" | "oldest" | "az" | "za")}
@@ -139,40 +133,116 @@ function AdminUsersPage() {
             <option value="az">Alphabetical (A - Z)</option>
             <option value="za">Alphabetical (Z - A)</option>
           </select>
-
+        </div>
+        <div className="grid grid-cols-2 gap-2 sm:contents">
           <button
             type="button"
             onClick={() => setMyPlayersOnly(!myPlayersOnly)}
-            className={`h-11 rounded-xl px-4 text-xs font-extrabold uppercase tracking-wider transition-all ${
+            className={`h-11 rounded-xl px-3 text-[11px] font-extrabold uppercase tracking-wider transition-all sm:px-4 sm:text-xs ${
               myPlayersOnly
-                ? "bg-violet-600 text-white shadow-lg shadow-violet-600/30 border border-violet-400/50"
+                ? "border border-violet-400/50 bg-violet-600 text-white shadow-lg shadow-violet-600/30"
                 : "border border-border bg-panel text-muted-foreground hover:bg-panel-hover hover:text-foreground"
             }`}
           >
-            🎯 My Players Only {myPlayersOnly ? "✓" : ""}
+            My Players {myPlayersOnly ? "✓" : ""}
           </button>
-
           <button
             type="button"
             onClick={() => void load()}
-            className="inline-flex items-center gap-1.5 h-11 rounded-xl border border-border bg-panel px-4 text-sm font-semibold text-foreground hover:bg-panel-hover"
+            className="inline-flex h-11 items-center justify-center gap-1.5 rounded-xl border border-border bg-panel px-4 text-sm font-semibold text-foreground hover:bg-panel-hover"
           >
             <RefreshCw size={15} />
-            <span>Refresh</span>
+            Refresh
           </button>
         </div>
+        <button
+          type="button"
+          onClick={() => setShowAddModal(true)}
+          className="inline-flex h-11 w-full items-center justify-center gap-2 rounded-xl bg-primary px-5 text-sm font-bold text-primary-foreground shadow-md transition-all hover:bg-primary/90 active:scale-95 sm:w-auto"
+        >
+          <UserPlus size={18} />
+          Add Account
+        </button>
       </div>
 
-      {/* Users Table */}
-      <div className="overflow-x-auto rounded-2xl border border-border bg-panel shadow-sm">
-        <table className="w-full text-left text-sm border-collapse min-w-[900px]">
+      <div className="grid gap-2.5 md:hidden">
+        {sortedRows.length === 0 ? (
+          <div className="rounded-2xl border border-border bg-panel p-8 text-center text-sm text-muted-foreground">
+            No users found matching your search.
+          </div>
+        ) : (
+          sortedRows.map((u) => {
+            const locked = u.isLocked || (u.failedAttempts ?? 0) >= 3;
+            return (
+              <div key={u.id} className="space-y-3 rounded-2xl border border-border bg-panel p-3.5">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span className="truncate text-sm font-black text-foreground">@{u.username}</span>
+                      {locked ? (
+                        <span className="shrink-0 rounded-md border border-rose-500/50 bg-rose-500/15 px-2 py-0.5 text-[10px] font-black uppercase tracking-wide text-rose-400">
+                          Locked
+                        </span>
+                      ) : (
+                        <span className="shrink-0 rounded-md border border-emerald-500/40 bg-emerald-500/15 px-2 py-0.5 text-[10px] font-black uppercase tracking-wide text-emerald-400">
+                          Active
+                        </span>
+                      )}
+                    </div>
+                    {u.displayName && (
+                      <div className="mt-0.5 truncate text-[11px] text-primary/90">{u.displayName}</div>
+                    )}
+                    <div className="mt-0.5 font-mono text-[10px] text-muted-foreground">
+                      {u.publicUserId}
+                    </div>
+                  </div>
+                  <div className="shrink-0 text-right">
+                    <div className="text-[10px] font-bold uppercase tracking-wide text-muted-foreground">Balance</div>
+                    <div className="text-lg font-black tabular-nums text-emerald-400">{formatMoney(u.balance)}</div>
+                  </div>
+                </div>
+
+                <div className="flex flex-wrap items-center gap-2 text-[11px]">
+                  <span className="rounded-full bg-panel-hover px-2.5 py-1 font-black uppercase tracking-wider text-muted-foreground">
+                    {u.role === "master_agent" ? "Master Agent" : u.role}
+                  </span>
+                  <span className="truncate rounded-lg border border-violet-500/30 bg-violet-500/10 px-2.5 py-1 font-bold text-violet-300">
+                    @{u.agentName || "System"}
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-2 gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setActiveModal({ type: "addChips", user: u })}
+                    className="h-10 rounded-xl bg-emerald-500/90 text-xs font-black uppercase tracking-wide text-black"
+                  >
+                    Add / Withdraw
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setActiveModal({ type: "menu", user: u })}
+                    className="inline-flex h-10 items-center justify-center gap-1.5 rounded-xl border border-amber-500/30 bg-amber-500/10 text-xs font-bold text-amber-300"
+                  >
+                    <MoreHorizontal size={16} />
+                    Actions
+                  </button>
+                </div>
+              </div>
+            );
+          })
+        )}
+      </div>
+
+      <div className="hidden overflow-x-auto rounded-2xl border border-border bg-panel shadow-sm md:block">
+        <table className="w-full min-w-[900px] border-collapse text-left text-sm">
           <thead className="border-b border-border text-[11px] uppercase tracking-wider text-muted-foreground bg-white/[0.02]">
             <tr>
               <th className="px-4 py-3.5 font-semibold">User</th>
               <th className="px-4 py-3.5 font-semibold text-center">Created By / Agent</th>
               <th className="px-4 py-3.5 font-semibold text-center">Role</th>
               <th className="px-4 py-3.5 font-semibold text-center">Balance</th>
-              <th className="px-4 py-3.5 font-semibold text-center">Actions Grid</th>
+              <th className="px-4 py-3.5 text-center font-semibold">Actions</th>
             </tr>
           </thead>
           <tbody>
@@ -229,82 +299,44 @@ function AdminUsersPage() {
                       <div className="flex flex-wrap items-center justify-center gap-1.5 text-xs font-bold">
                         <button
                           type="button"
-                          onClick={() => setActiveModal({ type: "menu", user: u })}
-                          className="rounded-xl border border-amber-500/30 bg-amber-500/10 px-3 py-1.5 text-amber-300 hover:bg-amber-500/20 active:scale-95 transition-all"
-                        >
-                          Menu
-                        </button>
-
-                        <button
-                          type="button"
-                          onClick={() => setActiveModal({ type: "view", user: u })}
-                          className="rounded-xl border border-border bg-panel-hover px-3 py-1.5 text-foreground hover:bg-border active:scale-95 transition-all"
-                        >
-                          View
-                        </button>
-
-                        <button
-                          type="button"
-                          onClick={() => setActiveModal({ type: "edit", user: u })}
-                          className="rounded-xl border border-border bg-panel-hover px-3 py-1.5 text-foreground hover:bg-border active:scale-95 transition-all"
-                        >
-                          Profile
-                        </button>
-
-                        <button
-                          type="button"
-                          onClick={() => setActiveModal({ type: "edit", user: u })}
-                          className="rounded-xl border border-emerald-500/30 bg-emerald-500/10 px-3 py-1.5 text-emerald-400 hover:bg-emerald-500/20 active:scale-95 transition-all"
-                        >
-                          Edit
-                        </button>
-
-                        <button
-                          type="button"
                           onClick={() => setActiveModal({ type: "addChips", user: u })}
-                          className="rounded-xl border border-emerald-500/40 bg-emerald-500/15 px-3 py-1.5 text-emerald-300 hover:bg-emerald-500/25 active:scale-95 transition-all"
+                          className="rounded-xl border border-emerald-500/40 bg-emerald-500/15 px-3 py-1.5 text-emerald-300 hover:bg-emerald-500/25"
                         >
                           Chips
                         </button>
-
                         <button
                           type="button"
-                          onClick={() => {
-                            navigator.clipboard.writeText(u.id);
-                            toast.success(`Copied ID for @${u.username}`);
-                          }}
-                          className="rounded-xl border border-border bg-panel-hover px-3 py-1.5 text-foreground hover:bg-border active:scale-95 transition-all"
+                          onClick={() => setActiveModal({ type: "view", user: u })}
+                          className="rounded-xl border border-border bg-panel-hover px-3 py-1.5 text-foreground hover:bg-border"
                         >
-                          Copy ID
+                          View
                         </button>
-
                         <button
                           type="button"
-                          onClick={() => setActiveModal({ type: "password", user: u })}
-                          className="rounded-xl border border-emerald-500/30 bg-emerald-500/10 px-3 py-1.5 text-emerald-400 hover:bg-emerald-500/20 active:scale-95 transition-all"
+                          onClick={() => setActiveModal({ type: "edit", user: u })}
+                          className="rounded-xl border border-emerald-500/30 bg-emerald-500/10 px-3 py-1.5 text-emerald-400 hover:bg-emerald-500/20"
                         >
-                          Password
+                          Edit
                         </button>
-
-                        <button
-                          type="button"
-                          onClick={() => setActiveModal({ type: "security", user: u })}
-                          className="rounded-xl border border-emerald-500/30 bg-emerald-500/10 px-3 py-1.5 text-emerald-400 hover:bg-emerald-500/20 active:scale-95 transition-all"
-                        >
-                          Security Code
-                        </button>
-
                         <button
                           type="button"
                           disabled={busyId === u.id}
                           onClick={() => void toggleLock(u.id, locked)}
-                          className={`rounded-xl border px-3 py-1.5 text-xs font-bold transition-all ${
+                          className={`rounded-xl border px-3 py-1.5 text-xs font-bold ${
                             locked
                               ? "border-emerald-500/40 bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20"
                               : "border-rose-500/40 bg-rose-500/10 text-rose-400 hover:bg-rose-500/20"
                           }`}
                         >
                           {locked ? "Unlock" : "Lock"}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setActiveModal({ type: "menu", user: u })}
+                          className="inline-flex items-center gap-1 rounded-xl border border-amber-500/30 bg-amber-500/10 px-3 py-1.5 text-amber-300 hover:bg-amber-500/20"
+                        >
+                          <MoreHorizontal size={14} />
+                          Actions
                         </button>
                       </div>
                     </td>
@@ -320,9 +352,10 @@ function AdminUsersPage() {
       {showAddModal && (
         <CreateUserModal
           onClose={() => setShowAddModal(false)}
-          onSuccess={() => {
+          onSuccess={async (promoted) => {
             setShowAddModal(false);
-            void load();
+            await load();
+            if (promoted) await refreshSession();
           }}
         />
       )}
@@ -564,7 +597,10 @@ function AddChipsModal({
 }
 
 /** Modal to create new Player or Agent accounts */
-function CreateUserModal({ onClose, onSuccess }: { onClose: () => void; onSuccess: () => void }) {
+function CreateUserModal({ onClose, onSuccess }: { onClose: () => void; onSuccess: (promoted: boolean) => void }) {
+  const { user } = useAuth();
+  const isSuper = user?.role === "superadmin";
+  const canCreateAgent = user?.role === "agent" || user?.role === "master_agent" || isSuper;
   const [displayName, setDisplayName] = useState("");
   const [username, setUsername] = useState("");
   const [publicUserId, setPublicUserId] = useState("");
@@ -582,7 +618,14 @@ function CreateUserModal({ onClose, onSuccess }: { onClose: () => void; onSucces
     }
     setSubmitting(true);
     try {
-      await adminCreateUserFn({
+      const createRole: UserRole = isSuper
+        ? role
+        : canCreateAgent
+          ? role === "agent"
+            ? "agent"
+            : "player"
+          : "player";
+      const created = await adminCreateUserFn({
         data: {
           username: username.trim(),
           publicUserId: publicUserId.trim() || undefined,
@@ -590,11 +633,17 @@ function CreateUserModal({ onClose, onSuccess }: { onClose: () => void; onSucces
           email: email.trim() || undefined,
           password,
           balance: Number(balance) || 0,
-          role,
+          role: createRole,
         },
       });
-      toast.success(`Account @${username.trim()} created successfully!`);
-      onSuccess();
+      if (created.agentPromoted) {
+        toast.success(
+          `Agent @${username.trim()} created. You earned Master Agent!`,
+        );
+      } else {
+        toast.success(`Account @${username.trim()} created successfully!`);
+      }
+      onSuccess(Boolean(created.agentPromoted));
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Failed to create account");
     } finally {
@@ -614,16 +663,36 @@ function CreateUserModal({ onClose, onSuccess }: { onClose: () => void; onSucces
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-xs font-semibold uppercase text-muted-foreground mb-1">Account Role</label>
-            <select
-              value={role}
-              onChange={(e) => setRole(e.target.value as UserRole)}
-              className="w-full h-11 rounded-xl border border-border bg-background px-3 text-sm font-bold text-foreground"
-            >
-              <option value="player">Player</option>
-              <option value="agent">Agent</option>
-              <option value="master_agent">Master Agent</option>
-            </select>
+            <label className="mb-1 block text-xs font-semibold uppercase text-muted-foreground">Account Role</label>
+            {isSuper ? (
+              <select
+                value={role}
+                onChange={(e) => setRole(e.target.value as UserRole)}
+                className="h-11 w-full rounded-xl border border-border bg-background px-3 text-sm font-bold text-foreground"
+              >
+                <option value="player">Player</option>
+                <option value="agent">Agent</option>
+                <option value="master_agent">Master Agent</option>
+              </select>
+            ) : canCreateAgent ? (
+              <>
+                <select
+                  value={role === "agent" ? "agent" : "player"}
+                  onChange={(e) => setRole(e.target.value as UserRole)}
+                  className="h-11 w-full rounded-xl border border-border bg-background px-3 text-sm font-bold text-foreground"
+                >
+                  <option value="player">Player</option>
+                  <option value="agent">Agent</option>
+                </select>
+                {user?.role === "agent" && (
+                  <p className="mt-1.5 text-[11px] text-violet-300">{AGENT_MASTER_PROMOTE_HINT}</p>
+                )}
+              </>
+            ) : (
+              <div className="flex h-11 items-center rounded-xl border border-border bg-background px-3 text-sm font-bold text-foreground">
+                Player
+              </div>
+            )}
           </div>
 
           <div>
@@ -726,7 +795,7 @@ function UserMenuModal({
 }: {
   user: AdminUserRow;
   onClose: () => void;
-  onSelect: (modalType: "view" | "edit" | "password" | "security") => void;
+  onSelect: (modalType: "view" | "edit" | "password" | "security" | "addChips") => void;
 }) {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 p-4 backdrop-blur-sm animate-in fade-in duration-200">
@@ -742,6 +811,15 @@ function UserMenuModal({
         </div>
 
         <div className="space-y-2 pt-1">
+          <button
+            type="button"
+            onClick={() => onSelect("addChips")}
+            className="flex w-full items-center justify-between rounded-xl border border-emerald-500/30 bg-emerald-500/10 p-3 text-left text-sm font-semibold text-emerald-300 transition-colors hover:bg-emerald-500/20"
+          >
+            <span>Add / Withdraw Chips</span>
+            <span className="text-xs text-emerald-400/70">→</span>
+          </button>
+
           <button
             type="button"
             onClick={() => onSelect("view")}

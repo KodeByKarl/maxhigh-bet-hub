@@ -218,7 +218,7 @@ export function PugDenConfigModal({ game, open, onOpenChange, onPatchLobby }: Pr
                 {game.name}
               </DialogTitle>
               <DialogDescription className="text-xs text-muted-foreground">
-                Full engine · diamond 1-2-3-4-3-2-1 · 144 ways · Treats + Dawg&apos;s Den —{" "}
+                Full engine · diamond 3-4-5-4-3 · 720 ways · Treats + Dawg&apos;s Den —{" "}
                 {game.gameId}
               </DialogDescription>
             </DialogHeader>

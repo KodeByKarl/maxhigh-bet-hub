@@ -358,30 +358,30 @@ export function ChineseNewYearSlot({
         }}
       />
 
-      {/* Themed header — centered title, clear of close (X) */}
+      {/* Compact header — more room for reels (elderly-friendly symbol size) */}
       <header className="relative z-20 shrink-0">
         <div
-          className="relative border-b-2 border-yellow-600/70"
+          className="relative border-b border-yellow-600/70"
           style={{
             background:
               "linear-gradient(180deg, #7f1d1d 0%, #450a0a 48%, #1c0808 100%)",
           }}
         >
           <div
-            className="h-[3px] w-full"
+            className="h-[2px] w-full"
             style={{
               background:
                 "linear-gradient(90deg, transparent 0%, #B8860B 12%, #F5D76E 50%, #B8860B 88%, transparent 100%)",
             }}
           />
 
-          <div className="flex items-center justify-center px-12 py-2.5 sm:px-14 sm:py-3">
+          <div className="flex items-center justify-center px-11 py-1.5 sm:px-14 sm:py-2.5">
             <div className="flex min-w-0 max-w-full flex-col items-center text-center">
-              <div className="text-[9px] font-bold uppercase tracking-[0.28em] text-amber-200/75 sm:text-[10px]">
+              <div className="text-[10px] font-bold uppercase tracking-[0.28em] text-amber-200/80 sm:text-[11px]">
                 Gong Xi Fa Cai
               </div>
               <h1
-                className="truncate text-base font-black tracking-wide text-transparent sm:text-lg"
+                className="truncate text-lg font-black tracking-wide text-transparent sm:text-xl"
                 style={{
                   backgroundImage:
                     "linear-gradient(180deg, #FFF6C8 0%, #F5D76E 42%, #D4A017 78%, #8B6914 100%)",
@@ -392,26 +392,19 @@ export function ChineseNewYearSlot({
               >
                 Chinese New Year
               </h1>
-              <div className="mt-0.5 flex items-center justify-center gap-1.5">
-                <span className="h-px w-6 bg-gradient-to-r from-transparent to-yellow-500/70" />
-                <span className="text-[9px] font-semibold tracking-widest text-yellow-200/60">
-                  新 年 快 乐
-                </span>
-                <span className="h-px w-6 bg-gradient-to-l from-transparent to-yellow-500/70" />
-              </div>
             </div>
           </div>
 
           {fsProgress && (
             <div className="absolute bottom-0 left-1/2 z-10 -translate-x-1/2 translate-y-1/2">
-              <span className="rounded-full border border-amber-300/80 bg-gradient-to-r from-red-800 via-amber-700 to-red-800 px-3 py-0.5 text-[10px] font-black text-yellow-50 shadow-[0_0_14px_rgba(220,38,38,0.55)]">
+              <span className="rounded-full border border-amber-300/80 bg-gradient-to-r from-red-800 via-amber-700 to-red-800 px-3 py-0.5 text-[11px] font-black text-yellow-50 shadow-[0_0_14px_rgba(220,38,38,0.55)]">
                 {fsProgress}
               </span>
             </div>
           )}
 
           <div
-            className="h-[3px] w-full"
+            className="h-[2px] w-full"
             style={{
               background:
                 "linear-gradient(90deg, transparent 0%, #B8860B 12%, #F5D76E 50%, #B8860B 88%, transparent 100%)",
@@ -420,20 +413,16 @@ export function ChineseNewYearSlot({
         </div>
       </header>
 
-      {/* Reels — fill available space (5×3) */}
-      <div className="relative z-10 flex min-h-0 flex-1 items-center justify-center overflow-hidden px-2 py-1 sm:px-3 sm:py-2">
-        <div
-          className="relative h-full max-h-full max-w-full"
-          style={{
-            aspectRatio: `${cfg.reelsCount} / ${cfg.rowsCount}`,
-            width: "auto",
-            // Cap extreme ultrawide; height drives size so symbols grow with the play area
-            maxWidth: "min(100%, 1280px)",
-          }}
-        >
-          <div className="box-border flex h-full w-full flex-col rounded-2xl border-[3px] border-yellow-600/80 bg-gradient-to-b from-red-950/95 to-black/90 p-0.5 shadow-[0_0_48px_rgba(185,28,28,0.4)] sm:border-4 sm:p-1">
+      {/* Reels — stretch to fill leftover height on mobile so symbols stay large */}
+      <div className="relative z-10 flex min-h-0 flex-1 items-stretch justify-center overflow-hidden px-1.5 py-1 sm:items-center sm:px-3 sm:py-2">
+        <div className="relative h-full w-full max-w-[1100px] sm:mx-auto sm:flex sm:max-h-full sm:items-center sm:justify-center">
+          {/* Mobile: fill leftover height (bigger tiles). Desktop: 5:3 frame. */}
+          <div
+            className="box-border flex h-full w-full flex-col overflow-hidden rounded-xl border-2 border-[#C9A227]/90 bg-[#1a0606]/95 p-[3px] shadow-[0_0_40px_rgba(185,28,28,0.35),inset_0_0_0_1px_rgba(245,215,110,0.25)] sm:aspect-[5/3] sm:h-auto sm:max-h-full sm:w-full sm:rounded-2xl sm:border-[3px] sm:p-1.5"
+            style={{ maxWidth: "min(100%, calc(85dvh * 5 / 3))" }}
+          >
             <div
-              className="grid h-full min-h-0 w-full flex-1 gap-[2px] sm:gap-[3px]"
+              className="grid h-full min-h-0 w-full flex-1 gap-1 sm:gap-1.5"
               style={{
                 gridTemplateColumns: `repeat(${cfg.reelsCount}, minmax(0, 1fr))`,
                 gridTemplateRows: `repeat(${cfg.rowsCount}, minmax(0, 1fr))`,
@@ -445,7 +434,7 @@ export function ChineseNewYearSlot({
                   return (
                     <div
                       key={key}
-                      className="min-h-0 min-w-0 p-px"
+                      className="relative min-h-0 min-w-0"
                       style={{ gridColumn: reel + 1, gridRow: row + 1 }}
                     >
                       <ReelCell
@@ -461,7 +450,7 @@ export function ChineseNewYearSlot({
                             ? SYMBOL_NAMES[extraScatter]
                             : null
                         }
-                        className="!aspect-auto h-full w-full"
+                        className="h-full w-full"
                       />
                     </div>
                   );
@@ -523,23 +512,23 @@ export function ChineseNewYearSlot({
         </div>
       </div>
 
-      {/* Controls — centered cluster */}
-      <div className="relative z-20 border-t border-yellow-800/40 bg-black/55 px-3 py-2.5 backdrop-blur-sm">
-        <div className="mx-auto flex w-full max-w-lg flex-col items-center gap-2">
-          <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-0.5 text-[11px] text-yellow-100/80">
+      {/* Controls — larger tap targets for older players */}
+      <div className="relative z-20 border-t border-yellow-800/40 bg-black/60 px-2.5 py-2.5 backdrop-blur-sm sm:px-3 sm:py-3">
+        <div className="mx-auto flex w-full max-w-lg flex-col items-center gap-2.5">
+          <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-1 text-[13px] font-semibold text-yellow-100/90 sm:text-sm">
             <span>Bal {formatMoneyCompact(balance)}</span>
-            <span className="text-amber-300/90">Win {formatMoneyCompact(lastWin)}</span>
+            <span className="text-amber-300">Win {formatMoneyCompact(lastWin)}</span>
             <span>
               {cfg.paylineCount} lines · {formatMoneyCompact(bet)}
             </span>
           </div>
 
-          <div className="flex flex-wrap items-center justify-center gap-2">
+          <div className="flex flex-wrap items-center justify-center gap-2.5">
             <button
               type="button"
               disabled={busy}
               onClick={() => setBet(BET_STEPS[Math.max(0, bi - 1)]!)}
-              className="grid size-9 place-items-center rounded-[5px] border border-yellow-700/50 bg-red-950/60 text-yellow-100 disabled:opacity-40"
+              className="grid size-12 place-items-center rounded-lg border-2 border-yellow-700/60 bg-red-950/70 text-xl font-black text-yellow-100 disabled:opacity-40 sm:size-11"
             >
               −
             </button>
@@ -547,7 +536,7 @@ export function ChineseNewYearSlot({
               type="button"
               disabled={busy}
               onClick={() => !busy && setBetPickerOpen(true)}
-              className="min-w-[3.75rem] rounded-[5px] border border-yellow-600/50 bg-black/35 px-2 py-1.5 text-center text-sm font-black tabular-nums text-yellow-100 transition hover:border-yellow-400/70 hover:bg-red-950/50 disabled:opacity-40"
+              className="min-w-[4.5rem] rounded-lg border-2 border-yellow-600/60 bg-black/40 px-3 py-2.5 text-center text-base font-black tabular-nums text-yellow-100 transition hover:border-yellow-400/70 hover:bg-red-950/50 disabled:opacity-40 sm:text-lg"
               title="Select bet"
               aria-label="Open bet picker"
             >
@@ -557,7 +546,7 @@ export function ChineseNewYearSlot({
               type="button"
               disabled={busy}
               onClick={() => setBet(BET_STEPS[Math.min(BET_STEPS.length - 1, bi + 1)]!)}
-              className="grid size-9 place-items-center rounded-[5px] border border-yellow-700/50 bg-red-950/60 text-yellow-100 disabled:opacity-40"
+              className="grid size-12 place-items-center rounded-lg border-2 border-yellow-700/60 bg-red-950/70 text-xl font-black text-yellow-100 disabled:opacity-40 sm:size-11"
             >
               +
             </button>
@@ -566,14 +555,14 @@ export function ChineseNewYearSlot({
               type="button"
               onClick={() => setTurbo((t) => !t)}
               className={cn(
-                "grid size-9 place-items-center rounded-[5px] border",
+                "grid size-12 place-items-center rounded-lg border-2 sm:size-11",
                 turbo
                   ? "border-amber-400 bg-amber-600/40 text-amber-100"
                   : "border-yellow-800/50 bg-black/40 text-yellow-200/70",
               )}
               title="Turbo"
             >
-              <FastForward className="size-4" />
+              <FastForward className="size-5" />
             </button>
 
             <button
@@ -583,7 +572,7 @@ export function ChineseNewYearSlot({
                 if (!autoSpin && !busyRef.current) void doSpin();
               }}
               className={cn(
-                "grid h-9 place-items-center rounded-[5px] border px-2.5 text-[10px] font-bold uppercase",
+                "grid h-12 place-items-center rounded-lg border-2 px-3.5 text-xs font-bold uppercase tracking-wide sm:h-11",
                 autoSpin
                   ? "border-red-400 bg-red-700/50 text-white"
                   : "border-yellow-800/50 bg-black/40 text-yellow-200/70",
@@ -595,20 +584,20 @@ export function ChineseNewYearSlot({
             <button
               type="button"
               onClick={() => setInfoOpen(true)}
-              className="grid size-9 place-items-center rounded-[5px] border border-yellow-800/50 bg-black/40 text-yellow-200/80"
+              className="grid size-12 place-items-center rounded-lg border-2 border-yellow-800/50 bg-black/40 text-yellow-200/80 sm:size-11"
               title="Paytable"
               aria-label="Info"
             >
-              <Info className="size-4" />
+              <Info className="size-5" />
             </button>
 
             <button
               type="button"
               disabled={busy}
               onClick={() => void doSpin()}
-              className="flex items-center gap-1.5 rounded-[5px] border-2 border-yellow-400 bg-gradient-to-b from-red-600 to-red-900 px-5 py-2 text-sm font-black uppercase tracking-wide text-yellow-50 shadow-[0_0_20px_rgba(220,38,38,0.5)] disabled:opacity-50"
+              className="flex min-h-12 items-center gap-2 rounded-lg border-2 border-yellow-400 bg-gradient-to-b from-red-600 to-red-900 px-6 py-2.5 text-base font-black uppercase tracking-wide text-yellow-50 shadow-[0_0_20px_rgba(220,38,38,0.5)] disabled:opacity-50 sm:min-h-11 sm:text-sm"
             >
-              <RotateCcw className="size-4" />
+              <RotateCcw className="size-5" />
               Spin
             </button>
           </div>

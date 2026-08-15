@@ -60,7 +60,7 @@ function createInitialBoard(): BoardCell[] {
 
 function preloadAssets() {
   if (typeof Image === "undefined") return;
-  const urls = ["/games/super-ace.png", ...Object.values(TILE_IMAGE_MAP)];
+  const urls = ["/games/super-ace.webp", ...Object.values(TILE_IMAGE_MAP)];
   for (const src of urls) {
     const img = new Image();
     img.decoding = "async";
@@ -436,7 +436,7 @@ export function SuperAceSlot({ onBalanceUpdate }: SuperAceSlotProps) {
     <div className="relative flex h-dvh w-full flex-col overflow-hidden select-none">
       {/* Full-bleed themed backdrop */}
       <img
-        src="/games/super-ace.png"
+        src="/games/super-ace.webp"
         alt=""
         className="absolute inset-0 size-full object-cover"
         aria-hidden

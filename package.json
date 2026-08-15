@@ -10,10 +10,13 @@
     "preview": "vite preview",
     "lint": "eslint .",
     "format": "prettier --write .",
-    "db:push": "drizzle-kit push",
-    "db:studio": "drizzle-kit studio",
-    "db:seed": "tsx --env-file=.env scripts/seed.ts",
-    "db:setup": "npm run db:push && npm run db:seed"
+    "db:push": "npx drizzle-kit push",
+    "db:studio": "npx drizzle-kit studio",
+    "db:seed": "npx tsx --env-file=.env scripts/seed.ts",
+    "db:setup": "npm run db:push && npm run db:seed",
+    "db:sync": "npx tsx --env-file=.env scripts/db-sync.ts",
+    "db:generate": "npx drizzle-kit generate",
+    "db:cleanup-play-sessions": "npx tsx --env-file=.env scripts/cleanup-play-sessions.ts"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",

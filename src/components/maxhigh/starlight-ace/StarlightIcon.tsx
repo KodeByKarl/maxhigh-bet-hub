@@ -8,13 +8,13 @@ export const TILE_IMAGE_MAP: Record<StarlightSymKind, string> = {
   sym_q: "/images/symbols/starlight-ace/q.png",
   sym_k: "/images/symbols/starlight-ace/k.png",
   sym_a: "/images/symbols/starlight-ace/a.png",
-  moon: "/images/symbols/starlight-ace/moon.png",
+  moon: "/images/symbols/starlight-ace/moon.webp",
   star: "/images/symbols/starlight-ace/star.png",
-  castle: "/images/symbols/starlight-ace/castle.png",
+  castle: "/images/symbols/starlight-ace/castle.webp",
   princess: "/images/symbols/starlight-ace/princess.png",
   comet: "/images/symbols/starlight-ace/comet.png",
-  wild: "/images/symbols/starlight-ace/wild.png",
-  scatter: "/images/symbols/starlight-ace/scatter.png",
+  wild: "/images/symbols/starlight-ace/wild.webp",
+  scatter: "/images/symbols/starlight-ace/scatter.webp",
 };
 
 type StarlightIconProps = {

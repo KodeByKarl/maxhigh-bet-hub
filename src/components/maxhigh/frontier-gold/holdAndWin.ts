@@ -1,8 +1,8 @@
-import type { FrontierGoldConfig } from "@/lib/frontier-gold-config";
+import { totalCells, type FrontierGoldConfig } from "@/lib/frontier-gold-config";
 import { pickWeighted, type Rng } from "./rng";
 import type { HoldCoin, HoldWinScript, HoldWinStep } from "./types";
 
-function rollCoin(rng: Rng, cfg: FrontierGoldConfig, totalBet: number): HoldCoin {
+function rollCoin(rng: Rng, cfg: FrontierGoldConfig, _totalBet: number): HoldCoin {
   if (rng() < (cfg.holdWinJackpotChance ?? 0.025)) {
     const jp = pickWeighted(rng, cfg.jackpots);
     return {
@@ -23,7 +23,8 @@ function rollCoin(rng: Rng, cfg: FrontierGoldConfig, totalBet: number): HoldCoin
 }
 
 /**
- * Hold & Win: lock trigger coins, 3 respins, reset on new coin, end on 0 respins or full 15.
+ * Hold & Win: lock trigger coins, 3 respins, reset on new coin,
+ * end on 0 respins or full diamond (sum of reelHeights).
  */
 export function resolveHoldAndWin(
   rng: Rng,
@@ -31,7 +32,7 @@ export function resolveHoldAndWin(
   cfg: FrontierGoldConfig,
   triggerPositions: Array<[number, number]>,
 ): HoldWinScript {
-  const cells = cfg.reelsCount * cfg.rowsCount;
+  const cells = totalCells(cfg);
   const occupied = new Map<string, HoldCoin>();
 
   const triggerCoins: HoldCoin[] = [];
@@ -52,7 +53,8 @@ export function resolveHoldAndWin(
   while (respins > 0 && occupied.size < cells) {
     const newCoins: HoldCoin[] = [];
     for (let r = 0; r < cfg.reelsCount; r++) {
-      for (let row = 0; row < cfg.rowsCount; row++) {
+      const height = cfg.reelHeights?.[r] ?? cfg.rowsCount;
+      for (let row = 0; row < height; row++) {
         const key = `${r},${row}`;
         if (occupied.has(key)) continue;
         if (rng() < cfg.holdWinCoinChance) {

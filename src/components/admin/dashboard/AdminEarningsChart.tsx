@@ -152,30 +152,29 @@ export function AdminEarningsChart() {
       className="rounded-2xl border border-white/[0.07] bg-[rgba(12,10,22,0.90)] shadow-[0_8px_40px_rgba(0,0,0,0.45)] overflow-hidden"
     >
       {/* ── Header ─────────────────────── */}
-      <div className="flex flex-wrap items-center justify-between gap-3 px-5 pt-5 pb-4 border-b border-white/[0.06]">
+      <div className="flex flex-col gap-3 border-b border-white/[0.06] px-3 pt-3 pb-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between sm:px-5 sm:pt-5 sm:pb-4">
         <div className="flex items-center gap-2.5">
-          <div className="grid h-9 w-9 place-items-center rounded-xl bg-violet-500/15 border border-violet-400/20">
-            <TrendingUp size={17} className="text-violet-300" />
+          <div className="grid h-8 w-8 place-items-center rounded-xl border border-violet-400/20 bg-violet-500/15 sm:h-9 sm:w-9">
+            <TrendingUp size={16} className="text-violet-300" />
           </div>
           <div>
-            <h2 className="text-sm font-bold text-white leading-none">Revenue Chart</h2>
-            <p className="text-[10px] text-white/35 mt-0.5">
+            <h2 className="text-sm font-bold leading-none text-white">Revenue Chart</h2>
+            <p className="mt-0.5 hidden text-[10px] text-white/35 sm:block">
               Net earnings over time — hover to inspect
             </p>
           </div>
         </div>
 
-        {/* Period tabs */}
-        <div className="flex items-center gap-1 rounded-xl border border-white/[0.07] bg-white/[0.03] p-1">
+        <div className="grid w-full grid-cols-3 gap-1 rounded-xl border border-white/[0.07] bg-white/[0.03] p-1 sm:flex sm:w-auto sm:items-center">
           {PERIODS.map((p) => (
             <button
               key={p.id}
               type="button"
               onClick={() => setPeriod(p.id)}
-              className={`rounded-lg px-4 py-1.5 text-xs font-bold transition-all duration-200 ${
+              className={`rounded-lg px-2 py-1.5 text-[11px] font-bold transition-all duration-200 sm:px-4 sm:text-xs ${
                 period === p.id
                   ? "bg-violet-600 text-white"
-                  : "text-white/35 hover:text-white hover:bg-white/[0.06]"
+                  : "text-white/35 hover:bg-white/[0.06] hover:text-white"
               }`}
             >
               {p.label}
@@ -194,7 +193,7 @@ export function AdminEarningsChart() {
         ].map(({ label, val, extra, accent }) => (
           <div
             key={label}
-            className={`px-5 py-3.5 ${accent ? "bg-violet-500/[0.06]" : ""}`}
+            className={`px-3 py-2.5 sm:px-5 sm:py-3.5 ${accent ? "bg-violet-500/[0.06]" : ""}`}
           >
             <div className="text-[10px] font-bold text-white/35 uppercase tracking-wider">
               {label}
@@ -232,8 +231,7 @@ export function AdminEarningsChart() {
           <svg
             ref={svgRef}
             viewBox={`0 0 ${SVG_W} ${SVG_H}`}
-            className="w-full overflow-visible cursor-crosshair select-none"
-            style={{ height: "220px" }}
+            className="h-40 w-full cursor-crosshair select-none overflow-visible sm:h-[220px]"
             onMouseMove={handleMouseMove}
             onMouseLeave={() => setTooltip(null)}
             aria-label="Revenue trend chart"

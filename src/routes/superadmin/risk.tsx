@@ -63,8 +63,11 @@ function SuperRiskPage() {
   return (
     <div className="space-y-6 pb-6">
       <div>
-        <h1 className="text-3xl font-bold text-foreground">Risk Management & Fraud Control</h1>
-        <p className="mt-1 text-sm text-muted-foreground">
+        <h1 className="text-xl font-bold text-foreground sm:text-3xl">
+          <span className="sm:hidden">Risk Control</span>
+          <span className="hidden sm:inline">Risk Management & Fraud Control</span>
+        </h1>
+        <p className="mt-1 text-xs text-muted-foreground sm:text-sm">
           Configure maximum wager caps, payout limits, automated win triggers, and fraud detection.
         </p>
       </div>

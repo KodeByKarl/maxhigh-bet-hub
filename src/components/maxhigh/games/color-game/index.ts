@@ -1,0 +1,1 @@
+export { ColorGameTable } from "./ColorGameTable";

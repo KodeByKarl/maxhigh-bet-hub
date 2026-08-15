@@ -4,6 +4,7 @@ import { useAuth } from "@/lib/auth";
 import { isStaffRole } from "@/lib/user";
 import { AdminSidebar } from "./AdminSidebar";
 import { AdminTopBar } from "./AdminTopBar";
+import { AdminMobileNav } from "./AdminMobileNav";
 import { adminGlass, adminPageBg } from "../ui/glass";
 
 /** Domain 2 shell — casino Navbar/Sidebar are not used here. */
@@ -61,12 +62,13 @@ export function AdminShell() {
       <AdminSidebar />
       <div className="flex min-w-0 flex-1 flex-col">
         <AdminTopBar />
-        <main className="flex-1 p-3 sm:p-5">
+        <main className="flex-1 p-3 pb-[5.5rem] sm:p-5 md:pb-5">
           <div className="w-full">
             <Outlet />
           </div>
         </main>
       </div>
+      <AdminMobileNav />
     </div>
   );
 }

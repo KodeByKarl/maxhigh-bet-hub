@@ -1,3 +1,4 @@
+import { memo } from "react";
 import { cn } from "@/lib/utils";
 import type { FsSymKind } from "@/lib/fire-spike-config";
 import { FireSpikeIcon } from "./FireSpikeIcon";
@@ -5,6 +6,8 @@ import { FireSpikeIcon } from "./FireSpikeIcon";
 export type ReelPhase = "idle" | "spinning" | "stopping" | "win";
 
 const SPIN_STRIP: FsSymKind[] = ["bar", "dice", "diamond", "chip", "lucky7", "wild", "scatter"];
+const SPIN_STRIP_LOOP: FsSymKind[] = [...SPIN_STRIP, ...SPIN_STRIP];
+const FRAME_PCT = 100 / SPIN_STRIP_LOOP.length;
 
 type ReelCellProps = {
   kind: FsSymKind;
@@ -23,7 +26,7 @@ type ReelCellProps = {
 /**
  * Fire Spike cell — CSS win ring with smooth fade-out (no hard cut).
  */
-export function ReelCell({
+export const ReelCell = memo(function ReelCell({
   kind,
   phase,
   reel,
@@ -38,8 +41,6 @@ export function ReelCell({
   const spinning = phase === "spinning";
   const activeGlow = (!!winning || !!mixHighlight) && !fading;
   const showRing = !!winning || !!mixHighlight || !!fading;
-  const strip = [...SPIN_STRIP, ...SPIN_STRIP];
-  const framePct = 100 / strip.length;
   const stopDelayMs = reel * 110 + row * 35;
 
   return (
@@ -71,31 +72,26 @@ export function ReelCell({
 
       {spinning ? (
         <div
-          className="fs-reel-scroll absolute left-0 top-0 z-[1] w-full"
+          className="fs-reel-scroll absolute left-0 top-0 z-[1] w-full opacity-90"
           style={{
-            height: `${strip.length * 100}%`,
-            filter: "blur(2px) saturate(1.08) brightness(1.06)",
+            height: `${SPIN_STRIP_LOOP.length * 100}%`,
             animationDuration: `${0.18 + (reel % 3) * 0.03}s`,
           }}
         >
-          {strip.map((sym, i) => (
-            <div
-              key={`${spinId}-spin-${i}`}
-              className="relative w-full"
-              style={{ height: `${framePct}%` }}
-            >
+          {SPIN_STRIP_LOOP.map((sym, i) => (
+            <div key={`spin-${i}`} className="relative w-full" style={{ height: `${FRAME_PCT}%` }}>
               <FireSpikeIcon kind={sym} framed />
             </div>
           ))}
         </div>
       ) : (
         <div
-          key={`land-${spinId}-${reel}-${row}`}
+          key={phase === "stopping" ? `land-${spinId}` : "idle"}
           className={cn(
-            "absolute inset-0 z-[1] transition-[transform,filter] duration-350 ease-out",
+            "absolute inset-0 z-[1] transition-transform duration-350 ease-out",
             phase === "stopping" && "fs-reel-land",
             activeGlow && "fs-win-pulse",
-            fading && "scale-100 brightness-100",
+            fading && "scale-100",
           )}
           style={phase === "stopping" ? { animationDelay: `${stopDelayMs}ms` } : undefined}
         >
@@ -108,4 +104,4 @@ export function ReelCell({
       ) : null}
     </div>
   );
-}
+});

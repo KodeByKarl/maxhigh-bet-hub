@@ -51,24 +51,24 @@ export const SYM_COLOR: Record<PlSymKind, string> = {
 };
 
 export const ICON_SRC: Record<PlSymKind, string> = {
-  sym_10: "/images/symbols/pug-den/sym_10.png",
-  sym_j: "/images/symbols/pug-den/sym_j.png",
-  sym_q: "/images/symbols/pug-den/sym_q.png",
-  sym_k: "/images/symbols/pug-den/sym_k.png",
-  sym_a: "/images/symbols/pug-den/sym_a.png",
-  rat: "/images/symbols/pug-den/rat.png",
-  pigeon: "/images/symbols/pug-den/pigeon.png",
+  sym_10: "/images/symbols/pug-den/sym_10.webp",
+  sym_j: "/images/symbols/pug-den/sym_j.webp",
+  sym_q: "/images/symbols/pug-den/sym_q.webp",
+  sym_k: "/images/symbols/pug-den/sym_k.webp",
+  sym_a: "/images/symbols/pug-den/sym_a.webp",
+  rat: "/images/symbols/pug-den/rat.webp",
+  pigeon: "/images/symbols/pug-den/pigeon.webp",
   cat: "/images/symbols/pug-den/cat.png",
   chihuahua: "/images/symbols/pug-den/chihuahua.png",
-  pug: "/images/symbols/pug-den/pug.png",
-  treat_biscuit: "/images/symbols/pug-den/treat_biscuit.png",
+  pug: "/images/symbols/pug-den/pug.webp",
+  treat_biscuit: "/images/symbols/pug-den/treat_biscuit.webp",
   treat_bone: "/images/symbols/pug-den/treat_bone.png",
-  treat_steak: "/images/symbols/pug-den/treat_steak.png",
-  scatter: "/images/symbols/pug-den/scatter.png",
-  toaster: "/images/symbols/pug-den/toaster.png",
+  treat_steak: "/images/symbols/pug-den/treat_steak.webp",
+  scatter: "/images/symbols/pug-den/scatter.webp",
+  toaster: "/images/symbols/pug-den/toaster.webp",
 };
 
 export const CARD_FRAME_SRC = "/images/symbols/pug-den/card-frame.png";
 
 /** Full-bleed stage backdrop for Pug Den. */
-export const STAGE_BG_SRC = "/images/pug-den-bg.png";
+export const STAGE_BG_SRC = "/images/pug-den-bg.webp";

@@ -91,7 +91,7 @@ function betIndex(bet: number) {
 function preloadAssets() {
   if (typeof Image === "undefined") return;
   const urls = [
-    "/images/symbols/sweet/backdrop.png",
+    "/images/symbols/sweet/backdrop.webp",
     "/images/symbols/sweet/lollipop.png",
     ...Object.values(ICON_SRC),
   ];
@@ -296,7 +296,8 @@ export function CandyPeakSlot({
         const payMap = new Map<string, number>();
         const stepRows: LedgerRow[] = [];
         for (const c of step.clusters) {
-          for (const k of c.keys) payMap.set(k, c.perSymbol);
+          const badgeKey = c.keys[0];
+          if (badgeKey) payMap.set(badgeKey, c.pay);
           const row = { id: c.id, kind: c.kind, count: c.count, pay: c.pay };
           stepRows.push(row);
           rows.push(row);
@@ -662,7 +663,7 @@ export function CandyPeakSlot({
   return (
     <div className="relative flex h-dvh w-full flex-col overflow-hidden select-none">
       <img
-        src="/images/symbols/sweet/backdrop.png"
+        src="/images/symbols/sweet/backdrop.webp"
         alt=""
         className="absolute inset-0 size-full object-cover"
         aria-hidden

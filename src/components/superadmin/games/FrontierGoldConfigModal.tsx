@@ -107,7 +107,7 @@ export function FrontierGoldConfigModal({ game, open, onOpenChange, onPatchLobby
                 {game.name}
               </DialogTitle>
               <DialogDescription className="text-xs text-muted-foreground">
-                5×3 · 25 lines · Hold & Win · Free Spins — {game.gameId}
+                Diamond 3-4-5-4-3 · 720 ways · Hold & Win · Free Spins — {game.gameId}
               </DialogDescription>
             </DialogHeader>
             <button

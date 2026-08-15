@@ -24,6 +24,10 @@ export function pickSymbol(
   return cfg.symbols[cfg.symbols.length - 1].kind;
 }
 
+function reelHeight(cfg: FrontierGoldConfig, reel: number): number {
+  return cfg.reelHeights?.[reel] ?? cfg.rowsCount;
+}
+
 export function generateGrid(
   rng: Rng,
   cfg: FrontierGoldConfig,
@@ -32,8 +36,9 @@ export function generateGrid(
   const isFreeSpins = !!opts?.isFreeSpins;
   const grid: FgGrid = [];
   for (let r = 0; r < cfg.reelsCount; r++) {
+    const height = reelHeight(cfg, r);
     const col: FgSymKind[] = [];
-    for (let row = 0; row < cfg.rowsCount; row++) {
+    for (let row = 0; row < height; row++) {
       col.push(pickSymbol(rng, r, cfg, isFreeSpins));
     }
     grid.push(col);

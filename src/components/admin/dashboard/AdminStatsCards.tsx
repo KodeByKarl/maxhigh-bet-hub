@@ -100,58 +100,51 @@ export function AdminStatsCards({ stats }: { stats: AdminDashboardStats | null }
   return (
     <div className="space-y-3">
       {/* ── Main KPI Cards ─────────────────────────── */}
-      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+      <div className="grid grid-cols-2 gap-2.5 xl:grid-cols-4 xl:gap-3">
         {cards.map((c) => {
           const Icon = c.icon;
           return (
             <div
               key={c.label}
-              className={`${adminGlassElevated} border-l-2 ${c.borderColor} p-5 relative overflow-hidden group`}
+              className={`${adminGlassElevated} relative overflow-hidden border-l-2 ${c.borderColor} p-3 sm:p-5 group`}
             >
-              {/* Header row */}
-              <div className="flex items-start justify-between mb-4">
-                <div className="flex items-center gap-2.5">
-                  <div
-                    className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-white/[0.06]"
-                  >
-                    <Icon size={17} style={{ color: c.accentColor }} />
+              <div className="mb-2 flex items-start justify-between sm:mb-4">
+                <div className="flex min-w-0 items-center gap-2 sm:gap-2.5">
+                  <div className="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-white/[0.06] sm:h-9 sm:w-9">
+                    <Icon size={16} style={{ color: c.accentColor }} />
                   </div>
-                  <span className="text-[11px] font-bold uppercase tracking-wider text-white/45 leading-tight">
+                  <span className="text-[10px] font-bold uppercase leading-tight tracking-wider text-white/45 sm:text-[11px]">
                     {c.label}
                   </span>
                 </div>
 
-                {/* Badge or action */}
                 {c.trendUp !== null ? (
                   <span
-                    className={`inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-[11px] font-bold ${
+                    className={`hidden items-center gap-1 rounded-md px-2 py-0.5 text-[11px] font-bold sm:inline-flex ${
                       c.trendUp
-                        ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20"
-                        : "bg-rose-500/10 text-rose-400 border border-rose-500/20"
+                        ? "border border-emerald-500/20 bg-emerald-500/10 text-emerald-400"
+                        : "border border-rose-500/20 bg-rose-500/10 text-rose-400"
                     }`}
                   >
                     {c.trendUp ? <TrendingUp size={10} /> : <TrendingDown size={10} />}
                     {c.trendPct}
                   </span>
                 ) : (
-                  <span className="inline-flex items-center rounded-md bg-white/[0.05] border border-white/[0.08] px-2 py-0.5 text-[11px] font-bold text-white/30">
+                  <span className="hidden rounded-md border border-white/[0.08] bg-white/[0.05] px-2 py-0.5 text-[11px] font-bold text-white/30 sm:inline-flex">
                     {c.trendPct}
                   </span>
                 )}
               </div>
 
-              {/* Value */}
-              <div className="text-3xl sm:text-4xl font-black tabular-nums text-white tracking-tight leading-none">
+              <div className="truncate text-lg font-black tabular-nums leading-none tracking-tight text-white sm:text-3xl lg:text-4xl">
                 {c.value}
               </div>
 
-              {/* Sub text */}
-              <div className="mt-1.5 text-[11px] text-white/40 leading-snug">
+              <div className="mt-1 hidden text-[11px] leading-snug text-white/40 sm:mt-1.5 sm:block">
                 {c.sub}
               </div>
 
-              {/* Sparkline */}
-              <div className="mt-3 -mx-1">
+              <div className="mt-2 hidden sm:mt-3 sm:block -mx-1">
                 <AdminSparkline
                   tone={c.sparkTone}
                   points={c.sparkPoints}
@@ -164,7 +157,7 @@ export function AdminStatsCards({ stats }: { stats: AdminDashboardStats | null }
       </div>
 
       {/* ── Secondary KPI Strip ──────────────────────── */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 divide-x divide-white/[0.05] overflow-hidden rounded-xl border border-white/[0.06] bg-[rgba(12,10,22,0.7)]">
+      <div className="grid grid-cols-2 overflow-hidden divide-x divide-y divide-white/[0.05] rounded-xl border border-white/[0.06] bg-[rgba(12,10,22,0.7)] sm:grid-cols-4 sm:divide-y-0">
         {[
           {
             icon: Users,
@@ -193,7 +186,7 @@ export function AdminStatsCards({ stats }: { stats: AdminDashboardStats | null }
         ].map(({ icon: SIcon, label, value, color }) => (
           <div
             key={label}
-            className="flex items-center gap-3 px-4 py-3 hover:bg-white/[0.03] transition-colors"
+            className="flex items-center gap-2 px-3 py-2.5 hover:bg-white/[0.03] transition-colors sm:gap-3 sm:px-4 sm:py-3"
           >
             <SIcon size={14} className="shrink-0" style={{ color }} />
             <div className="min-w-0">

@@ -13,6 +13,7 @@ export type AdminDashboardStats = {
   agentBalance: number;
   agentUsername: string;
   agentRole: string;
+  downlinePlayers: number;
   labels: {
     totalUsers: string;
     totalPlayers: string;

@@ -65,7 +65,7 @@ export const ReelCell = memo(function ReelCell({
       {cell && (
         <motion.div
           key={cell.key}
-          className="absolute inset-[7%] flex items-center justify-center will-change-transform"
+          className="absolute inset-[2%] flex items-center justify-center will-change-transform"
           initial={
             isInitialDrop || isGravityDrop
               ? {
@@ -182,9 +182,9 @@ export const ReelCell = memo(function ReelCell({
               <motion.span
                 initial={{ y: 6, opacity: 0, scale: 0.8 }}
                 animate={{ y: 0, opacity: 1, scale: 1 }}
-                className="absolute top-0 left-1/2 z-[2] -translate-x-1/2 rounded-full border border-white bg-gradient-to-b from-yellow-200 to-amber-400 px-1 py-0.5 text-[8px] font-black text-amber-950 shadow"
+                className="absolute top-0 left-1/2 z-[2] -translate-x-1/2 whitespace-nowrap rounded-full border border-white bg-gradient-to-b from-yellow-200 to-amber-400 px-1.5 py-0.5 text-[10px] font-black tabular-nums text-amber-950 shadow"
               >
-                +₱{perPay.toFixed(2)}
+                +₱{Number.isInteger(perPay) ? perPay : perPay.toFixed(2)}
               </motion.span>
             )}
         </motion.div>

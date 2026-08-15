@@ -92,16 +92,16 @@ export const DEFAULT_GODLY_GATES_CONFIG: GodlyGatesConfig = {
   fsMultStart: 1,
   fsMultStep: 1,
   symbols: [
-    { id: "ten", kind: "ten", label: "10", weight: 22, pay: [0.15, 0.4, 1, 2] },
-    { id: "jack", kind: "jack", label: "J", weight: 20, pay: [0.2, 0.5, 1.2, 2.5] },
-    { id: "queen", kind: "queen", label: "Q", weight: 18, pay: [0.25, 0.6, 1.4, 3] },
-    { id: "king", kind: "king", label: "K", weight: 16, pay: [0.3, 0.75, 1.8, 4] },
-    { id: "ace", kind: "ace", label: "A", weight: 14, pay: [0.4, 1, 2.2, 5] },
-    { id: "scarab", kind: "scarab", label: "Scarab", weight: 10, pay: [0.6, 1.5, 4, 10] },
-    { id: "ankh", kind: "ankh", label: "Ankh", weight: 8, pay: [0.8, 2, 5, 12] },
-    { id: "horus", kind: "horus", label: "Horus", weight: 6, pay: [1, 2.5, 6, 15] },
-    { id: "anubis", kind: "anubis", label: "Anubis", weight: 5, pay: [1.2, 3, 8, 20] },
-    { id: "pharaoh", kind: "pharaoh", label: "Pharaoh", weight: 4, pay: [1.5, 4, 10, 30] },
+    { id: "ten", kind: "ten", label: "10", weight: 22, pay: [0.6, 1.5, 4, 8] },
+    { id: "jack", kind: "jack", label: "J", weight: 20, pay: [0.8, 2, 5, 10] },
+    { id: "queen", kind: "queen", label: "Q", weight: 18, pay: [1, 2.5, 6, 12] },
+    { id: "king", kind: "king", label: "K", weight: 16, pay: [1.2, 3, 8, 16] },
+    { id: "ace", kind: "ace", label: "A", weight: 14, pay: [1.5, 4, 10, 20] },
+    { id: "scarab", kind: "scarab", label: "Scarab", weight: 10, pay: [2, 6, 15, 35] },
+    { id: "ankh", kind: "ankh", label: "Ankh", weight: 8, pay: [2.5, 8, 18, 40] },
+    { id: "horus", kind: "horus", label: "Horus", weight: 6, pay: [3, 10, 22, 50] },
+    { id: "anubis", kind: "anubis", label: "Anubis", weight: 5, pay: [4, 12, 28, 70] },
+    { id: "pharaoh", kind: "pharaoh", label: "Pharaoh", weight: 4, pay: [5, 15, 35, 100] },
     {
       id: "wild",
       kind: "wild",
@@ -130,6 +130,26 @@ function num(v: unknown, fallback: number) {
   return typeof v === "number" && Number.isFinite(v) ? v : fallback;
 }
 
+/** Original ways ×bet pays — too small vs ₱20–₱100 PH stakes. */
+const LEGACY_DEFAULT_PAYS: Record<string, number[]> = {
+  ten: [0.15, 0.4, 1, 2],
+  jack: [0.2, 0.5, 1.2, 2.5],
+  queen: [0.25, 0.6, 1.4, 3],
+  king: [0.3, 0.75, 1.8, 4],
+  ace: [0.4, 1, 2.2, 5],
+  scarab: [0.6, 1.5, 4, 10],
+  ankh: [0.8, 2, 5, 12],
+  horus: [1, 2.5, 6, 15],
+  anubis: [1.2, 3, 8, 20],
+  pharaoh: [1.5, 4, 10, 30],
+};
+
+function isLegacyDefaultPay(id: string, pay: unknown): boolean {
+  const legacy = LEGACY_DEFAULT_PAYS[id];
+  if (!legacy || !Array.isArray(pay) || pay.length < legacy.length) return false;
+  return legacy.every((n, i) => num(pay[i], NaN) === n);
+}
+
 /** Merge partial / stored JSON onto defaults (safe for DB blobs). */
 export function normalizeGodlyGatesConfig(raw: unknown): GodlyGatesConfig {
   const d = DEFAULT_GODLY_GATES_CONFIG;
@@ -142,7 +162,11 @@ export function normalizeGodlyGatesConfig(raw: unknown): GodlyGatesConfig {
       (s) => s && typeof s === "object" && (s as { id?: string }).id === def.id,
     ) as Partial<GodlyGatesSymbolConfig> | undefined;
     if (!found) return { ...def, pay: [...def.pay] as [number, number, number, number] };
-    const paySrc = Array.isArray(found.pay) ? found.pay : def.pay;
+    const paySrc = isLegacyDefaultPay(def.id, found.pay)
+      ? def.pay
+      : Array.isArray(found.pay)
+        ? found.pay
+        : def.pay;
     return {
       ...def,
       label: typeof found.label === "string" && found.label.trim() ? found.label : def.label,

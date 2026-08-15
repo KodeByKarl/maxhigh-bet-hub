@@ -2,7 +2,7 @@
  * Mahjong Ways — polished layout matching Candy Peak chrome.
  * Engine resolves spins instantly; this file plays back the animation script.
  */
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { Info, Menu, Zap } from "lucide-react";
 import { toast } from "sonner";
@@ -59,7 +59,7 @@ function createInitialBoard(): BoardCell[] {
 
 function preloadAssets() {
   if (typeof Image === "undefined") return;
-  const urls = ["/games/mahjong-ways.png", ...Object.values(TILE_IMAGE_MAP)];
+  const urls = ["/games/mahjong-ways.webp", ...Object.values(TILE_IMAGE_MAP)];
   for (const src of urls) {
     const img = new Image();
     img.decoding = "async";
@@ -117,6 +117,21 @@ export function MahjongWaysSlot({ onBalanceUpdate }: MahjongWaysSlotProps) {
 
   const busy = phase !== "idle";
   const engineCfg = getMahjongWaysConfig();
+
+  /** Dense slot index — O(1) lookup instead of board.find per cell. */
+  const slotIndex = useMemo(() => {
+    const slots: (BoardCell | null)[] = Array.from({ length: COLS * ROWS }, () => null);
+    for (const c of board) {
+      const i = c.rowIndex * COLS + c.reelIndex;
+      if (i >= 0 && i < slots.length) slots[i] = c;
+    }
+    return slots;
+  }, [board]);
+
+  const isDropping = phase === "dropping";
+  const isGlowing = phase === "glow";
+  const isPopping = phase === "popping";
+  const isFalling = phase === "falling";
   const anteMult = engineCfg.anteBetMult;
   const buyMult = engineCfg.buyFeatureMult;
   const totalBet = +(bet * (ante ? anteMult : 1)).toFixed(2);
@@ -427,7 +442,7 @@ export function MahjongWaysSlot({ onBalanceUpdate }: MahjongWaysSlotProps) {
     <div className="relative flex h-dvh w-full flex-col overflow-hidden select-none">
       {/* Full-bleed themed backdrop */}
       <img
-        src="/games/mahjong-ways.png"
+        src="/games/mahjong-ways.webp"
         alt=""
         className="absolute inset-0 size-full object-cover"
         aria-hidden
@@ -443,9 +458,9 @@ export function MahjongWaysSlot({ onBalanceUpdate }: MahjongWaysSlotProps) {
         aria-hidden
       />
 
-      <div className="relative z-10 flex min-h-0 flex-1 items-center justify-center px-2 py-1.5 sm:px-3 sm:py-2">
-        <div className="flex h-full max-h-full w-full max-w-[1600px] flex-col items-center gap-1.5 sm:gap-2">
-          <div className="grid min-h-0 w-full flex-1 grid-cols-1 items-stretch gap-2 sm:grid-cols-[160px_minmax(0,1fr)_160px] sm:gap-3 lg:grid-cols-[180px_minmax(0,1fr)_180px]">
+      <div className="relative z-10 flex min-h-0 flex-1 flex-col px-1.5 pt-[max(0.25rem,env(safe-area-inset-top))] pb-[max(0.35rem,env(safe-area-inset-bottom))] sm:items-center sm:justify-center sm:px-3 sm:py-2">
+        <div className="flex min-h-0 w-full max-w-[1600px] flex-1 flex-col sm:h-full sm:max-h-full sm:items-center sm:gap-2">
+          <div className="grid min-h-0 w-full flex-1 grid-cols-1 items-stretch gap-1.5 sm:grid-cols-[160px_minmax(0,1fr)_160px] sm:gap-3 lg:grid-cols-[180px_minmax(0,1fr)_180px]">
             {/* LEFT RAIL */}
             <div className="hidden h-full min-w-0 items-center justify-end sm:flex">
               <div className="flex w-full flex-col items-stretch justify-center gap-2.5">
@@ -528,65 +543,59 @@ export function MahjongWaysSlot({ onBalanceUpdate }: MahjongWaysSlotProps) {
               </div>
             </div>
 
-            {/* GRID COLUMN */}
-            <div className="flex h-full min-h-0 min-w-0 w-full flex-col items-center">
-              <div
-                className="flex h-full min-h-0 w-full max-w-full flex-col items-center"
-                style={{
-                  width: `min(100%, calc(82dvh * ${COLS} / ${ROWS}))`,
-                }}
-              >
-                {/* Title / ways pill */}
-                <div
-                  className="mb-1.5 flex shrink-0 items-center gap-2 rounded-full px-4 py-1 shadow-[0_8px_22px_rgba(212,160,23,0.45)] sm:px-5"
-                  style={{
-                    background:
-                      "linear-gradient(180deg,#FFF3B0 0%,#F5D76E 25%,#D4A017 70%,#B8860B 100%)",
-                    border: "2px solid #7f1d1d",
-                  }}
-                >
-                  <span
-                    className="text-sm font-black tracking-wide sm:text-base"
+            {/* GRID + CONTROLS COLUMN — mobile fills full height, no dead space */}
+            <div className="flex min-h-0 min-w-0 w-full flex-1 flex-col">
+              <div className="flex min-h-0 w-full flex-1 flex-col sm:mx-auto sm:max-w-full sm:items-center">
+                {/* Compact title + multiplier strip */}
+                <div className="flex shrink-0 flex-col items-center gap-1 px-1 sm:mb-1.5 sm:gap-1.5">
+                  <div
+                    className="flex items-center gap-2 rounded-full px-3.5 py-1 shadow-[0_8px_22px_rgba(212,160,23,0.45)] sm:px-5"
                     style={{
-                      color: "#450a0a",
-                      textShadow: "0 1px 0 rgba(255,255,255,0.45)",
+                      background:
+                        "linear-gradient(180deg,#FFF3B0 0%,#F5D76E 25%,#D4A017 70%,#B8860B 100%)",
+                      border: "2px solid #7f1d1d",
                     }}
                   >
-                    Mahjong Ways
-                  </span>
-                  <span className="text-[10px] font-black uppercase tracking-widest text-[#7f1d1d]/80">
-                    {totalWays} Ways
-                  </span>
+                    <span
+                      className="text-[0.95rem] font-black tracking-wide sm:text-base"
+                      style={{
+                        color: "#450a0a",
+                        textShadow: "0 1px 0 rgba(255,255,255,0.45)",
+                      }}
+                    >
+                      Mahjong Ways
+                    </span>
+                    <span className="text-[11px] font-black uppercase tracking-widest text-[#7f1d1d]/85 sm:text-[10px]">
+                      {totalWays} Ways
+                    </span>
+                  </div>
+
+                  <div className="flex items-center justify-center gap-3.5 sm:gap-5">
+                    {multList.map((m) => {
+                      const isActive = currentMult === m;
+                      return (
+                        <span
+                          key={m}
+                          className={cn(
+                            "text-xl font-black italic transition-all duration-300 sm:text-2xl",
+                            isActive
+                              ? "scale-125 text-[#F5D76E] drop-shadow-[0_0_12px_rgba(250,204,21,0.9)]"
+                              : "text-amber-700/55",
+                          )}
+                        >
+                          x{m}
+                        </span>
+                      );
+                    })}
+                  </div>
                 </div>
 
-                {/* Multiplier strip */}
-                <div className="mb-1.5 flex shrink-0 items-center justify-center gap-3 sm:gap-5">
-                  {multList.map((m) => {
-                    const isActive = currentMult === m;
-                    return (
-                      <span
-                        key={m}
-                        className={cn(
-                          "text-lg font-black italic transition-all duration-300 sm:text-2xl",
-                          isActive
-                            ? "scale-125 text-[#F5D76E] drop-shadow-[0_0_12px_rgba(250,204,21,0.9)]"
-                            : "text-amber-700/55",
-                        )}
-                      >
-                        x{m}
-                      </span>
-                    );
-                  })}
-                </div>
-
-                <div className="relative flex min-h-0 w-full flex-1 items-center justify-center">
+                {/* REELS — grow to fill leftover height on mobile; 5:4 aspect on sm+ */}
+                <div className="relative mt-1 flex min-h-0 w-full flex-1 items-stretch justify-center sm:mt-0 sm:items-center">
                   <div
-                    className="relative mx-auto size-full max-h-full"
+                    className="relative h-full w-full sm:mx-auto sm:aspect-[5/4] sm:h-auto sm:max-h-full sm:w-full"
                     style={{
-                      aspectRatio: `${COLS} / ${ROWS}`,
-                      width: "100%",
-                      height: "auto",
-                      maxHeight: "100%",
+                      maxWidth: "min(100%, calc(82dvh * 5 / 4))",
                     }}
                   >
                     {showTumbleBadge && (
@@ -598,10 +607,10 @@ export function MahjongWaysSlot({ onBalanceUpdate }: MahjongWaysSlotProps) {
                               "linear-gradient(180deg, #dc2626 0%, #991b1b 55%, #450a0a 100%)",
                           }}
                         >
-                          <div className="text-[9px] font-black uppercase tracking-[0.18em] text-white">
+                          <div className="text-[10px] font-black uppercase tracking-[0.18em] text-white">
                             Cascade Win
                           </div>
-                          <div className="text-lg font-black leading-none text-yellow-300 tabular-nums">
+                          <div className="text-xl font-black leading-none text-yellow-300 tabular-nums">
                             {formatMoney(dropTotal)}
                           </div>
                         </div>
@@ -610,14 +619,14 @@ export function MahjongWaysSlot({ onBalanceUpdate }: MahjongWaysSlotProps) {
 
                     {/* Lacquer red–gold frame */}
                     <div
-                      className="relative size-full rounded-[1rem] p-[7px] shadow-[0_18px_50px_rgba(127,29,29,0.55)] sm:rounded-[1.25rem] sm:p-[9px]"
+                      className="relative size-full rounded-[0.85rem] p-[3px] shadow-[0_18px_50px_rgba(127,29,29,0.55)] sm:rounded-[1.25rem] sm:p-[9px]"
                       style={{
                         background:
                           "repeating-linear-gradient(135deg, #F5D76E 0 10px, #B8860B 10px 20px, #7f1d1d 20px 30px, #F5D76E 30px 40px)",
                       }}
                     >
                       <div
-                        className="relative size-full overflow-hidden rounded-[0.65rem] sm:rounded-[0.9rem]"
+                        className="relative size-full overflow-hidden rounded-[0.55rem] sm:rounded-[0.9rem]"
                         style={{
                           background:
                             "linear-gradient(180deg, #166534 0%, #14532d 40%, #052e16 100%)",
@@ -626,7 +635,7 @@ export function MahjongWaysSlot({ onBalanceUpdate }: MahjongWaysSlotProps) {
                       >
                         <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(255,255,255,0.12)_0%,transparent_65%)]" />
                         <div
-                          className="relative grid size-full gap-[2px] p-[3px] sm:gap-1 sm:p-1"
+                          className="relative grid size-full gap-[2px] p-[2px] sm:gap-1 sm:p-1"
                           style={{
                             gridTemplateColumns: `repeat(${COLS}, minmax(0, 1fr))`,
                             gridTemplateRows: `repeat(${ROWS}, minmax(0, 1fr))`,
@@ -639,9 +648,7 @@ export function MahjongWaysSlot({ onBalanceUpdate }: MahjongWaysSlotProps) {
                             if (row >= height) {
                               return <div key={`empty-${i}`} className="min-h-0 min-w-0" />;
                             }
-                            const cell =
-                              board.find((c) => c.reelIndex === col && c.rowIndex === row) ??
-                              null;
+                            const cell = slotIndex[i] ?? null;
                             const win = cell ? winningKeys.has(cell.key) : false;
                             return (
                               <ReelCell
@@ -649,7 +656,14 @@ export function MahjongWaysSlot({ onBalanceUpdate }: MahjongWaysSlotProps) {
                                 cell={cell}
                                 col={col}
                                 row={row}
-                                phase={phase}
+                                isDropping={isDropping && !!cell}
+                                isGlowing={isGlowing && win}
+                                isPopping={isPopping && win}
+                                isFalling={
+                                  isFalling &&
+                                  !!cell &&
+                                  (spawnedKeys.has(cell.key) || fallenKeys.has(cell.key))
+                                }
                                 win={win}
                                 isSpawn={cell ? spawnedKeys.has(cell.key) : false}
                                 isFallen={cell ? fallenKeys.has(cell.key) : false}
@@ -663,14 +677,14 @@ export function MahjongWaysSlot({ onBalanceUpdate }: MahjongWaysSlotProps) {
                   </div>
                 </div>
 
-                {/* Mobile buy / ante */}
+                {/* Mobile buy / ante — larger tap targets */}
                 {!inFree && (
-                  <div className="mt-1 flex shrink-0 gap-2 sm:hidden">
+                  <div className="mt-1.5 flex shrink-0 gap-2 sm:hidden">
                     <button
                       type="button"
                       disabled={busy}
                       onClick={() => setShowBuyModal(true)}
-                      className="rounded-lg border-2 border-[#E8C547] bg-[#b91c1c] px-3 py-1.5 text-[10px] font-black uppercase text-white"
+                      className="min-h-11 flex-1 rounded-xl border-2 border-[#E8C547] bg-[#b91c1c] px-3 py-2 text-xs font-black uppercase text-white"
                     >
                       Buy FS {formatMoneyCompact(buyCost)}
                     </button>
@@ -679,7 +693,7 @@ export function MahjongWaysSlot({ onBalanceUpdate }: MahjongWaysSlotProps) {
                       disabled={busy}
                       onClick={() => setAnte((v) => !v)}
                       className={cn(
-                        "rounded-lg border-2 border-[#E8C547] px-3 py-1.5 text-[10px] font-black uppercase",
+                        "min-h-11 flex-1 rounded-xl border-2 border-[#E8C547] px-3 py-2 text-xs font-black uppercase",
                         ante
                           ? "bg-[#F5D76E] text-[#450a0a]"
                           : "bg-[#14532d] text-[#F5D76E]",
@@ -690,49 +704,49 @@ export function MahjongWaysSlot({ onBalanceUpdate }: MahjongWaysSlotProps) {
                   </div>
                 )}
 
-                {/* BOTTOM BAR — gold lacquer chrome */}
+                {/* BOTTOM BAR — full width, larger for older players */}
                 <div
-                  className="mt-2 w-full shrink-0 rounded-[1.15rem] p-[4px] shadow-[0_12px_36px_rgba(69,10,10,0.55)]"
+                  className="mt-1.5 w-full shrink-0 rounded-[1.15rem] p-[4px] shadow-[0_12px_36px_rgba(69,10,10,0.55)] sm:mt-2"
                   style={{
                     background:
                       "repeating-linear-gradient(135deg, #FFF3B0 0 8px, #F5D76E 8px 16px, #D4A017 16px 24px, #FFF3B0 24px 32px)",
                   }}
                 >
                   <div
-                    className="flex flex-col gap-2 rounded-[0.95rem] px-3 py-2.5 sm:flex-row sm:items-center sm:justify-between sm:gap-3 sm:px-4 sm:py-3"
+                    className="flex flex-col gap-2.5 rounded-[0.95rem] px-3 py-3 sm:flex-row sm:items-center sm:justify-between sm:gap-3 sm:px-4 sm:py-3"
                     style={{
                       background:
                         "linear-gradient(180deg, rgba(153,27,27,0.97) 0%, rgba(69,10,10,0.98) 100%)",
                     }}
                   >
-                    <div className="flex min-w-0 flex-col gap-1.5 sm:min-w-[150px]">
-                      <div className="flex flex-wrap items-baseline gap-x-3 gap-y-0.5 font-black tracking-wide sm:gap-x-4">
-                        <div>
-                          <span className="text-[10px] uppercase text-[#F5D76E]/90 sm:text-xs">
-                            Credit{" "}
-                          </span>
-                          <span className="text-sm tabular-nums text-[#F5D76E] sm:text-base">
+                    <div className="flex min-w-0 flex-col gap-2 sm:min-w-[150px] sm:gap-1.5">
+                      <div className="grid grid-cols-3 gap-2 font-black tracking-wide sm:flex sm:flex-wrap sm:items-baseline sm:gap-x-4">
+                        <div className="min-w-0 text-center sm:text-left">
+                          <div className="text-[11px] uppercase text-[#F5D76E]/90 sm:text-xs">
+                            Credit
+                          </div>
+                          <div className="truncate text-base tabular-nums text-[#F5D76E] sm:text-base">
                             {formatMoney(balance)}
-                          </span>
+                          </div>
                         </div>
-                        <div>
-                          <span className="text-[10px] uppercase text-[#F5D76E]/90 sm:text-xs">
-                            Bet{" "}
-                          </span>
-                          <span className="text-sm tabular-nums text-[#F5D76E] sm:text-base">
+                        <div className="min-w-0 text-center sm:text-left">
+                          <div className="text-[11px] uppercase text-[#F5D76E]/90 sm:text-xs">
+                            Bet
+                          </div>
+                          <div className="truncate text-base tabular-nums text-[#F5D76E] sm:text-base">
                             {formatMoney(totalBet)}
-                          </span>
+                          </div>
                         </div>
-                        <div>
-                          <span className="text-[10px] uppercase text-[#F5D76E]/90 sm:text-xs">
-                            Win{" "}
-                          </span>
-                          <span className="text-sm tabular-nums text-[#F5D76E] sm:text-base">
+                        <div className="min-w-0 text-center sm:text-left">
+                          <div className="text-[11px] uppercase text-[#F5D76E]/90 sm:text-xs">
+                            Win
+                          </div>
+                          <div className="truncate text-base tabular-nums text-[#F5D76E] sm:text-base">
                             {formatMoney(displayWin)}
-                          </span>
+                          </div>
                         </div>
                       </div>
-                      <div className="flex items-center gap-1.5">
+                      <div className="hidden items-center gap-1.5 sm:flex">
                         <button
                           type="button"
                           onClick={() => setShowBuyModal(true)}
@@ -753,30 +767,49 @@ export function MahjongWaysSlot({ onBalanceUpdate }: MahjongWaysSlotProps) {
                       </div>
                     </div>
 
-                    <div className="flex flex-1 items-center justify-center gap-2">
+                    <div className="flex flex-1 items-center justify-between gap-2 sm:justify-center">
+                      <button
+                        type="button"
+                        onClick={() => setShowBuyModal(true)}
+                        disabled={busy || inFree}
+                        className="grid size-11 place-items-center rounded-full border-2 border-[#E8C547]/70 bg-[#450a0a] text-[#F5D76E] shadow transition hover:brightness-110 disabled:opacity-40 sm:hidden"
+                        aria-label="Menu"
+                      >
+                        <Menu size={18} />
+                      </button>
+
                       <button
                         type="button"
                         onClick={() => setTurbo((v) => !v)}
                         className={cn(
-                          "inline-flex items-center gap-1.5 rounded-full border-2 px-3 py-1.5 text-[10px] font-black uppercase tracking-wider shadow transition sm:text-xs",
+                          "inline-flex min-h-11 items-center gap-1.5 rounded-full border-2 px-4 py-2 text-xs font-black uppercase tracking-wider shadow transition sm:min-h-0 sm:px-3 sm:py-1.5 sm:text-xs",
                           turbo
                             ? "border-[#E8C547] bg-gradient-to-b from-[#FFF3B0] to-[#D4A017] text-[#450a0a]"
                             : "border-[#E8C547]/80 bg-[#450a0a] text-[#F5D76E]",
                         )}
                         aria-pressed={turbo}
                       >
-                        <Zap size={12} />
+                        <Zap size={14} />
                         Turbo
+                      </button>
+
+                      <button
+                        type="button"
+                        className="grid size-11 place-items-center rounded-full border-2 border-[#E8C547]/70 bg-[#450a0a] text-[#F5D76E] shadow transition hover:brightness-110 sm:hidden"
+                        aria-label="Info"
+                        title={`${totalWays} ways · gold tiles turn wild`}
+                      >
+                        <Info size={18} />
                       </button>
                     </div>
 
-                    <div className="flex flex-col items-center gap-1 self-center">
-                      <div className="flex items-center gap-2 sm:gap-2.5">
+                    <div className="flex flex-col items-center gap-1.5 self-center">
+                      <div className="flex items-center gap-3 sm:gap-2.5">
                         <button
                           type="button"
                           disabled={busy || inFree}
                           onClick={() => nudgeBet(-1)}
-                          className="grid size-10 place-items-center rounded-full border-[3px] border-[#E8C547] text-xl font-black text-white shadow-lg disabled:opacity-40 sm:size-11"
+                          className="grid size-12 place-items-center rounded-full border-[3px] border-[#E8C547] text-2xl font-black text-white shadow-lg disabled:opacity-40 sm:size-11 sm:text-xl"
                           style={{
                             background: "linear-gradient(180deg,#dc2626 0%,#7f1d1d 100%)",
                           }}
@@ -789,7 +822,7 @@ export function MahjongWaysSlot({ onBalanceUpdate }: MahjongWaysSlotProps) {
                           type="button"
                           disabled={busy}
                           onClick={() => void handleSpin()}
-                          className="relative grid size-[68px] place-items-center rounded-full border-[4px] border-[#E8C547] shadow-[0_8px_28px_rgba(212,160,23,0.45)] disabled:opacity-60 sm:size-[76px]"
+                          className="relative grid size-[5.25rem] place-items-center rounded-full border-[4px] border-[#E8C547] shadow-[0_8px_28px_rgba(212,160,23,0.45)] disabled:opacity-60 sm:size-[76px]"
                           style={{
                             background:
                               "radial-gradient(circle at 35% 28%, #f87171 0%, #b91c1c 42%, #450a0a 100%)",
@@ -799,7 +832,7 @@ export function MahjongWaysSlot({ onBalanceUpdate }: MahjongWaysSlotProps) {
                           {busy ? (
                             <svg
                               viewBox="0 0 24 24"
-                              className="size-8 animate-spin text-[#F5D76E] sm:size-9"
+                              className="size-10 animate-spin text-[#F5D76E] sm:size-9"
                               fill="none"
                               stroke="currentColor"
                               strokeWidth="2.4"
@@ -814,7 +847,7 @@ export function MahjongWaysSlot({ onBalanceUpdate }: MahjongWaysSlotProps) {
                           ) : (
                             <svg
                               viewBox="0 0 24 24"
-                              className="size-8 text-[#F5D76E] sm:size-9"
+                              className="size-10 text-[#F5D76E] sm:size-9"
                               fill="none"
                               stroke="currentColor"
                               strokeWidth="2.4"
@@ -833,7 +866,7 @@ export function MahjongWaysSlot({ onBalanceUpdate }: MahjongWaysSlotProps) {
                           type="button"
                           disabled={busy || inFree}
                           onClick={() => nudgeBet(1)}
-                          className="grid size-10 place-items-center rounded-full border-[3px] border-[#E8C547] text-xl font-black text-white shadow-lg disabled:opacity-40 sm:size-11"
+                          className="grid size-12 place-items-center rounded-full border-[3px] border-[#E8C547] text-2xl font-black text-white shadow-lg disabled:opacity-40 sm:size-11 sm:text-xl"
                           style={{
                             background: "linear-gradient(180deg,#dc2626 0%,#7f1d1d 100%)",
                           }}
@@ -848,7 +881,7 @@ export function MahjongWaysSlot({ onBalanceUpdate }: MahjongWaysSlotProps) {
                         disabled={inFree}
                         onClick={() => setAutoSpin((v) => !v)}
                         className={cn(
-                          "rounded-full border-2 px-5 py-1 text-[10px] font-black uppercase tracking-wider shadow sm:text-xs",
+                          "min-h-10 rounded-full border-2 px-6 py-1.5 text-xs font-black uppercase tracking-wider shadow sm:min-h-0 sm:px-5 sm:py-1 sm:text-xs",
                           autoSpin
                             ? "border-[#E8C547] bg-gradient-to-b from-[#FFF3B0] to-[#D4A017] text-[#450a0a]"
                             : "border-[#E8C547]/80 bg-[#450a0a] text-[#F5D76E]",

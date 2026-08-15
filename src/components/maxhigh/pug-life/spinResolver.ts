@@ -2,7 +2,7 @@
  * Pug Den — server-authoritative full spin / session resolution.
  *
  * Base spin order:
- * 1. Generate 1-2-3-4-3-2-1 diamond grid (144 connecting ways)
+ * 1. Generate 3-4-5-4-3 diamond grid (720 connecting ways)
  * 2. Evaluate connecting ways (+ Treat mult combination)
  * 3. Check Treat Yo'Self trigger (3+ Treats)
  * 4. Check Dawg's Den trigger (3+ Scatters)

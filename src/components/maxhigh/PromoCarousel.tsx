@@ -13,7 +13,7 @@ const defaultPromos: CarouselSlideRow[] = [
     sub: "Compete for prizes · Coming soon",
     cta: "Join Race",
     linkUrl: null,
-    imageUrl: "/promos/promo-daily-race.png",
+    imageUrl: "/promos/promo-daily-race.webp",
     sortOrder: 0,
     enabled: true,
     createdAt: new Date().toISOString(),

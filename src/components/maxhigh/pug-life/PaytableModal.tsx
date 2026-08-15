@@ -40,10 +40,10 @@ const PAY_ORDER: PlSymKind[] = [
 ];
 
 const HOWTO_IMG = {
-  paylines: "/images/pug-den/howto/win-paylines.png?v=3",
-  treats: "/images/pug-den/howto/win-treats.png?v=3",
-  treatYoSelf: "/images/pug-den/howto/win-treat-yoself.png?v=3",
-  dawgsDen: "/images/pug-den/howto/win-dawgs-den.png?v=3",
+  paylines: "/images/pug-den/howto/win-paylines.webp?v=3",
+  treats: "/images/pug-den/howto/win-treats.webp?v=3",
+  treatYoSelf: "/images/pug-den/howto/win-treat-yoself.webp?v=3",
+  dawgsDen: "/images/pug-den/howto/win-dawgs-den.webp?v=3",
 } as const;
 
 function PatternStrip({ kinds, label }: { kinds: PlSymKind[]; label: string }) {
@@ -111,7 +111,7 @@ export function PaytableModal({ open, onClose }: PaytableModalProps) {
           <div>
             <h2 className="text-lg font-black text-amber-100">Pug Den · How to Win</h2>
             <p className="text-[10px] text-amber-200/60">
-              Diamond {cfg.reelHeights?.join("-") ?? "1-2-3-4-3-2-1"} · {cfg.paylineCount}{" "}
+              Diamond {cfg.reelHeights?.join("-") ?? "3-4-5-4-3"} · {cfg.paylineCount}{" "}
               connecting ways · max {cfg.maxWinMult}×
             </p>
           </div>
@@ -153,14 +153,14 @@ export function PaytableModal({ open, onClose }: PaytableModalProps) {
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
                     src={HOWTO_IMG.paylines}
-                    alt="1-2-3-4-3-2-1 diamond connecting ways"
+                    alt="3-4-5-4-3 diamond connecting ways"
                     className="aspect-video w-full object-cover"
                   />
                 </div>
                 <p className="text-xs leading-relaxed text-white/80">
                   The board is a{" "}
                   <span className="font-bold text-amber-100">
-                    {cfg.reelHeights?.join("-") ?? "1-2-3-4-3-2-1"}
+                    {cfg.reelHeights?.join("-") ?? "3-4-5-4-3"}
                   </span>{" "}
                   diamond with circular cells and{" "}
                   <span className="font-bold text-amber-100">{cfg.paylineCount} connecting ways</span>.
@@ -282,7 +282,7 @@ export function PaytableModal({ open, onClose }: PaytableModalProps) {
                 <h3 className="mb-1.5 text-sm font-black text-amber-200">Base game</h3>
                 <ul className="list-disc space-y-1 pl-4">
                   <li>
-                    Diamond {cfg.reelHeights?.join("-") ?? "1-2-3-4-3-2-1"} · {cfg.paylineCount}{" "}
+                    Diamond {cfg.reelHeights?.join("-") ?? "3-4-5-4-3"} · {cfg.paylineCount}{" "}
                     connecting ways.
                   </li>
                   <li>

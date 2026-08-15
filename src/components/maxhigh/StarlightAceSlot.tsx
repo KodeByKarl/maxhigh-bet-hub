@@ -2,7 +2,7 @@
  * Starlight Ace — polished layout matching Candy Peak chrome.
  * Engine resolves spins instantly; this file plays back the animation script.
  */
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { Info, Menu, Zap } from "lucide-react";
 import { toast } from "sonner";
@@ -58,10 +58,13 @@ function createInitialBoard(): BoardCell[] {
   return board;
 }
 
+const STARLIGHT_BACKDROP = "/images/symbols/starlight-ace/backdrop.webp";
+
 function preloadAssets() {
   if (typeof Image === "undefined") return;
   const urls = [
-    "/games/starlight-ace.png",
+    "/games/starlight-ace.webp",
+    STARLIGHT_BACKDROP,
     ...Object.values(TILE_IMAGE_MAP),
   ];
   for (const src of urls) {
@@ -121,6 +124,20 @@ export function StarlightAceSlot({ onBalanceUpdate }: StarlightAceSlotProps) {
   const [cfgTick, setCfgTick] = useState(0);
 
   const busy = phase !== "idle";
+
+  const slotIndex = useMemo(() => {
+    const slots: (BoardCell | null)[] = Array.from({ length: COLS * ROWS }, () => null);
+    for (const c of board) {
+      const i = c.rowIndex * COLS + c.reelIndex;
+      if (i >= 0 && i < slots.length) slots[i] = c;
+    }
+    return slots;
+  }, [board]);
+
+  const isDropping = phase === "dropping";
+  const isGlowing = phase === "glow";
+  const isPopping = phase === "popping";
+  const isFalling = phase === "falling";
   const engineCfg = getStarlightAceConfig();
   const anteMult = engineCfg.anteBetMult;
   const buyMult = engineCfg.buyFeatureMult;
@@ -430,9 +447,9 @@ export function StarlightAceSlot({ onBalanceUpdate }: StarlightAceSlotProps) {
 
   return (
     <div className="relative flex h-dvh w-full flex-col overflow-hidden select-none">
-      {/* Full-bleed themed backdrop */}
+      {/* Full-bleed themed backdrop (portrait art; square logo thumb lives in /games/) */}
       <img
-        src="/games/starlight-ace.png"
+        src={STARLIGHT_BACKDROP}
         alt=""
         className="absolute inset-0 size-full object-cover"
         aria-hidden
@@ -533,17 +550,18 @@ export function StarlightAceSlot({ onBalanceUpdate }: StarlightAceSlotProps) {
               </div>
             </div>
 
-            {/* GRID COLUMN — board + bar share one width (not full viewport stretch) */}
+            {/* GRID COLUMN — playfield cluster centered above the HUD */}
             <div className="flex h-full min-h-0 min-w-0 w-full flex-col items-center">
               <div
-                className="flex h-full min-h-0 max-h-full flex-col items-stretch"
+                className="flex h-full min-h-0 max-h-full flex-col"
                 style={{
-                  width: `min(100%, calc((100dvh - 10rem) * ${COLS} / ${ROWS}))`,
+                  width: `min(100%, calc((100dvh - 12rem) * ${COLS} / ${ROWS}))`,
                 }}
               >
+                <div className="flex min-h-0 w-full flex-1 flex-col items-center justify-center gap-1.5">
                 {/* Title / ways pill */}
                 <div
-                  className="mx-auto mb-1 flex shrink-0 items-center gap-2 rounded-full px-3 py-0.5 shadow-[0_8px_22px_rgba(212,160,23,0.45)] sm:mb-1.5 sm:px-4"
+                  className="mx-auto flex shrink-0 items-center gap-2 rounded-full px-3 py-0.5 shadow-[0_8px_22px_rgba(212,160,23,0.45)] sm:px-4"
                   style={{
                     background:
                       "linear-gradient(180deg,#FFF3B0 0%,#F5D76E 25%,#D4A017 70%,#B8860B 100%)",
@@ -565,7 +583,7 @@ export function StarlightAceSlot({ onBalanceUpdate }: StarlightAceSlotProps) {
                 </div>
 
                 {/* Multiplier strip */}
-                <div className="mb-1 flex shrink-0 items-center justify-center gap-2.5 sm:mb-1.5 sm:gap-4">
+                <div className="flex shrink-0 items-center justify-center gap-2.5 sm:gap-4">
                   {multList.map((m) => {
                     const isActive = currentMult === m;
                     return (
@@ -584,16 +602,10 @@ export function StarlightAceSlot({ onBalanceUpdate }: StarlightAceSlotProps) {
                   })}
                 </div>
 
-                <div className="relative min-h-0 w-full flex-1 overflow-hidden">
-                  <div
-                    className="relative mx-auto size-full max-h-full"
-                    style={{
-                      aspectRatio: `${COLS} / ${ROWS}`,
-                      width: "100%",
-                      height: "auto",
-                      maxHeight: "100%",
-                    }}
-                  >
+                <div
+                  className="relative w-full shrink-0"
+                  style={{ aspectRatio: `${COLS} / ${ROWS}` }}
+                >
                     {showTumbleBadge && (
                       <div className="pointer-events-none absolute left-1/2 top-0 z-20 -translate-x-1/2 -translate-y-1/2">
                         <div
@@ -643,9 +655,7 @@ export function StarlightAceSlot({ onBalanceUpdate }: StarlightAceSlotProps) {
                             if (row >= height) {
                               return <div key={`empty-${i}`} className="min-h-0 min-w-0" />;
                             }
-                            const cell =
-                              board.find((c) => c.reelIndex === col && c.rowIndex === row) ??
-                              null;
+                            const cell = slotIndex[i] ?? null;
                             const win = cell ? winningKeys.has(cell.key) : false;
                             return (
                               <ReelCell
@@ -653,7 +663,14 @@ export function StarlightAceSlot({ onBalanceUpdate }: StarlightAceSlotProps) {
                                 cell={cell}
                                 col={col}
                                 row={row}
-                                phase={phase}
+                                isDropping={isDropping && !!cell}
+                                isGlowing={isGlowing && win}
+                                isPopping={isPopping && win}
+                                isFalling={
+                                  isFalling &&
+                                  !!cell &&
+                                  (spawnedKeys.has(cell.key) || fallenKeys.has(cell.key))
+                                }
                                 win={win}
                                 isSpawn={cell ? spawnedKeys.has(cell.key) : false}
                                 isFallen={cell ? fallenKeys.has(cell.key) : false}
@@ -665,11 +682,10 @@ export function StarlightAceSlot({ onBalanceUpdate }: StarlightAceSlotProps) {
                       </div>
                     </div>
                   </div>
-                </div>
 
-                {/* Mobile buy / ante */}
+                {/* Mobile buy / ante — travel with the board so the gap below the grid disappears */}
                 {!inFree && (
-                  <div className="mt-1 flex shrink-0 justify-center gap-2 sm:hidden">
+                  <div className="flex shrink-0 justify-center gap-2 sm:hidden">
                     <button
                       type="button"
                       disabled={busy}
@@ -693,6 +709,7 @@ export function StarlightAceSlot({ onBalanceUpdate }: StarlightAceSlotProps) {
                     </button>
                   </div>
                 )}
+                </div>
 
                 {/* BOTTOM BAR — same width as board */}
                 <div
@@ -703,63 +720,82 @@ export function StarlightAceSlot({ onBalanceUpdate }: StarlightAceSlotProps) {
                   }}
                 >
                   <div
-                    className="flex flex-wrap items-center justify-between gap-x-2 gap-y-1 rounded-[10px] px-2 py-1.5 sm:flex-nowrap sm:gap-3 sm:px-3 sm:py-1.5"
+                    className="flex flex-col gap-1.5 rounded-[10px] px-2 py-1.5 sm:flex-row sm:items-center sm:justify-between sm:gap-3 sm:px-3 sm:py-1.5"
                     style={{
                       background:
                         "linear-gradient(180deg, rgba(109,40,217,0.92) 0%, rgba(76,29,149,0.96) 55%, rgba(46,16,101,0.98) 100%)",
                     }}
                   >
-                    <div className="flex min-w-0 items-center gap-1.5 sm:gap-2">
-                      <button
-                        type="button"
-                        onClick={() => setShowBuyModal(true)}
-                        disabled={busy || inFree}
-                        className="grid size-6 shrink-0 place-items-center rounded-full border border-[#E8C547]/80 bg-[#2e1065] text-[#F5D76E] transition hover:brightness-110 disabled:opacity-40 sm:size-7"
-                        aria-label="Buy feature"
-                      >
-                        <Menu size={12} />
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setInfoOpen(true)}
-                        className="grid size-6 shrink-0 place-items-center rounded-full border border-[#E8C547]/80 bg-[#2e1065] text-[#F5D76E] transition hover:brightness-110 sm:size-7"
-                        aria-label="Info"
-                        title="Paytable & rules"
-                      >
-                        <Info size={12} />
-                      </button>
-                      <div className="flex min-w-0 flex-wrap items-baseline gap-x-2 gap-y-0 font-black tracking-wide sm:gap-x-3">
-                        <div className="whitespace-nowrap text-[10px] sm:text-xs">
-                          <span className="uppercase text-[#F5D76E]/85">Credit </span>
-                          <span className="tabular-nums text-[#F5D76E]">{formatMoney(balance)}</span>
-                        </div>
-                        <div className="whitespace-nowrap text-[10px] sm:text-xs">
-                          <span className="uppercase text-[#F5D76E]/85">Bet </span>
-                          <span className="tabular-nums text-[#F5D76E]">{formatMoney(totalBet)}</span>
-                        </div>
-                        <div className="whitespace-nowrap text-[10px] sm:text-xs">
-                          <span className="uppercase text-[#F5D76E]/85">Win </span>
-                          <span className="tabular-nums text-[#F5D76E]">{formatMoney(displayWin)}</span>
+                    <div className="flex min-w-0 items-center justify-between gap-1.5 sm:justify-start sm:gap-2">
+                      <div className="flex min-w-0 items-center gap-1.5 sm:gap-2">
+                        <button
+                          type="button"
+                          onClick={() => setShowBuyModal(true)}
+                          disabled={busy || inFree}
+                          className="grid size-6 shrink-0 place-items-center rounded-full border border-[#E8C547]/80 bg-[#2e1065] text-[#F5D76E] transition hover:brightness-110 disabled:opacity-40 sm:size-7"
+                          aria-label="Buy feature"
+                        >
+                          <Menu size={12} />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setInfoOpen(true)}
+                          className="grid size-6 shrink-0 place-items-center rounded-full border border-[#E8C547]/80 bg-[#2e1065] text-[#F5D76E] transition hover:brightness-110 sm:size-7"
+                          aria-label="Info"
+                          title="Paytable & rules"
+                        >
+                          <Info size={12} />
+                        </button>
+                        <div className="flex min-w-0 flex-wrap items-baseline gap-x-2 gap-y-0 font-black tracking-wide sm:gap-x-3">
+                          <div className="whitespace-nowrap text-[10px] sm:text-xs">
+                            <span className="uppercase text-[#F5D76E]/85">Credit </span>
+                            <span className="tabular-nums text-[#F5D76E]">{formatMoney(balance)}</span>
+                          </div>
+                          <div className="whitespace-nowrap text-[10px] sm:text-xs">
+                            <span className="uppercase text-[#F5D76E]/85">Bet </span>
+                            <span className="tabular-nums text-[#F5D76E]">{formatMoney(totalBet)}</span>
+                          </div>
+                          <div className="whitespace-nowrap text-[10px] sm:text-xs">
+                            <span className="uppercase text-[#F5D76E]/85">Win </span>
+                            <span className="tabular-nums text-[#F5D76E]">{formatMoney(displayWin)}</span>
+                          </div>
                         </div>
                       </div>
+
+                      <button
+                        type="button"
+                        onClick={() => setTurbo((v) => !v)}
+                        className={cn(
+                          "inline-flex shrink-0 items-center gap-1 rounded-full border px-2 py-0.5 text-[9px] font-black uppercase tracking-wider transition sm:hidden",
+                          turbo
+                            ? "border-[#E8C547] bg-gradient-to-b from-[#FFF3B0] to-[#D4A017] text-[#450a0a]"
+                            : "border-[#E8C547]/80 bg-[#2e1065] text-[#F5D76E]",
+                        )}
+                        aria-pressed={turbo}
+                      >
+                        <Zap size={10} />
+                        Turbo
+                      </button>
                     </div>
 
-                    <button
-                      type="button"
-                      onClick={() => setTurbo((v) => !v)}
-                      className={cn(
-                        "inline-flex shrink-0 items-center gap-1 rounded-full border px-2 py-0.5 text-[9px] font-black uppercase tracking-wider transition sm:px-2.5 sm:text-[10px]",
-                        turbo
-                          ? "border-[#E8C547] bg-gradient-to-b from-[#FFF3B0] to-[#D4A017] text-[#450a0a]"
-                          : "border-[#E8C547]/80 bg-[#2e1065] text-[#F5D76E]",
-                      )}
-                      aria-pressed={turbo}
-                    >
-                      <Zap size={10} />
-                      Turbo
-                    </button>
+                    <div className="hidden flex-1 items-center justify-center sm:flex">
+                      <button
+                        type="button"
+                        onClick={() => setTurbo((v) => !v)}
+                        className={cn(
+                          "inline-flex shrink-0 items-center gap-1 rounded-full border px-2 py-0.5 text-[9px] font-black uppercase tracking-wider transition sm:px-2.5 sm:text-[10px]",
+                          turbo
+                            ? "border-[#E8C547] bg-gradient-to-b from-[#FFF3B0] to-[#D4A017] text-[#450a0a]"
+                            : "border-[#E8C547]/80 bg-[#2e1065] text-[#F5D76E]",
+                        )}
+                        aria-pressed={turbo}
+                      >
+                        <Zap size={10} />
+                        Turbo
+                      </button>
+                    </div>
 
-                    <div className="flex flex-col items-center gap-0.5 self-center">
+                    <div className="flex w-full flex-col items-center gap-0.5 sm:w-auto">
                       <div className="flex items-center gap-1.5">
                         <button
                           type="button"

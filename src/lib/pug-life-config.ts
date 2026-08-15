@@ -1,5 +1,5 @@
 /**
- * Pug Den — 1-2-3-4-3-2-1 diamond / connecting-ways slot math config.
+ * Pug Den — 3-4-5-4-3 diamond / connecting-ways slot math config.
  * Inspired by Hacksaw Gaming "Pug Life" mechanics (Treat Wilds, Treat Yo'Self, Dawg's Den).
  *
  * ============================================================================
@@ -8,7 +8,7 @@
  * ============================================================================
  *
  * Board / wins:
- * - Reel heights 1-2-3-4-3-2-1 (7 reels, 16 cells) → 144 connecting ways
+ * - Reel heights 3-4-5-4-3 (5 reels, 19 cells) → 720 connecting ways
  * - Wins: 3+ matching symbols on consecutive reels from the left (ways)
  * - Treat tiers: Biscuit 2–4x, Bone 5–20x, Steak 25–200x
  * - 5+ consecutive Treat reels pays fiveTreatPayStakeMult × stake × ways (+ Treat mults)
@@ -159,7 +159,7 @@ export type PugLifeConfig = {
   reelsCount: number;
   /** Max rows (tallest reel). */
   rowsCount: number;
-  /** Per-reel visible row counts — classic diamond 1-2-3-4-3-2-1. */
+  /** Per-reel visible row counts — default 3-4-5-4-3. */
   reelHeights: number[];
   /** Product of reelHeights (connecting ways). Kept as paylineCount for admin UI compat. */
   paylineCount: number;
@@ -244,9 +244,10 @@ export const TREAT_KINDS: PlSymKind[] = [
 ];
 
 /**
- * Classic diamond reel heights → 1×2×3×4×3×2×1 = 144 connecting ways.
+ * Phone-friendly diamond reel heights → 3×4×5×4×3 = 720 connecting ways.
+ * (Replaces classic 1-2-3-4-3-2-1 / 144 ways so cells scale larger on mobile.)
  */
-export const DEFAULT_REEL_HEIGHTS = [1, 2, 3, 4, 3, 2, 1] as const;
+export const DEFAULT_REEL_HEIGHTS = [3, 4, 5, 4, 3] as const;
 
 export function totalConnectingWays(reelHeights: number[]): number {
   return reelHeights.reduce((acc, h) => acc * Math.max(0, h), 1);
@@ -272,85 +273,85 @@ function profileWeights(
 
 /**
  * Provisional base-game reel weights (toaster weight 0 — never lands in base).
- * 7 reels matching DEFAULT_REEL_HEIGHTS.
+ * 5 reels matching DEFAULT_REEL_HEIGHTS.
  */
 const BASE_WEIGHTS = profileWeights({
-  sym_10: [46, 46, 46, 46, 46, 46, 46],
-  sym_j: [44, 44, 44, 44, 44, 44, 44],
-  sym_q: [42, 42, 42, 42, 42, 42, 42],
-  sym_k: [40, 40, 40, 40, 40, 40, 40],
-  sym_a: [38, 38, 38, 38, 38, 38, 38],
-  rat: [24, 24, 24, 24, 24, 24, 24],
-  pigeon: [20, 20, 20, 20, 20, 20, 20],
-  cat: [15, 15, 15, 15, 15, 15, 15],
-  chihuahua: [11, 11, 11, 11, 11, 11, 11],
-  pug: [7, 7, 7, 7, 7, 7, 7],
-  treat_biscuit: [2, 2, 2, 2, 2, 2, 2],
-  treat_bone: [1, 1, 1, 1, 1, 1, 1],
-  treat_steak: [0, 1, 0, 1, 0, 1, 0],
-  scatter: [2, 1, 2, 1, 2, 1, 2],
-  toaster: [0, 0, 0, 0, 0, 0, 0],
+  sym_10: [46, 46, 46, 46, 46],
+  sym_j: [44, 44, 44, 44, 44],
+  sym_q: [42, 42, 42, 42, 42],
+  sym_k: [40, 40, 40, 40, 40],
+  sym_a: [38, 38, 38, 38, 38],
+  rat: [24, 24, 24, 24, 24],
+  pigeon: [20, 20, 20, 20, 20],
+  cat: [15, 15, 15, 15, 15],
+  chihuahua: [11, 11, 11, 11, 11],
+  pug: [7, 7, 7, 7, 7],
+  treat_biscuit: [2, 2, 2, 2, 2],
+  treat_bone: [1, 1, 1, 1, 1],
+  treat_steak: [0, 1, 0, 1, 0],
+  scatter: [2, 1, 2, 1, 2],
+  toaster: [0, 0, 0, 0, 0],
 });
 
 /** FeatureSpins: elevated Treat + Scatter weights. */
 const FEATURESPINS_WEIGHTS = profileWeights({
-  sym_10: [36, 36, 36, 36, 36, 36, 36],
-  sym_j: [34, 34, 34, 34, 34, 34, 34],
-  sym_q: [32, 32, 32, 32, 32, 32, 32],
-  sym_k: [30, 30, 30, 30, 30, 30, 30],
-  sym_a: [28, 28, 28, 28, 28, 28, 28],
-  rat: [18, 18, 18, 18, 18, 18, 18],
-  pigeon: [14, 14, 14, 14, 14, 14, 14],
-  cat: [12, 12, 12, 12, 12, 12, 12],
-  chihuahua: [8, 8, 8, 8, 8, 8, 8],
-  pug: [5, 5, 5, 5, 5, 5, 5],
-  treat_biscuit: [18, 18, 18, 18, 18, 18, 18],
-  treat_bone: [8, 8, 8, 8, 8, 8, 8],
-  treat_steak: [3, 3, 3, 3, 3, 3, 3],
-  scatter: [12, 12, 12, 12, 12, 12, 12],
-  toaster: [0, 0, 0, 0, 0, 0, 0],
+  sym_10: [36, 36, 36, 36, 36],
+  sym_j: [34, 34, 34, 34, 34],
+  sym_q: [32, 32, 32, 32, 32],
+  sym_k: [30, 30, 30, 30, 30],
+  sym_a: [28, 28, 28, 28, 28],
+  rat: [18, 18, 18, 18, 18],
+  pigeon: [14, 14, 14, 14, 14],
+  cat: [12, 12, 12, 12, 12],
+  chihuahua: [8, 8, 8, 8, 8],
+  pug: [5, 5, 5, 5, 5],
+  treat_biscuit: [18, 18, 18, 18, 18],
+  treat_bone: [8, 8, 8, 8, 8],
+  treat_steak: [3, 3, 3, 3, 3],
+  scatter: [12, 12, 12, 12, 12],
+  toaster: [0, 0, 0, 0, 0],
 });
 
 /**
- * Dawg's Den session strips — Toaster on center reels 3–4 (0-based; tallest cells).
+ * Dawg's Den session strips — Toaster on center reels 1–2 (0-based; tall columns).
  */
 export const DAWGS_DEN_WEIGHTS = profileWeights({
-  sym_10: [46, 46, 46, 42, 42, 46, 46],
-  sym_j: [44, 44, 44, 40, 40, 44, 44],
-  sym_q: [42, 42, 42, 38, 38, 42, 42],
-  sym_k: [40, 40, 40, 36, 36, 40, 40],
-  sym_a: [38, 38, 38, 34, 34, 38, 38],
-  rat: [22, 22, 22, 20, 20, 22, 22],
-  pigeon: [18, 18, 18, 16, 16, 18, 18],
-  cat: [14, 14, 14, 12, 12, 14, 14],
-  chihuahua: [10, 10, 10, 9, 9, 10, 10],
-  pug: [6, 6, 6, 5, 5, 6, 6],
-  treat_biscuit: [3, 3, 3, 2, 2, 3, 3],
-  treat_bone: [1, 1, 1, 1, 1, 1, 1],
-  treat_steak: [0, 1, 0, 0, 1, 0, 0],
-  scatter: [0, 0, 0, 0, 0, 0, 0],
-  toaster: [0, 0, 0, 4, 4, 0, 0],
+  sym_10: [46, 42, 42, 42, 46],
+  sym_j: [44, 40, 40, 40, 44],
+  sym_q: [42, 38, 38, 38, 42],
+  sym_k: [40, 36, 36, 36, 40],
+  sym_a: [38, 34, 34, 34, 38],
+  rat: [22, 20, 20, 20, 22],
+  pigeon: [18, 16, 16, 16, 18],
+  cat: [14, 12, 12, 12, 14],
+  chihuahua: [10, 9, 9, 9, 10],
+  pug: [6, 5, 5, 5, 6],
+  treat_biscuit: [3, 2, 2, 2, 3],
+  treat_bone: [1, 1, 1, 1, 1],
+  treat_steak: [0, 0, 1, 0, 0],
+  scatter: [0, 0, 0, 0, 0],
+  toaster: [0, 4, 4, 0, 0],
 });
 
 /**
  * Treat Yo'Self session strips — no Scatter, no Toaster; Treats can land.
  */
 export const TREAT_YOSELF_WEIGHTS = profileWeights({
-  sym_10: [50, 50, 50, 50, 50, 50, 50],
-  sym_j: [48, 48, 48, 48, 48, 48, 48],
-  sym_q: [46, 46, 46, 46, 46, 46, 46],
-  sym_k: [44, 44, 44, 44, 44, 44, 44],
-  sym_a: [42, 42, 42, 42, 42, 42, 42],
-  rat: [26, 26, 26, 26, 26, 26, 26],
-  pigeon: [22, 22, 22, 22, 22, 22, 22],
-  cat: [16, 16, 16, 16, 16, 16, 16],
-  chihuahua: [12, 12, 12, 12, 12, 12, 12],
-  pug: [8, 8, 8, 8, 8, 8, 8],
-  treat_biscuit: [2, 2, 2, 2, 2, 2, 2],
-  treat_bone: [1, 0, 1, 0, 1, 0, 1],
-  treat_steak: [0, 0, 0, 1, 0, 0, 0],
-  scatter: [0, 0, 0, 0, 0, 0, 0],
-  toaster: [0, 0, 0, 0, 0, 0, 0],
+  sym_10: [50, 50, 50, 50, 50],
+  sym_j: [48, 48, 48, 48, 48],
+  sym_q: [46, 46, 46, 46, 46],
+  sym_k: [44, 44, 44, 44, 44],
+  sym_a: [42, 42, 42, 42, 42],
+  rat: [26, 26, 26, 26, 26],
+  pigeon: [22, 22, 22, 22, 22],
+  cat: [16, 16, 16, 16, 16],
+  chihuahua: [12, 12, 12, 12, 12],
+  pug: [8, 8, 8, 8, 8],
+  treat_biscuit: [2, 2, 2, 2, 2],
+  treat_bone: [1, 0, 1, 0, 1],
+  treat_steak: [0, 0, 1, 0, 0],
+  scatter: [0, 0, 0, 0, 0],
+  toaster: [0, 0, 0, 0, 0],
 });
 
 export const DEFAULT_RTP_PROFILES: PlRtpProfile[] = [
@@ -391,8 +392,8 @@ export const DEFAULT_RTP_PROFILES: PlRtpProfile[] = [
  */
 export const DEFAULT_PUG_LIFE_CONFIG: PugLifeConfig = {
   schemaVersion: 1,
-  reelsCount: 7,
-  rowsCount: 4,
+  reelsCount: 5,
+  rowsCount: 5,
   reelHeights: [...DEFAULT_REEL_HEIGHTS],
   paylineCount: totalConnectingWays([...DEFAULT_REEL_HEIGHTS]),
   paylines: [],
@@ -450,7 +451,7 @@ export const DEFAULT_PUG_LIFE_CONFIG: PugLifeConfig = {
     ],
     minFreeSpins: 3,
     maxFreeSpins: 20,
-    toasterReels: [3, 4],
+    toasterReels: [1, 2],
     toasterMultChancePercent: 50, // TODO/config-pending
     toasterMultiplierValues: [
       { value: 2, weight: 20 },
@@ -525,80 +526,81 @@ export const DEFAULT_PUG_LIFE_CONFIG: PugLifeConfig = {
       kind: "sym_10",
       name: "10",
       tier: "low",
-      pay: [0.05, 0.1, 0.25],
-      reelWeights: rw([46, 46, 46, 46, 46, 46, 46]),
+      /** Scaled for 720-way / 3-4-5-4-3 board */
+      pay: [0.008, 0.015, 0.038],
+      reelWeights: rw([46, 46, 46, 46, 46]),
     },
     {
       id: "sym_j",
       kind: "sym_j",
       name: "J",
       tier: "low",
-      pay: [0.06, 0.12, 0.3],
-      reelWeights: rw([44, 44, 44, 44, 44, 44, 44]),
+      pay: [0.009, 0.018, 0.045],
+      reelWeights: rw([44, 44, 44, 44, 44]),
     },
     {
       id: "sym_q",
       kind: "sym_q",
       name: "Q",
       tier: "low",
-      pay: [0.07, 0.14, 0.35],
-      reelWeights: rw([42, 42, 42, 42, 42, 42, 42]),
+      pay: [0.01, 0.02, 0.05],
+      reelWeights: rw([42, 42, 42, 42, 42]),
     },
     {
       id: "sym_k",
       kind: "sym_k",
       name: "K",
       tier: "low",
-      pay: [0.08, 0.16, 0.4],
-      reelWeights: rw([40, 40, 40, 40, 40, 40, 40]),
+      pay: [0.012, 0.024, 0.06],
+      reelWeights: rw([40, 40, 40, 40, 40]),
     },
     {
       id: "sym_a",
       kind: "sym_a",
       name: "A",
       tier: "low",
-      pay: [0.1, 0.2, 0.5],
-      reelWeights: rw([38, 38, 38, 38, 38, 38, 38]),
+      pay: [0.015, 0.03, 0.075],
+      reelWeights: rw([38, 38, 38, 38, 38]),
     },
     {
       id: "rat",
       kind: "rat",
       name: "Rat",
       tier: "high",
-      pay: [0.15, 0.35, 0.8],
-      reelWeights: rw([24, 24, 24, 24, 24, 24, 24]),
+      pay: [0.022, 0.05, 0.12],
+      reelWeights: rw([24, 24, 24, 24, 24]),
     },
     {
       id: "pigeon",
       kind: "pigeon",
       name: "Pigeon",
       tier: "high",
-      pay: [0.2, 0.45, 1.0],
-      reelWeights: rw([20, 20, 20, 20, 20, 20, 20]),
+      pay: [0.03, 0.065, 0.15],
+      reelWeights: rw([20, 20, 20, 20, 20]),
     },
     {
       id: "cat",
       kind: "cat",
       name: "Cat",
       tier: "high",
-      pay: [0.25, 0.55, 1.25],
-      reelWeights: rw([15, 15, 15, 15, 15, 15, 15]),
+      pay: [0.038, 0.08, 0.19],
+      reelWeights: rw([15, 15, 15, 15, 15]),
     },
     {
       id: "chihuahua",
       kind: "chihuahua",
       name: "Chihuahua",
       tier: "high",
-      pay: [0.3, 0.7, 1.6],
-      reelWeights: rw([11, 11, 11, 11, 11, 11, 11]),
+      pay: [0.045, 0.1, 0.24],
+      reelWeights: rw([11, 11, 11, 11, 11]),
     },
     {
       id: "pug",
       kind: "pug",
       name: "Pugly the Pug",
       tier: "high",
-      pay: [0.4, 1.0, 2.5],
-      reelWeights: rw([7, 7, 7, 7, 7, 7, 7]),
+      pay: [0.06, 0.15, 0.38],
+      reelWeights: rw([7, 7, 7, 7, 7]),
     },
     {
       id: "treat_biscuit",
@@ -606,7 +608,7 @@ export const DEFAULT_PUG_LIFE_CONFIG: PugLifeConfig = {
       name: "Biscuit Treat",
       tier: "treat",
       pay: [0, 0, 0],
-      reelWeights: rw([2, 2, 2, 2, 2, 2, 2]),
+      reelWeights: rw([2, 2, 2, 2, 2]),
       wild: true,
       treatTier: "biscuit",
     },
@@ -616,7 +618,7 @@ export const DEFAULT_PUG_LIFE_CONFIG: PugLifeConfig = {
       name: "Bone Treat",
       tier: "treat",
       pay: [0, 0, 0],
-      reelWeights: rw([1, 1, 1, 1, 1, 1, 1]),
+      reelWeights: rw([1, 1, 1, 1, 1]),
       wild: true,
       treatTier: "bone",
     },
@@ -626,7 +628,7 @@ export const DEFAULT_PUG_LIFE_CONFIG: PugLifeConfig = {
       name: "Steak Treat",
       tier: "treat",
       pay: [0, 0, 0],
-      reelWeights: rw([0, 1, 0, 1, 0, 1, 0]),
+      reelWeights: rw([0, 1, 0, 1, 0]),
       wild: true,
       treatTier: "steak",
     },
@@ -636,7 +638,7 @@ export const DEFAULT_PUG_LIFE_CONFIG: PugLifeConfig = {
       name: "Dawg's Den Scatter",
       tier: "scatter",
       pay: [0, 0, 0],
-      reelWeights: rw([2, 1, 2, 1, 2, 1, 2]),
+      reelWeights: rw([2, 1, 2, 1, 2]),
       scatter: true,
     },
     {
@@ -645,7 +647,7 @@ export const DEFAULT_PUG_LIFE_CONFIG: PugLifeConfig = {
       name: "Toaster",
       tier: "toaster",
       pay: [0, 0, 0],
-      reelWeights: rw([0, 0, 0, 0, 0, 0, 0]),
+      reelWeights: rw([0, 0, 0, 0, 0]),
       wild: true,
       toaster: true,
     },
@@ -804,13 +806,16 @@ export function normalizePugLifeConfig(raw: unknown): PugLifeConfig {
   if (!raw || typeof raw !== "object") return structuredClone(d);
   const o = raw as Partial<PugLifeConfig>;
 
-  // Prefer explicit reelHeights; migrate legacy 5×4 configs to diamond defaults
+  // Prefer explicit reelHeights; migrate legacy 5×4 and classic 7-reel diamond → 3-4-5-4-3
+  const classicSevenDiamond =
+    Array.isArray(o.reelHeights) &&
+    o.reelHeights.map((h) => Math.round(num(h, 0))).join(",") === "1,2,3,4,3,2,1";
   const legacyFiveByFour =
     !Array.isArray(o.reelHeights) &&
     Math.round(num(o.reelsCount, 0)) === 5 &&
     Math.round(num(o.rowsCount, 0)) === 4;
   const reelHeights = normalizeReelHeights(
-    legacyFiveByFour ? d.reelHeights : o.reelHeights,
+    classicSevenDiamond || legacyFiveByFour ? d.reelHeights : o.reelHeights,
     d.reelHeights,
   );
   const reelsCount = reelHeights.length;
@@ -886,9 +891,10 @@ export function normalizePugLifeConfig(raw: unknown): PugLifeConfig {
     ),
     minFreeSpins: clamp(Math.round(num(ddIn.minFreeSpins, d.dawgsDen.minFreeSpins)), 1, 100),
     maxFreeSpins: clamp(Math.round(num(ddIn.maxFreeSpins, d.dawgsDen.maxFreeSpins)), 1, 100),
-    toasterReels: Array.isArray(ddIn.toasterReels)
-      ? ddIn.toasterReels.map((r) => clamp(Math.round(num(r, 3)), 0, reelsCount - 1))
-      : [...d.dawgsDen.toasterReels],
+    toasterReels:
+      classicSevenDiamond || !Array.isArray(ddIn.toasterReels)
+        ? [...d.dawgsDen.toasterReels]
+        : ddIn.toasterReels.map((r) => clamp(Math.round(num(r, 1)), 0, reelsCount - 1)),
     toasterMultChancePercent: clamp(
       num(ddIn.toasterMultChancePercent, d.dawgsDen.toasterMultChancePercent),
       0,

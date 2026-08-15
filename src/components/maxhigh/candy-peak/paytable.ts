@@ -8,16 +8,16 @@ export const SYMBOLS: CellSym[] = getRuntimeSymbols().map((s) => ({
 }));
 
 export const ICON_SRC: Record<SymKind, string> = {
-  grape: "/images/symbols/sweet/grape.png",
+  grape: "/images/symbols/sweet/grape.webp",
   plum: "/images/symbols/sweet/plum.png",
   melon: "/images/symbols/sweet/melon.png",
-  apple: "/images/symbols/sweet/apple.png",
+  apple: "/images/symbols/sweet/apple.webp",
   blue: "/images/symbols/sweet/blue.png",
   green: "/images/symbols/sweet/green.png",
   purple: "/images/symbols/sweet/purple.png",
   heart: "/images/symbols/sweet/heart.png",
   lollipop: "/images/symbols/sweet/lollipop.png",
-  bomb: "/images/symbols/sweet/bomb.png",
+  bomb: "/images/symbols/sweet/bomb.webp",
 };
 
 export function payForCount(sym: CellSym, count: number): number {
@@ -60,4 +60,6 @@ export const ANTE_MULT = 1.25;
 export const FREE_SPINS_BASE = 10;
 export const FREE_SPINS_RETRIGGER = 5;
 
-export const BET_STEPS = [0.2, 0.4, 0.6, 0.8, 1, 1.2, 1.6, 2, 2.4, 3, 4, 5, 6.25, 8, 10];
+export const BET_STEPS = [
+  0.2, 0.4, 0.6, 0.8, 1, 1.2, 1.6, 2, 2.4, 3, 4, 5, 6.25, 8, 10, 20, 50, 100,
+];

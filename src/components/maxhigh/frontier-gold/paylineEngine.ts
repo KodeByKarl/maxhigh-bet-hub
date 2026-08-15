@@ -1,84 +1,98 @@
-import { betPerLine, type FgSymKind, type FrontierGoldConfig } from "@/lib/frontier-gold-config";
+/**
+ * Frontier Gold — connecting ways on a 3-4-5-4-3 diamond board.
+ * Wins = 3+ matching symbols on consecutive reels from the left;
+ * Wild substitutes (not for Scatter / Bonus).
+ * Payout = pay × totalBet × waysCount.
+ */
+import type { FgSymKind, FrontierGoldConfig } from "@/lib/frontier-gold-config";
 import type { FgGrid, PaylineWin } from "./types";
 
 function isWild(kind: FgSymKind, cfg: FrontierGoldConfig) {
   return !!cfg.symbols.find((s) => s.kind === kind)?.wild;
 }
 
-function isPaying(kind: FgSymKind, cfg: FrontierGoldConfig) {
+function isPayingTarget(kind: FgSymKind, cfg: FrontierGoldConfig): boolean {
   const s = cfg.symbols.find((x) => x.kind === kind);
-  return !!s && (s.tier === "low" || s.tier === "high" || s.tier === "wild");
+  return !!s && (s.tier === "low" || s.tier === "high");
+}
+
+function payForCount(symPay: [number, number, number], count: number): number {
+  if (count < 3) return 0;
+  if (count === 3) return symPay[0];
+  if (count === 4) return symPay[1];
+  // 5+ consecutive reels use the 5-oak tier (board max is 7)
+  return symPay[2];
 }
 
 /**
- * Left→right payline eval with wild substitution (not for scatter/bonus).
+ * Left→right connecting ways evaluation for variable reelHeights.
  */
-export function evaluatePaylines(
+export function evaluateWays(
   grid: FgGrid,
   totalBet: number,
   cfg: FrontierGoldConfig,
 ): { wins: PaylineWin[]; total: number } {
-  const bpl = betPerLine(totalBet, cfg);
+  const reelsCount = cfg.reelsCount;
+  const minLen = cfg.minMatchLength;
   const wins: PaylineWin[] = [];
   let total = 0;
+  let winIndex = 0;
 
-  for (let lineIndex = 0; lineIndex < cfg.paylineCount; lineIndex++) {
-    const path = cfg.paylines[lineIndex];
-    if (!path || path.length < cfg.reelsCount) continue;
+  const pushWin = (w: Omit<PaylineWin, "lineIndex">) => {
+    wins.push({ ...w, lineIndex: winIndex++ });
+    total += w.payout;
+  };
 
-    const cells: FgSymKind[] = [];
-    for (let reel = 0; reel < cfg.reelsCount; reel++) {
-      const row = path[reel];
-      const sym = grid[reel]?.[row];
-      if (!sym) break;
-      cells.push(sym);
-    }
-    if (cells.length < cfg.minMatchLength) continue;
+  for (const symCfg of cfg.symbols) {
+    if (!isPayingTarget(symCfg.kind, cfg)) continue;
+    const target = symCfg.kind;
 
-    // Determine target paying symbol (first non-wild, or wild-only line)
-    let target: FgSymKind | null = null;
-    for (const c of cells) {
-      if (c === "scatter" || c === "bonus") {
-        target = null;
-        break;
+    const matchingPerReel: Array<Array<{ row: number }>> = [];
+    let consecutive = 0;
+
+    for (let reel = 0; reel < reelsCount; reel++) {
+      const col = grid[reel] ?? [];
+      const matches: Array<{ row: number }> = [];
+      for (let row = 0; row < col.length; row++) {
+        const c = col[row];
+        if (!c || c === "scatter" || c === "bonus") continue;
+        if (c === target || isWild(c, cfg)) {
+          matches.push({ row });
+        }
       }
-      if (!isWild(c, cfg)) {
-        target = c;
-        break;
-      }
+      if (matches.length === 0) break;
+      matchingPerReel.push(matches);
+      consecutive++;
     }
-    if (!target) {
-      // all wilds — use wild pay
-      if (cells.every((c) => isWild(c, cfg))) target = "wild";
-      else continue;
-    }
-    if (!isPaying(target, cfg) && target !== "wild") continue;
 
-    let count = 0;
+    if (consecutive < minLen) continue;
+
+    const waysCount = matchingPerReel.reduce((acc, list) => acc * list.length, 1);
+    const baseMult = payForCount(symCfg.pay, consecutive);
+    if (baseMult <= 0 || waysCount <= 0) continue;
+
     const positions: Array<[number, number]> = [];
-    for (let reel = 0; reel < cells.length; reel++) {
-      const c = cells[reel];
-      if (c === "scatter" || c === "bonus") break;
-      if (c === target || isWild(c, cfg)) {
-        count++;
-        positions.push([reel, path[reel]]);
-      } else break;
+    for (let reel = 0; reel < matchingPerReel.length; reel++) {
+      for (const m of matchingPerReel[reel]!) {
+        positions.push([reel, m.row]);
+      }
     }
 
-    if (count < cfg.minMatchLength) continue;
-    const symCfg = cfg.symbols.find((s) => s.kind === target);
-    if (!symCfg) continue;
-    const payIdx = Math.min(count, 5) - 3;
-    if (payIdx < 0 || payIdx > 2) continue;
-    const mult = symCfg.pay[payIdx as 0 | 1 | 2];
-    if (mult <= 0) continue;
-    const payout = +(mult * bpl).toFixed(2);
-    wins.push({ lineIndex, symbol: target, count, positions, payout });
-    total += payout;
+    const payout = +(baseMult * totalBet * waysCount).toFixed(2);
+    pushWin({
+      symbol: target,
+      count: consecutive,
+      positions,
+      waysCount,
+      payout,
+    });
   }
 
   return { wins, total: +total.toFixed(2) };
 }
+
+/** @deprecated Alias — Frontier Gold now uses connecting ways. */
+export const evaluatePaylines = evaluateWays;
 
 export function evaluateScatterPay(
   scatterCount: number,

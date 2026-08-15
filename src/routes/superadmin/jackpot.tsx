@@ -126,8 +126,11 @@ function SuperJackpotPage() {
   return (
     <div className="mx-auto max-w-xl space-y-6 pb-6">
       <div>
-        <h1 className="text-3xl font-black text-foreground">Mega Jackpot Management</h1>
-        <p className="mt-1 text-sm text-muted-foreground">
+        <h1 className="text-xl font-black text-foreground sm:text-3xl">
+          <span className="sm:hidden">Jackpot</span>
+          <span className="hidden sm:inline">Mega Jackpot Management</span>
+        </h1>
+        <p className="mt-1 text-xs text-muted-foreground sm:text-sm">
           Manage progressive pool funds, win eligibility, and the Player Board display amount.
         </p>
       </div>

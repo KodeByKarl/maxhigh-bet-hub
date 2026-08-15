@@ -9,6 +9,7 @@ import type { AdminAuditLogRow, AdminDashboardStats } from "@/lib/admin-types";
 import { useAuth } from "@/lib/auth";
 import { isStaffRole } from "@/lib/user";
 import { adminGlass, adminGlassElevated } from "@/components/admin/ui/glass";
+import { AGENT_MASTER_PROMOTE_HINT } from "@/lib/agent-promotion";
 import {
   Plus,
   ScrollText,
@@ -94,47 +95,49 @@ function AdminDashboardPage() {
   });
 
   return (
-    <div className="space-y-5 pb-8">
+    <div className="space-y-4 pb-2 sm:space-y-5 sm:pb-8">
 
-      {/* ── Header Banner ─────────────────────────────────────────── */}
-      <div className="flex flex-wrap items-start justify-between gap-4">
-        <div className="space-y-1">
-          {/* Role pill */}
-          <div className="inline-flex items-center gap-1.5 rounded-full border border-violet-400/30 bg-violet-500/[0.12] px-3 py-1 text-[11px] font-bold uppercase tracking-widest text-violet-300 mb-2">
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <div className="mb-1.5 inline-flex items-center gap-1.5 rounded-full border border-violet-400/30 bg-violet-500/[0.12] px-2.5 py-1 text-[10px] font-bold uppercase tracking-widest text-violet-300 sm:mb-2 sm:px-3 sm:text-[11px]">
             <span className="h-1.5 w-1.5 rounded-full bg-violet-400 animate-pulse" />
             {roleLabel}
           </div>
 
-          <h1 className="text-3xl sm:text-4xl font-black tracking-tight text-white">
-            Command Center, {firstName}
+          <h1 className="text-xl font-black tracking-tight text-white sm:text-3xl lg:text-4xl">
+            <span className="sm:hidden">Command Center</span>
+            <span className="hidden sm:inline">Command Center, {firstName}</span>
           </h1>
 
-          <p className="text-sm text-white/45 max-w-lg leading-relaxed">
-            Real-time control over player accounts, wallet chips, turnover volume, and earnings.
+          <p className="mt-1 max-w-lg text-xs leading-relaxed text-white/45 sm:text-sm">
+            <span className="sm:hidden">Players, chips, turnover, and earnings.</span>
+            <span className="hidden sm:inline">
+              Real-time control over player accounts, wallet chips, turnover volume, and earnings.
+            </span>
           </p>
+          {user?.role === "agent" && (
+            <p className="mt-2 text-xs font-semibold text-violet-300">
+              {AGENT_MASTER_PROMOTE_HINT}
+            </p>
+          )}
         </div>
 
-        {/* Right: time + action buttons */}
-        <div className="flex flex-col items-end gap-3">
-          {/* Live clock */}
-          <div className="hidden sm:flex items-center gap-2 rounded-xl border border-white/[0.07] bg-white/[0.03] px-3.5 py-2">
+        <div className="flex w-full items-center justify-between gap-3 sm:w-auto sm:flex-col sm:items-end">
+          <div className="flex items-center gap-2 rounded-xl border border-white/[0.07] bg-white/[0.03] px-3 py-1.5 sm:px-3.5 sm:py-2">
             <Clock size={14} className="text-white/30" />
             <div className="text-right">
               <div className="text-sm font-bold tabular-nums text-white">{timeStr}</div>
-              <div className="text-[10px] text-white/30">{dateStr}</div>
+              <div className="hidden text-[10px] text-white/30 sm:block">{dateStr}</div>
             </div>
           </div>
 
-          {/* Action buttons */}
-          <div className="flex flex-wrap items-center gap-2">
-            <Link
-              to="/admin/users"
-              className="inline-flex h-10 items-center gap-2 rounded-xl bg-violet-600 hover:bg-violet-500 px-5 text-sm font-bold text-white active:scale-95 transition-all"
-            >
-              <Plus size={15} />
-              Add Player
-            </Link>
-          </div>
+          <Link
+            to="/admin/users"
+            className="inline-flex h-10 items-center gap-2 rounded-xl bg-violet-600 px-4 text-sm font-bold text-white transition-all hover:bg-violet-500 active:scale-95 sm:px-5"
+          >
+            <Plus size={15} />
+            Add Player
+          </Link>
         </div>
       </div>
 
@@ -154,9 +157,9 @@ function AdminDashboardPage() {
       <div className="grid gap-4 lg:grid-cols-2">
 
         {/* Quick Actions */}
-        <div className={`${adminGlass} p-5 space-y-4`}>
+        <div className={`${adminGlass} space-y-3 p-4 sm:space-y-4 sm:p-5`}>
           <div className="flex items-center justify-between border-b border-white/[0.06] pb-3">
-            <h2 className="text-sm font-bold text-white">Agent Quick Actions</h2>
+            <h2 className="text-sm font-bold text-white">Quick Actions</h2>
             <span className="text-[10px] font-bold uppercase tracking-widest text-violet-300/70">
               Shortcuts
             </span>
@@ -214,12 +217,12 @@ function AdminDashboardPage() {
         </div>
 
         {/* Wallet Rules */}
-        <div className={`${adminGlass} p-5 space-y-4`}>
+        <div className={`${adminGlass} space-y-3 p-4 sm:space-y-4 sm:p-5`}>
           <div className="flex items-center gap-2.5 border-b border-white/[0.06] pb-3">
             <div className="grid h-8 w-8 place-items-center rounded-lg bg-emerald-500/15 border border-emerald-400/20">
               <ShieldCheck size={15} className="text-emerald-400" />
             </div>
-            <h2 className="text-sm font-bold text-white">Agent Wallet Rules</h2>
+            <h2 className="text-sm font-bold text-white">Wallet Rules</h2>
           </div>
 
           <div className="space-y-3">

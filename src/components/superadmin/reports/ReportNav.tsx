@@ -56,14 +56,14 @@ export function ReportPageHeader({
   return (
     <div className="flex flex-wrap items-center justify-between gap-3">
       <div>
-        <h1 className="text-3xl font-bold text-foreground">{title}</h1>
-        <p className="mt-1 text-sm text-muted-foreground">{blurb}</p>
+        <h1 className="text-xl font-bold text-foreground sm:text-3xl">{title}</h1>
+        <p className="mt-1 text-xs text-muted-foreground sm:text-sm">{blurb}</p>
       </div>
 
       <button
         type="button"
         onClick={handlePrint}
-        className="no-print flex items-center gap-2 rounded-xl border border-amber-500/30 bg-amber-500/10 px-4 py-2 text-xs font-bold uppercase tracking-wider text-amber-300 hover:bg-amber-500/20 transition"
+        className="no-print flex items-center gap-2 rounded-xl border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-[10px] font-bold uppercase tracking-wider text-amber-300 hover:bg-amber-500/20 transition sm:px-4 sm:text-xs"
       >
         <Printer className="h-4 w-4 text-amber-400" />
         Export / Print PDF

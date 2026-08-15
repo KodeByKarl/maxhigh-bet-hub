@@ -1,11 +1,14 @@
 import {
   DEFAULT_FRONTIER_GOLD_CONFIG,
+  DEFAULT_REEL_HEIGHTS,
   calcFreeSpinsAward,
   normalizeFrontierGoldConfig,
+  totalCells,
+  totalConnectingWays,
 } from "../src/lib/frontier-gold-config";
 import { resolveFrontierSpin } from "../src/components/maxhigh/frontier-gold/spinResolver";
 import { setFrontierGoldConfig } from "../src/components/maxhigh/frontier-gold/runtimeConfig";
-import { evaluatePaylines } from "../src/components/maxhigh/frontier-gold/paylineEngine";
+import { evaluateWays } from "../src/components/maxhigh/frontier-gold/paylineEngine";
 import { resolveHoldAndWin } from "../src/components/maxhigh/frontier-gold/holdAndWin";
 import { createRng } from "../src/components/maxhigh/frontier-gold/rng";
 import type { FgGrid } from "../src/components/maxhigh/frontier-gold/types";
@@ -16,21 +19,36 @@ function assert(cond: boolean, msg: string) {
   if (!cond) throw new Error(msg);
 }
 
-function unitPaylines() {
-  console.log("1. Paylines + wild");
+function unitDiamondLayout() {
+  console.log("0. Diamond layout shape");
+  assert(
+    DEFAULT_FRONTIER_GOLD_CONFIG.reelHeights.join(",") === [...DEFAULT_REEL_HEIGHTS].join(","),
+    "reelHeights must be 3-4-5-4-3",
+  );
+  assert(DEFAULT_FRONTIER_GOLD_CONFIG.reelsCount === 5, "5 reels");
+  assert(DEFAULT_FRONTIER_GOLD_CONFIG.rowsCount === 5, "max height 5");
+  assert(totalConnectingWays(DEFAULT_FRONTIER_GOLD_CONFIG.reelHeights) === 720, "720 ways");
+  assert(DEFAULT_FRONTIER_GOLD_CONFIG.paylineCount === 720, "paylineCount = ways");
+  assert(totalCells(DEFAULT_FRONTIER_GOLD_CONFIG) === 19, "19 cells");
+  console.log("✔ diamond shape ok\n");
+}
+
+function unitWays() {
+  console.log("1. Connecting ways + wild");
+  // Heights [3,4,5,4,3] — Ace on left 3 reels with wild on reel 1
   const grid: FgGrid = [
-    ["sym_a", "bandit", "sym_j"],
-    ["wild", "sym_q", "sym_k"],
-    ["sym_a", "safe", "sym_q"],
-    ["sym_j", "sym_k", "sym_a"],
-    ["sym_q", "sym_j", "bandit"],
+    ["sym_a", "sym_j", "sym_q"], // h=3
+    ["wild", "sym_q", "sym_k", "safe"], // h=4
+    ["sym_a", "safe", "sym_q", "sym_j", "bandit"], // h=5
+    ["sym_q", "sym_j", "bandit", "bartender"], // h=4
+    ["sym_k", "bartender", "sheriff"], // h=3
   ];
-  grid[0][1] = "sym_a";
-  grid[1][1] = "wild";
-  grid[2][1] = "sym_a";
-  const eval1 = evaluatePaylines(grid, 25, DEFAULT_FRONTIER_GOLD_CONFIG);
-  assert(eval1.wins.some((w) => w.symbol === "sym_a" && w.count >= 3), "Expected A payline with wild");
-  console.log("✔ paylines ok\n");
+  const eval1 = evaluateWays(grid, 1, DEFAULT_FRONTIER_GOLD_CONFIG);
+  assert(eval1.wins.some((w) => w.symbol === "sym_a" && w.count >= 3), "Expected Ace ways with wild");
+  const aceWin = eval1.wins.find((w) => w.symbol === "sym_a")!;
+  assert((aceWin.waysCount ?? 0) >= 1, "waysCount set");
+  assert(aceWin.payout > 0, "Ace payout > 0");
+  console.log("✔ ways ok\n");
 }
 
 function holdWinAndFs() {
@@ -41,7 +59,7 @@ function holdWinAndFs() {
     [2, 0],
     [3, 0],
     [4, 0],
-    [0, 1],
+    [2, 1],
   ]);
   assert(hw.triggerCoins.length === 6, "6 trigger coins");
   assert(hw.totalWin > 0, "hold win payout");
@@ -51,6 +69,14 @@ function holdWinAndFs() {
   let sawFs = false;
   for (let i = 0; i < 40000; i++) {
     const s = resolveFrontierSpin({ totalBet: 1 });
+    // Every spin must produce a diamond-shaped grid
+    assert(s.grid.length === 5, `grid reels ${s.grid.length}`);
+    for (let r = 0; r < 5; r++) {
+      assert(
+        s.grid[r]!.length === DEFAULT_REEL_HEIGHTS[r],
+        `reel ${r} height ${s.grid[r]!.length} != ${DEFAULT_REEL_HEIGHTS[r]}`,
+      );
+    }
     if (s.holdWin) sawHold = true;
     if (s.freeSpinsAwarded > 0) sawFs = true;
     assert(s.totalWin >= 0, "negative win");
@@ -61,6 +87,37 @@ function holdWinAndFs() {
   assert(calcFreeSpinsAward(3) === 10, "3 scatters → 10 FS");
   assert(calcFreeSpinsAward(4) === 12, "4 scatters → 12 FS");
   console.log("✔ hold/fs ok\n");
+}
+
+function legacyMigration() {
+  console.log("2b. Legacy layouts → 3-4-5-4-3 migration");
+  const fromFiveByThree = normalizeFrontierGoldConfig({
+    reelsCount: 5,
+    rowsCount: 3,
+    paylineCount: 25,
+    symbols: DEFAULT_FRONTIER_GOLD_CONFIG.symbols.map((s) => ({
+      ...s,
+      pay: [14, 35, 110] as [number, number, number],
+      reelWeights: [10, 10, 10, 10, 10],
+      reelWeightsFreeSpins: [10, 10, 10, 10, 10],
+    })),
+  });
+  assert(fromFiveByThree.reelHeights.join(",") === "3,4,5,4,3", "5×3 → heights");
+  assert(fromFiveByThree.reelsCount === 5, "5×3 → reels");
+  assert(fromFiveByThree.paylineCount === 720, "5×3 → ways");
+  assert(fromFiveByThree.symbols[0]!.reelWeights.length === 5, "weights length 5");
+  assert(fromFiveByThree.symbols[0]!.pay[0]! < 1, "legacy pays scaled to stake mult");
+
+  const fromSeven = normalizeFrontierGoldConfig({
+    reelHeights: [1, 2, 3, 4, 3, 2, 1],
+    reelsCount: 7,
+    rowsCount: 4,
+    paylineCount: 144,
+  });
+  assert(fromSeven.reelHeights.join(",") === "3,4,5,4,3", "7-diamond → heights");
+  assert(fromSeven.reelsCount === 5, "7-diamond → reels");
+  assert(fromSeven.paylineCount === 720, "7-diamond → ways");
+  console.log("✔ migration ok\n");
 }
 
 function maxCap() {
@@ -102,8 +159,10 @@ function rtpSmoke() {
   console.log("✔ rtp smoke ok\n");
 }
 
-unitPaylines();
+unitDiamondLayout();
+unitWays();
 holdWinAndFs();
+legacyMigration();
 maxCap();
 rtpSmoke();
 console.log("ALL FRONTIER GOLD TESTS PASSED");

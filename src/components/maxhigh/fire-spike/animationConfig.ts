@@ -38,13 +38,13 @@ export const SYM_COLOR: Record<FsSymKind, string> = {
 
 /** Real art path — renderer falls back to glyph if file missing. */
 export const ICON_SRC: Record<FsSymKind, string> = {
-  bar: "/images/symbols/fire-spike/bar.png",
-  dice: "/images/symbols/fire-spike/dice.png",
-  diamond: "/images/symbols/fire-spike/diamond.png",
-  chip: "/images/symbols/fire-spike/chip.png",
-  lucky7: "/images/symbols/fire-spike/lucky7.png",
-  wild: "/images/symbols/fire-spike/wild.png",
-  scatter: "/images/symbols/fire-spike/scatter.png",
+  bar: "/images/symbols/fire-spike/bar.webp",
+  dice: "/images/symbols/fire-spike/dice.webp",
+  diamond: "/images/symbols/fire-spike/diamond.webp",
+  chip: "/images/symbols/fire-spike/chip.webp",
+  lucky7: "/images/symbols/fire-spike/lucky7.webp",
+  wild: "/images/symbols/fire-spike/wild.webp",
+  scatter: "/images/symbols/fire-spike/scatter.webp",
 };
 
 /** Ornate metal frame overlay (Frontier-style card border, fire palette). */

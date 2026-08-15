@@ -1,5 +1,5 @@
 /**
- * Pug Den — connecting ways on a 1-2-3-4-3-2-1 diamond board.
+ * Pug Den — connecting ways on a 3-4-5-4-3 diamond board.
  * Wins = 3+ matching symbols on consecutive reels from the left;
  * Treat / Toaster wilds substitute (not for Scatter).
  * Multiple Treats on a win → multipliers are summed (combined).

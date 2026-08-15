@@ -1,32 +1,11 @@
 import { Link, useRouterState } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import {
-  LayoutDashboard,
-  Users,
-  UserCog,
-  Gamepad2,
-  ScrollText,
-  Gem,
-  Shield,
-  ChevronDown,
-  BarChart3,
-  Settings,
-  Gift,
-  Lock,
-} from "lucide-react";
+import { Shield, ChevronDown, BarChart3, ScrollText } from "lucide-react";
 import { saGlass } from "../ui/glass";
 import { REPORT_SECTIONS, type ReportSection } from "../reports/ReportNav";
+import { SUPER_NAV } from "./nav";
 
-const topNav = [
-  { to: "/superadmin" as const, label: "Command center", icon: LayoutDashboard, exact: true },
-  { to: "/superadmin/users" as const, label: "Player List", icon: Users, exact: false },
-  { to: "/superadmin/admins" as const, label: "Admins", icon: UserCog, exact: false },
-  { to: "/superadmin/games" as const, label: "Games control", icon: Gamepad2, exact: false },
-  { to: "/superadmin/promotions" as const, label: "Promotions", icon: Gift, exact: false },
-  { to: "/superadmin/risk" as const, label: "Risk Control", icon: Lock, exact: false },
-  { to: "/superadmin/settings" as const, label: "System Settings", icon: Settings, exact: false },
-  { to: "/superadmin/jackpot" as const, label: "Jackpot", icon: Gem, exact: false },
-];
+const topNav = SUPER_NAV.filter((item) => item.to !== "/superadmin/staff");
 
 const navLinkClass =
   "flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-muted-foreground transition-colors hover:bg-white/[0.06] hover:text-foreground data-[status=active]:bg-gradient-to-r data-[status=active]:from-amber-500 data-[status=active]:to-orange-500 data-[status=active]:text-black data-[status=active]:shadow-[0_0_20px_rgba(245,158,11,0.25)]";
@@ -65,7 +44,8 @@ export function SuperSidebar() {
               <Link
                 key={item.to}
                 to={item.to}
-                activeOptions={{ exact: item.exact }}
+                params={item.params as never}
+                activeOptions={{ exact: Boolean(item.exact) }}
                 className={navLinkClass}
               >
                 <Icon size={17} />

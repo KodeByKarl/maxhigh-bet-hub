@@ -1,12 +1,13 @@
-import { eq, desc, inArray } from "drizzle-orm";
+import { desc, eq } from "drizzle-orm";
 import { getDb } from "../db/client";
 import { gameControls, gameSettingsLogs } from "../db/schema";
 import { newId } from "../session";
 import { writeAuditLog } from "../admin/audit.server";
 import { requirePermission } from "../auth/rbac.server";
+import { slotGames, type GameCategory } from "@/lib/games";
 
 export type BulkGameControlsInput = {
-  scope: "all" | "slots" | "table" | "live" | string[];
+  scope: "all" | "slots" | "cards" | "fishing" | "table" | "live";
   deadSpinPct: number;
   winChancePct: number;
   maxMultiplier: number;
@@ -28,75 +29,126 @@ export type GameSettingsLogRowType = {
   createdAt: string;
 };
 
+function parseJsonObject(raw: string | null | undefined): Record<string, unknown> {
+  if (!raw) return {};
+  try {
+    const v = JSON.parse(raw) as unknown;
+    return v && typeof v === "object" && !Array.isArray(v) ? { ...(v as Record<string, unknown>) } : {};
+  } catch {
+    return {};
+  }
+}
+
+/** Merge global outcome sliders into each game's full engine JSON (never wipe symbols / FS math). */
+export function mergeOutcomeIntoEngineConfig(
+  existing: string | null | undefined,
+  patch: { deadSpinPct: number; winChancePct: number; maxMultiplier: number; rtp: number },
+): string {
+  const cfg = parseJsonObject(existing);
+  cfg.deadSpinChancePercent = patch.deadSpinPct;
+  cfg.deadSpinPct = patch.deadSpinPct;
+  cfg.winChancePct = patch.winChancePct;
+  cfg.winChancePercent = patch.winChancePct;
+  cfg.maxMultiplier = patch.maxMultiplier;
+  cfg.maxWinMult = patch.maxMultiplier;
+  cfg.targetRtp = patch.rtp;
+  cfg.rtpTarget = patch.rtp;
+  return JSON.stringify(cfg);
+}
+
+function catalogCategoryForScope(scope: BulkGameControlsInput["scope"]): GameCategory | null {
+  if (scope === "all") return null;
+  if (scope === "slots") return "slot";
+  if (scope === "cards" || scope === "table" || scope === "live") return "cards";
+  if (scope === "fishing") return "fishing";
+  return null;
+}
+
 export async function superBulkUpdateGameControls(input: BulkGameControlsInput): Promise<{
   ok: boolean;
   affectedCount: number;
   logId: string;
+  deadSpinPct: number;
+  winChancePct: number;
+  maxMultiplier: number;
+  rtp: number;
 }> {
   const actor = await requirePermission("GAME_CONTROL_UPDATE");
   const db = getDb();
 
-  // Validate percentages and limits
   const deadSpinPct = +Math.max(0, Math.min(100, input.deadSpinPct)).toFixed(2);
   const winChancePct = +Math.max(0, Math.min(100, input.winChancePct)).toFixed(2);
   const maxMultiplier = +Math.max(1, Math.min(100000, input.maxMultiplier)).toFixed(2);
   const rtp = +Math.max(50, Math.min(150, input.rtp)).toFixed(2);
 
-  // 1. Fetch matching game control rows before update
-  const allControls = await db.select().from(gameControls);
-
-  let targetIds: string[] = [];
-  if (Array.isArray(input.scope)) {
-    targetIds = input.scope;
-  } else if (input.scope === "all") {
-    targetIds = allControls.map((c) => c.gameId);
-  } else {
-    const scopeStr = input.scope;
-    targetIds = allControls
-      .filter((c) => c.gameId.toLowerCase().includes(scopeStr.toLowerCase()))
-      .map((c) => c.gameId);
+  const category = catalogCategoryForScope(input.scope);
+  const targets = slotGames.filter((g) => (category ? g.category === category : true));
+  if (targets.length === 0) {
+    throw new Error("No games in that category");
   }
 
-  if (targetIds.length === 0) {
-    targetIds = allControls.map((c) => c.gameId);
+  const existingRows = await db.select().from(gameControls);
+  const byId = new Map(existingRows.map((r) => [r.gameId, r]));
+  const beforeSnapshot = JSON.stringify(
+    targets.map((g) => {
+      const row = byId.get(g.id);
+      return row
+        ? { gameId: row.gameId, rtp: row.rtp, engineConfig: row.engineConfig }
+        : { gameId: g.id, rtp: null, engineConfig: null };
+    }),
+  );
+
+  const patch = { deadSpinPct, winChancePct, maxMultiplier, rtp };
+
+  for (const game of targets) {
+    const existing = byId.get(game.id);
+    const engineConfig = mergeOutcomeIntoEngineConfig(existing?.engineConfig, patch);
+    const rtpLabel = `${rtp}%`;
+
+    if (!existing) {
+      await db.insert(gameControls).values({
+        gameId: game.id,
+        enabled: "yes",
+        featured: "no",
+        sortOrder: 0,
+        tag: game.tag ?? null,
+        rtp: rtpLabel,
+        volatility: game.volatility,
+        minBet: game.minBet,
+        maxBet: game.maxBet,
+        engineConfig,
+      });
+    } else {
+      await db
+        .update(gameControls)
+        .set({
+          rtp: rtpLabel,
+          engineConfig,
+        })
+        .where(eq(gameControls.gameId, game.id));
+    }
   }
 
-  const beforeControls = allControls.filter((c) => targetIds.includes(c.gameId));
-  const beforeSnapshot = JSON.stringify(beforeControls);
+  const afterRows = await db.select().from(gameControls);
+  const afterById = new Map(afterRows.map((r) => [r.gameId, r]));
+  const afterSnapshot = JSON.stringify(
+    targets.map((g) => {
+      const row = afterById.get(g.id);
+      return row
+        ? { gameId: row.gameId, rtp: row.rtp, engineConfig: row.engineConfig }
+        : { gameId: g.id, rtp: null, engineConfig: null };
+    }),
+  );
 
-  const engineConfigJson = JSON.stringify({
-    deadSpinPct,
-    winChancePct,
-    maxMultiplier,
-    rtp,
-  });
-
-  // 2. Perform bulk update
-  await db
-    .update(gameControls)
-    .set({
-      rtp: String(rtp),
-      engineConfig: engineConfigJson,
-    })
-    .where(inArray(gameControls.gameId, targetIds));
-
-  // 3. Fetch after snapshot
-  const afterControls = await db
-    .select()
-    .from(gameControls)
-    .where(inArray(gameControls.gameId, targetIds));
-  const afterSnapshot = JSON.stringify(afterControls);
-
-  // 4. Write immutable record in game_settings_logs
   const logId = newId();
-  const scopeLabel = Array.isArray(input.scope) ? `custom (${targetIds.length} games)` : input.scope;
+  const scopeLabel = input.scope;
 
   await db.insert(gameSettingsLogs).values({
     id: logId,
     actorId: actor.id,
     actorUsername: actor.username,
     scope: scopeLabel,
-    affectedCount: targetIds.length,
+    affectedCount: targets.length,
     deadSpinPct: String(deadSpinPct),
     winChancePct: String(winChancePct),
     maxMultiplier: String(maxMultiplier),
@@ -105,16 +157,15 @@ export async function superBulkUpdateGameControls(input: BulkGameControlsInput):
     afterSnapshot,
   });
 
-  // 5. Write audit log
   await writeAuditLog({
     actor,
     action: "super.bulk_game_update",
-    summary: `Bulk updated ${targetIds.length} game controls (RTP: ${rtp}%, WinChance: ${winChancePct}%, DeadSpin: ${deadSpinPct}%)`,
+    summary: `Bulk updated ${targets.length} games (RTP: ${rtp}%, WinChance: ${winChancePct}%, DeadSpin: ${deadSpinPct}%)`,
     targetType: "game_controls",
     targetId: logId,
     meta: {
       scope: scopeLabel,
-      affectedCount: targetIds.length,
+      affectedCount: targets.length,
       rtp,
       winChancePct,
       deadSpinPct,
@@ -122,7 +173,15 @@ export async function superBulkUpdateGameControls(input: BulkGameControlsInput):
     },
   });
 
-  return { ok: true, affectedCount: targetIds.length, logId };
+  return {
+    ok: true,
+    affectedCount: targets.length,
+    logId,
+    deadSpinPct,
+    winChancePct,
+    maxMultiplier,
+    rtp,
+  };
 }
 
 export async function listGameSettingsLogs(opts?: { limit?: number }): Promise<GameSettingsLogRowType[]> {

@@ -27,14 +27,13 @@ import type { FgSymKind } from "@/lib/frontier-gold-config";
 import { TILE_IMAGE_MAP } from "./frontier-gold/FrontierIcon";
 
 const BET_STEPS = [0.25, 0.5, 1, 2, 5, 10, 20, 35];
-const COLS = 5;
-const ROWS = 3;
 const EMPTY_SET = new Set<string>();
 
 function idleGrid(): FgGrid {
+  const heights = DEFAULT_FRONTIER_GOLD_CONFIG.reelHeights;
   const syms = DEFAULT_FRONTIER_GOLD_CONFIG.symbols.filter((s) => s.tier === "low" || s.tier === "high");
-  return Array.from({ length: COLS }, (_, r) =>
-    Array.from({ length: ROWS }, (_, row) => syms[(r + row) % syms.length]!.kind),
+  return heights.map((height, r) =>
+    Array.from({ length: height }, (_, row) => syms[(r + row) % syms.length]!.kind),
   );
 }
 
@@ -70,6 +69,7 @@ export function FrontierGoldSlot() {
   const [showBuy, setShowBuy] = useState(false);
   const [muted, setMuted] = useState(false);
   const [cfgTick, setCfgTick] = useState(0);
+  const [boardHost, setBoardHost] = useState({ w: 0, h: 0 });
 
   /** Same as CNY: busy is derived from phase — idle always unlocks SPIN */
   const busy = phase !== "idle" || showBuy;
@@ -78,6 +78,7 @@ export function FrontierGoldSlot() {
   const mountedRef = useRef(true);
   const playbackGen = useRef(0);
   const spinRef = useRef<() => Promise<void>>(async () => undefined);
+  const boardHostRef = useRef<HTMLDivElement>(null);
 
   turboRef.current = turbo;
 
@@ -85,6 +86,19 @@ export function FrontierGoldSlot() {
   void cfgTick;
   const buyCost = +(bet * cfg.buyFeatureMult).toFixed(2);
   const displayWin = inFree ? fsSessionWin : lastWin;
+
+  useEffect(() => {
+    const el = boardHostRef.current;
+    if (!el) return;
+    const measure = () => {
+      const r = el.getBoundingClientRect();
+      setBoardHost({ w: r.width, h: r.height });
+    };
+    measure();
+    const ro = new ResizeObserver(measure);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
 
   const wait = useCallback((ms: number, gen: number) => {
     const scaled = turboRef.current ? Math.min(ms, 55) : ms;
@@ -441,182 +455,205 @@ export function FrontierGoldSlot() {
     return coins.find((c) => c.reel === reel && c.row === row) ?? null;
   };
 
+  const reelHeights =
+    cfg.reelHeights?.length === cfg.reelsCount
+      ? cfg.reelHeights
+      : Array.from({ length: cfg.reelsCount }, () => cfg.rowsCount);
+  const maxReelRows = Math.max(...reelHeights, 1);
+  const reelCols = reelHeights.length;
+
+  /**
+   * Size circles as large as possible while keeping ALL columns on-screen.
+   * 3-4-5-4-3 (5 cols) fills the phone much better than the old 7-col diamond.
+   */
+  const availW = boardHost.w;
+  const availH = boardHost.h;
+  const narrow = availW > 0 && availW < 720;
+  const sidePad = narrow ? 4 : 0;
+  const cellGap =
+    availW > 0
+      ? Math.max(narrow ? 3 : 5, Math.round(Math.min(availW, availH) * (narrow ? 0.008 : 0.01)))
+      : 2;
+  const byHeight =
+    availH > 0 ? (availH - cellGap * Math.max(0, maxReelRows - 1)) / maxReelRows : 0;
+  const byWidthFit =
+    availW > 0
+      ? (availW - sidePad * 2 - cellGap * Math.max(0, reelCols - 1)) / reelCols
+      : 0;
+  const circlePx =
+    availW > 0 && availH > 0
+      ? Math.max(48, Math.floor(Math.min(byHeight, byWidthFit)))
+      : 0;
+  const boardW = circlePx > 0 ? circlePx * reelCols + cellGap * (reelCols - 1) : undefined;
+  const boardH = circlePx > 0 ? circlePx * maxReelRows + cellGap * (maxReelRows - 1) : undefined;
+
   return (
-    <div className="relative flex h-dvh w-full flex-col overflow-hidden select-none">
+    <div className="relative h-full w-full overflow-hidden select-none">
       <img
-        src="/games/frontier-gold.png"
+        src="/games/frontier-gold.webp"
         alt=""
-        className="absolute inset-0 size-full object-cover"
+        className="absolute inset-0 size-full object-cover object-[center_20%]"
         aria-hidden
       />
       <div
         className="absolute inset-0"
         style={{
           background:
-            "linear-gradient(180deg, rgba(69,26,3,0.35) 0%, rgba(28,15,8,0.55) 45%, rgba(0,0,0,0.82) 100%)",
+            "linear-gradient(180deg, rgba(69,26,3,0.2) 0%, rgba(28,15,8,0.4) 28%, rgba(12,6,3,0.68) 55%, rgba(0,0,0,0.9) 100%)",
         }}
       />
 
-      <div className="relative z-10 flex min-h-0 flex-1 flex-col items-center px-2 pb-2 pt-2 sm:px-4">
-        <div className="flex h-full min-h-0 w-full max-w-[1600px] flex-col items-center">
-          <div
-            className="flex h-full min-h-0 max-h-full flex-col items-stretch"
-            style={{
-              width: `min(100%, calc((100dvh - 7.5rem) * ${COLS} / ${ROWS}))`,
-            }}
-          >
-            <div className="mx-auto mb-1.5 shrink-0 rounded-full border-2 border-amber-700 bg-gradient-to-b from-amber-200 to-amber-600 px-4 py-1 text-xs font-black text-amber-950 shadow sm:mb-2 sm:px-5 sm:text-sm">
-              Frontier Gold · Hold & Win · 25 Lines
-            </div>
+      <div className="pointer-events-none absolute left-0 right-0 top-1 z-30 flex flex-col items-center gap-1 px-2 sm:top-2">
+        <div className="rounded-full border border-amber-700/90 bg-gradient-to-b from-amber-200 to-amber-600 px-3 py-0.5 text-[10px] font-black text-amber-950 shadow sm:border-2 sm:px-5 sm:py-1 sm:text-sm">
+          Frontier Gold · Hold & Win · {cfg.paylineCount} Ways
+        </div>
+        {inFree && (
+          <div className="rounded-lg border border-amber-400/60 bg-amber-950/85 px-3 py-0.5 text-[10px] font-bold text-amber-200 sm:text-xs">
+            FREE SPINS {freeSpinsLeft} · Session {formatMoney(fsSessionWin)}
+          </div>
+        )}
+      </div>
 
-            {inFree && (
-              <div className="mx-auto mb-1.5 shrink-0 rounded-lg border border-amber-400/60 bg-amber-950/80 px-3 py-1 text-xs font-bold text-amber-200">
-                FREE SPINS {freeSpinsLeft} · Session {formatMoney(fsSessionWin)}
-              </div>
-            )}
-
-            <div className="relative min-h-0 w-full flex-1 overflow-hidden">
+      {/* Diamond board — 3-4-5-4-3, sized to fill play area */}
+      <div
+        ref={boardHostRef}
+        className="absolute inset-x-0 bottom-[6.5rem] top-7 z-10 flex items-center justify-center overflow-hidden px-1 sm:bottom-28 sm:top-10 sm:px-2"
+      >
+        <div
+          className="flex shrink-0 items-center justify-center"
+          style={{
+            width: boardW ?? "100%",
+            height: boardH ?? "100%",
+          }}
+        >
+          <div className="flex items-center justify-center" style={{ gap: cellGap }}>
+            {reelHeights.map((height, reel) => (
               <div
-                className="relative mx-auto size-full max-h-full"
-                style={{
-                  aspectRatio: `${COLS} / ${ROWS}`,
-                  width: "100%",
-                  height: "auto",
-                  maxHeight: "100%",
-                }}
+                key={reel}
+                className="flex flex-col justify-center"
+                style={{ width: circlePx || undefined, gap: cellGap }}
               >
-                <div
-                  className="relative size-full rounded-[0.85rem] p-[5px] shadow-[0_18px_50px_rgba(180,83,9,0.55)] sm:rounded-[1.15rem] sm:p-[8px]"
-                  style={{
-                    background: "linear-gradient(145deg,#fde68a 0%,#fbbf24 28%,#b45309 62%,#78350f 100%)",
-                  }}
-                >
-                  <div
-                    className="relative grid size-full gap-[2px] overflow-hidden rounded-[0.55rem] p-[2px] sm:gap-1 sm:rounded-[0.8rem] sm:p-1"
-                    style={{
-                      background: "linear-gradient(180deg,#2a160c 0%,#1c1008 100%)",
-                      gridTemplateColumns: `repeat(${COLS}, minmax(0, 1fr))`,
-                      gridTemplateRows: `repeat(${ROWS}, minmax(0, 1fr))`,
-                      boxShadow: "inset 0 0 28px rgba(0,0,0,0.45)",
-                    }}
-                  >
-                    {grid.map((col, reel) =>
-                      col.map((kind, row) => {
-                        const key = cellKey(reel, row);
-                        const coin = coinAt(reel, row);
-                        const winning = winningKeys.has(key);
-                        const removing = removingKeys.has(key);
-                        return (
-                          <div
-                            key={key}
-                            className="relative min-h-0 min-w-0 overflow-hidden"
-                            style={{ gridColumn: reel + 1, gridRow: row + 1 }}
-                          >
-                            <ReelCell
-                              kind={coin ? "bonus" : (kind as FgSymKind)}
-                              phase={phase}
-                              reel={reel}
-                              row={row}
-                              spinId={spinId}
-                              winning={winning}
-                              removing={removing}
-                              dimmed={winningKeys.size > 0 && !winning && !removing}
-                              coinLabel={coin ? coin.label : undefined}
-                              className="!aspect-auto h-full w-full"
-                            />
-                          </div>
-                        );
-                      }),
-                    )}
-                  </div>
-                </div>
-
-                {cascadeBadge != null && cascadeBadge > 0 && (
-                  <div className="pointer-events-none absolute left-1/2 top-2 z-30 -translate-x-1/2 rounded-full border-2 border-yellow-300 bg-gradient-to-b from-red-700 to-amber-950 px-4 py-1 text-center shadow-lg">
-                    <div className="text-[9px] font-black uppercase tracking-widest text-yellow-100">
-                      Cascade
-                    </div>
-                    <div className="text-sm font-black text-amber-200">{formatMoney(cascadeBadge)}</div>
-                  </div>
-                )}
-
-                <WinCelebration amount={winPopup} label={banner} />
+                {Array.from({ length: height }, (_, row) => {
+                  const kind = grid[reel]?.[row] ?? "sym_j";
+                  const key = cellKey(reel, row);
+                  const coin = coinAt(reel, row);
+                  const winning = winningKeys.has(key);
+                  const removing = removingKeys.has(key);
+                  return (
+                    <ReelCell
+                      key={key}
+                      kind={coin ? "bonus" : (kind as FgSymKind)}
+                      phase={phase}
+                      reel={reel}
+                      row={row}
+                      spinId={spinId}
+                      winning={winning}
+                      removing={removing}
+                      dimmed={winningKeys.size > 0 && !winning && !removing}
+                      coinLabel={coin ? coin.label : undefined}
+                      style={
+                        circlePx > 0
+                          ? { width: circlePx, height: circlePx, flex: "none" }
+                          : undefined
+                      }
+                    />
+                  );
+                })}
               </div>
+            ))}
+          </div>
+        </div>
+
+        {cascadeBadge != null && cascadeBadge > 0 && (
+          <div className="pointer-events-none absolute left-1/2 top-[10%] z-30 -translate-x-1/2 rounded-full border-2 border-yellow-300 bg-gradient-to-b from-red-700 to-amber-950 px-4 py-1 text-center shadow-lg">
+            <div className="text-[9px] font-black uppercase tracking-widest text-yellow-100">
+              Cascade
             </div>
+            <div className="text-sm font-black text-amber-200">{formatMoney(cascadeBadge)}</div>
+          </div>
+        )}
 
-            <div className="mt-1.5 flex w-full shrink-0 flex-wrap items-center justify-between gap-2 rounded-xl border border-amber-700/50 bg-[#2a160c]/95 px-3 py-2 text-amber-100 sm:mt-2 sm:px-4 sm:py-2.5">
-              <div className="text-[11px] font-black sm:text-xs">
-                <span className="text-amber-400/80">CREDIT </span>
-                {formatMoney(balance)}
-                <span className="ml-2 text-amber-400/80">BET </span>
-                {formatMoney(bet)}
-                <span className="ml-2 text-amber-400/80">WIN </span>
-                {formatMoney(displayWin)}
-              </div>
-              <div className="flex items-center gap-1.5">
-                <button
-                  type="button"
-                  onClick={() => setShowBuy(true)}
-                  disabled={busy || inFree}
-                  className="rounded-full border border-amber-500 px-2 py-0.5 text-[9px] font-black uppercase text-amber-200 disabled:opacity-40"
-                >
-                  Buy FS
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    frontierAudio.unlock();
-                    frontierAudio.playUiClick();
-                    setTurbo((v) => !v);
-                  }}
-                  className={cn(
-                    "inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[9px] font-black uppercase",
-                    turbo ? "border-amber-300 bg-amber-400 text-amber-950" : "border-amber-600 text-amber-200",
-                  )}
-                >
-                  <Zap size={10} /> Turbo
-                </button>
-                <button
-                  type="button"
-                  onClick={toggleMute}
-                  title={muted ? "Unmute" : "Mute"}
-                  className="grid size-7 place-items-center rounded-full border border-amber-600 text-amber-200 sm:size-8"
-                >
-                  {muted ? <VolumeX size={12} /> : <Volume2 size={12} />}
-                </button>
-                <button
-                  type="button"
-                  disabled={busy || inFree}
-                  onClick={() => nudgeBet(-1)}
-                  className="grid size-8 place-items-center rounded-full bg-red-800 font-black text-white disabled:opacity-40 sm:size-9"
-                >
-                  −
-                </button>
-                <button
-                  type="button"
-                  disabled={busy}
-                  onClick={() => void spinRef.current()}
-                  className="grid size-12 place-items-center rounded-full border-2 border-amber-300 bg-gradient-to-b from-red-500 to-red-900 text-xs font-black text-amber-100 disabled:opacity-60 sm:size-14 sm:text-sm"
-                >
-                  {busy ? "…" : "SPIN"}
-                </button>
-                <button
-                  type="button"
-                  disabled={busy || inFree}
-                  onClick={() => nudgeBet(1)}
-                  className="grid size-8 place-items-center rounded-full bg-red-800 font-black text-white disabled:opacity-40 sm:size-9"
-                >
-                  +
-                </button>
-                <button
-                  type="button"
-                  title="25 lines · Wild · Scatter FS · 6+ coins Hold & Win"
-                  className="grid size-7 place-items-center rounded-full border border-amber-600 text-amber-200 sm:size-8"
-                >
-                  <Info size={12} />
-                </button>
-              </div>
-            </div>
+        <WinCelebration amount={winPopup} label={banner} />
+      </div>
+
+      <div className="absolute inset-x-0 bottom-0 z-20 border-t border-amber-700/50 bg-[#2a160c]/95 px-2 py-1.5 text-amber-100 backdrop-blur-md sm:px-4 sm:py-2">
+        <div className="mx-auto flex w-full max-w-[1600px] flex-col gap-1.5 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between sm:gap-2">
+          <div className="flex items-center justify-between gap-2 text-[11px] font-black tabular-nums sm:justify-start sm:gap-3 sm:text-sm">
+            <span>
+              <span className="text-amber-400/80">CREDIT </span>
+              {formatMoney(balance)}
+            </span>
+            <span>
+              <span className="text-amber-400/80">BET </span>
+              {formatMoney(bet)}
+            </span>
+            <span>
+              <span className="text-amber-400/80">WIN </span>
+              {formatMoney(displayWin)}
+            </span>
+          </div>
+          <div className="flex items-center justify-center gap-1 sm:gap-2">
+            <button
+              type="button"
+              onClick={() => setShowBuy(true)}
+              disabled={busy || inFree}
+              className="rounded-full border-2 border-amber-500 px-2 py-1 text-[9px] font-black uppercase text-amber-200 disabled:opacity-40 sm:px-3 sm:text-xs"
+            >
+              Buy FS
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                frontierAudio.unlock();
+                frontierAudio.playUiClick();
+                setTurbo((v) => !v);
+              }}
+              className={cn(
+                "inline-flex items-center gap-1 rounded-full border-2 px-2 py-1 text-[9px] font-black uppercase sm:text-xs",
+                turbo ? "border-amber-300 bg-amber-400 text-amber-950" : "border-amber-600 text-amber-200",
+              )}
+            >
+              <Zap size={11} /> Turbo
+            </button>
+            <button
+              type="button"
+              onClick={toggleMute}
+              title={muted ? "Unmute" : "Mute"}
+              className="grid size-9 place-items-center rounded-full border-2 border-amber-600 text-amber-200"
+            >
+              {muted ? <VolumeX size={15} /> : <Volume2 size={15} />}
+            </button>
+            <button
+              type="button"
+              disabled={busy || inFree}
+              onClick={() => nudgeBet(-1)}
+              className="grid size-10 place-items-center rounded-full bg-red-800 text-lg font-black text-white disabled:opacity-40"
+            >
+              −
+            </button>
+            <button
+              type="button"
+              disabled={busy}
+              onClick={() => void spinRef.current()}
+              className="grid size-14 place-items-center rounded-full border-[3px] border-amber-300 bg-gradient-to-b from-red-500 to-red-900 text-sm font-black text-amber-100 disabled:opacity-60"
+            >
+              {busy ? "…" : "SPIN"}
+            </button>
+            <button
+              type="button"
+              disabled={busy || inFree}
+              onClick={() => nudgeBet(1)}
+              className="grid size-10 place-items-center rounded-full bg-red-800 text-lg font-black text-white disabled:opacity-40"
+            >
+              +
+            </button>
+            <button
+              type="button"
+              title="720 ways diamond · Wild · Scatter FS · 6+ coins Hold & Win"
+              className="grid size-9 place-items-center rounded-full border-2 border-amber-600 text-amber-200"
+            >
+              <Info size={15} />
+            </button>
           </div>
         </div>
       </div>

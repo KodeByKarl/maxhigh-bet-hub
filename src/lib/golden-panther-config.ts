@@ -79,7 +79,7 @@ export const SYMBOL_LABELS: Record<GoldenPantherSymKind, string> = {
 
 export const DEFAULT_GOLDEN_PANTHER_CONFIG: GoldenPantherConfig = {
   schemaVersion: 1,
-  deadSpinChancePercent: 25,
+  deadSpinChancePercent: 38,
   seedMelonBiasPercent: 35,
   seedClusterMin: 8,
   seedClusterMax: 12,
@@ -115,14 +115,14 @@ export const DEFAULT_GOLDEN_PANTHER_CONFIG: GoldenPantherConfig = {
   anteBetMult: 1.25,
   minCluster: 8,
   symbols: [
-    { id: "grape", kind: "grape", label: "10", weight: 18, pay: [0.25, 0.75, 2] },
-    { id: "plum", kind: "plum", label: "J", weight: 16, pay: [0.4, 0.9, 4] },
-    { id: "melon", kind: "melon", label: "Q", weight: 14, pay: [0.5, 1, 5] },
-    { id: "apple", kind: "apple", label: "K", weight: 12, pay: [1, 1.5, 10] },
-    { id: "blue", kind: "blue", label: "A", weight: 10, pay: [1.5, 2, 12] },
-    { id: "green", kind: "green", label: "Owl", weight: 8, pay: [2, 5, 15] },
-    { id: "purple", kind: "purple", label: "Wolf", weight: 6, pay: [2.5, 10, 25] },
-    { id: "heart", kind: "heart", label: "Ram", weight: 5, pay: [10, 25, 50] },
+    { id: "grape", kind: "grape", label: "10", weight: 18, pay: [1, 3, 8] },
+    { id: "plum", kind: "plum", label: "J", weight: 16, pay: [1.2, 3.5, 10] },
+    { id: "melon", kind: "melon", label: "Q", weight: 14, pay: [1.5, 4, 12] },
+    { id: "apple", kind: "apple", label: "K", weight: 12, pay: [2, 5, 20] },
+    { id: "blue", kind: "blue", label: "A", weight: 10, pay: [2.5, 6, 25] },
+    { id: "green", kind: "green", label: "Owl", weight: 8, pay: [4, 10, 35] },
+    { id: "purple", kind: "purple", label: "Wolf", weight: 6, pay: [6, 18, 50] },
+    { id: "heart", kind: "heart", label: "Ram", weight: 5, pay: [12, 30, 80] },
     {
       id: "lollipop",
       kind: "lollipop",
@@ -151,6 +151,24 @@ function num(v: unknown, fallback: number) {
   return typeof v === "number" && Number.isFinite(v) ? v : fallback;
 }
 
+/** Original Sweet Bonanza-style ×bet pays — too small vs ₱20–₱100 PH stakes. */
+const LEGACY_DEFAULT_PAYS: Record<string, [number, number, number]> = {
+  grape: [0.25, 0.75, 2],
+  plum: [0.4, 0.9, 4],
+  melon: [0.5, 1, 5],
+  apple: [1, 1.5, 10],
+  blue: [1.5, 2, 12],
+  green: [2, 5, 15],
+  purple: [2.5, 10, 25],
+  heart: [10, 25, 50],
+};
+
+function isLegacyDefaultPay(id: string, pay: unknown): boolean {
+  const legacy = LEGACY_DEFAULT_PAYS[id];
+  if (!legacy || !Array.isArray(pay) || pay.length < 3) return false;
+  return num(pay[0], NaN) === legacy[0] && num(pay[1], NaN) === legacy[1] && num(pay[2], NaN) === legacy[2];
+}
+
 /** Merge partial / stored JSON onto defaults (safe for DB blobs). */
 export function normalizeGoldenPantherConfig(raw: unknown): GoldenPantherConfig {
   const d = DEFAULT_GOLDEN_PANTHER_CONFIG;
@@ -163,7 +181,11 @@ export function normalizeGoldenPantherConfig(raw: unknown): GoldenPantherConfig 
       (s) => s && typeof s === "object" && (s as { id?: string }).id === def.id,
     ) as Partial<GoldenPantherSymbolConfig> | undefined;
     if (!found) return { ...def, pay: [...def.pay] as [number, number, number] };
-    const paySrc = Array.isArray(found.pay) ? found.pay : def.pay;
+    const paySrc = isLegacyDefaultPay(def.id, found.pay)
+      ? def.pay
+      : Array.isArray(found.pay)
+        ? found.pay
+        : def.pay;
     return {
       ...def,
       label: typeof found.label === "string" && found.label.trim() ? found.label : def.label,

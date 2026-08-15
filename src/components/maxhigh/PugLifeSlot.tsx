@@ -454,7 +454,7 @@ export function PugLifeSlot({
         </div>
       )}
 
-      {/* Diamond reels — circles only, no board container */}
+      {/* Diamond reels — 3-4-5-4-3 circles fill phone width */}
       <div className="relative z-10 flex min-h-0 flex-1 items-center justify-center px-1 py-1 sm:px-2">
         <div className="flex w-full max-w-6xl items-center justify-center gap-1 sm:gap-1.5 md:gap-2 lg:gap-2.5">
           {(cfgSnap.reelHeights?.length === cfgSnap.reelsCount
@@ -463,7 +463,7 @@ export function PugLifeSlot({
           ).map((height, reel) => (
             <div
               key={reel}
-              className="flex w-[14%] max-w-[7.25rem] flex-col justify-center gap-1 sm:max-w-[8.25rem] sm:gap-1.5 md:max-w-[9rem] md:gap-2"
+              className="flex w-[19%] max-w-[9.5rem] flex-col justify-center gap-1 sm:max-w-[10.5rem] sm:gap-1.5 md:max-w-[11.5rem] md:gap-2"
             >
               {Array.from({ length: height }, (_, row) => {
                 const cell: PlCell = grid[reel]?.[row] ?? { kind: "sym_10" };

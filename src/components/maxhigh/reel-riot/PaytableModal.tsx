@@ -33,10 +33,10 @@ const PAY_ORDER: RrSymKind[] = [
 ];
 
 const HOWTO_IMG = {
-  payline: "/images/fruit-riot/howto/win-payline.png",
-  threeFruit: "/images/fruit-riot/howto/win-three-fruit.png",
-  twoWild: "/images/fruit-riot/howto/win-two-wild.png",
-  bonus: "/images/fruit-riot/howto/win-bonus-ladder.png",
+  payline: "/images/fruit-riot/howto/win-payline.webp",
+  threeFruit: "/images/fruit-riot/howto/win-three-fruit.webp",
+  twoWild: "/images/fruit-riot/howto/win-two-wild.webp",
+  bonus: "/images/fruit-riot/howto/win-bonus-ladder.webp",
 } as const;
 
 function PatternStrip({ kinds, label }: { kinds: RrSymKind[]; label: string }) {

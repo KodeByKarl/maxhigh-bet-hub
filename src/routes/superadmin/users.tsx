@@ -19,7 +19,7 @@ import { formatMoney } from "@/lib/currency";
 import { Input } from "@/components/ui/input";
 import { saGlass } from "@/components/superadmin/ui/glass";
 import { toast } from "sonner";
-import { Pencil, X } from "lucide-react";
+import { MoreHorizontal, Pencil, X } from "lucide-react";
 
 export const Route = createFileRoute("/superadmin/users")({
   component: SuperUsersPage,
@@ -71,20 +71,20 @@ function SuperUsersPage() {
   return (
     <div className="space-y-5 pb-6">
       <div>
-        <h1 className="text-3xl font-bold text-foreground">Player List</h1>
-        <p className="mt-1 text-sm text-muted-foreground">
+        <h1 className="text-xl font-bold text-foreground sm:text-3xl">Player List</h1>
+        <p className="mt-1 text-xs text-muted-foreground sm:text-sm">
           View all accounts, create users, edit profile, username, and password.
         </p>
       </div>
 
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div className="flex flex-wrap items-center gap-2">
-          <Input
-            value={q}
-            onChange={(e) => setQ(e.target.value)}
-            placeholder="Search username or email…"
-            className="h-11 max-w-xs rounded-xl border-amber-500/20 bg-white/[0.06] text-foreground"
-          />
+      <div className="grid grid-cols-1 gap-2 sm:flex sm:flex-wrap sm:items-center sm:justify-between">
+        <Input
+          value={q}
+          onChange={(e) => setQ(e.target.value)}
+          placeholder="Search username or email…"
+          className="h-11 w-full rounded-xl border-amber-500/20 bg-white/[0.06] text-foreground sm:max-w-xs"
+        />
+        <div className="grid grid-cols-2 gap-2 sm:contents">
           <select
             value={role}
             onChange={(e) => setRole(e.target.value as UserRole | "all")}
@@ -124,6 +124,8 @@ function SuperUsersPage() {
               Alphabetical (Z - A)
             </option>
           </select>
+        </div>
+        <div className="grid grid-cols-2 gap-2 sm:contents">
           <button
             type="button"
             onClick={() => void load()}
@@ -131,26 +133,96 @@ function SuperUsersPage() {
           >
             Refresh
           </button>
+          <button
+            type="button"
+            onClick={() => setShowAddModal(true)}
+            className="inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-amber-500 px-5 text-sm font-bold text-black hover:bg-amber-400 active:scale-95 transition-transform"
+          >
+            + Add Player
+          </button>
         </div>
-
-        <button
-          type="button"
-          onClick={() => setShowAddModal(true)}
-          className="inline-flex items-center gap-2 h-11 rounded-xl bg-amber-500 px-5 text-sm font-bold text-black hover:bg-amber-400 active:scale-95 transition-transform"
-        >
-          + Add Player
-        </button>
       </div>
 
-      <div className={`${saGlass} overflow-x-auto`}>
-        <table className="w-full text-left text-sm table-fixed border-collapse">
+      <div className="grid gap-2.5 lg:hidden">
+        {sortedRows.length === 0 ? (
+          <div className={`${saGlass} p-8 text-center text-sm text-muted-foreground`}>No accounts found.</div>
+        ) : (
+          sortedRows.map((u) => (
+            <div key={u.id} className={`${saGlass} space-y-3 p-3.5`}>
+              <div className="flex items-start justify-between gap-3">
+                <div className="min-w-0">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className="truncate text-sm font-black text-foreground">@{u.username}</span>
+                    {u.isLocked === "yes" ? (
+                      <span className="shrink-0 rounded-md border border-rose-500/50 bg-rose-500/20 px-2 py-0.5 text-[10px] font-black uppercase tracking-wide text-rose-300">
+                        Locked
+                      </span>
+                    ) : (
+                      <span className="shrink-0 rounded-md border border-emerald-500/40 bg-emerald-500/15 px-2 py-0.5 text-[10px] font-black uppercase tracking-wide text-emerald-400">
+                        Active
+                      </span>
+                    )}
+                  </div>
+                  {u.displayName && (
+                    <div className="mt-0.5 truncate text-[11px] text-amber-400">{u.displayName}</div>
+                  )}
+                  <div className="mt-0.5 font-mono text-[10px] text-muted-foreground">
+                    ID: {u.publicUserId || u.id.slice(0, 8)}
+                  </div>
+                </div>
+                <div className="shrink-0 text-right">
+                  <div className="text-[10px] font-bold uppercase tracking-wide text-muted-foreground">Balance</div>
+                  <div className="text-lg font-black tabular-nums text-emerald-400">{formatMoney(u.balance)}</div>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-2">
+                <select
+                  value={u.role}
+                  onChange={(e) => void setUserRole(u.id, e.target.value as UserRole)}
+                  className="h-10 w-full rounded-xl border border-amber-500/20 bg-[#161224] px-2 text-xs font-bold text-foreground [color-scheme:dark]"
+                >
+                  <option value="player">Player</option>
+                  <option value="agent">Agent</option>
+                  <option value="master_agent">Master Agent</option>
+                  <option value="superadmin">SuperAdmin</option>
+                </select>
+                <div className="flex h-10 items-center truncate rounded-xl border border-amber-500/30 bg-amber-500/10 px-2.5 text-[11px] font-bold text-amber-300">
+                  @{u.parentAgentUsername || "System"}
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-2">
+                <button
+                  type="button"
+                  onClick={() => setActiveModal({ type: "addChips", user: u })}
+                  className="h-10 rounded-xl bg-emerald-500/90 text-xs font-black uppercase tracking-wide text-black"
+                >
+                  Add / Withdraw
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setActiveModal({ type: "menu", user: u })}
+                  className="inline-flex h-10 items-center justify-center gap-1.5 rounded-xl border border-amber-500/30 bg-amber-500/10 text-xs font-bold text-amber-300"
+                >
+                  <MoreHorizontal size={16} />
+                  Actions
+                </button>
+              </div>
+            </div>
+          ))
+        )}
+      </div>
+
+      <div className={`${saGlass} hidden overflow-x-auto lg:block`}>
+        <table className="w-full table-fixed border-collapse text-left text-sm">
           <thead className="border-b border-amber-500/20 text-[11px] uppercase text-muted-foreground bg-white/[0.02]">
             <tr>
               <th className="w-[20%] px-4 py-3.5">Player</th>
               <th className="w-[18%] px-4 py-3.5 text-center">Created By / Agent</th>
               <th className="w-[12%] px-4 py-3.5 text-center">Role</th>
               <th className="w-[15%] px-4 py-3.5 text-center">Balance</th>
-              <th className="w-[35%] px-4 py-3.5 text-center">Actions Grid</th>
+              <th className="w-[35%] px-4 py-3.5 text-center">Actions</th>
             </tr>
           </thead>
           <tbody>
@@ -199,86 +271,36 @@ function SuperUsersPage() {
                 </td>
 
                 {/* Clean Balanced Actions Grid */}
-                <td className="w-[50%] px-4 py-4 align-middle">
-                  <div className="flex flex-wrap items-center justify-center gap-2 text-xs font-bold">
-                    <button
-                      type="button"
-                      onClick={() => setActiveModal({ type: "menu", user: u })}
-                      className="rounded-xl border border-amber-500/30 bg-amber-500/10 px-3 py-1.5 text-amber-300 hover:bg-amber-500/20 active:scale-95 transition-all"
-                    >
-                      Menu
-                    </button>
-
-                    <button
-                      type="button"
-                      onClick={() => setActiveModal({ type: "view", user: u })}
-                      className="rounded-xl border border-white/10 bg-white/[0.05] px-3 py-1.5 text-foreground/90 hover:bg-white/10 active:scale-95 transition-all"
-                    >
-                      View
-                    </button>
-
-                    <button
-                      type="button"
-                      onClick={() => setActiveModal({ type: "profile", user: u })}
-                      className="rounded-xl border border-white/10 bg-white/[0.05] px-3 py-1.5 text-foreground/90 hover:bg-white/10 active:scale-95 transition-all"
-                    >
-                      Profile
-                    </button>
-
-                    <button
-                      type="button"
-                      onClick={() => setEditing(u)}
-                      className="rounded-xl border border-emerald-500/30 bg-emerald-500/10 px-3 py-1.5 text-emerald-400 hover:bg-emerald-500/20 active:scale-95 transition-all"
-                    >
-                      Edit
-                    </button>
-
+                <td className="w-[35%] px-4 py-4 align-middle">
+                  <div className="flex flex-wrap items-center justify-center gap-1.5 text-xs font-bold">
                     <button
                       type="button"
                       onClick={() => setActiveModal({ type: "addChips", user: u })}
-                      className="rounded-xl border border-emerald-500/40 bg-emerald-500/15 px-3 py-1.5 text-emerald-300 hover:bg-emerald-500/25 active:scale-95 transition-all"
+                      className="rounded-xl border border-emerald-500/40 bg-emerald-500/15 px-3 py-1.5 text-emerald-300 hover:bg-emerald-500/25"
                     >
                       Add / Withdraw
                     </button>
-
                     <button
                       type="button"
-                      onClick={() => setActiveModal({ type: "copy", user: u })}
-                      className="rounded-xl border border-white/10 bg-white/[0.05] px-3 py-1.5 text-foreground/90 hover:bg-white/10 active:scale-95 transition-all"
+                      onClick={() => setActiveModal({ type: "view", user: u })}
+                      className="rounded-xl border border-white/10 bg-white/[0.05] px-3 py-1.5 text-foreground/90 hover:bg-white/10"
                     >
-                      Copy ID
+                      View
                     </button>
-
                     <button
                       type="button"
                       onClick={() => setEditing(u)}
-                      className="rounded-xl border border-emerald-500/30 bg-emerald-500/10 px-3 py-1.5 text-emerald-400 hover:bg-emerald-500/20 active:scale-95 transition-all"
+                      className="rounded-xl border border-emerald-500/30 bg-emerald-500/10 px-3 py-1.5 text-emerald-400 hover:bg-emerald-500/20"
                     >
-                      Password
+                      Edit
                     </button>
-
                     <button
                       type="button"
-                      onClick={() => setActiveModal({ type: "security", user: u })}
-                      className="rounded-xl border border-emerald-500/30 bg-emerald-500/10 px-3 py-1.5 text-emerald-400 hover:bg-emerald-500/20 active:scale-95 transition-all"
+                      onClick={() => setActiveModal({ type: "menu", user: u })}
+                      className="inline-flex items-center gap-1 rounded-xl border border-amber-500/30 bg-amber-500/10 px-3 py-1.5 text-amber-300 hover:bg-amber-500/20"
                     >
-                      Security Code
-                    </button>
-
-                    <button
-                      type="button"
-                      onClick={() => setActiveModal({ type: "winLimit", user: u })}
-                      className="rounded-xl border border-amber-500/30 bg-amber-500/10 px-3 py-1.5 text-amber-300 hover:bg-amber-500/20 active:scale-95 transition-all"
-                    >
-                      Win Limit
-                    </button>
-
-                    <button
-                      type="button"
-                      onClick={() => setActiveModal({ type: "suspicious", user: u })}
-                      className="rounded-xl border border-rose-500/30 bg-rose-500/10 px-3 py-1.5 text-rose-400 hover:bg-rose-500/20 active:scale-95 transition-all"
-                    >
-                      Suspicious Check
+                      <MoreHorizontal size={14} />
+                      Actions
                     </button>
                   </div>
                 </td>
@@ -315,6 +337,11 @@ function SuperUsersPage() {
           modal={activeModal}
           onClose={() => setActiveModal(null)}
           onActionComplete={() => void load()}
+          onNavigate={(type) => setActiveModal({ type, user: activeModal.user })}
+          onEdit={() => {
+            setEditing(activeModal.user);
+            setActiveModal(null);
+          }}
         />
       )}
     </div>
@@ -658,6 +685,8 @@ function PlayerActionModal({
   modal,
   onClose,
   onActionComplete,
+  onNavigate,
+  onEdit,
 }: {
   modal: {
     type: "menu" | "view" | "profile" | "edit" | "copy" | "password" | "security" | "winLimit" | "suspicious" | "addChips";
@@ -665,6 +694,10 @@ function PlayerActionModal({
   };
   onClose: () => void;
   onActionComplete?: () => void;
+  onNavigate?: (
+    type: "menu" | "view" | "profile" | "edit" | "copy" | "password" | "security" | "winLimit" | "suspicious" | "addChips",
+  ) => void;
+  onEdit?: () => void;
 }) {
   const { user, type } = modal;
   const [isLocked, setIsLocked] = useState(user.isLocked === "yes");
@@ -762,7 +795,7 @@ function PlayerActionModal({
     <div className="fixed inset-0 z-50 grid place-items-center bg-black/65 backdrop-blur-md p-4 overflow-y-auto" onClick={onClose}>
       <div
         onClick={(e) => e.stopPropagation()}
-        className={`${saGlass} w-full ${type === "suspicious" || type === "view" ? "max-w-4xl" : "max-w-xl"} space-y-4 p-6 border border-amber-500/30 shadow-2xl my-auto transition-all`}
+        className={`${saGlass} my-auto w-full space-y-4 border border-amber-500/30 p-4 shadow-2xl transition-all sm:p-6 ${type === "suspicious" || type === "view" ? "max-w-4xl" : "max-w-xl"}`}
       >
         <div className="flex items-center justify-between border-b border-amber-500/20 pb-3">
           <div>
@@ -947,7 +980,40 @@ function PlayerActionModal({
               </span>
             </div>
 
-            <p className="text-xs text-muted-foreground">Quick management controls for player <span className="text-amber-400 font-bold">@{user.username}</span>:</p>
+            <p className="text-xs text-muted-foreground">
+              Manage <span className="font-bold text-amber-400">@{user.username}</span>
+            </p>
+            <div className="grid grid-cols-2 gap-2">
+              {(
+                [
+                  { type: "view" as const, label: "View" },
+                  { type: "profile" as const, label: "Profile" },
+                  { type: "addChips" as const, label: "Add / Withdraw" },
+                  { type: "copy" as const, label: "Copy ID" },
+                  { type: "security" as const, label: "Security Code" },
+                  { type: "winLimit" as const, label: "Win Limit" },
+                  { type: "suspicious" as const, label: "Suspicious Check" },
+                ]
+              ).map((item) => (
+                <button
+                  key={item.type}
+                  type="button"
+                  onClick={() => onNavigate?.(item.type)}
+                  className="rounded-xl border border-white/10 bg-white/[0.05] px-3 py-2.5 text-xs font-bold text-foreground hover:bg-white/10"
+                >
+                  {item.label}
+                </button>
+              ))}
+              <button
+                type="button"
+                onClick={() => onEdit?.()}
+                className="rounded-xl border border-emerald-500/30 bg-emerald-500/10 px-3 py-2.5 text-xs font-bold text-emerald-400 hover:bg-emerald-500/20"
+              >
+                Edit / Password
+              </button>
+            </div>
+
+            <p className="text-xs text-muted-foreground">Security controls</p>
             <div className="grid grid-cols-2 gap-3">
               <button
                 type="button"

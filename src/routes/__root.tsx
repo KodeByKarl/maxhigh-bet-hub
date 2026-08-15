@@ -1,4 +1,4 @@
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { type QueryClient } from "@tanstack/react-query";
 import {
   Outlet,
   Link,
@@ -11,7 +11,6 @@ import {
 import { type ReactNode, useEffect, useState } from "react";
 
 import appCss from "../styles.css?url";
-import { AuthProvider } from "../lib/auth";
 import { Navbar } from "../components/maxhigh/Navbar";
 import { Sidebar, MobileSidebar } from "../components/maxhigh/Sidebar";
 import { LiveWinsTicker } from "../components/maxhigh/LiveWinsTicker";
@@ -79,7 +78,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
   head: () => ({
     meta: [
       { charSet: "utf-8" },
-      { name: "viewport", content: "width=device-width, initial-scale=1" },
+      { name: "viewport", content: "width=device-width, initial-scale=1, viewport-fit=cover" },
       { title: "MaxHigh — Casino & Betting Dashboard" },
       { name: "description", content: "MaxHigh casino and betting dashboard: play slots, mines, crash, dice, tower, and wheel with daily and weekly races." },
       { name: "author", content: "MaxHigh" },
@@ -131,7 +130,6 @@ function RootShell({ children }: { children: ReactNode }) {
 }
 
 function RootComponent() {
-  const { queryClient } = Route.useRouteContext();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const isStaffPortal = pathname.startsWith("/admin") || pathname.startsWith("/superadmin");
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -149,35 +147,31 @@ function RootComponent() {
     };
   }, [pathname]);
 
+  if (isStaffPortal) {
+    return <Outlet />;
+  }
+
   return (
-    <QueryClientProvider client={queryClient}>
-      <AuthProvider>
-        {isStaffPortal ? (
-          <Outlet />
-        ) : (
-          <div className="min-h-screen dashboard-bg bg-background text-foreground relative">
-            <div className="absolute inset-0 bg-background/85 backdrop-blur-[2px] pointer-events-none -z-10" />
-            <Navbar onOpenMobileMenu={() => setMobileMenuOpen(true)} />
-            <div className="flex">
-              <Sidebar />
-              <MobileSidebar
-                isOpen={mobileMenuOpen}
-                onClose={() => setMobileMenuOpen(false)}
-              />
-              <div className="min-w-0 flex-1">
-                <LiveWinsTicker />
-                <main>
-                  <div className="mx-auto flex max-w-[1400px] flex-col gap-8 p-3 sm:p-6">
-                    <Outlet />
-                  </div>
-                </main>
-              </div>
+    <div className="min-h-screen dashboard-bg bg-background text-foreground relative">
+      <div className="absolute inset-0 bg-background/85 backdrop-blur-[2px] pointer-events-none -z-10" />
+      <Navbar onOpenMobileMenu={() => setMobileMenuOpen(true)} />
+      <div className="flex">
+        <Sidebar />
+        <MobileSidebar
+          isOpen={mobileMenuOpen}
+          onClose={() => setMobileMenuOpen(false)}
+        />
+        <div className="min-w-0 flex-1">
+          <LiveWinsTicker />
+          <main>
+            <div className="mx-auto flex max-w-[1400px] flex-col gap-8 p-3 sm:p-6">
+              <Outlet />
             </div>
-            <LoginModal />
-            <Toaster />
-          </div>
-        )}
-      </AuthProvider>
-    </QueryClientProvider>
+          </main>
+        </div>
+      </div>
+      <LoginModal />
+      <Toaster />
+    </div>
   );
 }

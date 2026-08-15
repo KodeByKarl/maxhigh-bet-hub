@@ -82,7 +82,7 @@ export const SYMBOL_LABELS: Record<SugarSurgeSymKind, string> = {
 
 export const DEFAULT_SUGAR_SURGE_CONFIG: SugarSurgeConfig = {
   schemaVersion: 1,
-  deadSpinChancePercent: 28,
+  deadSpinChancePercent: 38,
   seedMelonBiasPercent: 30,
   seedClusterMin: 5,
   seedClusterMax: 8,
@@ -113,14 +113,14 @@ export const DEFAULT_SUGAR_SURGE_CONFIG: SugarSurgeConfig = {
   anteBetMult: 1.25,
   minCluster: 5,
   symbols: [
-    { id: "grape", kind: "grape", label: "Red bear", weight: 18, pay: [0.2, 0.4, 1] },
-    { id: "plum", kind: "plum", label: "Orange bear", weight: 16, pay: [0.2, 0.5, 1.2] },
-    { id: "melon", kind: "melon", label: "Purple bear", weight: 14, pay: [0.25, 0.6, 1.5] },
-    { id: "apple", kind: "apple", label: "Green star", weight: 12, pay: [0.3, 0.8, 2] },
-    { id: "blue", kind: "blue", label: "Pink bean", weight: 10, pay: [0.4, 1, 2.5] },
-    { id: "green", kind: "green", label: "Pink candy", weight: 8, pay: [0.5, 1.5, 4] },
-    { id: "purple", kind: "purple", label: "Cyan candy", weight: 6, pay: [0.8, 2, 6] },
-    { id: "heart", kind: "heart", label: "Orange heart", weight: 5, pay: [1, 3, 10] },
+    { id: "grape", kind: "grape", label: "Red bear", weight: 18, pay: [1, 2, 5] },
+    { id: "plum", kind: "plum", label: "Orange bear", weight: 16, pay: [1, 2.5, 6] },
+    { id: "melon", kind: "melon", label: "Purple bear", weight: 14, pay: [1.2, 3, 8] },
+    { id: "apple", kind: "apple", label: "Green star", weight: 12, pay: [1.5, 4, 10] },
+    { id: "blue", kind: "blue", label: "Pink bean", weight: 10, pay: [2, 5, 12] },
+    { id: "green", kind: "green", label: "Pink candy", weight: 8, pay: [2.5, 6, 18] },
+    { id: "purple", kind: "purple", label: "Cyan candy", weight: 6, pay: [4, 10, 25] },
+    { id: "heart", kind: "heart", label: "Orange heart", weight: 5, pay: [6, 15, 40] },
     {
       id: "lollipop",
       kind: "lollipop",
@@ -149,6 +149,24 @@ function num(v: unknown, fallback: number) {
   return typeof v === "number" && Number.isFinite(v) ? v : fallback;
 }
 
+/** Original cluster ×bet pays — too small vs ₱20–₱100 PH stakes. */
+const LEGACY_DEFAULT_PAYS: Record<string, number[]> = {
+  grape: [0.2, 0.4, 1],
+  plum: [0.2, 0.5, 1.2],
+  melon: [0.25, 0.6, 1.5],
+  apple: [0.3, 0.8, 2],
+  blue: [0.4, 1, 2.5],
+  green: [0.5, 1.5, 4],
+  purple: [0.8, 2, 6],
+  heart: [1, 3, 10],
+};
+
+function isLegacyDefaultPay(id: string, pay: unknown): boolean {
+  const legacy = LEGACY_DEFAULT_PAYS[id];
+  if (!legacy || !Array.isArray(pay) || pay.length < legacy.length) return false;
+  return legacy.every((n, i) => num(pay[i], NaN) === n);
+}
+
 /** Merge partial / stored JSON onto defaults (safe for DB blobs). */
 export function normalizeSugarSurgeConfig(raw: unknown): SugarSurgeConfig {
   const d = DEFAULT_SUGAR_SURGE_CONFIG;
@@ -161,7 +179,11 @@ export function normalizeSugarSurgeConfig(raw: unknown): SugarSurgeConfig {
       (s) => s && typeof s === "object" && (s as { id?: string }).id === def.id,
     ) as Partial<SugarSurgeSymbolConfig> | undefined;
     if (!found) return { ...def, pay: [...def.pay] as [number, number, number] };
-    const paySrc = Array.isArray(found.pay) ? found.pay : def.pay;
+    const paySrc = isLegacyDefaultPay(def.id, found.pay)
+      ? def.pay
+      : Array.isArray(found.pay)
+        ? found.pay
+        : def.pay;
     return {
       ...def,
       label: typeof found.label === "string" && found.label.trim() ? found.label : def.label,

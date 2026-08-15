@@ -1,13 +1,17 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState, type FormEvent } from "react";
-import { getPlatformSettingsFn, savePlatformSettingsFn } from "@/functions/superadmin";
+import {
+  cleanupPlaySessionsFn,
+  getPlatformSettingsFn,
+  savePlatformSettingsFn,
+} from "@/functions/superadmin";
 import type { PlatformSettingsData } from "@/lib/superadmin-types";
 import { useAuth } from "@/lib/auth";
 import { isSuperadminRole } from "@/lib/user";
 import { saGlass } from "@/components/superadmin/ui/glass";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
-import { Save, Settings, ShieldAlert } from "lucide-react";
+import { DatabaseZap, Save, Settings, ShieldAlert } from "lucide-react";
 
 export const Route = createFileRoute("/superadmin/settings")({
   component: SuperSettingsPage,
@@ -25,6 +29,8 @@ function SuperSettingsPage() {
   });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [cleaning, setCleaning] = useState(false);
+  const [lastCleanup, setLastCleanup] = useState<string | null>(null);
 
   useEffect(() => {
     if (!isReady || !user || !isSuperadminRole(user.role)) return;
@@ -58,6 +64,22 @@ function SuperSettingsPage() {
     }
   }
 
+  async function handleCleanup(dryRun: boolean) {
+    setCleaning(true);
+    try {
+      const result = await cleanupPlaySessionsFn({
+        data: { dryRun },
+      });
+      const msg = `${dryRun ? "Dry-run" : "Cleanup"}: closed ${result.dedupedClosed + result.staleClosed} (dedupe ${result.dedupedClosed}, stale ${result.staleClosed}), purged ${result.purged}`;
+      setLastCleanup(msg);
+      toast.success(msg);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Play session cleanup failed");
+    } finally {
+      setCleaning(false);
+    }
+  }
+
   if (loading) {
     return <div className="p-6 text-sm text-muted-foreground">Loading platform settings…</div>;
   }
@@ -65,8 +87,8 @@ function SuperSettingsPage() {
   return (
     <div className="space-y-6 pb-6">
       <div>
-        <h1 className="text-3xl font-bold text-foreground">System Settings</h1>
-        <p className="mt-1 text-sm text-muted-foreground">
+        <h1 className="text-xl font-bold text-foreground sm:text-3xl">System Settings</h1>
+        <p className="mt-1 text-xs text-muted-foreground sm:text-sm">
           Global platform settings, maintenance locks, deposit/withdrawal thresholds, and player banners.
         </p>
       </div>
@@ -178,6 +200,39 @@ function SuperSettingsPage() {
           {saving ? "Saving…" : "Save Platform Settings"}
         </button>
       </form>
+
+      <div className={`${saGlass} p-6 space-y-4 max-w-3xl`}>
+        <div className="flex items-center gap-3">
+          <div className="grid h-9 w-9 place-items-center rounded-xl bg-amber-500/20 text-amber-400">
+            <DatabaseZap size={20} />
+          </div>
+          <div>
+            <h2 className="text-base font-bold text-foreground">Play Sessions Cleanup</h2>
+            <p className="text-xs text-muted-foreground">
+              Close abandoned opens (24h, no free spins), dedupe open rows, delete closed sessions older than 30 days.
+            </p>
+          </div>
+        </div>
+        <div className="flex flex-wrap gap-3">
+          <button
+            type="button"
+            disabled={cleaning}
+            onClick={() => void handleCleanup(true)}
+            className="inline-flex h-10 items-center rounded-xl border border-amber-500/30 bg-white/[0.04] px-4 text-sm font-semibold text-foreground hover:bg-white/[0.08] disabled:opacity-50"
+          >
+            {cleaning ? "Running…" : "Dry run"}
+          </button>
+          <button
+            type="button"
+            disabled={cleaning}
+            onClick={() => void handleCleanup(false)}
+            className="inline-flex h-10 items-center rounded-xl bg-amber-500 px-4 text-sm font-bold text-black hover:bg-amber-400 disabled:opacity-50"
+          >
+            {cleaning ? "Running…" : "Run cleanup"}
+          </button>
+        </div>
+        {lastCleanup ? <p className="text-xs text-muted-foreground">{lastCleanup}</p> : null}
+      </div>
     </div>
   );
 }

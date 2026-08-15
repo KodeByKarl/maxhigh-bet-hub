@@ -36,11 +36,19 @@ export async function resolveNetworkUserIds(
   const playersOnly = opts?.playersOnly === true;
 
   if (actor.role === "agent") {
-    // Agents may only view Players they personally created
+    // Agents may view Players they created + Agents under their domain
+    // (creating an Agent promotes them to Master Agent).
     const rows = await db
       .select({ id: users.id })
       .from(users)
-      .where(and(eq(users.parentAgentId, actor.id), eq(users.role, "player")));
+      .where(
+        and(
+          eq(users.parentAgentId, actor.id),
+          playersOnly
+            ? eq(users.role, "player")
+            : inArray(users.role, ["player", "agent"]),
+        ),
+      );
     return rows.map((r) => r.id);
   }
 

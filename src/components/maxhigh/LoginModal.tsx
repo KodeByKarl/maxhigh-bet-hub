@@ -48,7 +48,7 @@ export function LoginModal() {
           <div className="relative hidden h-full min-h-0 overflow-hidden md:block">
             <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_30%_20%,#7C3AED_0%,transparent_55%),radial-gradient(ellipse_at_80%_80%,#A78BFA_0%,transparent_50%),linear-gradient(160deg,#4C1D95_0%,#7C3AED_50%,#5B21B6_100%)]" />
             <img
-              src="/games/candy-peak-bg.png"
+              src="/games/candy-peak-bg.webp"
               alt=""
               className="absolute inset-0 h-full w-full object-cover opacity-30"
               aria-hidden

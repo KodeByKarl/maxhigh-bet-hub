@@ -3,6 +3,7 @@ import { useAuth } from "@/lib/auth";
 import { isSuperadminRole } from "@/lib/user";
 import { SuperSidebar } from "./SuperSidebar";
 import { SuperTopBar } from "./SuperTopBar";
+import { SuperMobileNav } from "./SuperMobileNav";
 import { saGlass, saPageBg } from "../ui/glass";
 import { Toaster } from "@/components/ui/sonner";
 
@@ -51,12 +52,13 @@ export function SuperShell() {
       <SuperSidebar />
       <div className="flex min-w-0 flex-1 flex-col">
         <SuperTopBar />
-        <main className="flex-1 p-3 sm:p-5">
+        <main className="flex-1 p-3 pb-[5.5rem] sm:p-5 lg:pb-5">
           <div className="w-full">
             <Outlet />
           </div>
         </main>
       </div>
+      <SuperMobileNav />
       <Toaster />
     </div>
   );

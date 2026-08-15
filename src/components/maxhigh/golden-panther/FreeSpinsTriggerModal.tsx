@@ -6,6 +6,10 @@ type Props = {
   onClose: () => void;
 };
 
+/**
+ * Golden Panther — free spins unlock.
+ * Temple / gold Aztec theme (not candy-green).
+ */
 export function FreeSpinsTriggerModal({ count = 10, onClose }: Props) {
   return (
     <motion.div
@@ -13,71 +17,157 @@ export function FreeSpinsTriggerModal({ count = 10, onClose }: Props) {
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
       onClick={onClose}
-      className="fixed inset-0 z-[150] flex cursor-pointer items-center justify-center bg-black/75 p-4 backdrop-blur-md"
+      className="fixed inset-0 z-[150] flex cursor-pointer items-center justify-center bg-black/80 p-4 backdrop-blur-sm"
     >
-      <motion.div
-        initial={{ scale: 0.5, y: 50, opacity: 0 }}
-        animate={{ scale: 1, y: 0, opacity: 1 }}
-        exit={{ scale: 0.8, opacity: 0 }}
-        transition={{ type: "spring", stiffness: 300, damping: 20 }}
-        className="relative w-full max-w-lg rounded-[2.5rem] border-4 border-amber-300 p-2 shadow-[0_0_80px_rgba(250,204,21,0.8)]"
+      {/* Soft temple glow behind the board */}
+      <div
+        className="pointer-events-none absolute inset-0"
         style={{
           background:
-            "linear-gradient(135deg, #78350F 0%, #D97706 50%, #064E3B 100%)",
+            "radial-gradient(ellipse at 50% 40%, rgba(217,119,6,0.28) 0%, transparent 55%), radial-gradient(ellipse at 50% 80%, rgba(120,53,15,0.35) 0%, transparent 50%)",
         }}
-      >
-        <div className="relative overflow-hidden rounded-[2rem] border-2 border-amber-200/40 bg-gradient-to-b from-emerald-950/90 via-emerald-900/90 to-black/90 px-6 py-10 text-center shadow-inner">
-          {/* Animated Golden Panther Scatter Banner */}
-          <div className="relative mx-auto mb-4 flex justify-center">
-            <motion.div
-              animate={{
-                y: [0, -14, 0],
-                rotate: [0, -4, 4, 0],
-                scale: [1, 1.12, 1],
-              }}
-              transition={{ repeat: Infinity, duration: 1.8, ease: "easeInOut" }}
-              className="relative"
-            >
-              <img
-                src={ICON_SRC.lollipop}
-                alt="Panther Scatter"
-                className="h-32 w-32 object-contain drop-shadow-[0_0_30px_rgba(250,204,21,1)] sm:h-40 sm:w-40"
-              />
-              <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 rounded-full border border-amber-300 bg-amber-400 px-3 py-0.5 text-xs font-black uppercase text-amber-950 shadow-lg whitespace-nowrap">
-                PANTHER SCATTER
-              </div>
-            </motion.div>
-          </div>
+        aria-hidden
+      />
 
-          <motion.h2
-            initial={{ scale: 0.7 }}
-            animate={{ scale: 1.05 }}
-            transition={{ repeat: Infinity, repeatType: "reverse", duration: 0.8 }}
-            className="text-3xl font-black uppercase tracking-wider text-amber-300 drop-shadow-[0_4px_0_#78350F] sm:text-5xl"
+      <motion.div
+        initial={{ scale: 0.82, y: 36, opacity: 0 }}
+        animate={{ scale: 1, y: 0, opacity: 1 }}
+        exit={{ scale: 0.94, opacity: 0 }}
+        transition={{ type: "spring", stiffness: 320, damping: 22 }}
+        className="relative w-full max-w-[22rem] overflow-hidden rounded-[1.35rem] sm:max-w-md"
+        style={{
+          background: "linear-gradient(165deg, #3F2A08 0%, #1A0F05 42%, #0A0704 100%)",
+          border: "2px solid #C9A227",
+          boxShadow:
+            "0 0 0 1px rgba(245,215,110,0.35), 0 24px 60px rgba(0,0,0,0.75), 0 0 48px rgba(217,119,6,0.35)",
+        }}
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* Top gold rail */}
+        <div
+          className="h-1.5 w-full"
+          style={{
+            background:
+              "linear-gradient(90deg, transparent 0%, #8B6914 15%, #F5D76E 50%, #8B6914 85%, transparent 100%)",
+          }}
+        />
+
+        <div className="relative px-5 pb-6 pt-5 text-center sm:px-7 sm:pt-6">
+          {/* Atmosphere pattern */}
+          <div
+            className="pointer-events-none absolute inset-0 opacity-[0.07]"
             style={{
-              WebkitTextStroke: "1px #78350F",
+              backgroundImage:
+                "url(\"data:image/svg+xml,%3Csvg width='48' height='48' viewBox='0 0 48 48' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M24 4 L28 20 L44 24 L28 28 L24 44 L20 28 L4 24 L20 20 Z' fill='%23F5D76E'/%3E%3C/svg%3E\")",
+            }}
+            aria-hidden
+          />
+
+          <p className="relative text-[10px] font-bold uppercase tracking-[0.38em] text-amber-200/70 sm:text-[11px]">
+            Temple Feature
+          </p>
+
+          {/* Scatter medallion — lighten blend hides baked black square */}
+          <motion.div
+            className="relative mx-auto mt-3 flex size-28 items-center justify-center sm:size-32"
+            animate={{ y: [0, -6, 0] }}
+            transition={{ repeat: Infinity, duration: 2.4, ease: "easeInOut" }}
+          >
+            <div
+              className="pointer-events-none absolute inset-[-18%] rounded-full"
+              style={{
+                background:
+                  "radial-gradient(circle, rgba(245,158,11,0.55) 0%, transparent 68%)",
+              }}
+              aria-hidden
+            />
+            <img
+              src={ICON_SRC.lollipop}
+              alt=""
+              draggable={false}
+              className="relative z-[1] size-[92%] object-contain mix-blend-lighten drop-shadow-[0_0_22px_rgba(245,158,11,0.85)]"
+            />
+          </motion.div>
+
+          <div
+            className="relative mx-auto mt-1 h-px w-24"
+            style={{
+              background:
+                "linear-gradient(90deg, transparent, #F5D76E, transparent)",
+            }}
+          />
+
+          <h2
+            className="relative mt-4 font-black uppercase leading-none tracking-wide text-transparent"
+            style={{
+              fontSize: "clamp(1.85rem, 7vw, 2.6rem)",
+              backgroundImage:
+                "linear-gradient(180deg, #FFF6C8 0%, #F5D76E 45%, #D97706 100%)",
+              WebkitBackgroundClip: "text",
+              backgroundClip: "text",
+              filter: "drop-shadow(0 3px 0 #451A03)",
             }}
           >
-            FREE SPINS!
-          </motion.h2>
+            Free Spins
+          </h2>
 
-          <div className="mt-2 text-lg font-black uppercase tracking-widest text-white drop-shadow-md sm:text-2xl">
-            You Hit Panther Scatters
-          </div>
+          <p className="relative mt-2 text-xs font-semibold uppercase tracking-[0.2em] text-amber-100/75 sm:text-sm">
+            Panther scatters unlocked
+          </p>
 
-          <div className="mt-6 rounded-2xl border border-amber-300/40 bg-gradient-to-r from-amber-600 via-amber-500 to-emerald-600 px-6 py-4 shadow-2xl">
-            <div className="text-sm font-black uppercase tracking-[0.2em] text-amber-100">
-              FEATURE UNLOCKED
+          {/* Spin count — primary signal */}
+          <div className="relative mx-auto mt-5 max-w-[16rem]">
+            <div
+              className="rounded-xl border border-amber-300/50 px-4 py-3.5"
+              style={{
+                background:
+                  "linear-gradient(180deg, #92400E 0%, #78350F 55%, #451A03 100%)",
+                boxShadow:
+                  "inset 0 1px 0 rgba(255,236,179,0.35), 0 10px 28px rgba(0,0,0,0.45)",
+              }}
+            >
+              <div className="text-[10px] font-bold uppercase tracking-[0.28em] text-amber-200/80">
+                Awarded
+              </div>
+              <motion.div
+                initial={{ scale: 0.75, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                transition={{ type: "spring", stiffness: 260, damping: 16, delay: 0.08 }}
+                className="mt-0.5 font-black tabular-nums leading-none text-yellow-200"
+                style={{
+                  fontSize: "clamp(2.4rem, 12vw, 3.4rem)",
+                  textShadow: "0 3px 0 #451A03, 0 0 20px rgba(250,204,21,0.55)",
+                }}
+              >
+                {count}
+              </motion.div>
+              <div className="mt-1 text-sm font-black uppercase tracking-[0.18em] text-amber-100">
+                Free Spins
+              </div>
             </div>
-            <div className="mt-1 text-4xl font-black text-yellow-300 drop-shadow-[0_3px_0_#78350F] sm:text-5xl">
-              {count} FREE SPINS
-            </div>
           </div>
 
-          <div className="mt-6 text-xs font-bold uppercase tracking-[0.25em] text-amber-200">
-            Tap Anywhere To Start Spin
-          </div>
+          <button
+            type="button"
+            onClick={onClose}
+            className="relative mt-5 w-full rounded-lg border border-amber-400/60 bg-gradient-to-b from-amber-500 to-amber-800 py-2.5 text-sm font-black uppercase tracking-wider text-amber-950 shadow-[0_0_20px_rgba(245,158,11,0.35)] transition active:scale-[0.98]"
+          >
+            Start Spins
+          </button>
+
+          <p className="relative mt-3 text-[10px] font-semibold uppercase tracking-[0.28em] text-amber-200/45">
+            Or tap outside
+          </p>
         </div>
+
+        {/* Bottom gold rail */}
+        <div
+          className="h-1.5 w-full"
+          style={{
+            background:
+              "linear-gradient(90deg, transparent 0%, #8B6914 15%, #F5D76E 50%, #8B6914 85%, transparent 100%)",
+          }}
+        />
       </motion.div>
     </motion.div>
   );

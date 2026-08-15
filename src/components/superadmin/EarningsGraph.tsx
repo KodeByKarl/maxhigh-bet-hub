@@ -44,64 +44,63 @@ export function EarningsGraph() {
   const maxVal = Math.max(1, ...(points.length > 0 ? points.map((p) => Math.abs(p.netEarnings)) : [1000]));
 
   return (
-    <div className={`${saGlass} p-5 space-y-4`}>
-      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-white/10 pb-3">
+    <div className={`${saGlass} space-y-3 p-3 sm:space-y-4 sm:p-5`}>
+      <div className="flex flex-col gap-3 border-b border-white/10 pb-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
         <div className="flex items-center gap-2">
-          <TrendingUp className="h-5 w-5 text-amber-400" />
-          <h2 className="text-lg font-bold text-foreground">Platform Earnings Trend</h2>
+          <TrendingUp className="h-4 w-4 text-amber-400 sm:h-5 sm:w-5" />
+          <h2 className="text-sm font-bold text-foreground sm:text-lg">Earnings Trend</h2>
         </div>
 
-        {/* View Selector Toggle (Day / Week / Month) */}
-        <div className="flex items-center gap-1.5 rounded-xl border border-white/10 bg-white/[0.04] p-1">
+        <div className="grid w-full grid-cols-3 gap-1 rounded-xl border border-white/10 bg-white/[0.04] p-1 sm:flex sm:w-auto sm:items-center sm:gap-1.5">
           {(
             [
-              { id: "day", label: "Daily (24h)" },
-              { id: "week", label: "Weekly (7d)" },
-              { id: "month", label: "Monthly (12m)" },
+              { id: "day", label: "Daily (24h)", short: "24h" },
+              { id: "week", label: "Weekly (7d)", short: "7d" },
+              { id: "month", label: "Monthly (12m)", short: "12m" },
             ] as const
           ).map((p) => (
             <button
               key={p.id}
               type="button"
               onClick={() => setPeriod(p.id)}
-              className={`rounded-lg px-3 py-1.5 text-xs font-bold transition ${
+              className={`rounded-lg px-2 py-1.5 text-[11px] font-bold transition sm:px-3 sm:text-xs ${
                 period === p.id
                   ? "bg-amber-500 text-black shadow-md shadow-amber-500/20"
                   : "text-muted-foreground hover:bg-white/10 hover:text-foreground"
               }`}
             >
-              {p.label}
+              <span className="sm:hidden">{p.short}</span>
+              <span className="hidden sm:inline">{p.label}</span>
             </button>
           ))}
         </div>
       </div>
 
-      {/* Summary Totals Cards */}
-      <div className="grid gap-3 sm:grid-cols-4">
-        <div className="rounded-xl border border-white/10 bg-white/[0.03] p-3">
-          <div className="text-[11px] font-semibold text-muted-foreground">Today's Net</div>
-          <div className={`mt-1 text-lg font-black ${ (data?.todayNet ?? 0) >= 0 ? "text-emerald-400" : "text-rose-400"}`}>
+      <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 sm:gap-3">
+        <div className="rounded-xl border border-white/10 bg-white/[0.03] p-2.5 sm:p-3">
+          <div className="text-[10px] font-semibold text-muted-foreground sm:text-[11px]">Today's Net</div>
+          <div className={`mt-1 text-sm font-black sm:text-lg ${ (data?.todayNet ?? 0) >= 0 ? "text-emerald-400" : "text-rose-400"}`}>
             {formatMoney(data?.todayNet ?? 0)}
           </div>
         </div>
 
-        <div className="rounded-xl border border-white/10 bg-white/[0.03] p-3">
-          <div className="text-[11px] font-semibold text-muted-foreground">This Week</div>
-          <div className={`mt-1 text-lg font-black ${ (data?.thisWeekNet ?? 0) >= 0 ? "text-emerald-400" : "text-rose-400"}`}>
+        <div className="rounded-xl border border-white/10 bg-white/[0.03] p-2.5 sm:p-3">
+          <div className="text-[10px] font-semibold text-muted-foreground sm:text-[11px]">This Week</div>
+          <div className={`mt-1 text-sm font-black sm:text-lg ${ (data?.thisWeekNet ?? 0) >= 0 ? "text-emerald-400" : "text-rose-400"}`}>
             {formatMoney(data?.thisWeekNet ?? 0)}
           </div>
         </div>
 
-        <div className="rounded-xl border border-white/10 bg-white/[0.03] p-3">
-          <div className="text-[11px] font-semibold text-muted-foreground">This Month</div>
-          <div className={`mt-1 text-lg font-black ${ (data?.thisMonthNet ?? 0) >= 0 ? "text-emerald-400" : "text-rose-400"}`}>
+        <div className="rounded-xl border border-white/10 bg-white/[0.03] p-2.5 sm:p-3">
+          <div className="text-[10px] font-semibold text-muted-foreground sm:text-[11px]">This Month</div>
+          <div className={`mt-1 text-sm font-black sm:text-lg ${ (data?.thisMonthNet ?? 0) >= 0 ? "text-emerald-400" : "text-rose-400"}`}>
             {formatMoney(data?.thisMonthNet ?? 0)}
           </div>
         </div>
 
-        <div className="rounded-xl border border-amber-500/20 bg-amber-500/10 p-3">
-          <div className="text-[11px] font-bold text-amber-300">All-Time Net</div>
-          <div className="mt-1 text-lg font-black text-amber-400">
+        <div className="rounded-xl border border-amber-500/20 bg-amber-500/10 p-2.5 sm:p-3">
+          <div className="text-[10px] font-bold text-amber-300 sm:text-[11px]">All-Time Net</div>
+          <div className="mt-1 text-sm font-black text-amber-400 sm:text-lg">
             {formatMoney(data?.allTimeNet ?? 0)}
           </div>
         </div>
@@ -110,12 +109,12 @@ export function EarningsGraph() {
       {/* Interactive Bar/Trend Visualizer */}
       <div className="pt-2">
         {loading ? (
-          <div className="h-44 flex items-center justify-center text-xs text-muted-foreground">Loading earnings chart…</div>
+          <div className="flex h-32 items-center justify-center text-xs text-muted-foreground sm:h-44">Loading earnings chart…</div>
         ) : !data || !data.points || data.points.length === 0 ? (
-          <div className="h-44 flex items-center justify-center text-xs text-muted-foreground">No earnings data recorded yet.</div>
+          <div className="flex h-32 items-center justify-center text-xs text-muted-foreground sm:h-44">No earnings data recorded yet.</div>
         ) : (
           <div className="space-y-2">
-            <div className="h-44 flex items-end justify-between gap-1.5 pt-4 pb-2 px-2 border-b border-white/10">
+            <div className="flex h-32 items-end justify-between gap-1 border-b border-white/10 px-1 pb-2 pt-3 sm:h-44 sm:gap-1.5 sm:px-2 sm:pt-4">
               {data.points.map((pt, idx) => {
                 const heightPct = Math.max(8, Math.round((Math.abs(pt.netEarnings) / maxVal) * 100));
                 const isPositive = pt.netEarnings >= 0;

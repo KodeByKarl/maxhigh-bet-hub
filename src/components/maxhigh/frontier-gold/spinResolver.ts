@@ -20,7 +20,7 @@ function applyCap(amount: number, already: number, maxPayout: number) {
 
 /**
  * Server-authoritative spin:
- * payline cascade (remove → drop → refill) → scatter → Hold & Win → cap.
+ * diamond connecting-ways cascade (remove → drop → refill) → scatter → Hold & Win → cap.
  */
 export function resolveFrontierSpin(opts: {
   totalBet: number;

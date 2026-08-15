@@ -51,10 +51,10 @@ class GoldenPantherAudio {
       /* ignore */
     }
     this.applyMasterGain();
-    if (!muted && !this.isAmbientPlaying) {
-      this.startAmbient();
-    } else if (muted) {
+    if (muted) {
       this.stopAmbient();
+    } else if (this.unlocked && !this.isAmbientPlaying) {
+      this.startAmbient();
     }
   }
 
@@ -73,15 +73,13 @@ class GoldenPantherAudio {
     this.applyMasterGain();
   }
 
+  /** No-op until a user gesture; ambient starts in setupUnlock. */
   preload() {
-    if (!this.ctx) this.ensureCtx();
-    if (!this.muted && !this.isAmbientPlaying) {
-      this.startAmbient();
-    }
+    /* AudioContext must wait for a gesture — see setupUnlock. */
   }
 
   private ensureCtx(): AudioContext | null {
-    if (typeof window === "undefined") return null;
+    if (typeof window === "undefined" || !this.unlocked) return null;
     try {
       if (!this.ctx) {
         const AC =
@@ -101,7 +99,7 @@ class GoldenPantherAudio {
         this.applyMasterGain();
       }
       if (this.ctx.state === "suspended") {
-        void this.ctx.resume();
+        void this.ctx.resume().catch(() => undefined);
       }
       return this.ctx;
     } catch {
@@ -118,9 +116,12 @@ class GoldenPantherAudio {
   private setupUnlock() {
     const unlock = () => {
       if (this.unlocked) return;
-      const ctx = this.ensureCtx();
-      if (ctx?.state === "suspended") void ctx.resume();
       this.unlocked = true;
+      const ctx = this.ensureCtx();
+      if (ctx?.state === "suspended") {
+        void ctx.resume().catch(() => undefined);
+      }
+      if (!this.muted) this.startAmbient();
       window.removeEventListener("pointerdown", unlock);
       window.removeEventListener("keydown", unlock);
     };
@@ -132,7 +133,7 @@ class GoldenPantherAudio {
    * Procedural Jungle Drums & Mystical Aztec Pad Ambient Theme Music.
    */
   startAmbient() {
-    if (this.muted || this.isAmbientPlaying) return;
+    if (this.muted || this.isAmbientPlaying || !this.unlocked) return;
     const ctx = this.ensureCtx();
     if (!ctx || !this.ambientGain) return;
 

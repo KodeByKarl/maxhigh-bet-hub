@@ -2,7 +2,7 @@
  * Buffalo Reign — polished layout matching Candy Peak chrome.
  * Engine resolves spins instantly; this file plays back the animation script.
  */
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { Info, Menu, Zap } from "lucide-react";
 import { toast } from "sonner";
@@ -57,7 +57,7 @@ function createInitialBoard(): BoardCell[] {
 
 function preloadAssets() {
   if (typeof Image === "undefined") return;
-  const urls = ["/games/buffalo-reign.png", ...Object.values(TILE_IMAGE_MAP)];
+  const urls = ["/games/buffalo-reign.webp", ...Object.values(TILE_IMAGE_MAP)];
   for (const src of urls) {
     const img = new Image();
     img.decoding = "async";
@@ -114,6 +114,20 @@ export function WildFrontierStampedeSlot({ onBalanceUpdate }: WildFrontierStampe
   const [cfgTick, setCfgTick] = useState(0);
 
   const busy = phase !== "idle";
+
+  const slotIndex = useMemo(() => {
+    const slots: (BoardCell | null)[] = Array.from({ length: COLS * ROWS }, () => null);
+    for (const c of board) {
+      const i = c.rowIndex * COLS + c.reelIndex;
+      if (i >= 0 && i < slots.length) slots[i] = c;
+    }
+    return slots;
+  }, [board]);
+
+  const isDropping = phase === "dropping";
+  const isGlowing = phase === "glow";
+  const isPopping = phase === "popping";
+  const isFalling = phase === "falling";
   const engineCfg = getBuffaloReignConfig();
   const anteMult = engineCfg.anteBetMult;
   const buyMult = engineCfg.buyFeatureMult;
@@ -447,7 +461,7 @@ export function WildFrontierStampedeSlot({ onBalanceUpdate }: WildFrontierStampe
     <div className="relative flex h-dvh w-full flex-col overflow-hidden select-none">
       {/* Full-bleed themed backdrop */}
       <img
-        src="/games/buffalo-reign.png"
+        src="/games/buffalo-reign.webp"
         alt=""
         className="absolute inset-0 size-full object-cover"
         aria-hidden
@@ -659,9 +673,7 @@ export function WildFrontierStampedeSlot({ onBalanceUpdate }: WildFrontierStampe
                             if (row >= height) {
                               return <div key={`empty-${i}`} className="min-h-0 min-w-0" />;
                             }
-                            const cell =
-                              board.find((c) => c.reelIndex === col && c.rowIndex === row) ??
-                              null;
+                            const cell = slotIndex[i] ?? null;
                             const win = cell ? winningKeys.has(cell.key) : false;
                             return (
                               <ReelCell
@@ -669,7 +681,14 @@ export function WildFrontierStampedeSlot({ onBalanceUpdate }: WildFrontierStampe
                                 cell={cell}
                                 col={col}
                                 row={row}
-                                phase={phase}
+                                isDropping={isDropping && !!cell}
+                                isGlowing={isGlowing && win}
+                                isPopping={isPopping && win}
+                                isFalling={
+                                  isFalling &&
+                                  !!cell &&
+                                  (spawnedKeys.has(cell.key) || fallenKeys.has(cell.key))
+                                }
                                 win={win}
                                 isSpawn={cell ? spawnedKeys.has(cell.key) : false}
                                 isFallen={cell ? fallenKeys.has(cell.key) : false}

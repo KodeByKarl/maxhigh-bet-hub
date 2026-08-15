@@ -11,7 +11,8 @@ type ChineseIconProps = {
 };
 
 /**
- * 3D symbol glyph — PNG assets under /images/symbols/chinese/.
+ * 3D symbol glyph — transparent PNGs under /images/symbols/cny/.
+ * Sized large for readability (older players).
  */
 export const ChineseIcon = memo(function ChineseIcon({
   kind,
@@ -34,27 +35,27 @@ export const ChineseIcon = memo(function ChineseIcon({
         draggable={false}
         decoding="async"
         className={cn(
-          // Zoom past PNG dark margins; cell overflow clips the rest
-          "pointer-events-none size-full scale-[1.55] object-contain object-center transition-all duration-300",
+          // Fill cell; lighten blend hides any leftover pure-black fringe on dark felt
+          "pointer-events-none size-[98%] object-contain object-center mix-blend-lighten transition-all duration-300",
           kind === "dragon" &&
-            "drop-shadow-[0_0_18px_rgba(220,38,38,0.85)] drop-shadow-[0_0_10px_rgba(250,204,21,0.6)]",
-          kind === "monkey" && "drop-shadow-[0_0_16px_rgba(234,88,12,0.9)]",
-          kind === "extra_scatter" && "scale-[1.6] drop-shadow-[0_0_20px_rgba(250,204,21,0.95)]",
-          !isFeature && "drop-shadow-[0_2px_4px_rgba(0,0,0,0.35)]",
+            "drop-shadow-[0_0_14px_rgba(220,38,38,0.75)] drop-shadow-[0_0_8px_rgba(250,204,21,0.5)]",
+          kind === "monkey" && "drop-shadow-[0_0_12px_rgba(234,88,12,0.85)]",
+          kind === "extra_scatter" && "size-full drop-shadow-[0_0_16px_rgba(250,204,21,0.9)]",
+          !isFeature && "drop-shadow-[0_2px_6px_rgba(0,0,0,0.35)]",
         )}
       />
       {kind === "monkey" && (
-        <span className="absolute bottom-0.5 left-1/2 z-[30] -translate-x-1/2 whitespace-nowrap rounded-full border border-yellow-200 bg-gradient-to-r from-red-600 via-amber-400 to-red-600 px-1.5 py-px text-[7px] font-black uppercase text-white shadow">
+        <span className="absolute bottom-1 left-1/2 z-[30] -translate-x-1/2 whitespace-nowrap rounded-full border border-yellow-200 bg-gradient-to-r from-red-600 via-amber-400 to-red-600 px-2 py-0.5 text-[9px] font-black uppercase text-white shadow sm:text-[10px]">
           MONKEY
         </span>
       )}
       {kind === "dragon" && (
-        <span className="absolute bottom-0.5 left-1/2 z-[30] -translate-x-1/2 whitespace-nowrap rounded-full border border-yellow-200 bg-gradient-to-r from-red-800 via-yellow-500 to-red-800 px-1.5 py-px text-[7px] font-black uppercase text-yellow-50 shadow">
+        <span className="absolute bottom-1 left-1/2 z-[30] -translate-x-1/2 whitespace-nowrap rounded-full border border-yellow-200 bg-gradient-to-r from-red-800 via-yellow-500 to-red-800 px-2 py-0.5 text-[9px] font-black uppercase text-yellow-50 shadow sm:text-[10px]">
           DRAGON
         </span>
       )}
       {kind === "extra_scatter" && (
-        <span className="absolute bottom-0.5 left-1/2 z-[30] -translate-x-1/2 whitespace-nowrap rounded-full border border-yellow-100 bg-gradient-to-r from-amber-500 via-yellow-300 to-amber-500 px-1.5 py-px text-[7px] font-black uppercase text-amber-950 shadow animate-pulse">
+        <span className="absolute bottom-1 left-1/2 z-[30] -translate-x-1/2 whitespace-nowrap rounded-full border border-yellow-100 bg-gradient-to-r from-amber-500 via-yellow-300 to-amber-500 px-2 py-0.5 text-[9px] font-black uppercase text-amber-950 shadow animate-pulse sm:text-[10px]">
           {extraLabel ? `EXTRA · ${extraLabel}` : "EXTRA"}
         </span>
       )}

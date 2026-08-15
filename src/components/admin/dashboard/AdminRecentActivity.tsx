@@ -57,7 +57,7 @@ function relativeTime(dateStr: string): string {
 
 export function AdminRecentActivity({ logs }: { logs: AdminAuditLogRow[] }) {
   return (
-    <section className={`${adminGlass} flex h-full flex-col p-5`}>
+    <section className={`${adminGlass} flex h-full flex-col p-4 sm:p-5`}>
       {/* Header */}
       <div className="flex items-center justify-between gap-3 mb-1">
         <div className="flex items-center gap-2.5">

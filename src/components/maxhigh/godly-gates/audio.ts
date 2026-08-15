@@ -73,8 +73,8 @@ class GoldenEmpireAudio {
       /* ignore */
     }
     this.applyMasterGain();
-    if (!muted) {
-      void this.ensureCtx();
+    if (!muted && this.unlocked) {
+      void this.resumeIfNeeded();
       if (!this.ambientSrc) this.startAmbient();
     }
   }
@@ -107,16 +107,28 @@ class GoldenEmpireAudio {
     let loaded = 0;
     onProgress?.(0, total);
 
+    // Decode via OfflineAudioContext so we never touch AudioContext before a gesture.
+    const decoder =
+      typeof OfflineAudioContext !== "undefined"
+        ? new OfflineAudioContext(2, 1, 44100)
+        : null;
+
     await Promise.all(
       entries.map(async ([id, url]) => {
         try {
           const res = await fetch(url, { cache: "force-cache" });
           if (!res.ok) throw new Error(`${url} → ${res.status}`);
           const arr = await res.arrayBuffer();
-          const ctx = this.ensureCtx();
-          if (!ctx) throw new Error("AudioContext unavailable");
-          const buf = await ctx.decodeAudioData(arr.slice(0));
-          this.buffers.set(id, buf);
+          if (decoder) {
+            const buf = await decoder.decodeAudioData(arr.slice(0));
+            this.buffers.set(id, buf);
+          } else {
+            // Fallback: create suspended context without resume (decode only).
+            const ctx = this.ensureCtx({ resume: false });
+            if (!ctx) throw new Error("AudioContext unavailable");
+            const buf = await ctx.decodeAudioData(arr.slice(0));
+            this.buffers.set(id, buf);
+          }
         } catch (e) {
           console.warn("[GE audio] failed to load", id, e);
         } finally {
@@ -127,8 +139,9 @@ class GoldenEmpireAudio {
     );
   }
 
-  private ensureCtx(): AudioContext | null {
+  private ensureCtx(opts: { resume?: boolean } = {}): AudioContext | null {
     if (typeof window === "undefined") return null;
+    const wantResume = opts.resume !== false && this.unlocked;
     try {
       if (!this.ctx) {
         const AC =
@@ -145,10 +158,19 @@ class GoldenEmpireAudio {
         this.sfxGain.gain.value = 1;
         this.applyMasterGain();
       }
-      if (this.ctx.state === "suspended") void this.ctx.resume();
+      if (wantResume && this.ctx.state === "suspended") {
+        void this.ctx.resume().catch(() => undefined);
+      }
       return this.ctx;
     } catch {
       return null;
+    }
+  }
+
+  private resumeIfNeeded() {
+    if (!this.unlocked || !this.ctx) return;
+    if (this.ctx.state === "suspended") {
+      void this.ctx.resume().catch(() => undefined);
     }
   }
 
@@ -161,9 +183,12 @@ class GoldenEmpireAudio {
   private setupUnlock() {
     const unlock = () => {
       if (this.unlocked) return;
-      const ctx = this.ensureCtx();
-      if (ctx?.state === "suspended") void ctx.resume();
       this.unlocked = true;
+      const ctx = this.ensureCtx({ resume: true });
+      if (ctx?.state === "suspended") {
+        void ctx.resume().catch(() => undefined);
+      }
+      if (!this.muted) this.startAmbient();
       window.removeEventListener("pointerdown", unlock);
       window.removeEventListener("keydown", unlock);
     };
@@ -181,7 +206,8 @@ class GoldenEmpireAudio {
       fadeIn?: number;
     } = {},
   ): { source: AudioBufferSourceNode; gain: GainNode } | null {
-    const ctx = this.ensureCtx();
+    if (!this.unlocked) return null;
+    const ctx = this.ensureCtx({ resume: true });
     const buf = this.buffers.get(id);
     if (!ctx || !buf || !this.sfxGain) return null;
 
@@ -295,8 +321,8 @@ class GoldenEmpireAudio {
   }
 
   startAmbient() {
-    if (this.muted || this.ambientSrc) return;
-    const ctx = this.ensureCtx();
+    if (this.muted || this.ambientSrc || !this.unlocked) return;
+    const ctx = this.ensureCtx({ resume: true });
     if (!ctx || !this.ambientGain) return;
     const buf = this.buffers.get("ambientLoop");
     if (!buf) return;
@@ -327,7 +353,8 @@ class GoldenEmpireAudio {
   }
 
   private crossfadeAmbient(target: number, seconds: number) {
-    const ctx = this.ensureCtx();
+    if (!this.unlocked) return;
+    const ctx = this.ensureCtx({ resume: true });
     if (!ctx || !this.ambientGain) return;
     const now = ctx.currentTime;
     this.ambientGain.gain.cancelScheduledValues(now);

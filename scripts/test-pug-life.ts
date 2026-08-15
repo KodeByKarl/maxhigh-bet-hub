@@ -67,20 +67,28 @@ function runUnitTests() {
 
   // --- Section 1: config + grid ---
   const normalized = normalizePugLifeConfig(null);
-  assert(normalized.reelsCount === 7, "7 reels");
-  assert(normalized.reelHeights.join("-") === "1-2-3-4-3-2-1", "diamond heights");
-  assert(normalized.paylineCount === 144, "144 connecting ways");
+  assert(normalized.reelsCount === 5, "5 reels");
+  assert(normalized.reelHeights.join("-") === "3-4-5-4-3", "diamond heights");
+  assert(normalized.paylineCount === 720, "720 connecting ways");
   assert(normalized.maxWinMult === 7_500, "maxWinMult 7500");
   assert(normalized.minBet === 0.1 && normalized.maxBet === 100, "bet range");
 
-  // Legacy 5×4 configs migrate to diamond
+  // Legacy 5×4 configs migrate to 3-4-5-4-3
   const migrated = normalizePugLifeConfig({ reelsCount: 5, rowsCount: 4, paylineCount: 16 });
-  assert(migrated.reelHeights.join("-") === "1-2-3-4-3-2-1", "legacy migrate");
+  assert(migrated.reelHeights.join("-") === "3-4-5-4-3", "legacy migrate");
+
+  const fromSeven = normalizePugLifeConfig({
+    reelHeights: [1, 2, 3, 4, 3, 2, 1],
+    reelsCount: 7,
+    rowsCount: 4,
+  });
+  assert(fromSeven.reelHeights.join("-") === "3-4-5-4-3", "7-diamond migrate");
+  assert(fromSeven.dawgsDen.toasterReels.join(",") === "1,2", "toaster reels migrate");
 
   const rng = createRng("pl-grid-test");
   const g = generateGrid(rng, cfg, { context: "base" });
   assert(
-    g.length === 7 && g.every((c, i) => c.length === HEIGHTS[i]),
+    g.length === 5 && g.every((c, i) => c.length === HEIGHTS[i]),
     "generateGrid diamond",
   );
 
@@ -89,48 +97,44 @@ function runUnitTests() {
     for (const c of col) assert(c.kind !== "toaster", "no toaster in base game");
   }
 
-  // Dawg's Den: toaster only reels 3,4
+  // Dawg's Den: toaster only reels 1,2
   let toasterSeenWrongReel = false;
   for (let i = 0; i < 200; i++) {
     const gg = generateGrid(createRng(`pl-dd-${i}`), cfg, { context: "dawgs_den" });
-    for (let reel = 0; reel < 7; reel++) {
-      for (const c of gg[reel]) {
-        if (c.kind === "toaster" && ![3, 4].includes(reel)) toasterSeenWrongReel = true;
+    for (let reel = 0; reel < 5; reel++) {
+      for (const c of gg[reel]!) {
+        if (c.kind === "toaster" && ![1, 2].includes(reel)) toasterSeenWrongReel = true;
       }
     }
   }
-  assert(!toasterSeenWrongReel, "toaster only on center reels 3/4");
+  assert(!toasterSeenWrongReel, "toaster only on center reels 1/2");
   console.log("✓ Section 1: config + diamond grid + toaster restriction");
 
   // --- Section 2: connecting ways ---
   const dead: PlGrid = gridFrom([
-    ["sym_10"],
-    ["sym_j", "sym_q"],
-    ["sym_k", "sym_a", "rat"],
-    ["pigeon", "cat", "chihuahua", "pug"],
     ["sym_10", "sym_j", "sym_q"],
-    ["sym_k", "sym_a"],
-    ["rat"],
+    ["sym_k", "sym_a", "rat", "pigeon"],
+    ["cat", "chihuahua", "pug", "sym_10", "sym_j"],
+    ["sym_q", "sym_k", "sym_a", "rat"],
+    ["pigeon", "cat", "chihuahua"],
   ]);
   const deadEval = evaluatePaylines(dead, BET, cfg);
   assert(deadEval.total === 0, `Expected no-win, got ${deadEval.total}`);
   console.log("✓ No-win ways eval");
 
-  // 5 consecutive reels of pug (reels 0–4)
+  // 5 consecutive reels of pug
   const pugFive: PlGrid = [
-    fillCol(1, "pug"),
-    fillCol(2, "pug"),
     fillCol(3, "pug"),
     fillCol(4, "pug"),
+    fillCol(5, "pug"),
+    fillCol(4, "pug"),
     fillCol(3, "pug"),
-    fillCol(2, "sym_j"),
-    fillCol(1, "sym_q"),
   ];
   const pugEval = evaluatePaylines(pugFive, BET, cfg);
   const pugWin = pugEval.wins.find((w) => w.symbol === "pug");
   const pugPay = cfg.symbols.find((s) => s.kind === "pug")!.pay[2];
-  // ways = 1*2*3*4*3 = 72
-  const expectedWays = 1 * 2 * 3 * 4 * 3;
+  // ways = 3*4*5*4*3 = 720
+  const expectedWays = 3 * 4 * 5 * 4 * 3;
   assert(!!pugWin && pugWin.count === 5, "pug 5 consecutive reels");
   assert(pugWin!.waysCount === expectedWays, `pug ways ${expectedWays} got ${pugWin!.waysCount}`);
   assert(
@@ -139,22 +143,20 @@ function runUnitTests() {
   );
   console.log(`✓ Ways pug 5-oak = ${pugWin!.payout} (${expectedWays} ways)`);
 
-  // 3 consecutive on leftmost reels only (heights 1,2,3 → 6 ways)
+  // 3 consecutive on leftmost reels (heights 3,4,5 → 60 ways)
   const threeOak: PlGrid = [
-    fillCol(1, "sym_a"),
-    fillCol(2, "sym_a"),
     fillCol(3, "sym_a"),
+    fillCol(4, "sym_a"),
+    fillCol(5, "sym_a"),
     fillCol(4, "pug"),
     fillCol(3, "rat"),
-    fillCol(2, "cat"),
-    fillCol(1, "pigeon"),
   ];
   for (const stake of [1, 10]) {
     const ev = evaluatePaylines(threeOak, stake, cfg);
     const win = ev.wins.find((w) => w.symbol === "sym_a");
     assert(!!win && win.count === 3, `3-oak at stake ${stake}`);
-    assert(win!.waysCount === 6, "1×2×3 = 6 ways");
-    const expected = cfg.symbols.find((s) => s.kind === "sym_a")!.pay[0] * stake * 6;
+    assert(win!.waysCount === 60, "3×4×5 = 60 ways");
+    const expected = cfg.symbols.find((s) => s.kind === "sym_a")!.pay[0] * stake * 60;
     assert(Math.abs(win!.payout - expected) < 0.02, `3-oak payout stake ${stake}`);
   }
   console.log("✓ Section 2: connecting ways + stake scaling");
@@ -177,13 +179,11 @@ function runUnitTests() {
 
   // Treat substitutes on pug ways (reel 0 treat, reels 1-4 pug)
   const oneTreat: PlGrid = [
-    [cell("treat_biscuit", 3)],
-    fillCol(2, "pug"),
-    fillCol(3, "pug"),
+    [cell("treat_biscuit", 3), cell("pug"), cell("pug")],
+    fillCol(4, "pug"),
+    fillCol(5, "pug"),
     fillCol(4, "pug"),
     fillCol(3, "pug"),
-    fillCol(2, "sym_j"),
-    fillCol(1, "sym_q"),
   ];
   const oneEv = evaluatePaylines(oneTreat, BET, cfg);
   const oneW = oneEv.wins.find((w) => w.symbol === "pug");
@@ -192,13 +192,11 @@ function runUnitTests() {
 
   // Two Treats — sum
   const twoTreat: PlGrid = [
-    [cell("treat_biscuit", 3)],
-    [cell("treat_bone", 5), cell("treat_bone", 5)],
-    fillCol(3, "pug"),
+    [cell("treat_biscuit", 3), cell("pug"), cell("pug")],
+    [cell("treat_bone", 5), cell("treat_bone", 5), cell("pug"), cell("pug")],
+    fillCol(5, "pug"),
     fillCol(4, "pug"),
     fillCol(3, "pug"),
-    fillCol(2, "sym_j"),
-    fillCol(1, "sym_q"),
   ];
   const twoEv = evaluatePaylines(twoTreat, BET, cfg);
   const twoW = twoEv.wins.find((w) => w.symbol === "pug");
@@ -207,9 +205,20 @@ function runUnitTests() {
 
   // Five Treat consecutive reels → fiveTreatWin
   const fiveTreat: PlGrid = [
-    [cell("treat_biscuit", 2)],
-    [cell("treat_biscuit", 2), cell("treat_biscuit", 2)],
-    [cell("treat_bone", 5), cell("treat_bone", 5), cell("treat_bone", 5)],
+    [cell("treat_biscuit", 2), cell("treat_biscuit", 2), cell("treat_biscuit", 2)],
+    [
+      cell("treat_biscuit", 2),
+      cell("treat_biscuit", 2),
+      cell("treat_biscuit", 2),
+      cell("treat_biscuit", 2),
+    ],
+    [
+      cell("treat_bone", 5),
+      cell("treat_bone", 5),
+      cell("treat_bone", 5),
+      cell("treat_bone", 5),
+      cell("treat_bone", 5),
+    ],
     [
       cell("treat_bone", 5),
       cell("treat_bone", 5),
@@ -217,8 +226,6 @@ function runUnitTests() {
       cell("treat_bone", 5),
     ],
     [cell("treat_steak", 25), cell("treat_steak", 25), cell("treat_steak", 25)],
-    fillCol(2, "sym_j"),
-    fillCol(1, "sym_q"),
   ];
   const fiveEv = evaluatePaylines(fiveTreat, BET, cfg);
   const fiveW = fiveEv.wins.find((w) => w.fiveTreatWin);
@@ -228,13 +235,11 @@ function runUnitTests() {
 
   // --- Section 4: Treat Yo'Self ---
   const triggerGrid: PlGrid = [
-    [cell("treat_biscuit", 2)],
-    [cell("treat_bone", 5), cell("sym_10")],
-    [cell("treat_steak", 25), cell("sym_10"), cell("sym_j")],
+    [cell("treat_biscuit", 2), cell("sym_10"), cell("sym_j")],
+    [cell("treat_bone", 5), cell("sym_10"), cell("sym_j"), cell("sym_q")],
+    [cell("treat_steak", 25), cell("sym_10"), cell("sym_j"), cell("sym_q"), cell("sym_k")],
     fillCol(4, "sym_a"),
     fillCol(3, "rat"),
-    fillCol(2, "pug"),
-    fillCol(1, "sym_k"),
   ];
   const tysTrig = shouldTriggerTreatYoSelf(triggerGrid, cfg);
   assert(tysTrig.triggered && tysTrig.positions.length === 3, "Treat Yo'Self trigger 3+");
@@ -251,8 +256,8 @@ function runUnitTests() {
   for (const step of tysSession.steps) {
     for (const [reel, row] of tysTrig.positions) {
       assert(
-        step.grid[reel][row].sticky === true ||
-          step.grid[reel][row].kind.startsWith("treat_"),
+        step.grid[reel]![row]!.sticky === true ||
+          step.grid[reel]![row]!.kind.startsWith("treat_"),
         "trigger treats stay sticky",
       );
     }
@@ -280,13 +285,11 @@ function runUnitTests() {
   assert(threw, "cannot add after settle");
 
   const scatterGrid: PlGrid = [
-    [cell("scatter")],
-    [cell("scatter"), cell("sym_10")],
     [cell("scatter"), cell("sym_10"), cell("sym_j")],
+    [cell("scatter"), cell("sym_10"), cell("sym_j"), cell("sym_q")],
+    [cell("scatter"), cell("sym_10"), cell("sym_j"), cell("sym_q"), cell("sym_k")],
     fillCol(4, "sym_a"),
     fillCol(3, "rat"),
-    fillCol(2, "pug"),
-    fillCol(1, "sym_k"),
   ];
   const ddTrig = shouldTriggerDawgsDen(scatterGrid, cfg);
   assert(ddTrig.triggered, "Dawg's Den trigger");
@@ -391,9 +394,24 @@ function runUnitTests() {
 
   // --- Section 7: max-win cap ---
   const huge: PlGrid = [
-    [cell("treat_steak", 200)],
-    [cell("treat_steak", 200), cell("treat_steak", 200)],
-    [cell("treat_steak", 200), cell("treat_steak", 200), cell("treat_steak", 200)],
+    [
+      cell("treat_steak", 200),
+      cell("treat_steak", 200),
+      cell("treat_steak", 200),
+    ],
+    [
+      cell("treat_steak", 200),
+      cell("treat_steak", 200),
+      cell("treat_steak", 200),
+      cell("treat_steak", 200),
+    ],
+    [
+      cell("treat_steak", 200),
+      cell("treat_steak", 200),
+      cell("treat_steak", 200),
+      cell("treat_steak", 200),
+      cell("treat_steak", 200),
+    ],
     [
       cell("treat_steak", 200),
       cell("treat_steak", 200),
@@ -401,8 +419,6 @@ function runUnitTests() {
       cell("treat_steak", 200),
     ],
     [cell("treat_steak", 200), cell("treat_steak", 200), cell("treat_steak", 200)],
-    [cell("treat_steak", 200), cell("treat_steak", 200)],
-    [cell("treat_steak", 200)],
   ];
   const capped = resolvePugLifeSpin({ totalBet: BET, seed: "cap", grid: huge });
   assert(capped.totalWin <= cfg.maxWinMult * BET + 0.01, "capped at 7500×");
@@ -415,7 +431,7 @@ function runUnitTests() {
 
   // Full resolve smoke
   const smoke = resolvePugLifeSpin({ totalBet: BET, seed: "smoke-1" });
-  assert(!!smoke.seed && smoke.grid.length === 7, "smoke resolve 7 reels");
+  assert(!!smoke.seed && smoke.grid.length === 5, "smoke resolve 5 reels");
   assert(
     smoke.grid.every((c, i) => c.length === HEIGHTS[i]),
     "smoke diamond heights",

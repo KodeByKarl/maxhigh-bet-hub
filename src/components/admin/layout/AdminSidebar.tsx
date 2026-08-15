@@ -1,6 +1,7 @@
 import { Link } from "@tanstack/react-router";
 import { LayoutDashboard, Users, ScrollText, Sparkles, Headphones } from "lucide-react";
 import { adminGlass } from "../ui/glass";
+import { useAuth } from "@/lib/auth";
 
 const nav = [
   { to: "/admin" as const, label: "Dashboard", icon: LayoutDashboard, exact: true },
@@ -9,7 +10,15 @@ const nav = [
   { to: "/admin/support" as const, label: "Live Support", icon: Headphones, exact: false },
 ];
 
+function roleLabel(role?: string) {
+  if (role === "master_agent") return "Master Agent";
+  if (role === "agent") return "Agent";
+  return "Admin";
+}
+
 export function AdminSidebar() {
+  const { user } = useAuth();
+
   return (
     <aside className="sticky top-0 hidden h-screen w-[15.5rem] shrink-0 flex-col p-3 md:flex">
       <div className={`${adminGlass} flex h-full flex-col p-3`}>
@@ -18,7 +27,7 @@ export function AdminSidebar() {
           <div>
             <div className="text-sm font-black tracking-wide text-white">MaxHigh</div>
             <div className="text-[10px] font-semibold uppercase tracking-[0.16em] text-violet-300/80">
-              Admin
+              {roleLabel(user?.role)}
             </div>
           </div>
         </div>

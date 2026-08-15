@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 100" fill="none">
+  <defs>
+    <radialGradient id="g" cx="50%" cy="45%" r="55%">
+      <stop offset="0%" stop-color="#FB7185"/>
+      <stop offset="70%" stop-color="#BE123C"/>
+      <stop offset="100%" stop-color="#7F1D1D"/>
+    </radialGradient>
+  </defs>
+  <ellipse cx="72" cy="54" rx="58" ry="30" fill="url(#g)"/>
+  <path d="M18 54 L0 24 L8 54 L0 84 Z" fill="#881337"/>
+  <path d="M90 24 Q126 6 148 40 Q120 54 90 44 Z" fill="#FDA4AF"/>
+  <path d="M60 22 Q78 0 96 24" stroke="#FECDD3" stroke-width="4" fill="none"/>
+  <circle cx="124" cy="48" r="6" fill="#450A0A"/>
+  <circle cx="126" cy="46" r="2" fill="#FECACA"/>
+  <path d="M40 62 Q72 74 110 62" stroke="#9F1239" stroke-width="3" opacity=".5"/>
+  <text x="72" y="58" text-anchor="middle" fill="#FFE4E6" font-size="14" font-family="Arial Black, sans-serif" font-weight="900">BOSS</text>
+</svg>

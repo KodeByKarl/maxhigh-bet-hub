@@ -20,7 +20,7 @@ export const PantherIcon = memo(function PantherIcon({
 }: PantherIconProps) {
   const isScatter = kind === "lollipop";
   const isBomb = kind === "bomb";
-  const src = ICON_SRC[kind] || "/images/symbols/panther/10.png";
+  const src = ICON_SRC[kind] || "/images/symbols/gp/10.png?v=1";
 
   return (
     <div className={cn("relative grid place-items-center bg-transparent overflow-visible size-full select-none", className)}>
@@ -30,10 +30,11 @@ export const PantherIcon = memo(function PantherIcon({
         decoding="async"
         loading="eager"
         className={cn(
-          "size-full object-contain filter transition-all duration-300 pointer-events-none",
-          isScatter && "drop-shadow-[0_0_16px_rgba(250,204,21,0.95)] scale-105 animate-pulse",
-          isBomb && "drop-shadow-[0_0_14px_rgba(168,85,247,0.9)] scale-105",
-          (kind === "heart" || kind === "purple" || kind === "green") && "drop-shadow-[0_0_10px_rgba(245,158,11,0.6)]"
+          "size-full object-contain mix-blend-lighten filter transition-all duration-300 pointer-events-none",
+          isScatter && "drop-shadow-[0_0_16px_rgba(250,204,21,0.95)] scale-[1.06] animate-pulse",
+          isBomb && "drop-shadow-[0_0_14px_rgba(168,85,247,0.9)] scale-[1.06]",
+          (kind === "heart" || kind === "purple" || kind === "green") &&
+            "drop-shadow-[0_0_10px_rgba(245,158,11,0.55)] scale-[1.04]",
         )}
       />
       {isScatter && (

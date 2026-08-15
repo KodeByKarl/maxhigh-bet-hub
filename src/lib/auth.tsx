@@ -8,7 +8,6 @@ import {
   type ReactNode,
 } from "react";
 import {
-  adjustBalanceFn,
   getJackpotFn,
   getSessionFn,
   heartbeatFn,
@@ -33,12 +32,7 @@ type AuthContextValue = {
   logout: () => Promise<void>;
   refreshSession: () => Promise<void>;
   refreshJackpot: () => Promise<void>;
-  /** Persist wager debit to MariaDB and update local user.balance (bets only). */
-  adjustBalance: (
-    delta: number,
-    type: "bet",
-    opts?: { note?: string; game?: string; gameId?: string },
-  ) => Promise<number>;
+  /** Update local session balance after a server settle response (never invent credits). */
   setBalanceLocal: (balance: number) => void;
 };
 
@@ -153,22 +147,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(null);
   }, []);
 
-  const adjustBalance = useCallback(
-    async (
-      delta: number,
-      type: "bet",
-      opts?: { note?: string; game?: string; gameId?: string },
-    ) => {
-      const res = await adjustBalanceFn({
-        data: { delta, type, note: opts?.note, game: opts?.game, gameId: opts?.gameId },
-      });
-      setUser((u) => (u ? { ...u, balance: res.balance } : u));
-      if (type === "bet") void refreshJackpot();
-      return res.balance;
-    },
-    [refreshJackpot],
-  );
-
   const setBalanceLocal = useCallback((balance: number) => {
     setUser((u) => (u ? { ...u, balance } : u));
   }, []);
@@ -187,7 +165,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       logout,
       refreshSession,
       refreshJackpot,
-      adjustBalance,
       setBalanceLocal,
     }),
     [
@@ -202,7 +179,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       logout,
       refreshSession,
       refreshJackpot,
-      adjustBalance,
       setBalanceLocal,
     ],
   );

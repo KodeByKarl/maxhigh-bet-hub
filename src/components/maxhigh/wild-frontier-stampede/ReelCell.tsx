@@ -1,4 +1,4 @@
-﻿import { memo } from "react";
+import { memo } from "react";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { ANIM } from "./animationConfig";
@@ -12,7 +12,11 @@ type ReelCellProps = {
   cell: BoardCell | null;
   col: number;
   row: number;
-  phase: ReelPhase;
+  /** Boolean phase flags — idle cells keep stable props so memo can skip. */
+  isDropping: boolean;
+  isGlowing: boolean;
+  isPopping: boolean;
+  isFalling: boolean;
   win: boolean;
   isSpawn: boolean;
   isFallen: boolean;
@@ -27,18 +31,20 @@ export const ReelCell = memo(function ReelCell({
   cell,
   col,
   row,
-  phase,
+  isDropping,
+  isGlowing,
+  isPopping,
+  isFalling,
   win,
   isSpawn,
   isFallen,
   fallDist,
 }: ReelCellProps) {
-  const popping = phase === "popping" && win;
-  const glowing = phase === "glow" && win;
+  const popping = isPopping && win;
+  const glowing = isGlowing && win;
   const winFx = glowing || popping;
-  const isInitialDrop = phase === "dropping" && !!cell;
-  const isGravityDrop =
-    phase === "falling" && !!cell && (isSpawn || isFallen) && fallDist > 0;
+  const isInitialDrop = isDropping && !!cell;
+  const isGravityDrop = isFalling && !!cell && (isSpawn || isFallen) && fallDist > 0;
   const dropRows = isInitialDrop ? row + 1.35 : fallDist;
   const isScatter = cell?.sym.scatter;
 
@@ -46,9 +52,7 @@ export const ReelCell = memo(function ReelCell({
     <div
       className={cn(
         "relative min-h-0 min-w-0",
-        phase === "dropping" || phase === "falling" || isScatter || winFx
-          ? "overflow-visible"
-          : "overflow-hidden",
+        isDropping || isFalling || isScatter || winFx ? "overflow-visible" : "overflow-hidden",
         isScatter
           ? "z-[30]"
           : winFx
@@ -61,7 +65,7 @@ export const ReelCell = memo(function ReelCell({
       {cell && (
         <motion.div
           key={cell.key}
-          className="absolute inset-[4%] flex items-center justify-center will-change-transform"
+          className="absolute inset-[0.5%] flex items-center justify-center will-change-transform"
           initial={
             isInitialDrop || isGravityDrop
               ? {
@@ -78,29 +82,18 @@ export const ReelCell = memo(function ReelCell({
                   opacity: [1, 1, 0],
                   rotate: [0, -12, 18],
                   y: [0, -10, 14],
-                  filter: [
-                    "brightness(1) saturate(1)",
-                    "brightness(1.45) saturate(1.35)",
-                    "brightness(2) saturate(0.5)",
-                  ],
                 }
               : glowing
                 ? {
                     y: 0,
                     opacity: 1,
                     scale: [1, 1.12, 1.06],
-                    filter: [
-                      "brightness(1) saturate(1)",
-                      "brightness(1.25) saturate(1.2)",
-                      "brightness(1.1) saturate(1.1)",
-                    ],
                   }
                 : {
                     y: 0,
                     opacity: 1,
                     scale: 1,
                     rotate: 0,
-                    filter: "brightness(1) saturate(1)",
                   }
           }
           transition={
@@ -127,14 +120,10 @@ export const ReelCell = memo(function ReelCell({
                         mass: 0.85,
                         delay:
                           col *
-                            ((isInitialDrop
-                              ? ANIM.dropStaggerCol
-                              : ANIM.fallStaggerCol) /
+                            ((isInitialDrop ? ANIM.dropStaggerCol : ANIM.fallStaggerCol) /
                               1000) +
                           row *
-                            ((isInitialDrop
-                              ? ANIM.dropStaggerRow
-                              : ANIM.fallStaggerRow) /
+                            ((isInitialDrop ? ANIM.dropStaggerRow : ANIM.fallStaggerRow) /
                               1000) *
                             0.45,
                       },
@@ -142,10 +131,7 @@ export const ReelCell = memo(function ReelCell({
                         duration: 0.18,
                         delay:
                           col *
-                          ((isInitialDrop
-                            ? ANIM.dropStaggerCol
-                            : ANIM.fallStaggerCol) /
-                            1000),
+                          ((isInitialDrop ? ANIM.dropStaggerCol : ANIM.fallStaggerCol) / 1000),
                       },
                       scale: {
                         type: "spring",
@@ -153,9 +139,7 @@ export const ReelCell = memo(function ReelCell({
                         damping: 20,
                         delay:
                           col *
-                            ((isInitialDrop
-                              ? ANIM.dropStaggerCol
-                              : ANIM.fallStaggerCol) /
+                            ((isInitialDrop ? ANIM.dropStaggerCol : ANIM.fallStaggerCol) /
                               1000) +
                           0.1,
                       },
@@ -166,7 +150,7 @@ export const ReelCell = memo(function ReelCell({
                     }
           }
         >
-          <WinSparkles phase={phase} active={winFx} />
+          <WinSparkles popping={popping} active={winFx} />
           <StampedeIcon
             kind={cell.sym.kind}
             winning={winFx}
