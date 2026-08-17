@@ -86,7 +86,7 @@ export function PromoCarousel() {
   }, [emblaApi]);
 
   return (
-    <section className="relative overflow-hidden rounded-3xl border border-border bg-panel shadow-xl">
+    <section className="relative w-full min-w-0 overflow-hidden rounded-3xl border border-border bg-panel shadow-xl">
       <div className="overflow-hidden" ref={emblaRef}>
         <div className="flex">
           {slides.map((p) => (
@@ -112,7 +112,7 @@ export function PromoCarousel() {
                     <div className="text-xs font-semibold uppercase tracking-[0.2em] text-white/75 sm:text-sm">
                       {p.title}
                     </div>
-                    <div className="mt-2 text-4xl font-black tracking-tight text-white drop-shadow-lg sm:text-5xl lg:text-6xl">
+                    <div className="mt-2 text-3xl font-black tracking-tight text-white drop-shadow-lg sm:text-5xl lg:text-6xl">
                       {p.headline}
                     </div>
                     <p className="mt-2 text-sm text-white/80 sm:text-base">{p.sub}</p>

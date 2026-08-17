@@ -58,7 +58,7 @@ export function AdminShell() {
   }
 
   return (
-    <div className={`flex min-h-screen ${adminPageBg} text-foreground`}>
+    <div className={`flex min-h-screen w-full max-w-[100vw] overflow-x-clip ${adminPageBg} text-foreground`}>
       <AdminSidebar />
       <div className="flex min-w-0 flex-1 flex-col">
         <AdminTopBar />

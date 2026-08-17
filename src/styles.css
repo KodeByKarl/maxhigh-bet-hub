@@ -155,9 +155,17 @@
   --foreground: #F5F3FF;
 }
 
+html {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
 html, body {
   background-color: var(--background);
   color: var(--foreground);
+  width: 100%;
+  max-width: 100%;
+  overflow-x: clip;
 }
 
 /* Dashboard Responsive Background: desktopbg for PC/large screens, phonebg for mobile */
@@ -166,12 +174,14 @@ html, body {
   background-size: cover;
   background-position: center top;
   background-repeat: no-repeat;
-  background-attachment: fixed;
+  /* `fixed` on Android Chrome can inflate the layout viewport — scroll on small screens */
+  background-attachment: scroll;
 }
 
 @media (min-width: 768px) {
   .dashboard-bg {
     background-image: url("/desktopbg.jpg");
+    background-attachment: fixed;
   }
 }
 

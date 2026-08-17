@@ -1964,7 +1964,7 @@ export function GamePlayModal({ game, open, onOpenChange }: Props) {
   return createPortal(
     <div
       ref={shellRef}
-      className="fixed inset-0 z-[9999] flex w-full flex-col overflow-hidden overscroll-none bg-[#0A0912]"
+      className="fixed inset-0 z-[9999] flex w-full max-w-[100vw] flex-col overflow-hidden overscroll-none bg-[#0A0912]"
       role="dialog"
       aria-modal="true"
       aria-label={`${game.name} game`}

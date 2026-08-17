@@ -55,7 +55,7 @@ export function StatsBar() {
   return (
     <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
       {cards.map((s) => (
-        <div key={s.label} className="flex items-center gap-3 rounded-2xl border border-border bg-panel p-4">
+        <div key={s.label} className="flex min-w-0 items-center gap-2.5 rounded-2xl border border-border bg-panel p-3 sm:gap-3 sm:p-4">
           <div
             className="grid h-11 w-11 shrink-0 place-items-center rounded-xl"
             style={{ backgroundColor: s.color }}

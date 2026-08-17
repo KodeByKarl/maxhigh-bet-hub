@@ -117,11 +117,17 @@ function RootShell({ children }: { children: ReactNode }) {
   }
 
   return (
-    <html lang="en" className={themeClass}>
+    <html lang="en" className={`${themeClass} overflow-x-clip`}>
       <head>
+        {/*
+          Static viewport MUST be in the first HTML parse. Android Chrome locks the
+          layout viewport (~980px desktop) if this only appears later via HeadContent.
+        */}
+        <meta charSet="utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
         <HeadContent />
       </head>
-      <body>
+      <body className="min-h-full overflow-x-clip">
         {children}
         <Scripts />
       </body>
@@ -152,16 +158,16 @@ function RootComponent() {
   }
 
   return (
-    <div className="min-h-screen dashboard-bg bg-background text-foreground relative">
+    <div className="relative min-h-screen w-full max-w-[100vw] dashboard-bg bg-background text-foreground">
       <div className="absolute inset-0 bg-background/85 backdrop-blur-[2px] pointer-events-none -z-10" />
       <Navbar onOpenMobileMenu={() => setMobileMenuOpen(true)} />
-      <div className="flex">
+      <div className="flex min-w-0">
         <Sidebar />
         <MobileSidebar
           isOpen={mobileMenuOpen}
           onClose={() => setMobileMenuOpen(false)}
         />
-        <div className="min-w-0 flex-1">
+        <div className="min-w-0 flex-1 overflow-x-clip">
           <LiveWinsTicker />
           <main>
             <div className="mx-auto flex max-w-[1400px] flex-col gap-8 p-3 sm:p-6">

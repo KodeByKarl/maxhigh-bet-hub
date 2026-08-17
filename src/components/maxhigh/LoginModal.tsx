@@ -66,7 +66,7 @@ export function LoginModal() {
             </div>
           </div>
 
-          <div className="relative flex h-full flex-col justify-center overflow-y-auto bg-panel px-8 py-10 sm:px-12 lg:px-14">
+          <div className="relative flex h-full min-w-0 flex-col justify-center overflow-y-auto bg-panel px-5 py-8 sm:px-12 sm:py-10 lg:px-14">
             <DialogTitle className="text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
               Sign in
             </DialogTitle>

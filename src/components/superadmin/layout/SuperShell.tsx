@@ -48,7 +48,7 @@ export function SuperShell() {
   }
 
   return (
-    <div className={`flex min-h-screen ${saPageBg} text-foreground`}>
+    <div className={`flex min-h-screen w-full max-w-[100vw] overflow-x-clip ${saPageBg} text-foreground`}>
       <SuperSidebar />
       <div className="flex min-w-0 flex-1 flex-col">
         <SuperTopBar />

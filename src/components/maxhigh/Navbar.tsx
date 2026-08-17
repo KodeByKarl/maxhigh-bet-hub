@@ -85,7 +85,7 @@ export function Navbar({ onOpenMobileMenu }: { onOpenMobileMenu?: () => void }) 
 
   return (
     <header className="sticky top-0 z-40 border-b border-border/40 bg-sidebar/40 backdrop-blur-md">
-      <div className="flex h-16 items-center gap-2 sm:gap-3 px-3 sm:px-4">
+      <div className="flex h-16 min-w-0 items-center gap-2 px-3 sm:gap-3 sm:px-4">
         {onOpenMobileMenu && (
           <button
             type="button"
@@ -97,11 +97,11 @@ export function Navbar({ onOpenMobileMenu }: { onOpenMobileMenu?: () => void }) 
           </button>
         )}
 
-        <div className="shrink-0">
+        <div className="min-w-0 shrink">
           <Logo />
         </div>
 
-        <div className="ml-auto flex items-center gap-2">
+        <div className="ml-auto flex min-w-0 shrink-0 items-center gap-2">
           <div className="relative">
             <div className="flex h-11 items-stretch overflow-hidden rounded-full border border-border bg-panel">
               <button
@@ -114,7 +114,7 @@ export function Navbar({ onOpenMobileMenu }: { onOpenMobileMenu?: () => void }) 
                   setProfileOpen(false);
                   setWalletOpen((v) => !v);
                 }}
-                className="flex items-center gap-2 px-3 hover:bg-panel-hover"
+                className="flex min-w-0 items-center gap-1.5 px-2.5 hover:bg-panel-hover sm:gap-2 sm:px-3"
                 aria-label="Wallet"
               >
                 <ChipIcon className="h-6 w-6" />

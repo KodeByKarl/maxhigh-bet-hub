@@ -43,7 +43,7 @@ export function SuperLoginForm() {
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-[#12100E] p-3 sm:p-6">
-      <div className="grid h-[min(90dvh,42rem)] w-full max-w-6xl overflow-hidden rounded-3xl border border-amber-500/20 bg-[#1C1916] shadow-2xl shadow-black/50 md:grid-cols-[1.15fr_1fr]">
+      <div className="grid h-[min(90dvh,42rem)] w-full min-w-0 max-w-6xl overflow-hidden rounded-3xl border border-amber-500/20 bg-[#1C1916] shadow-2xl shadow-black/50 md:grid-cols-[1.15fr_1fr]">
         <div className="relative hidden overflow-hidden md:block">
           <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_30%_20%,#F59E0B_0%,transparent_55%),radial-gradient(ellipse_at_80%_80%,#FB923C_0%,transparent_50%),linear-gradient(160deg,#D97706_0%,#F59E0B_50%,#EA580C_100%)]" />
           <img
@@ -61,7 +61,7 @@ export function SuperLoginForm() {
           </p>
         </div>
 
-        <div className="flex flex-col justify-center bg-[#1C1916] px-8 py-10 sm:px-12">
+        <div className="flex min-w-0 flex-col justify-center bg-[#1C1916] px-5 py-8 sm:px-12 sm:py-10">
           <div className="mb-1 text-[11px] font-bold uppercase tracking-[0.18em] text-amber-400">
             Superadmin · Domain 3
           </div>

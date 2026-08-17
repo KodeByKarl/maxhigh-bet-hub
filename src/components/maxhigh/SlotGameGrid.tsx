@@ -44,7 +44,7 @@ export function SlotGameGrid({ title = "Slots", games, limit, useCatalog = !game
             key={game.id}
             type="button"
             onClick={() => setSelected(game)}
-            className="group relative aspect-square overflow-hidden rounded-2xl border border-border bg-panel text-left transition-transform hover:-translate-y-0.5"
+            className="group relative aspect-square min-w-0 overflow-hidden rounded-2xl border border-border bg-panel text-left transition-transform hover:-translate-y-0.5"
           >
             <img
               src={game.thumb}

@@ -50,7 +50,7 @@ export function AdminLoginForm() {
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-[#0A0912] p-3 sm:p-6">
-      <div className="grid h-[min(90dvh,42rem)] w-full max-w-6xl overflow-hidden rounded-3xl border border-border bg-[#0E0C18] shadow-2xl md:grid-cols-[1.15fr_1fr]">
+      <div className="grid h-[min(90dvh,42rem)] w-full min-w-0 max-w-6xl overflow-hidden rounded-3xl border border-border bg-[#0E0C18] shadow-2xl md:grid-cols-[1.15fr_1fr]">
         {/* Left art — same language as player login */}
         <div className="relative hidden h-full min-h-0 overflow-hidden md:block">
           <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_30%_20%,#4C1D95_0%,transparent_55%),radial-gradient(ellipse_at_80%_80%,#1E3A8A_0%,transparent_50%),linear-gradient(160deg,#0A0912_0%,#1A1030_50%,#0A0912_100%)]" />
@@ -77,7 +77,7 @@ export function AdminLoginForm() {
         </div>
 
         {/* Right form */}
-        <div className="relative flex h-full flex-col justify-center overflow-y-auto px-8 py-10 sm:px-12 lg:px-14">
+        <div className="relative flex h-full min-w-0 flex-col justify-center overflow-y-auto px-5 py-8 sm:px-12 sm:py-10 lg:px-14">
           <div className="mb-1 text-[11px] font-bold uppercase tracking-[0.18em] text-[#4F7CFF]">
             Admin · Domain 2
           </div>
