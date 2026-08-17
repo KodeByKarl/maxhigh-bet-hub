@@ -12,6 +12,7 @@ import {
 import { getDb } from "../db/client";
 import { gameControls, playSessions, users } from "../db/schema";
 import { newId, requireUser } from "../session";
+import { applyCapToScriptTotalWin, enforcePoolCap } from "../settlement/enforcePoolCap";
 import {
   assertNotInMaintenanceForBets,
   availableFrom,
@@ -172,6 +173,13 @@ export async function buffaloReignPaidSpin(data: {
     ante: data.ante,
     isFreeSpins: false,
   });
+  applyCapToScriptTotalWin(script, {
+    gameId: BUFFALO_REIGN_GAME_ID,
+    gameName: GAME_NAME,
+    bet: data.bet,
+    maxWinMult: cfg.maxWinMult,
+    context: "paid-spin",
+  });
 
   const roundId = newId();
 
@@ -325,6 +333,13 @@ export async function buffaloReignFreeSpin(data: {
     isFreeSpins: true,
     sessionMultiplier,
   });
+  applyCapToScriptTotalWin(script, {
+    gameId: BUFFALO_REIGN_GAME_ID,
+    gameName: GAME_NAME,
+    bet,
+    maxWinMult: cfg.maxWinMult,
+    context: "free-spin",
+  });
 
   const roundId = newId();
 
@@ -353,17 +368,25 @@ export async function buffaloReignFreeSpin(data: {
     let currentBalance = Number(row.balance);
 
     if (isFinished && accumulatedWin > 0) {
+      const payout = enforcePoolCap({
+        gameId: BUFFALO_REIGN_GAME_ID,
+        gameName: GAME_NAME,
+        bet,
+        maxWinMult: cfg.maxWinMult,
+        computedWin: accumulatedWin,
+        context: "free-spins-final",
+      }).payout;
       const ledger = await writeLedgerDelta(tx, {
         userId: user.id,
         username: row.username,
-        delta: accumulatedWin,
+        delta: payout,
         type: "win",
         game: GAME_NAME,
-        note: `${BUFFALO_REIGN_GAME_ID} · ${GAME_NAME} · Free spins feature final payout ₱${accumulatedWin.toFixed(2)}`,
+        note: `${BUFFALO_REIGN_GAME_ID} · ${GAME_NAME} · Free spins feature final payout ₱${payout.toFixed(2)}`,
       });
       currentBalance = ledger.balance;
       fsPayout = {
-        amount: accumulatedWin,
+        amount: payout,
         spinsPlayed: played,
       };
     }
@@ -428,6 +451,13 @@ export async function buffaloReignBuyFeature(data: {
     bet: data.bet,
     ante: false,
     isFreeSpins: false,
+  });
+  applyCapToScriptTotalWin(script, {
+    gameId: BUFFALO_REIGN_GAME_ID,
+    gameName: GAME_NAME,
+    bet: data.bet,
+    maxWinMult: cfg.maxWinMult,
+    context: "buy-feature",
   });
 
   // Ensure minimum 10 free spins awarded on buy feature

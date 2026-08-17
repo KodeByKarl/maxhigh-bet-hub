@@ -102,7 +102,7 @@ export function applyGravity(
 
   // Fill empty spots on the right with new symbols
   while (keptTop.length < TOP_COLS) {
-    const newCell = makeCell(pickSym(ante), freeSpins);
+    const newCell = makeCell(pickSym(ante), freeSpins, false, { allowScatter: false });
     keptTop.push(newCell);
     spawnedKeys.push(newCell.key);
     spawnedSet.add(newCell.key);
@@ -139,7 +139,7 @@ export function applyGravity(
       if (cell && !remove.has(cell.key)) kept.push(cell);
     }
     while (kept.length < ROWS) {
-      const cell = makeCell(pickSym(ante), freeSpins);
+      const cell = makeCell(pickSym(ante), freeSpins, false, { allowScatter: false });
       spawnedKeys.push(cell.key);
       spawnedSet.add(cell.key);
       kept.push(cell);

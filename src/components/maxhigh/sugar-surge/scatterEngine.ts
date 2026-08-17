@@ -10,6 +10,7 @@ export type ScatterResult = {
 /** Default Sugar Rush–style free-spin awards by scatter count. */
 export function freeSpinsForScatterCount(count: number): number {
   const cfg = getSugarSurgeConfig();
+  if (count < cfg.freeSpinsTriggerCount) return 0;
   const table = cfg.freeSpinsByScatterCount;
   if (table && table.length > 0) {
     const sorted = [...table].sort((a, b) => b.count - a.count);
@@ -61,7 +62,8 @@ export function resolveScatters(
       count: maxScattersSeen,
       cashPay: 0,
       freeSpinsAwarded: 0,
-      retriggerSpins: spins,
+      retriggerSpins:
+        maxScattersSeen >= cfg.freeSpinsRetriggerCount ? cfg.freeSpinsRetrigger : 0,
     };
   }
 

@@ -11,6 +11,10 @@ import { getDb } from "../db/client";
 import { gameControls, playSessions, users } from "../db/schema";
 import { money, newId, requireUser } from "../session";
 import {
+  applyCapToScriptTotalWin,
+  enforcePoolCap,
+} from "../settlement/enforcePoolCap";
+import {
   assertNotInMaintenanceForBets,
   availableFrom,
   getMaxSingleBet,
@@ -158,7 +162,14 @@ export async function godlyGatesPaidSpin(data: { bet: number }): Promise<GodlyGa
     throw new Error("Finish free spins before placing a new bet");
   }
 
-  const { script } = await resolveOnServer({ bet: data.bet, isFreeSpins: false });
+  const { script, cfg } = await resolveOnServer({ bet: data.bet, isFreeSpins: false });
+  applyCapToScriptTotalWin(script, {
+    gameId: GODLY_GATES_GAME_ID,
+    gameName: GAME_NAME,
+    bet: data.bet,
+    maxWinMult: cfg.maxWinMult,
+    context: "paid-spin",
+  });
 
   const result = await db.transaction(async (tx) => {
     const userRows = await tx.select().from(users).where(eq(users.id, user.id)).limit(1);
@@ -265,10 +276,17 @@ export async function godlyGatesFreeSpin(data: {
   const bet = Number(session.bet);
   const startMult = Math.max(1, Number(session.fsBombAcc) || 1);
 
-  const { script, finalizeFreeSpinTotal } = await resolveOnServer({
+  const { script, finalizeFreeSpinTotal, cfg } = await resolveOnServer({
     bet,
     isFreeSpins: true,
     startMultiplier: startMult,
+  });
+  applyCapToScriptTotalWin(script, {
+    gameId: GODLY_GATES_GAME_ID,
+    gameName: GAME_NAME,
+    bet,
+    maxWinMult: cfg.maxWinMult,
+    context: "free-spin",
   });
 
   const result = await db.transaction(async (tx) => {
@@ -288,7 +306,8 @@ export async function godlyGatesFreeSpin(data: {
     if (!u) throw new Error("User not found");
 
     let nextWin = +(Number(row.fsSessionWin) + script.totalWin).toFixed(2);
-    let nextMult = Math.max(1, script.endMultiplier);
+    const multCeiling = cfg.maxFsMult > 0 ? cfg.maxFsMult : Number.POSITIVE_INFINITY;
+    let nextMult = Math.min(multCeiling, Math.max(1, script.endMultiplier));
     let nextPlayed = Number(row.fsSpinsPlayed) + 1;
     let nextLeft = left - 1;
     if (script.retriggerSpins > 0) nextLeft += script.retriggerSpins;
@@ -298,7 +317,14 @@ export async function godlyGatesFreeSpin(data: {
     let fsPayout: GodlyGatesSpinResult["fsPayout"];
 
     if (nextLeft === 0) {
-      const final = finalizeFreeSpinTotal(nextWin, nextMult);
+      const final = enforcePoolCap({
+        gameId: GODLY_GATES_GAME_ID,
+        gameName: GAME_NAME,
+        bet,
+        maxWinMult: cfg.maxWinMult,
+        computedWin: finalizeFreeSpinTotal(nextWin, nextMult),
+        context: "free-spins-final",
+      }).payout;
       if (final > 0) {
         const winRes = await writeLedgerDelta(tx, {
           userId: user.id,

@@ -3,10 +3,14 @@
  * Client only receives scripts + balances; it cannot choose win amounts.
  */
 import { and, eq } from "drizzle-orm";
-import { GOLDEN_PANTHER_GAME_ID, normalizeGoldenPantherConfig } from "@/lib/golden-panther-config";
+import { GOLDEN_PANTHER_GAME_ID, normalizeGoldenPantherConfig, remainingFreeSpinsAfterSpin } from "@/lib/golden-panther-config";
 import { getDb } from "../db/client";
 import { gameControls, playSessions, users } from "../db/schema";
 import { money, newId, requireUser } from "../session";
+import {
+  applyCapToScriptTotalWin,
+  enforcePoolCap,
+} from "../settlement/enforcePoolCap";
 import {
   assertNotInMaintenanceForBets,
   availableFrom,
@@ -48,6 +52,7 @@ async function resolveOnServer(opts: {
   bet: number;
   ante: boolean;
   isFreeSpins: boolean;
+  initialBombAccumulator?: number;
 }) {
   const cfg = await loadEngineConfig();
   return withEngineExclusive(async () => {
@@ -61,6 +66,7 @@ async function resolveOnServer(opts: {
       ante: opts.ante && !opts.isFreeSpins,
       isFreeSpins: opts.isFreeSpins,
       collectBombsInFreeSpins: true,
+      initialBombAccumulator: opts.initialBombAccumulator,
     });
     return { script, finalizeFreeSpinTotal, cfg };
   });
@@ -186,6 +192,13 @@ export async function goldenPantherPaidSpin(data: {
     ante: data.ante,
     isFreeSpins: false,
   });
+  applyCapToScriptTotalWin(script, {
+    gameId: GOLDEN_PANTHER_GAME_ID,
+    gameName: GAME_NAME,
+    bet: data.bet,
+    maxWinMult: cfg.maxWinMult,
+    context: "paid-spin",
+  });
 
   const result = await db.transaction(async (tx) => {
     const userRows = await tx.select().from(users).where(eq(users.id, user.id)).limit(1);
@@ -292,10 +305,18 @@ export async function goldenPantherFreeSpin(data: {
   if (Number(session.freeSpinsLeft) <= 0) throw new Error("No free spins remaining");
 
   const bet = Number(session.bet);
-  const { script, finalizeFreeSpinTotal } = await resolveOnServer({
+  const { script, finalizeFreeSpinTotal, cfg } = await resolveOnServer({
     bet,
     ante: session.ante === "yes",
     isFreeSpins: true,
+    initialBombAccumulator: Number(session.fsBombAcc) || 0,
+  });
+  applyCapToScriptTotalWin(script, {
+    gameId: GOLDEN_PANTHER_GAME_ID,
+    gameName: GAME_NAME,
+    bet,
+    maxWinMult: cfg.maxWinMult,
+    context: "free-spin",
   });
 
   const result = await db.transaction(async (tx) => {
@@ -315,17 +336,28 @@ export async function goldenPantherFreeSpin(data: {
     if (!u) throw new Error("User not found");
 
     let nextWin = +(Number(row.fsSessionWin) + script.totalWin).toFixed(2);
-    let nextBomb = Number(row.fsBombAcc) + script.bombAccumulator;
+    const bombCeiling = cfg.maxFsBombMult > 0 ? cfg.maxFsBombMult : Number.POSITIVE_INFINITY;
+    let nextBomb = Math.min(bombCeiling, Number(row.fsBombAcc) + script.bombAccumulator);
     let nextPlayed = Number(row.fsSpinsPlayed) + 1;
-    let nextLeft = left - 1;
-    if (script.retriggerSpins > 0) nextLeft += script.retriggerSpins;
-    nextLeft = Math.max(0, nextLeft);
+    let nextLeft = remainingFreeSpinsAfterSpin({
+      leftBefore: left,
+      retrigger: script.retriggerSpins,
+      playedAfter: nextPlayed,
+      maxSessionSpins: cfg.maxFsSessionSpins,
+    });
 
     let balance = Number(u.balance);
     let fsPayout: GoldenPantherSpinResult["fsPayout"];
 
     if (nextLeft === 0) {
-      const final = finalizeFreeSpinTotal(nextWin, nextBomb);
+      const final = enforcePoolCap({
+        gameId: GOLDEN_PANTHER_GAME_ID,
+        gameName: GAME_NAME,
+        bet,
+        maxWinMult: cfg.maxWinMult,
+        computedWin: finalizeFreeSpinTotal(nextWin, nextBomb),
+        context: "free-spins-final",
+      }).payout;
       if (final > 0) {
         const winRes = await writeLedgerDelta(tx, {
           userId: user.id,

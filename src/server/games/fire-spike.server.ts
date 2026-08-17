@@ -12,6 +12,7 @@ import {
 import { getDb } from "../db/client";
 import { gameControls, users } from "../db/schema";
 import { newId, requireUser } from "../session";
+import { applyCapToScriptTotalWin } from "../settlement/enforcePoolCap";
 import {
   assertNotInMaintenanceForBets,
   availableFrom,
@@ -74,6 +75,13 @@ export async function fireSpikePaidSpin(data: { bet: number }): Promise<FireSpik
   await assertNotInMaintenanceForBets();
 
   const script = resolveFireSpikeSpin({ totalBet: cost });
+  applyCapToScriptTotalWin(script, {
+    gameId: FIRE_SPIKE_GAME_ID,
+    gameName: GAME_NAME,
+    bet: cost,
+    maxWinMult: cfg.maxWinMult,
+    context: "paid-spin",
+  });
   const roundId = newId();
 
   const db = getDb();

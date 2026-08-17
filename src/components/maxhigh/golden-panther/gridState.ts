@@ -43,18 +43,22 @@ export function pickBombMult(): number {
   return table[0]?.mult ?? 2;
 }
 
-export function makeCell(sym: CellSym, freeSpins: boolean, forceBomb = false): BoardCell {
+export function makeCell(sym: CellSym, freeSpins: boolean, forceBomb = false, opts?: { allowScatter?: boolean }): BoardCell {
   const cfg = getGoldenPantherConfig();
-  const { bomb } = pools();
+  const { bomb, pay } = pools();
+  let use = sym;
+  if (opts?.allowScatter === false && use.scatter) {
+    use = pay[Math.floor(Math.random() * pay.length)] ?? use;
+  }
   const bombChance = (freeSpins ? cfg.bombChanceFreeSpinsPercent : cfg.bombChanceBasePercent) / 100;
-  if (forceBomb || sym.bomb || Math.random() < bombChance) {
+  if (forceBomb || use.bomb || Math.random() < bombChance) {
     return {
       key: nextKey(),
       sym: bomb,
       mult: pickBombMult(),
     };
   }
-  return { key: nextKey(), sym };
+  return { key: nextKey(), sym: use };
 }
 
 export function fillerCell(i: number): BoardCell {
@@ -111,10 +115,12 @@ export function buildBoard(ante: boolean, freeSpins: boolean, seedWin = true): B
     const board = randomFill(ante, freeSpins);
     const min = Math.min(cfg.seedClusterMin, cfg.seedClusterMax);
     const max = Math.max(cfg.seedClusterMin, cfg.seedClusterMax);
+    const lows = pay.filter((s) => ["grape", "plum", "melon", "apple", "blue"].includes(s.id));
+    const pool = lows.length ? lows : pay;
     const target =
       Math.random() < cfg.seedMelonBiasPercent / 100
-        ? (pay.find((s) => s.id === "melon") ?? pay[0])
-        : pay[Math.floor(Math.random() * pay.length)];
+        ? (pay.find((s) => s.id === "melon") ?? pool[0])
+        : pool[Math.floor(Math.random() * pool.length)];
     const count = min + Math.floor(Math.random() * (max - min + 1));
     const indices = shuffle(ALL_INDICES);
     for (let k = 0; k < Math.min(count, CELLS); k++) {

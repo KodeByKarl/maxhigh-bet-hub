@@ -14,8 +14,8 @@ export const ANIM = {
   /** How long a symbol takes to land on first drop */
   dropDuration: 520,
   landSquash: 140,
-  /** Winning symbols pulse / highlight */
-  glowDuration: 720,
+  /** Winning symbols pulse / highlight — min 10s before payout counts up */
+  glowDuration: 10_000,
   /** Match pop / shatter */
   popDuration: 380,
   popStagger: 32,

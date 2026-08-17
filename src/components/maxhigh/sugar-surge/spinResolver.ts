@@ -1,9 +1,10 @@
 /**
  * Full spin cascade resolver — logic only; animation consumes SpinScript.
  */
+import { getSugarSurgeConfig } from "./runtimeConfig";
 import { buildBoard, cloneBoard } from "./gridState";
 import {
-  applyPositionMultToWin,
+  applyClusterPositionMults,
   cloneMults,
   createEmptyMults,
   finalizeFreeSpinTotal,
@@ -37,11 +38,11 @@ export function playCascade(opts: ResolveOpts): SpinScript {
  * One paid or free spin cascade:
  * Detect → calculate → upgrade position mults → remove → gravity → spawn → repeat.
  * Stop when no adjacent clusters remain (or safety cap).
- * End: totalWin = rawClusterPays × sum(positionMults) (if any mults).
+ * End: each tumble pays cluster value × (sum of multipliers on that cluster's cells, or 1).
  */
 export function resolveSpin(opts: ResolveOpts): SpinScript {
   let board = cloneBoard(
-    opts.forceBoard ?? buildBoard(opts.ante && !opts.isFreeSpins, opts.isFreeSpins),
+    opts.forceBoard ?? buildBoard(opts.ante && !opts.isFreeSpins, opts.isFreeSpins, !opts.isFreeSpins),
   );
   const initialBoard = cloneBoard(board);
 
@@ -52,6 +53,7 @@ export function resolveSpin(opts: ResolveOpts): SpinScript {
 
   const steps: TumbleStep[] = [];
   let rawWin = 0;
+  let totalWin = 0;
   let maxScatters = 0;
 
   for (let guard = 0; guard < MAX_CASCADES; guard++) {
@@ -60,7 +62,11 @@ export function resolveSpin(opts: ResolveOpts): SpinScript {
 
     if (ev.winningKeys.size === 0) break;
 
+    // Pay this tumble with CURRENT cell multipliers on winning positions only,
+    // then upgrade those cells. Do not multiply the whole cascade by the board sum.
+    const priced = applyClusterPositionMults(ev.clusters, positionMults);
     rawWin += ev.win;
+    totalWin += priced.win;
     positionMults = updateMultipliers(positionMults, ev.winningIndices);
 
     const remove = new Set(ev.winningKeys);
@@ -72,12 +78,16 @@ export function resolveSpin(opts: ResolveOpts): SpinScript {
     );
 
     const multSum = sumMultipliers(positionMults);
+    const clusters = ev.clusters.map((c, i) => ({
+      ...c,
+      pay: priced.clusterPays[i] ?? c.pay,
+    }));
     const step: TumbleStep = {
       board: cloneBoard(board),
       winningKeys: [...remove],
       winningIndices: [...ev.winningIndices],
-      clusters: ev.clusters,
-      tumbleWin: ev.win,
+      clusters,
+      tumbleWin: priced.win,
       bombSum: multSum,
       positionMults: cloneMults(positionMults),
       afterPop: gravity.afterPop,
@@ -90,15 +100,13 @@ export function resolveSpin(opts: ResolveOpts): SpinScript {
     board = gravity.next;
   }
 
-  const applied = applyPositionMultToWin(rawWin, positionMults);
-  let totalWin = applied.win;
-  const displayMult = applied.multSum > 0 ? applied.multSum : 1;
-
   const scatter = resolveScatters(maxScatters, opts.bet, opts.isFreeSpins);
   if (!opts.isFreeSpins) {
     totalWin += scatter.cashPay;
     rawWin += scatter.cashPay;
   }
+
+  const displayMult = sumMultipliers(positionMults);
 
   const cascadeMults = cloneMults(positionMults);
   // Persist mults in FS, and when a paid spin triggers FS (carry into bonus).
@@ -107,14 +115,21 @@ export function resolveSpin(opts: ResolveOpts): SpinScript {
       ? cascadeMults
       : resetBoardMultipliers();
 
+  let settledWin = +totalWin.toFixed(2);
+  const capMult = getSugarSurgeConfig().maxWinMult;
+  if (capMult > 0) {
+    const cap = +(opts.bet * capMult).toFixed(2);
+    if (settledWin > cap) settledWin = cap;
+  }
+
   return endSpin({
     initialBoard,
     initialPositionMults,
     finalPositionMults: persistMults,
     steps,
-    totalWin: +totalWin.toFixed(2),
+    totalWin: settledWin,
     rawWin: +rawWin.toFixed(2),
-    displayMult,
+    displayMult: displayMult > 1 ? displayMult : 1,
     scatters: maxScatters,
     scatterPay: scatter.cashPay,
     freeSpinsAwarded: scatter.freeSpinsAwarded,

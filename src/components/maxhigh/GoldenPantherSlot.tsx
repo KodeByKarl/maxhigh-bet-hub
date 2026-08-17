@@ -360,6 +360,10 @@ export function GoldenPantherSlot({
         } else {
           setLedger(mergeLedgerRows(rows));
         }
+
+        setPhase("glow");
+        await wait(ANIM.glowDuration, gen);
+
         running += step.tumbleWin;
         if (step.tumbleWin > 0) {
           currentBal += step.tumbleWin;
@@ -369,9 +373,6 @@ export function GoldenPantherSlot({
         if (isFree && running > 0) {
           setLastWin(+(fsSessionRef.current + running).toFixed(2));
         }
-
-        setPhase("glow");
-        await wait(ANIM.glowDuration, gen);
 
         setPhase("popping");
         pantherAudio.playCascadeTick();

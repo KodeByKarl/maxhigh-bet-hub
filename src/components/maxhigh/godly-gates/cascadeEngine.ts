@@ -70,7 +70,10 @@ export function evaluateBoard(board: BoardCell[], bet: number): EvalResult {
     const length = counts.length;
     if (length < MIN_WAY_LENGTH) continue;
 
-    const wayCount = counts.reduce((a, b) => a * b, 1);
+    const rawWays = counts.reduce((a, b) => a * b, 1);
+    const waysCap = getGodlyGatesConfig().maxWaysCount;
+    const wayCount =
+      waysCap > 0 && Number.isFinite(waysCap) ? Math.min(rawWays, waysCap) : rawWays;
     const sym = getRuntimeSymbols().find((s) => s.id === targetId);
     if (!sym || sym.scatter || sym.wild) continue;
 
@@ -96,10 +99,16 @@ export function evaluateBoard(board: BoardCell[], bet: number): EvalResult {
 
 function spawnCell(freeSpins: boolean): BoardCell {
   const cfg = getGodlyGatesConfig();
+  const symbols = getRuntimeSymbols();
   if (freeSpins && Math.random() * 100 < cfg.cascadeWildChancePercent) {
-    return makeCell(getRuntimeSymbols().find((s) => s.wild)!);
+    return makeCell(symbols.find((s) => s.wild)!);
   }
-  return makeCell(pickSym(false));
+  let sym = pickSym(false);
+  if (sym.scatter) {
+    const pay = symbols.filter((s) => !s.scatter && !s.wild);
+    sym = pay[Math.floor(Math.random() * pay.length)] ?? sym;
+  }
+  return makeCell(sym);
 }
 
 /**

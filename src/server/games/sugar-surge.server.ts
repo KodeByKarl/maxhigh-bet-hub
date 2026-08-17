@@ -8,6 +8,10 @@ import { getDb } from "../db/client";
 import { gameControls, playSessions, users } from "../db/schema";
 import { money, newId, requireUser } from "../session";
 import {
+  applyCapToScriptTotalWin,
+  enforcePoolCap,
+} from "../settlement/enforcePoolCap";
+import {
   assertNotInMaintenanceForBets,
   availableFrom,
   getMaxSingleBet,
@@ -204,6 +208,13 @@ export async function sugarSurgePaidSpin(data: {
     ante: data.ante,
     isFreeSpins: false,
   });
+  applyCapToScriptTotalWin(script, {
+    gameId: SUGAR_SURGE_GAME_ID,
+    gameName: GAME_NAME,
+    bet: data.bet,
+    maxWinMult: cfg.maxWinMult,
+    context: "paid-spin",
+  });
 
   const result = await db.transaction(async (tx) => {
     const userRows = await tx.select().from(users).where(eq(users.id, user.id)).limit(1);
@@ -314,11 +325,18 @@ export async function sugarSurgeFreeSpin(data: {
 
   const bet = Number(session.bet);
   const feature = parseFeatureState(session.featureState);
-  const { script, finalizeFreeSpinTotal } = await resolveOnServer({
+  const { script, finalizeFreeSpinTotal, cfg } = await resolveOnServer({
     bet,
     ante: session.ante === "yes",
     isFreeSpins: true,
     initialPositionMults: feature.positionMults,
+  });
+  applyCapToScriptTotalWin(script, {
+    gameId: SUGAR_SURGE_GAME_ID,
+    gameName: GAME_NAME,
+    bet,
+    maxWinMult: cfg.maxWinMult,
+    context: "free-spin",
   });
 
   const result = await db.transaction(async (tx) => {
@@ -354,7 +372,14 @@ export async function sugarSurgeFreeSpin(data: {
     let fsPayout: SugarSurgeSpinResult["fsPayout"];
 
     if (nextLeft === 0) {
-      const final = finalizeFreeSpinTotal(nextWin, 0);
+      const final = enforcePoolCap({
+        gameId: SUGAR_SURGE_GAME_ID,
+        gameName: GAME_NAME,
+        bet,
+        maxWinMult: cfg.maxWinMult,
+        computedWin: finalizeFreeSpinTotal(nextWin, 0),
+        context: "free-spins-final",
+      }).payout;
       if (final > 0) {
         const winRes = await writeLedgerDelta(tx, {
           userId: user.id,

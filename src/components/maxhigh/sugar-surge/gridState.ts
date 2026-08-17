@@ -114,10 +114,12 @@ export function buildBoard(ante: boolean, freeSpins: boolean, seedWin = true): B
     const board = randomFill(ante, freeSpins);
     const min = Math.min(cfg.seedClusterMin, cfg.seedClusterMax);
     const max = Math.max(cfg.seedClusterMin, cfg.seedClusterMax);
+    const lows = pay.filter((s) => ["grape", "plum", "melon", "apple", "blue"].includes(s.id));
+    const pool = lows.length ? lows : pay;
     const target =
       Math.random() < cfg.seedMelonBiasPercent / 100
-        ? (pay.find((s) => s.id === "melon") ?? pay[0])
-        : pay[Math.floor(Math.random() * pay.length)];
+        ? (pay.find((s) => s.id === "melon") ?? pool[0])
+        : pool[Math.floor(Math.random() * pool.length)];
     const count = min + Math.floor(Math.random() * (max - min + 1));
     plantConnectedCluster(board, target, Math.min(count, CELLS), freeSpins);
     return board;

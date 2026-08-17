@@ -51,7 +51,7 @@ export function PaytableModal({ bet, onClose }: Props) {
                 Paytable
               </div>
               <div className="text-[11px] font-bold text-emerald-200/80">
-                Cluster pays · {minCluster}+ matching symbols
+                Cluster pays · {minCluster}+ matching · win = bet × multiplier · max {cfg.maxWinMult.toLocaleString()}×
               </div>
             </div>
             <button
@@ -81,15 +81,18 @@ export function PaytableModal({ bet, onClose }: Props) {
                   <div className="grid min-w-0 flex-1 grid-cols-3 gap-1 text-center text-[10px] font-black tabular-nums text-white sm:text-[11px]">
                     <div>
                       <div className="text-white/55">{minCluster}–{minCluster + 1}</div>
-                      <div className="text-[#F5D76E]">₱{(bet * sym.pay[0]).toFixed(2)}</div>
+                      <div className="text-[#F5D76E]">{sym.pay[0]}×</div>
+                      <div className="text-[10px] font-bold text-white/70">₱{(bet * sym.pay[0]).toFixed(2)}</div>
                     </div>
                     <div>
                       <div className="text-white/55">{minCluster + 2}–{minCluster + 3}</div>
-                      <div className="text-[#F5D76E]">₱{(bet * sym.pay[1]).toFixed(2)}</div>
+                      <div className="text-[#F5D76E]">{sym.pay[1]}×</div>
+                      <div className="text-[10px] font-bold text-white/70">₱{(bet * sym.pay[1]).toFixed(2)}</div>
                     </div>
                     <div>
                       <div className="text-white/55">{minCluster + 4}+</div>
-                      <div className="text-[#F5D76E]">₱{(bet * sym.pay[2]).toFixed(2)}</div>
+                      <div className="text-[#F5D76E]">{sym.pay[2]}×</div>
+                      <div className="text-[10px] font-bold text-white/70">₱{(bet * sym.pay[2]).toFixed(2)}</div>
                     </div>
                   </div>
                 </div>

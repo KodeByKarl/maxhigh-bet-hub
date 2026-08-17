@@ -1,3 +1,4 @@
+import { getCandyPeakConfig } from "./runtimeConfig";
 import { buildBoard, cloneBoard } from "./gridState";
 import { applyBombToTumble, finalizeFreeSpinTotal } from "./multiplierEngine";
 import { resolveScatters } from "./scatterEngine";
@@ -10,6 +11,8 @@ export type ResolveOpts = {
   isFreeSpins: boolean;
   /** FS: collect bombs then apply once at end (spec §4) */
   collectBombsInFreeSpins?: boolean;
+  /** Running FS bomb total from prior spins in this feature. */
+  initialBombAccumulator?: number;
   forceBoard?: BoardCell[];
 };
 
@@ -19,14 +22,16 @@ export type ResolveOpts = {
  */
 export function resolveSpin(opts: ResolveOpts): SpinScript {
   const collectMode = opts.isFreeSpins && (opts.collectBombsInFreeSpins ?? true);
-  let board = cloneBoard(opts.forceBoard ?? buildBoard(opts.ante && !opts.isFreeSpins, opts.isFreeSpins));
+  let board = cloneBoard(
+    opts.forceBoard ?? buildBoard(opts.ante && !opts.isFreeSpins, opts.isFreeSpins, !opts.isFreeSpins),
+  );
   const initialBoard = cloneBoard(board);
   const steps: TumbleStep[] = [];
   let totalWin = 0;
   let rawWin = 0;
   let peakBomb = 0;
   let maxScatters = 0;
-  let accumulator = 0;
+  let accumulator = Math.max(0, opts.initialBombAccumulator ?? 0);
 
   // Safety cap on tumble chains
   for (let guard = 0; guard < 40; guard++) {
@@ -88,8 +93,13 @@ export function resolveSpin(opts: ResolveOpts): SpinScript {
     rawWin += scatter.cashPay;
   }
 
-  const finalTotal = +totalWin.toFixed(2);
+  let finalTotal = +totalWin.toFixed(2);
   const finalRaw = +rawWin.toFixed(2);
+  const capMult = getCandyPeakConfig().maxWinMult;
+  if (capMult > 0) {
+    const cap = +(opts.bet * capMult).toFixed(2);
+    if (finalTotal > cap) finalTotal = cap;
+  }
   // Base: peak bomb only if this spin actually won. FS: banked mult from winning tumbles only.
   const displayMult =
     finalRaw > 0

@@ -64,6 +64,8 @@ export type SugarSurgeConfig = {
   superBuyFeatureMult: number;
   anteBetMult: number;
   minCluster: number;
+  /** Max win as × bet for the round. 0 = uncapped. */
+  maxWinMult: number;
   symbols: SugarSurgeSymbolConfig[];
 };
 
@@ -82,24 +84,23 @@ export const SYMBOL_LABELS: Record<SugarSurgeSymKind, string> = {
 
 export const DEFAULT_SUGAR_SURGE_CONFIG: SugarSurgeConfig = {
   schemaVersion: 1,
-  deadSpinChancePercent: 38,
+  deadSpinChancePercent: 27,
   seedMelonBiasPercent: 30,
   seedClusterMin: 5,
-  seedClusterMax: 8,
+  seedClusterMax: 6,
   bombChanceBasePercent: 0,
   bombChanceFreeSpinsPercent: 0,
   bombTable: [{ mult: 2, weight: 1 }],
   positionMultTiers: [2, 4, 8, 16, 32, 64, 128],
-  freeSpinsTriggerCount: 3,
-  freeSpinsRetriggerCount: 3,
+  freeSpinsTriggerCount: 4,
+  freeSpinsRetriggerCount: 4,
   freeSpinsBase: 10,
   freeSpinsRetrigger: 10,
   freeSpinsByScatterCount: [
-    { count: 3, spins: 10 },
-    { count: 4, spins: 12 },
-    { count: 5, spins: 15 },
-    { count: 6, spins: 20 },
-    { count: 7, spins: 30 },
+    { count: 4, spins: 10 },
+    { count: 5, spins: 12 },
+    { count: 6, spins: 15 },
+    { count: 7, spins: 20 },
   ],
   anteScatterWeightMult: 2,
   scatterCashTiers: [
@@ -112,20 +113,21 @@ export const DEFAULT_SUGAR_SURGE_CONFIG: SugarSurgeConfig = {
   superBuyFeatureMult: 500,
   anteBetMult: 1.25,
   minCluster: 5,
+  maxWinMult: 5_000,
   symbols: [
-    { id: "grape", kind: "grape", label: "Red bear", weight: 18, pay: [1, 2, 5] },
-    { id: "plum", kind: "plum", label: "Orange bear", weight: 16, pay: [1, 2.5, 6] },
-    { id: "melon", kind: "melon", label: "Purple bear", weight: 14, pay: [1.2, 3, 8] },
-    { id: "apple", kind: "apple", label: "Green star", weight: 12, pay: [1.5, 4, 10] },
-    { id: "blue", kind: "blue", label: "Pink bean", weight: 10, pay: [2, 5, 12] },
-    { id: "green", kind: "green", label: "Pink candy", weight: 8, pay: [2.5, 6, 18] },
-    { id: "purple", kind: "purple", label: "Cyan candy", weight: 6, pay: [4, 10, 25] },
-    { id: "heart", kind: "heart", label: "Orange heart", weight: 5, pay: [6, 15, 40] },
+    { id: "grape", kind: "grape", label: "Red bear", weight: 18, pay: [0.22, 0.47, 1.12] },
+    { id: "plum", kind: "plum", label: "Orange bear", weight: 16, pay: [0.22, 0.56, 1.35] },
+    { id: "melon", kind: "melon", label: "Purple bear", weight: 14, pay: [0.28, 0.67, 1.68] },
+    { id: "apple", kind: "apple", label: "Green star", weight: 12, pay: [0.34, 0.9, 2.24] },
+    { id: "blue", kind: "blue", label: "Pink bean", weight: 10, pay: [0.45, 1.12, 2.7] },
+    { id: "green", kind: "green", label: "Pink candy", weight: 8, pay: [0.56, 1.62, 4.5] },
+    { id: "purple", kind: "purple", label: "Cyan candy", weight: 6, pay: [0.9, 2.24, 6.7] },
+    { id: "heart", kind: "heart", label: "Orange heart", weight: 5, pay: [1.12, 3.36, 11.2] },
     {
       id: "lollipop",
       kind: "lollipop",
       label: "Rocket",
-      weight: 2.8,
+      weight: 1.55,
       pay: [0, 0, 0],
       scatter: true,
     },
@@ -149,22 +151,27 @@ function num(v: unknown, fallback: number) {
   return typeof v === "number" && Number.isFinite(v) ? v : fallback;
 }
 
-/** Original cluster ×bet pays — too small vs ₱20–₱100 PH stakes. */
-const LEGACY_DEFAULT_PAYS: Record<string, number[]> = {
-  grape: [0.2, 0.4, 1],
-  plum: [0.2, 0.5, 1.2],
-  melon: [0.25, 0.6, 1.5],
-  apple: [0.3, 0.8, 2],
-  blue: [0.4, 1, 2.5],
-  green: [0.5, 1.5, 4],
-  purple: [0.8, 2, 6],
-  heart: [1, 3, 10],
+/** Prior default tables — migrate stored engine JSON onto the current multipliers. */
+const LEGACY_PAY_TABLES: Record<string, number[][]> = {
+  grape: [[1, 2, 5], [0.2, 0.4, 1], [0.3, 0.6, 1.5], [0.24, 0.5, 1.2], [0.2, 0.42, 1]],
+  plum: [[1, 2.5, 6], [0.2, 0.5, 1.2], [0.3, 0.75, 1.8], [0.24, 0.6, 1.45]],
+  melon: [[1.2, 3, 8], [0.25, 0.6, 1.5], [0.35, 0.9, 2.2], [0.3, 0.72, 1.8], [0.25, 0.6, 1.5]],
+  apple: [[1.5, 4, 10], [0.3, 0.8, 2], [0.45, 1.2, 3], [0.36, 0.95, 2.4]],
+  blue: [[2, 5, 12], [0.4, 1, 2.5], [0.6, 1.5, 3.6], [0.48, 1.2, 2.9], [0.4, 1, 2.4]],
+  green: [[2.5, 6, 18], [0.5, 1.5, 4], [0.75, 2.2, 6], [0.6, 1.75, 4.8], [0.5, 1.45, 4]],
+  purple: [[4, 10, 25], [0.8, 2, 6], [1.2, 3, 9], [0.95, 2.4, 7.2], [0.8, 2, 6]],
+  heart: [[6, 15, 40], [1, 3, 10], [1.5, 4.5, 15], [1.2, 3.6, 12]],
 };
 
+function paysMatch(pay: unknown, expected: number[]): boolean {
+  if (!Array.isArray(pay) || pay.length < expected.length) return false;
+  return expected.every((n, i) => num(pay[i], NaN) === n);
+}
+
 function isLegacyDefaultPay(id: string, pay: unknown): boolean {
-  const legacy = LEGACY_DEFAULT_PAYS[id];
-  if (!legacy || !Array.isArray(pay) || pay.length < legacy.length) return false;
-  return legacy.every((n, i) => num(pay[i], NaN) === n);
+  const tables = LEGACY_PAY_TABLES[id];
+  if (!tables) return false;
+  return tables.some((legacy) => paysMatch(pay, legacy));
 }
 
 /** Merge partial / stored JSON onto defaults (safe for DB blobs). */
@@ -282,6 +289,7 @@ export function normalizeSugarSurgeConfig(raw: unknown): SugarSurgeConfig {
     superBuyFeatureMult: clamp(num(o.superBuyFeatureMult, d.superBuyFeatureMult), 1, 10_000),
     anteBetMult: clamp(num(o.anteBetMult, d.anteBetMult), 1, 5),
     minCluster: clamp(Math.round(num(o.minCluster, d.minCluster)), 3, 30),
+    maxWinMult: clamp(num(o.maxWinMult, d.maxWinMult), 0, 100_000),
     symbols,
   };
 }

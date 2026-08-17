@@ -1,3 +1,4 @@
+import { getGodlyGatesConfig } from "./runtimeConfig";
 import { applyGravity, evaluateBoard } from "./cascadeEngine";
 import { buildBoard, cloneBoard } from "./gridState";
 import { createMultiplier } from "./multiplierEngine";
@@ -23,7 +24,7 @@ export function resolveSpin(opts: ResolveOpts): SpinScript {
       buildBoard({
         freeSpins: opts.isFreeSpins,
         boostScatter: false,
-        seedWin: true,
+        seedWin: !opts.isFreeSpins,
       }),
   );
 
@@ -78,10 +79,21 @@ export function resolveSpin(opts: ResolveOpts): SpinScript {
     rawWin += scatter.cashPay;
   }
 
+  let settledWin = +totalWin.toFixed(2);
+  const cfg = getGodlyGatesConfig();
+  const capMult =
+    opts.isFreeSpins && cfg.maxFsSpinMult > 0
+      ? Math.min(cfg.maxWinMult || cfg.maxFsSpinMult, cfg.maxFsSpinMult)
+      : cfg.maxWinMult;
+  if (capMult > 0) {
+    const cap = +(opts.bet * capMult).toFixed(2);
+    if (settledWin > cap) settledWin = cap;
+  }
+
   return {
     initialBoard,
     steps,
-    totalWin: +totalWin.toFixed(2),
+    totalWin: settledWin,
     rawWin: +rawWin.toFixed(2),
     displayMult: opts.isFreeSpins ? mult.get() : 1,
     scatters: maxScatters,

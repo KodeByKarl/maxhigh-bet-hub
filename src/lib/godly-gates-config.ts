@@ -62,17 +62,25 @@ export type GodlyGatesConfig = {
   buyFeatureMult: number;
   fsMultStart: number;
   fsMultStep: number;
+  /** Ceiling on the progressive FS cascade multiplier. 0 = uncapped. */
+  maxFsMult: number;
+  /** Cap on ways-count used in the pay formula (wilds can otherwise explode 5^6). 0 = uncapped. */
+  maxWaysCount: number;
+  /** Per-spin win ceiling during free spins (× bet). 0 = use maxWinMult. */
+  maxFsSpinMult: number;
+  /** Max win as × bet for the round. 0 = uncapped. */
+  maxWinMult: number;
   symbols: GodlyGatesSymbolConfig[];
 };
 
 export const DEFAULT_GODLY_GATES_CONFIG: GodlyGatesConfig = {
   schemaVersion: 1,
-  deadSpinChancePercent: 30,
+  deadSpinChancePercent: 82,
   seedWinLengthMin: 3,
-  seedWinLengthMax: 5,
-  seedWildChancePercent: 15,
-  freeSpinsWildChancePercent: 8,
-  cascadeWildChancePercent: 10,
+  seedWinLengthMax: 3,
+  seedWildChancePercent: 3,
+  freeSpinsWildChancePercent: 1,
+  cascadeWildChancePercent: 1,
   freeSpinsTriggerCount: 3,
   freeSpinsRetriggerCount: 3,
   freeSpinsRetrigger: 5,
@@ -91,22 +99,26 @@ export const DEFAULT_GODLY_GATES_CONFIG: GodlyGatesConfig = {
   buyFeatureMult: 80,
   fsMultStart: 1,
   fsMultStep: 1,
+  maxFsMult: 3,
+  maxWaysCount: 2,
+  maxFsSpinMult: 12,
+  maxWinMult: 5_000,
   symbols: [
-    { id: "ten", kind: "ten", label: "10", weight: 22, pay: [0.6, 1.5, 4, 8] },
-    { id: "jack", kind: "jack", label: "J", weight: 20, pay: [0.8, 2, 5, 10] },
-    { id: "queen", kind: "queen", label: "Q", weight: 18, pay: [1, 2.5, 6, 12] },
-    { id: "king", kind: "king", label: "K", weight: 16, pay: [1.2, 3, 8, 16] },
-    { id: "ace", kind: "ace", label: "A", weight: 14, pay: [1.5, 4, 10, 20] },
-    { id: "scarab", kind: "scarab", label: "Scarab", weight: 10, pay: [2, 6, 15, 35] },
-    { id: "ankh", kind: "ankh", label: "Ankh", weight: 8, pay: [2.5, 8, 18, 40] },
-    { id: "horus", kind: "horus", label: "Horus", weight: 6, pay: [3, 10, 22, 50] },
-    { id: "anubis", kind: "anubis", label: "Anubis", weight: 5, pay: [4, 12, 28, 70] },
-    { id: "pharaoh", kind: "pharaoh", label: "Pharaoh", weight: 4, pay: [5, 15, 35, 100] },
+    { id: "ten", kind: "ten", label: "10", weight: 22, pay: [0.042, 0.095, 0.189, 0.378] },
+    { id: "jack", kind: "jack", label: "J", weight: 20, pay: [0.052, 0.116, 0.231, 0.462] },
+    { id: "queen", kind: "queen", label: "Q", weight: 18, pay: [0.063, 0.147, 0.294, 0.588] },
+    { id: "king", kind: "king", label: "K", weight: 16, pay: [0.074, 0.168, 0.357, 0.672] },
+    { id: "ace", kind: "ace", label: "A", weight: 14, pay: [0.095, 0.21, 0.42, 0.84] },
+    { id: "scarab", kind: "scarab", label: "Scarab", weight: 10, pay: [0.147, 0.336, 0.756, 1.47] },
+    { id: "ankh", kind: "ankh", label: "Ankh", weight: 8, pay: [0.189, 0.42, 0.924, 1.68] },
+    { id: "horus", kind: "horus", label: "Horus", weight: 6, pay: [0.231, 0.504, 1.176, 2.1] },
+    { id: "anubis", kind: "anubis", label: "Anubis", weight: 5, pay: [0.294, 0.672, 1.47, 2.94] },
+    { id: "pharaoh", kind: "pharaoh", label: "Pharaoh", weight: 4, pay: [0.378, 0.84, 1.89, 3.78] },
     {
       id: "wild",
       kind: "wild",
       label: "WILD",
-      weight: 3.5,
+      weight: 1.0,
       pay: [0, 0, 0, 0],
       wild: true,
     },
@@ -114,7 +126,7 @@ export const DEFAULT_GODLY_GATES_CONFIG: GodlyGatesConfig = {
       id: "scatter",
       kind: "scatter",
       label: "SCATTER",
-      weight: 2.5,
+      weight: 1.6,
       pay: [0, 0, 0, 0],
       scatter: true,
     },
@@ -130,24 +142,89 @@ function num(v: unknown, fallback: number) {
   return typeof v === "number" && Number.isFinite(v) ? v : fallback;
 }
 
-/** Original ways ×bet pays — too small vs ₱20–₱100 PH stakes. */
-const LEGACY_DEFAULT_PAYS: Record<string, number[]> = {
-  ten: [0.15, 0.4, 1, 2],
-  jack: [0.2, 0.5, 1.2, 2.5],
-  queen: [0.25, 0.6, 1.4, 3],
-  king: [0.3, 0.75, 1.8, 4],
-  ace: [0.4, 1, 2.2, 5],
-  scarab: [0.6, 1.5, 4, 10],
-  ankh: [0.8, 2, 5, 12],
-  horus: [1, 2.5, 6, 15],
-  anubis: [1.2, 3, 8, 20],
-  pharaoh: [1.5, 4, 10, 30],
+/** Prior default tables — migrate stored engine JSON onto the current multipliers. */
+const LEGACY_PAY_TABLES: Record<string, number[][]> = {
+  ten: [
+    [0.15, 0.4, 1, 2],
+    [0.6, 1.5, 4, 8],
+    [0.2, 0.5, 1.2, 2.5],
+    [0.1, 0.22, 0.45, 0.9],
+    [0.04, 0.09, 0.18, 0.36],
+  ],
+  jack: [
+    [0.2, 0.5, 1.2, 2.5],
+    [0.8, 2, 5, 10],
+    [0.25, 0.6, 1.5, 3],
+    [0.12, 0.28, 0.55, 1.1],
+    [0.05, 0.11, 0.22, 0.44],
+  ],
+  queen: [
+    [0.25, 0.6, 1.4, 3],
+    [1, 2.5, 6, 12],
+    [0.3, 0.75, 1.8, 3.5],
+    [0.15, 0.35, 0.7, 1.4],
+    [0.06, 0.14, 0.28, 0.56],
+  ],
+  king: [
+    [0.3, 0.75, 1.8, 4],
+    [1.2, 3, 8, 16],
+    [0.4, 1, 2.2, 4],
+    [0.18, 0.4, 0.85, 1.6],
+    [0.07, 0.16, 0.34, 0.64],
+  ],
+  ace: [
+    [0.4, 1, 2.2, 5],
+    [1.5, 4, 10, 20],
+    [0.5, 1.2, 2.8, 5],
+    [0.22, 0.5, 1, 2],
+    [0.09, 0.2, 0.4, 0.8],
+  ],
+  scarab: [
+    [0.6, 1.5, 4, 10],
+    [2, 6, 15, 35],
+    [0.8, 2, 5, 10],
+    [0.35, 0.8, 1.8, 3.5],
+    [0.14, 0.32, 0.72, 1.4],
+  ],
+  ankh: [
+    [0.8, 2, 5, 12],
+    [2.5, 8, 18, 40],
+    [1, 2.5, 6, 12],
+    [0.45, 1, 2.2, 4],
+    [0.18, 0.4, 0.88, 1.6],
+  ],
+  horus: [
+    [1, 2.5, 6, 15],
+    [3, 10, 22, 50],
+    [1.2, 3, 8, 15],
+    [0.55, 1.2, 2.8, 5],
+    [0.22, 0.48, 1.12, 2],
+  ],
+  anubis: [
+    [1.2, 3, 8, 20],
+    [4, 12, 28, 70],
+    [1.5, 4, 10, 20],
+    [0.7, 1.6, 3.5, 7],
+    [0.28, 0.64, 1.4, 2.8],
+  ],
+  pharaoh: [
+    [1.5, 4, 10, 30],
+    [5, 15, 35, 100],
+    [2, 5, 12, 25],
+    [0.9, 2, 4.5, 9],
+    [0.36, 0.8, 1.8, 3.6],
+  ],
 };
 
+function paysMatch(pay: unknown, expected: number[]): boolean {
+  if (!Array.isArray(pay) || pay.length < expected.length) return false;
+  return expected.every((n, i) => num(pay[i], NaN) === n);
+}
+
 function isLegacyDefaultPay(id: string, pay: unknown): boolean {
-  const legacy = LEGACY_DEFAULT_PAYS[id];
-  if (!legacy || !Array.isArray(pay) || pay.length < legacy.length) return false;
-  return legacy.every((n, i) => num(pay[i], NaN) === n);
+  const tables = LEGACY_PAY_TABLES[id];
+  if (!tables) return false;
+  return tables.some((legacy) => paysMatch(pay, legacy));
 }
 
 /** Merge partial / stored JSON onto defaults (safe for DB blobs). */
@@ -245,6 +322,10 @@ export function normalizeGodlyGatesConfig(raw: unknown): GodlyGatesConfig {
     buyFeatureMult: clamp(num(o.buyFeatureMult, d.buyFeatureMult), 1, 10_000),
     fsMultStart: clamp(num(o.fsMultStart, d.fsMultStart), 1, 100),
     fsMultStep: clamp(num(o.fsMultStep, d.fsMultStep), 0, 100),
+    maxFsMult: clamp(num(o.maxFsMult, d.maxFsMult), 0, 1_000),
+    maxWaysCount: clamp(Math.round(num(o.maxWaysCount, d.maxWaysCount)), 0, 10_000),
+    maxFsSpinMult: clamp(num(o.maxFsSpinMult, d.maxFsSpinMult), 0, 100_000),
+    maxWinMult: clamp(num(o.maxWinMult, d.maxWinMult), 0, 100_000),
     symbols,
   };
 }

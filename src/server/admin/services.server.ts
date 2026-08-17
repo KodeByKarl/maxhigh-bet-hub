@@ -40,6 +40,57 @@ function formatPhp(n: number) {
   return `₱${n.toLocaleString("en-PH", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 }
 
+function dashboardStatsFromTotals(
+  actor: PublicUser,
+  agentBalance: number,
+  totals: {
+    totalPlayers: number;
+    totalBets: number;
+    betVolume: number;
+    winVolume: number;
+    biggestWin24h: number;
+    liveWins24h: number;
+  },
+): AdminDashboardStats {
+  const netEarnings = +(totals.betVolume - totals.winVolume).toFixed(2);
+  return {
+    totalUsers: totals.totalPlayers,
+    totalPlayers: totals.totalPlayers,
+    totalAdmins: 0,
+    totalBets: totals.totalBets,
+    betVolume: totals.betVolume,
+    winVolume: totals.winVolume,
+    netEarnings,
+    biggestWin24h: totals.biggestWin24h,
+    liveWins24h: totals.liveWins24h,
+    agentBalance,
+    agentUsername: actor.username,
+    agentRole: actor.role,
+    downlinePlayers: totals.totalPlayers,
+    labels: {
+      totalUsers: totals.totalPlayers.toLocaleString("en-PH"),
+      totalPlayers: totals.totalPlayers.toLocaleString("en-PH"),
+      totalAdmins: "—",
+      totalBets: totals.totalBets.toLocaleString("en-PH"),
+      betVolume: formatPhp(totals.betVolume),
+      winVolume: formatPhp(totals.winVolume),
+      netEarnings: formatPhp(netEarnings),
+      biggestWin24h: formatPhp(totals.biggestWin24h),
+      liveWins24h: totals.liveWins24h.toLocaleString("en-PH"),
+      agentBalance: formatPhp(agentBalance),
+    },
+  };
+}
+
+async function assertCanManageAccount(actor: PublicUser, targetId: string): Promise<void> {
+  if (targetId === actor.id) {
+    throw new Error("Forbidden — cannot lock or unlock your own account");
+  }
+  if (!(await isInDownline(actor, targetId))) {
+    throw new Error("Forbidden — user is outside your downline");
+  }
+}
+
 export async function fetchAdminDashboard(): Promise<AdminDashboardStats> {
   const actor = await requirePermission("DASHBOARD_VIEW");
   const db = getDb();
@@ -48,40 +99,48 @@ export async function fetchAdminDashboard(): Promise<AdminDashboardStats> {
   const [actorRow] = await db.select().from(users).where(eq(users.id, actor.id)).limit(1);
   const agentBalance = actorRow ? Number(actorRow.balance) : actor.balance;
 
-  // Count all players on the platform (superadmin handles staff/admin counts)
-  const [playerCountRow] = await db
-    .select({
-      totalPlayers: sql<number>`sum(case when ${users.role} = 'player' then 1 else 0 end)`,
-    })
-    .from(users);
-
-  let downlinePlayers = Number(playerCountRow?.totalPlayers ?? 0);
-  if (actor.role === "agent") {
-    const [own] = await db
-      .select({ n: sql<number>`count(*)` })
-      .from(users)
-      .where(and(eq(users.parentAgentId, actor.id), eq(users.role, "player")));
-    downlinePlayers = Number(own?.n ?? 0);
-  } else if (actor.role === "master_agent") {
-    const networkIds = await scopeToDownline(actor, { playersOnly: true });
-    downlinePlayers = networkIds?.length ?? 0;
+  // Agent / master agent see only their downline. Admin is unrestricted (platform-wide).
+  const networkIds = await scopeToDownline(actor, { playersOnly: true });
+  if (networkIds !== null && networkIds.length === 0) {
+    return dashboardStatsFromTotals(actor, agentBalance, {
+      totalPlayers: 0,
+      totalBets: 0,
+      betVolume: 0,
+      winVolume: 0,
+      biggestWin24h: 0,
+      liveWins24h: 0,
+    });
   }
 
-  // All player bets & wins platform-wide
+  const playerFilter =
+    networkIds !== null
+      ? and(eq(users.role, "player"), inArray(users.id, networkIds))
+      : eq(users.role, "player");
+  const txScope = networkIds !== null ? inArray(transactions.userId, networkIds) : undefined;
+  const liveScope =
+    networkIds !== null
+      ? and(sql`${liveWins.createdAt} >= ${dayAgo}`, inArray(liveWins.userId, networkIds))
+      : sql`${liveWins.createdAt} >= ${dayAgo}`;
+
+  const [playerCountRow] = await db
+    .select({ totalPlayers: sql<number>`count(*)` })
+    .from(users)
+    .where(playerFilter);
+
   const [betRow] = await db
     .select({
       totalBets: sql<number>`count(*)`,
       betVolume: sql<string>`coalesce(sum(abs(${transactions.amount})), 0)`,
     })
     .from(transactions)
-    .where(eq(transactions.type, "bet"));
+    .where(and(eq(transactions.type, "bet"), txScope));
 
   const [winRow] = await db
     .select({
       winVolume: sql<string>`coalesce(sum(${transactions.amount}), 0)`,
     })
     .from(transactions)
-    .where(eq(transactions.type, "win"));
+    .where(and(eq(transactions.type, "win"), txScope));
 
   const [liveWinRow] = await db
     .select({
@@ -89,43 +148,16 @@ export async function fetchAdminDashboard(): Promise<AdminDashboardStats> {
       count: sql<number>`count(*)`,
     })
     .from(liveWins)
-    .where(sql`${liveWins.createdAt} >= ${dayAgo}`);
+    .where(liveScope);
 
-  const totalPlayers = Number(playerCountRow?.totalPlayers ?? 0);
-  const totalBets = Number(betRow?.totalBets ?? 0);
-  const betVolume = Number(betRow?.betVolume ?? 0);
-  const winVolume = Number(winRow?.winVolume ?? 0);
-  const netEarnings = +(betVolume - winVolume).toFixed(2);
-  const biggestWin24h = Number(liveWinRow?.biggest ?? 0);
-  const liveWins24h = Number(liveWinRow?.count ?? 0);
-
-  return {
-    totalUsers: totalPlayers,   // admin sees players only; admin/staff counts are superadmin scope
-    totalPlayers,
-    totalAdmins: 0,             // hidden from admin — superadmin only
-    totalBets,
-    betVolume,
-    winVolume,
-    netEarnings,
-    biggestWin24h,
-    liveWins24h,
-    agentBalance,
-    agentUsername: actor.username,
-    agentRole: actor.role,
-    downlinePlayers,
-    labels: {
-      totalUsers: totalPlayers.toLocaleString("en-PH"),
-      totalPlayers: totalPlayers.toLocaleString("en-PH"),
-      totalAdmins: "—",
-      totalBets: totalBets.toLocaleString("en-PH"),
-      betVolume: formatPhp(betVolume),
-      winVolume: formatPhp(winVolume),
-      netEarnings: formatPhp(netEarnings),
-      biggestWin24h: formatPhp(biggestWin24h),
-      liveWins24h: liveWins24h.toLocaleString("en-PH"),
-      agentBalance: formatPhp(agentBalance),
-    },
-  };
+  return dashboardStatsFromTotals(actor, agentBalance, {
+    totalPlayers: Number(playerCountRow?.totalPlayers ?? 0),
+    totalBets: Number(betRow?.totalBets ?? 0),
+    betVolume: Number(betRow?.betVolume ?? 0),
+    winVolume: Number(winRow?.winVolume ?? 0),
+    biggestWin24h: Number(liveWinRow?.biggest ?? 0),
+    liveWins24h: Number(liveWinRow?.count ?? 0),
+  });
 }
 
 export async function listAdminUsers(opts?: {
@@ -506,6 +538,7 @@ export async function adminLockUser(data: {
   const rows = await db.select().from(users).where(eq(users.id, data.userId)).limit(1);
   const user = rows[0];
   if (!user) throw new Error("User not found");
+  await assertCanManageAccount(actor, user.id);
 
   const lockReason = data.reason?.trim() || "Locked by admin";
 
@@ -552,6 +585,7 @@ export async function adminUnlockUser(data: {
   const rows = await db.select().from(users).where(eq(users.id, data.userId)).limit(1);
   const user = rows[0];
   if (!user) throw new Error("User not found");
+  await assertCanManageAccount(actor, user.id);
 
   await db
     .update(users)
@@ -618,6 +652,7 @@ export async function adminResetFailedAttempts(data: {
   const rows = await db.select().from(users).where(eq(users.id, data.userId)).limit(1);
   const user = rows[0];
   if (!user) throw new Error("User not found");
+  await assertCanManageAccount(actor, user.id);
 
   await db
     .update(users)
@@ -682,7 +717,7 @@ export async function listAdminAuditLogs(opts?: {
    */
   scope?: "system" | "all";
 }): Promise<AdminAuditLogRow[]> {
-  await requirePermission("AUDIT_LOG_VIEW");
+  const actor = await requirePermission("AUDIT_LOG_VIEW");
   const db = getDb();
   const limit = Math.min(Math.max(opts?.limit ?? 100, 1), 300);
   const q = opts?.q?.trim();
@@ -690,6 +725,20 @@ export async function listAdminAuditLogs(opts?: {
   const scope = opts?.scope ?? "all";
 
   const filters = [];
+  const networkIds = await scopeToDownline(actor);
+  if (networkIds !== null) {
+    if (networkIds.length === 0) {
+      filters.push(eq(auditLogs.actorId, actor.id));
+    } else {
+      filters.push(
+        or(
+          eq(auditLogs.actorId, actor.id),
+          inArray(auditLogs.actorId, networkIds),
+          inArray(auditLogs.targetId, networkIds),
+        )!,
+      );
+    }
+  }
   if (scope === "system") {
     // Player gameplay belongs in Player ledger (transactions), not System actions
     filters.push(
@@ -737,33 +786,48 @@ export async function listAdminAuditLogs(opts?: {
 }
 
 export async function fetchAdminDayPulse(dayIndex: number): Promise<AdminDayPulse> {
-  await requirePermission("DASHBOARD_VIEW");
+  const actor = await requirePermission("DASHBOARD_VIEW");
   const db = getDb();
   const { start, end, idx } = dayBounds(dayIndex);
+  const networkIds = await scopeToDownline(actor, { playersOnly: true });
+  const emptyNetwork = networkIds !== null && networkIds.length === 0;
+  const txScope =
+    networkIds !== null && networkIds.length > 0 ? inArray(transactions.userId, networkIds) : undefined;
 
-  const [txRow] = await db
-    .select({
-      bets: sql<number>`sum(case when ${transactions.type} = 'bet' then 1 else 0 end)`,
-      wins: sql<number>`sum(case when ${transactions.type} = 'win' then 1 else 0 end)`,
-      betVolume: sql<string>`coalesce(sum(case when ${transactions.type} = 'bet' then abs(${transactions.amount}) else 0 end), 0)`,
-      winVolume: sql<string>`coalesce(sum(case when ${transactions.type} = 'win' then abs(${transactions.amount}) else 0 end), 0)`,
-      playersActive: sql<number>`count(distinct ${transactions.userId})`,
-    })
-    .from(transactions)
-    .where(and(sql`${transactions.createdAt} >= ${start}`, sql`${transactions.createdAt} < ${end}`));
+  const [txRow] = emptyNetwork
+    ? [{ bets: 0, wins: 0, betVolume: "0", winVolume: "0", playersActive: 0 }]
+    : await db
+        .select({
+          bets: sql<number>`sum(case when ${transactions.type} = 'bet' then 1 else 0 end)`,
+          wins: sql<number>`sum(case when ${transactions.type} = 'win' then 1 else 0 end)`,
+          betVolume: sql<string>`coalesce(sum(case when ${transactions.type} = 'bet' then abs(${transactions.amount}) else 0 end), 0)`,
+          winVolume: sql<string>`coalesce(sum(case when ${transactions.type} = 'win' then abs(${transactions.amount}) else 0 end), 0)`,
+          playersActive: sql<number>`count(distinct ${transactions.userId})`,
+        })
+        .from(transactions)
+        .where(
+          and(
+            sql`${transactions.createdAt} >= ${start}`,
+            sql`${transactions.createdAt} < ${end}`,
+            txScope,
+          ),
+        );
 
-  const [sessionRow] = await db
-    .select({
-      sessions: sql<number>`count(*)`,
-    })
-    .from(auditLogs)
-    .where(
-      and(
-        eq(auditLogs.action, "game.session_open"),
-        sql`${auditLogs.createdAt} >= ${start}`,
-        sql`${auditLogs.createdAt} < ${end}`,
-      ),
-    );
+  const [sessionRow] = emptyNetwork
+    ? [{ sessions: 0 }]
+    : await db
+        .select({
+          sessions: sql<number>`count(*)`,
+        })
+        .from(auditLogs)
+        .where(
+          and(
+            eq(auditLogs.action, "game.session_open"),
+            sql`${auditLogs.createdAt} >= ${start}`,
+            sql`${auditLogs.createdAt} < ${end}`,
+            networkIds !== null ? inArray(auditLogs.actorId, networkIds) : undefined,
+          ),
+        );
 
   const bets = Number(txRow?.bets ?? 0);
   const wins = Number(txRow?.wins ?? 0);

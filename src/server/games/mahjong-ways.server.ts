@@ -12,6 +12,7 @@ import {
 import { getDb } from "../db/client";
 import { gameControls, playSessions, users } from "../db/schema";
 import { newId, requireUser } from "../session";
+import { applyCapToScriptTotalWin, enforcePoolCap } from "../settlement/enforcePoolCap";
 import {
   assertNotInMaintenanceForBets,
   availableFrom,
@@ -170,6 +171,13 @@ export async function mahjongWaysPaidSpin(data: {
     ante: data.ante,
     isFreeSpins: false,
   });
+  applyCapToScriptTotalWin(script, {
+    gameId: MAHJONG_WAYS_GAME_ID,
+    gameName: GAME_NAME,
+    bet: data.bet,
+    maxWinMult: cfg.maxWinMult,
+    context: "paid-spin",
+  });
 
   const roundId = newId();
 
@@ -313,10 +321,17 @@ export async function mahjongWaysFreeSpin(data: {
   const bet = Number(currentSession.bet);
   const ante = currentSession.ante === "yes";
 
-  const { script } = await resolveOnServer({
+  const { script, cfg } = await resolveOnServer({
     bet,
     ante,
     isFreeSpins: true,
+  });
+  applyCapToScriptTotalWin(script, {
+    gameId: MAHJONG_WAYS_GAME_ID,
+    gameName: GAME_NAME,
+    bet,
+    maxWinMult: cfg.maxWinMult,
+    context: "free-spin",
   });
 
   const roundId = newId();
@@ -346,17 +361,25 @@ export async function mahjongWaysFreeSpin(data: {
     let currentBalance = Number(row.balance);
 
     if (isFinished && accumulatedWin > 0) {
+      const payout = enforcePoolCap({
+        gameId: MAHJONG_WAYS_GAME_ID,
+        gameName: GAME_NAME,
+        bet,
+        maxWinMult: cfg.maxWinMult,
+        computedWin: accumulatedWin,
+        context: "free-spins-final",
+      }).payout;
       const ledger = await writeLedgerDelta(tx, {
         userId: user.id,
         username: row.username,
-        delta: accumulatedWin,
+        delta: payout,
         type: "win",
         game: GAME_NAME,
-        note: `${MAHJONG_WAYS_GAME_ID} · ${GAME_NAME} · Free spins feature final payout ₱${accumulatedWin.toFixed(2)}`,
+        note: `${MAHJONG_WAYS_GAME_ID} · ${GAME_NAME} · Free spins feature final payout ₱${payout.toFixed(2)}`,
       });
       currentBalance = ledger.balance;
       fsPayout = {
-        amount: accumulatedWin,
+        amount: payout,
         spinsPlayed: played,
       };
     }
@@ -421,6 +444,13 @@ export async function mahjongWaysBuyFeature(data: {
     bet: data.bet,
     ante: false,
     isFreeSpins: false,
+  });
+  applyCapToScriptTotalWin(script, {
+    gameId: MAHJONG_WAYS_GAME_ID,
+    gameName: GAME_NAME,
+    bet: data.bet,
+    maxWinMult: cfg.maxWinMult,
+    context: "buy-feature",
   });
 
   // Ensure minimum 10 free spins awarded on buy feature

@@ -103,7 +103,7 @@ export function applyGravity(
       if (!remove.has(cell.key)) kept.push(cell);
     }
     while (kept.length < ROWS) {
-      const cell = makeCell(pickSym(ante), freeSpins);
+      const cell = makeCell(pickSym(ante), freeSpins, false, { allowScatter: false });
       spawnedKeys.push(cell.key);
       spawnedSet.add(cell.key);
       kept.push(cell);

@@ -767,6 +767,18 @@ function MultSection({
             onChange={(n) => onPatch({ fsMultStep: n })}
           />
         </Field>
+        <Field
+          label="FS multiplier ceiling"
+          hint="Progressive cascade multiplier stops here. Separate from the pool cap."
+        >
+          <NumInput
+            value={cfg.maxFsMult ?? 3}
+            min={0}
+            step={1}
+            suffix="×"
+            onChange={(n) => onPatch({ maxFsMult: n })}
+          />
+        </Field>
       </div>
       <HintBox>
         Example: start 1×, step +1 → after 3 cascades the board pays at 4×. Cascade wins already apply

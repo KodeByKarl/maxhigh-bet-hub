@@ -141,6 +141,21 @@ async function runRbacTests() {
     console.log("✅ Audit log trail for denied attempts functioning cleanly.");
   }
 
+  // TEST 5: Agent / Master Agent lock-unlock permissions
+  console.log("\n--- TEST 5: Agent & Master Agent can lock/unlock downline accounts ---");
+  const unlockRoles = PERMISSION_MAP.USER_UNLOCK;
+  const lockRoles = PERMISSION_MAP.USER_LOCK;
+  if (
+    unlockRoles.includes("agent") &&
+    unlockRoles.includes("master_agent") &&
+    lockRoles.includes("agent") &&
+    lockRoles.includes("master_agent")
+  ) {
+    console.log("✅ Agent and Master Agent have USER_LOCK and USER_UNLOCK.");
+  } else {
+    console.error("❌ Agent/Master Agent missing lock/unlock permissions");
+  }
+
   // Cleanup
   await db.delete(sessions).where(eq(sessions.userId, playerId));
   await db.delete(sessions).where(eq(sessions.userId, superadminId));

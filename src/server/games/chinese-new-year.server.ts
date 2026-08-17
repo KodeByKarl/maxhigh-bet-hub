@@ -11,6 +11,7 @@ import {
 import { getDb } from "../db/client";
 import { gameControls, playSessions, users } from "../db/schema";
 import { newId, requireUser } from "../session";
+import { applyCapToScriptTotalWin, enforcePoolCap } from "../settlement/enforcePoolCap";
 import {
   assertNotInMaintenanceForBets,
   availableFrom,
@@ -183,6 +184,13 @@ export async function chineseNewYearPaidSpin(data: {
   }
 
   const script = resolveCnySpin({ totalBet: cost });
+  applyCapToScriptTotalWin(script, {
+    gameId: CHINESE_NEW_YEAR_GAME_ID,
+    gameName: GAME_NAME,
+    bet: cost,
+    maxWinMult: cfg.maxWinMult,
+    context: "paid-spin",
+  });
   const autoCollect = data.autoCollect ?? cfg.autoplayDeclineGamble;
   const shouldHoldGamble = script.totalWin > 0 && script.gambleAvailable && !autoCollect;
   const roundId = newId();
@@ -348,7 +356,15 @@ export async function chineseNewYearCollect(data: {
   const feat = current ? parseFeatureState(current.featureState) : null;
   if (!current || !feat) throw new Error("No pending win to collect");
 
-  const amount = feat.amount;
+  const cfg = await loadEngineConfig();
+  const amount = enforcePoolCap({
+    gameId: CHINESE_NEW_YEAR_GAME_ID,
+    gameName: GAME_NAME,
+    bet: feat.totalBet,
+    maxWinMult: cfg.maxWinMult,
+    computedWin: feat.amount,
+    context: "collect",
+  }).payout;
   const roundId = newId();
 
   const result = await db.transaction(async (tx) => {
@@ -457,13 +473,21 @@ export async function chineseNewYearGamble(data: {
 
     if (!result.canGambleAgain) {
       // Auto-credit when cap / max rounds hit
+      const payout = enforcePoolCap({
+        gameId: CHINESE_NEW_YEAR_GAME_ID,
+        gameName: GAME_NAME,
+        bet: feat.totalBet,
+        maxWinMult: cfg.maxWinMult,
+        computedWin: result.amount,
+        context: "gamble-settle",
+      }).payout;
       const ledger = await writeLedgerDelta(tx, {
         userId: user.id,
         username: row.username,
-        delta: result.amount,
+        delta: payout,
         type: "win",
         game: GAME_NAME,
-        note: `${CHINESE_NEW_YEAR_GAME_ID} · ${GAME_NAME} · gamble settle ₱${result.amount.toFixed(2)}`,
+        note: `${CHINESE_NEW_YEAR_GAME_ID} · ${GAME_NAME} · gamble settle ₱${payout.toFixed(2)}`,
       });
       await tx
         .update(playSessions)

@@ -16,7 +16,7 @@ export type CellSym = {
   id: string;
   kind: SymKind;
   weight: number;
-  /** Payout tiers × bet: [8–9, 10–11, 12+] */
+  /** Payout multiplier × bet: [min, min+2, min+4+] */
   pay: [number, number, number];
   scatter?: boolean;
   bomb?: boolean;

@@ -61,6 +61,14 @@ export type CandyPeakConfig = {
   superBuyFeatureMult: number;
   anteBetMult: number;
   minCluster: number;
+  /** Max win as × bet for the round. 0 = uncapped. */
+  maxWinMult: number;
+  /** Ceiling on collected FS bomb multiplier. 0 = uncapped. */
+  maxFsBombMult: number;
+  /** Hard stop on FS + retriggers. 0 = uncapped. */
+  maxFsSessionSpins: number;
+  /** Base-game tumble bomb-sum ceiling. 0 = uncapped. */
+  maxBaseBombSum: number;
   symbols: CandyPeakSymbolConfig[];
 };
 
@@ -79,12 +87,12 @@ export const SYMBOL_LABELS: Record<CandyPeakSymKind, string> = {
 
 export const DEFAULT_CANDY_PEAK_CONFIG: CandyPeakConfig = {
   schemaVersion: 1,
-  deadSpinChancePercent: 38,
+  deadSpinChancePercent: 77,
   seedMelonBiasPercent: 35,
   seedClusterMin: 8,
-  seedClusterMax: 12,
-  bombChanceBasePercent: 4,
-  bombChanceFreeSpinsPercent: 22,
+  seedClusterMax: 9,
+  bombChanceBasePercent: 2.5,
+  bombChanceFreeSpinsPercent: 3,
   bombTable: [
     { mult: 2, weight: 28 },
     { mult: 3, weight: 22 },
@@ -100,9 +108,9 @@ export const DEFAULT_CANDY_PEAK_CONFIG: CandyPeakConfig = {
     { mult: 100, weight: 0.1 },
   ],
   freeSpinsTriggerCount: 4,
-  freeSpinsRetriggerCount: 3,
+  freeSpinsRetriggerCount: 4,
   freeSpinsBase: 10,
-  freeSpinsRetrigger: 5,
+  freeSpinsRetrigger: 3,
   anteScatterWeightMult: 2,
   scatterCashTiers: [
     { count: 3, mult: 1 },
@@ -114,20 +122,24 @@ export const DEFAULT_CANDY_PEAK_CONFIG: CandyPeakConfig = {
   superBuyFeatureMult: 500,
   anteBetMult: 1.25,
   minCluster: 8,
+  maxWinMult: 10_000,
+  maxFsBombMult: 20,
+  maxFsSessionSpins: 25,
+  maxBaseBombSum: 2,
   symbols: [
-    { id: "grape", kind: "grape", label: "Grape", weight: 18, pay: [1, 3, 8] },
-    { id: "plum", kind: "plum", label: "Plum", weight: 16, pay: [1.2, 3.5, 10] },
-    { id: "melon", kind: "melon", label: "Melon", weight: 14, pay: [1.5, 4, 12] },
-    { id: "apple", kind: "apple", label: "Apple", weight: 12, pay: [2, 5, 20] },
-    { id: "blue", kind: "blue", label: "Blue candy", weight: 10, pay: [2.5, 6, 25] },
-    { id: "green", kind: "green", label: "Green candy", weight: 8, pay: [4, 10, 35] },
-    { id: "purple", kind: "purple", label: "Purple candy", weight: 6, pay: [6, 18, 50] },
-    { id: "heart", kind: "heart", label: "Heart", weight: 5, pay: [12, 30, 80] },
+    { id: "grape", kind: "grape", label: "Grape", weight: 18, pay: [0.2, 0.35, 0.8] },
+    { id: "plum", kind: "plum", label: "Plum", weight: 16, pay: [0.35, 0.5, 1.2] },
+    { id: "melon", kind: "melon", label: "Melon", weight: 14, pay: [0.5, 0.65, 2] },
+    { id: "apple", kind: "apple", label: "Apple", weight: 12, pay: [0.65, 0.8, 4] },
+    { id: "blue", kind: "blue", label: "Blue candy", weight: 10, pay: [0.8, 2.5, 8] },
+    { id: "green", kind: "green", label: "Green candy", weight: 8, pay: [1.55, 6.8, 25] },
+    { id: "purple", kind: "purple", label: "Purple candy", weight: 6, pay: [3, 13.5, 51] },
+    { id: "heart", kind: "heart", label: "Heart", weight: 5, pay: [5.1, 25.5, 102] },
     {
       id: "lollipop",
       kind: "lollipop",
       label: "Candy cane",
-      weight: 3.2,
+      weight: 2.0,
       pay: [0, 0, 0],
       scatter: true,
     },
@@ -151,22 +163,63 @@ function num(v: unknown, fallback: number) {
   return typeof v === "number" && Number.isFinite(v) ? v : fallback;
 }
 
-/** Original Sweet Bonanza-style ×bet pays — too small vs ₱20–₱100 PH stakes. */
-const LEGACY_DEFAULT_PAYS: Record<string, number[]> = {
-  grape: [0.25, 0.75, 2],
-  plum: [0.4, 0.9, 4],
-  melon: [0.5, 1, 5],
-  apple: [1, 1.5, 10],
-  blue: [1.5, 2, 12],
-  green: [2, 5, 15],
-  purple: [2.5, 10, 25],
-  heart: [10, 25, 50],
+/** Prior default tables — migrate stored engine JSON onto the current multipliers. */
+const LEGACY_PAY_TABLES: Record<string, [number, number, number][]> = {
+  grape: [
+    [0.25, 0.75, 2],
+    [1, 3, 8],
+  ],
+  plum: [
+    [0.4, 0.9, 4],
+    [1.2, 3.5, 10],
+  ],
+  melon: [
+    [0.5, 1, 5],
+    [1.5, 4, 12],
+  ],
+  apple: [
+    [1, 1.5, 10],
+    [2, 5, 20],
+  ],
+  blue: [
+    [1.5, 2, 12],
+    [2.5, 6, 25],
+  ],
+  green: [
+    [2, 5, 15],
+    [4, 10, 35],
+    [2, 10, 50],
+    [1.2, 5, 18],
+    [1.5, 6.5, 24],
+    [1.8, 8, 30],
+  ],
+  purple: [
+    [2.5, 10, 25],
+    [6, 18, 50],
+    [6, 25, 150],
+    [2.5, 10, 40],
+    [3, 13, 50],
+    [3.5, 16, 60],
+  ],
+  heart: [
+    [10, 25, 50],
+    [12, 30, 80],
+    [12, 80, 500],
+    [4, 20, 80],
+    [5, 25, 100],
+    [6, 30, 120],
+  ],
 };
 
+function paysMatch(pay: unknown, expected: [number, number, number]): boolean {
+  if (!Array.isArray(pay) || pay.length < 3) return false;
+  return num(pay[0], NaN) === expected[0] && num(pay[1], NaN) === expected[1] && num(pay[2], NaN) === expected[2];
+}
+
 function isLegacyDefaultPay(id: string, pay: unknown): boolean {
-  const legacy = LEGACY_DEFAULT_PAYS[id];
-  if (!legacy || !Array.isArray(pay) || pay.length < legacy.length) return false;
-  return legacy.every((n, i) => num(pay[i], NaN) === n);
+  const tables = LEGACY_PAY_TABLES[id];
+  if (!tables) return false;
+  return tables.some((legacy) => paysMatch(pay, legacy));
 }
 
 /** Merge partial / stored JSON onto defaults (safe for DB blobs). */
@@ -259,8 +312,26 @@ export function normalizeCandyPeakConfig(raw: unknown): CandyPeakConfig {
     superBuyFeatureMult: clamp(num(o.superBuyFeatureMult, d.superBuyFeatureMult), 1, 10_000),
     anteBetMult: clamp(num(o.anteBetMult, d.anteBetMult), 1, 5),
     minCluster: clamp(Math.round(num(o.minCluster, d.minCluster)), 3, 30),
+    maxWinMult: clamp(num(o.maxWinMult, d.maxWinMult), 0, 100_000),
+    maxFsBombMult: clamp(num(o.maxFsBombMult, d.maxFsBombMult), 0, 10_000),
+    maxFsSessionSpins: clamp(Math.round(num(o.maxFsSessionSpins, d.maxFsSessionSpins)), 0, 200),
+    maxBaseBombSum: clamp(num(o.maxBaseBombSum, d.maxBaseBombSum), 0, 1_000),
     symbols,
   };
+}
+
+/** Remaining FS after this spin, honoring maxFsSessionSpins. */
+export function remainingFreeSpinsAfterSpin(opts: {
+  leftBefore: number;
+  retrigger: number;
+  playedAfter: number;
+  maxSessionSpins: number;
+}): number {
+  let left = Math.max(0, opts.leftBefore - 1 + Math.max(0, opts.retrigger));
+  if (opts.maxSessionSpins > 0) {
+    left = Math.min(left, Math.max(0, opts.maxSessionSpins - opts.playedAfter));
+  }
+  return left;
 }
 
 export function configToCellSyms(cfg: CandyPeakConfig): {

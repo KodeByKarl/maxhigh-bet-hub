@@ -278,6 +278,25 @@ export function GoldenPantherConfigModal({ game, open, onOpenChange, onPatchLobb
                         className="w-full mt-2"
                       />
                     </div>
+
+                    <div>
+                      <label className="text-xs text-muted-foreground font-bold">
+                        Max win multiplier: {cfg.maxWinMult.toLocaleString()}×
+                      </label>
+                      <Input
+                        type="number"
+                        min={0}
+                        max={100000}
+                        value={cfg.maxWinMult}
+                        onChange={(e) =>
+                          setCfg((p) => ({ ...p, maxWinMult: Number(e.target.value) }))
+                        }
+                        className="mt-2"
+                      />
+                      <p className="text-[11px] text-muted-foreground mt-1">
+                        Round payout is clamped to bet × this value (₱5 × 10,000× = ₱50,000).
+                      </p>
+                    </div>
                   </div>
                 </div>
               )}
@@ -317,7 +336,10 @@ export function GoldenPantherConfigModal({ game, open, onOpenChange, onPatchLobb
 
                           {!sym.scatter && !sym.bomb && (
                             <div className="flex items-center gap-2">
-                              <span className="text-xs text-muted-foreground">Pay (8-9 / 10-11 / 12+):</span>
+                              <span className="text-xs text-muted-foreground">
+                                Pay ({cfg.minCluster}–{cfg.minCluster + 1} / {cfg.minCluster + 2}–
+                                {cfg.minCluster + 3} / {cfg.minCluster + 4}+):
+                              </span>
                               <Input
                                 type="number"
                                 value={sym.pay[0]}
@@ -390,6 +412,26 @@ export function GoldenPantherConfigModal({ game, open, onOpenChange, onPatchLobb
                         className="mt-1"
                       />
                     </div>
+                  </div>
+
+                  <div>
+                    <label className="text-xs text-muted-foreground font-bold">
+                      FS bomb multiplier ceiling
+                    </label>
+                    <Input
+                      type="number"
+                      min={0}
+                      max={10000}
+                      value={cfg.maxFsBombMult}
+                      onChange={(e) =>
+                        setCfg((p) => ({ ...p, maxFsBombMult: Number(e.target.value) }))
+                      }
+                      className="mt-1 max-w-xs"
+                    />
+                    <p className="text-[11px] text-muted-foreground mt-1">
+                      Collected bombs add during free spins, then multiply once at the end — never
+                      above this. The pool cap is a separate last-line safety net.
+                    </p>
                   </div>
 
                   <div className="space-y-2">

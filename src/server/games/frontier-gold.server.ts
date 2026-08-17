@@ -11,6 +11,7 @@ import {
 import { getDb } from "../db/client";
 import { gameControls, playSessions, users } from "../db/schema";
 import { newId, requireUser } from "../session";
+import { applyCapToScriptTotalWin, enforcePoolCap } from "../settlement/enforcePoolCap";
 import {
   assertNotInMaintenanceForBets,
   availableFrom,
@@ -148,6 +149,13 @@ export async function frontierGoldPaidSpin(data: {
   }
 
   const { script } = await resolveOnServer({ bet: data.bet, isFreeSpins: false });
+  applyCapToScriptTotalWin(script, {
+    gameId: FRONTIER_GOLD_GAME_ID,
+    gameName: GAME_NAME,
+    bet: data.bet,
+    maxWinMult: cfg.maxWinMult,
+    context: "paid-spin",
+  });
   const roundId = newId();
 
   const result = await db.transaction(async (tx) => {
@@ -273,7 +281,14 @@ export async function frontierGoldFreeSpin(data: {
   }
 
   const bet = Number(currentSession.bet);
-  const { script } = await resolveOnServer({ bet, isFreeSpins: true });
+  const { script, cfg } = await resolveOnServer({ bet, isFreeSpins: true });
+  applyCapToScriptTotalWin(script, {
+    gameId: FRONTIER_GOLD_GAME_ID,
+    gameName: GAME_NAME,
+    bet,
+    maxWinMult: cfg.maxWinMult,
+    context: "free-spin",
+  });
   const roundId = newId();
 
   const result = await db.transaction(async (tx) => {
@@ -301,16 +316,24 @@ export async function frontierGoldFreeSpin(data: {
     let currentBalance = Number(row.balance);
 
     if (isFinished && accumulatedWin > 0) {
+      const payout = enforcePoolCap({
+        gameId: FRONTIER_GOLD_GAME_ID,
+        gameName: GAME_NAME,
+        bet,
+        maxWinMult: cfg.maxWinMult,
+        computedWin: accumulatedWin,
+        context: "free-spins-final",
+      }).payout;
       const ledger = await writeLedgerDelta(tx, {
         userId: user.id,
         username: row.username,
-        delta: accumulatedWin,
+        delta: payout,
         type: "win",
         game: GAME_NAME,
-        note: `${FRONTIER_GOLD_GAME_ID} · ${GAME_NAME} · Free spins final payout ₱${accumulatedWin.toFixed(2)}`,
+        note: `${FRONTIER_GOLD_GAME_ID} · ${GAME_NAME} · Free spins final payout ₱${payout.toFixed(2)}`,
       });
       currentBalance = ledger.balance;
-      fsPayout = { amount: accumulatedWin, spinsPlayed: played };
+      fsPayout = { amount: payout, spinsPlayed: played };
     }
 
     const updatedSession = await tx
@@ -363,6 +386,13 @@ export async function frontierGoldBuyFeature(data: {
   await assertNotInMaintenanceForBets();
 
   const { script } = await resolveOnServer({ bet: data.bet, isFreeSpins: false });
+  applyCapToScriptTotalWin(script, {
+    gameId: FRONTIER_GOLD_GAME_ID,
+    gameName: GAME_NAME,
+    bet: data.bet,
+    maxWinMult: cfg.maxWinMult,
+    context: "buy-feature",
+  });
   if (script.freeSpinsAwarded < cfg.freeSpinsBaseCount) {
     script.freeSpinsAwarded = cfg.freeSpinsBaseCount;
     script.scatterCount = Math.max(script.scatterCount, cfg.freeSpinsTriggerCount);

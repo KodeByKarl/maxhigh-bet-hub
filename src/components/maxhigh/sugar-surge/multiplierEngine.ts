@@ -137,8 +137,34 @@ export function resetBoardMultipliers(): number[] {
 }
 
 /**
+ * Apply position multipliers to each cluster using only that cluster's cells,
+ * then sum. Empty multipliers → pay raw cluster values.
+ * Call this BEFORE upgrading the winning positions for the tumble.
+ */
+export function applyClusterPositionMults(
+  clusters: Array<{ pay: number; indices: number[] }>,
+  mults: number[],
+): { win: number; clusterPays: number[] } {
+  let win = 0;
+  const clusterPays: number[] = [];
+  for (const c of clusters) {
+    let cellSum = 0;
+    for (const i of c.indices) {
+      const m = mults[i] ?? 0;
+      if (m > 0) cellSum += m;
+    }
+    const factor = cellSum > 0 ? cellSum : 1;
+    const pay = +(c.pay * factor).toFixed(2);
+    clusterPays.push(pay);
+    win += pay;
+  }
+  return { win: +win.toFixed(2), clusterPays };
+}
+
+/**
  * Apply position multipliers to cascade raw win (Sugar Rush end-of-cascade rule).
  * No multipliers present → pay raw win unchanged.
+ * @deprecated Prefer applyClusterPositionMults per tumble (winning cells only).
  */
 export function applyPositionMultToWin(rawWin: number, mults: number[]): {
   win: number;
