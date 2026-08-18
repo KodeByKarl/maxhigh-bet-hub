@@ -270,8 +270,8 @@ export async function superCreateUser(data: {
   if (data.parentAgentId) {
     const [upline] = await db.select().from(users).where(eq(users.id, data.parentAgentId)).limit(1);
     if (!upline) throw new Error("Selected upline account not found");
-    if (upline.role !== "master_agent" && upline.role !== "superadmin") {
-      throw new Error("Upline must be a Master Agent");
+    if (upline.role !== "master_agent" && upline.role !== "superadmin" && upline.role !== "agent") {
+      throw new Error("Upline must be an Agent or Master Agent");
     }
     parentAgentId = upline.id;
   }

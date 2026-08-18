@@ -78,7 +78,7 @@ function SuperDashboardPage() {
       <div>
         <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-amber-400">Live financials</p>
         <h1 className="mt-1 text-xl font-black tracking-tight text-foreground sm:text-3xl lg:text-4xl">
-          <span className="sm:hidden">Command Center</span>
+          <span className="sm:hidden">Command Center, {name}</span>
           <span className="hidden sm:inline">Advanced Financial Command Center, {name}</span>
         </h1>
         <p className="mt-1 text-xs text-muted-foreground sm:mt-1.5 sm:text-sm">

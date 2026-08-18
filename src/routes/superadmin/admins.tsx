@@ -15,6 +15,7 @@ import { useAuth } from "@/lib/auth";
 import { isSuperadminRole } from "@/lib/user";
 import { formatMoney } from "@/lib/currency";
 import { Input } from "@/components/ui/input";
+import { PasswordInput } from "@/components/ui/password-input";
 import { saGlass } from "@/components/superadmin/ui/glass";
 import { toast } from "sonner";
 import { MoreHorizontal, X } from "lucide-react";
@@ -354,12 +355,12 @@ function AddAdminModal({
   existingUsernames: string[];
   masterAgents: SuperUserRow[];
 }) {
+  const { user } = useAuth();
   const [busy, setBusy] = useState(false);
   const [username, setUsername] = useState("");
-  const [publicUserId, setPublicUserId] = useState("");
   const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [role, setRole] = useState<UserRole>("agent");
-  const [displayName, setDisplayName] = useState("");
   const [parentAgentId, setParentAgentId] = useState<string>("");
 
   const isUsernameTaken = useMemo(() => {
@@ -373,15 +374,17 @@ function AddAdminModal({
       toast.error("Username already taken!");
       return;
     }
+    if (password !== confirmPassword) {
+      toast.error("Passwords do not match");
+      return;
+    }
     setBusy(true);
     try {
       await superCreateUserFn({
         data: {
           username,
-          publicUserId: publicUserId.trim() || undefined,
           password,
           role,
-          displayName: displayName || undefined,
           balance: 0,
           parentAgentId: role === "agent" && parentAgentId ? parentAgentId : undefined,
         },
@@ -395,9 +398,14 @@ function AddAdminModal({
     }
   }
 
+  const selectedUpline = masterAgents.find((ma) => ma.id === parentAgentId);
+
   return (
-    <div className="fixed inset-0 z-50 grid place-items-center bg-black/65 backdrop-blur-md p-4 overflow-y-auto" onClick={onClose}>
-      <div onClick={(e) => e.stopPropagation()} className={`${saGlass} w-full max-w-lg space-y-4 p-6 border border-amber-500/30 shadow-2xl my-auto`}>
+    <div className="fixed inset-0 z-50 flex items-end justify-center overflow-y-auto bg-black/65 backdrop-blur-md sm:items-center sm:p-4" onClick={onClose}>
+      <div
+        onClick={(e) => e.stopPropagation()}
+        className={`${saGlass} my-auto flex max-h-[min(92dvh,calc(100dvh-3.5rem))] w-full max-w-lg flex-col overflow-y-auto rounded-t-2xl border border-amber-500/30 p-5 pb-[max(1.25rem,env(safe-area-inset-bottom))] shadow-2xl sm:rounded-2xl sm:p-6`}
+      >
         <div className="flex items-center justify-between border-b border-amber-500/20 pb-3">
           <div>
             <h2 className="text-xl font-black text-foreground">+ Add Agent / Staff Account</h2>
@@ -408,59 +416,59 @@ function AddAdminModal({
           </button>
         </div>
 
-        <form onSubmit={onSubmit} className="space-y-4">
+        <form onSubmit={onSubmit} className="mt-4 space-y-4">
+          <div className="rounded-xl border border-amber-500/30 bg-amber-500/10 px-3 py-2.5">
+            <div className="text-[10px] font-bold uppercase tracking-wider text-amber-300">Created by</div>
+            <div className="mt-0.5 truncate text-sm font-black text-foreground">@{user?.username ?? "—"}</div>
+            <div className="text-[11px] text-muted-foreground">Superadmin</div>
+          </div>
+
           <div>
-            <label className="block text-[11px] font-bold uppercase text-muted-foreground mb-1">Username</label>
+            <label className="mb-1 block text-[11px] font-bold uppercase text-muted-foreground">Username</label>
             <Input
               value={username}
               onChange={(e) => setUsername(e.target.value)}
               required
               placeholder="e.g. agent_john"
-              className="h-10 rounded-xl bg-white/[0.06] text-foreground"
+              autoComplete="off"
+              className="h-11 rounded-xl bg-white/[0.06] text-foreground"
             />
-            {isUsernameTaken && <div className="mt-1 text-[11px] font-semibold text-rose-400">❌ Username already taken!</div>}
+            {isUsernameTaken && <div className="mt-1 text-[11px] font-semibold text-rose-400">Username already taken!</div>}
           </div>
 
           <div>
-            <label className="block text-[11px] font-bold uppercase text-muted-foreground mb-1">
-              User ID (optional)
-            </label>
-            <Input
-              value={publicUserId}
-              onChange={(e) => setPublicUserId(e.target.value)}
-              placeholder="Defaults to username if empty"
-              className="h-10 rounded-xl bg-white/[0.06] text-foreground"
-            />
-          </div>
-
-          <div>
-            <label className="block text-[11px] font-bold uppercase text-muted-foreground mb-1">Display Name (Optional)</label>
-            <Input
-              value={displayName}
-              onChange={(e) => setDisplayName(e.target.value)}
-              placeholder="e.g. John Doe"
-              className="h-10 rounded-xl bg-white/[0.06] text-foreground"
-            />
-          </div>
-
-          <div>
-            <label className="block text-[11px] font-bold uppercase text-muted-foreground mb-1">Password</label>
-            <Input
+            <label className="mb-1 block text-[11px] font-bold uppercase text-muted-foreground">Password *</label>
+            <PasswordInput
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
-              type="password"
               placeholder="Min 6 characters"
-              className="h-10 rounded-xl bg-white/[0.06] text-foreground"
+              autoComplete="new-password"
+              className="h-11 rounded-xl bg-white/[0.06] text-foreground"
             />
           </div>
 
           <div>
-            <label className="block text-[11px] font-bold uppercase text-muted-foreground mb-1">Role</label>
+            <label className="mb-1 block text-[11px] font-bold uppercase text-muted-foreground">Confirm Password *</label>
+            <PasswordInput
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
+              required
+              placeholder="Re-enter password"
+              autoComplete="new-password"
+              className="h-11 rounded-xl bg-white/[0.06] text-foreground"
+            />
+            {confirmPassword.length > 0 && password !== confirmPassword && (
+              <p className="mt-1 text-[11px] font-semibold text-rose-400">Passwords do not match</p>
+            )}
+          </div>
+
+          <div>
+            <label className="mb-1 block text-[11px] font-bold uppercase text-muted-foreground">Role</label>
             <select
               value={role}
               onChange={(e) => setRole(e.target.value as UserRole)}
-              className="h-10 w-full rounded-xl border border-amber-500/20 bg-[#1C1916] px-3 text-sm font-bold text-foreground [color-scheme:dark]"
+              className="h-11 w-full rounded-xl border border-amber-500/20 bg-[#1C1916] px-3 text-sm font-bold text-foreground [color-scheme:dark]"
             >
               <option value="agent">Agent</option>
               <option value="master_agent">Master Agent</option>
@@ -470,27 +478,32 @@ function AddAdminModal({
 
           {role === "agent" && (
             <div>
-              <label className="block text-[11px] font-bold uppercase text-muted-foreground mb-1">Upline Master Agent (Optional)</label>
+              <label className="mb-1 block text-[11px] font-bold uppercase text-muted-foreground">Agent account (upline)</label>
               <select
                 value={parentAgentId}
                 onChange={(e) => setParentAgentId(e.target.value)}
-                className="h-10 w-full rounded-xl border border-amber-500/20 bg-[#1C1916] px-3 text-sm text-foreground [color-scheme:dark]"
+                className="h-11 w-full rounded-xl border border-amber-500/20 bg-[#1C1916] px-3 text-sm text-foreground [color-scheme:dark]"
               >
-                <option value="">Direct SuperAdmin Agent (No Upline)</option>
+                <option value="">Direct Superadmin @{user?.username ?? "you"} (no upline)</option>
                 {masterAgents.map((ma) => (
                   <option key={ma.id} value={ma.id}>
                     @{ma.username} {ma.displayName ? `(${ma.displayName})` : ""}
                   </option>
                 ))}
               </select>
+              <p className="mt-1.5 text-[11px] text-muted-foreground">
+                {selectedUpline
+                  ? `This agent will belong to Master Agent @${selectedUpline.username}`
+                  : `This agent will belong to Superadmin @${user?.username ?? "you"}`}
+              </p>
             </div>
           )}
 
           <div className="flex justify-end gap-2 pt-2">
-            <button type="button" onClick={onClose} className="h-10 rounded-xl border border-amber-500/25 px-4 text-sm font-semibold text-foreground hover:bg-white/[0.06]">
+            <button type="button" onClick={onClose} className="h-11 rounded-xl border border-amber-500/25 px-4 text-sm font-semibold text-foreground hover:bg-white/[0.06]">
               Cancel
             </button>
-            <button type="submit" disabled={busy || isUsernameTaken} className="h-10 rounded-xl bg-amber-500 px-5 text-sm font-bold text-black disabled:opacity-60">
+            <button type="submit" disabled={busy || isUsernameTaken} className="h-11 rounded-xl bg-amber-500 px-5 text-sm font-bold text-black disabled:opacity-60">
               {busy ? "Creating…" : "Create Agent"}
             </button>
           </div>

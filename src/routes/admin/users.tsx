@@ -15,6 +15,7 @@ import { isStaffRole } from "@/lib/user";
 import { AGENT_MASTER_PROMOTE_HINT } from "@/lib/agent-promotion";
 import { formatMoney } from "@/lib/currency";
 import { Input } from "@/components/ui/input";
+import { PasswordInput } from "@/components/ui/password-input";
 import { toast } from "sonner";
 import { MoreHorizontal, Pencil, X, KeyRound, ShieldAlert, UserPlus, RefreshCw, Lock, Unlock } from "lucide-react";
 
@@ -596,16 +597,22 @@ function AddChipsModal({
   );
 }
 
+function actorRoleLabel(role?: string) {
+  if (role === "master_agent") return "Master Agent";
+  if (role === "agent") return "Agent";
+  if (role === "superadmin") return "Superadmin";
+  return "Admin";
+}
+
 /** Modal to create new Player or Agent accounts */
 function CreateUserModal({ onClose, onSuccess }: { onClose: () => void; onSuccess: (promoted: boolean) => void }) {
   const { user } = useAuth();
   const isSuper = user?.role === "superadmin";
   const canCreateAgent = user?.role === "agent" || user?.role === "master_agent" || isSuper;
-  const [displayName, setDisplayName] = useState("");
   const [username, setUsername] = useState("");
-  const [publicUserId, setPublicUserId] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [balance, setBalance] = useState("0");
   const [role, setRole] = useState<UserRole>("player");
   const [submitting, setSubmitting] = useState(false);
@@ -614,6 +621,10 @@ function CreateUserModal({ onClose, onSuccess }: { onClose: () => void; onSucces
     e.preventDefault();
     if (!username.trim() || !password) {
       toast.error("Username and password are required");
+      return;
+    }
+    if (password !== confirmPassword) {
+      toast.error("Passwords do not match");
       return;
     }
     setSubmitting(true);
@@ -628,8 +639,6 @@ function CreateUserModal({ onClose, onSuccess }: { onClose: () => void; onSucces
       const created = await adminCreateUserFn({
         data: {
           username: username.trim(),
-          publicUserId: publicUserId.trim() || undefined,
-          displayName: displayName.trim() || undefined,
           email: email.trim() || undefined,
           password,
           balance: Number(balance) || 0,
@@ -652,8 +661,8 @@ function CreateUserModal({ onClose, onSuccess }: { onClose: () => void; onSucces
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 p-4 backdrop-blur-sm animate-in fade-in duration-200">
-      <div className="w-full max-w-md rounded-2xl border border-border bg-panel p-6 shadow-2xl space-y-5">
+    <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/75 sm:items-center sm:p-4 backdrop-blur-sm animate-in fade-in duration-200">
+      <div className="flex max-h-[min(92dvh,calc(100dvh-3.5rem))] w-full max-w-md flex-col overflow-y-auto rounded-t-2xl border border-border bg-panel p-5 pb-[max(1.25rem,env(safe-area-inset-bottom))] shadow-2xl sm:rounded-2xl sm:p-6">
         <div className="flex items-center justify-between border-b border-border pb-4">
           <h3 className="text-lg font-bold text-foreground">Create New Account</h3>
           <button type="button" onClick={onClose} className="rounded-lg p-1.5 text-muted-foreground hover:bg-panel-hover">
@@ -661,7 +670,17 @@ function CreateUserModal({ onClose, onSuccess }: { onClose: () => void; onSucces
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="mt-4 space-y-4">
+          <div className="rounded-xl border border-violet-400/30 bg-violet-500/10 px-3 py-2.5">
+            <div className="text-[10px] font-bold uppercase tracking-wider text-violet-300">Agent account</div>
+            <div className="mt-0.5 truncate text-sm font-black text-foreground">
+              @{user?.username ?? "—"}
+            </div>
+            <div className="text-[11px] text-muted-foreground">
+              {actorRoleLabel(user?.role)} — new accounts are created under this downline
+            </div>
+          </div>
+
           <div>
             <label className="mb-1 block text-xs font-semibold uppercase text-muted-foreground">Account Role</label>
             {isSuper ? (
@@ -696,40 +715,19 @@ function CreateUserModal({ onClose, onSuccess }: { onClose: () => void; onSucces
           </div>
 
           <div>
-            <label className="block text-xs font-semibold uppercase text-muted-foreground mb-1">Username *</label>
+            <label className="mb-1 block text-xs font-semibold uppercase text-muted-foreground">Username *</label>
             <Input
               value={username}
               onChange={(e) => setUsername(e.target.value)}
               placeholder="e.g. player88"
               required
+              autoComplete="off"
               className="h-11 rounded-xl border-border bg-background"
             />
           </div>
 
           <div>
-            <label className="block text-xs font-semibold uppercase text-muted-foreground mb-1">
-              User ID (optional — defaults to username)
-            </label>
-            <Input
-              value={publicUserId}
-              onChange={(e) => setPublicUserId(e.target.value)}
-              placeholder="Globally unique account code"
-              className="h-11 rounded-xl border-border bg-background"
-            />
-          </div>
-
-          <div>
-            <label className="block text-xs font-semibold uppercase text-muted-foreground mb-1">Display Name</label>
-            <Input
-              value={displayName}
-              onChange={(e) => setDisplayName(e.target.value)}
-              placeholder="e.g. John Doe"
-              className="h-11 rounded-xl border-border bg-background"
-            />
-          </div>
-
-          <div>
-            <label className="block text-xs font-semibold uppercase text-muted-foreground mb-1">Email (Optional)</label>
+            <label className="mb-1 block text-xs font-semibold uppercase text-muted-foreground">Email (Optional)</label>
             <Input
               type="email"
               value={email}
@@ -740,20 +738,36 @@ function CreateUserModal({ onClose, onSuccess }: { onClose: () => void; onSucces
           </div>
 
           <div>
-            <label className="block text-xs font-semibold uppercase text-muted-foreground mb-1">Password *</label>
-            <Input
-              type="password"
+            <label className="mb-1 block text-xs font-semibold uppercase text-muted-foreground">Password *</label>
+            <PasswordInput
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               placeholder="At least 6 characters"
               required
               minLength={6}
+              autoComplete="new-password"
               className="h-11 rounded-xl border-border bg-background"
             />
           </div>
 
           <div>
-            <label className="block text-xs font-semibold uppercase text-muted-foreground mb-1">Initial Balance (₱)</label>
+            <label className="mb-1 block text-xs font-semibold uppercase text-muted-foreground">Confirm Password *</label>
+            <PasswordInput
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
+              placeholder="Re-enter password"
+              required
+              minLength={6}
+              autoComplete="new-password"
+              className="h-11 rounded-xl border-border bg-background"
+            />
+            {confirmPassword.length > 0 && password !== confirmPassword && (
+              <p className="mt-1 text-[11px] font-semibold text-rose-400">Passwords do not match</p>
+            )}
+          </div>
+
+          <div>
+            <label className="mb-1 block text-xs font-semibold uppercase text-muted-foreground">Initial Balance (₱)</label>
             <Input
               type="number"
               value={balance}
@@ -765,7 +779,7 @@ function CreateUserModal({ onClose, onSuccess }: { onClose: () => void; onSucces
             />
           </div>
 
-          <div className="flex items-center justify-end gap-3 pt-3 border-t border-border">
+          <div className="flex items-center justify-end gap-3 border-t border-border pt-3">
             <button
               type="button"
               onClick={onClose}
@@ -1018,12 +1032,17 @@ function EditProfileModal({ user, onClose, onSuccess }: { user: AdminUserRow; on
 /** Reset Password Modal */
 function ResetPasswordModal({ user, onClose, onSuccess }: { user: AdminUserRow; onClose: () => void; onSuccess: () => void }) {
   const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
     if (!password || password.length < 6) {
       toast.error("Password must be at least 6 characters");
+      return;
+    }
+    if (password !== confirmPassword) {
+      toast.error("Passwords do not match");
       return;
     }
     setSubmitting(true);
@@ -1044,8 +1063,8 @@ function ResetPasswordModal({ user, onClose, onSuccess }: { user: AdminUserRow; 
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 p-4 backdrop-blur-sm animate-in fade-in duration-200">
-      <div className="w-full max-w-md rounded-2xl border border-border bg-panel p-6 shadow-2xl space-y-4">
+    <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/75 sm:items-center sm:p-4 backdrop-blur-sm animate-in fade-in duration-200">
+      <div className="w-full max-w-md space-y-4 rounded-t-2xl border border-border bg-panel p-5 pb-[max(1.25rem,env(safe-area-inset-bottom))] shadow-2xl sm:rounded-2xl sm:p-6">
         <div className="flex items-center justify-between border-b border-border pb-3">
           <h3 className="font-bold text-foreground">Reset Password — @{user.username}</h3>
           <button type="button" onClick={onClose} className="rounded-lg p-1.5 text-muted-foreground hover:bg-panel-hover">
@@ -1055,19 +1074,34 @@ function ResetPasswordModal({ user, onClose, onSuccess }: { user: AdminUserRow; 
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-xs font-semibold uppercase text-muted-foreground mb-1">New Password *</label>
-            <Input
-              type="password"
+            <label className="mb-1 block text-xs font-semibold uppercase text-muted-foreground">New Password *</label>
+            <PasswordInput
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               placeholder="Enter new password (min 6 chars)"
               required
               minLength={6}
+              autoComplete="new-password"
               className="h-11 rounded-xl border-border bg-background"
             />
           </div>
+          <div>
+            <label className="mb-1 block text-xs font-semibold uppercase text-muted-foreground">Confirm Password *</label>
+            <PasswordInput
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
+              placeholder="Re-enter password"
+              required
+              minLength={6}
+              autoComplete="new-password"
+              className="h-11 rounded-xl border-border bg-background"
+            />
+            {confirmPassword.length > 0 && password !== confirmPassword && (
+              <p className="mt-1 text-[11px] font-semibold text-rose-400">Passwords do not match</p>
+            )}
+          </div>
 
-          <div className="flex justify-end gap-3 pt-3 border-t border-border">
+          <div className="flex justify-end gap-3 border-t border-border pt-3">
             <button
               type="button"
               onClick={onClose}
@@ -1078,9 +1112,9 @@ function ResetPasswordModal({ user, onClose, onSuccess }: { user: AdminUserRow; 
             <button
               type="submit"
               disabled={submitting}
-              className="h-11 rounded-xl bg-amber-500 px-5 text-sm font-bold text-black hover:bg-amber-400 disabled:opacity-50"
+              className="h-11 rounded-xl bg-primary px-5 text-sm font-bold text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
             >
-              {submitting ? "Resetting…" : "Set New Password"}
+              {submitting ? "Saving…" : "Reset Password"}
             </button>
           </div>
         </form>

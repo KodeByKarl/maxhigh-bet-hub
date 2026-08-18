@@ -15,7 +15,7 @@ export function SuperTopBar() {
             <Shield size={15} />
           </div>
           <div className="min-w-0 leading-tight">
-            <div className="truncate text-sm font-black tracking-wide text-foreground">MaxHigh</div>
+            <div className="truncate text-sm font-black tracking-wide text-foreground">@{user?.username || name}</div>
             <div className="text-[10px] font-bold uppercase tracking-[0.14em] text-amber-500">Superadmin</div>
           </div>
         </div>

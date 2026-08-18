@@ -19,7 +19,7 @@ export function AdminTopBar() {
         <div className="flex min-w-0 items-center gap-2.5 md:hidden">
           <img src="/maxhigh-chip.png" alt="" className="h-8 w-8 shrink-0 rounded-full" aria-hidden />
           <div className="min-w-0 leading-tight">
-            <div className="truncate text-sm font-black tracking-wide text-white">MaxHigh</div>
+            <div className="truncate text-sm font-black tracking-wide text-white">@{user?.username || name}</div>
             <div className="text-[10px] font-bold uppercase tracking-[0.14em] text-violet-300">
               {roleLabel(user?.role)}
             </div>

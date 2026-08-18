@@ -62,7 +62,7 @@ export function AdminShell() {
       <AdminSidebar />
       <div className="flex min-w-0 flex-1 flex-col">
         <AdminTopBar />
-        <main className="flex-1 p-3 pb-[5.5rem] sm:p-5 md:pb-5">
+        <main className="flex-1 p-3 pb-[8.75rem] sm:p-5 md:pb-5">
           <div className="w-full">
             <Outlet />
           </div>

@@ -105,8 +105,7 @@ function AdminDashboardPage() {
           </div>
 
           <h1 className="text-xl font-black tracking-tight text-white sm:text-3xl lg:text-4xl">
-            <span className="sm:hidden">Command Center</span>
-            <span className="hidden sm:inline">Command Center, {firstName}</span>
+            Command Center, {firstName}
           </h1>
 
           <p className="mt-1 max-w-lg text-xs leading-relaxed text-white/45 sm:text-sm">

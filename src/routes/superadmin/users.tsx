@@ -17,6 +17,7 @@ import { useAuth } from "@/lib/auth";
 import { isSuperadminRole } from "@/lib/user";
 import { formatMoney } from "@/lib/currency";
 import { Input } from "@/components/ui/input";
+import { PasswordInput } from "@/components/ui/password-input";
 import { saGlass } from "@/components/superadmin/ui/glass";
 import { toast } from "sonner";
 import { MoreHorizontal, Pencil, X } from "lucide-react";
@@ -318,6 +319,7 @@ function SuperUsersPage() {
             void load();
           }}
           existingUsernames={rows.map((r) => r.username.toLowerCase())}
+          agents={rows.filter((r) => r.role === "agent" || r.role === "master_agent")}
         />
       )}
 
@@ -352,38 +354,39 @@ function AddPlayerModal({
   onClose,
   onCreated,
   existingUsernames,
+  agents,
 }: {
   onClose: () => void;
   onCreated: () => void;
   existingUsernames: string[];
+  agents: SuperUserRow[];
 }) {
+  const { user } = useAuth();
   const [busy, setBusy] = useState(false);
   const [email, setEmail] = useState("");
   const [username, setUsername] = useState("");
-  const [userId, setUserId] = useState("");
   const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [role, setRole] = useState<UserRole>("player");
   const [balance, setBalance] = useState("0");
+  const [parentAgentId, setParentAgentId] = useState("");
 
-  // System generator
   const generateSystemCredentials = () => {
     const randomNum = Math.floor(100000 + Math.random() * 900000);
     const sysUser = `player_${randomNum}`;
-    const sysId = crypto.randomUUID();
     const sysPass = Math.random().toString(36).slice(-8) + "A1!";
     setUsername(sysUser);
-    setUserId(sysId);
     setPassword(sysPass);
-    toast.info("System generated User ID, username & password!");
+    setConfirmPassword(sysPass);
+    toast.info("System generated username & password!");
   };
 
-  // Live password validation
   const hasMinLength = password.length >= 6;
   const hasLetter = /[a-zA-Z]/.test(password);
   const hasNumber = /[0-9]/.test(password);
   const isPasswordValid = hasMinLength && hasLetter && hasNumber;
+  const passwordsMatch = password === confirmPassword;
 
-  // Live username verification
   const isUsernameTaken = username.trim() !== "" && existingUsernames.includes(username.trim().toLowerCase());
   const isUsernameValid = username.trim().length >= 3 && !isUsernameTaken;
 
@@ -397,6 +400,10 @@ function AddPlayerModal({
       toast.error("Password must be at least 6 characters with letters and numbers!");
       return;
     }
+    if (!passwordsMatch) {
+      toast.error("Passwords do not match");
+      return;
+    }
 
     setBusy(true);
     try {
@@ -407,6 +414,7 @@ function AddPlayerModal({
           password: password.trim(),
           role,
           balance: Number(balance) || 0,
+          parentAgentId: parentAgentId || undefined,
         },
       });
       toast.success(`Account @${username.trim()} created successfully!`);
@@ -418,12 +426,14 @@ function AddPlayerModal({
     }
   }
 
+  const selectedAgent = agents.find((a) => a.id === parentAgentId);
+
   return (
-    <div className="fixed inset-0 z-50 grid place-items-center bg-black/60 backdrop-blur-sm p-4" onClick={onClose}>
+    <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/60 backdrop-blur-sm sm:items-center sm:p-4" onClick={onClose}>
       <form
         onSubmit={onSubmit}
         onClick={(e) => e.stopPropagation()}
-        className={`${saGlass} w-full max-w-xl space-y-4 p-6 border border-amber-500/30 shadow-2xl`}
+        className={`${saGlass} flex max-h-[min(92dvh,calc(100dvh-3.5rem))] w-full max-w-xl flex-col overflow-y-auto rounded-t-2xl border border-amber-500/30 p-5 pb-[max(1.25rem,env(safe-area-inset-bottom))] shadow-2xl sm:rounded-2xl sm:p-6`}
       >
         <div className="flex items-center justify-between border-b border-amber-500/20 pb-3">
           <div>
@@ -439,89 +449,130 @@ function AddPlayerModal({
           </button>
         </div>
 
-        <div className="flex items-center justify-between rounded-xl border border-amber-500/30 bg-amber-500/10 p-3">
+        <div className="mt-4 rounded-xl border border-amber-500/30 bg-amber-500/10 px-3 py-2.5">
+          <div className="text-[10px] font-bold uppercase tracking-wider text-amber-300">Agent account</div>
+          <div className="mt-1">
+            <select
+              value={parentAgentId}
+              onChange={(e) => setParentAgentId(e.target.value)}
+              className="h-11 w-full rounded-xl border border-amber-500/20 bg-[#1C1916] px-3 text-sm font-bold text-foreground [color-scheme:dark]"
+            >
+              <option value="">Direct — Superadmin @{user?.username ?? "you"}</option>
+              {agents.map((a) => (
+                <option key={a.id} value={a.id}>
+                  @{a.username} ({a.role === "master_agent" ? "Master Agent" : "Agent"})
+                </option>
+              ))}
+            </select>
+          </div>
+          <p className="mt-1.5 text-[11px] text-muted-foreground">
+            {selectedAgent
+              ? `This player will belong to @${selectedAgent.username}`
+              : `No agent selected — account is created under Superadmin @${user?.username ?? "you"}`}
+          </p>
+        </div>
+
+        <div className="mt-3 flex items-center justify-between rounded-xl border border-amber-500/30 bg-amber-500/10 p-3">
           <span className="text-xs font-bold text-amber-300">Quick System Generator</span>
           <button
             type="button"
             onClick={generateSystemCredentials}
-            className="rounded-lg bg-amber-500 px-3 py-1.5 text-xs font-black text-black hover:bg-amber-400 active:scale-95 transition-transform"
+            className="rounded-lg bg-amber-500 px-3 py-1.5 text-xs font-black text-black transition-transform hover:bg-amber-400 active:scale-95"
           >
-            ⚡ Auto-Generate All
+            Auto-Generate
           </button>
         </div>
 
-        <div className="grid gap-3 sm:grid-cols-2">
+        <div className="mt-4 grid gap-3 sm:grid-cols-2">
           <div>
-            <label className="block text-[11px] font-bold uppercase text-muted-foreground mb-1">
+            <label className="mb-1 block text-[11px] font-bold uppercase text-muted-foreground">
               Username
             </label>
             <Input
               value={username}
-              onChange={(e) => {
-                setUsername(e.target.value);
-                if (!userId) setUserId(`usr_${e.target.value.toLowerCase().replace(/[^a-z0-9]/g, "")}`);
-              }}
+              onChange={(e) => setUsername(e.target.value)}
               required
               placeholder="e.g. player888"
-              className="h-10 rounded-xl bg-white/[0.06] text-foreground"
+              autoComplete="off"
+              className="h-11 rounded-xl bg-white/[0.06] text-foreground"
             />
             {username.trim() !== "" && (
               <div className="mt-1 text-[11px] font-semibold">
                 {isUsernameTaken ? (
-                  <span className="text-rose-400">❌ Username already exists!</span>
+                  <span className="text-rose-400">Username already exists!</span>
                 ) : (
-                  <span className="text-emerald-400">✓ Username available</span>
+                  <span className="text-emerald-400">Username available</span>
                 )}
               </div>
             )}
           </div>
 
           <div>
-            <label className="block text-[11px] font-bold uppercase text-muted-foreground mb-1">
-              User ID (System / Custom)
+            <label className="mb-1 block text-[11px] font-bold uppercase text-muted-foreground">
+              Email (optional)
             </label>
             <Input
-              value={userId}
-              onChange={(e) => setUserId(e.target.value)}
-              placeholder="Auto-generated UUID or custom ID"
-              className="h-10 rounded-xl bg-white/[0.06] text-foreground font-mono text-xs"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              type="email"
+              placeholder="player@example.com"
+              className="h-11 rounded-xl bg-white/[0.06] text-foreground"
             />
           </div>
 
-          <div className="sm:col-span-2">
-            <label className="block text-[11px] font-bold uppercase text-muted-foreground mb-1">
-              Password Verification
+          <div>
+            <label className="mb-1 block text-[11px] font-bold uppercase text-muted-foreground">
+              Password *
             </label>
-            <Input
+            <PasswordInput
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
-              type="text"
-              placeholder="System generated or custom password"
-              className="h-10 rounded-xl bg-white/[0.06] text-foreground font-mono"
+              placeholder="Min 6 chars, letter + number"
+              autoComplete="new-password"
+              className="h-11 rounded-xl bg-white/[0.06] text-foreground"
             />
-            {/* Live Password Verification Status */}
-            <div className="mt-2 grid grid-cols-3 gap-2 text-[11px]">
-              <div className={`rounded-lg px-2 py-1 border text-center font-bold ${hasMinLength ? "border-emerald-500/40 bg-emerald-500/10 text-emerald-400" : "border-white/10 text-muted-foreground"}`}>
+          </div>
+
+          <div>
+            <label className="mb-1 block text-[11px] font-bold uppercase text-muted-foreground">
+              Confirm Password *
+            </label>
+            <PasswordInput
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
+              required
+              placeholder="Re-enter password"
+              autoComplete="new-password"
+              className="h-11 rounded-xl bg-white/[0.06] text-foreground"
+            />
+            {confirmPassword.length > 0 && !passwordsMatch && (
+              <p className="mt-1 text-[11px] font-semibold text-rose-400">Passwords do not match</p>
+            )}
+          </div>
+
+          <div className="sm:col-span-2">
+            <div className="grid grid-cols-3 gap-2 text-[11px]">
+              <div className={`rounded-lg border px-2 py-1 text-center font-bold ${hasMinLength ? "border-emerald-500/40 bg-emerald-500/10 text-emerald-400" : "border-white/10 text-muted-foreground"}`}>
                 {hasMinLength ? "✓ 6+ Chars" : "Min 6 Chars"}
               </div>
-              <div className={`rounded-lg px-2 py-1 border text-center font-bold ${hasLetter ? "border-emerald-500/40 bg-emerald-500/10 text-emerald-400" : "border-white/10 text-muted-foreground"}`}>
+              <div className={`rounded-lg border px-2 py-1 text-center font-bold ${hasLetter ? "border-emerald-500/40 bg-emerald-500/10 text-emerald-400" : "border-white/10 text-muted-foreground"}`}>
                 {hasLetter ? "✓ Has Letter" : "Contains Letter"}
               </div>
-              <div className={`rounded-lg px-2 py-1 border text-center font-bold ${hasNumber ? "border-emerald-500/40 bg-emerald-500/10 text-emerald-400" : "border-white/10 text-muted-foreground"}`}>
+              <div className={`rounded-lg border px-2 py-1 text-center font-bold ${hasNumber ? "border-emerald-500/40 bg-emerald-500/10 text-emerald-400" : "border-white/10 text-muted-foreground"}`}>
                 {hasNumber ? "✓ Has Number" : "Contains Number"}
               </div>
             </div>
           </div>
 
           <div>
-            <label className="block text-[11px] font-bold uppercase text-muted-foreground mb-1">
+            <label className="mb-1 block text-[11px] font-bold uppercase text-muted-foreground">
               Role
             </label>
             <select
               value={role}
               onChange={(e) => setRole(e.target.value as UserRole)}
-              className="h-10 w-full rounded-xl border border-amber-500/20 bg-[#1C1916] px-3 text-sm font-bold text-foreground [color-scheme:dark]"
+              className="h-11 w-full rounded-xl border border-amber-500/20 bg-[#1C1916] px-3 text-sm font-bold text-foreground [color-scheme:dark]"
             >
               <option value="player">Player</option>
               <option value="agent">Agent</option>
@@ -531,7 +582,7 @@ function AddPlayerModal({
           </div>
 
           <div>
-            <label className="block text-[11px] font-bold uppercase text-muted-foreground mb-1">
+            <label className="mb-1 block text-[11px] font-bold uppercase text-muted-foreground">
               Initial Balance (₱)
             </label>
             <Input
@@ -540,12 +591,12 @@ function AddPlayerModal({
               type="number"
               min={0}
               placeholder="0 by default"
-              className="h-10 rounded-xl bg-white/[0.06] text-foreground"
+              className="h-11 rounded-xl bg-white/[0.06] text-foreground"
             />
           </div>
         </div>
 
-        <div className="flex justify-end gap-3 pt-3">
+        <div className="mt-4 flex justify-end gap-3 pt-3">
           <button
             type="button"
             onClick={onClose}
@@ -555,7 +606,7 @@ function AddPlayerModal({
           </button>
           <button
             type="submit"
-            disabled={busy || !isPasswordValid || !isUsernameValid}
+            disabled={busy || !isPasswordValid || !isUsernameValid || !passwordsMatch}
             className="h-11 rounded-xl bg-amber-500 px-6 text-xs font-black uppercase tracking-wider text-black hover:bg-amber-400 disabled:opacity-50"
           >
             {busy ? "Creating…" : "Create Player"}

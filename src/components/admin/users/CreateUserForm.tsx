@@ -3,6 +3,7 @@ import { toast } from "sonner";
 import { adminCreateUserFn } from "@/functions/admin";
 import { useAuth } from "@/lib/auth";
 import { Input } from "@/components/ui/input";
+import { PasswordInput } from "@/components/ui/password-input";
 
 export function CreateUserForm({ onCreated }: { onCreated: () => void }) {
   const { user } = useAuth();
@@ -11,11 +12,16 @@ export function CreateUserForm({ onCreated }: { onCreated: () => void }) {
   const [email, setEmail] = useState("");
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [balance, setBalance] = useState("1000");
   const [role, setRole] = useState<"player" | "admin">("player");
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
+    if (password !== confirmPassword) {
+      toast.error("Passwords do not match");
+      return;
+    }
     setBusy(true);
     try {
       const created = await adminCreateUserFn({
@@ -35,6 +41,7 @@ export function CreateUserForm({ onCreated }: { onCreated: () => void }) {
       setEmail("");
       setUsername("");
       setPassword("");
+      setConfirmPassword("");
       setBalance("1000");
       setRole("player");
       onCreated();
@@ -52,6 +59,11 @@ export function CreateUserForm({ onCreated }: { onCreated: () => void }) {
         Username is required for sign-in. Email is optional.
       </p>
 
+      <div className="mt-3 rounded-xl border border-violet-400/30 bg-violet-500/10 px-3 py-2.5">
+        <div className="text-[10px] font-bold uppercase tracking-wider text-violet-300">Agent account</div>
+        <div className="mt-0.5 truncate text-sm font-black text-foreground">@{user?.username ?? "—"}</div>
+      </div>
+
       <div className="mt-4 grid gap-3 sm:grid-cols-2">
         <Input
           required
@@ -67,12 +79,22 @@ export function CreateUserForm({ onCreated }: { onCreated: () => void }) {
           onChange={(e) => setEmail(e.target.value)}
           className="h-11 rounded-xl border-border bg-[#12101C]"
         />
-        <Input
+        <PasswordInput
           required
-          type="password"
           placeholder="Password (min 6)"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
+          minLength={6}
+          autoComplete="new-password"
+          className="h-11 rounded-xl border-border bg-[#12101C]"
+        />
+        <PasswordInput
+          required
+          placeholder="Confirm password"
+          value={confirmPassword}
+          onChange={(e) => setConfirmPassword(e.target.value)}
+          minLength={6}
+          autoComplete="new-password"
           className="h-11 rounded-xl border-border bg-[#12101C]"
         />
         <Input

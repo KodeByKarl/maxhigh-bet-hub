@@ -19,7 +19,7 @@ export function AdminMobileNav() {
   const onReports = pathname.startsWith("/admin/reports");
 
   return (
-    <nav className="fixed inset-x-0 bottom-0 z-30 border-t border-white/[0.08] bg-[#0E0C18]/95 px-1.5 pb-[max(0.4rem,env(safe-area-inset-bottom))] pt-1.5 backdrop-blur-xl md:hidden">
+    <nav className="fixed inset-x-0 bottom-0 z-30 border-t border-white/[0.08] bg-[#0E0C18]/95 px-1.5 pb-[max(3.25rem,env(safe-area-inset-bottom))] pt-1.5 backdrop-blur-xl md:hidden">
       <div className="grid grid-cols-4 gap-0.5">
         {tabs.map((item) => {
           const Icon = item.icon;

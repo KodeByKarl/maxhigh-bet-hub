@@ -862,7 +862,7 @@ export function GoldenPantherSlot({
     (phase === "glow" || phase === "popping" || phase === "falling");
 
   return (
-    <div className="relative flex h-dvh w-full flex-col overflow-hidden select-none">
+    <div className="relative flex h-full min-h-0 w-full max-w-[100vw] flex-col overflow-hidden select-none">
       <img
         src="/images/symbols/panther/backdrop.webp"
         alt=""
@@ -872,8 +872,8 @@ export function GoldenPantherSlot({
         fetchPriority="high"
       />
 
-      {/* Playfield — mobile-first, elder-readable */}
-      <div className="relative z-10 flex min-h-0 flex-1 flex-col px-1.5 pt-[max(0.25rem,env(safe-area-inset-top))] pb-[max(0.35rem,env(safe-area-inset-bottom))] sm:items-center sm:justify-center sm:px-3 sm:py-2">
+      {/* Playfield — sit above Android 3-button nav (safe-area is often 0 there) */}
+      <div className="relative z-10 flex min-h-0 flex-1 flex-col px-1.5 pt-[max(0.25rem,env(safe-area-inset-top))] pb-[max(3.25rem,env(safe-area-inset-bottom))] sm:items-center sm:justify-center sm:px-3 sm:py-2 sm:pb-2">
         <div className="mx-auto flex h-full min-h-0 w-full max-w-[840px] flex-col">
           {/* Open temple well — thin gold rim, no heavy metal box */}
           <div className="relative flex min-h-0 w-full flex-1 flex-col">
@@ -1003,14 +1003,14 @@ export function GoldenPantherSlot({
             </div>
           </div>
 
-          {/* Buy feature — larger taps on mobile */}
+          {/* Buy feature — compact on phones so the spin row stays on-screen */}
           {!inFree && (
-            <div className="mt-2 flex shrink-0 justify-center gap-2 sm:mt-2 sm:gap-3">
+            <div className="mt-1 flex shrink-0 justify-center gap-1.5 sm:mt-2 sm:gap-3">
               <button
                 type="button"
                 disabled={busy}
                 onClick={() => openBuyFeature("normal")}
-                className="min-h-11 rounded-xl border-2 border-amber-400/80 bg-black/70 px-4 py-2 text-xs font-black uppercase tracking-wide text-amber-200 disabled:opacity-40 sm:min-h-10 sm:text-[11px]"
+                className="min-h-9 rounded-xl border-2 border-amber-400/80 bg-black/70 px-3 py-1.5 text-[10px] font-black uppercase tracking-wide text-amber-200 disabled:opacity-40 sm:min-h-10 sm:px-4 sm:py-2 sm:text-[11px]"
               >
                 Buy FS {formatMoneyCompact(buyCost)}
               </button>
@@ -1018,60 +1018,64 @@ export function GoldenPantherSlot({
                 type="button"
                 disabled={busy}
                 onClick={() => openBuyFeature("super")}
-                className="min-h-11 rounded-xl border-2 border-amber-400/80 bg-black/70 px-4 py-2 text-xs font-black uppercase tracking-wide text-amber-200 disabled:opacity-40 sm:min-h-10 sm:text-[11px]"
+                className="min-h-9 rounded-xl border-2 border-amber-400/80 bg-black/70 px-3 py-1.5 text-[10px] font-black uppercase tracking-wide text-amber-200 disabled:opacity-40 sm:min-h-10 sm:px-4 sm:py-2 sm:text-[11px]"
               >
                 Super {formatMoneyCompact(superBuyCost)}
               </button>
             </div>
           )}
 
-          {/* Elder-friendly HUD */}
-          <div className="mt-2 w-full shrink-0 sm:mt-3">
-            {/* Meters — large readable values */}
-            <div className="mb-2 grid grid-cols-3 gap-1.5 sm:gap-2">
-              <div className="rounded-xl border border-amber-500/40 bg-black/75 px-2 py-2 text-center sm:py-2.5">
-                <div className="text-[10px] font-bold uppercase tracking-wider text-amber-200/70 sm:text-[11px]">
+          {/* HUD — compact on Android so Spin sits above the system nav */}
+          <div className="mt-1 w-full min-w-0 shrink-0 sm:mt-3">
+            <div className="mb-1.5 grid grid-cols-3 gap-1 sm:mb-2 sm:gap-2">
+              <div className="min-w-0 rounded-xl border border-amber-500/40 bg-black/75 px-1 py-1.5 text-center sm:px-2 sm:py-2.5">
+                <div className="text-[9px] font-bold uppercase tracking-wider text-amber-200/70 sm:text-[11px]">
                   Bet
                 </div>
-                <div className="text-base font-black tabular-nums text-amber-100 sm:text-lg">
+                <div className="truncate text-sm font-black tabular-nums leading-tight text-amber-100 sm:text-lg">
                   {totalBet.toFixed(2)}
                 </div>
               </div>
-              <div className="rounded-xl border border-fuchsia-400/50 bg-gradient-to-b from-purple-900/90 to-black/80 px-2 py-2 text-center sm:py-2.5">
-                <div className="text-[10px] font-bold uppercase tracking-wider text-fuchsia-200/80 sm:text-[11px]">
+              <div className="min-w-0 rounded-xl border border-fuchsia-400/50 bg-gradient-to-b from-purple-900/90 to-black/80 px-1 py-1.5 text-center sm:px-2 sm:py-2.5">
+                <div className="text-[9px] font-bold uppercase tracking-wider text-fuchsia-200/80 sm:text-[11px]">
                   Win
                 </div>
-                <div className="truncate text-base font-black tabular-nums text-yellow-200 sm:text-lg">
+                <div
+                  className="truncate text-sm font-black tabular-nums leading-tight text-yellow-200 sm:text-lg"
+                  title={displayWin > 0 ? formatMoney(displayWin) : undefined}
+                >
                   {displayWin > 0 ? formatMoneyCompact(displayWin) : "—"}
                 </div>
               </div>
-              <div className="rounded-xl border border-amber-500/40 bg-black/75 px-2 py-2 text-center sm:py-2.5">
-                <div className="text-[10px] font-bold uppercase tracking-wider text-amber-200/70 sm:text-[11px]">
+              <div className="min-w-0 rounded-xl border border-amber-500/40 bg-black/75 px-1 py-1.5 text-center sm:px-2 sm:py-2.5">
+                <div className="text-[9px] font-bold uppercase tracking-wider text-amber-200/70 sm:text-[11px]">
                   Balance
                 </div>
-                <div className="truncate text-base font-black tabular-nums text-amber-100 sm:text-lg">
+                <div
+                  className="truncate text-sm font-black tabular-nums leading-tight text-amber-100 sm:text-lg"
+                  title={formatMoney(balance)}
+                >
                   {formatMoneyCompact(balance)}
                 </div>
               </div>
             </div>
 
-            {/* Actions — big touch targets */}
-            <div className="flex items-center justify-between gap-2 rounded-2xl border border-amber-500/35 bg-black/80 px-2 py-2 backdrop-blur-md sm:gap-3 sm:px-3 sm:py-2.5">
+            <div className="flex min-w-0 items-center gap-1 rounded-2xl border border-amber-500/35 bg-black/80 px-1 py-1.5 backdrop-blur-md sm:gap-3 sm:px-3 sm:py-2.5">
               <button
                 type="button"
                 onClick={() => setInfoOpen(true)}
-                className="grid size-12 shrink-0 place-items-center rounded-xl border border-white/20 bg-neutral-800 text-white sm:size-11"
+                className="grid size-10 shrink-0 place-items-center rounded-xl border border-white/20 bg-neutral-800 text-white sm:size-11"
                 aria-label="Paytable Info"
               >
-                <Info size={22} />
+                <Info size={20} />
               </button>
 
-              <div className="flex items-center gap-1.5 rounded-xl border border-white/15 bg-neutral-900/90 px-1.5 py-1">
+              <div className="flex min-w-0 flex-1 items-center justify-center gap-0.5 rounded-xl border border-white/15 bg-neutral-900/90 px-0.5 py-0.5 sm:gap-1.5 sm:px-1.5 sm:py-1">
                 <button
                   type="button"
                   disabled={busy}
                   onClick={() => nudgeBet(-1)}
-                  className="grid size-11 place-items-center rounded-lg bg-neutral-700 text-xl font-black text-white disabled:opacity-40 sm:size-10"
+                  className="grid size-9 shrink-0 place-items-center rounded-lg bg-neutral-700 text-lg font-black text-white disabled:opacity-40 sm:size-10 sm:text-xl"
                   aria-label="Decrease Bet"
                 >
                   −
@@ -1080,13 +1084,13 @@ export function GoldenPantherSlot({
                   type="button"
                   disabled={busy}
                   onClick={() => setBetModalOpen(true)}
-                  className="min-w-[4.25rem] px-1 text-center disabled:opacity-40"
+                  className="min-w-0 flex-1 px-0.5 text-center disabled:opacity-40 sm:min-w-[4.25rem] sm:flex-none sm:px-1"
                   aria-label="Select Bet Amount"
                 >
-                  <div className="text-[10px] font-bold uppercase tracking-wider text-white/55">
+                  <div className="text-[9px] font-bold uppercase tracking-wider text-white/55 sm:text-[10px]">
                     Bet
                   </div>
-                  <div className="text-sm font-black tabular-nums text-yellow-300 sm:text-base">
+                  <div className="truncate text-xs font-black tabular-nums text-yellow-300 sm:text-base">
                     {totalBet.toFixed(2)}
                   </div>
                 </button>
@@ -1094,7 +1098,7 @@ export function GoldenPantherSlot({
                   type="button"
                   disabled={busy}
                   onClick={() => nudgeBet(1)}
-                  className="grid size-11 place-items-center rounded-lg bg-neutral-700 text-xl font-black text-white disabled:opacity-40 sm:size-10"
+                  className="grid size-9 shrink-0 place-items-center rounded-lg bg-neutral-700 text-lg font-black text-white disabled:opacity-40 sm:size-10 sm:text-xl"
                   aria-label="Increase Bet"
                 >
                   +
@@ -1105,14 +1109,14 @@ export function GoldenPantherSlot({
                 type="button"
                 onClick={() => setTurbo((v) => !v)}
                 className={cn(
-                  "grid size-12 shrink-0 place-items-center rounded-xl border sm:size-11",
+                  "grid size-10 shrink-0 place-items-center rounded-xl border sm:size-11",
                   turbo
                     ? "border-amber-400 bg-amber-400/25 text-yellow-200"
                     : "border-white/20 bg-neutral-800 text-white/70",
                 )}
                 aria-label="Turbo Fast Mode"
               >
-                <FastForward size={22} />
+                <FastForward size={18} />
               </button>
 
               <button
@@ -1132,32 +1136,32 @@ export function GoldenPantherSlot({
                     void spin(false);
                   }
                 }}
-                className="relative grid size-[4.25rem] shrink-0 place-items-center rounded-full border-[3px] border-amber-300 bg-gradient-to-b from-amber-400 via-amber-600 to-amber-800 text-amber-950 shadow-[0_6px_22px_rgba(217,119,6,0.65)] active:scale-95 sm:size-16"
+                className="relative grid size-14 shrink-0 place-items-center rounded-full border-[3px] border-amber-300 bg-gradient-to-b from-amber-400 via-amber-600 to-amber-800 text-amber-950 shadow-[0_6px_22px_rgba(217,119,6,0.65)] active:scale-95 sm:size-16"
                 aria-label="Spin"
               >
-                <div className="absolute inset-1.5 flex items-center justify-center rounded-full bg-gradient-to-b from-neutral-900 to-black shadow-inner">
+                <div className="absolute inset-1 flex items-center justify-center rounded-full bg-gradient-to-b from-neutral-900 to-black shadow-inner sm:inset-1.5">
                   {inFree ? (
                     <div className="flex flex-col items-center -space-y-0.5">
-                      <span className="text-2xl font-black tabular-nums leading-none text-yellow-300">
+                      <span className="text-xl font-black tabular-nums leading-none text-yellow-300 sm:text-2xl">
                         {freeSpins}
                       </span>
-                      <span className="text-[9px] font-black uppercase tracking-widest text-amber-500">
+                      <span className="text-[8px] font-black uppercase tracking-widest text-amber-500 sm:text-[9px]">
                         Spins
                       </span>
                     </div>
                   ) : autoSpin ? (
                     <div className="flex flex-col items-center -space-y-0.5">
-                      <span className="text-2xl font-black tabular-nums leading-none text-yellow-300">
+                      <span className="text-xl font-black tabular-nums leading-none text-yellow-300 sm:text-2xl">
                         {remainingAutoSpins === "infinity" ? "∞" : remainingAutoSpins}
                       </span>
-                      <span className="text-[9px] font-black uppercase tracking-widest text-amber-500">
+                      <span className="text-[8px] font-black uppercase tracking-widest text-amber-500 sm:text-[9px]">
                         Auto
                       </span>
                     </div>
                   ) : busy ? (
-                    <RotateCw size={28} className="animate-spin text-yellow-300" />
+                    <RotateCw size={24} className="animate-spin text-yellow-300 sm:size-7" />
                   ) : (
-                    <RotateCw size={28} className="text-yellow-300" />
+                    <RotateCw size={24} className="text-yellow-300 sm:size-7" />
                   )}
                 </div>
               </button>
@@ -1175,7 +1179,7 @@ export function GoldenPantherSlot({
                   }
                 }}
                 className={cn(
-                  "grid size-12 shrink-0 place-items-center rounded-xl border sm:size-11",
+                  "grid size-10 shrink-0 place-items-center rounded-xl border sm:size-11",
                   busy || autoSpin || (inFree && !fsPaused)
                     ? "border-red-500 bg-red-600 text-white shadow-[0_0_14px_rgba(239,68,68,0.85)]"
                     : "border-white/20 bg-neutral-800 text-white/70",
@@ -1183,20 +1187,20 @@ export function GoldenPantherSlot({
                 aria-label={busy || autoSpin || inFree ? "Stop Game" : "Auto Spin Settings"}
               >
                 {busy || autoSpin || (inFree && !fsPaused) ? (
-                  <Square size={18} className="fill-white text-white" />
+                  <Square size={16} className="fill-white text-white" />
                 ) : (
-                  <RotateCcw size={22} />
+                  <RotateCcw size={18} />
                 )}
               </button>
             </div>
 
             {busy && displayWin <= 0 && (
-              <p className="mt-1.5 text-center text-xs font-bold uppercase tracking-[0.2em] text-amber-200/70">
+              <p className="mt-1 hidden text-center text-[10px] font-bold uppercase tracking-[0.2em] text-amber-200/70 sm:mt-1.5 sm:block sm:text-xs">
                 Spinning…
               </p>
             )}
             {!busy && displayWin <= 0 && !inFree && (
-              <p className="mt-1.5 text-center text-xs font-bold uppercase tracking-[0.2em] text-amber-200/55">
+              <p className="mt-1 hidden text-center text-[10px] font-bold uppercase tracking-[0.2em] text-amber-200/55 sm:mt-1.5 sm:block sm:text-xs">
                 Good luck
               </p>
             )}

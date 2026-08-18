@@ -26,7 +26,7 @@ export function SuperMobileNav() {
 
   return (
     <>
-      <nav className="fixed inset-x-0 bottom-0 z-30 border-t border-amber-500/20 bg-[#1A162B]/95 px-1.5 pb-[max(0.4rem,env(safe-area-inset-bottom))] pt-1.5 backdrop-blur-xl lg:hidden">
+      <nav className="fixed inset-x-0 bottom-0 z-30 border-t border-amber-500/20 bg-[#1A162B]/95 px-1.5 pb-[max(3.25rem,env(safe-area-inset-bottom))] pt-1.5 backdrop-blur-xl lg:hidden">
         <div className="grid grid-cols-5 gap-0.5">
           {SUPER_MOBILE_TABS.map((item) => {
             const Icon = item.icon;
@@ -68,7 +68,7 @@ export function SuperMobileNav() {
       <Sheet open={moreOpen} onOpenChange={setMoreOpen}>
         <SheetContent
           side="bottom"
-          className="max-h-[85vh] overflow-y-auto rounded-t-3xl border-amber-500/20 bg-[#1A162B] p-4 pb-8 text-foreground"
+          className="max-h-[85vh] overflow-y-auto rounded-t-3xl border-amber-500/20 bg-[#1A162B] p-4 pb-[max(2.5rem,env(safe-area-inset-bottom))] text-foreground"
         >
           <SheetHeader className="mb-4 text-left">
             <SheetTitle className="flex items-center gap-2 text-foreground">
