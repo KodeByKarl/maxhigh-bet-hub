@@ -1,5 +1,5 @@
 /**
- * Client-facing Golden Panther balance QA — 20 consecutive paid spins,
+ * Client-facing Golden Panther balance QA — 40 consecutive paid spins,
  * wins and losses. HUD Bet/Win/Balance vs live wallet.
  *
  * Run: npx tsx --env-file=.env scripts/play-golden-panther-balance.ts
@@ -15,7 +15,7 @@ import { setGoldenPantherConfig } from "../src/components/maxhigh/golden-panther
 import { resolveSpin } from "../src/components/maxhigh/golden-panther/spinResolver";
 
 const BET = 0.2;
-const SPINS = 20;
+const SPINS = 40;
 const GAME_NAME = "Panther Peak";
 
 function php(n: number) {

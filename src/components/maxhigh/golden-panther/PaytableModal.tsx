@@ -110,8 +110,9 @@ export function PaytableModal({ bet, onClose }: Props) {
             <div className="flex items-center gap-3 rounded-xl border border-white/15 bg-white/10 px-2.5 py-2">
               <PantherIcon kind="bomb" mult={2} className="size-10 shrink-0" />
               <div className="text-[11px] font-bold leading-snug text-white">
-                <span className="text-[#F5D76E]">Bomb</span> — multiplies the
-                current tumble win. Values collect during Free Spins.
+                <span className="text-[#F5D76E]">Bomb</span> — 2x, 3x, 4x or 5x
+                only. Multiplies the current tumble win. Free Spins keep the
+                strongest bomb and apply it once at the end.
               </div>
             </div>
           </div>

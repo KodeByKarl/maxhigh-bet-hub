@@ -17,7 +17,9 @@ export type GoldenPantherSymKind =
   | "lollipop"
   | "bomb";
 
-export type GoldenPantherBombEntry = { mult: number; weight: number };
+export type GoldenPantherBombEntry = { mult: 2 | 3 | 4 | 5; weight: number };
+
+export const GOLDEN_PANTHER_BOMB_MULTS = [2, 3, 4, 5] as const;
 
 export type GoldenPantherScatterCashTier = {
   count: number;
@@ -70,7 +72,7 @@ export type GoldenPantherConfig = {
   maxFsBombMult: number;
   /** Hard stop on FS + retriggers so sticky-scatter cascades cannot run away. 0 = uncapped. */
   maxFsSessionSpins: number;
-  /** Base-game: bombs add, then this caps the tumble multiplier. 0 = uncapped. */
+  /** Base-game: strongest bomb on the winning tumble, capped here. 0 = uncapped. */
   maxBaseBombSum: number;
   symbols: GoldenPantherSymbolConfig[];
 };
@@ -97,18 +99,10 @@ export const DEFAULT_GOLDEN_PANTHER_CONFIG: GoldenPantherConfig = {
   bombChanceBasePercent: 1.5,
   bombChanceFreeSpinsPercent: 3,
   bombTable: [
-    { mult: 2, weight: 28 },
-    { mult: 3, weight: 22 },
-    { mult: 4, weight: 16 },
-    { mult: 5, weight: 12 },
-    { mult: 8, weight: 8 },
-    { mult: 10, weight: 6 },
-    { mult: 12, weight: 3 },
-    { mult: 15, weight: 2 },
-    { mult: 20, weight: 1.5 },
-    { mult: 25, weight: 1 },
-    { mult: 50, weight: 0.4 },
-    { mult: 100, weight: 0.1 },
+    { mult: 2, weight: 34 },
+    { mult: 3, weight: 28 },
+    { mult: 4, weight: 22 },
+    { mult: 5, weight: 16 },
   ],
   freeSpinsTriggerCount: 4,
   freeSpinsRetriggerCount: 4,
@@ -127,10 +121,10 @@ export const DEFAULT_GOLDEN_PANTHER_CONFIG: GoldenPantherConfig = {
   minCluster: 12,
   /** ₱5 × 10,000× = ₱50,000 round cap (the incident that lacked this clamp). */
   maxWinMult: 10_000,
-  /** Collected FS bombs add; this is the feature-end multiply ceiling (Sweet Bonanza-style). */
-  maxFsBombMult: 20,
+  /** Bombs only resolve to 2x/3x/4x/5x, including feature-end multiplier. */
+  maxFsBombMult: 5,
   maxFsSessionSpins: 25,
-  maxBaseBombSum: 2,
+  maxBaseBombSum: 5,
   symbols: [
     { id: "grape", kind: "grape", label: "10", weight: 18, pay: [0.2, 0.35, 0.8] },
     { id: "plum", kind: "plum", label: "J", weight: 16, pay: [0.35, 0.5, 1.2] },
@@ -162,6 +156,15 @@ export const DEFAULT_GOLDEN_PANTHER_CONFIG: GoldenPantherConfig = {
 function clamp(n: number, min: number, max: number) {
   if (!Number.isFinite(n)) return min;
   return Math.min(max, Math.max(min, n));
+}
+
+/** Map any bomb value onto the only allowed set: 2x / 3x / 4x / 5x. */
+export function clampBombMult(v: unknown): GoldenPantherBombEntry["mult"] {
+  const n = Math.round(num(v, 2));
+  if (n <= 2) return 2;
+  if (n === 3) return 3;
+  if (n === 4) return 4;
+  return 5;
 }
 
 function num(v: unknown, fallback: number) {
@@ -247,18 +250,23 @@ export function normalizeGoldenPantherConfig(raw: unknown): GoldenPantherConfig 
   });
 
   const bombIn = Array.isArray(o.bombTable) ? o.bombTable : null;
-  const bombTable: GoldenPantherBombEntry[] =
-    bombIn && bombIn.length > 0
-      ? bombIn
-          .map((b) => {
-            const row = b as Partial<GoldenPantherBombEntry>;
-            return {
-              mult: clamp(num(row.mult, 2), 1, 10_000),
-              weight: clamp(num(row.weight, 1), 0, 10_000),
-            };
-          })
-          .filter((b) => b.weight > 0 || b.mult > 0)
-      : d.bombTable.map((b) => ({ ...b }));
+  const bombWeights = new Map<GoldenPantherBombEntry["mult"], number>();
+  for (const mult of GOLDEN_PANTHER_BOMB_MULTS) {
+    bombWeights.set(mult, d.bombTable.find((b) => b.mult === mult)?.weight ?? 1);
+  }
+  if (bombIn && bombIn.length > 0) {
+    for (const b of bombIn) {
+      const row = b as Partial<GoldenPantherBombEntry>;
+      const n = Math.round(num(row.mult, 0));
+      if (!(GOLDEN_PANTHER_BOMB_MULTS as readonly number[]).includes(n)) continue;
+      const weight = clamp(num(row.weight, 1), 0, 10_000);
+      bombWeights.set(n as GoldenPantherBombEntry["mult"], weight);
+    }
+  }
+  const bombTable: GoldenPantherBombEntry[] = GOLDEN_PANTHER_BOMB_MULTS.map((mult) => ({
+    mult,
+    weight: bombWeights.get(mult) ?? 0,
+  }));
 
   const tiersIn = Array.isArray(o.scatterCashTiers) ? o.scatterCashTiers : null;
   const scatterCashTiers: GoldenPantherScatterCashTier[] =
@@ -306,9 +314,9 @@ export function normalizeGoldenPantherConfig(raw: unknown): GoldenPantherConfig 
     anteBetMult: clamp(num(o.anteBetMult, d.anteBetMult), 1, 5),
     minCluster: clamp(Math.round(num(o.minCluster, d.minCluster)), 3, 30),
     maxWinMult: clamp(num(o.maxWinMult, d.maxWinMult), 0, 100_000),
-    maxFsBombMult: clamp(num(o.maxFsBombMult, d.maxFsBombMult), 0, 10_000),
+    maxFsBombMult: clamp(num(o.maxFsBombMult, d.maxFsBombMult), 0, 5),
     maxFsSessionSpins: clamp(Math.round(num(o.maxFsSessionSpins, d.maxFsSessionSpins)), 0, 200),
-    maxBaseBombSum: clamp(num(o.maxBaseBombSum, d.maxBaseBombSum), 0, 1_000),
+    maxBaseBombSum: clamp(num(o.maxBaseBombSum, d.maxBaseBombSum), 0, 5),
     symbols,
   };
 }

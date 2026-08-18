@@ -1,4 +1,5 @@
 import { memo } from "react";
+import { clampBombMult } from "@/lib/golden-panther-config";
 import { cn } from "@/lib/utils";
 import type { SymKind } from "./types";
 import { ICON_SRC } from "./paytable";
@@ -7,6 +8,7 @@ type PantherIconProps = {
   kind: SymKind;
   mult?: number;
   className?: string;
+  showBombBadge?: boolean;
 };
 
 /**
@@ -17,6 +19,7 @@ export const PantherIcon = memo(function PantherIcon({
   kind,
   mult,
   className,
+  showBombBadge = true,
 }: PantherIconProps) {
   const isScatter = kind === "lollipop";
   const isBomb = kind === "bomb";
@@ -42,10 +45,10 @@ export const PantherIcon = memo(function PantherIcon({
           SCATTER
         </span>
       )}
-      {isBomb && (
+      {isBomb && showBombBadge && (
         <div className="absolute inset-0 grid place-items-center pointer-events-none z-[30]">
           <span className="rounded-full border-2 border-amber-300 bg-gradient-to-br from-purple-700 via-purple-900 to-black px-2 py-0.5 font-black text-[clamp(12px,2.4vw,18px)] text-yellow-300 drop-shadow-[0_2px_6px_rgba(0,0,0,0.9)] shadow-[0_0_15px_rgba(234,179,8,0.8)]">
-            ×{mult ?? 2}
+            ×{clampBombMult(mult ?? 2)}
           </span>
         </div>
       )}

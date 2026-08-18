@@ -1,16 +1,17 @@
+import { clampBombMult } from "@/lib/golden-panther-config";
 import type { BoardCell } from "./types";
 import { getGoldenPantherConfig } from "./runtimeConfig";
 
 /**
- * Base game: sum bomb mults on the board when a tumble wins; apply to that tumble's win.
- * Free spins: bombs are collected additively, then applied once at feature end.
+ * Base game: use a single applied bomb multiplier from the winning board.
+ * Free spins: keep the strongest winning bomb seen in the feature.
  *
  * Rule: a bomb is ONLY valid when there is a winning cluster (tumbleWin > 0).
  * Dead-spin / no-match bombs are declined and do not bank.
  */
-export function sumBombs(bombs: BoardCell[]): number {
+export function strongestBomb(bombs: BoardCell[]): number {
   if (bombs.length === 0) return 0;
-  return bombs.reduce((a, b) => a + (b.mult ?? 2), 0);
+  return bombs.reduce((top, b) => Math.max(top, clampBombMult(b.mult ?? 2)), 0);
 }
 
 function fsBombCeiling(): number {
@@ -36,7 +37,7 @@ export function applyBombToTumble(
   /** Bombs that should pop this step */
   clearBombs: boolean;
 } {
-  const bombSum = sumBombs(bombs);
+  const bombSum = strongestBomb(bombs);
   // No matching win → multiplier is invalid this step (do not bank / apply)
   if (tumbleWin <= 0 || bombSum <= 0) {
     return {
@@ -49,7 +50,7 @@ export function applyBombToTumble(
 
   if (opts.freeSpins && opts.collectMode) {
     const ceiling = fsBombCeiling();
-    const next = opts.accumulator + bombSum;
+    const next = Math.max(opts.accumulator, bombSum);
     return {
       win: tumbleWin,
       bombSum,
@@ -58,7 +59,7 @@ export function applyBombToTumble(
     };
   }
 
-  // Base (and FS non-collect): apply sum to this tumble, capped
+  // Base (and FS non-collect): apply one clean 2x/3x/4x/5x multiplier
   const baseCeil = baseBombCeiling();
   const applied = Number.isFinite(baseCeil) ? Math.min(baseCeil, bombSum) : bombSum;
   return {

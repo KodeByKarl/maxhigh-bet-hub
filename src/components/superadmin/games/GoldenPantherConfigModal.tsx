@@ -22,6 +22,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import {
   bombTablePercents,
   DEFAULT_GOLDEN_PANTHER_CONFIG,
+  GOLDEN_PANTHER_BOMB_MULTS,
   normalizeGoldenPantherConfig,
   weightPercents,
   type GoldenPantherConfig,
@@ -421,7 +422,7 @@ export function GoldenPantherConfigModal({ game, open, onOpenChange, onPatchLobb
                     <Input
                       type="number"
                       min={0}
-                      max={10000}
+                      max={5}
                       value={cfg.maxFsBombMult}
                       onChange={(e) =>
                         setCfg((p) => ({ ...p, maxFsBombMult: Number(e.target.value) }))
@@ -429,23 +430,25 @@ export function GoldenPantherConfigModal({ game, open, onOpenChange, onPatchLobb
                       className="mt-1 max-w-xs"
                     />
                     <p className="text-[11px] text-muted-foreground mt-1">
-                      Collected bombs add during free spins, then multiply once at the end — never
-                      above this. The pool cap is a separate last-line safety net.
+                      Only 2x / 3x / 4x / 5x bombs are allowed. Free spins keep the highest
+                      winning bomb and apply it once at the end.
                     </p>
                   </div>
 
                   <div className="space-y-2">
-                    <h5 className="text-xs font-bold text-white">Multiplier Weights</h5>
+                    <h5 className="text-xs font-bold text-white">Multiplier Weights (2x / 3x / 4x / 5x only)</h5>
                     <div className="grid grid-cols-2 gap-2">
-                      {cfg.bombTable.map((b, idx) => (
+                      {GOLDEN_PANTHER_BOMB_MULTS.map((mult, idx) => {
+                        const b = cfg.bombTable[idx] ?? { mult, weight: 0 };
+                        return (
                         <div
-                          key={b.mult}
+                          key={mult}
                           className="flex items-center justify-between rounded-lg border border-white/10 bg-white/[0.02] px-3 py-1.5"
                         >
-                          <span className="text-xs font-bold text-yellow-300">{b.mult}x</span>
+                          <span className="text-xs font-bold text-yellow-300">{mult}x</span>
                           <div className="flex items-center gap-2">
                             <span className="text-[10px] text-muted-foreground">
-                              {bombPercents[b.mult]}%
+                              {bombPercents[mult] ?? 0}%
                             </span>
                             <Input
                               type="number"
@@ -454,16 +457,17 @@ export function GoldenPantherConfigModal({ game, open, onOpenChange, onPatchLobb
                                 const val = Number(e.target.value);
                                 setCfg((p) => ({
                                   ...p,
-                                  bombTable: p.bombTable.map((row, i) =>
-                                    i === idx ? { ...row, weight: val } : row,
-                                  ),
+                                  bombTable: GOLDEN_PANTHER_BOMB_MULTS.map((rowMult, rowIdx) => {
+                                    const prev = p.bombTable[rowIdx] ?? { mult: rowMult, weight: 0 };
+                                    return rowIdx === idx ? { mult: rowMult, weight: val } : { mult: rowMult, weight: prev.weight };
+                                  }),
                                 }));
                               }}
                               className="w-16 h-7 text-xs"
                             />
                           </div>
                         </div>
-                      ))}
+                      )})}
                     </div>
                   </div>
                 </div>

@@ -119,7 +119,7 @@ export function BuyFeatureModal({
               ₱{cost.toFixed(2)}
             </div>
             <div className="mt-2 text-[10px] font-black uppercase leading-snug tracking-wide text-emerald-100/90">
-              4 panther canes · tumble wins · bomb multipliers in free spins
+              4 panther canes · tumble wins · 2x–5x bombs in free spins
             </div>
           </div>
 

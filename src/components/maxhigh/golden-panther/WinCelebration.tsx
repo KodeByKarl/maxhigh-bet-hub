@@ -63,7 +63,7 @@ export function WinCelebration({
     earn > 0 && (appliedMult <= 1 || Math.abs(earn * appliedMult - amount) < 0.02);
   const shownEarn = formulaMatches && appliedMult > 1 ? earn : amount;
   const shownMult = formulaMatches && earn > 0 ? appliedMult : 1;
-  const showMultPanel = amount > 0 && (bankedMult > 1 || appliedMult > 1);
+  const showMultPanel = amount > 0 && formulaMatches && appliedMult > 1;
 
   return (
     <motion.button

@@ -1,3 +1,4 @@
+import { clampBombMult } from "@/lib/golden-panther-config";
 import type { BoardCell, CellSym } from "./types";
 import { CELLS, COLS, ROWS } from "./types";
 import { getGoldenPantherConfig, getRuntimeSymbols } from "./runtimeConfig";
@@ -37,10 +38,10 @@ export function pickBombMult(): number {
   const total = table.reduce((a, b) => a + b.weight, 0);
   let r = Math.random() * total;
   for (const b of table) {
-    if (r < b.weight) return b.mult;
+    if (r < b.weight) return clampBombMult(b.mult);
     r -= b.weight;
   }
-  return table[0]?.mult ?? 2;
+  return clampBombMult(table[0]?.mult ?? 2);
 }
 
 export function makeCell(sym: CellSym, freeSpins: boolean, forceBomb = false, opts?: { allowScatter?: boolean }): BoardCell {
