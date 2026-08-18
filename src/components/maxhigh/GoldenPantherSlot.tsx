@@ -137,6 +137,8 @@ export function GoldenPantherSlot({
   const [fsSessionWin, setFsSessionWin] = useState(0);
   const [ledger, setLedger] = useState<LedgerRow[]>([]);
   const [dropTotal, setDropTotal] = useState(0);
+  const [tumbleStepWin, setTumbleStepWin] = useState(0);
+  const [cashflow, setCashflow] = useState<{ delta: number; label: string } | null>(null);
   const [banner, setBanner] = useState<string | null>(null);
   const [winPopup, setWinPopup] = useState<WinPopup | null>(null);
   const [fsSummary, setFsSummary] = useState<FsSummary | null>(null);
@@ -185,6 +187,14 @@ export function GoldenPantherSlot({
     timersRef.current.add(id);
     return id;
   }, []);
+
+  useEffect(() => {
+    if (!cashflow) return;
+    const id = window.setTimeout(() => {
+      if (mountedRef.current) setCashflow(null);
+    }, 2200);
+    return () => window.clearTimeout(id);
+  }, [cashflow]);
 
   /** Abortable wait — respects turbo + skipRef + playback generation / unmount. */
   const wait = useCallback((ms: number, gen: number) => {
@@ -287,25 +297,32 @@ export function GoldenPantherSlot({
         setLedger([]);
       }
       setDropTotal(0);
+      setTumbleStepWin(0);
       setWinningKeys(EMPTY_SET);
       setPayoutByKey(EMPTY_PAY);
       setSpawnedKeys(EMPTY_SET);
       setFallenKeys(EMPTY_SET);
       let running = 0;
-      let currentBal = startBalance;
       const rows: LedgerRow[] = [];
+
+      const applyRunningToHud = (nextRunning: number, stepWin = 0) => {
+        running = +nextRunning.toFixed(2);
+        setDropTotal(running);
+        setTumbleStepWin(stepWin);
+        if (isFree) {
+          if (running > 0) setLastWin(+(fsSessionRef.current + running).toFixed(2));
+          return;
+        }
+        // Paid spins only: wallet already had the bet deducted. Credit the same
+        // running total the WIN meter shows so balance never drifts from tally.
+        setBalanceLocal(+(startBalance + running).toFixed(2));
+      };
 
       if (skipRef.current) {
         const lastStep = script.steps[script.steps.length - 1];
         const finalBoard = lastStep ? lastStep.afterFall : script.initialBoard;
         setSlots(asSlots(finalBoard));
-        running = script.totalWin;
-        currentBal = startBalance + script.totalWin;
-        setBalanceLocal(currentBal);
-        setDropTotal(running);
-        if (isFree && running > 0) {
-          setLastWin(+(fsSessionRef.current + running).toFixed(2));
-        }
+        applyRunningToHud(script.totalWin, script.totalWin);
       } else {
         setPhase("dropping");
         setSlots(asSlots(script.initialBoard));
@@ -330,13 +347,7 @@ export function GoldenPantherSlot({
           setSpawnedKeys(EMPTY_SET);
           setFallenKeys(EMPTY_SET);
           setFallDistance(EMPTY_FALL);
-          running = script.totalWin;
-          currentBal = startBalance + script.totalWin;
-          setBalanceLocal(currentBal);
-          setDropTotal(running);
-          if (isFree && running > 0) {
-            setLastWin(+(fsSessionRef.current + running).toFixed(2));
-          }
+          applyRunningToHud(script.totalWin, script.totalWin);
           break;
         }
 
@@ -348,6 +359,8 @@ export function GoldenPantherSlot({
         const payMap = new Map<string, number>();
         const stepRows: LedgerRow[] = [];
         for (const c of step.clusters) {
+          // One badge per cluster (full cluster pay) so the on-reel number
+          // matches the amount credited this tumble, not a split per symbol.
           const badgeKey = c.keys[0];
           if (badgeKey) payMap.set(badgeKey, c.pay);
           const row = { id: c.id, kind: c.kind, count: c.count, pay: c.pay };
@@ -361,18 +374,17 @@ export function GoldenPantherSlot({
           setLedger(mergeLedgerRows(rows));
         }
 
+        // Credit BEFORE glow so WIN / badge / balance all show the amount
+        // during the winning appearance — not after it ends.
+        if (step.tumbleWin > 0) {
+          applyRunningToHud(running + step.tumbleWin, step.tumbleWin);
+          if (!isFree) {
+            setCashflow({ delta: step.tumbleWin, label: "win" });
+          }
+        }
+
         setPhase("glow");
         await wait(ANIM.glowDuration, gen);
-
-        running += step.tumbleWin;
-        if (step.tumbleWin > 0) {
-          currentBal += step.tumbleWin;
-          setBalanceLocal(currentBal);
-        }
-        setDropTotal(running);
-        if (isFree && running > 0) {
-          setLastWin(+(fsSessionRef.current + running).toFixed(2));
-        }
 
         setPhase("popping");
         pantherAudio.playCascadeTick();
@@ -386,6 +398,7 @@ export function GoldenPantherSlot({
         );
         setWinningKeys(EMPTY_SET);
         setPayoutByKey(EMPTY_PAY);
+        setTumbleStepWin(0);
         await wait(ANIM.holeHold, gen);
 
         setFallenKeys(new Set(step.fallenKeys));
@@ -400,11 +413,27 @@ export function GoldenPantherSlot({
         await wait(ANIM.betweenTumbles, gen);
       }
 
+      // Scatter / pool-cap: remaining difference vs tumble sum. Paid only —
+      // FS wallet is credited once at feature end from the server.
+      const leftover = +(script.totalWin - running).toFixed(2);
+      if (Math.abs(leftover) >= 0.01) {
+        applyRunningToHud(script.totalWin, leftover > 0 ? leftover : 0);
+        if (!isFree) {
+          setCashflow({
+            delta: leftover,
+            label: leftover > 0 ? "scatter" : "cap",
+          });
+        }
+      } else {
+        applyRunningToHud(script.totalWin, 0);
+      }
+
       if (gen === playbackGen.current) {
         setPhase("idle");
         setSpawnedKeys(EMPTY_SET);
         setFallenKeys(EMPTY_SET);
         setFallDistance(EMPTY_FALL);
+        setTumbleStepWin(0);
       }
       return script;
     },
@@ -419,7 +448,7 @@ export function GoldenPantherSlot({
         baseEarn: opts?.baseEarn ?? amount,
         multiplier: opts?.multiplier ?? 1,
       });
-      schedule(() => setWinPopup(null), ANIM.bannerHold + 1600);
+      schedule(() => setWinPopup(null), ANIM.winPopupHold);
     },
     [schedule],
   );
@@ -528,6 +557,7 @@ export function GoldenPantherSlot({
       try {
         if (!isFree) {
           setBalanceLocal(balance - cost);
+          setCashflow({ delta: -cost, label: "bet" });
         }
         await refreshEngineConfig();
 
@@ -583,6 +613,7 @@ export function GoldenPantherSlot({
             fsBombRef.current = 0;
             fsSessionRef.current = 0;
             if (settled.fsPayout.amount > 0) {
+              setCashflow({ delta: settled.fsPayout.amount, label: "win" });
               showTotalWin(settled.fsPayout.amount, {
                 baseEarn: settled.fsPayout.baseEarn,
                 multiplier: settled.fsPayout.multiplier,
@@ -601,6 +632,7 @@ export function GoldenPantherSlot({
       } catch (err) {
         if (!isFree) {
           setBalanceLocal(balance);
+          setCashflow(null);
         }
         if (!(err instanceof DOMException && err.name === "AbortError")) {
           const msg = err instanceof Error ? err.message : "Spin failed — try again";
@@ -858,8 +890,8 @@ export function GoldenPantherSlot({
 
   const displayWin = dropTotal > 0 ? dropTotal : (inFree ? fsSessionWin : lastWin);
   const showTumbleBadge =
-    dropTotal > 0 &&
-    (phase === "glow" || phase === "popping" || phase === "falling");
+    tumbleStepWin > 0 &&
+    (phase === "glow" || phase === "popping");
 
   return (
     <div className="relative flex h-full min-h-0 w-full max-w-[100vw] flex-col overflow-hidden select-none">
@@ -952,7 +984,7 @@ export function GoldenPantherSlot({
                         Tumble Win
                       </div>
                       <div className="text-lg font-black leading-none text-yellow-300 tabular-nums sm:text-xl">
-                        {formatMoney(dropTotal)}
+                        {formatMoney(tumbleStepWin, { signed: true })}
                       </div>
                     </div>
                   </div>
@@ -1032,8 +1064,8 @@ export function GoldenPantherSlot({
                 <div className="text-[9px] font-bold uppercase tracking-wider text-amber-200/70 sm:text-[11px]">
                   Bet
                 </div>
-                <div className="truncate text-sm font-black tabular-nums leading-tight text-amber-100 sm:text-lg">
-                  {totalBet.toFixed(2)}
+                <div className="break-all text-[11px] font-black tabular-nums leading-tight text-amber-100 sm:text-base">
+                  {formatMoney(totalBet)}
                 </div>
               </div>
               <div className="min-w-0 rounded-xl border border-fuchsia-400/50 bg-gradient-to-b from-purple-900/90 to-black/80 px-1 py-1.5 text-center sm:px-2 sm:py-2.5">
@@ -1041,10 +1073,10 @@ export function GoldenPantherSlot({
                   Win
                 </div>
                 <div
-                  className="truncate text-sm font-black tabular-nums leading-tight text-yellow-200 sm:text-lg"
+                  className="break-all text-[11px] font-black tabular-nums leading-tight text-yellow-200 sm:text-base"
                   title={displayWin > 0 ? formatMoney(displayWin) : undefined}
                 >
-                  {displayWin > 0 ? formatMoneyCompact(displayWin) : "—"}
+                  {displayWin > 0 ? formatMoney(displayWin) : "—"}
                 </div>
               </div>
               <div className="min-w-0 rounded-xl border border-amber-500/40 bg-black/75 px-1 py-1.5 text-center sm:px-2 sm:py-2.5">
@@ -1052,13 +1084,31 @@ export function GoldenPantherSlot({
                   Balance
                 </div>
                 <div
-                  className="truncate text-sm font-black tabular-nums leading-tight text-amber-100 sm:text-lg"
+                  className="break-all text-[11px] font-black tabular-nums leading-tight text-amber-100 sm:text-base"
                   title={formatMoney(balance)}
                 >
-                  {formatMoneyCompact(balance)}
+                  {formatMoney(balance)}
                 </div>
               </div>
             </div>
+            {cashflow && (
+              <p
+                className={cn(
+                  "mb-1.5 text-center text-[11px] font-black tabular-nums tracking-wide",
+                  cashflow.delta < 0 ? "text-rose-300" : "text-emerald-300",
+                )}
+              >
+                {cashflow.delta < 0 ? "−" : "+"}
+                {formatMoney(Math.abs(cashflow.delta))}
+                {cashflow.label === "bet"
+                  ? " bet"
+                  : cashflow.label === "scatter"
+                    ? " scatter"
+                    : cashflow.label === "cap"
+                      ? " cap"
+                      : " win"}
+              </p>
+            )}
 
             <div className="flex min-w-0 items-center gap-1 rounded-2xl border border-amber-500/35 bg-black/80 px-1 py-1.5 backdrop-blur-md sm:gap-3 sm:px-3 sm:py-2.5">
               <button
@@ -1091,7 +1141,7 @@ export function GoldenPantherSlot({
                     Bet
                   </div>
                   <div className="truncate text-xs font-black tabular-nums text-yellow-300 sm:text-base">
-                    {totalBet.toFixed(2)}
+                    {formatMoney(totalBet)}
                   </div>
                 </button>
                 <button

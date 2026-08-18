@@ -13,7 +13,8 @@
     "db:push": "npx drizzle-kit push",
     "db:studio": "npx drizzle-kit studio",
     "db:seed": "npx tsx --env-file=.env scripts/seed.ts",
-    "db:setup": "npm run db:push && npm run db:seed",
+    "db:seed-chips": "npx tsx --env-file=.env scripts/seed-all-chips.ts",
+    "db:setup": "npm run db:push && npm run db:seed && npm run db:seed-chips",
     "db:sync": "npx tsx --env-file=.env scripts/db-sync.ts",
     "db:generate": "npx drizzle-kit generate",
     "db:cleanup-play-sessions": "npx tsx --env-file=.env scripts/cleanup-play-sessions.ts"

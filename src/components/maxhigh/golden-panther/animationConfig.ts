@@ -14,8 +14,8 @@ export const ANIM = {
   /** How long a symbol takes to land on first drop */
   dropDuration: 520,
   landSquash: 140,
-  /** Winning symbols pulse / highlight — min 10s before payout counts up */
-  glowDuration: 10_000,
+  /** Winning symbols pulse / highlight before pop */
+  glowDuration: 3_000,
   /** Match pop / shatter */
   popDuration: 380,
   popStagger: 32,
@@ -28,6 +28,8 @@ export const ANIM = {
   holeHold: 140,
   betweenTumbles: 160,
   bannerHold: 1800,
+  /** Auto-dismiss full-screen win celebration */
+  winPopupHold: 3_000,
 } as const;
 
 export type PlaybackPhase =
