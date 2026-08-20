@@ -7,7 +7,7 @@ import type { BoardCell } from "./types";
 
 export type ReelPhase = "idle" | "dropping" | "glow" | "popping" | "falling";
 
-type ReelCellProps = {
+export type ReelCellProps = {
   index: number;
   cell: BoardCell | null;
   phase: ReelPhase;
@@ -20,9 +20,33 @@ type ReelCellProps = {
   isTop?: boolean;
 };
 
+function cellPhaseRelevant(props: ReelCellProps, phase: ReelPhase): boolean {
+  if (!props.cell) return phase === "dropping" || phase === "falling";
+  if (props.win) return phase === "glow" || phase === "popping";
+  if (props.isSpawn || props.isFallen) return phase === "falling";
+  return phase === "dropping";
+}
+
+function reelCellPropsEqual(prev: ReelCellProps, next: ReelCellProps): boolean {
+  if (prev.index !== next.index) return false;
+  if (prev.cols !== next.cols) return false;
+  if (prev.isTop !== next.isTop) return false;
+  if (prev.cell?.key !== next.cell?.key) return false;
+  if (prev.win !== next.win) return false;
+  if (prev.perPay !== next.perPay) return false;
+  if (prev.isSpawn !== next.isSpawn) return false;
+  if (prev.isFallen !== next.isFallen) return false;
+  if (prev.fallDist !== next.fallDist) return false;
+  if (prev.phase === next.phase) return true;
+  return !cellPhaseRelevant(prev, prev.phase) && !cellPhaseRelevant(next, next.phase);
+}
+
+const GLOW_CYCLES = 2;
+const GLOW_STEP_S = ANIM.glowDuration / 1000 / GLOW_CYCLES;
+
 /**
- * Single reel cell — memoized so only cells whose props change re-render
- * during tumble phases (avoids 30× Framer Motion tree work per tick).
+ * Single reel cell — memoized with phase-aware equality so idle cells skip
+ * re-renders when only winning cells should animate.
  */
 export const ReelCell = memo(function ReelCell({
   index,
@@ -46,6 +70,11 @@ export const ReelCell = memo(function ReelCell({
 
   const isScatter = cell?.sym.kind === "lollipop";
   const isWinLit = win && (phase === "glow" || phase === "popping");
+  const staggerMode = isInitialDrop ? "drop" : "fall";
+  const staggerCol = staggerMode === "drop" ? ANIM.dropStaggerCol : ANIM.fallStaggerCol;
+  const staggerRow = staggerMode === "drop" ? ANIM.dropStaggerRow : ANIM.fallStaggerRow;
+  const colDelay = (col * staggerCol) / 1000;
+  const rowDelay = (row * staggerRow * 0.45) / 1000;
 
   return (
     <div
@@ -58,7 +87,7 @@ export const ReelCell = memo(function ReelCell({
           ? "z-[30]"
           : isWinLit
             ? "z-[3]"
-            : (isInitialDrop || isGravityDrop)
+            : isInitialDrop || isGravityDrop
               ? "z-[1]"
               : "",
       )}
@@ -110,8 +139,8 @@ export const ReelCell = memo(function ReelCell({
                 }
               : phase === "glow" && win
                 ? {
-                    duration: 0.5,
-                    repeat: Infinity,
+                    duration: GLOW_STEP_S,
+                    repeat: GLOW_CYCLES - 1,
                     repeatType: "mirror",
                     ease: "easeInOut",
                   }
@@ -124,7 +153,7 @@ export const ReelCell = memo(function ReelCell({
                               stiffness: 420,
                               damping: 26,
                               mass: 0.85,
-                              delay: col * ((isInitialDrop ? ANIM.dropStaggerCol : ANIM.fallStaggerCol) / 1000),
+                              delay: colDelay,
                             },
                           }
                         : {
@@ -133,31 +162,15 @@ export const ReelCell = memo(function ReelCell({
                               stiffness: 420,
                               damping: 26,
                               mass: 0.85,
-                              delay:
-                                col * ((isInitialDrop ? ANIM.dropStaggerCol : ANIM.fallStaggerCol) / 1000) +
-                                row * ((isInitialDrop ? ANIM.dropStaggerRow : ANIM.fallStaggerRow) / 1000) * 0.45,
+                              delay: colDelay + rowDelay,
                             },
                           }),
-                      opacity: {
-                        duration: 0.18,
-                        delay:
-                          col *
-                          ((isInitialDrop
-                            ? ANIM.dropStaggerCol
-                            : ANIM.fallStaggerCol) /
-                            1000),
-                      },
+                      opacity: { duration: 0.18, delay: colDelay },
                       scale: {
                         type: "spring",
                         stiffness: 520,
                         damping: 20,
-                        delay:
-                          col *
-                            ((isInitialDrop
-                              ? ANIM.dropStaggerCol
-                              : ANIM.fallStaggerCol) /
-                              1000) +
-                          0.1,
+                        delay: colDelay + 0.1,
                       },
                     }
                   : {
@@ -166,7 +179,6 @@ export const ReelCell = memo(function ReelCell({
                     }
           }
         >
-          {/* Soft gold bloom behind winning symbols */}
           {isWinLit && (
             <motion.div
               aria-hidden
@@ -180,8 +192,8 @@ export const ReelCell = memo(function ReelCell({
                 popping
                   ? { duration: ANIM.popDuration / 1000, ease: "easeOut" }
                   : {
-                      duration: 0.7,
-                      repeat: Infinity,
+                      duration: GLOW_STEP_S,
+                      repeat: GLOW_CYCLES - 1,
                       repeatType: "mirror",
                       ease: "easeInOut",
                     }
@@ -201,16 +213,16 @@ export const ReelCell = memo(function ReelCell({
             className="relative z-[1] size-full"
           />
           {isWinLit && perPay != null && perPay > 0 && (
-              <motion.span
-                initial={{ y: 6, opacity: 0, scale: 0.8 }}
-                animate={{ y: 0, opacity: 1, scale: 1 }}
-                className="absolute top-0 left-1/2 z-[2] -translate-x-1/2 whitespace-nowrap rounded-full border border-white bg-gradient-to-b from-yellow-100 to-amber-400 px-1.5 py-0.5 text-[10px] font-black tabular-nums text-amber-950 shadow-[0_0_14px_rgba(250,204,21,0.95)]"
-              >
-                +₱{Number.isInteger(perPay) ? perPay : perPay.toFixed(2)}
-              </motion.span>
-            )}
+            <motion.span
+              initial={{ y: 6, opacity: 0, scale: 0.8 }}
+              animate={{ y: 0, opacity: 1, scale: 1 }}
+              className="absolute top-0 left-1/2 z-[2] -translate-x-1/2 whitespace-nowrap rounded-full border border-white bg-gradient-to-b from-yellow-100 to-amber-400 px-1.5 py-0.5 text-[10px] font-black tabular-nums text-amber-950 shadow-[0_0_14px_rgba(250,204,21,0.95)]"
+            >
+              +₱{Number.isInteger(perPay) ? perPay : perPay.toFixed(2)}
+            </motion.span>
+          )}
         </motion.div>
       )}
     </div>
   );
-});
+}, reelCellPropsEqual);

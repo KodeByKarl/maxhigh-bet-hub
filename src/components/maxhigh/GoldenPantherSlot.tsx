@@ -10,7 +10,7 @@
  */
 import { useCallback, useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { FastForward, Info, Menu, RotateCcw, RotateCw, Square, Volume2, VolumeX, Zap } from "lucide-react";
+import { FastForward, Info, RotateCcw, RotateCw, Square } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/lib/auth";
@@ -23,8 +23,13 @@ import {
   getGoldenPantherSessionFn,
 } from "@/functions/api";
 import { ANIM } from "./golden-panther/animationConfig";
-import { PantherFeatureBadge } from "./golden-panther/PantherFeatureBadge";
-import { FreeSpinsBadge } from "./golden-panther/FreeSpinsBadge";
+import {
+  getAutoSpinGapMs,
+  getDropWaitMs,
+  getPopWaitMs,
+  getRefillWaitMs,
+  scaleWaitMs,
+} from "./golden-panther/playbackHelpers";
 import { BetSelectModal } from "./golden-panther/BetSelectModal";
 import { buildBuyScatterIntroBoard, initialBoard } from "./golden-panther/gridState";
 import {
@@ -43,10 +48,9 @@ import { FreeSpinsCongrats } from "./golden-panther/FreeSpinsCongrats";
 import { FreeSpinsTriggerModal } from "./golden-panther/FreeSpinsTriggerModal";
 import { BuyFeatureModal } from "./golden-panther/BuyFeatureModal";
 import { PaytableModal } from "./golden-panther/PaytableModal";
-import { GameMenuModal } from "./golden-panther/GameMenuModal";
 import { AutoSpinModal, type AutoSpinOptions } from "./golden-panther/AutoSpinModal";
-import { WinLedger, mergeLedgerRows, type LedgerRow } from "./golden-panther/WinLedger";
-import { ReelCell, type ReelPhase } from "./golden-panther/ReelCell";
+import { ReelGrid, type ReelVisuals } from "./golden-panther/ReelGrid";
+import { type ReelPhase } from "./golden-panther/ReelCell";
 import { getGoldenPantherEngineConfigFn } from "@/functions/superadmin";
 import { GOLDEN_PANTHER_GAME_ID } from "@/lib/golden-panther-config";
 
@@ -127,9 +131,7 @@ export function GoldenPantherSlot({
   const [lastWin, setLastWin] = useState(0);
   const [freeSpins, setFreeSpins] = useState(0);
   const [inFree, setInFree] = useState(false);
-  const [fsBombAcc, setFsBombAcc] = useState(0);
   const [fsSessionWin, setFsSessionWin] = useState(0);
-  const [ledger, setLedger] = useState<LedgerRow[]>([]);
   const [dropTotal, setDropTotal] = useState(0);
   const [tumbleStepWin, setTumbleStepWin] = useState(0);
   const [cashflow, setCashflow] = useState<{ delta: number; label: string } | null>(null);
@@ -139,11 +141,9 @@ export function GoldenPantherSlot({
   const [triggerModalCount, setTriggerModalCount] = useState<number | null>(null);
   const [buyOpen, setBuyOpen] = useState(false);
   const [buyMode, setBuyMode] = useState<"normal" | "super">("normal");
-  const [menuOpen, setMenuOpen] = useState(false);
   const [infoOpen, setInfoOpen] = useState(false);
   const [betModalOpen, setBetModalOpen] = useState(false);
   const [fsPaused, setFsPaused] = useState(false);
-  const [muted, setMuted] = useState(() => pantherAudio.isMuted);
 
   const busy = phase !== "idle";
   const totalBet = +(bet * (ante ? getAnteMult() : 1)).toFixed(2);
@@ -158,7 +158,6 @@ export function GoldenPantherSlot({
   const playbackGen = useRef(0);
   const freeSpinsRef = useRef(freeSpins);
   const fsSessionRef = useRef(fsSessionWin);
-  const fsBombRef = useRef(fsBombAcc);
   const fsSpinsPlayedRef = useRef(0);
   const timersRef = useRef<Set<ReturnType<typeof setTimeout>>>(new Set());
   const spinRef = useRef<(asFree?: boolean) => Promise<void>>(async () => undefined);
@@ -167,7 +166,16 @@ export function GoldenPantherSlot({
   turboRef.current = turbo;
   freeSpinsRef.current = freeSpins;
   fsSessionRef.current = fsSessionWin;
-  fsBombRef.current = fsBombAcc;
+
+  const reelVisuals: ReelVisuals = {
+    slots,
+    phase,
+    winningKeys,
+    payoutByKey,
+    spawnedKeys,
+    fallenKeys,
+    fallDistance,
+  };
 
   const clearTrackedTimers = useCallback(() => {
     for (const id of timersRef.current) clearTimeout(id);
@@ -194,7 +202,7 @@ export function GoldenPantherSlot({
   /** Abortable wait — respects turbo + skipRef + playback generation / unmount. */
   const wait = useCallback((ms: number, gen: number) => {
     if (skipRef.current) return Promise.resolve();
-    const scaled = turboRef.current ? Math.min(ms, 60) : ms;
+    const scaled = scaleWaitMs(ms, turboRef.current);
     return new Promise<void>((resolve, reject) => {
       const id = setTimeout(() => {
         timersRef.current.delete(id);
@@ -230,7 +238,6 @@ export function GoldenPantherSlot({
       setFallDistance(EMPTY_FALL);
       setDropTotal(0);
       setTumbleStepWin(0);
-      setLedger([]);
       setLastWin(0);
       setWinPopup(null);
       setBanner(null);
@@ -242,10 +249,7 @@ export function GoldenPantherSlot({
       setSlots(asSlots(board));
       pantherAudio.startSpinLoop();
       try {
-        await wait(
-          ANIM.dropDuration + COLS * ANIM.dropStaggerCol + ROWS * ANIM.dropStaggerRow,
-          gen,
-        );
+        await wait(getDropWaitMs(), gen);
       } catch {
         pantherAudio.stopSpinLoop();
         return;
@@ -275,7 +279,6 @@ export function GoldenPantherSlot({
   useEffect(() => {
     mountedRef.current = true;
     preloadAssets();
-    pantherAudio.preload();
     if (gameId === GOLDEN_PANTHER_GAME_ID || gameId === "golden-panther") {
       void getGoldenPantherEngineConfigFn()
         .then((cfg) => {
@@ -297,10 +300,8 @@ export function GoldenPantherSlot({
           playSessionIdRef.current = session.sessionId;
           setInFree(true);
           setFreeSpins(session.freeSpinsLeft);
-          setFsBombAcc(session.fsBombAcc);
           setFsSessionWin(session.fsSessionWin);
           freeSpinsRef.current = session.freeSpinsLeft;
-          fsBombRef.current = session.fsBombAcc;
           fsSessionRef.current = session.fsSessionWin;
           fsSpinsPlayedRef.current = session.fsSpinsPlayed;
           if (session.bet > 0) setBet(session.bet);
@@ -317,33 +318,19 @@ export function GoldenPantherSlot({
     };
   }, [clearTrackedTimers, gameId]);
 
-  /** Pull latest Superadmin math for local UI (server settle uses its own copy). */
-  const refreshEngineConfig = useCallback(async () => {
-    if (gameId !== GOLDEN_PANTHER_GAME_ID && gameId !== "golden-panther") return;
-    try {
-      const cfg = await getGoldenPantherEngineConfigFn();
-      if (mountedRef.current) setGoldenPantherConfig(cfg);
-    } catch {
-      /* keep last known */
-    }
-  }, [gameId]);
-
   const applySession = useCallback(
     (session: {
       sessionId: string | null;
       freeSpinsLeft: number;
       fsSessionWin: number;
-      fsBombAcc: number;
       fsSpinsPlayed: number;
       inFree: boolean;
     }) => {
       playSessionIdRef.current = session.sessionId;
       setInFree(session.inFree);
       setFreeSpins(session.freeSpinsLeft);
-      setFsBombAcc(session.fsBombAcc);
       setFsSessionWin(session.fsSessionWin);
       freeSpinsRef.current = session.freeSpinsLeft;
-      fsBombRef.current = session.fsBombAcc;
       fsSessionRef.current = session.fsSessionWin;
       fsSpinsPlayedRef.current = session.fsSpinsPlayed;
     },
@@ -352,9 +339,6 @@ export function GoldenPantherSlot({
 
   const playScript = useCallback(
     async (script: SpinScript, isFree: boolean, gen: number, startBalance: number) => {
-      if (!isFree) {
-        setLedger([]);
-      }
       setDropTotal(0);
       setTumbleStepWin(0);
       setWinningKeys(EMPTY_SET);
@@ -362,7 +346,6 @@ export function GoldenPantherSlot({
       setSpawnedKeys(EMPTY_SET);
       setFallenKeys(EMPTY_SET);
       let running = 0;
-      const rows: LedgerRow[] = [];
 
       const applyRunningToHud = (nextRunning: number, stepWin = 0) => {
         running = +nextRunning.toFixed(2);
@@ -386,10 +369,7 @@ export function GoldenPantherSlot({
         setPhase("dropping");
         setSlots(asSlots(script.initialBoard));
         pantherAudio.startSpinLoop();
-        await wait(
-          ANIM.dropDuration + COLS * ANIM.dropStaggerCol + ROWS * ANIM.dropStaggerRow,
-          gen,
-        );
+        await wait(getDropWaitMs(), gen);
         pantherAudio.stopSpinLoop();
         pantherAudio.playReelStop(5);
       }
@@ -416,22 +396,11 @@ export function GoldenPantherSlot({
         setSlots(asSlots(step.board));
         setWinningKeys(new Set(step.winningKeys));
         const payMap = new Map<string, number>();
-        const stepRows: LedgerRow[] = [];
         for (const c of step.clusters) {
-          // One badge per cluster (full cluster pay) so the on-reel number
-          // matches the amount credited this tumble, not a split per symbol.
           const badgeKey = c.keys[0];
           if (badgeKey) payMap.set(badgeKey, c.pay);
-          const row = { id: c.id, kind: c.kind, count: c.count, pay: c.pay };
-          stepRows.push(row);
-          rows.push(row);
         }
         setPayoutByKey(payMap);
-        if (isFree) {
-          setLedger((prev) => mergeLedgerRows([...prev, ...stepRows]));
-        } else {
-          setLedger(mergeLedgerRows(rows));
-        }
 
         // Credit BEFORE glow so WIN / badge / balance all show the amount
         // during the winning appearance — not after it ends.
@@ -447,10 +416,7 @@ export function GoldenPantherSlot({
 
         setPhase("popping");
         pantherAudio.playCascadeTick();
-        await wait(
-          ANIM.popDuration + Math.min(step.winningKeys.length, 12) * ANIM.popStagger,
-          gen,
-        );
+        await wait(getPopWaitMs(step.winningKeys.length), gen);
 
         setSlots(
           step.afterPop.length === CELLS ? step.afterPop : asSlots(step.board),
@@ -465,10 +431,7 @@ export function GoldenPantherSlot({
         setFallDistance(step.fallDistance ?? EMPTY_FALL);
         setSlots(asSlots(step.afterFall));
         setPhase("falling");
-        await wait(
-          ANIM.refillDuration + COLS * ANIM.fallStaggerCol + ANIM.fallStaggerRow * 2,
-          gen,
-        );
+        await wait(getRefillWaitMs(), gen);
         await wait(ANIM.betweenTumbles, gen);
       }
 
@@ -532,12 +495,10 @@ export function GoldenPantherSlot({
           sessionId: session.sessionId,
           freeSpinsLeft: session.freeSpinsLeft,
           fsSessionWin: 0,
-          fsBombAcc: 0,
           fsSpinsPlayed: 0,
           inFree: true,
         });
         setLastWin(0);
-        setLedger([]);
         setBanner(`${session.freeSpinsLeft} FREE SPINS!`);
         setTriggerModalCount(session.freeSpinsLeft);
         schedule(() => setBanner(null), ANIM.bannerHold);
@@ -567,7 +528,6 @@ export function GoldenPantherSlot({
               sessionId: session.sessionId,
               freeSpinsLeft: session.freeSpinsLeft,
               fsSessionWin: session.fsSessionWin,
-              fsBombAcc: session.fsBombAcc,
               fsSpinsPlayed: session.fsSpinsPlayed,
               inFree: true,
             });
@@ -618,7 +578,6 @@ export function GoldenPantherSlot({
           setBalanceLocal(balance - cost);
           setCashflow({ delta: -cost, label: "bet" });
         }
-        await refreshEngineConfig();
 
         let settled: Awaited<ReturnType<typeof goldenPantherSpinFn>>;
         if (isFree) {
@@ -631,7 +590,6 @@ export function GoldenPantherSlot({
           settled = await goldenPantherFreeSpinFn({ data: { sessionId } });
         } else {
           settled = await goldenPantherSpinFn({ data: { bet, ante } });
-          setLedger([]);
           setDropTotal(0);
         }
 
@@ -643,16 +601,14 @@ export function GoldenPantherSlot({
 
         if (isFree) {
           setFsSessionWin(settled.session.fsSessionWin);
-          setFsBombAcc(settled.session.fsBombAcc);
           setLastWin(settled.session.fsSessionWin || settled.fsPayout?.amount || 0);
           fsSessionRef.current = settled.session.fsSessionWin;
-          fsBombRef.current = settled.session.fsBombAcc;
           fsSpinsPlayedRef.current = settled.session.fsSpinsPlayed;
 
           if (script.retriggerSpins > 0 && settled.session.inFree) {
             pantherAudio.playScatterTrigger();
             setBanner(`+${script.retriggerSpins} FREE SPINS!`);
-            schedule(() => setBanner(null), 1400);
+            schedule(() => setBanner(null), ANIM.bannerHold);
           }
 
           if (settled.fsPayout) {
@@ -667,9 +623,7 @@ export function GoldenPantherSlot({
               multiplier: settled.fsPayout.multiplier,
               spinsPlayed: settled.fsPayout.spinsPlayed,
             });
-            setFsBombAcc(0);
             setFsSessionWin(0);
-            fsBombRef.current = 0;
             fsSessionRef.current = 0;
             if (settled.fsPayout.amount > 0) {
               setCashflow({ delta: settled.fsPayout.amount, label: "win" });
@@ -704,7 +658,6 @@ export function GoldenPantherSlot({
                   sessionId: session.sessionId,
                   freeSpinsLeft: session.freeSpinsLeft,
                   fsSessionWin: session.fsSessionWin,
-                  fsBombAcc: session.fsBombAcc,
                   fsSpinsPlayed: session.fsSpinsPlayed,
                   inFree: true,
                 });
@@ -740,7 +693,6 @@ export function GoldenPantherSlot({
       finishBase,
       inFree,
       playScript,
-      refreshEngineConfig,
       refreshJackpot,
       schedule,
       setBalanceLocal,
@@ -826,12 +778,14 @@ export function GoldenPantherSlot({
   // Auto / free-spin chain — always invoke latest spin via ref (no stale closures).
   useEffect(() => {
     if (busyRef.current || busy) return;
-    if (winPopup || fsSummary || buyOpen || menuOpen || infoOpen || autoSpinModalOpen || betModalOpen || triggerModalCount != null) return;
+    if (winPopup || fsSummary || buyOpen || infoOpen || autoSpinModalOpen || betModalOpen || triggerModalCount != null) return;
+
+    const spinGap = getAutoSpinGapMs(turbo, autoSpinConfig?.spinWithoutReels);
 
     if (inFree && freeSpins > 0 && !fsPaused) {
       const t = setTimeout(() => {
         void spinRef.current(true);
-      }, turbo ? 350 : 700);
+      }, spinGap);
       return () => clearTimeout(t);
     }
 
@@ -888,7 +842,7 @@ export function GoldenPantherSlot({
         () => {
           void spinRef.current(false);
         },
-        autoSpinConfig?.spinWithoutReels ? 120 : turbo ? 350 : 700
+        spinGap,
       );
       return () => clearTimeout(t);
     }
@@ -900,7 +854,6 @@ export function GoldenPantherSlot({
     busy,
     fsSummary,
     buyOpen,
-    menuOpen,
     infoOpen,
     winPopup,
     inFree,
@@ -908,14 +861,8 @@ export function GoldenPantherSlot({
     lastWin,
     triggerModalCount,
     fsPaused,
+    turbo,
   ]);
-
-  const setMutedState = useCallback((on: boolean) => {
-    pantherAudio.setMuted(on);
-    setMuted(on);
-  }, []);
-
-  const toggleMute = useCallback(() => setMutedState(!muted), [muted, setMutedState]);
 
   const displayWin = dropTotal > 0 ? dropTotal : (inFree ? fsSessionWin : lastWin);
   const showTumbleBadge =
@@ -967,25 +914,13 @@ export function GoldenPantherSlot({
                     aspectRatio: "4 / 1",
                   }}
                 >
-                  {TOP_INDICES.map((i) => {
-                    const cell = slots[i] ?? null;
-                    const win = cell ? winningKeys.has(cell.key) : false;
-                    return (
-                      <ReelCell
-                        key={`top-slot-${i}`}
-                        index={i}
-                        cell={cell}
-                        phase={phase}
-                        win={win}
-                        perPay={cell ? payoutByKey.get(cell.key) : undefined}
-                        isSpawn={cell ? spawnedKeys.has(cell.key) : false}
-                        isFallen={cell ? fallenKeys.has(cell.key) : false}
-                        fallDist={cell ? (fallDistance[cell.key] ?? 0) : 0}
-                        cols={4}
-                        isTop={true}
-                      />
-                    );
-                  })}
+                  <ReelGrid
+                    indices={TOP_INDICES}
+                    cols={4}
+                    visuals={reelVisuals}
+                    isTop
+                    keyPrefix="top-slot"
+                  />
                 </div>
               </div>
 
@@ -1040,25 +975,13 @@ export function GoldenPantherSlot({
                     gridTemplateRows: `repeat(${ROWS}, minmax(0, 1fr))`,
                   }}
                 >
-                  {MAIN_INDICES.map((i) => {
-                    const cell = slots[i] ?? null;
-                    const win = cell ? winningKeys.has(cell.key) : false;
-                    return (
-                      <ReelCell
-                        key={`slot-${i}`}
-                        index={i - TOP_COLS}
-                        cell={cell}
-                        phase={phase}
-                        win={win}
-                        perPay={cell ? payoutByKey.get(cell.key) : undefined}
-                        isSpawn={cell ? spawnedKeys.has(cell.key) : false}
-                        isFallen={cell ? fallenKeys.has(cell.key) : false}
-                        fallDist={cell ? (fallDistance[cell.key] ?? 0) : 0}
-                        cols={COLS}
-                        isTop={false}
-                      />
-                    );
-                  })}
+                  <ReelGrid
+                    indices={MAIN_INDICES}
+                    cols={COLS}
+                    visuals={reelVisuals}
+                    indexOffset={TOP_COLS}
+                    keyPrefix="slot"
+                  />
                 </div>
               </div>
             </div>
@@ -1286,19 +1209,6 @@ export function GoldenPantherSlot({
           </div>
         </div>
       </div>
-
-      <AnimatePresence>
-        {menuOpen && (
-          <GameMenuModal
-            turbo={turbo}
-            muted={muted}
-            onTurboChange={setTurbo}
-            onMutedChange={setMutedState}
-            onOpenPaytable={() => setInfoOpen(true)}
-            onClose={() => setMenuOpen(false)}
-          />
-        )}
-      </AnimatePresence>
 
       <AnimatePresence>
         {autoSpinModalOpen && (

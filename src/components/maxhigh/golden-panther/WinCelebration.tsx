@@ -77,7 +77,7 @@ export function WinCelebration({
     >
       {/* Golden Particle Rain / Burst Effect */}
       <div className="pointer-events-none absolute inset-0 overflow-hidden">
-        {Array.from({ length: tier === "sensational" ? 24 : tier === "mega" ? 18 : 12 }).map((_, i) => (
+        {Array.from({ length: tier === "sensational" ? 12 : tier === "mega" ? 10 : 8 }).map((_, i) => (
           <motion.div
             key={`gold-particle-${i}`}
             initial={{
@@ -92,8 +92,8 @@ export function WinCelebration({
               rotate: 360 * (i % 2 === 0 ? 1 : -1),
             }}
             transition={{
-              duration: 2.2 + (i % 4) * 0.4,
-              repeat: Infinity,
+              duration: 1.8 + (i % 4) * 0.3,
+              repeat: 1,
               delay: (i * 0.12) % 1.5,
               ease: "linear",
             }}

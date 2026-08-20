@@ -3,8 +3,7 @@
  *
  * Playback waits use these durations as an upper bound. Drop/fall visuals use
  * Framer Motion springs (not fixed tweens), so waits intentionally include
- * stagger headroom rather than matching spring settle exactly — converting to
- * rAF-driven springs would change feel without a clear FPS win on a 6×5 grid.
+ * stagger headroom rather than matching spring settle exactly.
  */
 export const ANIM = {
   /** Per-column stagger on the initial cascade */
@@ -13,25 +12,26 @@ export const ANIM = {
   dropStaggerRow: 38,
   /** How long a symbol takes to land on first drop */
   dropDuration: 520,
-  landSquash: 140,
   /** Winning symbols pulse / highlight before pop */
-  glowDuration: 3_000,
+  glowDuration: 720,
   /** Match pop / shatter */
   popDuration: 380,
   popStagger: 32,
-  /** Gravity settle after a tumble */
-  fallDuration: 480,
   fallStaggerCol: 45,
   fallStaggerRow: 28,
   refillDuration: 560,
   /** Brief hole hold between pop and refill */
-  holeHold: 140,
-  betweenTumbles: 160,
-  bannerHold: 1800,
+  holeHold: 80,
+  betweenTumbles: 100,
+  bannerHold: 1400,
   /** Auto-dismiss full-screen win celebration */
-  winPopupHold: 3_000,
+  winPopupHold: 2_000,
   /** Buy feature: highlight scatters after they land */
-  buyScatterGlow: 1_800,
+  buyScatterGlow: 1_200,
+  /** Gap between auto / free spins when idle */
+  autoSpinGapNormal: 450,
+  autoSpinGapTurbo: 220,
+  autoSpinGapFast: 100,
 } as const;
 
 export type PlaybackPhase =
