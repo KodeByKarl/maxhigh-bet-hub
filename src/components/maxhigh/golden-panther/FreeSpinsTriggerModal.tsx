@@ -112,7 +112,7 @@ export function FreeSpinsTriggerModal({ count = 10, onClose }: Props) {
           </h2>
 
           <p className="relative mt-2 text-xs font-semibold uppercase tracking-[0.2em] text-amber-100/75 sm:text-sm">
-            Panther scatters unlocked
+            {count} panther scatters unlocked
           </p>
 
           {/* Spin count — primary signal */}

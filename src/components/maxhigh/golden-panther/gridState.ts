@@ -146,4 +146,20 @@ export function cloneBoard(board: BoardCell[]): BoardCell[] {
   return board.map((c) => ({ ...c, sym: c.sym }));
 }
 
+/**
+ * Buy-feature intro board — filler symbols plus exactly `freeSpinsTriggerCount`
+ * scatters placed at random cells (always 4 by default).
+ */
+export function buildBuyScatterIntroBoard(ante: boolean): BoardCell[] {
+  const cfg = getGoldenPantherConfig();
+  const { scatter } = pools();
+  const board = randomFill(ante, false);
+  const indices = shuffle(Array.from({ length: CELLS }, (_, i) => i));
+  const count = Math.min(cfg.freeSpinsTriggerCount, CELLS);
+  for (let k = 0; k < count; k++) {
+    board[indices[k]] = { key: nextKey(), sym: scatter };
+  }
+  return board;
+}
+
 export { COLS, ROWS, CELLS };

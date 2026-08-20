@@ -30,6 +30,8 @@ export const ANIM = {
   bannerHold: 1800,
   /** Auto-dismiss full-screen win celebration */
   winPopupHold: 3_000,
+  /** Buy feature: highlight scatters after they land */
+  buyScatterGlow: 1_800,
 } as const;
 
 export type PlaybackPhase =

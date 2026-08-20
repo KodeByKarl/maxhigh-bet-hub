@@ -45,18 +45,19 @@ export const ReelCell = memo(function ReelCell({
   const dropRows = isInitialDrop ? row + 1.35 : fallDist;
 
   const isScatter = cell?.sym.kind === "lollipop";
+  const isWinLit = win && (phase === "glow" || phase === "popping");
 
   return (
     <div
       className={cn(
         "relative min-h-0 min-w-0",
-        phase === "dropping" || phase === "falling" || isScatter
+        phase === "dropping" || phase === "falling" || isScatter || isWinLit
           ? "overflow-visible"
           : "overflow-hidden",
         isScatter
           ? "z-[30]"
-          : win && (phase === "glow" || phase === "popping")
-            ? "z-[2]"
+          : isWinLit
+            ? "z-[3]"
             : (isInitialDrop || isGravityDrop)
               ? "z-[1]"
               : "",
@@ -79,7 +80,7 @@ export const ReelCell = memo(function ReelCell({
           animate={
             popping
               ? {
-                  scale: [1.08, 1.22, 0],
+                  scale: [1.12, 1.28, 0],
                   opacity: [1, 1, 0],
                   rotate: [0, -10, 14],
                   y: [0, -8, 12],
@@ -89,7 +90,7 @@ export const ReelCell = memo(function ReelCell({
                     x: 0,
                     y: 0,
                     opacity: 1,
-                    scale: [1, 1.1, 1.06],
+                    scale: [1.04, 1.14, 1.08],
                   }
                 : {
                     x: 0,
@@ -165,24 +166,45 @@ export const ReelCell = memo(function ReelCell({
                     }
           }
         >
+          {/* Soft gold bloom behind winning symbols */}
+          {isWinLit && (
+            <motion.div
+              aria-hidden
+              className="pointer-events-none absolute inset-[-28%] z-0 rounded-full"
+              initial={{ opacity: 0, scale: 0.7 }}
+              animate={{
+                opacity: popping ? [0.95, 1, 0] : [0.55, 0.95, 0.7],
+                scale: popping ? [1.05, 1.35, 0.6] : [0.9, 1.18, 1.02],
+              }}
+              transition={
+                popping
+                  ? { duration: ANIM.popDuration / 1000, ease: "easeOut" }
+                  : {
+                      duration: 0.7,
+                      repeat: Infinity,
+                      repeatType: "mirror",
+                      ease: "easeInOut",
+                    }
+              }
+              style={{
+                background:
+                  "radial-gradient(circle, rgba(255,250,220,0.95) 0%, rgba(250,204,21,0.75) 32%, rgba(245,158,11,0.35) 58%, transparent 78%)",
+                boxShadow:
+                  "0 0 22px 8px rgba(250,204,21,0.55), 0 0 48px 16px rgba(253,224,71,0.35)",
+              }}
+            />
+          )}
           <PantherIcon
             kind={cell.sym.kind}
             mult={cell.mult}
-            className={cn(
-              "size-full",
-              win &&
-                (phase === "glow" || phase === "popping") &&
-                "drop-shadow-[0_0_14px_rgba(250,204,21,0.9)]",
-            )}
+            winLit={isWinLit}
+            className="relative z-[1] size-full"
           />
-          {win &&
-            perPay != null &&
-            perPay > 0 &&
-            (phase === "glow" || phase === "popping") && (
+          {isWinLit && perPay != null && perPay > 0 && (
               <motion.span
                 initial={{ y: 6, opacity: 0, scale: 0.8 }}
                 animate={{ y: 0, opacity: 1, scale: 1 }}
-                className="absolute top-0 left-1/2 z-[2] -translate-x-1/2 whitespace-nowrap rounded-full border border-white bg-gradient-to-b from-yellow-200 to-amber-400 px-1.5 py-0.5 text-[10px] font-black tabular-nums text-amber-950 shadow"
+                className="absolute top-0 left-1/2 z-[2] -translate-x-1/2 whitespace-nowrap rounded-full border border-white bg-gradient-to-b from-yellow-100 to-amber-400 px-1.5 py-0.5 text-[10px] font-black tabular-nums text-amber-950 shadow-[0_0_14px_rgba(250,204,21,0.95)]"
               >
                 +₱{Number.isInteger(perPay) ? perPay : perPay.toFixed(2)}
               </motion.span>

@@ -26,7 +26,7 @@ import { ANIM } from "./golden-panther/animationConfig";
 import { PantherFeatureBadge } from "./golden-panther/PantherFeatureBadge";
 import { FreeSpinsBadge } from "./golden-panther/FreeSpinsBadge";
 import { BetSelectModal } from "./golden-panther/BetSelectModal";
-import { initialBoard, nextKey, buildBoard } from "./golden-panther/gridState";
+import { buildBuyScatterIntroBoard, initialBoard } from "./golden-panther/gridState";
 import {
   BET_STEPS,
   ICON_SRC,
@@ -35,7 +35,7 @@ import {
   getFreeSpinsBase,
   getSuperBuyFeatureMult,
 } from "./golden-panther/paytable";
-import { getRuntimeSymbols, setGoldenPantherConfig } from "./golden-panther/runtimeConfig";
+import { setGoldenPantherConfig } from "./golden-panther/runtimeConfig";
 import type { BoardCell, SpinScript } from "./golden-panther/types";
 import { CELLS, COLS, MAIN_CELLS, ROWS, TOP_COLS } from "./golden-panther/types";
 import { WinCelebration } from "./golden-panther/WinCelebration";
@@ -70,12 +70,6 @@ const EMPTY_PAY = new Map<string, number>();
 const EMPTY_FALL: Record<string, number> = Object.freeze({}) as Record<string, number>;
 const TOP_INDICES = Object.freeze([0, 1, 2, 3]);
 const MAIN_INDICES = Object.freeze(Array.from({ length: MAIN_CELLS }, (_, i) => i + TOP_COLS));
-const ALL_BOARD_INDICES = Object.freeze(Array.from({ length: CELLS }, (_, i) => i));
-
-function scatterSym() {
-  return getRuntimeSymbols().find((s) => s.scatter)!;
-}
-
 /** Always exactly CELLS slots — never shrink the grid. */
 function asSlots(board: BoardCell[]): Slot[] {
   const slots: Slot[] = Array.from({ length: CELLS }, () => null);
@@ -168,6 +162,7 @@ export function GoldenPantherSlot({
   const fsSpinsPlayedRef = useRef(0);
   const timersRef = useRef<Set<ReturnType<typeof setTimeout>>>(new Set());
   const spinRef = useRef<(asFree?: boolean) => Promise<void>>(async () => undefined);
+  const triggerModalResolveRef = useRef<(() => void) | null>(null);
 
   turboRef.current = turbo;
   freeSpinsRef.current = freeSpins;
@@ -212,6 +207,70 @@ export function GoldenPantherSlot({
       timersRef.current.add(id);
     });
   }, []);
+
+  const dismissTriggerModal = useCallback(() => {
+    setTriggerModalCount(null);
+    triggerModalResolveRef.current?.();
+    triggerModalResolveRef.current = null;
+  }, []);
+
+  const waitForTriggerModal = useCallback(() => {
+    return new Promise<void>((resolve) => {
+      triggerModalResolveRef.current = resolve;
+    });
+  }, []);
+
+  /** Buy feature: drop trigger scatters, glow, then Free Spins modal before spin 1. */
+  const playBuyScatterIntro = useCallback(
+    async (gen: number, fsCount: number, useAnte: boolean) => {
+      setWinningKeys(EMPTY_SET);
+      setPayoutByKey(EMPTY_PAY);
+      setSpawnedKeys(EMPTY_SET);
+      setFallenKeys(EMPTY_SET);
+      setFallDistance(EMPTY_FALL);
+      setDropTotal(0);
+      setTumbleStepWin(0);
+      setLedger([]);
+      setLastWin(0);
+      setWinPopup(null);
+      setBanner(null);
+
+      const board = buildBuyScatterIntroBoard(useAnte);
+      const scatterKeys = board.filter((c) => c.sym.scatter).map((c) => c.key);
+
+      setPhase("dropping");
+      setSlots(asSlots(board));
+      pantherAudio.startSpinLoop();
+      try {
+        await wait(
+          ANIM.dropDuration + COLS * ANIM.dropStaggerCol + ROWS * ANIM.dropStaggerRow,
+          gen,
+        );
+      } catch {
+        pantherAudio.stopSpinLoop();
+        return;
+      }
+      pantherAudio.stopSpinLoop();
+      pantherAudio.playReelStop(5);
+      pantherAudio.playScatterTrigger();
+
+      setWinningKeys(new Set(scatterKeys));
+      setPhase("glow");
+      try {
+        await wait(ANIM.buyScatterGlow, gen);
+      } catch {
+        setWinningKeys(EMPTY_SET);
+        setPhase("idle");
+        return;
+      }
+
+      setWinningKeys(EMPTY_SET);
+      setPhase("idle");
+      setTriggerModalCount(fsCount);
+      await waitForTriggerModal();
+    },
+    [wait, waitForTriggerModal],
+  );
 
   useEffect(() => {
     mountedRef.current = true;
@@ -717,58 +776,28 @@ export function GoldenPantherSlot({
       setBalanceLocal(bought.balance);
       void refreshJackpot();
       applySession(bought.session);
-      if (buyMode === "super") setAnte(true);
-      setTriggerModalCount(bought.session.freeSpinsLeft || getFreeSpinsBase());
-      pantherAudio.playScatterTrigger();
+      const useAnte = buyMode === "super";
+      if (useAnte) setAnte(true);
+      const fsCount = bought.session.freeSpinsLeft || getFreeSpinsBase();
+
+      setFsSummary(null);
+      setFsPaused(false);
+
+      const gen = ++playbackGen.current;
+      busyRef.current = true;
+      try {
+        await playBuyScatterIntro(gen, fsCount, useAnte);
+      } catch {
+        dismissTriggerModal();
+      } finally {
+        if (gen === playbackGen.current) {
+          busyRef.current = false;
+          if (mountedRef.current) setPhase("idle");
+        }
+      }
+      // First free spin starts via the auto-chain once the modal closes.
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Buy feature failed");
-      return;
-    }
-
-    setBanner(null);
-    setWinPopup(null);
-    setFsSummary(null);
-    setLedger([]);
-    setDropTotal(0);
-    setLastWin(0);
-
-    setBanner(
-      buyMode === "super"
-        ? `SUPER FREE SPINS · ${getFreeSpinsBase()}`
-        : `BUY FREE SPINS · ${getFreeSpinsBase()}`,
-    );
-    pantherAudio.playScatterTrigger();
-    schedule(() => setBanner(null), 1400);
-
-    const gen = ++playbackGen.current;
-    busyRef.current = true;
-    try {
-      const seeded = buildBoard(true, true, false);
-      // Fisher–Yates for scatter seed positions (unbiased vs sort-shuffle).
-      const indices = ALL_BOARD_INDICES.slice() as number[];
-      for (let i = indices.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [indices[i], indices[j]] = [indices[j], indices[i]];
-      }
-      for (let k = 0; k < 4; k++) {
-        seeded[indices[k]] = {
-          key: nextKey(),
-          sym: scatterSym(),
-        };
-      }
-      setSlots(asSlots(seeded));
-      await wait(turboRef.current ? 350 : 650, gen);
-    } catch {
-      /* aborted */
-    } finally {
-      if (gen === playbackGen.current) {
-        busyRef.current = false;
-        if (mountedRef.current) setPhase("idle");
-      }
-    }
-
-    if (mountedRef.current && gen === playbackGen.current) {
-      await spinRef.current(true);
     }
   }, [
     applySession,
@@ -776,12 +805,12 @@ export function GoldenPantherSlot({
     bet,
     buyCost,
     buyMode,
+    dismissTriggerModal,
     phase,
+    playBuyScatterIntro,
     refreshJackpot,
-    schedule,
     setBalanceLocal,
     superBuyCost,
-    wait,
   ]);
 
   const nudgeBet = useCallback(
@@ -1349,7 +1378,7 @@ export function GoldenPantherSlot({
         {triggerModalCount != null && (
           <FreeSpinsTriggerModal
             count={triggerModalCount}
-            onClose={() => setTriggerModalCount(null)}
+            onClose={dismissTriggerModal}
           />
         )}
       </AnimatePresence>
