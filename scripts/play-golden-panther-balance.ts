@@ -6,7 +6,10 @@
  */
 import "dotenv/config";
 import { eq, sql } from "drizzle-orm";
-import { GOLDEN_PANTHER_GAME_ID, normalizeGoldenPantherConfig } from "../src/lib/golden-panther-config";
+import {
+  GOLDEN_PANTHER_GAME_ID,
+  normalizeGoldenPantherConfig,
+} from "../src/lib/golden-panther-config";
 import { getDb } from "../src/server/db/client";
 import { gameControls, users } from "../src/server/db/schema";
 import { writeLedgerDelta } from "../src/server/wallet.server";
@@ -159,12 +162,17 @@ async function main() {
 
   const wins = rows.filter((r) => r.result === "WIN");
   const losses = rows.filter((r) => r.result === "LOSE");
-  const totalBet = +(rows.reduce((a, r) => a + r.betOut, 0)).toFixed(2);
-  const totalWin = +(rows.reduce((a, r) => a + r.winIn, 0)).toFixed(2);
+  const totalBet = +rows.reduce((a, r) => a + r.betOut, 0).toFixed(2);
+  const totalWin = +rows.reduce((a, r) => a + r.winIn, 0).toFixed(2);
   const net = +(totalWin - totalBet).toFixed(2);
   const endBalance = Number(
-    (await db.select({ balance: users.balance }).from(users).where(eq(users.id, player.id)).limit(1))[0]
-      ?.balance ?? wallet,
+    (
+      await db
+        .select({ balance: users.balance })
+        .from(users)
+        .where(eq(users.id, player.id))
+        .limit(1)
+    )[0]?.balance ?? wallet,
   );
 
   console.log("============================================================");
@@ -206,8 +214,12 @@ async function main() {
   console.log(`Total bet out:  ${php(totalBet)}`);
   console.log(`Total win in:   ${php(totalWin)}`);
   console.log(`Session net:    ${net >= 0 ? "+" : ""}${php(net)}`);
-  console.log(`Balance delta:  ${php(startBalance)} → ${php(endBalance)}  (${endBalance - startBalance >= 0 ? "+" : ""}${php(endBalance - startBalance)})`);
-  console.log(`HUD vs wallet:  ${mismatches === 0 ? "ALL PASS — every spin matched" : `${mismatches} FAIL`}`);
+  console.log(
+    `Balance delta:  ${php(startBalance)} → ${php(endBalance)}  (${endBalance - startBalance >= 0 ? "+" : ""}${php(endBalance - startBalance)})`,
+  );
+  console.log(
+    `HUD vs wallet:  ${mismatches === 0 ? "ALL PASS — every spin matched" : `${mismatches} FAIL`}`,
+  );
   console.log("============================================================");
   process.exit(mismatches === 0 ? 0 : 1);
 }

@@ -9,7 +9,7 @@ type PantherIconProps = {
   mult?: number;
   className?: string;
   showBombBadge?: boolean;
-  /** Extra gold light when this symbol is part of a win */
+  /** Light win tint — keep cheap (no multi-layer drop-shadow stacks). */
   winLit?: boolean;
 };
 
@@ -30,37 +30,36 @@ export const PantherIcon = memo(function PantherIcon({
 
   return (
     <div className={cn("relative grid place-items-center bg-transparent overflow-visible size-full select-none", className)}>
+      {/* CSS-only win ring — GPU-friendly, no animated bloom / box-shadow layers */}
+      {winLit && (
+        <div
+          aria-hidden
+          className="pointer-events-none absolute inset-[8%] z-0 rounded-full bg-amber-300/35 ring-2 ring-amber-200/80"
+        />
+      )}
       <img
         src={src}
         alt={kind}
         decoding="async"
         loading="eager"
         className={cn(
-          "size-full object-contain mix-blend-lighten filter transition-all duration-300 pointer-events-none",
-          isScatter && !winLit && "drop-shadow-[0_0_16px_rgba(250,204,21,0.95)] scale-[1.06] animate-pulse",
-          isBomb && !winLit && "drop-shadow-[0_0_14px_rgba(168,85,247,0.9)] scale-[1.06]",
+          "relative z-[1] size-full object-contain mix-blend-lighten pointer-events-none",
+          isScatter && !winLit && "scale-[1.06] drop-shadow-[0_0_10px_rgba(250,204,21,0.7)]",
+          isBomb && !winLit && "scale-[1.06] drop-shadow-[0_0_10px_rgba(168,85,247,0.7)]",
           !winLit &&
             (kind === "heart" || kind === "purple" || kind === "green") &&
-            "drop-shadow-[0_0_10px_rgba(245,158,11,0.55)] scale-[1.04]",
-          winLit && "scale-[1.08] brightness-125 contrast-125 saturate-150",
+            "scale-[1.04] drop-shadow-[0_0_8px_rgba(245,158,11,0.45)]",
+          winLit && "scale-[1.05] brightness-125 saturate-125 drop-shadow-[0_0_8px_rgba(253,224,71,0.85)]",
         )}
-        style={
-          winLit
-            ? {
-                filter:
-                  "brightness(1.45) contrast(1.2) saturate(1.35) drop-shadow(0 0 4px #fffef5) drop-shadow(0 0 12px #fde047) drop-shadow(0 0 24px #fbbf24) drop-shadow(0 0 40px rgba(245,158,11,0.9))",
-              }
-            : undefined
-        }
       />
       {isScatter && (
-        <span className="absolute -bottom-2 left-1/2 z-[30] -translate-x-1/2 rounded-full border border-yellow-200 bg-gradient-to-r from-amber-600 via-yellow-400 to-amber-600 px-2 py-0.5 text-[9px] font-black uppercase text-amber-950 shadow-[0_0_12px_rgba(250,204,21,0.9)] whitespace-nowrap">
+        <span className="absolute -bottom-2 left-1/2 z-[30] -translate-x-1/2 rounded-full border border-yellow-200 bg-gradient-to-r from-amber-600 via-yellow-400 to-amber-600 px-2 py-0.5 text-[9px] font-black uppercase text-amber-950 shadow-sm whitespace-nowrap">
           SCATTER
         </span>
       )}
       {isBomb && showBombBadge && (
         <div className="absolute inset-0 grid place-items-center pointer-events-none z-[30]">
-          <span className="rounded-full border-2 border-amber-300 bg-gradient-to-br from-purple-700 via-purple-900 to-black px-2 py-0.5 font-black text-[clamp(12px,2.4vw,18px)] text-yellow-300 drop-shadow-[0_2px_6px_rgba(0,0,0,0.9)] shadow-[0_0_15px_rgba(234,179,8,0.8)]">
+          <span className="rounded-full border-2 border-amber-300 bg-gradient-to-br from-purple-700 via-purple-900 to-black px-2 py-0.5 font-black text-[clamp(12px,2.4vw,18px)] text-yellow-300 drop-shadow-[0_2px_4px_rgba(0,0,0,0.85)]">
             ×{clampBombMult(mult ?? 2)}
           </span>
         </div>

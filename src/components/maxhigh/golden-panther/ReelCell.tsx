@@ -41,12 +41,12 @@ function reelCellPropsEqual(prev: ReelCellProps, next: ReelCellProps): boolean {
   return !cellPhaseRelevant(prev, prev.phase) && !cellPhaseRelevant(next, next.phase);
 }
 
-const GLOW_CYCLES = 2;
-const GLOW_STEP_S = ANIM.glowDuration / 1000 / GLOW_CYCLES;
-
 /**
  * Single reel cell — memoized with phase-aware equality so idle cells skip
  * re-renders when only winning cells should animate.
+ *
+ * Win highlight is CSS-only (no per-cell bloom motion layer) so large clusters
+ * stay smooth on Android / mid-range devices.
  */
 export const ReelCell = memo(function ReelCell({
   index,
@@ -109,17 +109,18 @@ export const ReelCell = memo(function ReelCell({
           animate={
             popping
               ? {
-                  scale: [1.12, 1.28, 0],
+                  scale: [1.08, 1.18, 0],
                   opacity: [1, 1, 0],
-                  rotate: [0, -10, 14],
-                  y: [0, -8, 12],
+                  rotate: [0, -8, 10],
+                  y: [0, -6, 10],
                 }
               : phase === "glow" && win
                 ? {
                     x: 0,
                     y: 0,
                     opacity: 1,
-                    scale: [1.04, 1.14, 1.08],
+                    // One gentle bump — no repeating scale (avoids N× JS animations)
+                    scale: 1.06,
                   }
                 : {
                     x: 0,
@@ -139,10 +140,8 @@ export const ReelCell = memo(function ReelCell({
                 }
               : phase === "glow" && win
                 ? {
-                    duration: GLOW_STEP_S,
-                    repeat: GLOW_CYCLES - 1,
-                    repeatType: "mirror",
-                    ease: "easeInOut",
+                    duration: 0.22,
+                    ease: "easeOut",
                   }
                 : isInitialDrop || isGravityDrop
                   ? {
@@ -179,33 +178,6 @@ export const ReelCell = memo(function ReelCell({
                     }
           }
         >
-          {isWinLit && (
-            <motion.div
-              aria-hidden
-              className="pointer-events-none absolute inset-[-28%] z-0 rounded-full"
-              initial={{ opacity: 0, scale: 0.7 }}
-              animate={{
-                opacity: popping ? [0.95, 1, 0] : [0.55, 0.95, 0.7],
-                scale: popping ? [1.05, 1.35, 0.6] : [0.9, 1.18, 1.02],
-              }}
-              transition={
-                popping
-                  ? { duration: ANIM.popDuration / 1000, ease: "easeOut" }
-                  : {
-                      duration: GLOW_STEP_S,
-                      repeat: GLOW_CYCLES - 1,
-                      repeatType: "mirror",
-                      ease: "easeInOut",
-                    }
-              }
-              style={{
-                background:
-                  "radial-gradient(circle, rgba(255,250,220,0.95) 0%, rgba(250,204,21,0.75) 32%, rgba(245,158,11,0.35) 58%, transparent 78%)",
-                boxShadow:
-                  "0 0 22px 8px rgba(250,204,21,0.55), 0 0 48px 16px rgba(253,224,71,0.35)",
-              }}
-            />
-          )}
           <PantherIcon
             kind={cell.sym.kind}
             mult={cell.mult}
@@ -213,13 +185,9 @@ export const ReelCell = memo(function ReelCell({
             className="relative z-[1] size-full"
           />
           {isWinLit && perPay != null && perPay > 0 && (
-            <motion.span
-              initial={{ y: 6, opacity: 0, scale: 0.8 }}
-              animate={{ y: 0, opacity: 1, scale: 1 }}
-              className="absolute top-0 left-1/2 z-[2] -translate-x-1/2 whitespace-nowrap rounded-full border border-white bg-gradient-to-b from-yellow-100 to-amber-400 px-1.5 py-0.5 text-[10px] font-black tabular-nums text-amber-950 shadow-[0_0_14px_rgba(250,204,21,0.95)]"
-            >
+            <span className="absolute top-0 left-1/2 z-[2] -translate-x-1/2 whitespace-nowrap rounded-full border border-white/90 bg-gradient-to-b from-yellow-100 to-amber-400 px-1.5 py-0.5 text-[10px] font-black tabular-nums text-amber-950 shadow-sm">
               +₱{Number.isInteger(perPay) ? perPay : perPay.toFixed(2)}
-            </motion.span>
+            </span>
           )}
         </motion.div>
       )}
