@@ -1,4 +1,4 @@
-import { eq, desc, sql, and, gt, gte } from "drizzle-orm";
+import { eq, desc, sql, and, gt, gte, or } from "drizzle-orm";
 import { compare, hash } from "bcryptjs";
 import { getDb } from "./db/client";
 import { jackpot, liveWins, sessions, transactions, users, walletRequests, auditLogs, supportTickets, supportMessages } from "./db/schema";
@@ -648,3 +648,197 @@ export async function resolveSupportTicket(ticketId: string) {
 
   return { ok: true, userId: ticket.userId };
 }
+
+export type MyTransactionRow = {
+  id: string;
+  type: "deposit" | "withdraw" | "bet" | "win" | "adjust" | "jackpot";
+  amount: number;
+  absAmount: number;
+  balanceAfter: number;
+  game: string | null;
+  note: string | null;
+  label: string;
+  createdAt: string;
+};
+
+export type MyPlayGameRow = {
+  game: string;
+  betCount: number;
+  betVolume: number;
+  winVolume: number;
+  net: number;
+};
+
+export type MyWalletSummary = {
+  balance: number;
+  fundIn: number;
+  fundOut: number;
+  betCount: number;
+  betVolume: number;
+  winVolume: number;
+  net: number;
+  byGame: MyPlayGameRow[];
+};
+
+function myTxLabel(
+  type: MyTransactionRow["type"],
+  amount: number,
+): string {
+  if (type === "deposit" || (type === "adjust" && amount > 0)) return "Fund In";
+  if (type === "withdraw" || (type === "adjust" && amount < 0)) return "Fund Out";
+  if (type === "bet") return "Bet";
+  if (type === "win") return "Win";
+  if (type === "jackpot") return "Jackpot";
+  return type;
+}
+
+/** Player-scoped ledger — fund in/out, bets, or all. */
+export async function listMyTransactions(opts?: {
+  tab?: "funds" | "play" | "all";
+  limit?: number;
+}): Promise<MyTransactionRow[]> {
+  const session = await requireUser();
+  const db = getDb();
+  const limit = Math.min(Math.max(opts?.limit ?? 100, 1), 300);
+  const tab = opts?.tab ?? "all";
+
+  const filters = [eq(transactions.userId, session.id)];
+  if (tab === "funds") {
+    filters.push(
+      or(
+        eq(transactions.type, "deposit"),
+        eq(transactions.type, "withdraw"),
+        eq(transactions.type, "adjust"),
+      )!,
+    );
+  } else if (tab === "play") {
+    filters.push(
+      or(
+        eq(transactions.type, "bet"),
+        eq(transactions.type, "win"),
+        eq(transactions.type, "jackpot"),
+      )!,
+    );
+  }
+
+  const rows = await db
+    .select({
+      id: transactions.id,
+      type: transactions.type,
+      amount: transactions.amount,
+      balanceAfter: transactions.balanceAfter,
+      game: transactions.game,
+      note: transactions.note,
+      createdAt: transactions.createdAt,
+    })
+    .from(transactions)
+    .where(and(...filters))
+    .orderBy(desc(transactions.seq))
+    .limit(limit);
+
+  return rows.map((r) => {
+    const amount = Number(r.amount);
+    const type = r.type as MyTransactionRow["type"];
+    return {
+      id: r.id,
+      type,
+      amount,
+      absAmount: Math.abs(amount),
+      balanceAfter: Number(r.balanceAfter),
+      game: r.game,
+      note: r.note,
+      label: myTxLabel(type, amount),
+      createdAt: r.createdAt?.toISOString?.() ?? String(r.createdAt),
+    };
+  });
+}
+
+/** Combined wallet + play summary for the signed-in player. */
+export async function fetchMyWalletSummary(): Promise<MyWalletSummary> {
+  const session = await requireUser();
+  const db = getDb();
+
+  const balRows = await db
+    .select({ balance: users.balance })
+    .from(users)
+    .where(eq(users.id, session.id))
+    .limit(1);
+
+  const agg = await db
+    .select({
+      type: transactions.type,
+      game: transactions.game,
+      total: sql<string>`COALESCE(SUM(${transactions.amount}), 0)`,
+      positive: sql<string>`COALESCE(SUM(CASE WHEN ${transactions.amount} > 0 THEN ${transactions.amount} ELSE 0 END), 0)`,
+      negative: sql<string>`COALESCE(SUM(CASE WHEN ${transactions.amount} < 0 THEN ${transactions.amount} ELSE 0 END), 0)`,
+      cnt: sql<number>`COUNT(*)`,
+    })
+    .from(transactions)
+    .where(eq(transactions.userId, session.id))
+    .groupBy(transactions.type, transactions.game);
+
+  let fundIn = 0;
+  let fundOut = 0;
+  let betCount = 0;
+  let betVolume = 0;
+  let winVolume = 0;
+  const gameMap = new Map<string, MyPlayGameRow>();
+
+  for (const row of agg) {
+    const total = Number(row.total);
+    const positive = Number(row.positive);
+    const negative = Math.abs(Number(row.negative));
+    const cnt = Number(row.cnt);
+    const type = row.type;
+    const game = (row.game && row.game.trim()) || "Other";
+
+    if (type === "deposit") {
+      fundIn += Math.abs(total);
+    } else if (type === "withdraw") {
+      fundOut += Math.abs(total);
+    } else if (type === "adjust") {
+      fundIn += positive;
+      fundOut += negative;
+    } else if (type === "bet") {
+      betCount += cnt;
+      betVolume += Math.abs(total);
+      const g = gameMap.get(game) ?? {
+        game,
+        betCount: 0,
+        betVolume: 0,
+        winVolume: 0,
+        net: 0,
+      };
+      g.betCount += cnt;
+      g.betVolume += Math.abs(total);
+      gameMap.set(game, g);
+    } else if (type === "win" || type === "jackpot") {
+      winVolume += Math.abs(total);
+      const g = gameMap.get(game) ?? {
+        game,
+        betCount: 0,
+        betVolume: 0,
+        winVolume: 0,
+        net: 0,
+      };
+      g.winVolume += Math.abs(total);
+      gameMap.set(game, g);
+    }
+  }
+
+  const byGame = [...gameMap.values()]
+    .map((g) => ({ ...g, net: +(g.winVolume - g.betVolume).toFixed(2) }))
+    .sort((a, b) => b.betVolume - a.betVolume);
+
+  return {
+    balance: Number(balRows[0]?.balance ?? 0),
+    fundIn: +fundIn.toFixed(2),
+    fundOut: +fundOut.toFixed(2),
+    betCount,
+    betVolume: +betVolume.toFixed(2),
+    winVolume: +winVolume.toFixed(2),
+    net: +(winVolume - betVolume).toFixed(2),
+    byGame,
+  };
+}
+

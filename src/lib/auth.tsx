@@ -4,18 +4,18 @@ import {
   useContext,
   useEffect,
   useMemo,
+  useRef,
   useState,
   type ReactNode,
 } from "react";
-import {
-  getJackpotFn,
-  getSessionFn,
-  heartbeatFn,
-  loginFn,
-  logoutFn,
-} from "@/functions/api";
+import { getJackpotFn, getSessionFn, heartbeatFn, loginFn, logoutFn } from "@/functions/api";
 import type { PublicUser } from "@/lib/user";
 import { toast } from "sonner";
+
+/** Client idle logout — slightly under server idle so UX feels intentional. */
+const CLIENT_IDLE_MS = 55 * 60 * 1000;
+const ACTIVITY_HEARTBEAT_MS = 45_000;
+const SESSION_POLL_MS = 15_000;
 
 export type AuthUser = PublicUser;
 
@@ -43,17 +43,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [isReady, setIsReady] = useState(false);
   const [loginOpen, setLoginOpen] = useState(false);
   const [jackpot, setJackpot] = useState(0);
+  const lastActivityRef = useRef(Date.now());
+  const lastHeartbeatRef = useRef(0);
+  const logoutReasonRef = useRef<"manual" | "expired" | null>(null);
 
   const refreshSession = useCallback(async () => {
     try {
       const session = await getSessionFn();
       setUser((prevUser) => {
         if (!session && prevUser) {
-          toast.error("You've been logged out because your account was accessed from another device.", {
-            duration: 6000,
-          });
+          if (logoutReasonRef.current !== "manual") {
+            toast.error("Your session expired. Please sign in again.", { duration: 6000 });
+          }
+          logoutReasonRef.current = null;
         }
-        // Preserve object equality if properties haven't changed to prevent re-render loops
         if (prevUser && session && JSON.stringify(prevUser) === JSON.stringify(session)) {
           return prevUser;
         }
@@ -61,11 +64,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       });
     } catch {
       setUser((prevUser) => {
-        if (prevUser) {
-          toast.error("You've been logged out because your account was accessed from another device.", {
-            duration: 6000,
-          });
+        if (prevUser && logoutReasonRef.current !== "manual") {
+          toast.error("Your session expired. Please sign in again.", { duration: 6000 });
         }
+        logoutReasonRef.current = null;
         return null;
       });
     }
@@ -98,33 +100,66 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => window.clearInterval(id);
   }, [refreshJackpot]);
 
-  /** Real-time single-device session validation poll (every 5 seconds) */
+  /** Session validation poll — does not bump idle clock on the server. */
   useEffect(() => {
     if (!user) return;
     const id = window.setInterval(() => {
       void refreshSession();
-    }, 5000);
+    }, SESSION_POLL_MS);
     return () => window.clearInterval(id);
   }, [user, refreshSession]);
 
-  /** Keep Players Online accurate while this tab is open and logged in. */
+  /**
+   * Activity → heartbeat (idle clock) + client idle auto-logout.
+   * Applies to every role via AuthProvider (player / agent / admin / superadmin).
+   */
   useEffect(() => {
     if (!user) return;
-    const beat = () => {
+
+    const markActivity = () => {
+      lastActivityRef.current = Date.now();
+      const now = Date.now();
+      if (now - lastHeartbeatRef.current < ACTIVITY_HEARTBEAT_MS) return;
+      lastHeartbeatRef.current = now;
       void heartbeatFn().catch(() => undefined);
     };
-    beat();
-    const id = window.setInterval(beat, 60_000);
-    const onFocus = () => {
-      beat();
-      void refreshSession();
+
+    markActivity();
+
+    const events: Array<keyof WindowEventMap> = [
+      "pointerdown",
+      "keydown",
+      "touchstart",
+      "scroll",
+      "mousemove",
+    ];
+    for (const ev of events) {
+      window.addEventListener(ev, markActivity, { passive: true });
+    }
+    const onVisibility = () => {
+      if (document.visibilityState === "visible") markActivity();
     };
-    window.addEventListener("focus", onFocus);
+    document.addEventListener("visibilitychange", onVisibility);
+
+    const idleWatch = window.setInterval(() => {
+      if (Date.now() - lastActivityRef.current < CLIENT_IDLE_MS) return;
+      logoutReasonRef.current = "expired";
+      void logoutFn()
+        .catch(() => undefined)
+        .finally(() => {
+          setUser(null);
+          toast.error("Logged out due to inactivity. Please sign in again.", { duration: 6000 });
+        });
+    }, 30_000);
+
     return () => {
-      window.clearInterval(id);
-      window.removeEventListener("focus", onFocus);
+      for (const ev of events) {
+        window.removeEventListener(ev, markActivity);
+      }
+      document.removeEventListener("visibilitychange", onVisibility);
+      window.clearInterval(idleWatch);
     };
-  }, [user, refreshSession]);
+  }, [user]);
 
   const openLogin = useCallback(() => setLoginOpen(true), []);
   const closeLogin = useCallback(() => setLoginOpen(false), []);
@@ -135,14 +170,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return false;
   }, [user]);
 
-  const login = useCallback(async (username: string, password: string) => {
-    const next = await loginFn({ data: { username, password } });
-    setUser(next);
-    setLoginOpen(false);
-    await refreshJackpot();
-  }, [refreshJackpot]);
+  const login = useCallback(
+    async (username: string, password: string) => {
+      const next = await loginFn({ data: { username, password } });
+      lastActivityRef.current = Date.now();
+      lastHeartbeatRef.current = 0;
+      logoutReasonRef.current = null;
+      setUser(next);
+      setLoginOpen(false);
+      await refreshJackpot();
+    },
+    [refreshJackpot],
+  );
 
   const logout = useCallback(async () => {
+    logoutReasonRef.current = "manual";
     await logoutFn();
     setUser(null);
   }, []);

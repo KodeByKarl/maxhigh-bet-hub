@@ -6254,7 +6254,7 @@ export async function superGetUserSecurityDetails(userId: string) {
     .select()
     .from(transactions)
     .where(eq(transactions.userId, userId))
-    .orderBy(desc(transactions.createdAt))
+    .orderBy(desc(transactions.seq))
     .limit(100);
 
   let totalBets = 0;

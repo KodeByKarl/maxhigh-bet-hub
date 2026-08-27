@@ -866,7 +866,7 @@ export async function fetchAdminDayPulse(dayIndex: number): Promise<AdminDayPuls
 }
 
 function txLabel(type: AdminTransactionRow["type"], amount: number): string {
-  if (type === "bet") return "Bet / Loss";
+  if (type === "bet") return "Bet";
   if (type === "win") return "Win";
   if (type === "deposit") return "Deposit";
   if (type === "withdraw") return "Withdraw";
@@ -935,8 +935,8 @@ export async function listAdminTransactions(opts?: {
 
   const rows =
     filters.length > 0
-      ? await base.where(and(...filters)).orderBy(desc(transactions.createdAt)).limit(limit)
-      : await base.orderBy(desc(transactions.createdAt)).limit(limit);
+      ? await base.where(and(...filters)).orderBy(desc(transactions.seq)).limit(limit)
+      : await base.orderBy(desc(transactions.seq)).limit(limit);
 
   return rows.map((r) => {
     const amount = Number(r.amount);

@@ -1,6 +1,7 @@
 import { Link } from "@tanstack/react-router";
 import { saGlass } from "@/components/superadmin/ui/glass";
 import { Printer } from "lucide-react";
+import { formatDateTimePH } from "@/lib/datetime";
 
 export const REPORT_SECTIONS = [
   { slug: "winlose", label: "Win/Lose" },
@@ -71,7 +72,7 @@ export function ReportPageHeader({
 
       <div className="hidden print-only text-xs text-black pb-2 border-b border-black w-full mb-4">
         <div className="font-bold text-lg">MaxHigh Platform Report — {title}</div>
-        <div>Generated on: {new Date().toLocaleString("en-PH")}</div>
+        <div>Generated on: {formatDateTimePH(new Date())}</div>
       </div>
     </div>
   );

@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useCallback, useEffect, useState } from "react";
-import { bulkApplyGameOutcomesFn, listGameSettingsLogsFn, listSuperGamesFn, superUpdateGameFn } from "@/functions/superadmin";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { bulkApplyGameOutcomesFn, getBulkOutcomeSettingsFn, listGameSettingsLogsFn, listSuperGamesFn, superUpdateGameFn } from "@/functions/superadmin";
 import type { SuperGameRow } from "@/lib/superadmin-types";
 import { useAuth } from "@/lib/auth";
 import { isSuperadminRole } from "@/lib/user";
@@ -233,36 +233,129 @@ type GameSettingsLogRow = {
   createdAt: string;
 };
 
+type OutcomeSnapshot = {
+  deadSpinPct: number;
+  winChancePct: number;
+  maxMultiplier: number;
+  rtp: number;
+};
+
+const BULK_DRAFT_KEY = "mh-bulk-outcome-draft";
+
+function readDraft(): OutcomeSnapshot | null {
+  try {
+    const raw = sessionStorage.getItem(BULK_DRAFT_KEY);
+    if (!raw) return null;
+    const v = JSON.parse(raw) as OutcomeSnapshot;
+    if (
+      Number.isFinite(v.deadSpinPct) &&
+      Number.isFinite(v.winChancePct) &&
+      Number.isFinite(v.maxMultiplier) &&
+      Number.isFinite(v.rtp)
+    ) {
+      return v;
+    }
+  } catch {
+    /* ignore */
+  }
+  return null;
+}
+
+function writeDraft(snapshot: OutcomeSnapshot) {
+  try {
+    sessionStorage.setItem(BULK_DRAFT_KEY, JSON.stringify(snapshot));
+  } catch {
+    /* ignore */
+  }
+}
+
+function clearDraft() {
+  try {
+    sessionStorage.removeItem(BULK_DRAFT_KEY);
+  } catch {
+    /* ignore */
+  }
+}
+
+function snapshotsEqual(a: OutcomeSnapshot, b: OutcomeSnapshot) {
+  return (
+    a.deadSpinPct === b.deadSpinPct &&
+    a.winChancePct === b.winChancePct &&
+    a.maxMultiplier === b.maxMultiplier &&
+    a.rtp === b.rtp
+  );
+}
+
 function BulkOutcomePanel({ onApplied }: { onApplied: () => void }) {
   const [scope, setScope] = useState<"all" | "slots" | "cards" | "fishing">("all");
   const [deadSpinPct, setDeadSpinPct] = useState(40);
   const [winChancePct, setWinChancePct] = useState(60);
   const [maxMultiplier, setMaxMultiplier] = useState(5000);
   const [rtp, setRtp] = useState(96);
+  const [savedLive, setSavedLive] = useState<OutcomeSnapshot | null>(null);
+  const [loadingSettings, setLoadingSettings] = useState(true);
   const [applying, setApplying] = useState(false);
   const [logs, setLogs] = useState<GameSettingsLogRow[]>([]);
   const [showLogs, setShowLogs] = useState(false);
 
+  const currentSnapshot = useMemo<OutcomeSnapshot>(
+    () => ({ deadSpinPct, winChancePct, maxMultiplier, rtp }),
+    [deadSpinPct, winChancePct, maxMultiplier, rtp],
+  );
+  const hasUnsavedChanges = savedLive != null && !snapshotsEqual(currentSnapshot, savedLive);
+
+  const applySnapshot = useCallback((s: OutcomeSnapshot) => {
+    setDeadSpinPct(s.deadSpinPct);
+    setWinChancePct(s.winChancePct);
+    setMaxMultiplier(s.maxMultiplier);
+    setRtp(s.rtp);
+  }, []);
+
+  const loadSettings = useCallback(async () => {
+    setLoadingSettings(true);
+    try {
+      const live = await getBulkOutcomeSettingsFn();
+      const liveSnap: OutcomeSnapshot = {
+        deadSpinPct: live.deadSpinPct,
+        winChancePct: live.winChancePct,
+        maxMultiplier: live.maxMultiplier,
+        rtp: live.rtp,
+      };
+      setSavedLive(liveSnap);
+
+      const draft = readDraft();
+      if (draft && !snapshotsEqual(draft, liveSnap)) {
+        applySnapshot(draft);
+      } else {
+        applySnapshot(liveSnap);
+        clearDraft();
+      }
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Failed to load live game settings");
+    } finally {
+      setLoadingSettings(false);
+    }
+  }, [applySnapshot]);
+
   const fetchLogs = useCallback(async () => {
     try {
       const res = await listGameSettingsLogsFn();
-      const rows = res as GameSettingsLogRow[];
-      setLogs(rows);
-      const latest = rows[0];
-      if (latest) {
-        if (Number.isFinite(latest.deadSpinPct)) setDeadSpinPct(latest.deadSpinPct);
-        if (Number.isFinite(latest.winChancePct)) setWinChancePct(latest.winChancePct);
-        if (Number.isFinite(latest.maxMultiplier)) setMaxMultiplier(latest.maxMultiplier);
-        if (Number.isFinite(latest.rtp)) setRtp(latest.rtp);
-      }
-    } catch {
-      // silent
+      setLogs(res as GameSettingsLogRow[]);
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Failed to load change history");
+      setLogs([]);
     }
   }, []);
 
   useEffect(() => {
+    void loadSettings();
     void fetchLogs();
-  }, [fetchLogs]);
+  }, [loadSettings, fetchLogs]);
+
+  useEffect(() => {
+    if (loadingSettings || !hasUnsavedChanges) return;
+    writeDraft(currentSnapshot);
+  }, [currentSnapshot, hasUnsavedChanges, loadingSettings]);
 
   async function handleBulkApply() {
     // Validation before submission
@@ -297,7 +390,17 @@ function BulkOutcomePanel({ onApplied }: { onApplied: () => void }) {
       toast.success(
         `Bulk updated ${result.affectedCount} games! (RTP: ${result.rtp}%, DeadSpin: ${result.deadSpinPct}%, WinChance: ${result.winChancePct}%)`,
       );
+      const applied: OutcomeSnapshot = {
+        deadSpinPct: result.deadSpinPct,
+        winChancePct: result.winChancePct,
+        maxMultiplier: result.maxMultiplier,
+        rtp: result.rtp,
+      };
+      setSavedLive(applied);
+      applySnapshot(applied);
+      clearDraft();
       await fetchLogs();
+      await loadSettings();
       onApplied();
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Bulk apply failed");
@@ -331,6 +434,17 @@ function BulkOutcomePanel({ onApplied }: { onApplied: () => void }) {
             {showLogs ? "Hide Change Logs" : `View Audit Log (${logs.length})`}
           </button>
         </div>
+
+        {hasUnsavedChanges && (
+          <div className="mt-4 rounded-xl border border-amber-400/40 bg-amber-500/10 px-4 py-3 text-xs text-amber-100">
+            <span className="font-bold uppercase tracking-wide text-amber-300">Unsaved changes</span>
+            <span className="mt-1 block text-amber-100/90">
+              Moving the sliders does not change live games yet. Tap{" "}
+              <strong className="text-amber-200">Apply to {scope === "all" ? "All Games" : scope}</strong> before
+              playing — otherwise spins still use the last saved settings.
+            </span>
+          </div>
+        )}
 
         {/* Category Scope Selection */}
         <div className="pt-4">
@@ -444,12 +558,16 @@ function BulkOutcomePanel({ onApplied }: { onApplied: () => void }) {
 
           <button
             type="button"
-            disabled={applying}
+            disabled={applying || loadingSettings}
             onClick={() => void handleBulkApply()}
             className="flex items-center gap-2 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 px-6 py-2.5 text-xs font-black uppercase tracking-wider text-black shadow-lg shadow-amber-500/25 transition hover:brightness-110 disabled:opacity-50"
           >
             <Zap className="h-4 w-4" />
-            {applying ? "Applying..." : `Apply to ${scope === "all" ? "All Games" : scope}`}
+            {applying
+              ? "Applying..."
+              : hasUnsavedChanges
+                ? `Save & apply to ${scope === "all" ? "all games" : scope}`
+                : `Apply to ${scope === "all" ? "All Games" : scope}`}
           </button>
         </div>
       </div>

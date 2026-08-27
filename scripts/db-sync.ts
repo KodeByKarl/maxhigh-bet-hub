@@ -83,6 +83,47 @@ async function main() {
   await addColumnIfNotExists("users", "upline_id", "VARCHAR(36) NULL");
   await addColumnIfNotExists("users", "updated_at", "DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP");
 
+  // Stable ledger ordering — created_at is second-precision so bet/win pairs can tie.
+  const [txSeqCol] = await conn.query<any[]>(
+    `SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = ? AND TABLE_NAME = 'transactions' AND COLUMN_NAME = 'seq'`,
+    [database],
+  );
+  if (!txSeqCol || txSeqCol.length === 0) {
+    console.log("Adding transactions.seq (AUTO_INCREMENT) for stable ledger ordering...");
+    await conn.query(
+      `ALTER TABLE transactions ADD COLUMN seq BIGINT UNSIGNED NOT NULL AUTO_INCREMENT UNIQUE FIRST`,
+    );
+    await conn.query(`CREATE INDEX tx_seq_idx ON transactions (seq)`);
+    console.log("Successfully added transactions.seq.");
+  }
+
+  // Re-number seq in true chronological order (bet before win when timestamps tie).
+  if (!txSeqCol || txSeqCol.length === 0) {
+    console.log("Backfilling transactions.seq in chronological order...");
+    await conn.query(`ALTER TABLE transactions MODIFY seq BIGINT UNSIGNED NOT NULL`);
+    await conn.query(`UPDATE transactions SET seq = seq + 10000000`);
+    await conn.query(`
+      UPDATE transactions t
+      JOIN (
+        SELECT id,
+          ROW_NUMBER() OVER (
+            ORDER BY created_at ASC,
+              (balance_after - amount) ASC,
+              CASE type WHEN 'bet' THEN 0 WHEN 'win' THEN 1 WHEN 'jackpot' THEN 2 ELSE 3 END,
+              id ASC
+          ) AS new_seq
+        FROM transactions
+      ) x ON t.id = x.id
+      SET t.seq = x.new_seq
+    `);
+    const [maxRow] = await conn.query<any[]>(`SELECT COALESCE(MAX(seq), 0) + 1 AS next_seq FROM transactions`);
+    const nextSeq = Number(maxRow?.[0]?.next_seq ?? 1);
+    await conn.query(
+      `ALTER TABLE transactions MODIFY seq BIGINT UNSIGNED NOT NULL AUTO_INCREMENT UNIQUE, AUTO_INCREMENT = ${nextSeq}`,
+    );
+    console.log(`transactions.seq backfill complete (next AUTO_INCREMENT=${nextSeq}).`);
+  }
+
   await conn.query(`
     UPDATE users SET public_user_id = username
     WHERE public_user_id IS NULL OR public_user_id = ''

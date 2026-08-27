@@ -71,6 +71,23 @@ export const getBalanceFn = createServerFn({ method: "GET" }).handler(async () =
   return fetchBalance();
 });
 
+const myTransactionsSchema = z.object({
+  tab: z.enum(["funds", "play", "all"]).optional(),
+  limit: z.number().int().min(1).max(300).optional(),
+});
+
+export const listMyTransactionsFn = createServerFn({ method: "GET" })
+  .validator(myTransactionsSchema)
+  .handler(async ({ data }) => {
+    const { listMyTransactions } = await import("../server/services.server");
+    return listMyTransactions(data);
+  });
+
+export const getMyWalletSummaryFn = createServerFn({ method: "GET" }).handler(async () => {
+  const { fetchMyWalletSummary } = await import("../server/services.server");
+  return fetchMyWalletSummary();
+});
+
 const candyPeakSpinSchema = z.object({
   bet: z.number().finite().positive().max(100_000),
   ante: z.boolean(),

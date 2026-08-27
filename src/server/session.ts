@@ -8,7 +8,18 @@ import { sessions, users, type User } from "./db/schema";
 export type { PublicUser };
 
 export const SESSION_COOKIE = "mh_session";
-const SESSION_DAYS = 14;
+
+/** Hard max session length from login (all roles). Overnight tabs must not stay signed in. */
+export const SESSION_ABSOLUTE_MS = 12 * 60 * 60 * 1000; // 12 hours
+
+/**
+ * Server-side idle window based on lastSeenAt.
+ * lastSeenAt is only bumped by intentional activity (heartbeat), not by session polls.
+ */
+export const SESSION_IDLE_MS = 60 * 60 * 1000; // 60 minutes
+
+/** Cookie maxAge matches absolute session. */
+const SESSION_COOKIE_MAX_AGE_S = Math.floor(SESSION_ABSOLUTE_MS / 1000);
 
 export function toPublicUser(u: User): PublicUser {
   return {
@@ -39,7 +50,7 @@ export async function createSession(userId: string) {
   const db = getDb();
   const token = newToken();
   const now = new Date();
-  const expiresAt = new Date(Date.now() + SESSION_DAYS * 24 * 60 * 60 * 1000);
+  const expiresAt = new Date(now.getTime() + SESSION_ABSOLUTE_MS);
 
   // 1. Fetch user to check role & username
   const userRows = await db.select().from(users).where(eq(users.id, userId)).limit(1);
@@ -80,7 +91,7 @@ export async function createSession(userId: string) {
     sameSite: "lax",
     path: "/",
     secure: process.env.NODE_ENV === "production",
-    maxAge: SESSION_DAYS * 24 * 60 * 60,
+    maxAge: SESSION_COOKIE_MAX_AGE_S,
   });
   return token;
 }
@@ -100,7 +111,7 @@ export async function destroyUserSessions(userId: string): Promise<number> {
   return result[0]?.affectedRows ?? 0;
 }
 
-/** Mark the current session as active (Players Online). */
+/** Mark the current session as active (Players Online + idle clock). */
 export async function touchPresence(): Promise<boolean> {
   const token = getCookie(SESSION_COOKIE);
   if (!token) return false;
@@ -113,6 +124,12 @@ export async function touchPresence(): Promise<boolean> {
   return (result[0]?.affectedRows ?? 0) > 0;
 }
 
+async function invalidateSession(sessionId: string) {
+  const db = getDb();
+  await db.delete(sessions).where(eq(sessions.id, sessionId));
+  deleteCookie(SESSION_COOKIE, { path: "/" });
+}
+
 export async function getSessionUser(): Promise<PublicUser | null> {
   const token = getCookie(SESSION_COOKIE);
   if (!token) return null;
@@ -120,7 +137,13 @@ export async function getSessionUser(): Promise<PublicUser | null> {
   const db = getDb();
   const now = new Date();
   const rows = await db
-    .select({ user: users, sessionId: sessions.id })
+    .select({
+      user: users,
+      sessionId: sessions.id,
+      createdAt: sessions.createdAt,
+      lastSeenAt: sessions.lastSeenAt,
+      expiresAt: sessions.expiresAt,
+    })
     .from(sessions)
     .innerJoin(users, eq(sessions.userId, users.id))
     .where(and(eq(sessions.token, token), gt(sessions.expiresAt, now)))
@@ -132,6 +155,22 @@ export async function getSessionUser(): Promise<PublicUser | null> {
     return null;
   }
 
+  const createdAt = row.createdAt ? new Date(row.createdAt).getTime() : 0;
+  const lastSeenAt = row.lastSeenAt ? new Date(row.lastSeenAt).getTime() : createdAt;
+  const nowMs = now.getTime();
+
+  // Absolute max — covers overnight / forgotten tabs for every role
+  if (createdAt > 0 && nowMs - createdAt > SESSION_ABSOLUTE_MS) {
+    await invalidateSession(row.sessionId);
+    return null;
+  }
+
+  // Idle max — lastSeenAt only moves on heartbeat / real activity
+  if (lastSeenAt > 0 && nowMs - lastSeenAt > SESSION_IDLE_MS) {
+    await invalidateSession(row.sessionId);
+    return null;
+  }
+
   // If user is locked, invalidate active session immediately
   const isLocked =
     row.user.isLocked === "yes" ||
@@ -139,14 +178,11 @@ export async function getSessionUser(): Promise<PublicUser | null> {
     (row.user.lockedUntil && now < new Date(row.user.lockedUntil));
 
   if (isLocked) {
-    await db.delete(sessions).where(eq(sessions.id, row.sessionId));
-    deleteCookie(SESSION_COOKIE, { path: "/" });
+    await invalidateSession(row.sessionId);
     return null;
   }
 
-  // Lightweight presence bump on any authenticated session read
-  await db.update(sessions).set({ lastSeenAt: now }).where(eq(sessions.id, row.sessionId));
-
+  // Do NOT bump lastSeenAt here — session polls would keep idle forever.
   return toPublicUser(row.user);
 }
 

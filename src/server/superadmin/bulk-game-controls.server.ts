@@ -56,7 +56,124 @@ export function mergeOutcomeIntoEngineConfig(
   return JSON.stringify(cfg);
 }
 
-function catalogCategoryForScope(scope: BulkGameControlsInput["scope"]): GameCategory | null {
+export type BulkOutcomeSnapshot = {
+  deadSpinPct: number;
+  winChancePct: number;
+  maxMultiplier: number;
+  rtp: number;
+  /** Where the displayed values came from */
+  source: "live" | "audit_log" | "default";
+  configuredGameCount: number;
+  lastAppliedAt: string | null;
+};
+
+function readNum(v: unknown): number | null {
+  const n = typeof v === "number" ? v : typeof v === "string" ? Number(v) : NaN;
+  return Number.isFinite(n) ? n : null;
+}
+
+function readOutcomeFromEngine(
+  raw: string | null | undefined,
+  rtpLabel?: string | null,
+): Partial<BulkOutcomeSnapshot> | null {
+  const cfg = parseJsonObject(raw);
+  const deadSpinPct = readNum(cfg.deadSpinChancePercent ?? cfg.deadSpinPct);
+  const winChancePct = readNum(cfg.winChancePct ?? cfg.winChancePercent);
+  const maxMultiplier = readNum(cfg.maxWinMult ?? cfg.maxMultiplier);
+  let rtp = readNum(cfg.targetRtp ?? cfg.rtpTarget);
+  if (rtp == null && rtpLabel) {
+    const m = rtpLabel.match(/([\d.]+)/);
+    if (m) rtp = readNum(m[1]);
+  }
+  if (deadSpinPct == null && winChancePct == null && maxMultiplier == null && rtp == null) {
+    return null;
+  }
+  return {
+    deadSpinPct: deadSpinPct ?? undefined,
+    winChancePct: winChancePct ?? undefined,
+    maxMultiplier: maxMultiplier ?? undefined,
+    rtp: rtp ?? undefined,
+  } as Partial<BulkOutcomeSnapshot>;
+}
+
+/** Pick the most common rounded value in a list (live DB consensus). */
+function modeRounded(values: number[], decimals = 0): number | null {
+  if (values.length === 0) return null;
+  const counts = new Map<number, number>();
+  for (const v of values) {
+    const key = +v.toFixed(decimals);
+    counts.set(key, (counts.get(key) ?? 0) + 1);
+  }
+  let best: number | null = null;
+  let bestCount = 0;
+  for (const [k, c] of counts) {
+    if (c > bestCount) {
+      best = k;
+      bestCount = c;
+    }
+  }
+  return best;
+}
+
+const PANEL_DEFAULTS: BulkOutcomeSnapshot = {
+  deadSpinPct: 40,
+  winChancePct: 60,
+  maxMultiplier: 5000,
+  rtp: 96,
+  source: "default",
+  configuredGameCount: 0,
+  lastAppliedAt: null,
+};
+
+/** Read the sliders from live game_controls (not just audit history). */
+export async function getCurrentBulkOutcomeSettings(): Promise<BulkOutcomeSnapshot> {
+  await requirePermission("GAME_CONTROL_UPDATE");
+  const db = getDb();
+
+  const [latestLog] = await db
+    .select({ createdAt: gameSettingsLogs.createdAt })
+    .from(gameSettingsLogs)
+    .orderBy(desc(gameSettingsLogs.createdAt))
+    .limit(1);
+
+  const rows = await db
+    .select({ engineConfig: gameControls.engineConfig, rtp: gameControls.rtp })
+    .from(gameControls);
+
+  const deads: number[] = [];
+  const wins: number[] = [];
+  const maxes: number[] = [];
+  const rtps: number[] = [];
+  let configuredGameCount = 0;
+
+  for (const row of rows) {
+    const parsed = readOutcomeFromEngine(row.engineConfig, row.rtp);
+    if (!parsed) continue;
+    configuredGameCount++;
+    if (parsed.deadSpinPct != null) deads.push(parsed.deadSpinPct);
+    if (parsed.winChancePct != null) wins.push(parsed.winChancePct);
+    if (parsed.maxMultiplier != null) maxes.push(parsed.maxMultiplier);
+    if (parsed.rtp != null) rtps.push(parsed.rtp);
+  }
+
+  if (configuredGameCount === 0) {
+    return {
+      ...PANEL_DEFAULTS,
+      lastAppliedAt: latestLog?.createdAt?.toISOString?.() ?? null,
+    };
+  }
+
+  return {
+    deadSpinPct: modeRounded(deads, 0) ?? PANEL_DEFAULTS.deadSpinPct,
+    winChancePct: modeRounded(wins, 0) ?? PANEL_DEFAULTS.winChancePct,
+    maxMultiplier: modeRounded(maxes, 0) ?? PANEL_DEFAULTS.maxMultiplier,
+    rtp: modeRounded(rtps, 1) ?? PANEL_DEFAULTS.rtp,
+    source: "live",
+    configuredGameCount,
+    lastAppliedAt: latestLog?.createdAt?.toISOString?.() ?? null,
+  };
+}
+
   if (scope === "all") return null;
   if (scope === "slots") return "slot";
   if (scope === "cards" || scope === "table" || scope === "live") return "cards";

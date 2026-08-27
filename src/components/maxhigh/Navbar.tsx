@@ -1,12 +1,4 @@
-import {
-  ChevronDown,
-  Bell,
-  Settings,
-  Globe,
-  LogIn,
-  LogOut,
-  Menu,
-} from "lucide-react";
+import { ChevronDown, Bell, Settings, Globe, LogIn, LogOut, Menu, Wallet } from "lucide-react";
 import { useState, useEffect } from "react";
 import { Logo } from "./Logo";
 import { useAuth } from "@/lib/auth";
@@ -27,6 +19,7 @@ import { NotificationsModal } from "./profile/NotificationsModal";
 import { GiftsModal } from "./profile/GiftsModal";
 import { SettingsModal } from "./profile/SettingsModal";
 import { WorldModal } from "./profile/WorldModal";
+import { WalletModal } from "./profile/WalletModal";
 import { toast } from "sonner";
 
 function ChipIcon({ className }: { className?: string }) {
@@ -42,9 +35,10 @@ function ChipIcon({ className }: { className?: string }) {
   );
 }
 
-type Panel = "notifications" | "gifts" | "settings" | "world" | null;
+type Panel = "notifications" | "gifts" | "settings" | "world" | "wallet" | null;
 
 const profileMenu = [
+  { id: "wallet" as const, label: "My Wallet", icon: Wallet },
   { id: "notifications" as const, label: "Notifications", icon: Bell },
   { id: "settings" as const, label: "Settings", icon: Settings },
   { id: "world" as const, label: "World", icon: Globe },
@@ -123,7 +117,9 @@ export function Navbar({ onOpenMobileMenu }: { onOpenMobileMenu?: () => void }) 
                     {t("Balance")}
                   </span>
                   <span className="text-sm font-black tabular-nums text-foreground">
-                    {mounted && prefs.hideBalance ? formatMoney(balance).replace(/\d/g, "•") : formatMoney(balance)}
+                    {mounted && prefs.hideBalance
+                      ? formatMoney(balance).replace(/\d/g, "•")
+                      : formatMoney(balance)}
                   </span>
                 </div>
                 <ChevronDown size={14} className="text-muted-foreground" />
@@ -142,7 +138,9 @@ export function Navbar({ onOpenMobileMenu }: { onOpenMobileMenu?: () => void }) 
                   </div>
                   <div className="mt-1 flex items-baseline gap-2">
                     <span className="text-2xl font-black tabular-nums text-foreground">
-                      {mounted && prefs.hideBalance ? formatMoney(balance).replace(/\d/g, "•") : formatMoney(balance)}
+                      {mounted && prefs.hideBalance
+                        ? formatMoney(balance).replace(/\d/g, "•")
+                        : formatMoney(balance)}
                     </span>
                   </div>
                   <div className="mt-3 grid grid-cols-1 gap-2">
@@ -155,8 +153,20 @@ export function Navbar({ onOpenMobileMenu }: { onOpenMobileMenu?: () => void }) 
                         PHP · Philippine Peso
                       </span>
                       <span className="mt-0.5 text-sm font-bold tabular-nums text-foreground">
-                        {mounted && prefs.hideBalance ? formatMoney(balance).replace(/\d/g, "•") : formatMoney(balance)}
+                        {mounted && prefs.hideBalance
+                          ? formatMoney(balance).replace(/\d/g, "•")
+                          : formatMoney(balance)}
                       </span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setWalletOpen(false);
+                        setPanel("wallet");
+                      }}
+                      className="rounded-xl border border-border bg-panel px-3 py-2.5 text-left text-xs font-bold uppercase tracking-wide text-foreground hover:bg-panel-hover"
+                    >
+                      Fund In/Out · Play Summary
                     </button>
                   </div>
                 </div>
@@ -272,6 +282,7 @@ export function Navbar({ onOpenMobileMenu }: { onOpenMobileMenu?: () => void }) 
         onOpenChange={(o) => setPanel(o ? "settings" : null)}
       />
       <WorldModal open={panel === "world"} onOpenChange={(o) => setPanel(o ? "world" : null)} />
+      <WalletModal open={panel === "wallet"} onOpenChange={(o) => setPanel(o ? "wallet" : null)} />
     </header>
   );
 }

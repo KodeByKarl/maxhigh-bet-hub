@@ -1,4 +1,5 @@
 import { formatMoney } from "@/lib/currency";
+import { formatDateTimePH } from "@/lib/datetime";
 import type { AdminTransactionRow } from "@/lib/admin-types";
 
 function typeTone(type: AdminTransactionRow["type"]) {
@@ -37,7 +38,7 @@ export function TransactionsTable({ rows }: { rows: AdminTransactionRow[] }) {
           {rows.map((r) => (
             <tr key={r.id} className="border-b border-border/70 last:border-0">
               <td className="whitespace-nowrap px-4 py-3 text-xs text-muted-foreground">
-                {new Date(r.createdAt).toLocaleString("en-PH")}
+                {formatDateTimePH(r.createdAt)}
               </td>
               <td className="px-4 py-3">
                 <div className="font-semibold text-foreground">@{r.username}</div>

@@ -113,6 +113,14 @@ export async function assertNotInMaintenanceForBets(db: DbLike = getDb()) {
  * so concurrent bets cannot race/overdraft; balance update + transactions insert
  * share that same transaction boundary.
  */
+/** Ensures bet/win pairs always get distinct, increasing timestamps. */
+let lastLedgerMs = 0;
+function nextLedgerTime(): Date {
+  const now = Date.now();
+  lastLedgerMs = Math.max(now, lastLedgerMs + 1);
+  return new Date(lastLedgerMs);
+}
+
 export async function writeLedgerDelta(
   tx: DbLike,
   opts: {
@@ -151,6 +159,7 @@ export async function writeLedgerDelta(
     balanceAfter,
     game: opts.game ?? null,
     note: opts.note ?? null,
+    createdAt: nextLedgerTime(),
   });
 
   if (opts.type === "win" && opts.delta > 0 && opts.game) {

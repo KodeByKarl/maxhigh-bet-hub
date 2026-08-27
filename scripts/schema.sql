@@ -56,6 +56,7 @@ CREATE TABLE IF NOT EXISTS jackpot (
 ) ENGINE=InnoDB;
 
 CREATE TABLE IF NOT EXISTS transactions (
+  seq BIGINT UNSIGNED NOT NULL AUTO_INCREMENT UNIQUE,
   id VARCHAR(36) PRIMARY KEY,
   user_id VARCHAR(36) NOT NULL,
   type ENUM('deposit','withdraw','bet','win','adjust','jackpot') NOT NULL,
@@ -66,6 +67,7 @@ CREATE TABLE IF NOT EXISTS transactions (
   created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   INDEX tx_user_idx (user_id),
   INDEX tx_created_idx (created_at),
+  INDEX tx_seq_idx (seq),
   INDEX tx_type_idx (type),
   INDEX tx_game_idx (game),
   CONSTRAINT tx_user_fk FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE

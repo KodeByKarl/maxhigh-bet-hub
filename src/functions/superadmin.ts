@@ -952,6 +952,11 @@ export const bulkApplyGameOutcomesFn = createServerFn({ method: "POST" })
     return superBulkUpdateGameControls(data);
   });
 
+export const getBulkOutcomeSettingsFn = createServerFn({ method: "GET" }).handler(async () => {
+  const { getCurrentBulkOutcomeSettings } = await import("../server/superadmin/bulk-game-controls.server");
+  return getCurrentBulkOutcomeSettings();
+});
+
 export const listGameSettingsLogsFn = createServerFn({ method: "GET" }).handler(async () => {
   const { listGameSettingsLogs } = await import("../server/superadmin/bulk-game-controls.server");
   return listGameSettingsLogs();

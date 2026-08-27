@@ -86,6 +86,8 @@ export const jackpot = mysqlTable("jackpot", {
 export const transactions = mysqlTable(
   "transactions",
   {
+    /** Monotonic insert order — use for stable ledger sorting when created_at ties. */
+    seq: bigint("seq", { mode: "number", unsigned: true }).autoincrement().notNull().unique(),
     id: varchar("id", { length: 36 }).primaryKey(),
     userId: varchar("user_id", { length: 36 })
       .notNull()
@@ -101,6 +103,7 @@ export const transactions = mysqlTable(
   (t) => [
     index("tx_user_idx").on(t.userId),
     index("tx_created_idx").on(t.createdAt),
+    index("tx_seq_idx").on(t.seq),
     index("tx_type_idx").on(t.type),
     index("tx_game_idx").on(t.game),
   ],
