@@ -204,8 +204,8 @@ export const goldenPantherBuyFeatureFn = createServerFn({ method: "POST" })
   });
 
 export const getGoldenPantherSessionFn = createServerFn({ method: "GET" }).handler(async () => {
-  const { fetchGoldenPantherSession } = await import("../server/games/golden-panther.server");
-  return fetchGoldenPantherSession();
+  const { getGoldenPantherOpenSession } = await import("../server/games/golden-panther.server");
+  return getGoldenPantherOpenSession();
 });
 
 export const getGoldenPantherEngineConfigFn = createServerFn({ method: "GET" }).handler(async () => {

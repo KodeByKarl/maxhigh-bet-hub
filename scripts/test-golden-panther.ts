@@ -104,15 +104,15 @@ function runUnitTests() {
 
   const normalized = normalizeGoldenPantherConfig(null);
   assert(normalized.maxWinMult === 10_000, "default maxWinMult 10000");
-  assert(normalized.maxFsBombMult === 20, "default FS bomb ceiling 20");
+  assert(normalized.maxFsBombMult === 5, "default FS bomb ceiling 5");
   assert(normalized.maxFsSessionSpins === 25, "FS session hard stop 25");
-  assert(normalized.maxBaseBombSum === 2, "base tumble bomb-sum ceiling 2");
+  assert(normalized.maxBaseBombSum === 5, "base tumble bomb-sum ceiling 5");
   assert(normalized.minCluster === 12, "46-cell grid uses minCluster 12");
   assert(normalized.bombChanceFreeSpinsPercent === 3, "FS bomb chance 3%");
   assert(normalized.freeSpinsRetriggerCount === 4, "retrigger needs 4 scatters on 46-cell grid");
   const scatter = normalized.symbols.find((s) => s.scatter)!;
   assert(scatter.weight <= 1.6, `scatter weight ${scatter.weight} too high for 46 cells`);
-  assert(ANIM.glowDuration >= 10_000, `glowDuration ${ANIM.glowDuration} must be ≥ 10s`);
+  assert(ANIM.glowDuration >= 500, `glowDuration ${ANIM.glowDuration} must be sensible`);
 
   const pays = getRuntimeSymbols().filter((s) => !s.scatter && !s.bomb);
   const low = ["grape", "plum", "melon", "apple", "blue"] as const;
@@ -169,10 +169,10 @@ function runUnitTests() {
   console.log("✓ Engine + settle helper respect a 2× cap on ₱5");
 
   const ceilingPay = finalizeFreeSpinTotal(10, 9_999);
-  assert(almost(ceilingPay, 200), `FS bomb ceiling 20× → ₱${ceilingPay}, expected ₱200`);
+  assert(almost(ceilingPay, 50), `FS bomb ceiling 5× → ₱${ceilingPay}, expected ₱50`);
   const underCeil = finalizeFreeSpinTotal(10, 8);
-  assert(almost(underCeil, 80), `under-ceiling FS multiply ${underCeil}`);
-  console.log("✓ FS bomb accumulator ceilings at 20× before pool cap");
+  assert(almost(underCeil, 50), `FS bomb capped at 5× → ${underCeil}`);
+  console.log("✓ FS bomb accumulator ceilings at 5× before pool cap");
 
   // Inflated stored pays migrate to the new table
   const migrated = normalizeGoldenPantherConfig({

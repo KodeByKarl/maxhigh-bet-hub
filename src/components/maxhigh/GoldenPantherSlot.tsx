@@ -306,8 +306,13 @@ export function GoldenPantherSlot({
           fsSpinsPlayedRef.current = session.fsSpinsPlayed;
           if (session.bet > 0) setBet(session.bet);
           setAnte(session.ante);
+          setFsPaused(false);
+          setFsSummary(null);
+          toast.message(`Resuming ${session.freeSpinsLeft} free spins`);
         })
-        .catch(() => undefined);
+        .catch((err) => {
+          console.error("[GoldenPanther] session load failed", err);
+        });
     }
     return () => {
       mountedRef.current = false;
@@ -317,6 +322,17 @@ export function GoldenPantherSlot({
       pantherAudio.stopAmbient();
     };
   }, [clearTrackedTimers, gameId]);
+
+  /** Pull latest Superadmin math for local UI (server settle uses its own copy). */
+  const refreshEngineConfig = useCallback(async () => {
+    if (gameId !== GOLDEN_PANTHER_GAME_ID && gameId !== "golden-panther") return;
+    try {
+      const cfg = await getGoldenPantherEngineConfigFn();
+      if (mountedRef.current) setGoldenPantherConfig(cfg);
+    } catch {
+      /* keep last known */
+    }
+  }, [gameId]);
 
   const applySession = useCallback(
     (session: {
@@ -579,6 +595,8 @@ export function GoldenPantherSlot({
           setCashflow({ delta: -cost, label: "bet" });
         }
 
+        await refreshEngineConfig();
+
         let settled: Awaited<ReturnType<typeof goldenPantherSpinFn>>;
         if (isFree) {
           const sessionId = playSessionIdRef.current;
@@ -693,6 +711,7 @@ export function GoldenPantherSlot({
       finishBase,
       inFree,
       playScript,
+      refreshEngineConfig,
       refreshJackpot,
       schedule,
       setBalanceLocal,
