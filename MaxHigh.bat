@@ -81,11 +81,15 @@ echo       OK
 echo [4/8] Syncing latest code from GitHub ...
 git fetch origin main >nul 2>&1
 if not errorlevel 1 (
+  for /f %%H in ('git rev-parse --short HEAD') do set "LOCAL_SHA=%%H"
+  for /f %%H in ('git rev-parse --short origin/main') do set "REMOTE_SHA=%%H"
+  echo       local  !LOCAL_SHA!  ^|  origin/main !REMOTE_SHA!
   git pull --ff-only origin main
   if errorlevel 1 (
     echo       Diverged — skipped pull
   ) else (
-    echo       Up to date with origin/main
+    for /f %%H in ('git rev-parse --short HEAD') do set "LOCAL_SHA=%%H"
+    echo       Synced @ !LOCAL_SHA! ^(Already up to date = OK, latest na^)
   )
 ) else (
   echo       Fetch failed — continuing offline
