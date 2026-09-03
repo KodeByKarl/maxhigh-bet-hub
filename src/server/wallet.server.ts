@@ -3,7 +3,7 @@
  */
 import { and, eq, sql, gte, or } from "drizzle-orm";
 import { getDb } from "./db/client";
-import { jackpot, liveWins, platformSettings, riskControls, transactions, users, walletRequests } from "./db/schema";
+import { liveWins, platformSettings, riskControls, transactions, users, walletRequests } from "./db/schema";
 import { money, newId } from "./session";
 
 /** Drizzle tx or db — keep loose to avoid mysql dialect union friction. */
@@ -112,6 +112,11 @@ export async function assertNotInMaintenanceForBets(db: DbLike = getDb()) {
  * MUST be called inside an open DB transaction. Locks the user row (FOR UPDATE)
  * so concurrent bets cannot race/overdraft; balance update + transactions insert
  * share that same transaction boundary.
+ *
+ * Mega jackpot contribution is intentionally NOT in this transaction: a failed
+ * `UPDATE jackpot` (deadlock / lock wait / host flake) used to abort the whole
+ * bet/win and toast a raw SQL error in-game. Jackpot is progressive display —
+ * never block play.
  */
 /** Ensures bet/win pairs always get distinct, increasing timestamps. */
 let lastLedgerMs = 0;
@@ -119,6 +124,33 @@ function nextLedgerTime(): Date {
   const now = Date.now();
   lastLedgerMs = Math.max(now, lastLedgerMs + 1);
   return new Date(lastLedgerMs);
+}
+
+/**
+ * Atomic mega-pool bump on a separate connection.
+ * INSERT…ON DUPLICATE KEY UPDATE avoids read/modify/write races.
+ */
+export async function bumpMegaJackpot(contrib: number, opts?: { insertFloor?: number }) {
+  const add = +Number(contrib).toFixed(2);
+  if (!(add > 0) || !Number.isFinite(add)) return;
+  const floor = Math.max(0, opts?.insertFloor ?? 0);
+  const initial = money(Math.max(add, floor));
+  try {
+    const db = getDb();
+    await db.execute(sql`
+      INSERT INTO jackpot (id, amount, enabled, display_amount)
+      VALUES ('mega', ${initial}, 'yes', ${money(500_000_000)})
+      ON DUPLICATE KEY UPDATE amount = ROUND(amount + ${add}, 2)
+    `);
+  } catch (err) {
+    console.error("[wallet] mega jackpot bump failed (non-fatal)", err);
+  }
+}
+
+function scheduleMegaJackpotBump(contrib: number, opts?: { insertFloor?: number }) {
+  const add = +Number(contrib).toFixed(2);
+  if (!(add > 0) || !Number.isFinite(add)) return;
+  void bumpMegaJackpot(add, opts);
 }
 
 export async function writeLedgerDelta(
@@ -163,40 +195,22 @@ export async function writeLedgerDelta(
   });
 
   if (opts.type === "win" && opts.delta > 0 && opts.game) {
-    await tx.insert(liveWins).values({
-      userId: opts.userId,
-      username: opts.username,
-      game: opts.game,
-      amount: money(opts.delta),
-    });
-    const jpRows = await tx.select().from(jackpot).where(eq(jackpot.id, "mega")).limit(1);
-    const jpAmount = Number(jpRows[0]?.amount ?? 0) + Math.max(0.01, opts.delta * 0.01);
-    if (jpRows[0]) {
-      await tx.update(jackpot).set({ amount: money(jpAmount) }).where(eq(jackpot.id, "mega"));
-    } else {
-      await tx.insert(jackpot).values({
-        id: "mega",
-        amount: money(jpAmount),
-        enabled: "yes",
-        displayAmount: money(500_000_000),
+    try {
+      await tx.insert(liveWins).values({
+        userId: opts.userId,
+        username: opts.username,
+        game: opts.game,
+        amount: money(opts.delta),
       });
+    } catch (err) {
+      // Feed is cosmetic — do not abort a paid win over a ticker insert.
+      console.error("[wallet] live_wins insert failed (non-fatal)", err);
     }
+    scheduleMegaJackpotBump(Math.max(0.01, opts.delta * 0.01));
   }
 
   if (opts.type === "bet" && opts.delta < 0) {
-    const contrib = Math.abs(opts.delta) * 0.01;
-    const jpRows = await tx.select().from(jackpot).where(eq(jackpot.id, "mega")).limit(1);
-    const jpAmount = Number(jpRows[0]?.amount ?? 0) + contrib;
-    if (jpRows[0]) {
-      await tx.update(jackpot).set({ amount: money(jpAmount) }).where(eq(jackpot.id, "mega"));
-    } else {
-      await tx.insert(jackpot).values({
-        id: "mega",
-        amount: money(Math.max(jpAmount, 10000)),
-        enabled: "yes",
-        displayAmount: money(500_000_000),
-      });
-    }
+    scheduleMegaJackpotBump(Math.abs(opts.delta) * 0.01, { insertFloor: 10_000 });
   }
 
   return { balance: next };
