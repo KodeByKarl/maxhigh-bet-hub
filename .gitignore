@@ -21,6 +21,9 @@ dist-ssr
 .env.*
 !.env.example
 
+# Auto-deploy runtime
+deploy/logs/
+
 # Wrangler / Cloudflare
 .wrangler/
 .dev.vars

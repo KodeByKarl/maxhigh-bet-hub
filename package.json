@@ -8,6 +8,7 @@
     "build": "vite build",
     "build:dev": "vite build --mode development",
     "preview": "vite preview",
+    "start": "node .output/server/index.mjs",
     "lint": "eslint .",
     "format": "prettier --write .",
     "db:push": "npx drizzle-kit push",
@@ -17,7 +18,12 @@
     "db:setup": "npm run db:push && npm run db:seed && npm run db:seed-chips",
     "db:sync": "npx tsx --env-file=.env scripts/db-sync.ts",
     "db:generate": "npx drizzle-kit generate",
-    "db:cleanup-play-sessions": "npx tsx --env-file=.env scripts/cleanup-play-sessions.ts"
+    "db:cleanup-play-sessions": "npx tsx --env-file=.env scripts/cleanup-play-sessions.ts",
+    "deploy:check": "node deploy/auto-update.mjs --check",
+    "deploy:now": "node deploy/auto-update.mjs",
+    "deploy:force": "node deploy/auto-update.mjs --force",
+    "deploy:watch": "node deploy/watcher.mjs",
+    "deploy:pm2": "pm2 start deploy/ecosystem.config.cjs"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",
