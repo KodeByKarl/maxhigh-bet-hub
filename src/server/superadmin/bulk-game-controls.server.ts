@@ -174,6 +174,9 @@ export async function getCurrentBulkOutcomeSettings(): Promise<BulkOutcomeSnapsh
   };
 }
 
+function catalogCategoryForScope(
+  scope: BulkGameControlsInput["scope"],
+): GameCategory | null {
   if (scope === "all") return null;
   if (scope === "slots") return "slot";
   if (scope === "cards" || scope === "table" || scope === "live") return "cards";

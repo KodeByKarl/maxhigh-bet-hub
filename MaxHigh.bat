@@ -100,17 +100,13 @@ if not errorlevel 1 (
   echo       Could not fetch — offline? Continuing with local code.
 )
 
-REM ---- 5) Database schema + seed ----
+REM ---- 5) Database schema + seed (non-interactive — never use drizzle-kit push here) ----
 echo [5/7] Ensuring database tables + seed accounts ...
-call npm run db:push
-if errorlevel 1 (
-  echo [!] db:push failed. Check MYSQL_* in .env and that MariaDB is up.
-  pause
-  exit /b 1
-)
 call npm run db:sync
 if errorlevel 1 (
-  echo       [!] db:sync warning — continuing
+  echo [!] db:sync failed. Check MYSQL_* in .env and that MariaDB is up.
+  pause
+  exit /b 1
 )
 call npm run db:seed
 if errorlevel 1 (

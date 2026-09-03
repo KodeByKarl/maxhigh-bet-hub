@@ -230,22 +230,17 @@ export async function runAutoUpdate(opts = {}) {
 
     if (RUN_DB_PUSH) {
       try {
-        log("Ensuring DB schema (db:push)…");
-        await run("npm", ["run", "db:push"]);
-      } catch (err) {
-        log(`db:push warning (non-fatal): ${err instanceof Error ? err.message : err}`);
-      }
-    }
-
-    if (RUN_DB_SYNC) {
-      log("DEPLOY_DB_SYNC=1 — running npm run db:sync");
-      try {
+        // Non-interactive additive sync — never drizzle-kit push (prompts / truncate).
+        log("Ensuring DB schema (db:sync)…");
         await run("npm", ["run", "db:sync"]);
       } catch (err) {
         log(`db:sync warning (non-fatal): ${err instanceof Error ? err.message : err}`);
       }
     }
 
+    if (RUN_DB_SYNC) {
+      log("DEPLOY_DB_SYNC=1 — db:sync already attempted above when DEPLOY_DB_PUSH is on");
+    }
     await run("npm", ["run", "build"], { env: { NODE_ENV: "production" } });
 
     const after = await localSha();
