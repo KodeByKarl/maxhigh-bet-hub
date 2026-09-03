@@ -5,27 +5,34 @@
 Double-click **`MaxHigh.bat`**. It will:
 
 1. Install npm dependencies  
-2. Start MariaDB (if installed as a Windows service)  
-3. Create/fix missing DB tables + seed accounts  
+2. Start MariaDB  
+3. DB sync + seed  
 4. Pull latest from GitHub  
-5. Build Frontend + Backend  
-6. Start both processes with PM2:
-   - `maxhigh-app` — the site/API  
-   - `maxhigh-updater` — keeps fetching GitHub; on new commit → pull → build → reload  
+5. Build **Node server** (`nitro.preset = node-server`)  
+6. Start PM2: `maxhigh-app` + `maxhigh-updater`  
+7. Start **Caddy** → **https://maxhigh.online** → `127.0.0.1:8080`  
 
-After that you can close the log window anytime — the app **keeps running**.  
-New pushes to `main` update the server by themselves.
+### Domain checklist
+
+| Need | Detail |
+|------|--------|
+| DNS | `maxhigh.online` (+ `www`) **A/AAAA** → this server's public IP |
+| Firewall | TCP **80** + **443** open (Let's Encrypt + HTTPS) |
+| Caddy | `caddy.exe` on PATH, or in `deploy\caddy.exe` |
+| `.env` | `CADDY_DOMAIN=maxhigh.online`, `PORT=8080`, `PUBLIC_URL=https://maxhigh.online` |
+
+Config file: `deploy/Caddyfile`
 
 ```bat
 MaxHigh.bat
 ```
 
-Useful later:
+Useful:
 
 ```bat
 pm2 status
-pm2 logs
-pm2 restart maxhigh-app
+pm2 logs maxhigh-caddy
+pm2 logs maxhigh-app
 ```
 
 ## Linux (VPS)

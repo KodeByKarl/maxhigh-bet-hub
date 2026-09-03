@@ -22,4 +22,8 @@ export default defineConfig({
     // nitro/vite builds from this
     server: { entry: "server" },
   },
+  // Self-hosted behind Caddy (https://maxhigh.online) — Node HTTP server, not Cloudflare Workers.
+  nitro: {
+    preset: "node-server",
+  },
 });

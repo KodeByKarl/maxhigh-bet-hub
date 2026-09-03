@@ -1,13 +1,11 @@
 @echo off
-setlocal EnableExtensions
+setlocal EnableExtensions EnableDelayedExpansion
 cd /d "%~dp0"
 
 REM ============================================================
-REM  MaxHigh.bat — ONE click, full stack
-REM  1) Install npm deps
-REM  2) Start MariaDB + create/fix missing DB tables + seed
-REM  3) Build + run Frontend/Backend
-REM  4) Keep fetching GitHub forever (auto-update on new commits)
+REM  MaxHigh.bat — ONE click
+REM  deps → MariaDB → DB sync/seed → build → PM2 app+updater
+REM  → Caddy https://maxhigh.online → keep fetching GitHub
 REM ============================================================
 
 title MaxHigh — starting...
@@ -17,40 +15,39 @@ echo   MaxHigh — auto start
 echo  ========================================
 echo.
 
-REM ---- 0) Tools ----
-where node >nul 2>&1
-if errorlevel 1 (
-  echo [!] Node.js not found. Install Node 20+ then re-run.
-  pause
-  exit /b 1
-)
-where npm >nul 2>&1
-if errorlevel 1 (
-  echo [!] npm not found.
-  pause
-  exit /b 1
-)
-where git >nul 2>&1
-if errorlevel 1 (
-  echo [!] git not found. Install Git for Windows then re-run.
-  pause
-  exit /b 1
+where node >nul 2>&1 || (echo [!] Node.js missing & pause & exit /b 1)
+where npm  >nul 2>&1 || (echo [!] npm missing & pause & exit /b 1)
+where git  >nul 2>&1 || (echo [!] git missing & pause & exit /b 1)
+
+REM ---- Load .env into this session (KEY=VALUE lines) ----
+if exist ".env" (
+  for /f "usebackq eol=# tokens=1,* delims==" %%A in (".env") do (
+    if not "%%A"=="" if not "%%B"=="" set "%%A=%%B"
+  )
 )
 
-REM ---- 1) .env ----
-echo [1/7] Checking .env ...
+if not defined PORT set "PORT=8080"
+if not defined CADDY_DOMAIN set "CADDY_DOMAIN=maxhigh.online"
+if not defined PUBLIC_URL set "PUBLIC_URL=https://maxhigh.online"
+if not defined CADDY_ACME_EMAIL set "CADDY_ACME_EMAIL=admin@maxhigh.online"
+if not defined DEPLOY_BRANCH set "DEPLOY_BRANCH=main"
+if not defined DEPLOY_POLL_SECONDS set "DEPLOY_POLL_SECONDS=60"
+if not defined DEPLOY_WEBHOOK_PORT set "DEPLOY_WEBHOOK_PORT=9090"
+
+echo [1/8] Checking .env ...
 if not exist ".env" (
   copy /Y ".env.example" ".env" >nul
-  echo       Created .env from .env.example
-  echo       Edit DB password if needed, then press any key...
+  echo       Created .env — set MYSQL_* then save
   notepad ".env"
   pause
+  for /f "usebackq eol=# tokens=1,* delims==" %%A in (".env") do (
+    if not "%%A"=="" if not "%%B"=="" set "%%A=%%B"
+  )
 ) else (
   echo       OK
 )
 
-REM ---- 2) MariaDB / MySQL ----
-echo [2/7] Starting database service ...
+echo [2/8] Starting database service ...
 set "SERVICE="
 for %%S in (MariaDB MySQL80 MySQL57 MySQL) do (
   sc query "%%S" >nul 2>&1
@@ -59,126 +56,153 @@ for %%S in (MariaDB MySQL80 MySQL57 MySQL) do (
     goto :db_found
   )
 )
-echo       No Windows MySQL service found — start XAMPP/WAMP MySQL manually.
+echo       No Windows MySQL service — start XAMPP/WAMP MySQL manually.
 goto :db_done
 
 :db_found
-sc query "%SERVICE%" | findstr /I "RUNNING" >nul
+sc query "!SERVICE!" | findstr /I "RUNNING" >nul
 if not errorlevel 1 (
-  echo       %SERVICE% already running
+  echo       !SERVICE! already running
 ) else (
-  net start "%SERVICE%" >nul 2>&1
+  net start "!SERVICE!" >nul 2>&1
   if errorlevel 1 (
-    echo       [!] Could not start %SERVICE%. Run this bat as Administrator.
+    echo       [!] Could not start !SERVICE! — run bat as Administrator
   ) else (
-    echo       Started %SERVICE%
+    echo       Started !SERVICE!
   )
 )
 :db_done
 
-REM ---- 3) npm dependencies ----
-echo [3/7] Installing npm dependencies ...
+echo [3/8] Installing npm dependencies ...
 call npm install
-if errorlevel 1 (
-  echo [!] npm install failed.
-  pause
-  exit /b 1
-)
+if errorlevel 1 (echo [!] npm install failed & pause & exit /b 1)
 echo       OK
 
-REM ---- 4) Pull latest from GitHub (if remote reachable) ----
-echo [4/7] Syncing latest code from GitHub ...
+echo [4/8] Syncing latest code from GitHub ...
 git fetch origin main >nul 2>&1
 if not errorlevel 1 (
   git pull --ff-only origin main
   if errorlevel 1 (
-    echo       Local branch diverged — skipped pull ^(will still start^)
+    echo       Diverged — skipped pull
   ) else (
-    echo       Repo up to date with origin/main
+    echo       Up to date with origin/main
   )
 ) else (
-  echo       Could not fetch — offline? Continuing with local code.
+  echo       Fetch failed — continuing offline
 )
 
-REM ---- 5) Database schema + seed (non-interactive — never use drizzle-kit push here) ----
-echo [5/7] Ensuring database tables + seed accounts ...
+echo [5/8] Ensuring database tables + seed ...
 call npm run db:sync
-if errorlevel 1 (
-  echo [!] db:sync failed. Check MYSQL_* in .env and that MariaDB is up.
-  pause
-  exit /b 1
-)
+if errorlevel 1 (echo [!] db:sync failed — check .env MYSQL_* & pause & exit /b 1)
 call npm run db:seed
-if errorlevel 1 (
-  echo       [!] db:seed warning — continuing
-)
+if errorlevel 1 echo       [!] db:seed warning — continuing
 echo       OK
 
-REM ---- 6) Production build ----
-echo [6/7] Building Frontend + Backend ...
+echo [6/8] Building Frontend + Backend ^(Nitro node-server^) ...
 set NODE_ENV=production
+set NITRO_PRESET=node-server
 call npm run build
-if errorlevel 1 (
-  echo [!] Build failed.
+if errorlevel 1 (echo [!] Build failed & pause & exit /b 1)
+if not exist ".output\server\index.mjs" (
+  echo [!] Missing .output\server\index.mjs
   pause
   exit /b 1
 )
 echo       OK
 
-REM ---- 7) PM2: app + GitHub auto-updater ----
-echo [7/7] Starting app + GitHub auto-updater ...
+echo [7/8] Starting app + GitHub auto-updater ^(PM2^) ...
 where pm2 >nul 2>&1
 if errorlevel 1 (
-  echo       Installing pm2 ...
   call npm install -g pm2
-  if errorlevel 1 (
-    echo [!] pm2 install failed.
-    pause
-    exit /b 1
-  )
+  if errorlevel 1 (echo [!] pm2 install failed & pause & exit /b 1)
 )
-
 if not exist "deploy\logs" mkdir "deploy\logs"
-
-REM Load deploy defaults into this session (watcher also reads .env)
-if not defined DEPLOY_BRANCH set "DEPLOY_BRANCH=main"
-if not defined DEPLOY_POLL_SECONDS set "DEPLOY_POLL_SECONDS=60"
-if not defined DEPLOY_WEBHOOK_PORT set "DEPLOY_WEBHOOK_PORT=9090"
-if not defined PORT set "PORT=8080"
 
 call pm2 startOrReload deploy/ecosystem.config.cjs --update-env
 if errorlevel 1 (
-  echo       startOrReload failed — trying fresh start ...
   call pm2 delete maxhigh-app maxhigh-updater >nul 2>&1
   call pm2 start deploy/ecosystem.config.cjs
-  if errorlevel 1 (
-    echo [!] Could not start PM2 processes.
-    pause
-    exit /b 1
-  )
+  if errorlevel 1 (echo [!] PM2 start failed & pause & exit /b 1)
 )
 call pm2 save >nul 2>&1
+echo       App on http://127.0.0.1:!PORT!/
 
+echo [8/8] Caddy → https://!CADDY_DOMAIN!/ ...
+set "CADDY_EXE="
+where caddy >nul 2>&1 && for /f "delims=" %%C in ('where caddy') do (
+  set "CADDY_EXE=%%C"
+  goto :have_caddy
+)
+if exist "%ProgramFiles%\Caddy\caddy.exe" set "CADDY_EXE=%ProgramFiles%\Caddy\caddy.exe"
+if exist "%LOCALAPPDATA%\Caddy\caddy.exe" set "CADDY_EXE=%LOCALAPPDATA%\Caddy\caddy.exe"
+if exist "C:\caddy\caddy.exe" set "CADDY_EXE=C:\caddy\caddy.exe"
+if exist "%~dp0caddy.exe" set "CADDY_EXE=%~dp0caddy.exe"
+if exist "%~dp0deploy\caddy.exe" set "CADDY_EXE=%~dp0deploy\caddy.exe"
+
+:have_caddy
+if not defined CADDY_EXE (
+  echo       [!] caddy.exe not found
+  echo           Install: https://caddyserver.com/docs/install#windows
+  echo           Or drop caddy.exe into deploy\
+  echo           Local app works; HTTPS domain not proxied yet.
+  goto :summary
+)
+
+echo       Using: !CADDY_EXE!
+"!CADDY_EXE!" validate --config "%~dp0deploy\Caddyfile" --adapter caddyfile
+if errorlevel 1 (
+  echo       [!] Invalid deploy\Caddyfile
+  goto :summary
+)
+
+call pm2 describe maxhigh-caddy >nul 2>&1
+if not errorlevel 1 (
+  "!CADDY_EXE!" reload --config "%~dp0deploy\Caddyfile" --adapter caddyfile
+  if errorlevel 1 (
+    call pm2 restart maxhigh-caddy --update-env
+  ) else (
+    echo       Caddy reloaded
+  )
+) else (
+  call pm2 start "!CADDY_EXE!" --name maxhigh-caddy --interpreter none -- run --config "%~dp0deploy\Caddyfile" --adapter caddyfile
+  if errorlevel 1 (
+    start "MaxHigh-Caddy" /MIN "!CADDY_EXE!" run --config "%~dp0deploy\Caddyfile" --adapter caddyfile
+    echo       Caddy started in background window
+  ) else (
+    echo       Caddy via PM2 ^(maxhigh-caddy^)
+  )
+  call pm2 save >nul 2>&1
+)
+
+timeout /t 3 /nobreak >nul
+curl -s -o NUL -w "%%{http_code}" --max-time 5 "http://127.0.0.1:!PORT!/" > "%TEMP%\mh_app.txt" 2>nul
+set /p APP_CODE=<"%TEMP%\mh_app.txt"
+echo       Local app: HTTP !APP_CODE!
+curl -s -o NUL -w "%%{http_code}" --max-time 10 -k "https://!CADDY_DOMAIN!/" > "%TEMP%\mh_site.txt" 2>nul
+set /p SITE_CODE=<"%TEMP%\mh_site.txt"
+if "!SITE_CODE!"=="" set "SITE_CODE=000"
+if "!SITE_CODE!"=="000" (
+  echo       https://!CADDY_DOMAIN!/ not up yet — check DNS A record + firewall 80/443
+) else (
+  echo       https://!CADDY_DOMAIN!/ HTTP !SITE_CODE!
+)
+
+:summary
 echo.
 echo  ========================================
 echo   MaxHigh is RUNNING
 echo  ========================================
-echo   App:      http://localhost:%PORT%/
-echo   Updater:  polls GitHub every %DEPLOY_POLL_SECONDS%s
-echo             health http://localhost:%DEPLOY_WEBHOOK_PORT%/health
+echo   Public:  !PUBLIC_URL!/
+echo   Local:   http://127.0.0.1:!PORT!/
+echo   Domain:  !CADDY_DOMAIN!  ^(Caddy + Let's Encrypt^)
+echo   Updater: every !DEPLOY_POLL_SECONDS!s from GitHub
 echo.
-echo   New commits on origin/main = auto pull + build + reload
-echo   ^(no need to open this bat again^)
-echo.
-echo   Useful:
-echo     pm2 status
-echo     pm2 logs
-echo     pm2 restart maxhigh-app
+echo   Need: DNS A/AAAA → this PC, ports 80+443 open
+echo   pm2 status ^| pm2 logs
 echo  ========================================
 echo.
 
-REM Open browser + show live logs (Ctrl+C only stops the log view, NOT the app)
-start "" "http://localhost:%PORT%/"
+start "" "!PUBLIC_URL!/"
 timeout /t 2 /nobreak >nul
 call pm2 logs --lines 40
 

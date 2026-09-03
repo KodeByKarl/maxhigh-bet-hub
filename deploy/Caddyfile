@@ -1,0 +1,37 @@
+# MaxHigh — Caddy reverse proxy
+# Serves https://maxhigh.online → Node app on PORT (default 8080)
+#
+# Started by MaxHigh.bat:
+#   caddy run --config deploy/Caddyfile --adapter caddyfile
+#
+# DNS: A/AAAA for maxhigh.online (+ www) → this server's public IP
+# Firewall: allow TCP 80 + 443 (Let's Encrypt + HTTPS)
+
+{
+	email {$CADDY_ACME_EMAIL:admin@maxhigh.online}
+}
+
+{$CADDY_DOMAIN:maxhigh.online}, www.{$CADDY_DOMAIN:maxhigh.online} {
+	encode gzip zstd
+
+	reverse_proxy 127.0.0.1:{$PORT:8080} {
+		header_up Host {host}
+		header_up X-Real-IP {remote_host}
+		header_up X-Forwarded-For {remote_host}
+		header_up X-Forwarded-Proto {scheme}
+	}
+
+	header {
+		Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
+		X-Content-Type-Options nosniff
+		Referrer-Policy strict-origin-when-cross-origin
+		-Server
+	}
+
+	log {
+		output file deploy/logs/caddy-access.log {
+			roll_size 10mb
+			roll_keep 5
+		}
+	}
+}
