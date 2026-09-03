@@ -23,7 +23,7 @@
     "deploy:now": "node deploy/auto-update.mjs",
     "deploy:force": "node deploy/auto-update.mjs --force",
     "deploy:watch": "node deploy/watcher.mjs",
-    "deploy:pm2": "pm2 start deploy/ecosystem.config.cjs"
+    "deploy:pm2": "pm2 startOrReload deploy/ecosystem.config.cjs --update-env"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",

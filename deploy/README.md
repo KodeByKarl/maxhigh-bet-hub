@@ -1,114 +1,69 @@
 # MaxHigh continuous deploy (auto-update from GitHub)
 
-When the app + updater are running on the server, every push to `main` is pulled,
-built, and hot-reloaded. You do not need to SSH for routine updates.
+## Windows — one click
 
-## What runs
+Double-click **`MaxHigh.bat`**. It will:
 
-| PM2 process         | Role                                      |
-|---------------------|-------------------------------------------|
-| `maxhigh-app`       | Production Node server (`.output/...`)    |
-| `maxhigh-updater`   | Polls GitHub + optional webhook → deploy  |
+1. Install npm dependencies  
+2. Start MariaDB (if installed as a Windows service)  
+3. Create/fix missing DB tables + seed accounts  
+4. Pull latest from GitHub  
+5. Build Frontend + Backend  
+6. Start both processes with PM2:
+   - `maxhigh-app` — the site/API  
+   - `maxhigh-updater` — keeps fetching GitHub; on new commit → pull → build → reload  
 
-Deploy steps (automatic):
+After that you can close the log window anytime — the app **keeps running**.  
+New pushes to `main` update the server by themselves.
 
-1. `git fetch` / compare to `origin/main`
-2. `git pull --ff-only`
-3. `npm ci`
-4. `npm run build`
-5. `pm2 reload maxhigh-app`
+```bat
+MaxHigh.bat
+```
 
-## One-time server setup
+Useful later:
 
-### Linux
+```bat
+pm2 status
+pm2 logs
+pm2 restart maxhigh-app
+```
+
+## Linux (VPS)
 
 ```bash
 cd /path/to/maxhigh-bet-hub
-cp .env.example .env   # fill MySQL + DEPLOY_WEBHOOK_SECRET
+cp .env.example .env   # fill MySQL + optional DEPLOY_WEBHOOK_SECRET
 chmod +x deploy/install.sh
 ./deploy/install.sh
-pm2 startup            # run the command it prints
-pm2 save
-```
-
-### Windows Server
-
-Double-click **`MaxHigh.bat`** in the repo root, then choose:
-
-- `8` — Install + start PM2 (app + auto-updater)
-- `5` / `6` — Check or deploy once
-
-Or from a prompt:
-
-```bat
-MaxHigh.bat pm2
-MaxHigh.bat check
-MaxHigh.bat deploy
-```
-
-Fill `.env` first (MySQL + `DEPLOY_WEBHOOK_SECRET`). Then:
-
-```bat
-pm2 startup
-pm2 save
+pm2 startup && pm2 save
 ```
 
 ## `.env` knobs
 
 ```env
+PORT=8080
 DEPLOY_BRANCH=main
-DEPLOY_POLL_SECONDS=90
+DEPLOY_POLL_SECONDS=60
 DEPLOY_WEBHOOK_ENABLED=1
 DEPLOY_WEBHOOK_PORT=9090
-DEPLOY_WEBHOOK_SECRET=change-me-long-random
-DEPLOY_PM2_APP=maxhigh-app
-# Optional: run schema sync after each pull (off by default)
-# DEPLOY_DB_SYNC=1
+DEPLOY_WEBHOOK_SECRET=change-me-to-a-long-random-string
 ```
 
-## GitHub webhook (instant; optional)
+## GitHub webhook (optional, instant)
 
-Polling alone is enough (default every 90s). For instant deploys on push:
+Polling alone is enough (default every 60s). For instant deploys:
 
-1. Open port `9090` (or your `DEPLOY_WEBHOOK_PORT`) to the server  
-2. GitHub → repo → **Settings → Webhooks → Add webhook**
-   - **Payload URL:** `http://YOUR_SERVER_IP:9090/hooks/github`  
-     (or reverse-proxy `https://maxhigh.online/hooks/github` → `9090`)
+1. Open port `9090`  
+2. GitHub → **Settings → Webhooks**
+   - **Payload URL:** `http://YOUR_SERVER:9090/hooks/github`
    - **Content type:** `application/json`
    - **Secret:** same as `DEPLOY_WEBHOOK_SECRET`
-   - **Events:** Just the **push** event
+   - **Events:** push
 
-Manual trigger (same secret as token):
+Health: `http://localhost:9090/health`
 
-```bash
-curl -X POST "http://127.0.0.1:9090/hooks/deploy?token=YOUR_SECRET"
-```
+## Safety
 
-Health:
-
-```bash
-curl -s http://127.0.0.1:9090/health
-```
-
-## Day-to-day workflow
-
-1. Develop locally → `git commit` → `git push origin main`
-2. Within ~90s (or instantly via webhook) the server updates itself
-3. Check: `pm2 status` · `pm2 logs maxhigh-updater` · `deploy/logs/auto-update.log`
-
-## Manual commands
-
-```bash
-npm run deploy:check    # are we behind origin/main?
-npm run deploy:now      # run one deploy cycle now
-npm run deploy:force    # rebuild/reload even if already up to date
-pm2 logs maxhigh-updater
-pm2 reload maxhigh-app
-```
-
-## Safety notes
-
-- Uses `git pull --ff-only` — will **not** overwrite unexpected local commits on the server.
-- `.env` is gitignored — secrets stay on the box.
-- Jackpot / player data is in MySQL — deploys do not wipe the DB.
-- Set `DEPLOY_DB_SYNC=1` only if you want `npm run db:sync` after every pull.
+- Uses `git pull --ff-only`  
+- `.env` stays on the server (gitignored)  
+- MySQL data is never wiped by a deploy  

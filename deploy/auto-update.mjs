@@ -33,7 +33,9 @@ const BRANCH = process.env.DEPLOY_BRANCH || "main";
 const REMOTE = process.env.DEPLOY_REMOTE || "origin";
 const APP_PM2_NAME = process.env.DEPLOY_PM2_APP || "maxhigh-app";
 const RUN_DB_SYNC = process.env.DEPLOY_DB_SYNC === "1";
-const INSTALL_CMD = process.env.DEPLOY_INSTALL_CMD || "npm ci";
+/** Default npm install — more forgiving than ci on Windows boxes. */
+const INSTALL_CMD = process.env.DEPLOY_INSTALL_CMD || "npm install";
+const RUN_DB_PUSH = process.env.DEPLOY_DB_PUSH !== "0";
 
 function ensureLogDir() {
   if (!existsSync(LOG_DIR)) mkdirSync(LOG_DIR, { recursive: true });
@@ -222,13 +224,26 @@ export async function runAutoUpdate(opts = {}) {
     // Fast-forward only — refuses if local commits would be overwritten
     await git(["pull", "--ff-only", REMOTE, BRANCH]);
 
-    // Install (npm ci if lockfile present)
+    // Install deps
     const installParts = INSTALL_CMD.split(/\s+/).filter(Boolean);
     await run(installParts[0], installParts.slice(1));
 
+    if (RUN_DB_PUSH) {
+      try {
+        log("Ensuring DB schema (db:push)…");
+        await run("npm", ["run", "db:push"]);
+      } catch (err) {
+        log(`db:push warning (non-fatal): ${err instanceof Error ? err.message : err}`);
+      }
+    }
+
     if (RUN_DB_SYNC) {
       log("DEPLOY_DB_SYNC=1 — running npm run db:sync");
-      await run("npm", ["run", "db:sync"]);
+      try {
+        await run("npm", ["run", "db:sync"]);
+      } catch (err) {
+        log(`db:sync warning (non-fatal): ${err instanceof Error ? err.message : err}`);
+      }
     }
 
     await run("npm", ["run", "build"], { env: { NODE_ENV: "production" } });
