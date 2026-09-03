@@ -33,10 +33,22 @@ pm2 save
 
 ### Windows Server
 
-```powershell
-cd D:\Projects\maxhigh-bet-hub
-copy .env.example .env   # fill secrets
-.\deploy\install.ps1
+Double-click **`MaxHigh.bat`** in the repo root, then choose:
+
+- `8` — Install + start PM2 (app + auto-updater)
+- `5` / `6` — Check or deploy once
+
+Or from a prompt:
+
+```bat
+MaxHigh.bat pm2
+MaxHigh.bat check
+MaxHigh.bat deploy
+```
+
+Fill `.env` first (MySQL + `DEPLOY_WEBHOOK_SECRET`). Then:
+
+```bat
 pm2 startup
 pm2 save
 ```
