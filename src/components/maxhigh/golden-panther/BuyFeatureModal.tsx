@@ -1,196 +1,268 @@
+import { useState, type ReactNode } from "react";
 import { motion } from "framer-motion";
-import { BET_STEPS, getFreeSpinsBase } from "./paytable";
+import { BET_STEPS, ICON_SRC, getFreeSpinsBase } from "./paytable";
+
+export const BUY_FS_QTY_MIN = 1;
+export const BUY_FS_QTY_MAX = 50;
 
 export type BuyFeatureModalProps = {
   bet: number;
-  cost: number;
+  /** Unit price for 1 free spin at the current bet / mode. */
+  unitPrice: number;
   balance: number;
+  mode: "normal" | "super";
   onBetChange: (bet: number) => void;
-  onConfirm: () => void;
+  onConfirm: (quantity: number) => void;
   onCancel: () => void;
 };
 
-/** Confirm Rebuy–style panther modal for Buy Feature. */
+function betStepIndex(bet: number) {
+  const found = BET_STEPS.findIndex((v) => v >= bet);
+  return found === -1 ? BET_STEPS.length - 1 : found;
+}
+
+/** Buy Bonus–style modal: adjustable bet + free-spin quantity, live price / total. */
 export function BuyFeatureModal({
   bet,
-  cost,
+  unitPrice,
   balance,
+  mode,
   onBetChange,
   onConfirm,
   onCancel,
 }: BuyFeatureModalProps) {
-  const found = BET_STEPS.findIndex((v) => v >= bet);
-  const stepIdx = found === -1 ? BET_STEPS.length - 1 : found;
-  const canMinus = stepIdx > 0;
-  const canPlus = stepIdx < BET_STEPS.length - 1;
-  const canAfford = balance >= cost;
+  const [quantity, setQuantity] = useState(() => Math.min(BUY_FS_QTY_MAX, Math.max(BUY_FS_QTY_MIN, getFreeSpinsBase())));
+  const stepIdx = betStepIndex(bet);
+  const canBetMinus = stepIdx > 0;
+  const canBetPlus = stepIdx < BET_STEPS.length - 1;
+  const canQtyMinus = quantity > BUY_FS_QTY_MIN;
+  const canQtyPlus = quantity < BUY_FS_QTY_MAX;
+  const totalPrice = +(unitPrice * quantity).toFixed(2);
+  const canAfford = balance >= totalPrice;
 
-  const nudge = (dir: -1 | 1) => {
+  const nudgeBet = (dir: -1 | 1) => {
     const next = BET_STEPS[stepIdx + dir];
     if (next != null) onBetChange(next);
+  };
+
+  const nudgeQty = (dir: -1 | 1) => {
+    setQuantity((q) => Math.min(BUY_FS_QTY_MAX, Math.max(BUY_FS_QTY_MIN, q + dir)));
   };
 
   return (
     <motion.div
       role="dialog"
       aria-modal="true"
-      aria-label="Confirm buy feature"
+      aria-label="Buy Bonus"
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="absolute inset-0 z-50 flex items-center justify-center bg-black/55 p-3 backdrop-blur-[3px]"
+      className="absolute inset-0 z-50 flex items-center justify-center bg-black/60 p-3 backdrop-blur-[3px]"
       onClick={onCancel}
     >
       <motion.div
-        initial={{ scale: 0.82, y: 28, opacity: 0 }}
+        initial={{ scale: 0.88, y: 20, opacity: 0 }}
         animate={{ scale: 1, y: 0, opacity: 1 }}
-        exit={{ scale: 0.92, opacity: 0 }}
-        transition={{ type: "spring", stiffness: 320, damping: 20 }}
-        className="relative w-full max-w-[400px] rounded-[1.6rem] p-[10px]"
+        exit={{ scale: 0.94, opacity: 0 }}
+        transition={{ type: "spring", stiffness: 340, damping: 22 }}
+        className="relative w-full max-w-[340px] overflow-hidden rounded-2xl border border-amber-500/40"
         style={{
-          background:
-            "linear-gradient(135deg, #FDE68A 0%, #D97706 50%, #064E3B 100%)",
-          boxShadow: "0 22px 50px rgba(0,0,0,0.85)",
+          background: "linear-gradient(180deg, #1a1208 0%, #0c0a06 100%)",
+          boxShadow: "0 22px 50px rgba(0,0,0,0.85), inset 0 1px 0 rgba(253,230,138,0.12)",
         }}
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Close */}
         <button
           type="button"
           aria-label="Close"
           onClick={onCancel}
-          className="absolute -right-1 -top-1 z-10 grid size-9 place-items-center rounded-full border-2 border-amber-300 bg-red-600 text-lg font-black text-white shadow-lg hover:brightness-110"
+          className="absolute right-2 top-2 z-10 grid size-8 place-items-center rounded-full border border-amber-400/50 bg-black/70 text-lg font-black text-amber-100 hover:brightness-125"
         >
           ×
         </button>
 
-        <div
-          className="relative overflow-hidden rounded-[1.25rem] px-4 pb-5 pt-4"
-          style={{
-            background:
-              "linear-gradient(180deg, #064E3B 0%, #022014 100%)",
-          }}
-        >
+        <div className="px-4 pb-4 pt-4">
           <div
-            className="relative text-center font-black uppercase tracking-wide text-yellow-300"
+            className="text-center font-black tracking-wide text-yellow-300"
             style={{
-              fontSize: "clamp(1.15rem, 4.5vw, 1.45rem)",
-              textShadow: "0 2px 4px rgba(0,0,0,0.8)",
+              fontSize: "clamp(1.2rem, 5vw, 1.45rem)",
+              textShadow: "0 2px 6px rgba(0,0,0,0.85)",
             }}
           >
-            Confirm Rebuy
+            Buy Bonus
           </div>
+          <p className="mx-auto mt-2 max-w-[280px] text-center text-[11px] font-semibold leading-snug text-yellow-200/90">
+            Click &apos;Buy &amp; Play&apos; to purchase and activate the featured game automatically.
+          </p>
 
-          {/* Feature card */}
           <div
-            className="relative mt-4 rounded-2xl border-2 border-amber-300 px-3 py-4 text-center"
+            className="relative mt-4 overflow-hidden rounded-xl border border-amber-600/50 px-3 py-3"
             style={{
-              background: "linear-gradient(180deg, #78350F 0%, #451A03 100%)",
-              boxShadow: "0 8px 20px rgba(0,0,0,0.5)",
+              background: "linear-gradient(180deg, #2a1808 0%, #140c04 100%)",
             }}
           >
-            <div className="pointer-events-none absolute left-2 top-1 flex gap-1 text-yellow-300">
-              <span>★</span>
-              <span className="text-sm">★</span>
-              <span>★</span>
+            <div className="mb-3 flex justify-center">
+              <img
+                src={ICON_SRC.lollipop}
+                alt=""
+                className="size-14 object-contain drop-shadow-[0_4px_10px_rgba(0,0,0,0.65)]"
+                draggable={false}
+              />
             </div>
-            <div className="pointer-events-none absolute right-2 top-1 flex gap-1 text-yellow-300">
-              <span>★</span>
-              <span className="text-sm">★</span>
-              <span>★</span>
-            </div>
-
-            <div
-              className="font-black uppercase tracking-wide text-emerald-200"
-              style={{
-                fontSize: "clamp(0.95rem, 3.5vw, 1.15rem)",
-                textShadow: "0 2px 4px rgba(0,0,0,0.8)",
-              }}
-            >
-              Buy Feature · {getFreeSpinsBase()} Free Spins
-            </div>
-            <div
-              className="mt-1 font-black tabular-nums leading-none text-yellow-300"
-              style={{
-                fontSize: "clamp(1.9rem, 8vw, 2.6rem)",
-                textShadow: "0 3px 0 #78350F, 0 6px 10px rgba(0,0,0,0.5)",
-              }}
-            >
-              ₱{cost.toFixed(2)}
-            </div>
-            <div className="mt-2 text-[10px] font-black uppercase leading-snug tracking-wide text-emerald-100/90">
-              4 panther canes · tumble wins · 2x–5x bombs in free spins
-            </div>
-          </div>
-
-          {/* Base bet */}
-          <div className="relative mt-5 text-center">
-            <div className="text-[11px] font-black uppercase tracking-[0.18em] text-emerald-200">
-              Base Bet
-            </div>
-            <div className="mt-2 flex items-center justify-center gap-3">
-              <button
-                type="button"
-                disabled={!canMinus}
-                onClick={() => nudge(-1)}
-                className="grid size-11 place-items-center rounded-full border-2 border-amber-300/70 bg-[#064E3B] text-2xl font-black text-white shadow-lg disabled:opacity-40 hover:brightness-110"
-              >
-                −
-              </button>
-              <div
-                className="min-w-[120px] rounded-xl border-2 border-amber-300/60 px-4 py-2.5 text-center font-black tabular-nums text-yellow-300"
-                style={{
-                  background: "linear-gradient(180deg, #065F46, #022014)",
-                  fontSize: "1.25rem",
-                  textShadow: "0 2px 0 #78350f",
-                }}
-              >
-                ₱{bet.toFixed(2)}
+            {mode === "super" && (
+              <div className="mb-2 text-center text-[10px] font-black uppercase tracking-[0.16em] text-amber-300/90">
+                Super Feature
               </div>
-              <button
-                type="button"
-                disabled={!canPlus}
-                onClick={() => nudge(1)}
-                className="grid size-11 place-items-center rounded-full border-2 border-white/40 bg-[#4c1d95] text-2xl font-black text-white shadow-lg disabled:opacity-40 hover:brightness-110"
-              >
-                +
-              </button>
-            </div>
+            )}
+
+            <Row label="Bet(₱)">
+              <Stepper
+                value={bet % 1 === 0 ? String(bet) : bet.toFixed(2)}
+                canMinus={canBetMinus}
+                canPlus={canBetPlus}
+                onMinus={() => nudgeBet(-1)}
+                onPlus={() => nudgeBet(1)}
+              />
+            </Row>
+
+            <Row label="Quantity">
+              <Stepper
+                value={String(quantity)}
+                canMinus={canQtyMinus}
+                canPlus={canQtyPlus}
+                onMinus={() => nudgeQty(-1)}
+                onPlus={() => nudgeQty(1)}
+              />
+            </Row>
+
+            <Row label="Price">
+              <ValueBox>₱ {formatPrice(unitPrice)}</ValueBox>
+            </Row>
+
+            <Row label="Total Price" last>
+              <ValueBox emphasize>₱ {formatPrice(totalPrice)}</ValueBox>
+            </Row>
+
             {!canAfford && (
-              <div className="mt-2 text-[11px] font-bold text-yellow-200">
+              <div className="mt-2 text-center text-[11px] font-bold text-yellow-200">
                 Insufficient balance
               </div>
             )}
           </div>
 
-          {/* Actions */}
-          <div className="relative mt-6 grid grid-cols-2 gap-3">
-            <button
-              type="button"
-              onClick={onCancel}
-              className="rounded-2xl border-[3px] border-white/70 py-3.5 text-lg font-black uppercase tracking-wide text-white shadow-lg hover:brightness-110"
-              style={{
-                background: "linear-gradient(180deg, #f87171 0%, #dc2626 55%, #b91c1c 100%)",
-                textShadow: "0 2px 0 rgba(0,0,0,0.35)",
-              }}
-            >
-              Cancel
-            </button>
-            <button
-              type="button"
-              disabled={!canAfford}
-              onClick={onConfirm}
-              className="rounded-2xl border-[3px] border-white/70 py-3.5 text-lg font-black uppercase tracking-wide text-white shadow-lg disabled:opacity-45 hover:brightness-110"
-              style={{
-                background: "linear-gradient(180deg, #bef264 0%, #84cc16 45%, #65a30d 100%)",
-                textShadow: "0 2px 0 rgba(0,0,0,0.35)",
-              }}
-            >
-              Yes
-            </button>
-          </div>
+          <button
+            type="button"
+            disabled={!canAfford}
+            onClick={() => onConfirm(quantity)}
+            className="mt-4 w-full rounded-xl border-2 border-yellow-300/80 py-3.5 text-lg font-black uppercase tracking-wide text-white shadow-lg disabled:opacity-45 hover:brightness-110"
+            style={{
+              background: "linear-gradient(180deg, #86efac 0%, #22c55e 40%, #15803d 100%)",
+              textShadow: "0 2px 0 rgba(0,0,0,0.35)",
+              boxShadow: "0 0 18px rgba(74,222,128,0.35), 0 8px 18px rgba(0,0,0,0.45)",
+            }}
+          >
+            Buy &amp; Play
+          </button>
         </div>
       </motion.div>
     </motion.div>
+  );
+}
+
+function formatPrice(n: number) {
+  return Number.isInteger(n) ? String(n) : n.toFixed(2);
+}
+
+function Row({
+  label,
+  children,
+  last,
+}: {
+  label: string;
+  children: ReactNode;
+  last?: boolean;
+}) {
+  return (
+    <div
+      className={`flex items-center justify-between gap-3 py-2 ${last ? "" : "border-b border-amber-700/35"}`}
+    >
+      <div className="shrink-0 text-[13px] font-bold text-amber-50/95">{label}</div>
+      <div className="min-w-0 flex-1">{children}</div>
+    </div>
+  );
+}
+
+function Stepper({
+  value,
+  canMinus,
+  canPlus,
+  onMinus,
+  onPlus,
+}: {
+  value: string;
+  canMinus: boolean;
+  canPlus: boolean;
+  onMinus: () => void;
+  onPlus: () => void;
+}) {
+  return (
+    <div className="flex items-center justify-end gap-1.5">
+      <StepBtn ariaLabel="Decrease" disabled={!canMinus} onClick={onMinus}>
+        −
+      </StepBtn>
+      <ValueBox>{value}</ValueBox>
+      <StepBtn ariaLabel="Increase" disabled={!canPlus} onClick={onPlus}>
+        +
+      </StepBtn>
+    </div>
+  );
+}
+
+function StepBtn({
+  children,
+  disabled,
+  onClick,
+  ariaLabel,
+}: {
+  children: ReactNode;
+  disabled?: boolean;
+  onClick: () => void;
+  ariaLabel: string;
+}) {
+  return (
+    <button
+      type="button"
+      aria-label={ariaLabel}
+      disabled={disabled}
+      onClick={onClick}
+      className="grid size-8 shrink-0 place-items-center rounded-md border border-amber-500/50 bg-gradient-to-b from-amber-900/80 to-black text-base font-black text-amber-100 disabled:opacity-35 hover:brightness-110"
+    >
+      {children}
+    </button>
+  );
+}
+
+function ValueBox({
+  children,
+  emphasize,
+}: {
+  children: ReactNode;
+  emphasize?: boolean;
+}) {
+  return (
+    <div
+      className={`min-w-[88px] rounded-md border px-2 py-1.5 text-center text-sm font-black tabular-nums ${
+        emphasize
+          ? "border-yellow-400/70 text-yellow-300"
+          : "border-amber-600/45 text-amber-50"
+      }`}
+      style={{
+        background: emphasize
+          ? "linear-gradient(180deg, #3f2a0a, #1a1005)"
+          : "linear-gradient(180deg, #24180c, #100a04)",
+      }}
+    >
+      {children}
+    </div>
   );
 }

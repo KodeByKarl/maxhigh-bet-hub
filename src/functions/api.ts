@@ -194,6 +194,8 @@ export const goldenPantherFreeSpinFn = createServerFn({ method: "POST" })
 const goldenPantherBuySchema = z.object({
   bet: z.number().finite().positive().max(100_000),
   mode: z.enum(["normal", "super"]),
+  /** Number of free spins to purchase (not fixed to freeSpinsBase). */
+  quantity: z.number().int().min(1).max(50),
 });
 
 export const goldenPantherBuyFeatureFn = createServerFn({ method: "POST" })

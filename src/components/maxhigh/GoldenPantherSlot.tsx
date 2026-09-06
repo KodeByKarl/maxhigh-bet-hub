@@ -147,9 +147,11 @@ export function GoldenPantherSlot({
 
   const busy = phase !== "idle";
   const totalBet = +(bet * (ante ? getAnteMult() : 1)).toFixed(2);
-  const buyCost = +(bet * getBuyFeatureMult()).toFixed(2);
-  const superBuyCost = +(bet * getSuperBuyFeatureMult()).toFixed(2);
-  const activeBuyCost = buyMode === "super" ? superBuyCost : buyCost;
+  const buyUnitPrice = +((bet * getBuyFeatureMult()) / Math.max(1, getFreeSpinsBase())).toFixed(2);
+  const superBuyUnitPrice = +((bet * getSuperBuyFeatureMult()) / Math.max(1, getFreeSpinsBase())).toFixed(2);
+  const buyCost = +(buyUnitPrice * getFreeSpinsBase()).toFixed(2);
+  const superBuyCost = +(superBuyUnitPrice * getFreeSpinsBase()).toFixed(2);
+  const activeUnitPrice = buyMode === "super" ? superBuyUnitPrice : buyUnitPrice;
 
   const busyRef = useRef(false);
   const skipRef = useRef(false);
@@ -731,58 +733,62 @@ export function GoldenPantherSlot({
     [inFree, phase],
   );
 
-  const buyFeature = useCallback(async () => {
-    if (busyRef.current || phase !== "idle") return;
-    const cost = buyMode === "super" ? superBuyCost : buyCost;
-    if (balance < cost) {
-      toast.error("Insufficient balance");
-      return;
-    }
-
-    setBuyOpen(false);
-    try {
-      const bought = await goldenPantherBuyFeatureFn({
-        data: { bet, mode: buyMode },
-      });
-      setBalanceLocal(bought.balance);
-      void refreshJackpot();
-      applySession(bought.session);
-      const useAnte = buyMode === "super";
-      if (useAnte) setAnte(true);
-      const fsCount = bought.session.freeSpinsLeft || getFreeSpinsBase();
-
-      setFsSummary(null);
-      setFsPaused(false);
-
-      const gen = ++playbackGen.current;
-      busyRef.current = true;
-      try {
-        await playBuyScatterIntro(gen, fsCount, useAnte);
-      } catch {
-        dismissTriggerModal();
-      } finally {
-        if (gen === playbackGen.current) {
-          busyRef.current = false;
-          if (mountedRef.current) setPhase("idle");
-        }
+  const buyFeature = useCallback(
+    async (quantity: number) => {
+      if (busyRef.current || phase !== "idle") return;
+      const unit = buyMode === "super" ? superBuyUnitPrice : buyUnitPrice;
+      const cost = +(unit * quantity).toFixed(2);
+      if (balance < cost) {
+        toast.error("Insufficient balance");
+        return;
       }
-      // First free spin starts via the auto-chain once the modal closes.
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Buy feature failed");
-    }
-  }, [
-    applySession,
-    balance,
-    bet,
-    buyCost,
-    buyMode,
-    dismissTriggerModal,
-    phase,
-    playBuyScatterIntro,
-    refreshJackpot,
-    setBalanceLocal,
-    superBuyCost,
-  ]);
+
+      setBuyOpen(false);
+      try {
+        const bought = await goldenPantherBuyFeatureFn({
+          data: { bet, mode: buyMode, quantity },
+        });
+        setBalanceLocal(bought.balance);
+        void refreshJackpot();
+        applySession(bought.session);
+        const useAnte = buyMode === "super";
+        if (useAnte) setAnte(true);
+        const fsCount = bought.session.freeSpinsLeft || quantity;
+
+        setFsSummary(null);
+        setFsPaused(false);
+
+        const gen = ++playbackGen.current;
+        busyRef.current = true;
+        try {
+          await playBuyScatterIntro(gen, fsCount, useAnte);
+        } catch {
+          dismissTriggerModal();
+        } finally {
+          if (gen === playbackGen.current) {
+            busyRef.current = false;
+            if (mountedRef.current) setPhase("idle");
+          }
+        }
+        // First free spin starts via the auto-chain once the modal closes.
+      } catch (err) {
+        toast.error(err instanceof Error ? err.message : "Buy feature failed");
+      }
+    },
+    [
+      applySession,
+      balance,
+      bet,
+      buyMode,
+      buyUnitPrice,
+      dismissTriggerModal,
+      phase,
+      playBuyScatterIntro,
+      refreshJackpot,
+      setBalanceLocal,
+      superBuyUnitPrice,
+    ],
+  );
 
   const nudgeBet = useCallback(
     (dir: -1 | 1) => {
@@ -1268,12 +1274,13 @@ export function GoldenPantherSlot({
         {buyOpen && (
           <BuyFeatureModal
             bet={bet}
-            cost={activeBuyCost}
+            unitPrice={activeUnitPrice}
             balance={balance}
+            mode={buyMode}
             onBetChange={setBet}
             onCancel={() => setBuyOpen(false)}
-            onConfirm={() => {
-              void buyFeature();
+            onConfirm={(quantity) => {
+              void buyFeature(quantity);
             }}
           />
         )}

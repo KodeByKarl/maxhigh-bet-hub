@@ -440,13 +440,21 @@ export async function goldenPantherFreeSpin(data: {
 export async function goldenPantherBuyFeature(data: {
   bet: number;
   mode: "normal" | "super";
+  /** Free spins to purchase; cost scales vs freeSpinsBase package price. */
+  quantity: number;
 }): Promise<{ balance: number; session: GoldenPantherSessionState }> {
   const user = await requireUser();
   if (!Number.isFinite(data.bet) || data.bet <= 0) throw new Error("Invalid bet");
+  const quantity = Math.round(data.quantity);
+  if (!Number.isFinite(quantity) || quantity < 1 || quantity > 50) {
+    throw new Error("Invalid quantity");
+  }
 
   const cfg = await loadEngineConfig();
   const mult = data.mode === "super" ? cfg.superBuyFeatureMult : cfg.buyFeatureMult;
-  const cost = +(data.bet * mult).toFixed(2);
+  const packageSpins = Math.max(1, cfg.freeSpinsBase);
+  // Package of freeSpinsBase costs bet*mult; each spin is priced proportionally.
+  const cost = +((data.bet * mult * quantity) / packageSpins).toFixed(2);
   const maxBet = await getMaxSingleBet();
   if (cost > maxBet * Math.max(mult, 1)) {
     // buy feature can exceed single spin max; still cap at risk max * buy mult
@@ -497,8 +505,8 @@ export async function goldenPantherBuyFeature(data: {
       game: GAME_NAME,
       note:
         data.mode === "super"
-          ? `${GOLDEN_PANTHER_GAME_ID} · ${GAME_NAME} · buy super feature ₱${cost.toFixed(2)}`
-          : `${GOLDEN_PANTHER_GAME_ID} · ${GAME_NAME} · buy feature ₱${cost.toFixed(2)}`,
+          ? `${GOLDEN_PANTHER_GAME_ID} · ${GAME_NAME} · buy super feature ×${quantity} ₱${cost.toFixed(2)}`
+          : `${GOLDEN_PANTHER_GAME_ID} · ${GAME_NAME} · buy feature ×${quantity} ₱${cost.toFixed(2)}`,
     });
 
     const id = newId();
@@ -510,7 +518,7 @@ export async function goldenPantherBuyFeature(data: {
       status: "open",
       bet: money(data.bet),
       ante,
-      freeSpinsLeft: cfg.freeSpinsBase,
+      freeSpinsLeft: quantity,
       fsSessionWin: "0.00",
       fsBombAcc: "0.00",
       fsSpinsPlayed: 0,
