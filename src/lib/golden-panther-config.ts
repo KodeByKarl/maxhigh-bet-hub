@@ -115,8 +115,10 @@ export const DEFAULT_GOLDEN_PANTHER_CONFIG: GoldenPantherConfig = {
     { count: 5, mult: 5 },
     { count: 6, mult: 100 },
   ],
-  buyFeatureMult: 100,
-  superBuyFeatureMult: 500,
+  /** Per-quantity Buy Bonus price: Price = bet × this. */
+  buyFeatureMult: 42.5,
+  /** Super buy unit price (5× normal). */
+  superBuyFeatureMult: 212.5,
   anteBetMult: 1.25,
   minCluster: 12,
   /** ₱5 × 10,000× = ₱50,000 round cap (the incident that lacked this clamp). */
@@ -169,6 +171,16 @@ export function clampBombMult(v: unknown): GoldenPantherBombEntry["mult"] {
 
 function num(v: unknown, fallback: number) {
   return typeof v === "number" && Number.isFinite(v) ? v : fallback;
+}
+
+/** Old package buy was 100x / 500x for 10 spins. Unit price is now 42.5x / 212.5x per quantity. */
+function migrateBuyUnitMult(v: unknown, fallback: number, superBuy = false) {
+  if (typeof v === "number" && Number.isFinite(v)) {
+    if (!superBuy && v === 100) return 42.5;
+    if (superBuy && v === 500) return 212.5;
+    return v;
+  }
+  return fallback;
 }
 
 /** Prior default tables — migrate stored engine JSON onto the current multipliers. */
@@ -309,8 +321,12 @@ export function normalizeGoldenPantherConfig(raw: unknown): GoldenPantherConfig 
     freeSpinsRetrigger: clamp(Math.round(num(o.freeSpinsRetrigger, d.freeSpinsRetrigger)), 0, 100),
     anteScatterWeightMult: clamp(num(o.anteScatterWeightMult, d.anteScatterWeightMult), 1, 10),
     scatterCashTiers,
-    buyFeatureMult: clamp(num(o.buyFeatureMult, d.buyFeatureMult), 1, 10_000),
-    superBuyFeatureMult: clamp(num(o.superBuyFeatureMult, d.superBuyFeatureMult), 1, 10_000),
+    buyFeatureMult: clamp(migrateBuyUnitMult(o.buyFeatureMult, d.buyFeatureMult), 1, 10_000),
+    superBuyFeatureMult: clamp(
+      migrateBuyUnitMult(o.superBuyFeatureMult, d.superBuyFeatureMult, true),
+      1,
+      10_000,
+    ),
     anteBetMult: clamp(num(o.anteBetMult, d.anteBetMult), 1, 5),
     minCluster: clamp(Math.round(num(o.minCluster, d.minCluster)), 3, 30),
     maxWinMult: clamp(num(o.maxWinMult, d.maxWinMult), 0, 100_000),

@@ -532,7 +532,7 @@ export function GoldenPantherConfigModal({ game, open, onOpenChange, onPatchLobb
 
                     <div className="grid grid-cols-2 gap-3 pt-2">
                       <div>
-                        <label className="text-xs text-muted-foreground">Buy Feature Cost (x bet)</label>
+                        <label className="text-xs text-muted-foreground">Buy Bonus Price (× bet, per qty)</label>
                         <Input
                           type="number"
                           value={cfg.buyFeatureMult}
@@ -543,7 +543,7 @@ export function GoldenPantherConfigModal({ game, open, onOpenChange, onPatchLobb
                         />
                       </div>
                       <div>
-                        <label className="text-xs text-muted-foreground">Super Buy Cost (x bet)</label>
+                        <label className="text-xs text-muted-foreground">Super Buy Price (× bet, per qty)</label>
                         <Input
                           type="number"
                           value={cfg.superBuyFeatureMult}

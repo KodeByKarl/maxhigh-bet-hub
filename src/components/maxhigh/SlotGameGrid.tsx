@@ -44,20 +44,20 @@ export function SlotGameGrid({ title = "Slots", games, limit, useCatalog = !game
             key={game.id}
             type="button"
             onClick={() => setSelected(game)}
-            className="group relative aspect-square min-w-0 overflow-hidden rounded-2xl border border-border bg-panel text-left transition-transform hover:-translate-y-0.5"
+            className="group relative aspect-square min-w-0 overflow-hidden rounded-2xl border border-border bg-panel text-left transition-[transform,box-shadow] duration-300 ease-out hover:-translate-y-0.5 hover:shadow-[0_12px_28px_rgba(0,0,0,0.35)] active:scale-[0.98]"
           >
             <img
               src={game.thumb}
               alt=""
-              className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+              className="h-full w-full object-cover transition-transform duration-500 ease-out group-hover:scale-105"
             />
-            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/10 to-transparent" />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/10 to-transparent transition-opacity duration-300 group-hover:from-black/70" />
             {game.tag && (
               <span className="absolute left-2 top-2 rounded-full bg-lime px-2 py-0.5 text-[10px] font-black uppercase text-on-lime">
                 {game.tag}
               </span>
             )}
-            <div className="absolute inset-x-0 bottom-0 p-2.5">
+            <div className="absolute inset-x-0 bottom-0 p-2.5 transition-transform duration-300 ease-out group-hover:translate-y-[-2px]">
               <div className="truncate text-xs font-bold uppercase tracking-wide text-white">{game.name}</div>
             </div>
           </button>

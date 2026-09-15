@@ -1,5 +1,8 @@
 import { slotGames, type GameCategory, type SlotGame } from "@/lib/games";
+import { isLobbyVisibleGame } from "@/lib/playable-games";
 import { useTranslation } from "@/lib/i18n";
+
+const visibleSlotGames = slotGames.filter((g) => isLobbyVisibleGame(g.id));
 
 export type LobbyTab = "lobby" | "slot" | "cards" | "fishing" | "latest";
 
@@ -46,7 +49,7 @@ export function CategoryTabs({ value, onChange }: Props) {
 
 export function gamesForTab(
   tab: LobbyTab,
-  catalog: SlotGame[] = slotGames,
+  catalog: SlotGame[] = visibleSlotGames,
 ): { title: string; games: SlotGame[] } {
   if (tab === "lobby") {
     return { title: "Popular Games", games: catalog };

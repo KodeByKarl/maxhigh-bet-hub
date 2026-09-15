@@ -112,6 +112,15 @@ const GAME_LAZY: Record<string, LazyGame> = {
   "carabao-cash": lazyNamed(() => import("./CarabaoCashSlot"), "CarabaoCashSlot"),
   "rice-field-riches": lazyNamed(() => import("./RiceFieldRichesSlot"), "RiceFieldRichesSlot"),
   "wild-panther": lazyNamed(() => import("./WildPantherSlot"), "WildPantherSlot"),
+  "ruby-raven": lazyNamed(() => import("./RubyRavenSlot"), "RubyRavenSlot"),
+  "midnight-owl": lazyNamed(() => import("./MidnightOwlSlot"), "MidnightOwlSlot"),
+  "honey-hive": lazyNamed(() => import("./HoneyHiveSlot"), "HoneyHiveSlot"),
+  "solar-serpent": lazyNamed(() => import("./SolarSerpentSlot"), "SolarSerpentSlot"),
+  "frost-fox": lazyNamed(() => import("./FrostFoxSlot"), "FrostFoxSlot"),
+  "coral-cobra": lazyNamed(() => import("./CoralCobraSlot"), "CoralCobraSlot"),
+  "lotus-lynx": lazyNamed(() => import("./LotusLynxSlot"), "LotusLynxSlot"),
+  "ember-tiger": lazyNamed(() => import("./EmberTigerSlot"), "EmberTigerSlot"),
+  "jade-jaguar": lazyNamed(() => import("./JadeJaguarSlot"), "JadeJaguarSlot"),
 };
 
 const ALIASES: Record<string, string> = {

@@ -210,6 +210,375 @@ export const getGoldenPantherSessionFn = createServerFn({ method: "GET" }).handl
   return getGoldenPantherOpenSession();
 });
 
+const rubyRavenSpinSchema = z.object({
+  bet: z.number().finite().positive().max(100_000),
+  ante: z.boolean(),
+});
+
+export const rubyRavenSpinFn = createServerFn({ method: "POST" })
+  .validator(rubyRavenSpinSchema)
+  .handler(async ({ data }) => {
+    const { rubyRavenPaidSpin } = await import("../server/games/ruby-raven.server");
+    return rubyRavenPaidSpin(data);
+  });
+
+const rubyRavenFreeSpinSchema = z.object({
+  sessionId: z.string().uuid(),
+});
+
+export const rubyRavenFreeSpinFn = createServerFn({ method: "POST" })
+  .validator(rubyRavenFreeSpinSchema)
+  .handler(async ({ data }) => {
+    const { rubyRavenFreeSpin } = await import("../server/games/ruby-raven.server");
+    return rubyRavenFreeSpin(data);
+  });
+
+const rubyRavenBuySchema = z.object({
+  bet: z.number().finite().positive().max(100_000),
+  mode: z.enum(["normal", "super"]),
+  quantity: z.number().int().min(1).max(50),
+});
+
+export const rubyRavenBuyFeatureFn = createServerFn({ method: "POST" })
+  .validator(rubyRavenBuySchema)
+  .handler(async ({ data }) => {
+    const { rubyRavenBuyFeature } = await import("../server/games/ruby-raven.server");
+    return rubyRavenBuyFeature(data);
+  });
+
+export const getRubyRavenSessionFn = createServerFn({ method: "GET" }).handler(async () => {
+  const { getRubyRavenOpenSession } = await import("../server/games/ruby-raven.server");
+  return getRubyRavenOpenSession();
+});
+
+const midnightOwlSpinSchema = z.object({
+  bet: z.number().finite().positive().max(100_000),
+  ante: z.boolean(),
+});
+
+export const midnightOwlSpinFn = createServerFn({ method: "POST" })
+  .validator(midnightOwlSpinSchema)
+  .handler(async ({ data }) => {
+    const { midnightOwlPaidSpin } = await import("../server/games/midnight-owl.server");
+    return midnightOwlPaidSpin(data);
+  });
+
+const midnightOwlFreeSpinSchema = z.object({
+  sessionId: z.string().uuid(),
+});
+
+export const midnightOwlFreeSpinFn = createServerFn({ method: "POST" })
+  .validator(midnightOwlFreeSpinSchema)
+  .handler(async ({ data }) => {
+    const { midnightOwlFreeSpin } = await import("../server/games/midnight-owl.server");
+    return midnightOwlFreeSpin(data);
+  });
+
+const midnightOwlBuySchema = z.object({
+  bet: z.number().finite().positive().max(100_000),
+  mode: z.enum(["normal", "super"]),
+  quantity: z.number().int().min(1).max(50),
+});
+
+export const midnightOwlBuyFeatureFn = createServerFn({ method: "POST" })
+  .validator(midnightOwlBuySchema)
+  .handler(async ({ data }) => {
+    const { midnightOwlBuyFeature } = await import("../server/games/midnight-owl.server");
+    return midnightOwlBuyFeature(data);
+  });
+
+export const getMidnightOwlSessionFn = createServerFn({ method: "GET" }).handler(async () => {
+  const { getMidnightOwlOpenSession } = await import("../server/games/midnight-owl.server");
+  return getMidnightOwlOpenSession();
+});
+
+const honeyHiveSpinSchema = z.object({
+  bet: z.number().finite().positive().max(100_000),
+  ante: z.boolean(),
+});
+
+export const honeyHiveSpinFn = createServerFn({ method: "POST" })
+  .validator(honeyHiveSpinSchema)
+  .handler(async ({ data }) => {
+    const { honeyHivePaidSpin } = await import("../server/games/honey-hive.server");
+    return honeyHivePaidSpin(data);
+  });
+
+const honeyHiveFreeSpinSchema = z.object({
+  sessionId: z.string().uuid(),
+});
+
+export const honeyHiveFreeSpinFn = createServerFn({ method: "POST" })
+  .validator(honeyHiveFreeSpinSchema)
+  .handler(async ({ data }) => {
+    const { honeyHiveFreeSpin } = await import("../server/games/honey-hive.server");
+    return honeyHiveFreeSpin(data);
+  });
+
+const honeyHiveBuySchema = z.object({
+  bet: z.number().finite().positive().max(100_000),
+  mode: z.enum(["normal", "super"]),
+  quantity: z.number().int().min(1).max(50),
+});
+
+export const honeyHiveBuyFeatureFn = createServerFn({ method: "POST" })
+  .validator(honeyHiveBuySchema)
+  .handler(async ({ data }) => {
+    const { honeyHiveBuyFeature } = await import("../server/games/honey-hive.server");
+    return honeyHiveBuyFeature(data);
+  });
+
+export const getHoneyHiveSessionFn = createServerFn({ method: "GET" }).handler(async () => {
+  const { getHoneyHiveOpenSession } = await import("../server/games/honey-hive.server");
+  return getHoneyHiveOpenSession();
+});
+
+const solarSerpentSpinSchema = z.object({
+  bet: z.number().finite().positive().max(100_000),
+  ante: z.boolean(),
+});
+
+export const solarSerpentSpinFn = createServerFn({ method: "POST" })
+  .validator(solarSerpentSpinSchema)
+  .handler(async ({ data }) => {
+    const { solarSerpentPaidSpin } = await import("../server/games/solar-serpent.server");
+    return solarSerpentPaidSpin(data);
+  });
+
+const solarSerpentFreeSpinSchema = z.object({
+  sessionId: z.string().uuid(),
+});
+
+export const solarSerpentFreeSpinFn = createServerFn({ method: "POST" })
+  .validator(solarSerpentFreeSpinSchema)
+  .handler(async ({ data }) => {
+    const { solarSerpentFreeSpin } = await import("../server/games/solar-serpent.server");
+    return solarSerpentFreeSpin(data);
+  });
+
+const solarSerpentBuySchema = z.object({
+  bet: z.number().finite().positive().max(100_000),
+  mode: z.enum(["normal", "super"]),
+  quantity: z.number().int().min(1).max(50),
+});
+
+export const solarSerpentBuyFeatureFn = createServerFn({ method: "POST" })
+  .validator(solarSerpentBuySchema)
+  .handler(async ({ data }) => {
+    const { solarSerpentBuyFeature } = await import("../server/games/solar-serpent.server");
+    return solarSerpentBuyFeature(data);
+  });
+
+export const getSolarSerpentSessionFn = createServerFn({ method: "GET" }).handler(async () => {
+  const { getSolarSerpentOpenSession } = await import("../server/games/solar-serpent.server");
+  return getSolarSerpentOpenSession();
+});
+
+const frostFoxSpinSchema = z.object({
+  bet: z.number().finite().positive().max(100_000),
+  ante: z.boolean(),
+});
+
+export const frostFoxSpinFn = createServerFn({ method: "POST" })
+  .validator(frostFoxSpinSchema)
+  .handler(async ({ data }) => {
+    const { frostFoxPaidSpin } = await import("../server/games/frost-fox.server");
+    return frostFoxPaidSpin(data);
+  });
+
+const frostFoxFreeSpinSchema = z.object({
+  sessionId: z.string().uuid(),
+});
+
+export const frostFoxFreeSpinFn = createServerFn({ method: "POST" })
+  .validator(frostFoxFreeSpinSchema)
+  .handler(async ({ data }) => {
+    const { frostFoxFreeSpin } = await import("../server/games/frost-fox.server");
+    return frostFoxFreeSpin(data);
+  });
+
+const frostFoxBuySchema = z.object({
+  bet: z.number().finite().positive().max(100_000),
+  mode: z.enum(["normal", "super"]),
+  quantity: z.number().int().min(1).max(50),
+});
+
+export const frostFoxBuyFeatureFn = createServerFn({ method: "POST" })
+  .validator(frostFoxBuySchema)
+  .handler(async ({ data }) => {
+    const { frostFoxBuyFeature } = await import("../server/games/frost-fox.server");
+    return frostFoxBuyFeature(data);
+  });
+
+export const getFrostFoxSessionFn = createServerFn({ method: "GET" }).handler(async () => {
+  const { getFrostFoxOpenSession } = await import("../server/games/frost-fox.server");
+  return getFrostFoxOpenSession();
+});
+
+const coralCobraSpinSchema = z.object({
+  bet: z.number().finite().positive().max(100_000),
+  ante: z.boolean(),
+});
+
+export const coralCobraSpinFn = createServerFn({ method: "POST" })
+  .validator(coralCobraSpinSchema)
+  .handler(async ({ data }) => {
+    const { coralCobraPaidSpin } = await import("../server/games/coral-cobra.server");
+    return coralCobraPaidSpin(data);
+  });
+
+const coralCobraFreeSpinSchema = z.object({
+  sessionId: z.string().uuid(),
+});
+
+export const coralCobraFreeSpinFn = createServerFn({ method: "POST" })
+  .validator(coralCobraFreeSpinSchema)
+  .handler(async ({ data }) => {
+    const { coralCobraFreeSpin } = await import("../server/games/coral-cobra.server");
+    return coralCobraFreeSpin(data);
+  });
+
+const coralCobraBuySchema = z.object({
+  bet: z.number().finite().positive().max(100_000),
+  mode: z.enum(["normal", "super"]),
+  quantity: z.number().int().min(1).max(50),
+});
+
+export const coralCobraBuyFeatureFn = createServerFn({ method: "POST" })
+  .validator(coralCobraBuySchema)
+  .handler(async ({ data }) => {
+    const { coralCobraBuyFeature } = await import("../server/games/coral-cobra.server");
+    return coralCobraBuyFeature(data);
+  });
+
+export const getCoralCobraSessionFn = createServerFn({ method: "GET" }).handler(async () => {
+  const { getCoralCobraOpenSession } = await import("../server/games/coral-cobra.server");
+  return getCoralCobraOpenSession();
+});
+
+const lotusLynxSpinSchema = z.object({
+  bet: z.number().finite().positive().max(100_000),
+  ante: z.boolean(),
+});
+
+export const lotusLynxSpinFn = createServerFn({ method: "POST" })
+  .validator(lotusLynxSpinSchema)
+  .handler(async ({ data }) => {
+    const { lotusLynxPaidSpin } = await import("../server/games/lotus-lynx.server");
+    return lotusLynxPaidSpin(data);
+  });
+
+const lotusLynxFreeSpinSchema = z.object({
+  sessionId: z.string().uuid(),
+});
+
+export const lotusLynxFreeSpinFn = createServerFn({ method: "POST" })
+  .validator(lotusLynxFreeSpinSchema)
+  .handler(async ({ data }) => {
+    const { lotusLynxFreeSpin } = await import("../server/games/lotus-lynx.server");
+    return lotusLynxFreeSpin(data);
+  });
+
+const lotusLynxBuySchema = z.object({
+  bet: z.number().finite().positive().max(100_000),
+  mode: z.enum(["normal", "super"]),
+  quantity: z.number().int().min(1).max(50),
+});
+
+export const lotusLynxBuyFeatureFn = createServerFn({ method: "POST" })
+  .validator(lotusLynxBuySchema)
+  .handler(async ({ data }) => {
+    const { lotusLynxBuyFeature } = await import("../server/games/lotus-lynx.server");
+    return lotusLynxBuyFeature(data);
+  });
+
+export const getLotusLynxSessionFn = createServerFn({ method: "GET" }).handler(async () => {
+  const { getLotusLynxOpenSession } = await import("../server/games/lotus-lynx.server");
+  return getLotusLynxOpenSession();
+});
+
+const emberTigerSpinSchema = z.object({
+  bet: z.number().finite().positive().max(100_000),
+  ante: z.boolean(),
+});
+
+export const emberTigerSpinFn = createServerFn({ method: "POST" })
+  .validator(emberTigerSpinSchema)
+  .handler(async ({ data }) => {
+    const { emberTigerPaidSpin } = await import("../server/games/ember-tiger.server");
+    return emberTigerPaidSpin(data);
+  });
+
+const emberTigerFreeSpinSchema = z.object({
+  sessionId: z.string().uuid(),
+});
+
+export const emberTigerFreeSpinFn = createServerFn({ method: "POST" })
+  .validator(emberTigerFreeSpinSchema)
+  .handler(async ({ data }) => {
+    const { emberTigerFreeSpin } = await import("../server/games/ember-tiger.server");
+    return emberTigerFreeSpin(data);
+  });
+
+const emberTigerBuySchema = z.object({
+  bet: z.number().finite().positive().max(100_000),
+  mode: z.enum(["normal", "super"]),
+  quantity: z.number().int().min(1).max(50),
+});
+
+export const emberTigerBuyFeatureFn = createServerFn({ method: "POST" })
+  .validator(emberTigerBuySchema)
+  .handler(async ({ data }) => {
+    const { emberTigerBuyFeature } = await import("../server/games/ember-tiger.server");
+    return emberTigerBuyFeature(data);
+  });
+
+export const getEmberTigerSessionFn = createServerFn({ method: "GET" }).handler(async () => {
+  const { getEmberTigerOpenSession } = await import("../server/games/ember-tiger.server");
+  return getEmberTigerOpenSession();
+});
+
+const jadeJaguarSpinSchema = z.object({
+  bet: z.number().finite().positive().max(100_000),
+  ante: z.boolean(),
+});
+
+export const jadeJaguarSpinFn = createServerFn({ method: "POST" })
+  .validator(jadeJaguarSpinSchema)
+  .handler(async ({ data }) => {
+    const { jadeJaguarPaidSpin } = await import("../server/games/jade-jaguar.server");
+    return jadeJaguarPaidSpin(data);
+  });
+
+const jadeJaguarFreeSpinSchema = z.object({
+  sessionId: z.string().uuid(),
+});
+
+export const jadeJaguarFreeSpinFn = createServerFn({ method: "POST" })
+  .validator(jadeJaguarFreeSpinSchema)
+  .handler(async ({ data }) => {
+    const { jadeJaguarFreeSpin } = await import("../server/games/jade-jaguar.server");
+    return jadeJaguarFreeSpin(data);
+  });
+
+const jadeJaguarBuySchema = z.object({
+  bet: z.number().finite().positive().max(100_000),
+  mode: z.enum(["normal", "super"]),
+  quantity: z.number().int().min(1).max(50),
+});
+
+export const jadeJaguarBuyFeatureFn = createServerFn({ method: "POST" })
+  .validator(jadeJaguarBuySchema)
+  .handler(async ({ data }) => {
+    const { jadeJaguarBuyFeature } = await import("../server/games/jade-jaguar.server");
+    return jadeJaguarBuyFeature(data);
+  });
+
+export const getJadeJaguarSessionFn = createServerFn({ method: "GET" }).handler(async () => {
+  const { getJadeJaguarOpenSession } = await import("../server/games/jade-jaguar.server");
+  return getJadeJaguarOpenSession();
+});
+
 export const getGoldenPantherEngineConfigFn = createServerFn({ method: "GET" }).handler(async () => {
   const { getGoldenPantherEngineConfig } = await import("../server/superadmin/services.server");
   return getGoldenPantherEngineConfig();

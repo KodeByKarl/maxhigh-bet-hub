@@ -1,15 +1,180 @@
-import { Suspense, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import {
+  Suspense,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type ReactNode,
+} from "react";
 import { createPortal } from "react-dom";
 import { X } from "lucide-react";
 import type { SlotGame } from "@/lib/games";
 import { useAuth } from "@/lib/auth";
 import { recordGameSessionFn } from "@/functions/api";
+import { cn } from "@/lib/utils";
 import { resolveLazyGame } from "./gamePlayRegistry";
 
 type Props = {
   game: SlotGame | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
+};
+
+type PantherBoot = {
+  badge: string;
+  charge: string;
+  name: string;
+  bgImage: string;
+  accent: string;
+  bgGradient: string;
+  barGradient: string;
+  borderGlow: string;
+  badgeGradient: string;
+  imageParticles: string[];
+};
+
+function pantherBoot(
+  id: string,
+  name: string,
+  badge: string,
+  charge: string,
+  accent: string,
+  bgGradient: string,
+  barGradient: string,
+  borderGlow: string,
+  badgeGradient: string,
+): PantherBoot {
+  const base = id === "golden-panther" ? "panther" : id;
+  return {
+    badge,
+    charge,
+    name,
+    bgImage: `/images/symbols/${base}/loading-bg.webp`,
+    accent,
+    bgGradient,
+    barGradient,
+    borderGlow,
+    badgeGradient,
+    imageParticles: [
+      `/images/symbols/${base}/wild.png`,
+      `/images/symbols/${base}/scatter.png`,
+    ],
+  };
+}
+
+/** Soft-launch panther family — each title uses its own loading art + accent. */
+const PANTHER_FAMILY_BOOT: Record<string, PantherBoot> = {
+  "golden-panther": pantherBoot(
+    "golden-panther",
+    "Golden Panther",
+    "GOLDEN PANTHER ARCADE",
+    "PANTHER POWER ACTIVE",
+    "#F59E0B",
+    "from-[#3F2A08]/80 via-[#0A0912]/80 to-[#120800]/95",
+    "from-[#F59E0B] via-[#FACC15] to-[#D97706]",
+    "shadow-[0_0_60px_rgba(245,158,11,0.8)] border-amber-400",
+    "from-[#F59E0B] via-[#FACC15] to-[#78350F]",
+  ),
+  "jade-jaguar": pantherBoot(
+    "jade-jaguar",
+    "Jade Jaguar",
+    "JADE JAGUAR ARCADE",
+    "JAGUAR POWER ACTIVE",
+    "#34D399",
+    "from-[#064E3B]/80 via-[#0A0912]/80 to-[#022C22]/95",
+    "from-[#6EE7B7] via-[#34D399] to-[#059669]",
+    "shadow-[0_0_60px_rgba(52,211,153,0.75)] border-emerald-400",
+    "from-[#34D399] via-[#10B981] to-[#064E3B]",
+  ),
+  "ember-tiger": pantherBoot(
+    "ember-tiger",
+    "Ember Tiger",
+    "EMBER TIGER ARCADE",
+    "TIGER POWER ACTIVE",
+    "#F97316",
+    "from-[#7C2D12]/80 via-[#0A0912]/80 to-[#450A0A]/95",
+    "from-[#FB923C] via-[#F97316] to-[#EA580C]",
+    "shadow-[0_0_60px_rgba(249,115,22,0.8)] border-orange-400",
+    "from-[#FB923C] via-[#EA580C] to-[#7C2D12]",
+  ),
+  "lotus-lynx": pantherBoot(
+    "lotus-lynx",
+    "Lotus Lynx",
+    "LOTUS LYNX ARCADE",
+    "LYNX POWER ACTIVE",
+    "#E879F9",
+    "from-[#701A75]/80 via-[#0A0912]/80 to-[#500724]/95",
+    "from-[#F0ABFC] via-[#E879F9] to-[#C026D3]",
+    "shadow-[0_0_60px_rgba(232,121,249,0.75)] border-fuchsia-400",
+    "from-[#E879F9] via-[#C026D3] to-[#701A75]",
+  ),
+  "coral-cobra": pantherBoot(
+    "coral-cobra",
+    "Coral Cobra",
+    "CORAL COBRA ARCADE",
+    "COBRA POWER ACTIVE",
+    "#2DD4BF",
+    "from-[#115E59]/80 via-[#0A0912]/80 to-[#4C0519]/95",
+    "from-[#5EEAD4] via-[#2DD4BF] to-[#FB7185]",
+    "shadow-[0_0_60px_rgba(45,212,191,0.75)] border-teal-400",
+    "from-[#2DD4BF] via-[#0D9488] to-[#BE123C]",
+  ),
+  "frost-fox": pantherBoot(
+    "frost-fox",
+    "Frost Fox",
+    "FROST FOX ARCADE",
+    "FOX POWER ACTIVE",
+    "#38BDF8",
+    "from-[#0C4A6E]/80 via-[#0A0912]/80 to-[#0F172A]/95",
+    "from-[#7DD3FC] via-[#38BDF8] to-[#0284C7]",
+    "shadow-[0_0_60px_rgba(56,189,248,0.75)] border-sky-400",
+    "from-[#38BDF8] via-[#0284C7] to-[#1E3A8A]",
+  ),
+  "solar-serpent": pantherBoot(
+    "solar-serpent",
+    "Solar Serpent",
+    "SOLAR SERPENT ARCADE",
+    "SERPENT POWER ACTIVE",
+    "#EAB308",
+    "from-[#713F12]/80 via-[#0A0912]/80 to-[#451A03]/95",
+    "from-[#FDE047] via-[#EAB308] to-[#CA8A04]",
+    "shadow-[0_0_60px_rgba(234,179,8,0.8)] border-yellow-400",
+    "from-[#EAB308] via-[#CA8A04] to-[#713F12]",
+  ),
+  "honey-hive": pantherBoot(
+    "honey-hive",
+    "Honey Hive",
+    "HONEY HIVE ARCADE",
+    "HIVE POWER ACTIVE",
+    "#F59E0B",
+    "from-[#92400E]/80 via-[#0A0912]/80 to-[#422006]/95",
+    "from-[#FCD34D] via-[#F59E0B] to-[#D97706]",
+    "shadow-[0_0_60px_rgba(245,158,11,0.8)] border-amber-400",
+    "from-[#F59E0B] via-[#D97706] to-[#92400E]",
+  ),
+  "midnight-owl": pantherBoot(
+    "midnight-owl",
+    "Midnight Owl",
+    "MIDNIGHT OWL ARCADE",
+    "OWL POWER ACTIVE",
+    "#818CF8",
+    "from-[#312E81]/80 via-[#0A0912]/80 to-[#1E1B4B]/95",
+    "from-[#A5B4FC] via-[#818CF8] to-[#6366F1]",
+    "shadow-[0_0_60px_rgba(129,140,248,0.75)] border-indigo-400",
+    "from-[#818CF8] via-[#6366F1] to-[#312E81]",
+  ),
+  "ruby-raven": pantherBoot(
+    "ruby-raven",
+    "Ruby Raven",
+    "RUBY RAVEN ARCADE",
+    "RAVEN POWER ACTIVE",
+    "#F43F5E",
+    "from-[#881337]/80 via-[#0A0912]/80 to-[#4C0519]/95",
+    "from-[#FB7185] via-[#F43F5E] to-[#E11D48]",
+    "shadow-[0_0_60px_rgba(244,63,94,0.8)] border-rose-400",
+    "from-[#F43F5E] via-[#E11D48] to-[#881337]",
+  ),
 };
 
 function getGameThemeConfig(gameId: string, category: string, thumb: string) {
@@ -135,24 +300,26 @@ function getGameThemeConfig(gameId: string, category: string, thumb: string) {
       ],
     };
   }
-  if (gameId === "golden-panther") {
+  const pantherFamily = PANTHER_FAMILY_BOOT[gameId];
+  if (pantherFamily) {
     return {
-      bgImage: "/images/symbols/panther/loading-bg.webp",
-      bgGradient: "from-[#3F2A08]/80 via-[#0A0912]/80 to-[#120800]/95",
+      bgImage: pantherFamily.bgImage,
+      bgGradient: pantherFamily.bgGradient,
       titleClass: "panther-title",
-      barGradient: "from-[#F59E0B] via-[#FACC15] to-[#D97706]",
-      borderGlow: "shadow-[0_0_60px_rgba(245,158,11,0.8)] border-amber-400",
-      badgeGradient: "from-[#F59E0B] via-[#FACC15] to-[#78350F]",
+      barGradient: pantherFamily.barGradient,
+      borderGlow: pantherFamily.borderGlow,
+      badgeGradient: pantherFamily.badgeGradient,
       renderType: "standard" as const,
-      imageParticles: ["/images/symbols/panther/wild.png", "/images/symbols/panther/scatter.png"],
-      badgeText: "GOLDEN PANTHER ARCADE",
-      chargeText: "PANTHER POWER ACTIVE",
+      imageParticles: pantherFamily.imageParticles,
+      badgeText: pantherFamily.badge,
+      chargeText: pantherFamily.charge,
+      accent: pantherFamily.accent,
       lines: [
-        "Entering the ancient golden jungle temple…",
-        "Awakening the majestic Golden Panther…",
-        "Forging 100x multiplier orb crystals…",
-        "Charging Aztec golden treasures…",
-        "The Golden Panther awaits!",
+        `Entering the ${pantherFamily.name} temple…`,
+        `Awakening ${pantherFamily.name}…`,
+        "Charging cluster bombs and tumble wins…",
+        "Preparing the Buy Bonus…",
+        `${pantherFamily.name} is ready!`,
       ],
     };
   }
@@ -1742,6 +1909,7 @@ function CreativeLoader({
   );
   const line = config.lines[Math.min(config.lines.length - 1, Math.floor(progress / 20))];
   const showTiles =
+    Boolean(PANTHER_FAMILY_BOOT[game.id]) ||
     game.id === "mahjong-ways" ||
     game.id === "candy-peak" ||
     game.id === "sugar-surge" ||
@@ -1822,23 +1990,49 @@ function ComingSoonPlay({ game }: { game: SlotGame }) {
       <img src={game.thumb} alt="" className="h-40 w-40 rounded-3xl object-cover shadow-xl" />
       <h2 className="text-2xl font-black uppercase text-white">{game.name}</h2>
       <p className="max-w-md text-sm text-white/80">
-        Full arcade mode for this title is cooking. Candy Peak and Godly Gates are playable now — more games soon.
+        Full arcade mode for this title is cooking. The Golden Panther family is live now — more games soon.
       </p>
     </div>
   );
 }
 
 /** Full-bleed play surface — fill the shell, never nest another 100dvh. */
-function PlaySurface({ children }: { children: ReactNode }) {
-  return <div className="absolute inset-0 h-full w-full overflow-hidden bg-[#0A0912]">{children}</div>;
+function PlaySurface({
+  children,
+  className,
+}: {
+  children: ReactNode;
+  className?: string;
+}) {
+  return (
+    <div className={cn("absolute inset-0 h-full w-full overflow-hidden bg-[#0A0912]", className)}>
+      {children}
+    </div>
+  );
+}
+
+/** Fires once the lazy game tree has committed — used to hold the boot loader until ready. */
+function GameMountSignal({ onReady }: { onReady: () => void }) {
+  useEffect(() => {
+    onReady();
+  }, [onReady]);
+  return null;
 }
 
 export function GamePlayModal({ game, open, onOpenChange }: Props) {
-  const [phase, setPhase] = useState<"loading" | "play">("loading");
   const [progress, setProgress] = useState(0);
+  const [mountGame, setMountGame] = useState(false);
+  const [gameReady, setGameReady] = useState(false);
+  const [progressDone, setProgressDone] = useState(false);
+  const [loaderFading, setLoaderFading] = useState(false);
+  const [loaderGone, setLoaderGone] = useState(false);
   const [mounted, setMounted] = useState(false);
   const shellRef = useRef<HTMLDivElement>(null);
   const { isLoggedIn, openLogin } = useAuth();
+
+  const handleGameReady = useCallback(() => {
+    setGameReady(true);
+  }, []);
 
   useEffect(() => setMounted(true), []);
 
@@ -1923,12 +2117,17 @@ export function GamePlayModal({ game, open, onOpenChange }: Props) {
     };
   }, [open, mounted]);
 
+  // Boot progress + early game mount so the chunk loads under the loader.
   useEffect(() => {
     if (!open || !game || !isLoggedIn) return;
-    setPhase("loading");
     setProgress(0);
+    setMountGame(false);
+    setGameReady(false);
+    setProgressDone(false);
+    setLoaderFading(false);
+    setLoaderGone(false);
+
     const start = Date.now();
-    // Ace High is a card table — shorter load so phones get to play faster
     const duration =
       game.id === "ace-high" ||
       game.id === "baccarat" ||
@@ -1943,28 +2142,63 @@ export function GamePlayModal({ game, open, onOpenChange }: Props) {
       game.id === "poker-showdown"
         ? 1600
         : 4200;
+
+    // Prefetch themed boot art so the loader never flashes empty.
+    const boot = PANTHER_FAMILY_BOOT[game.id];
+    if (boot && typeof Image !== "undefined") {
+      for (const src of [boot.bgImage, ...boot.imageParticles]) {
+        const img = new Image();
+        img.decoding = "async";
+        img.src = src;
+      }
+    }
+
+    // Start mounting the game mid-load so Suspense resolves under the overlay.
+    const mountAt = Math.max(400, Math.floor(duration * 0.35));
+    const mountTimer = window.setTimeout(() => setMountGame(true), mountAt);
+
     const tick = window.setInterval(() => {
       const p = Math.min(100, Math.round(((Date.now() - start) / duration) * 100));
       setProgress(p);
       if (p >= 100) {
         window.clearInterval(tick);
-        setPhase("play");
+        setProgressDone(true);
+        setMountGame(true);
         void recordGameSessionFn({
           data: { gameId: game.id, gameName: game.name },
         }).catch(() => undefined);
       }
     }, 40);
-    return () => window.clearInterval(tick);
+
+    return () => {
+      window.clearInterval(tick);
+      window.clearTimeout(mountTimer);
+    };
   }, [open, game?.id, game?.name, isLoggedIn]);
 
+  // Crossfade: wait until progress is done AND the lazy game has mounted, then fade loader out.
+  useEffect(() => {
+    if (!open || !progressDone || loaderGone) return;
+    const hasEngine = Boolean(game?.id && resolveLazyGame(game.id));
+    const ready = gameReady || !hasEngine;
+    if (!ready) return;
+
+    setLoaderFading(true);
+    const fadeTimer = window.setTimeout(() => {
+      setLoaderGone(true);
+    }, 520);
+    return () => window.clearTimeout(fadeTimer);
+  }, [open, progressDone, gameReady, loaderGone, game?.id]);
+
   const LazyGame = game ? resolveLazyGame(game.id) : null;
+  const showLoader = !loaderGone;
 
   if (!mounted || !open || !game || !isLoggedIn) return null;
 
   return createPortal(
     <div
       ref={shellRef}
-      className="fixed inset-0 z-[9999] flex w-full max-w-[100vw] flex-col overflow-hidden overscroll-none bg-[#0A0912]"
+      className="fixed inset-0 z-[9999] flex w-full max-w-[100vw] flex-col overflow-hidden overscroll-none bg-[#0A0912] animate-[loader-fade_0.35s_ease-out]"
       role="dialog"
       aria-modal="true"
       aria-label={`${game.name} game`}
@@ -1984,23 +2218,43 @@ export function GamePlayModal({ game, open, onOpenChange }: Props) {
       </div>
 
       <div className="relative z-[10000] min-h-0 flex-1 overflow-hidden bg-[#0A0912]">
-        {phase === "loading" ? (
-          <CreativeLoader game={game} progress={progress} />
-        ) : LazyGame ? (
-          <PlaySurface>
-            <Suspense
-              fallback={
-                <div className="absolute inset-0 grid place-items-center bg-[#0A0912] text-sm text-white/70">
-                  Loading {game.name}…
-                </div>
-              }
-            >
+        {mountGame && LazyGame ? (
+          <PlaySurface
+            className={cn(
+              "transition-opacity duration-500 ease-out",
+              loaderFading || loaderGone ? "opacity-100" : "opacity-0",
+            )}
+          >
+            <Suspense fallback={null}>
+              <GameMountSignal onReady={handleGameReady} />
               <LazyGame gameId={game.id} gameName={game.name} />
             </Suspense>
           </PlaySurface>
-        ) : (
-          <ComingSoonPlay game={game} />
-        )}
+        ) : null}
+
+        {mountGame && !LazyGame ? (
+          <PlaySurface
+            className={cn(
+              "transition-opacity duration-500 ease-out",
+              loaderFading || loaderGone ? "opacity-100" : "opacity-0",
+            )}
+          >
+            <ComingSoonPlay game={game} />
+            <GameMountSignal onReady={handleGameReady} />
+          </PlaySurface>
+        ) : null}
+
+        {showLoader ? (
+          <div
+            className={cn(
+              "absolute inset-0 z-20 transition-opacity duration-500 ease-out",
+              loaderFading ? "pointer-events-none opacity-0" : "opacity-100",
+            )}
+            aria-hidden={loaderFading}
+          >
+            <CreativeLoader game={game} progress={progress} />
+          </div>
+        ) : null}
       </div>
     </div>,
     document.body,

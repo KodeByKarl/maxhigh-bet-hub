@@ -440,7 +440,7 @@ export async function goldenPantherFreeSpin(data: {
 export async function goldenPantherBuyFeature(data: {
   bet: number;
   mode: "normal" | "super";
-  /** Free spins to purchase; cost scales vs freeSpinsBase package price. */
+  /** Bonus units to purchase. Price = bet × unitMult; Total = Price × quantity. */
   quantity: number;
 }): Promise<{ balance: number; session: GoldenPantherSessionState }> {
   const user = await requireUser();
@@ -452,15 +452,9 @@ export async function goldenPantherBuyFeature(data: {
 
   const cfg = await loadEngineConfig();
   const mult = data.mode === "super" ? cfg.superBuyFeatureMult : cfg.buyFeatureMult;
-  const packageSpins = Math.max(1, cfg.freeSpinsBase);
-  // Package of freeSpinsBase costs bet*mult; each spin is priced proportionally.
-  const cost = +((data.bet * mult * quantity) / packageSpins).toFixed(2);
-  const maxBet = await getMaxSingleBet();
-  if (cost > maxBet * Math.max(mult, 1)) {
-    // buy feature can exceed single spin max; still cap at risk max * buy mult
-  }
-  if (cost > Number((await getMaxSingleBet()) * 500)) {
-    throw new Error("Buy feature amount too large");
+  const cost = +(data.bet * mult * quantity).toFixed(2);
+  if (data.bet > 100_000) {
+    throw new Error("Buy feature bet too large");
   }
 
   await assertNotInMaintenanceForBets();

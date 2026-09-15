@@ -10,7 +10,7 @@
  */
 import { useCallback, useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { FastForward, Info, RotateCcw, RotateCw, Square } from "lucide-react";
+import { FastForward, Info, RotateCcw, RotateCw, Square, Volume2, VolumeX } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/lib/auth";
@@ -34,11 +34,9 @@ import { BetSelectModal } from "./golden-panther/BetSelectModal";
 import { buildBuyScatterIntroBoard, initialBoard } from "./golden-panther/gridState";
 import {
   BET_STEPS,
-  ICON_SRC,
+  BUY_FS_START_BET,
   getAnteMult,
-  getBuyFeatureMult,
-  getFreeSpinsBase,
-  getSuperBuyFeatureMult,
+  getBuyUnitPrice,
 } from "./golden-panther/paytable";
 import { setGoldenPantherConfig } from "./golden-panther/runtimeConfig";
 import type { BoardCell, SpinScript } from "./golden-panther/types";
@@ -50,6 +48,8 @@ import { BuyFeatureModal } from "./golden-panther/BuyFeatureModal";
 import { PaytableModal } from "./golden-panther/PaytableModal";
 import { AutoSpinModal, type AutoSpinOptions } from "./golden-panther/AutoSpinModal";
 import { ReelGrid, type ReelVisuals } from "./golden-panther/ReelGrid";
+import { goldenPantherTheme } from "./golden-panther/theme";
+import { themeToCssVars } from "./panther-shared/theme";
 import { type ReelPhase } from "./golden-panther/ReelCell";
 import { getGoldenPantherEngineConfigFn } from "@/functions/superadmin";
 import { GOLDEN_PANTHER_GAME_ID } from "@/lib/golden-panther-config";
@@ -93,9 +93,9 @@ function preloadAssets() {
   pantherAudio.preload();
   if (typeof Image === "undefined") return;
   const urls = [
-    "/images/symbols/panther/backdrop.webp",
-    "/images/symbols/panther/loading-bg.webp",
-    ...Object.values(ICON_SRC),
+    goldenPantherTheme.assets.backdrop,
+    goldenPantherTheme.assets.loadingBg,
+    ...Object.values(goldenPantherTheme.assets.icons),
   ];
   for (const src of urls) {
     const img = new Image();
@@ -144,14 +144,12 @@ export function GoldenPantherSlot({
   const [infoOpen, setInfoOpen] = useState(false);
   const [betModalOpen, setBetModalOpen] = useState(false);
   const [fsPaused, setFsPaused] = useState(false);
+  const [muted, setMuted] = useState(() => pantherAudio.isMuted);
 
   const busy = phase !== "idle";
   const totalBet = +(bet * (ante ? getAnteMult() : 1)).toFixed(2);
-  const buyUnitPrice = +((bet * getBuyFeatureMult()) / Math.max(1, getFreeSpinsBase())).toFixed(2);
-  const superBuyUnitPrice = +((bet * getSuperBuyFeatureMult()) / Math.max(1, getFreeSpinsBase())).toFixed(2);
-  const buyCost = +(buyUnitPrice * getFreeSpinsBase()).toFixed(2);
-  const superBuyCost = +(superBuyUnitPrice * getFreeSpinsBase()).toFixed(2);
-  const activeUnitPrice = buyMode === "super" ? superBuyUnitPrice : buyUnitPrice;
+  const buyCost = getBuyUnitPrice(BUY_FS_START_BET, "normal");
+  const superBuyCost = getBuyUnitPrice(BUY_FS_START_BET, "super");
 
   const busyRef = useRef(false);
   const skipRef = useRef(false);
@@ -496,7 +494,17 @@ export function GoldenPantherSlot({
   const dismissFsSummary = useCallback(() => {
     setFsSummary(null);
     fsSpinsPlayedRef.current = 0;
+    pantherAudio.endFreespins();
   }, []);
+
+  const setMutedState = useCallback((on: boolean) => {
+    pantherAudio.setMuted(on);
+    setMuted(on);
+  }, []);
+
+  const toggleMute = useCallback(() => {
+    setMutedState(!muted);
+  }, [muted, setMutedState]);
 
   const finishBase = useCallback(
     (script: SpinScript, session: { sessionId: string | null; freeSpinsLeft: number; inFree: boolean }) => {
@@ -727,6 +735,7 @@ export function GoldenPantherSlot({
   const openBuyFeature = useCallback(
     (mode: "normal" | "super" = "normal") => {
       if (busyRef.current || phase !== "idle" || inFree) return;
+      pantherAudio.playUiClick();
       setBuyMode(mode);
       setBuyOpen(true);
     },
@@ -734,9 +743,9 @@ export function GoldenPantherSlot({
   );
 
   const buyFeature = useCallback(
-    async (quantity: number) => {
+    async (buyBet: number, quantity: number) => {
       if (busyRef.current || phase !== "idle") return;
-      const unit = buyMode === "super" ? superBuyUnitPrice : buyUnitPrice;
+      const unit = getBuyUnitPrice(buyBet, buyMode);
       const cost = +(unit * quantity).toFixed(2);
       if (balance < cost) {
         toast.error("Insufficient balance");
@@ -744,9 +753,10 @@ export function GoldenPantherSlot({
       }
 
       setBuyOpen(false);
+      setBet(buyBet);
       try {
         const bought = await goldenPantherBuyFeatureFn({
-          data: { bet, mode: buyMode, quantity },
+          data: { bet: buyBet, mode: buyMode, quantity },
         });
         setBalanceLocal(bought.balance);
         void refreshJackpot();
@@ -778,15 +788,12 @@ export function GoldenPantherSlot({
     [
       applySession,
       balance,
-      bet,
       buyMode,
-      buyUnitPrice,
       dismissTriggerModal,
       phase,
       playBuyScatterIntro,
       refreshJackpot,
       setBalanceLocal,
-      superBuyUnitPrice,
     ],
   );
 
@@ -893,17 +900,36 @@ export function GoldenPantherSlot({
   const showTumbleBadge =
     tumbleStepWin > 0 &&
     (phase === "glow" || phase === "popping");
+  const theme = goldenPantherTheme;
+  const themeVars = themeToCssVars(theme);
 
   return (
-    <div className="relative flex h-full min-h-0 w-full max-w-[100vw] flex-col overflow-hidden select-none">
+    <div
+      className="relative flex h-full min-h-0 w-full max-w-[100vw] flex-col overflow-hidden select-none"
+      style={themeVars}
+    >
       <img
-        src="/images/symbols/panther/backdrop.webp"
+        src={theme.assets.backdrop}
         alt=""
         className="absolute inset-0 size-full object-cover"
         aria-hidden
         decoding="async"
         fetchPriority="high"
       />
+
+      <button
+        type="button"
+        onClick={toggleMute}
+        className="absolute right-2 top-[max(0.4rem,env(safe-area-inset-top))] z-30 grid size-9 place-items-center rounded-full border bg-black/55 backdrop-blur-sm hover:brightness-125"
+        style={{
+          borderColor: "var(--p-mute-border)",
+          color: "var(--p-mute-text)",
+        }}
+        aria-label={muted ? "Unmute" : "Mute"}
+        title={muted ? "Unmute" : "Mute"}
+      >
+        {muted ? <VolumeX size={16} /> : <Volume2 size={16} />}
+      </button>
 
       {/* Playfield — sit above Android 3-button nav (safe-area is often 0 there) */}
       <div className="relative z-10 flex min-h-0 flex-1 flex-col px-1.5 pt-[max(0.25rem,env(safe-area-inset-top))] pb-[max(3.25rem,env(safe-area-inset-bottom))] sm:items-center sm:justify-center sm:px-3 sm:py-2 sm:pb-2">
@@ -915,9 +941,9 @@ export function GoldenPantherSlot({
               style={{
                 maxWidth: "min(100%, 800px)",
                 background:
-                  "linear-gradient(180deg, rgba(12,8,4,0.55) 0%, rgba(8,5,3,0.72) 100%)",
+                  "linear-gradient(180deg, var(--p-well-top) 0%, var(--p-well-bottom) 100%)",
                 boxShadow:
-                  "inset 0 0 0 1.5px rgba(245,215,110,0.55), inset 0 0 40px rgba(0,0,0,0.35), 0 12px 36px rgba(0,0,0,0.45)",
+                  "inset 0 0 0 1.5px var(--p-rim), inset 0 0 40px rgba(0,0,0,0.35), 0 12px 36px rgba(0,0,0,0.45)",
               }}
             >
               {/* Soft top glow */}
@@ -925,7 +951,7 @@ export function GoldenPantherSlot({
                 className="pointer-events-none absolute inset-x-0 top-0 z-0 h-24"
                 style={{
                   background:
-                    "radial-gradient(ellipse at 50% 0%, rgba(245,158,11,0.18) 0%, transparent 70%)",
+                    "radial-gradient(ellipse at 50% 0%, var(--p-top-glow) 0%, transparent 70%)",
                 }}
                 aria-hidden
               />
@@ -954,7 +980,7 @@ export function GoldenPantherSlot({
                 className="relative z-10 mx-auto my-0.5 h-px w-[92%] shrink-0 opacity-80"
                 style={{
                   background:
-                    "linear-gradient(90deg, transparent, rgba(245,215,110,0.65), transparent)",
+                    "linear-gradient(90deg, transparent, var(--p-divider), transparent)",
                 }}
                 aria-hidden
               />
@@ -964,15 +990,23 @@ export function GoldenPantherSlot({
                 {showTumbleBadge && (
                   <div className="pointer-events-none absolute left-1/2 top-0 z-20 -translate-x-1/2 -translate-y-1/2">
                     <div
-                      className="rounded-full border-2 border-yellow-300 px-4 py-1.5 text-center shadow-[0_0_20px_rgba(250,204,21,0.8)]"
+                      className="rounded-full border-2 px-4 py-1.5 text-center shadow-[0_0_20px_var(--p-spin-shadow)]"
                       style={{
-                        background: "linear-gradient(180deg, #D97706 0%, #78350F 100%)",
+                        borderColor: "var(--p-tumble-border)",
+                        background:
+                          "linear-gradient(180deg, var(--p-tumble-from) 0%, var(--p-tumble-to) 100%)",
                       }}
                     >
-                      <div className="text-[10px] font-black uppercase tracking-[0.18em] text-amber-200">
+                      <div
+                        className="text-[10px] font-black uppercase tracking-[0.18em]"
+                        style={{ color: "var(--p-accent-soft)" }}
+                      >
                         Tumble Win
                       </div>
-                      <div className="text-lg font-black leading-none text-yellow-300 tabular-nums sm:text-xl">
+                      <div
+                        className="text-lg font-black leading-none tabular-nums sm:text-xl"
+                        style={{ color: "var(--p-tumble-text)" }}
+                      >
                         {formatMoney(tumbleStepWin, { signed: true })}
                       </div>
                     </div>
@@ -988,7 +1022,8 @@ export function GoldenPantherSlot({
                   {Array.from({ length: COLS }).map((_, c) => (
                     <div
                       key={c}
-                      className="border-r border-amber-200/80 last:border-r-0"
+                      className="border-r last:border-r-0"
+                      style={{ borderColor: "var(--p-accent-soft)" }}
                     />
                   ))}
                 </div>
@@ -1019,7 +1054,11 @@ export function GoldenPantherSlot({
                 type="button"
                 disabled={busy}
                 onClick={() => openBuyFeature("normal")}
-                className="min-h-9 rounded-xl border-2 border-amber-400/80 bg-black/70 px-3 py-1.5 text-[10px] font-black uppercase tracking-wide text-amber-200 disabled:opacity-40 sm:min-h-10 sm:px-4 sm:py-2 sm:text-[11px]"
+                className="min-h-9 rounded-xl border-2 bg-black/70 px-3 py-1.5 text-[10px] font-black uppercase tracking-wide disabled:opacity-40 sm:min-h-10 sm:px-4 sm:py-2 sm:text-[11px]"
+                style={{
+                  borderColor: "var(--p-accent)",
+                  color: "var(--p-accent-soft)",
+                }}
               >
                 Buy FS {formatMoneyCompact(buyCost)}
               </button>
@@ -1027,7 +1066,11 @@ export function GoldenPantherSlot({
                 type="button"
                 disabled={busy}
                 onClick={() => openBuyFeature("super")}
-                className="min-h-9 rounded-xl border-2 border-amber-400/80 bg-black/70 px-3 py-1.5 text-[10px] font-black uppercase tracking-wide text-amber-200 disabled:opacity-40 sm:min-h-10 sm:px-4 sm:py-2 sm:text-[11px]"
+                className="min-h-9 rounded-xl border-2 bg-black/70 px-3 py-1.5 text-[10px] font-black uppercase tracking-wide disabled:opacity-40 sm:min-h-10 sm:px-4 sm:py-2 sm:text-[11px]"
+                style={{
+                  borderColor: "var(--p-accent)",
+                  color: "var(--p-accent-soft)",
+                }}
               >
                 Super {formatMoneyCompact(superBuyCost)}
               </button>
@@ -1037,31 +1080,58 @@ export function GoldenPantherSlot({
           {/* HUD — compact on Android so Spin sits above the system nav */}
           <div className="mt-1 w-full min-w-0 shrink-0 sm:mt-3">
             <div className="mb-1.5 grid grid-cols-3 gap-1 sm:mb-2 sm:gap-2">
-              <div className="min-w-0 rounded-xl border border-amber-500/40 bg-black/75 px-1 py-1.5 text-center sm:px-2 sm:py-2.5">
-                <div className="text-[9px] font-bold uppercase tracking-wider text-amber-200/70 sm:text-[11px]">
+              <div
+                className="min-w-0 rounded-xl border bg-black/75 px-1 py-1.5 text-center sm:px-2 sm:py-2.5"
+                style={{ borderColor: "var(--p-hud-border)" }}
+              >
+                <div
+                  className="text-[9px] font-bold uppercase tracking-wider sm:text-[11px]"
+                  style={{ color: "var(--p-hud-label)" }}
+                >
                   Bet
                 </div>
-                <div className="break-all text-[11px] font-black tabular-nums leading-tight text-amber-100 sm:text-base">
+                <div
+                  className="break-all text-[11px] font-black tabular-nums leading-tight sm:text-base"
+                  style={{ color: "var(--p-hud-value)" }}
+                >
                   {formatMoney(totalBet)}
                 </div>
               </div>
-              <div className="min-w-0 rounded-xl border border-fuchsia-400/50 bg-gradient-to-b from-purple-900/90 to-black/80 px-1 py-1.5 text-center sm:px-2 sm:py-2.5">
-                <div className="text-[9px] font-bold uppercase tracking-wider text-fuchsia-200/80 sm:text-[11px]">
+              <div
+                className="min-w-0 rounded-xl border px-1 py-1.5 text-center sm:px-2 sm:py-2.5"
+                style={{
+                  borderColor: "var(--p-win-border)",
+                  background:
+                    "linear-gradient(180deg, var(--p-win-from) 0%, var(--p-win-to) 100%)",
+                }}
+              >
+                <div
+                  className="text-[9px] font-bold uppercase tracking-wider sm:text-[11px]"
+                  style={{ color: "var(--p-win-label)" }}
+                >
                   Win
                 </div>
                 <div
-                  className="break-all text-[11px] font-black tabular-nums leading-tight text-yellow-200 sm:text-base"
+                  className="break-all text-[11px] font-black tabular-nums leading-tight sm:text-base"
+                  style={{ color: "var(--p-win-value)" }}
                   title={displayWin > 0 ? formatMoney(displayWin) : undefined}
                 >
                   {displayWin > 0 ? formatMoney(displayWin) : "—"}
                 </div>
               </div>
-              <div className="min-w-0 rounded-xl border border-amber-500/40 bg-black/75 px-1 py-1.5 text-center sm:px-2 sm:py-2.5">
-                <div className="text-[9px] font-bold uppercase tracking-wider text-amber-200/70 sm:text-[11px]">
+              <div
+                className="min-w-0 rounded-xl border bg-black/75 px-1 py-1.5 text-center sm:px-2 sm:py-2.5"
+                style={{ borderColor: "var(--p-hud-border)" }}
+              >
+                <div
+                  className="text-[9px] font-bold uppercase tracking-wider sm:text-[11px]"
+                  style={{ color: "var(--p-hud-label)" }}
+                >
                   Balance
                 </div>
                 <div
-                  className="break-all text-[11px] font-black tabular-nums leading-tight text-amber-100 sm:text-base"
+                  className="break-all text-[11px] font-black tabular-nums leading-tight sm:text-base"
+                  style={{ color: "var(--p-hud-value)" }}
                   title={formatMoney(balance)}
                 >
                   {formatMoney(balance)}
@@ -1087,10 +1157,16 @@ export function GoldenPantherSlot({
               </p>
             )}
 
-            <div className="flex min-w-0 items-center gap-1 rounded-2xl border border-amber-500/35 bg-black/80 px-1 py-1.5 backdrop-blur-md sm:gap-3 sm:px-3 sm:py-2.5">
+            <div
+              className="flex min-w-0 items-center gap-1 rounded-2xl border bg-black/80 px-1 py-1.5 backdrop-blur-md sm:gap-3 sm:px-3 sm:py-2.5"
+              style={{ borderColor: "var(--p-hud-border)" }}
+            >
               <button
                 type="button"
-                onClick={() => setInfoOpen(true)}
+                onClick={() => {
+                  pantherAudio.playUiClick();
+                  setInfoOpen(true);
+                }}
                 className="grid size-10 shrink-0 place-items-center rounded-xl border border-white/20 bg-neutral-800 text-white sm:size-11"
                 aria-label="Paytable Info"
               >
@@ -1117,7 +1193,7 @@ export function GoldenPantherSlot({
                   <div className="text-[9px] font-bold uppercase tracking-wider text-white/55 sm:text-[10px]">
                     Bet
                   </div>
-                  <div className="truncate text-xs font-black tabular-nums text-yellow-300 sm:text-base">
+                  <div className="truncate text-xs font-black tabular-nums sm:text-base" style={{ color: "var(--p-win-value)" }}>
                     {formatMoney(totalBet)}
                   </div>
                 </button>
@@ -1137,10 +1213,17 @@ export function GoldenPantherSlot({
                 onClick={() => setTurbo((v) => !v)}
                 className={cn(
                   "grid size-10 shrink-0 place-items-center rounded-xl border sm:size-11",
-                  turbo
-                    ? "border-amber-400 bg-amber-400/25 text-yellow-200"
-                    : "border-white/20 bg-neutral-800 text-white/70",
+                  !turbo && "border-white/20 bg-neutral-800 text-white/70",
                 )}
+                style={
+                  turbo
+                    ? {
+                        borderColor: "var(--p-accent)",
+                        background: "color-mix(in srgb, var(--p-accent) 25%, transparent)",
+                        color: "var(--p-win-value)",
+                      }
+                    : undefined
+                }
                 aria-label="Turbo Fast Mode"
               >
                 <FastForward size={18} />
@@ -1163,32 +1246,51 @@ export function GoldenPantherSlot({
                     void spin(false);
                   }
                 }}
-                className="relative grid size-14 shrink-0 place-items-center rounded-full border-[3px] border-amber-300 bg-gradient-to-b from-amber-400 via-amber-600 to-amber-800 text-amber-950 shadow-[0_6px_22px_rgba(217,119,6,0.65)] active:scale-95 sm:size-16"
+                className="relative grid size-14 shrink-0 place-items-center rounded-full border-[3px] active:scale-95 sm:size-16"
+                style={{
+                  borderColor: "var(--p-accent-soft)",
+                  background:
+                    "linear-gradient(180deg, var(--p-spin-from) 0%, var(--p-spin-mid) 50%, var(--p-spin-to) 100%)",
+                  color: "var(--p-accent-deep)",
+                  boxShadow: "0 6px 22px var(--p-spin-shadow)",
+                }}
                 aria-label="Spin"
               >
                 <div className="absolute inset-1 flex items-center justify-center rounded-full bg-gradient-to-b from-neutral-900 to-black shadow-inner sm:inset-1.5">
                   {inFree ? (
                     <div className="flex flex-col items-center -space-y-0.5">
-                      <span className="text-xl font-black tabular-nums leading-none text-yellow-300 sm:text-2xl">
+                      <span
+                        className="text-xl font-black tabular-nums leading-none sm:text-2xl"
+                        style={{ color: "var(--p-win-value)" }}
+                      >
                         {freeSpins}
                       </span>
-                      <span className="text-[8px] font-black uppercase tracking-widest text-amber-500 sm:text-[9px]">
+                      <span
+                        className="text-[8px] font-black uppercase tracking-widest sm:text-[9px]"
+                        style={{ color: "var(--p-accent)" }}
+                      >
                         Spins
                       </span>
                     </div>
                   ) : autoSpin ? (
                     <div className="flex flex-col items-center -space-y-0.5">
-                      <span className="text-xl font-black tabular-nums leading-none text-yellow-300 sm:text-2xl">
+                      <span
+                        className="text-xl font-black tabular-nums leading-none sm:text-2xl"
+                        style={{ color: "var(--p-win-value)" }}
+                      >
                         {remainingAutoSpins === "infinity" ? "∞" : remainingAutoSpins}
                       </span>
-                      <span className="text-[8px] font-black uppercase tracking-widest text-amber-500 sm:text-[9px]">
+                      <span
+                        className="text-[8px] font-black uppercase tracking-widest sm:text-[9px]"
+                        style={{ color: "var(--p-accent)" }}
+                      >
                         Auto
                       </span>
                     </div>
                   ) : busy ? (
-                    <RotateCw size={24} className="animate-spin text-yellow-300 sm:size-7" />
+                    <RotateCw size={24} className="animate-spin sm:size-7" style={{ color: "var(--p-win-value)" }} />
                   ) : (
-                    <RotateCw size={24} className="text-yellow-300 sm:size-7" />
+                    <RotateCw size={24} className="sm:size-7" style={{ color: "var(--p-win-value)" }} />
                   )}
                 </div>
               </button>
@@ -1273,14 +1375,11 @@ export function GoldenPantherSlot({
       <AnimatePresence>
         {buyOpen && (
           <BuyFeatureModal
-            bet={bet}
-            unitPrice={activeUnitPrice}
             balance={balance}
             mode={buyMode}
-            onBetChange={setBet}
             onCancel={() => setBuyOpen(false)}
-            onConfirm={(quantity) => {
-              void buyFeature(quantity);
+            onConfirm={(buyBet, quantity) => {
+              void buyFeature(buyBet, quantity);
             }}
           />
         )}
@@ -1322,7 +1421,13 @@ export function GoldenPantherSlot({
       <AnimatePresence>
         {banner && !winPopup && !fsSummary && !triggerModalCount && (
           <div className="absolute inset-0 z-[100] flex items-center justify-center pointer-events-none animate-in fade-in zoom-in duration-300">
-            <div className="rounded-2xl border-4 border-white bg-gradient-to-b from-yellow-300 to-yellow-600 px-10 py-5 text-center shadow-2xl">
+            <div
+              className="rounded-2xl border-4 border-white px-10 py-5 text-center shadow-2xl"
+              style={{
+                background:
+                  "linear-gradient(180deg, var(--p-spin-from) 0%, var(--p-spin-mid) 100%)",
+              }}
+            >
               <h2 className="mb-2 font-black uppercase tracking-widest text-white drop-shadow-md sm:text-lg">
                 {banner}
               </h2>

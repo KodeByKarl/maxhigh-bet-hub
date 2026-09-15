@@ -1,4 +1,5 @@
-import { lazy, Suspense, useState } from "react";
+import { lazy, Suspense, useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import { Star, Play, Heart, Share2 } from "lucide-react";
 import {
   Dialog,
@@ -40,9 +41,26 @@ function Stars({ rating }: { rating: number }) {
   );
 }
 
+function PlayBootPlate() {
+  if (typeof document === "undefined") return null;
+  return createPortal(
+    <div
+      className="fixed inset-0 z-[9998] bg-[#0A0912] animate-[loader-fade_0.28s_ease-out]"
+      aria-hidden
+    />,
+    document.body,
+  );
+}
+
 export function GameModal({ game, open, onOpenChange }: Props) {
   const [playing, setPlaying] = useState(false);
   const { requireAuth } = useAuth();
+
+  // Prefetch the play shell while the info dialog is open.
+  useEffect(() => {
+    if (!open) return;
+    void import("./GamePlayModal");
+  }, [open]);
 
   if (!game) return null;
 
@@ -186,7 +204,7 @@ export function GameModal({ game, open, onOpenChange }: Props) {
       </Dialog>
 
       {playing ? (
-        <Suspense fallback={null}>
+        <Suspense fallback={<PlayBootPlate />}>
           <GamePlayModal
             game={game}
             open={playing}

@@ -306,6 +306,114 @@ export const saveGoldenPantherEngineConfigFn = createServerFn({ method: "POST" }
     return saveGoldenPantherEngineConfig(data.config);
   });
 
+export const getRubyRavenEngineConfigFn = createServerFn({ method: "GET" }).handler(async () => {
+  const { getRubyRavenEngineConfig } = await import("../server/superadmin/services.server");
+  return getRubyRavenEngineConfig();
+});
+
+export const saveRubyRavenEngineConfigFn = createServerFn({ method: "POST" })
+  .validator(z.object({ config: z.unknown() }))
+  .handler(async ({ data }) => {
+    const { saveRubyRavenEngineConfig } = await import("../server/superadmin/services.server");
+    return saveRubyRavenEngineConfig(data.config);
+  });
+
+export const getMidnightOwlEngineConfigFn = createServerFn({ method: "GET" }).handler(async () => {
+  const { getMidnightOwlEngineConfig } = await import("../server/superadmin/services.server");
+  return getMidnightOwlEngineConfig();
+});
+
+export const saveMidnightOwlEngineConfigFn = createServerFn({ method: "POST" })
+  .validator(z.object({ config: z.unknown() }))
+  .handler(async ({ data }) => {
+    const { saveMidnightOwlEngineConfig } = await import("../server/superadmin/services.server");
+    return saveMidnightOwlEngineConfig(data.config);
+  });
+
+export const getHoneyHiveEngineConfigFn = createServerFn({ method: "GET" }).handler(async () => {
+  const { getHoneyHiveEngineConfig } = await import("../server/superadmin/services.server");
+  return getHoneyHiveEngineConfig();
+});
+
+export const saveHoneyHiveEngineConfigFn = createServerFn({ method: "POST" })
+  .validator(z.object({ config: z.unknown() }))
+  .handler(async ({ data }) => {
+    const { saveHoneyHiveEngineConfig } = await import("../server/superadmin/services.server");
+    return saveHoneyHiveEngineConfig(data.config);
+  });
+
+export const getSolarSerpentEngineConfigFn = createServerFn({ method: "GET" }).handler(async () => {
+  const { getSolarSerpentEngineConfig } = await import("../server/superadmin/services.server");
+  return getSolarSerpentEngineConfig();
+});
+
+export const saveSolarSerpentEngineConfigFn = createServerFn({ method: "POST" })
+  .validator(z.object({ config: z.unknown() }))
+  .handler(async ({ data }) => {
+    const { saveSolarSerpentEngineConfig } = await import("../server/superadmin/services.server");
+    return saveSolarSerpentEngineConfig(data.config);
+  });
+
+export const getFrostFoxEngineConfigFn = createServerFn({ method: "GET" }).handler(async () => {
+  const { getFrostFoxEngineConfig } = await import("../server/superadmin/services.server");
+  return getFrostFoxEngineConfig();
+});
+
+export const saveFrostFoxEngineConfigFn = createServerFn({ method: "POST" })
+  .validator(z.object({ config: z.unknown() }))
+  .handler(async ({ data }) => {
+    const { saveFrostFoxEngineConfig } = await import("../server/superadmin/services.server");
+    return saveFrostFoxEngineConfig(data.config);
+  });
+
+export const getCoralCobraEngineConfigFn = createServerFn({ method: "GET" }).handler(async () => {
+  const { getCoralCobraEngineConfig } = await import("../server/superadmin/services.server");
+  return getCoralCobraEngineConfig();
+});
+
+export const saveCoralCobraEngineConfigFn = createServerFn({ method: "POST" })
+  .validator(z.object({ config: z.unknown() }))
+  .handler(async ({ data }) => {
+    const { saveCoralCobraEngineConfig } = await import("../server/superadmin/services.server");
+    return saveCoralCobraEngineConfig(data.config);
+  });
+
+export const getLotusLynxEngineConfigFn = createServerFn({ method: "GET" }).handler(async () => {
+  const { getLotusLynxEngineConfig } = await import("../server/superadmin/services.server");
+  return getLotusLynxEngineConfig();
+});
+
+export const saveLotusLynxEngineConfigFn = createServerFn({ method: "POST" })
+  .validator(z.object({ config: z.unknown() }))
+  .handler(async ({ data }) => {
+    const { saveLotusLynxEngineConfig } = await import("../server/superadmin/services.server");
+    return saveLotusLynxEngineConfig(data.config);
+  });
+
+export const getEmberTigerEngineConfigFn = createServerFn({ method: "GET" }).handler(async () => {
+  const { getEmberTigerEngineConfig } = await import("../server/superadmin/services.server");
+  return getEmberTigerEngineConfig();
+});
+
+export const saveEmberTigerEngineConfigFn = createServerFn({ method: "POST" })
+  .validator(z.object({ config: z.unknown() }))
+  .handler(async ({ data }) => {
+    const { saveEmberTigerEngineConfig } = await import("../server/superadmin/services.server");
+    return saveEmberTigerEngineConfig(data.config);
+  });
+
+export const getJadeJaguarEngineConfigFn = createServerFn({ method: "GET" }).handler(async () => {
+  const { getJadeJaguarEngineConfig } = await import("../server/superadmin/services.server");
+  return getJadeJaguarEngineConfig();
+});
+
+export const saveJadeJaguarEngineConfigFn = createServerFn({ method: "POST" })
+  .validator(z.object({ config: z.unknown() }))
+  .handler(async ({ data }) => {
+    const { saveJadeJaguarEngineConfig } = await import("../server/superadmin/services.server");
+    return saveJadeJaguarEngineConfig(data.config);
+  });
+
 /** Public — Aztec Treasure math config for the live engine. */
 export const getAztecTreasureEngineConfigFn = createServerFn({ method: "GET" }).handler(async () => {
   const { getAztecTreasureEngineConfig } = await import("../server/superadmin/services.server");

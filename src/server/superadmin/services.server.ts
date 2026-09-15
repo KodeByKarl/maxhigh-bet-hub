@@ -18,7 +18,7 @@ import type {
 } from "@/lib/superadmin-types";
 import { destroyUserSessions, money, newId, requireAdmin, requireSuperadmin, toPublicUser } from "../session";
 import { writeAuditLog } from "../admin/audit.server";
-import { isThumbnailOnlyGame, THUMBNAIL_ONLY_GAME_IDS } from "@/lib/playable-games";
+import { isLobbyVisibleGame, isThumbnailOnlyGame, THUMBNAIL_ONLY_GAME_IDS } from "@/lib/playable-games";
 import { requirePermission } from "../auth/rbac.server";
 import { assertCanManageChips, scopeToDownline } from "../auth/network-scope.server";
 import { slotGames } from "@/lib/games";
@@ -516,7 +516,7 @@ export async function listSuperGames(): Promise<SuperGameRow[]> {
   const rows: SuperGameRow[] = [];
   for (const catalog of slotGames) {
     const id = catalog.id;
-    if (isThumbnailOnlyGame(id)) continue;
+    if (!isLobbyVisibleGame(id) || isThumbnailOnlyGame(id)) continue;
     const c = byId.get(id);
     rows.push({
       gameId: id,
@@ -762,15 +762,15 @@ export async function listEnabledCatalogGames() {
     controls = await db.select().from(gameControls);
   } catch {
     // table may not exist yet — fall back to playable catalog only
-    return slotGames.filter((g) => !isThumbnailOnlyGame(g.id));
+    return slotGames.filter((g) => isLobbyVisibleGame(g.id) && !isThumbnailOnlyGame(g.id));
   }
   const map = new Map(controls.map((c) => [c.gameId, c]));
 
   type Row = (typeof slotGames)[number] & { _sort: number };
   const rows: Row[] = [];
   for (const g of slotGames) {
-    // Soft-launch: never show thumbnail-only titles (no playable engine yet).
-    if (isThumbnailOnlyGame(g.id)) continue;
+    // Soft-launch: lobby shows the Golden Panther family only.
+    if (!isLobbyVisibleGame(g.id) || isThumbnailOnlyGame(g.id)) continue;
     const c = map.get(g.id);
     if (c && c.enabled === "no") continue;
     rows.push({
@@ -9912,3 +9912,678 @@ export async function saveWildPantherEngineConfig(raw: unknown) {
   return cfg;
 }
 
+
+export async function getJadeJaguarEngineConfig() {
+  const {
+    JADE_JAGUAR_GAME_ID,
+    DEFAULT_JADE_JAGUAR_CONFIG,
+    normalizeJadeJaguarConfig,
+  } = await import("@/lib/jade-jaguar-config");
+  const db = getDb();
+  try {
+    const rows = await db
+      .select()
+      .from(gameControls)
+      .where(eq(gameControls.gameId, JADE_JAGUAR_GAME_ID))
+      .limit(1);
+    return normalizeJadeJaguarConfig(parseEngineConfigJson(rows[0]?.engineConfig));
+  } catch {
+    return structuredClone(DEFAULT_JADE_JAGUAR_CONFIG);
+  }
+}
+
+export async function saveJadeJaguarEngineConfig(raw: unknown) {
+  const actor = await requireSuperadmin();
+  const {
+    JADE_JAGUAR_GAME_ID,
+    normalizeJadeJaguarConfig,
+  } = await import("@/lib/jade-jaguar-config");
+  const catalog = slotGames.find((row) => row.id === JADE_JAGUAR_GAME_ID);
+  if (!catalog) throw new Error("Jade Jaguar not in catalog");
+
+  const cfg = normalizeJadeJaguarConfig(raw);
+  const db = getDb();
+  const existing = await db
+    .select()
+    .from(gameControls)
+    .where(eq(gameControls.gameId, JADE_JAGUAR_GAME_ID))
+    .limit(1);
+
+  const payload = JSON.stringify(cfg);
+
+  if (!existing[0]) {
+    await db.insert(gameControls).values({
+      gameId: JADE_JAGUAR_GAME_ID,
+      enabled: "yes",
+      featured: "no",
+      sortOrder: 0,
+      tag: catalog.tag ?? null,
+      rtp: catalog.rtp,
+      volatility: catalog.volatility,
+      minBet: catalog.minBet,
+      maxBet: catalog.maxBet,
+      engineConfig: payload,
+    });
+  } else {
+    await db
+      .update(gameControls)
+      .set({ engineConfig: payload })
+      .where(eq(gameControls.gameId, JADE_JAGUAR_GAME_ID));
+  }
+
+  await writeAuditLog({
+    actor,
+    action: "super.jade_jaguar_config",
+    summary: `Updated Jade Jaguar engine config (dead spin ${cfg.deadSpinChancePercent}%, FS ${cfg.freeSpinsBase})`,
+    targetType: "game",
+    targetId: JADE_JAGUAR_GAME_ID,
+    meta: {
+      deadSpinChancePercent: cfg.deadSpinChancePercent,
+      bombChanceBasePercent: cfg.bombChanceBasePercent,
+      freeSpinsTriggerCount: cfg.freeSpinsTriggerCount,
+      freeSpinsBase: cfg.freeSpinsBase,
+    },
+  });
+
+  return cfg;
+}
+
+export async function getEmberTigerEngineConfig() {
+  const {
+    EMBER_TIGER_GAME_ID,
+    DEFAULT_EMBER_TIGER_CONFIG,
+    normalizeEmberTigerConfig,
+  } = await import("@/lib/ember-tiger-config");
+  const db = getDb();
+  try {
+    const rows = await db
+      .select()
+      .from(gameControls)
+      .where(eq(gameControls.gameId, EMBER_TIGER_GAME_ID))
+      .limit(1);
+    return normalizeEmberTigerConfig(parseEngineConfigJson(rows[0]?.engineConfig));
+  } catch {
+    return structuredClone(DEFAULT_EMBER_TIGER_CONFIG);
+  }
+}
+
+export async function saveEmberTigerEngineConfig(raw: unknown) {
+  const actor = await requireSuperadmin();
+  const {
+    EMBER_TIGER_GAME_ID,
+    normalizeEmberTigerConfig,
+  } = await import("@/lib/ember-tiger-config");
+  const catalog = slotGames.find((row) => row.id === EMBER_TIGER_GAME_ID);
+  if (!catalog) throw new Error("Ember Tiger not in catalog");
+
+  const cfg = normalizeEmberTigerConfig(raw);
+  const db = getDb();
+  const existing = await db
+    .select()
+    .from(gameControls)
+    .where(eq(gameControls.gameId, EMBER_TIGER_GAME_ID))
+    .limit(1);
+
+  const payload = JSON.stringify(cfg);
+
+  if (!existing[0]) {
+    await db.insert(gameControls).values({
+      gameId: EMBER_TIGER_GAME_ID,
+      enabled: "yes",
+      featured: "no",
+      sortOrder: 0,
+      tag: catalog.tag ?? null,
+      rtp: catalog.rtp,
+      volatility: catalog.volatility,
+      minBet: catalog.minBet,
+      maxBet: catalog.maxBet,
+      engineConfig: payload,
+    });
+  } else {
+    await db
+      .update(gameControls)
+      .set({ engineConfig: payload })
+      .where(eq(gameControls.gameId, EMBER_TIGER_GAME_ID));
+  }
+
+  await writeAuditLog({
+    actor,
+    action: "super.ember_tiger_config",
+    summary: `Updated Ember Tiger engine config (dead spin ${cfg.deadSpinChancePercent}%, FS ${cfg.freeSpinsBase})`,
+    targetType: "game",
+    targetId: EMBER_TIGER_GAME_ID,
+    meta: {
+      deadSpinChancePercent: cfg.deadSpinChancePercent,
+      bombChanceBasePercent: cfg.bombChanceBasePercent,
+      freeSpinsTriggerCount: cfg.freeSpinsTriggerCount,
+      freeSpinsBase: cfg.freeSpinsBase,
+    },
+  });
+
+  return cfg;
+}
+
+export async function getLotusLynxEngineConfig() {
+  const {
+    LOTUS_LYNX_GAME_ID,
+    DEFAULT_LOTUS_LYNX_CONFIG,
+    normalizeLotusLynxConfig,
+  } = await import("@/lib/lotus-lynx-config");
+  const db = getDb();
+  try {
+    const rows = await db
+      .select()
+      .from(gameControls)
+      .where(eq(gameControls.gameId, LOTUS_LYNX_GAME_ID))
+      .limit(1);
+    return normalizeLotusLynxConfig(parseEngineConfigJson(rows[0]?.engineConfig));
+  } catch {
+    return structuredClone(DEFAULT_LOTUS_LYNX_CONFIG);
+  }
+}
+
+export async function saveLotusLynxEngineConfig(raw: unknown) {
+  const actor = await requireSuperadmin();
+  const {
+    LOTUS_LYNX_GAME_ID,
+    normalizeLotusLynxConfig,
+  } = await import("@/lib/lotus-lynx-config");
+  const catalog = slotGames.find((row) => row.id === LOTUS_LYNX_GAME_ID);
+  if (!catalog) throw new Error("Lotus Lynx not in catalog");
+
+  const cfg = normalizeLotusLynxConfig(raw);
+  const db = getDb();
+  const existing = await db
+    .select()
+    .from(gameControls)
+    .where(eq(gameControls.gameId, LOTUS_LYNX_GAME_ID))
+    .limit(1);
+
+  const payload = JSON.stringify(cfg);
+
+  if (!existing[0]) {
+    await db.insert(gameControls).values({
+      gameId: LOTUS_LYNX_GAME_ID,
+      enabled: "yes",
+      featured: "no",
+      sortOrder: 0,
+      tag: catalog.tag ?? null,
+      rtp: catalog.rtp,
+      volatility: catalog.volatility,
+      minBet: catalog.minBet,
+      maxBet: catalog.maxBet,
+      engineConfig: payload,
+    });
+  } else {
+    await db
+      .update(gameControls)
+      .set({ engineConfig: payload })
+      .where(eq(gameControls.gameId, LOTUS_LYNX_GAME_ID));
+  }
+
+  await writeAuditLog({
+    actor,
+    action: "super.lotus_lynx_config",
+    summary: `Updated Lotus Lynx engine config (dead spin ${cfg.deadSpinChancePercent}%, FS ${cfg.freeSpinsBase})`,
+    targetType: "game",
+    targetId: LOTUS_LYNX_GAME_ID,
+    meta: {
+      deadSpinChancePercent: cfg.deadSpinChancePercent,
+      bombChanceBasePercent: cfg.bombChanceBasePercent,
+      freeSpinsTriggerCount: cfg.freeSpinsTriggerCount,
+      freeSpinsBase: cfg.freeSpinsBase,
+    },
+  });
+
+  return cfg;
+}
+
+export async function getCoralCobraEngineConfig() {
+  const {
+    CORAL_COBRA_GAME_ID,
+    DEFAULT_CORAL_COBRA_CONFIG,
+    normalizeCoralCobraConfig,
+  } = await import("@/lib/coral-cobra-config");
+  const db = getDb();
+  try {
+    const rows = await db
+      .select()
+      .from(gameControls)
+      .where(eq(gameControls.gameId, CORAL_COBRA_GAME_ID))
+      .limit(1);
+    return normalizeCoralCobraConfig(parseEngineConfigJson(rows[0]?.engineConfig));
+  } catch {
+    return structuredClone(DEFAULT_CORAL_COBRA_CONFIG);
+  }
+}
+
+export async function saveCoralCobraEngineConfig(raw: unknown) {
+  const actor = await requireSuperadmin();
+  const {
+    CORAL_COBRA_GAME_ID,
+    normalizeCoralCobraConfig,
+  } = await import("@/lib/coral-cobra-config");
+  const catalog = slotGames.find((row) => row.id === CORAL_COBRA_GAME_ID);
+  if (!catalog) throw new Error("Coral Cobra not in catalog");
+
+  const cfg = normalizeCoralCobraConfig(raw);
+  const db = getDb();
+  const existing = await db
+    .select()
+    .from(gameControls)
+    .where(eq(gameControls.gameId, CORAL_COBRA_GAME_ID))
+    .limit(1);
+
+  const payload = JSON.stringify(cfg);
+
+  if (!existing[0]) {
+    await db.insert(gameControls).values({
+      gameId: CORAL_COBRA_GAME_ID,
+      enabled: "yes",
+      featured: "no",
+      sortOrder: 0,
+      tag: catalog.tag ?? null,
+      rtp: catalog.rtp,
+      volatility: catalog.volatility,
+      minBet: catalog.minBet,
+      maxBet: catalog.maxBet,
+      engineConfig: payload,
+    });
+  } else {
+    await db
+      .update(gameControls)
+      .set({ engineConfig: payload })
+      .where(eq(gameControls.gameId, CORAL_COBRA_GAME_ID));
+  }
+
+  await writeAuditLog({
+    actor,
+    action: "super.coral_cobra_config",
+    summary: `Updated Coral Cobra engine config (dead spin ${cfg.deadSpinChancePercent}%, FS ${cfg.freeSpinsBase})`,
+    targetType: "game",
+    targetId: CORAL_COBRA_GAME_ID,
+    meta: {
+      deadSpinChancePercent: cfg.deadSpinChancePercent,
+      bombChanceBasePercent: cfg.bombChanceBasePercent,
+      freeSpinsTriggerCount: cfg.freeSpinsTriggerCount,
+      freeSpinsBase: cfg.freeSpinsBase,
+    },
+  });
+
+  return cfg;
+}
+
+export async function getFrostFoxEngineConfig() {
+  const {
+    FROST_FOX_GAME_ID,
+    DEFAULT_FROST_FOX_CONFIG,
+    normalizeFrostFoxConfig,
+  } = await import("@/lib/frost-fox-config");
+  const db = getDb();
+  try {
+    const rows = await db
+      .select()
+      .from(gameControls)
+      .where(eq(gameControls.gameId, FROST_FOX_GAME_ID))
+      .limit(1);
+    return normalizeFrostFoxConfig(parseEngineConfigJson(rows[0]?.engineConfig));
+  } catch {
+    return structuredClone(DEFAULT_FROST_FOX_CONFIG);
+  }
+}
+
+export async function saveFrostFoxEngineConfig(raw: unknown) {
+  const actor = await requireSuperadmin();
+  const {
+    FROST_FOX_GAME_ID,
+    normalizeFrostFoxConfig,
+  } = await import("@/lib/frost-fox-config");
+  const catalog = slotGames.find((row) => row.id === FROST_FOX_GAME_ID);
+  if (!catalog) throw new Error("Frost Fox not in catalog");
+
+  const cfg = normalizeFrostFoxConfig(raw);
+  const db = getDb();
+  const existing = await db
+    .select()
+    .from(gameControls)
+    .where(eq(gameControls.gameId, FROST_FOX_GAME_ID))
+    .limit(1);
+
+  const payload = JSON.stringify(cfg);
+
+  if (!existing[0]) {
+    await db.insert(gameControls).values({
+      gameId: FROST_FOX_GAME_ID,
+      enabled: "yes",
+      featured: "no",
+      sortOrder: 0,
+      tag: catalog.tag ?? null,
+      rtp: catalog.rtp,
+      volatility: catalog.volatility,
+      minBet: catalog.minBet,
+      maxBet: catalog.maxBet,
+      engineConfig: payload,
+    });
+  } else {
+    await db
+      .update(gameControls)
+      .set({ engineConfig: payload })
+      .where(eq(gameControls.gameId, FROST_FOX_GAME_ID));
+  }
+
+  await writeAuditLog({
+    actor,
+    action: "super.frost_fox_config",
+    summary: `Updated Frost Fox engine config (dead spin ${cfg.deadSpinChancePercent}%, FS ${cfg.freeSpinsBase})`,
+    targetType: "game",
+    targetId: FROST_FOX_GAME_ID,
+    meta: {
+      deadSpinChancePercent: cfg.deadSpinChancePercent,
+      bombChanceBasePercent: cfg.bombChanceBasePercent,
+      freeSpinsTriggerCount: cfg.freeSpinsTriggerCount,
+      freeSpinsBase: cfg.freeSpinsBase,
+    },
+  });
+
+  return cfg;
+}
+
+export async function getSolarSerpentEngineConfig() {
+  const {
+    SOLAR_SERPENT_GAME_ID,
+    DEFAULT_SOLAR_SERPENT_CONFIG,
+    normalizeSolarSerpentConfig,
+  } = await import("@/lib/solar-serpent-config");
+  const db = getDb();
+  try {
+    const rows = await db
+      .select()
+      .from(gameControls)
+      .where(eq(gameControls.gameId, SOLAR_SERPENT_GAME_ID))
+      .limit(1);
+    return normalizeSolarSerpentConfig(parseEngineConfigJson(rows[0]?.engineConfig));
+  } catch {
+    return structuredClone(DEFAULT_SOLAR_SERPENT_CONFIG);
+  }
+}
+
+export async function saveSolarSerpentEngineConfig(raw: unknown) {
+  const actor = await requireSuperadmin();
+  const {
+    SOLAR_SERPENT_GAME_ID,
+    normalizeSolarSerpentConfig,
+  } = await import("@/lib/solar-serpent-config");
+  const catalog = slotGames.find((row) => row.id === SOLAR_SERPENT_GAME_ID);
+  if (!catalog) throw new Error("Solar Serpent not in catalog");
+
+  const cfg = normalizeSolarSerpentConfig(raw);
+  const db = getDb();
+  const existing = await db
+    .select()
+    .from(gameControls)
+    .where(eq(gameControls.gameId, SOLAR_SERPENT_GAME_ID))
+    .limit(1);
+
+  const payload = JSON.stringify(cfg);
+
+  if (!existing[0]) {
+    await db.insert(gameControls).values({
+      gameId: SOLAR_SERPENT_GAME_ID,
+      enabled: "yes",
+      featured: "no",
+      sortOrder: 0,
+      tag: catalog.tag ?? null,
+      rtp: catalog.rtp,
+      volatility: catalog.volatility,
+      minBet: catalog.minBet,
+      maxBet: catalog.maxBet,
+      engineConfig: payload,
+    });
+  } else {
+    await db
+      .update(gameControls)
+      .set({ engineConfig: payload })
+      .where(eq(gameControls.gameId, SOLAR_SERPENT_GAME_ID));
+  }
+
+  await writeAuditLog({
+    actor,
+    action: "super.solar_serpent_config",
+    summary: `Updated Solar Serpent engine config (dead spin ${cfg.deadSpinChancePercent}%, FS ${cfg.freeSpinsBase})`,
+    targetType: "game",
+    targetId: SOLAR_SERPENT_GAME_ID,
+    meta: {
+      deadSpinChancePercent: cfg.deadSpinChancePercent,
+      bombChanceBasePercent: cfg.bombChanceBasePercent,
+      freeSpinsTriggerCount: cfg.freeSpinsTriggerCount,
+      freeSpinsBase: cfg.freeSpinsBase,
+    },
+  });
+
+  return cfg;
+}
+
+export async function getHoneyHiveEngineConfig() {
+  const {
+    HONEY_HIVE_GAME_ID,
+    DEFAULT_HONEY_HIVE_CONFIG,
+    normalizeHoneyHiveConfig,
+  } = await import("@/lib/honey-hive-config");
+  const db = getDb();
+  try {
+    const rows = await db
+      .select()
+      .from(gameControls)
+      .where(eq(gameControls.gameId, HONEY_HIVE_GAME_ID))
+      .limit(1);
+    return normalizeHoneyHiveConfig(parseEngineConfigJson(rows[0]?.engineConfig));
+  } catch {
+    return structuredClone(DEFAULT_HONEY_HIVE_CONFIG);
+  }
+}
+
+export async function saveHoneyHiveEngineConfig(raw: unknown) {
+  const actor = await requireSuperadmin();
+  const {
+    HONEY_HIVE_GAME_ID,
+    normalizeHoneyHiveConfig,
+  } = await import("@/lib/honey-hive-config");
+  const catalog = slotGames.find((row) => row.id === HONEY_HIVE_GAME_ID);
+  if (!catalog) throw new Error("Honey Hive not in catalog");
+
+  const cfg = normalizeHoneyHiveConfig(raw);
+  const db = getDb();
+  const existing = await db
+    .select()
+    .from(gameControls)
+    .where(eq(gameControls.gameId, HONEY_HIVE_GAME_ID))
+    .limit(1);
+
+  const payload = JSON.stringify(cfg);
+
+  if (!existing[0]) {
+    await db.insert(gameControls).values({
+      gameId: HONEY_HIVE_GAME_ID,
+      enabled: "yes",
+      featured: "no",
+      sortOrder: 0,
+      tag: catalog.tag ?? null,
+      rtp: catalog.rtp,
+      volatility: catalog.volatility,
+      minBet: catalog.minBet,
+      maxBet: catalog.maxBet,
+      engineConfig: payload,
+    });
+  } else {
+    await db
+      .update(gameControls)
+      .set({ engineConfig: payload })
+      .where(eq(gameControls.gameId, HONEY_HIVE_GAME_ID));
+  }
+
+  await writeAuditLog({
+    actor,
+    action: "super.honey_hive_config",
+    summary: `Updated Honey Hive engine config (dead spin ${cfg.deadSpinChancePercent}%, FS ${cfg.freeSpinsBase})`,
+    targetType: "game",
+    targetId: HONEY_HIVE_GAME_ID,
+    meta: {
+      deadSpinChancePercent: cfg.deadSpinChancePercent,
+      bombChanceBasePercent: cfg.bombChanceBasePercent,
+      freeSpinsTriggerCount: cfg.freeSpinsTriggerCount,
+      freeSpinsBase: cfg.freeSpinsBase,
+    },
+  });
+
+  return cfg;
+}
+
+export async function getMidnightOwlEngineConfig() {
+  const {
+    MIDNIGHT_OWL_GAME_ID,
+    DEFAULT_MIDNIGHT_OWL_CONFIG,
+    normalizeMidnightOwlConfig,
+  } = await import("@/lib/midnight-owl-config");
+  const db = getDb();
+  try {
+    const rows = await db
+      .select()
+      .from(gameControls)
+      .where(eq(gameControls.gameId, MIDNIGHT_OWL_GAME_ID))
+      .limit(1);
+    return normalizeMidnightOwlConfig(parseEngineConfigJson(rows[0]?.engineConfig));
+  } catch {
+    return structuredClone(DEFAULT_MIDNIGHT_OWL_CONFIG);
+  }
+}
+
+export async function saveMidnightOwlEngineConfig(raw: unknown) {
+  const actor = await requireSuperadmin();
+  const {
+    MIDNIGHT_OWL_GAME_ID,
+    normalizeMidnightOwlConfig,
+  } = await import("@/lib/midnight-owl-config");
+  const catalog = slotGames.find((row) => row.id === MIDNIGHT_OWL_GAME_ID);
+  if (!catalog) throw new Error("Midnight Owl not in catalog");
+
+  const cfg = normalizeMidnightOwlConfig(raw);
+  const db = getDb();
+  const existing = await db
+    .select()
+    .from(gameControls)
+    .where(eq(gameControls.gameId, MIDNIGHT_OWL_GAME_ID))
+    .limit(1);
+
+  const payload = JSON.stringify(cfg);
+
+  if (!existing[0]) {
+    await db.insert(gameControls).values({
+      gameId: MIDNIGHT_OWL_GAME_ID,
+      enabled: "yes",
+      featured: "no",
+      sortOrder: 0,
+      tag: catalog.tag ?? null,
+      rtp: catalog.rtp,
+      volatility: catalog.volatility,
+      minBet: catalog.minBet,
+      maxBet: catalog.maxBet,
+      engineConfig: payload,
+    });
+  } else {
+    await db
+      .update(gameControls)
+      .set({ engineConfig: payload })
+      .where(eq(gameControls.gameId, MIDNIGHT_OWL_GAME_ID));
+  }
+
+  await writeAuditLog({
+    actor,
+    action: "super.midnight_owl_config",
+    summary: `Updated Midnight Owl engine config (dead spin ${cfg.deadSpinChancePercent}%, FS ${cfg.freeSpinsBase})`,
+    targetType: "game",
+    targetId: MIDNIGHT_OWL_GAME_ID,
+    meta: {
+      deadSpinChancePercent: cfg.deadSpinChancePercent,
+      bombChanceBasePercent: cfg.bombChanceBasePercent,
+      freeSpinsTriggerCount: cfg.freeSpinsTriggerCount,
+      freeSpinsBase: cfg.freeSpinsBase,
+    },
+  });
+
+  return cfg;
+}
+
+export async function getRubyRavenEngineConfig() {
+  const {
+    RUBY_RAVEN_GAME_ID,
+    DEFAULT_RUBY_RAVEN_CONFIG,
+    normalizeRubyRavenConfig,
+  } = await import("@/lib/ruby-raven-config");
+  const db = getDb();
+  try {
+    const rows = await db
+      .select()
+      .from(gameControls)
+      .where(eq(gameControls.gameId, RUBY_RAVEN_GAME_ID))
+      .limit(1);
+    return normalizeRubyRavenConfig(parseEngineConfigJson(rows[0]?.engineConfig));
+  } catch {
+    return structuredClone(DEFAULT_RUBY_RAVEN_CONFIG);
+  }
+}
+
+export async function saveRubyRavenEngineConfig(raw: unknown) {
+  const actor = await requireSuperadmin();
+  const {
+    RUBY_RAVEN_GAME_ID,
+    normalizeRubyRavenConfig,
+  } = await import("@/lib/ruby-raven-config");
+  const catalog = slotGames.find((row) => row.id === RUBY_RAVEN_GAME_ID);
+  if (!catalog) throw new Error("Ruby Raven not in catalog");
+
+  const cfg = normalizeRubyRavenConfig(raw);
+  const db = getDb();
+  const existing = await db
+    .select()
+    .from(gameControls)
+    .where(eq(gameControls.gameId, RUBY_RAVEN_GAME_ID))
+    .limit(1);
+
+  const payload = JSON.stringify(cfg);
+
+  if (!existing[0]) {
+    await db.insert(gameControls).values({
+      gameId: RUBY_RAVEN_GAME_ID,
+      enabled: "yes",
+      featured: "no",
+      sortOrder: 0,
+      tag: catalog.tag ?? null,
+      rtp: catalog.rtp,
+      volatility: catalog.volatility,
+      minBet: catalog.minBet,
+      maxBet: catalog.maxBet,
+      engineConfig: payload,
+    });
+  } else {
+    await db
+      .update(gameControls)
+      .set({ engineConfig: payload })
+      .where(eq(gameControls.gameId, RUBY_RAVEN_GAME_ID));
+  }
+
+  await writeAuditLog({
+    actor,
+    action: "super.ruby_raven_config",
+    summary: `Updated Ruby Raven engine config (dead spin ${cfg.deadSpinChancePercent}%, FS ${cfg.freeSpinsBase})`,
+    targetType: "game",
+    targetId: RUBY_RAVEN_GAME_ID,
+    meta: {
+      deadSpinChancePercent: cfg.deadSpinChancePercent,
+      bombChanceBasePercent: cfg.bombChanceBasePercent,
+      freeSpinsTriggerCount: cfg.freeSpinsTriggerCount,
+      freeSpinsBase: cfg.freeSpinsBase,
+    },
+  });
+
+  return cfg;
+}

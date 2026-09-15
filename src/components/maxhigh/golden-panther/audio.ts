@@ -1,26 +1,30 @@
 /**
- * Golden Panther — Web Audio Sound Engine & Theme Music Synthesizer.
- * Commercial-safe, procedural Web Audio synthesized sounds and jungle ambient beat.
+ * Golden Panther — quiet, ear-safe Web Audio kit.
+ * Sine/triangle only, low-pass on every voice, low default volume.
  */
 
 const MUTE_KEY = "golden-panther-muted";
 const VOL_KEY = "golden-panther-volume";
+
+const DEFAULT_VOLUME = 0.28;
+const AMBIENT_BUS = 0.07;
+const SFX_BUS = 0.18;
 
 class GoldenPantherAudio {
   private ctx: AudioContext | null = null;
   private master: GainNode | null = null;
   private ambientGain: GainNode | null = null;
   private sfxGain: GainNode | null = null;
+  private sfxFilter: BiquadFilterNode | null = null;
   private spinGain: GainNode | null = null;
 
   private spinOsc: OscillatorNode | null = null;
-  private spinNoiseNode: AudioNode | null = null;
-  private ambientInterval: number | null = null;
+  private padOsc: OscillatorNode[] = [];
   private isAmbientPlaying = false;
 
   private unlocked = false;
   private muted = false;
-  private volume = 0.75;
+  private volume = DEFAULT_VOLUME;
 
   constructor() {
     if (typeof window === "undefined") return;
@@ -28,7 +32,7 @@ class GoldenPantherAudio {
       const m = localStorage.getItem(MUTE_KEY);
       const v = localStorage.getItem(VOL_KEY);
       if (m != null) this.muted = m === "1";
-      if (v != null) this.volume = Math.max(0, Math.min(1, Number(v)));
+      if (v != null) this.volume = Math.max(0, Math.min(0.55, Number(v)));
     } catch {
       /* ignore */
     }
@@ -53,6 +57,7 @@ class GoldenPantherAudio {
     this.applyMasterGain();
     if (muted) {
       this.stopAmbient();
+      this.stopSpinLoop();
     } else if (this.unlocked && !this.isAmbientPlaying) {
       this.startAmbient();
     }
@@ -64,7 +69,7 @@ class GoldenPantherAudio {
   }
 
   setVolume(vol: number) {
-    this.volume = Math.max(0, Math.min(1, vol));
+    this.volume = Math.max(0, Math.min(0.55, vol));
     try {
       localStorage.setItem(VOL_KEY, String(this.volume));
     } catch {
@@ -73,9 +78,8 @@ class GoldenPantherAudio {
     this.applyMasterGain();
   }
 
-  /** No-op until a user gesture; ambient starts in setupUnlock. */
   preload() {
-    /* AudioContext must wait for a gesture — see setupUnlock. */
+    /* AudioContext waits for a gesture — see setupUnlock. */
   }
 
   private ensureCtx(): AudioContext | null {
@@ -89,13 +93,19 @@ class GoldenPantherAudio {
         this.master = this.ctx.createGain();
         this.ambientGain = this.ctx.createGain();
         this.sfxGain = this.ctx.createGain();
+        this.sfxFilter = this.ctx.createBiquadFilter();
+
+        this.sfxFilter.type = "lowpass";
+        this.sfxFilter.frequency.value = 1400;
+        this.sfxFilter.Q.value = 0.55;
 
         this.ambientGain.connect(this.master);
-        this.sfxGain.connect(this.master);
+        this.sfxGain.connect(this.sfxFilter);
+        this.sfxFilter.connect(this.master);
         this.master.connect(this.ctx.destination);
 
-        this.ambientGain.gain.value = 0.35;
-        this.sfxGain.gain.value = 0.85;
+        this.ambientGain.gain.value = AMBIENT_BUS;
+        this.sfxGain.gain.value = SFX_BUS;
         this.applyMasterGain();
       }
       if (this.ctx.state === "suspended") {
@@ -110,7 +120,7 @@ class GoldenPantherAudio {
   private applyMasterGain() {
     if (!this.master || !this.ctx) return;
     const g = this.muted ? 0 : this.volume;
-    this.master.gain.setTargetAtTime(g, this.ctx.currentTime, 0.03);
+    this.master.gain.setTargetAtTime(g, this.ctx.currentTime, 0.04);
   }
 
   private setupUnlock() {
@@ -129,109 +139,109 @@ class GoldenPantherAudio {
     window.addEventListener("keydown", unlock, { capture: true });
   }
 
-  /**
-   * Procedural Jungle Drums & Mystical Aztec Pad Ambient Theme Music.
-   */
+  private tone(
+    dest: AudioNode,
+    {
+      freq,
+      endFreq,
+      type = "sine",
+      peak = 0.08,
+      attack = 0.02,
+      hold = 0.04,
+      release = 0.18,
+      at = 0,
+    }: {
+      freq: number;
+      endFreq?: number;
+      type?: OscillatorType;
+      peak?: number;
+      attack?: number;
+      hold?: number;
+      release?: number;
+      at?: number;
+    },
+  ) {
+    if (!this.ctx) return;
+    const t = this.ctx.currentTime + at;
+    const osc = this.ctx.createOscillator();
+    const gain = this.ctx.createGain();
+    osc.type = type;
+    osc.frequency.setValueAtTime(freq, t);
+    if (endFreq != null) {
+      osc.frequency.exponentialRampToValueAtTime(Math.max(20, endFreq), t + attack + hold + release);
+    }
+    gain.gain.setValueAtTime(0.0001, t);
+    gain.gain.linearRampToValueAtTime(peak, t + attack);
+    gain.gain.setValueAtTime(peak, t + attack + hold);
+    gain.gain.exponentialRampToValueAtTime(0.0001, t + attack + hold + release);
+    osc.connect(gain);
+    gain.connect(dest);
+    osc.start(t);
+    osc.stop(t + attack + hold + release + 0.02);
+  }
+
+  /** Soft A-minor pad — no drums, no ticks. */
   startAmbient() {
     if (this.muted || this.isAmbientPlaying || !this.unlocked) return;
     const ctx = this.ensureCtx();
     if (!ctx || !this.ambientGain) return;
 
+    this.stopAmbient();
     this.isAmbientPlaying = true;
-    let step = 0;
+    const t = ctx.currentTime;
+    const freqs = [110, 164.81, 220];
 
-    // Jungle Drum + Aztec Flute Chords
-    const chordFreqs = [110, 138.59, 164.81, 220]; // A minor jungle vibe
-
-    const playPulse = () => {
-      if (!this.isAmbientPlaying || !this.ctx || this.muted) return;
-      const t = this.ctx.currentTime;
-
-      // Deep jungle bass drum every 4 steps
-      if (step % 4 === 0) {
-        const osc = this.ctx.createOscillator();
-        const gain = this.ctx.createGain();
-        osc.type = "sine";
-        osc.frequency.setValueAtTime(90, t);
-        osc.frequency.exponentialRampToValueAtTime(35, t + 0.25);
-
-        gain.gain.setValueAtTime(0.4, t);
-        gain.gain.exponentialRampToValueAtTime(0.001, t + 0.3);
-
-        osc.connect(gain);
-        gain.connect(this.ambientGain!);
-        osc.start(t);
-        osc.stop(t + 0.35);
-      }
-
-      // Jungle bongo / wood block tick
-      if (step % 2 === 1) {
-        const osc = this.ctx.createOscillator();
-        const gain = this.ctx.createGain();
-        osc.type = "triangle";
-        osc.frequency.setValueAtTime(280 + (step % 3) * 60, t);
-        gain.gain.setValueAtTime(0.12, t);
-        gain.gain.exponentialRampToValueAtTime(0.001, t + 0.12);
-
-        osc.connect(gain);
-        gain.connect(this.ambientGain!);
-        osc.start(t);
-        osc.stop(t + 0.15);
-      }
-
-      // Soft ambient flute chord every 8 steps
-      if (step % 8 === 0) {
-        const root = chordFreqs[(step / 8) % chordFreqs.length];
-        const osc = this.ctx.createOscillator();
-        const gain = this.ctx.createGain();
-        osc.type = "sine";
-        osc.frequency.setValueAtTime(root, t);
-
-        gain.gain.setValueAtTime(0.001, t);
-        gain.gain.linearRampToValueAtTime(0.08, t + 0.4);
-        gain.gain.linearRampToValueAtTime(0.001, t + 1.2);
-
-        osc.connect(gain);
-        gain.connect(this.ambientGain!);
-        osc.start(t);
-        osc.stop(t + 1.3);
-      }
-
-      step = (step + 1) % 32;
-    };
-
-    playPulse();
-    this.ambientInterval = window.setInterval(playPulse, 280);
+    this.padOsc = freqs.map((freq, i) => {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      const filter = ctx.createBiquadFilter();
+      osc.type = "sine";
+      osc.frequency.value = freq;
+      filter.type = "lowpass";
+      filter.frequency.value = 420;
+      gain.gain.setValueAtTime(0.0001, t);
+      gain.gain.linearRampToValueAtTime(0.045 - i * 0.01, t + 1.4);
+      osc.connect(filter);
+      filter.connect(gain);
+      gain.connect(this.ambientGain!);
+      osc.start(t);
+      return osc;
+    });
   }
 
   stopAmbient() {
     this.isAmbientPlaying = false;
-    if (this.ambientInterval != null) {
-      clearInterval(this.ambientInterval);
-      this.ambientInterval = null;
+    const t = this.ctx?.currentTime ?? 0;
+    for (const osc of this.padOsc) {
+      try {
+        osc.stop(t + 0.2);
+        osc.disconnect();
+      } catch {
+        /* ignore */
+      }
     }
+    this.padOsc = [];
   }
 
-  /**
-   * Sound during reel spinning (low jungle rumble + wind whoosh).
-   */
   startSpinLoop() {
     this.stopSpinLoop();
     const ctx = this.ensureCtx();
-    if (!ctx || !this.sfxGain) return;
+    if (!ctx || !this.sfxGain || this.muted) return;
 
     const t = ctx.currentTime;
     const osc = ctx.createOscillator();
     const gain = ctx.createGain();
+    const filter = ctx.createBiquadFilter();
 
-    osc.type = "sawtooth";
-    osc.frequency.setValueAtTime(80, t);
-    osc.frequency.linearRampToValueAtTime(120, t + 0.5);
+    osc.type = "sine";
+    osc.frequency.setValueAtTime(62, t);
+    filter.type = "lowpass";
+    filter.frequency.value = 280;
+    gain.gain.setValueAtTime(0.0001, t);
+    gain.gain.linearRampToValueAtTime(0.055, t + 0.18);
 
-    gain.gain.setValueAtTime(0.001, t);
-    gain.gain.linearRampToValueAtTime(0.12, t + 0.1);
-
-    osc.connect(gain);
+    osc.connect(filter);
+    filter.connect(gain);
     gain.connect(this.sfxGain);
     osc.start(t);
 
@@ -243,161 +253,103 @@ class GoldenPantherAudio {
     if (!this.ctx || !this.spinGain || !this.spinOsc) return;
     const t = this.ctx.currentTime;
     try {
-      this.spinGain.gain.setValueAtTime(this.spinGain.gain.value, t);
-      this.spinGain.gain.exponentialRampToValueAtTime(0.0001, t + 0.08);
-      setTimeout(() => {
+      this.spinGain.gain.setValueAtTime(Math.max(0.0001, this.spinGain.gain.value), t);
+      this.spinGain.gain.exponentialRampToValueAtTime(0.0001, t + 0.1);
+      const osc = this.spinOsc;
+      const gain = this.spinGain;
+      window.setTimeout(() => {
         try {
-          this.spinOsc?.stop();
-          this.spinOsc?.disconnect();
+          osc.stop();
+          osc.disconnect();
+          gain.disconnect();
         } catch {
           /* ignore */
         }
-        this.spinOsc = null;
-        this.spinGain = null;
-      }, 90);
+      }, 120);
     } catch {
-      this.spinOsc = null;
-      this.spinGain = null;
+      /* ignore */
     }
+    this.spinOsc = null;
+    this.spinGain = null;
   }
 
-  /**
-   * Column stop sound (resonant Aztec drum thunk with rising pitch per reel).
-   */
+  playUiClick() {
+    const ctx = this.ensureCtx();
+    if (!ctx || !this.sfxGain || this.muted) return;
+    this.tone(this.sfxGain, { freq: 320, endFreq: 210, peak: 0.05, attack: 0.008, hold: 0.02, release: 0.08 });
+  }
+
   playReelStop(reelIndex: number) {
     const ctx = this.ensureCtx();
     if (!ctx || !this.sfxGain || this.muted) return;
-
-    const t = ctx.currentTime;
-    const freq = 130 + reelIndex * 22; // pitch increases col 0 -> 5
-
-    const osc = ctx.createOscillator();
-    const gain = ctx.createGain();
-
-    osc.type = "sine";
-    osc.frequency.setValueAtTime(freq, t);
-    osc.frequency.exponentialRampToValueAtTime(45, t + 0.15);
-
-    gain.gain.setValueAtTime(0.35, t);
-    gain.gain.exponentialRampToValueAtTime(0.001, t + 0.16);
-
-    osc.connect(gain);
-    gain.connect(this.sfxGain);
-    osc.start(t);
-    osc.stop(t + 0.18);
+    const freq = 96 + reelIndex * 8;
+    this.tone(this.sfxGain, {
+      freq,
+      endFreq: 48,
+      peak: 0.07,
+      attack: 0.01,
+      hold: 0.03,
+      release: 0.12,
+    });
   }
 
-  /**
-   * Cascade tick (crystal pop sound during winning symbol explosion).
-   */
   playCascadeTick() {
     const ctx = this.ensureCtx();
     if (!ctx || !this.sfxGain || this.muted) return;
-
-    const t = ctx.currentTime;
-    const osc = ctx.createOscillator();
-    const gain = ctx.createGain();
-
-    osc.type = "sine";
-    osc.frequency.setValueAtTime(600 + Math.random() * 200, t);
-    osc.frequency.exponentialRampToValueAtTime(200, t + 0.12);
-
-    gain.gain.setValueAtTime(0.25, t);
-    gain.gain.exponentialRampToValueAtTime(0.001, t + 0.12);
-
-    osc.connect(gain);
-    gain.connect(this.sfxGain);
-    osc.start(t);
-    osc.stop(t + 0.14);
+    this.tone(this.sfxGain, {
+      freq: 430,
+      endFreq: 260,
+      peak: 0.045,
+      attack: 0.01,
+      hold: 0.02,
+      release: 0.1,
+    });
   }
 
-  /**
-   * Win payout sound fanfare (small, medium, big win).
-   */
   playWin(amount: number, bet: number) {
     const ctx = this.ensureCtx();
     if (!ctx || !this.sfxGain || this.muted || amount <= 0 || bet <= 0) return;
 
     const mult = amount / bet;
-    const t = ctx.currentTime;
-
-    const notes = mult >= 20 ? [261.63, 329.63, 392.0, 523.25, 659.25] : mult >= 5 ? [261.63, 329.63, 392.0] : [261.63, 329.63];
+    let notes = [196];
+    if (mult >= 20) notes = [196, 246.94, 293.66];
+    else if (mult >= 5) notes = [196, 246.94];
 
     notes.forEach((freq, idx) => {
-      const startTime = t + idx * 0.08;
-      const osc = ctx.createOscillator();
-      const gain = ctx.createGain();
-
-      osc.type = "triangle";
-      osc.frequency.setValueAtTime(freq, startTime);
-
-      gain.gain.setValueAtTime(0.001, startTime);
-      gain.gain.linearRampToValueAtTime(0.3, startTime + 0.04);
-      gain.gain.exponentialRampToValueAtTime(0.001, startTime + 0.35);
-
-      osc.connect(gain);
-      gain.connect(this.sfxGain!);
-      osc.start(startTime);
-      osc.stop(startTime + 0.38);
+      this.tone(this.sfxGain!, {
+        freq,
+        type: "sine",
+        peak: 0.06,
+        attack: 0.03,
+        hold: 0.06,
+        release: 0.28,
+        at: idx * 0.09,
+      });
     });
   }
 
-  /**
-   * Golden Panther Scatter Trigger Stinger (Roar + Majestic Chimes).
-   */
   playScatterTrigger() {
     this.stopSpinLoop();
     const ctx = this.ensureCtx();
     if (!ctx || !this.sfxGain || this.muted) return;
 
-    const t = ctx.currentTime;
-
-    // Panther Growl / Roar frequency bend
-    const roarOsc = ctx.createOscillator();
-    const roarGain = ctx.createGain();
-
-    roarOsc.type = "sawtooth";
-    roarOsc.frequency.setValueAtTime(140, t);
-    roarOsc.frequency.exponentialRampToValueAtTime(60, t + 0.6);
-
-    roarGain.gain.setValueAtTime(0.4, t);
-    roarGain.gain.exponentialRampToValueAtTime(0.001, t + 0.65);
-
-    roarOsc.connect(roarGain);
-    roarGain.connect(this.sfxGain);
-    roarOsc.start(t);
-    roarOsc.stop(t + 0.7);
-
-    // Golden Chime Arpeggio
-    [523.25, 659.25, 783.99, 1046.5].forEach((freq, i) => {
-      const chimeOsc = ctx.createOscillator();
-      const chimeGain = ctx.createGain();
-      const st = t + 0.1 + i * 0.1;
-
-      chimeOsc.type = "sine";
-      chimeOsc.frequency.setValueAtTime(freq, st);
-
-      chimeGain.gain.setValueAtTime(0.001, st);
-      chimeGain.gain.linearRampToValueAtTime(0.35, st + 0.05);
-      chimeGain.gain.exponentialRampToValueAtTime(0.001, st + 0.6);
-
-      chimeOsc.connect(chimeGain);
-      chimeGain.connect(this.sfxGain!);
-      chimeOsc.start(st);
-      chimeOsc.stop(st + 0.65);
+    [261.63, 329.63, 392].forEach((freq, i) => {
+      this.tone(this.sfxGain!, {
+        freq,
+        type: "sine",
+        peak: 0.065,
+        attack: 0.04,
+        hold: 0.08,
+        release: 0.42,
+        at: 0.06 + i * 0.11,
+      });
     });
   }
 
-  /**
-   * Free Spins Intro Fanfare.
-   */
   playFreespinIntro() {
     this.playScatterTrigger();
   }
 
-  /**
-   * End Free Spins restore ambient.
-   */
   endFreespins() {
     if (!this.muted && !this.isAmbientPlaying) {
       this.startAmbient();

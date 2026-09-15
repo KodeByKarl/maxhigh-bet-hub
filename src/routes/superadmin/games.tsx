@@ -71,6 +71,15 @@ import { GALAXY_ACE_GAME_ID } from "@/lib/galaxy-ace-config";
 import { GATE_OF_RA_GAME_ID } from "@/lib/gate-of-ra-config";
 import { MYSTIC_RUNES_GAME_ID } from "@/lib/mystic-runes-config";
 import { WILD_PANTHER_GAME_ID } from "@/lib/wild-panther-config";
+import { RUBY_RAVEN_GAME_ID } from "@/lib/ruby-raven-config";
+import { MIDNIGHT_OWL_GAME_ID } from "@/lib/midnight-owl-config";
+import { HONEY_HIVE_GAME_ID } from "@/lib/honey-hive-config";
+import { SOLAR_SERPENT_GAME_ID } from "@/lib/solar-serpent-config";
+import { FROST_FOX_GAME_ID } from "@/lib/frost-fox-config";
+import { CORAL_COBRA_GAME_ID } from "@/lib/coral-cobra-config";
+import { LOTUS_LYNX_GAME_ID } from "@/lib/lotus-lynx-config";
+import { EMBER_TIGER_GAME_ID } from "@/lib/ember-tiger-config";
+import { JADE_JAGUAR_GAME_ID } from "@/lib/jade-jaguar-config";
 import { RICE_FIELD_RICHES_GAME_ID } from "@/lib/rice-field-riches-config";
 import { CARABAO_CASH_GAME_ID } from "@/lib/carabao-cash-config";
 import { QUEZON_QUEST_GAME_ID } from "@/lib/quezon-quest-config";
@@ -179,6 +188,15 @@ import { GalaxyAceConfigModal } from "@/components/superadmin/games/GalaxyAceCon
 import { GateOfRaConfigModal } from "@/components/superadmin/games/GateOfRaConfigModal";
 import { MysticRunesConfigModal } from "@/components/superadmin/games/MysticRunesConfigModal";
 import { WildPantherConfigModal } from "@/components/superadmin/games/WildPantherConfigModal";
+import { RubyRavenConfigModal } from "@/components/superadmin/games/RubyRavenConfigModal";
+import { MidnightOwlConfigModal } from "@/components/superadmin/games/MidnightOwlConfigModal";
+import { HoneyHiveConfigModal } from "@/components/superadmin/games/HoneyHiveConfigModal";
+import { SolarSerpentConfigModal } from "@/components/superadmin/games/SolarSerpentConfigModal";
+import { FrostFoxConfigModal } from "@/components/superadmin/games/FrostFoxConfigModal";
+import { CoralCobraConfigModal } from "@/components/superadmin/games/CoralCobraConfigModal";
+import { LotusLynxConfigModal } from "@/components/superadmin/games/LotusLynxConfigModal";
+import { EmberTigerConfigModal } from "@/components/superadmin/games/EmberTigerConfigModal";
+import { JadeJaguarConfigModal } from "@/components/superadmin/games/JadeJaguarConfigModal";
 import { RiceFieldRichesConfigModal } from "@/components/superadmin/games/RiceFieldRichesConfigModal";
 import { CarabaoCashConfigModal } from "@/components/superadmin/games/CarabaoCashConfigModal";
 import { QuezonQuestConfigModal } from "@/components/superadmin/games/QuezonQuestConfigModal";
@@ -838,6 +856,24 @@ function SuperGamesPage() {
     "carabao-cash",
     RICE_FIELD_RICHES_GAME_ID,
     "rice-field-riches",
+    JADE_JAGUAR_GAME_ID,
+    "jade-jaguar",
+    EMBER_TIGER_GAME_ID,
+    "ember-tiger",
+    LOTUS_LYNX_GAME_ID,
+    "lotus-lynx",
+    CORAL_COBRA_GAME_ID,
+    "coral-cobra",
+    FROST_FOX_GAME_ID,
+    "frost-fox",
+    SOLAR_SERPENT_GAME_ID,
+    "solar-serpent",
+    HONEY_HIVE_GAME_ID,
+    "honey-hive",
+    MIDNIGHT_OWL_GAME_ID,
+    "midnight-owl",
+    RUBY_RAVEN_GAME_ID,
+    "ruby-raven",
     WILD_PANTHER_GAME_ID,
     "wild-panther",
   ]);
@@ -931,6 +967,24 @@ function SuperGamesPage() {
   const isMysticRunes = selectedId === MYSTIC_RUNES_GAME_ID || selectedId === "mystic-runes";
   const isWildPanther =
     selectedId === WILD_PANTHER_GAME_ID || selectedId === "wild-panther";
+  const isRubyRaven =
+    selectedId === RUBY_RAVEN_GAME_ID || selectedId === "ruby-raven";
+  const isMidnightOwl =
+    selectedId === MIDNIGHT_OWL_GAME_ID || selectedId === "midnight-owl";
+  const isHoneyHive =
+    selectedId === HONEY_HIVE_GAME_ID || selectedId === "honey-hive";
+  const isSolarSerpent =
+    selectedId === SOLAR_SERPENT_GAME_ID || selectedId === "solar-serpent";
+  const isFrostFox =
+    selectedId === FROST_FOX_GAME_ID || selectedId === "frost-fox";
+  const isCoralCobra =
+    selectedId === CORAL_COBRA_GAME_ID || selectedId === "coral-cobra";
+  const isLotusLynx =
+    selectedId === LOTUS_LYNX_GAME_ID || selectedId === "lotus-lynx";
+  const isEmberTiger =
+    selectedId === EMBER_TIGER_GAME_ID || selectedId === "ember-tiger";
+  const isJadeJaguar =
+    selectedId === JADE_JAGUAR_GAME_ID || selectedId === "jade-jaguar";
   const isRiceFieldRiches =
     selectedId === RICE_FIELD_RICHES_GAME_ID || selectedId === "rice-field-riches";
   const isCarabaoCash =
@@ -1958,6 +2012,87 @@ function SuperGamesPage() {
         />
       ) : selected && isWildPanther ? (
         <WildPantherConfigModal
+          game={selected}
+          open
+          onOpenChange={(open) => {
+            if (!open) setSelected(null);
+          }}
+          onPatchLobby={(data) => patch(selected.gameId, data)}
+        />
+      ) : selected && isJadeJaguar ? (
+        <JadeJaguarConfigModal
+          game={selected}
+          open
+          onOpenChange={(open) => {
+            if (!open) setSelected(null);
+          }}
+          onPatchLobby={(data) => patch(selected.gameId, data)}
+        />
+      ) : selected && isEmberTiger ? (
+        <EmberTigerConfigModal
+          game={selected}
+          open
+          onOpenChange={(open) => {
+            if (!open) setSelected(null);
+          }}
+          onPatchLobby={(data) => patch(selected.gameId, data)}
+        />
+      ) : selected && isLotusLynx ? (
+        <LotusLynxConfigModal
+          game={selected}
+          open
+          onOpenChange={(open) => {
+            if (!open) setSelected(null);
+          }}
+          onPatchLobby={(data) => patch(selected.gameId, data)}
+        />
+      ) : selected && isCoralCobra ? (
+        <CoralCobraConfigModal
+          game={selected}
+          open
+          onOpenChange={(open) => {
+            if (!open) setSelected(null);
+          }}
+          onPatchLobby={(data) => patch(selected.gameId, data)}
+        />
+      ) : selected && isFrostFox ? (
+        <FrostFoxConfigModal
+          game={selected}
+          open
+          onOpenChange={(open) => {
+            if (!open) setSelected(null);
+          }}
+          onPatchLobby={(data) => patch(selected.gameId, data)}
+        />
+      ) : selected && isSolarSerpent ? (
+        <SolarSerpentConfigModal
+          game={selected}
+          open
+          onOpenChange={(open) => {
+            if (!open) setSelected(null);
+          }}
+          onPatchLobby={(data) => patch(selected.gameId, data)}
+        />
+      ) : selected && isHoneyHive ? (
+        <HoneyHiveConfigModal
+          game={selected}
+          open
+          onOpenChange={(open) => {
+            if (!open) setSelected(null);
+          }}
+          onPatchLobby={(data) => patch(selected.gameId, data)}
+        />
+      ) : selected && isMidnightOwl ? (
+        <MidnightOwlConfigModal
+          game={selected}
+          open
+          onOpenChange={(open) => {
+            if (!open) setSelected(null);
+          }}
+          onPatchLobby={(data) => patch(selected.gameId, data)}
+        />
+      ) : selected && isRubyRaven ? (
+        <RubyRavenConfigModal
           game={selected}
           open
           onOpenChange={(open) => {
