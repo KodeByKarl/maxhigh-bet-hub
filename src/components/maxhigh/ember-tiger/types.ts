@@ -1,4 +1,4 @@
-/** Shared types for Sweet Bonanza engine + render. */
+/** Ember Tiger — Pug Den–style diamond board (cluster tumble math). */
 
 export type SymKind =
   | "grape"
@@ -72,9 +72,27 @@ export type SpinScript = {
   bombAccumulator: number;
 };
 
-export const COLS = 6;
-export const ROWS = 7;
-export const TOP_COLS = 4;
-export const MAIN_CELLS = COLS * ROWS; // 42
-export const CELLS = TOP_COLS + MAIN_CELLS; // 46 total cells (4 top + 42 main)
-export const MIN_CLUSTER = 8;
+/** 3-4-5-4-3 diamond — same footprint as Pug Den. */
+export const REEL_HEIGHTS = [3, 4, 5, 4, 3] as const;
+export const COLS = REEL_HEIGHTS.length; // 5
+export const ROWS = Math.max(...REEL_HEIGHTS); // 5 (tallest reel)
+export const TOP_COLS = 0;
+export const MAIN_CELLS = REEL_HEIGHTS.reduce((a, h) => a + h, 0); // 19
+export const CELLS = MAIN_CELLS;
+export const MIN_CLUSTER = 6;
+
+/** Flat index offset where column `col` begins (column-major). */
+export function colStart(col: number): number {
+  let s = 0;
+  for (let c = 0; c < col; c++) s += REEL_HEIGHTS[c] ?? 0;
+  return s;
+}
+
+/** Flat board index for diamond cell (col, row). Row 0 = top. */
+export function cellIndex(col: number, row: number): number {
+  return colStart(col) + row;
+}
+
+export function colHeight(col: number): number {
+  return REEL_HEIGHTS[col] ?? 0;
+}

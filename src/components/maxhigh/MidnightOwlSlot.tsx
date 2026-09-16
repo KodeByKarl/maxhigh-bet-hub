@@ -40,7 +40,7 @@ import {
 } from "./midnight-owl/paytable";
 import { setMidnightOwlConfig } from "./midnight-owl/runtimeConfig";
 import type { BoardCell, SpinScript } from "./midnight-owl/types";
-import { CELLS, COLS, MAIN_CELLS, ROWS, TOP_COLS } from "./midnight-owl/types";
+import { CELLS } from "./midnight-owl/types";
 import { WinCelebration } from "./midnight-owl/WinCelebration";
 import { FreeSpinsCongrats } from "./midnight-owl/FreeSpinsCongrats";
 import { FreeSpinsTriggerModal } from "./midnight-owl/FreeSpinsTriggerModal";
@@ -72,8 +72,6 @@ type FsSummary = {
 const EMPTY_SET = new Set<string>();
 const EMPTY_PAY = new Map<string, number>();
 const EMPTY_FALL: Record<string, number> = Object.freeze({}) as Record<string, number>;
-const TOP_INDICES = Object.freeze([0, 1, 2, 3]);
-const MAIN_INDICES = Object.freeze(Array.from({ length: MAIN_CELLS }, (_, i) => i + TOP_COLS));
 /** Always exactly CELLS slots — never shrink the grid. */
 function asSlots(board: BoardCell[]): Slot[] {
   const slots: Slot[] = Array.from({ length: CELLS }, () => null);
@@ -134,7 +132,6 @@ export function MidnightOwlSlot({
   const [fsSessionWin, setFsSessionWin] = useState(0);
   const [dropTotal, setDropTotal] = useState(0);
   const [tumbleStepWin, setTumbleStepWin] = useState(0);
-  const [cashflow, setCashflow] = useState<{ delta: number; label: string } | null>(null);
   const [banner, setBanner] = useState<string | null>(null);
   const [winPopup, setWinPopup] = useState<WinPopup | null>(null);
   const [fsSummary, setFsSummary] = useState<FsSummary | null>(null);
@@ -191,13 +188,69 @@ export function MidnightOwlSlot({
     return id;
   }, []);
 
-  useEffect(() => {
-    if (!cashflow) return;
-    const id = window.setTimeout(() => {
-      if (mountedRef.current) setCashflow(null);
-    }, 2200);
-    return () => window.clearTimeout(id);
-  }, [cashflow]);
+  /** Overlay toast — never inserts into HUD (avoids layout jump). */
+  const notifyCashflow = useCallback(
+    (delta: number, label: "bet" | "win" | "scatter" | "cap") => {
+      const abs = formatMoney(Math.abs(delta));
+      if (label === "bet") {
+        toast.custom(
+          () => (
+            <div
+              className="rounded-2xl border px-4 py-2.5 text-center shadow-[0_10px_28px_rgba(0,0,0,0.45)]"
+              style={{
+                borderColor: "rgba(165,180,252,0.55)",
+                background:
+                  "linear-gradient(135deg, rgba(8,8,20,0.96), rgba(49,46,129,0.96))",
+                color: "#C7D2FE",
+              }}
+            >
+              <div className="text-[10px] font-black uppercase tracking-[0.18em] text-indigo-200/80">
+                Bet
+              </div>
+              <div className="text-sm font-black tabular-nums">−{abs}</div>
+            </div>
+          ),
+          { duration: 1800 },
+        );
+        return;
+      }
+      const isWin = label === "win" || label === "scatter";
+      const title =
+        label === "scatter" ? "Scatter" : label === "cap" ? "Cap" : "Win";
+      const prefix = delta < 0 ? "−" : "+";
+      toast.custom(
+        () => (
+          <div
+            className="rounded-2xl border px-4 py-2.5 text-center shadow-[0_10px_28px_rgba(0,0,0,0.45)]"
+            style={{
+              borderColor: isWin
+                ? "rgba(196,181,253,0.65)"
+                : "rgba(129,140,248,0.55)",
+              background: isWin
+                ? "linear-gradient(135deg, #6366F1 0%, #4C1D95 55%, #080814 100%)"
+                : "linear-gradient(135deg, rgba(8,8,20,0.96), rgba(49,46,129,0.96))",
+              color: isWin ? "#EEF2FF" : "#C7D2FE",
+            }}
+          >
+            <div
+              className="text-[10px] font-black uppercase tracking-[0.18em]"
+              style={{
+                color: isWin ? "rgba(224,231,255,0.85)" : "rgba(199,210,254,0.85)",
+              }}
+            >
+              {title}
+            </div>
+            <div className="text-sm font-black tabular-nums">
+              {prefix}
+              {abs}
+            </div>
+          </div>
+        ),
+        { duration: 1800 },
+      );
+    },
+    [],
+  );
 
   /** Abortable wait — respects turbo + skipRef + playback generation / unmount. */
   const wait = useCallback((ms: number, gen: number) => {
@@ -423,7 +476,7 @@ export function MidnightOwlSlot({
         if (step.tumbleWin > 0) {
           applyRunningToHud(running + step.tumbleWin, step.tumbleWin);
           if (!isFree) {
-            setCashflow({ delta: step.tumbleWin, label: "win" });
+            notifyCashflow(step.tumbleWin, "win");
           }
         }
 
@@ -457,10 +510,7 @@ export function MidnightOwlSlot({
       if (Math.abs(leftover) >= 0.01) {
         applyRunningToHud(script.totalWin, leftover > 0 ? leftover : 0);
         if (!isFree) {
-          setCashflow({
-            delta: leftover,
-            label: leftover > 0 ? "scatter" : "cap",
-          });
+          notifyCashflow(leftover, leftover > 0 ? "scatter" : "cap");
         }
       } else {
         applyRunningToHud(script.totalWin, 0);
@@ -475,7 +525,7 @@ export function MidnightOwlSlot({
       }
       return script;
     },
-    [wait, setBalanceLocal],
+    [wait, setBalanceLocal, notifyCashflow],
   );
 
   const showTotalWin = useCallback(
@@ -602,7 +652,7 @@ export function MidnightOwlSlot({
       try {
         if (!isFree) {
           setBalanceLocal(balance - cost);
-          setCashflow({ delta: -cost, label: "bet" });
+          notifyCashflow(-cost, "bet");
         }
 
         await refreshEngineConfig();
@@ -654,7 +704,7 @@ export function MidnightOwlSlot({
             setFsSessionWin(0);
             fsSessionRef.current = 0;
             if (settled.fsPayout.amount > 0) {
-              setCashflow({ delta: settled.fsPayout.amount, label: "win" });
+              notifyCashflow(settled.fsPayout.amount, "win");
               showTotalWin(settled.fsPayout.amount, {
                 baseEarn: settled.fsPayout.baseEarn,
                 multiplier: settled.fsPayout.multiplier,
@@ -673,7 +723,6 @@ export function MidnightOwlSlot({
       } catch (err) {
         if (!isFree) {
           setBalanceLocal(balance);
-          setCashflow(null);
         }
         if (!(err instanceof DOMException && err.name === "AbortError")) {
           const msg = err instanceof Error ? err.message : "Spin failed — try again";
@@ -720,6 +769,7 @@ export function MidnightOwlSlot({
       bet,
       finishBase,
       inFree,
+      notifyCashflow,
       playScript,
       refreshEngineConfig,
       refreshJackpot,
@@ -934,21 +984,21 @@ export function MidnightOwlSlot({
       {/* Playfield — sit above Android 3-button nav (safe-area is often 0 there) */}
       <div className="relative z-10 flex min-h-0 flex-1 flex-col px-1.5 pt-[max(0.25rem,env(safe-area-inset-top))] pb-[max(3.25rem,env(safe-area-inset-bottom))] sm:items-center sm:justify-center sm:px-3 sm:py-2 sm:pb-2">
         <div className="mx-auto flex h-full min-h-0 w-full max-w-[840px] flex-col">
-          {/* Open temple well — thin gold rim, no heavy metal box */}
-          <div className="relative flex min-h-0 w-full flex-1 flex-col">
+          {/* Board well — hug the grid (no tall empty temple box) */}
+          <div className="relative flex min-h-0 w-full flex-1 items-center justify-center">
             <div
-              className="relative mx-auto flex h-full min-h-0 w-full flex-col overflow-hidden rounded-[1.25rem] sm:rounded-2xl"
+              className="relative flex max-h-full max-w-full flex-col overflow-hidden rounded-[1.25rem] p-1.5 sm:rounded-2xl sm:p-2"
               style={{
-                maxWidth: "min(100%, 800px)",
+                width: "fit-content",
+                height: "fit-content",
                 background:
                   "linear-gradient(180deg, var(--p-well-top) 0%, var(--p-well-bottom) 100%)",
                 boxShadow:
                   "inset 0 0 0 1.5px var(--p-rim), inset 0 0 40px rgba(0,0,0,0.35), 0 12px 36px rgba(0,0,0,0.45)",
               }}
             >
-              {/* Soft top glow */}
               <div
-                className="pointer-events-none absolute inset-x-0 top-0 z-0 h-24"
+                className="pointer-events-none absolute inset-x-0 top-0 z-0 h-16"
                 style={{
                   background:
                     "radial-gradient(ellipse at 50% 0%, var(--p-top-glow) 0%, transparent 70%)",
@@ -956,39 +1006,9 @@ export function MidnightOwlSlot({
                 aria-hidden
               />
 
-              {/* TOP TRACKER — same well, no nested frame */}
-              <div className="relative z-20 flex w-full shrink-0 justify-center pt-1">
-                <div
-                  className="grid w-[66.666%] overflow-visible"
-                  style={{
-                    gridTemplateColumns: "repeat(4, minmax(0, 1fr))",
-                    aspectRatio: "4 / 1",
-                  }}
-                >
-                  <ReelGrid
-                    indices={TOP_INDICES}
-                    cols={4}
-                    visuals={reelVisuals}
-                    isTop
-                    keyPrefix="top-slot"
-                  />
-                </div>
-              </div>
-
-              {/* Thin gold divider under top reel */}
-              <div
-                className="relative z-10 mx-auto my-0.5 h-px w-[92%] shrink-0 opacity-80"
-                style={{
-                  background:
-                    "linear-gradient(90deg, transparent, var(--p-divider), transparent)",
-                }}
-                aria-hidden
-              />
-
-              {/* MAIN 6×7 — open grid, no cell boxes */}
-              <div className="relative z-10 min-h-0 w-full flex-1 px-0.5 pb-1">
+              <div className="relative z-10 flex max-h-full max-w-full items-center justify-center">
                 {showTumbleBadge && (
-                  <div className="pointer-events-none absolute left-1/2 top-0 z-20 -translate-x-1/2 -translate-y-1/2">
+                  <div className="pointer-events-none absolute left-1/2 top-1 z-20 -translate-x-1/2">
                     <div
                       className="rounded-full border-2 px-4 py-1.5 text-center shadow-[0_0_20px_var(--p-spin-shadow)]"
                       style={{
@@ -1013,36 +1033,7 @@ export function MidnightOwlSlot({
                   </div>
                 )}
 
-                {/* Subtle column guides only */}
-                <div
-                  className="pointer-events-none absolute inset-x-0 top-0 bottom-1 z-[1] grid opacity-[0.12]"
-                  style={{ gridTemplateColumns: `repeat(${COLS}, minmax(0, 1fr))` }}
-                  aria-hidden
-                >
-                  {Array.from({ length: COLS }).map((_, c) => (
-                    <div
-                      key={c}
-                      className="border-r last:border-r-0"
-                      style={{ borderColor: "var(--p-accent-soft)" }}
-                    />
-                  ))}
-                </div>
-
-                <div
-                  className="relative z-[2] grid size-full overflow-visible"
-                  style={{
-                    gridTemplateColumns: `repeat(${COLS}, minmax(0, 1fr))`,
-                    gridTemplateRows: `repeat(${ROWS}, minmax(0, 1fr))`,
-                  }}
-                >
-                  <ReelGrid
-                    indices={MAIN_INDICES}
-                    cols={COLS}
-                    visuals={reelVisuals}
-                    indexOffset={TOP_COLS}
-                    keyPrefix="slot"
-                  />
-                </div>
+                <ReelGrid visuals={reelVisuals} />
               </div>
             </div>
           </div>
@@ -1138,25 +1129,6 @@ export function MidnightOwlSlot({
                 </div>
               </div>
             </div>
-            {cashflow && (
-              <p
-                className={cn(
-                  "mb-1.5 text-center text-[11px] font-black tabular-nums tracking-wide",
-                  cashflow.delta < 0 ? "text-rose-300" : "text-emerald-300",
-                )}
-              >
-                {cashflow.delta < 0 ? "−" : "+"}
-                {formatMoney(Math.abs(cashflow.delta))}
-                {cashflow.label === "bet"
-                  ? " bet"
-                  : cashflow.label === "scatter"
-                    ? " scatter"
-                    : cashflow.label === "cap"
-                      ? " cap"
-                      : " win"}
-              </p>
-            )}
-
             <div
               className="flex min-w-0 items-center gap-1 rounded-2xl border bg-black/80 px-1 py-1.5 backdrop-blur-md sm:gap-3 sm:px-3 sm:py-2.5"
               style={{ borderColor: "var(--p-hud-border)" }}

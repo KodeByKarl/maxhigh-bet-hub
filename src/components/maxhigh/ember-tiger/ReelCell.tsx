@@ -8,7 +8,8 @@ import type { BoardCell } from "./types";
 export type ReelPhase = "idle" | "dropping" | "glow" | "popping" | "falling";
 
 export type ReelCellProps = {
-  index: number;
+  col: number;
+  row: number;
   cell: BoardCell | null;
   phase: ReelPhase;
   win: boolean;
@@ -16,8 +17,6 @@ export type ReelCellProps = {
   isSpawn: boolean;
   isFallen: boolean;
   fallDist: number;
-  cols: number;
-  isTop?: boolean;
 };
 
 function cellPhaseRelevant(props: ReelCellProps, phase: ReelPhase): boolean {
@@ -28,9 +27,8 @@ function cellPhaseRelevant(props: ReelCellProps, phase: ReelPhase): boolean {
 }
 
 function reelCellPropsEqual(prev: ReelCellProps, next: ReelCellProps): boolean {
-  if (prev.index !== next.index) return false;
-  if (prev.cols !== next.cols) return false;
-  if (prev.isTop !== next.isTop) return false;
+  if (prev.col !== next.col) return false;
+  if (prev.row !== next.row) return false;
   if (prev.cell?.key !== next.cell?.key) return false;
   if (prev.win !== next.win) return false;
   if (prev.perPay !== next.perPay) return false;
@@ -42,14 +40,11 @@ function reelCellPropsEqual(prev: ReelCellProps, next: ReelCellProps): boolean {
 }
 
 /**
- * Single reel cell — memoized with phase-aware equality so idle cells skip
- * re-renders when only winning cells should animate.
- *
- * Win highlight is CSS-only (no per-cell bloom motion layer) so large clusters
- * stay smooth on Android / mid-range devices.
+ * Circular diamond cell — clip-path keeps fall anims from bleeding into neighbors (iOS).
  */
 export const ReelCell = memo(function ReelCell({
-  index,
+  col,
+  row,
   cell,
   phase,
   win,
@@ -57,11 +52,7 @@ export const ReelCell = memo(function ReelCell({
   isSpawn,
   isFallen,
   fallDist,
-  cols,
-  isTop,
 }: ReelCellProps) {
-  const col = index % cols;
-  const row = Math.floor(index / cols);
   const popping = phase === "popping" && win;
   const isInitialDrop = phase === "dropping" && !!cell;
   const isGravityDrop =
@@ -79,28 +70,31 @@ export const ReelCell = memo(function ReelCell({
   return (
     <div
       className={cn(
-        "relative min-h-0 min-w-0",
-        phase === "dropping" || phase === "falling" || isScatter || isWinLit
-          ? "overflow-visible"
-          : "overflow-hidden",
-        isScatter
-          ? "z-[30]"
-          : isWinLit
-            ? "z-[3]"
-            : isInitialDrop || isGravityDrop
-              ? "z-[1]"
-              : "",
+        "relative aspect-square w-full overflow-hidden rounded-full isolate",
+        "border-[3px] bg-[#1a0c08]/95 shadow-[0_4px_16px_rgba(0,0,0,0.45),inset_0_0_12px_rgba(0,0,0,0.55)]",
+        isScatter || isWinLit ? "z-[3]" : isInitialDrop || isGravityDrop ? "z-[1]" : "z-0",
+        isWinLit && "scale-[1.04]",
       )}
+      style={{
+        // clip-path beats iOS overflow+transform bleed into sibling cells
+        clipPath: "circle(50% at 50% 50%)",
+        WebkitClipPath: "circle(50% at 50% 50%)",
+        borderColor: isWinLit
+          ? "var(--p-accent-soft)"
+          : "color-mix(in srgb, var(--p-accent) 75%, transparent)",
+        boxShadow: isWinLit
+          ? "0 0 18px var(--p-spin-shadow), inset 0 0 12px rgba(0,0,0,0.55)"
+          : undefined,
+      }}
     >
       {cell && (
         <motion.div
           key={cell.key}
-          className="absolute inset-[2%] flex items-center justify-center will-change-transform"
+          className="absolute inset-0 flex items-center justify-center overflow-hidden rounded-full will-change-transform"
           initial={
             isInitialDrop || isGravityDrop
               ? {
-                  x: isTop ? `${(dropRows || cols) * 100}%` : 0,
-                  y: isTop ? 0 : `${-dropRows * 100}%`,
+                  y: `${-dropRows * 100}%`,
                   opacity: isSpawn || isInitialDrop ? 0.55 : 1,
                   scale: isSpawn || isInitialDrop ? 0.92 : 1,
                 }
@@ -115,20 +109,8 @@ export const ReelCell = memo(function ReelCell({
                   y: [0, -6, 10],
                 }
               : phase === "glow" && win
-                ? {
-                    x: 0,
-                    y: 0,
-                    opacity: 1,
-                    // One gentle bump — no repeating scale (avoids N× JS animations)
-                    scale: 1.06,
-                  }
-                : {
-                    x: 0,
-                    y: 0,
-                    opacity: 1,
-                    scale: 1,
-                    rotate: 0,
-                  }
+                ? { y: 0, opacity: 1, scale: 1.05 }
+                : { y: 0, opacity: 1, scale: 1, rotate: 0 }
           }
           transition={
             popping
@@ -139,31 +121,16 @@ export const ReelCell = memo(function ReelCell({
                   times: [0, 0.35, 1],
                 }
               : phase === "glow" && win
-                ? {
-                    duration: 0.22,
-                    ease: "easeOut",
-                  }
+                ? { duration: 0.22, ease: "easeOut" }
                 : isInitialDrop || isGravityDrop
                   ? {
-                      ...(isTop
-                        ? {
-                            x: {
-                              type: "spring",
-                              stiffness: 420,
-                              damping: 26,
-                              mass: 0.85,
-                              delay: colDelay,
-                            },
-                          }
-                        : {
-                            y: {
-                              type: "spring",
-                              stiffness: 420,
-                              damping: 26,
-                              mass: 0.85,
-                              delay: colDelay + rowDelay,
-                            },
-                          }),
+                      y: {
+                        type: "spring",
+                        stiffness: 420,
+                        damping: 26,
+                        mass: 0.85,
+                        delay: colDelay + rowDelay,
+                      },
                       opacity: { duration: 0.18, delay: colDelay },
                       scale: {
                         type: "spring",
@@ -172,10 +139,7 @@ export const ReelCell = memo(function ReelCell({
                         delay: colDelay + 0.1,
                       },
                     }
-                  : {
-                      duration: 0.22,
-                      ease: [0.22, 1, 0.36, 1],
-                    }
+                  : { duration: 0.22, ease: [0.22, 1, 0.36, 1] }
           }
         >
           <PantherIcon
@@ -186,7 +150,7 @@ export const ReelCell = memo(function ReelCell({
           />
           {isWinLit && perPay != null && perPay > 0 && (
             <span
-              className="absolute top-0 left-1/2 z-[2] -translate-x-1/2 whitespace-nowrap rounded-full border border-white/90 px-1.5 py-0.5 text-[10px] font-black tabular-nums shadow-sm"
+              className="absolute top-1 left-1/2 z-[2] -translate-x-1/2 whitespace-nowrap rounded-full border border-white/90 px-1.5 py-0.5 text-[8px] font-black tabular-nums shadow-sm sm:text-[10px]"
               style={{
                 background:
                   "linear-gradient(180deg, var(--p-payout-from) 0%, var(--p-payout-to) 100%)",

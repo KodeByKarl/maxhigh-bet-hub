@@ -40,7 +40,7 @@ import {
 } from "./coral-cobra/paytable";
 import { setCoralCobraConfig } from "./coral-cobra/runtimeConfig";
 import type { BoardCell, SpinScript } from "./coral-cobra/types";
-import { CELLS, COLS, MAIN_CELLS, ROWS, TOP_COLS } from "./coral-cobra/types";
+import { CELLS, COLS, MAIN_CELLS, ROWS } from "./coral-cobra/types";
 import { WinCelebration } from "./coral-cobra/WinCelebration";
 import { FreeSpinsCongrats } from "./coral-cobra/FreeSpinsCongrats";
 import { FreeSpinsTriggerModal } from "./coral-cobra/FreeSpinsTriggerModal";
@@ -72,8 +72,7 @@ type FsSummary = {
 const EMPTY_SET = new Set<string>();
 const EMPTY_PAY = new Map<string, number>();
 const EMPTY_FALL: Record<string, number> = Object.freeze({}) as Record<string, number>;
-const TOP_INDICES = Object.freeze([0, 1, 2, 3]);
-const MAIN_INDICES = Object.freeze(Array.from({ length: MAIN_CELLS }, (_, i) => i + TOP_COLS));
+const MAIN_INDICES = Object.freeze(Array.from({ length: MAIN_CELLS }, (_, i) => i));
 /** Always exactly CELLS slots — never shrink the grid. */
 function asSlots(board: BoardCell[]): Slot[] {
   const slots: Slot[] = Array.from({ length: CELLS }, () => null);
@@ -134,7 +133,6 @@ export function CoralCobraSlot({
   const [fsSessionWin, setFsSessionWin] = useState(0);
   const [dropTotal, setDropTotal] = useState(0);
   const [tumbleStepWin, setTumbleStepWin] = useState(0);
-  const [cashflow, setCashflow] = useState<{ delta: number; label: string } | null>(null);
   const [banner, setBanner] = useState<string | null>(null);
   const [winPopup, setWinPopup] = useState<WinPopup | null>(null);
   const [fsSummary, setFsSummary] = useState<FsSummary | null>(null);
@@ -191,13 +189,67 @@ export function CoralCobraSlot({
     return id;
   }, []);
 
-  useEffect(() => {
-    if (!cashflow) return;
-    const id = window.setTimeout(() => {
-      if (mountedRef.current) setCashflow(null);
-    }, 2200);
-    return () => window.clearTimeout(id);
-  }, [cashflow]);
+  /** Overlay toast — never inserts into HUD (avoids layout jump). */
+  const notifyCashflow = useCallback(
+    (delta: number, label: "bet" | "win" | "scatter" | "cap") => {
+      const abs = formatMoney(Math.abs(delta));
+      if (label === "bet") {
+        toast.custom(
+          () => (
+            <div
+              className="rounded-2xl border px-4 py-2.5 text-center shadow-[0_10px_28px_rgba(0,0,0,0.45)]"
+              style={{
+                borderColor: "rgba(251,113,133,0.55)",
+                background:
+                  "linear-gradient(135deg, rgba(76,5,25,0.96), rgba(4,47,46,0.96))",
+                color: "#FDA4AF",
+              }}
+            >
+              <div className="text-[10px] font-black uppercase tracking-[0.18em] text-rose-200/80">
+                Bet
+              </div>
+              <div className="text-sm font-black tabular-nums">−{abs}</div>
+            </div>
+          ),
+          { duration: 1800 },
+        );
+        return;
+      }
+      const isWin = label === "win" || label === "scatter";
+      const title =
+        label === "scatter" ? "Scatter" : label === "cap" ? "Cap" : "Win";
+      const prefix = delta < 0 ? "−" : "+";
+      toast.custom(
+        () => (
+          <div
+            className="rounded-2xl border px-4 py-2.5 text-center shadow-[0_10px_28px_rgba(0,0,0,0.45)]"
+            style={{
+              borderColor: isWin
+                ? "rgba(94,234,212,0.65)"
+                : "rgba(251,113,133,0.55)",
+              background: isWin
+                ? "linear-gradient(135deg, #0D9488 0%, #134E4A 55%, #4C0519 100%)"
+                : "linear-gradient(135deg, rgba(76,5,25,0.96), rgba(4,47,46,0.96))",
+              color: isWin ? "#99F6E4" : "#FDA4AF",
+            }}
+          >
+            <div
+              className="text-[10px] font-black uppercase tracking-[0.18em]"
+              style={{ color: isWin ? "rgba(153,246,228,0.85)" : "rgba(254,205,211,0.85)" }}
+            >
+              {title}
+            </div>
+            <div className="text-sm font-black tabular-nums">
+              {prefix}
+              {abs}
+            </div>
+          </div>
+        ),
+        { duration: 1800 },
+      );
+    },
+    [],
+  );
 
   /** Abortable wait — respects turbo + skipRef + playback generation / unmount. */
   const wait = useCallback((ms: number, gen: number) => {
@@ -423,7 +475,7 @@ export function CoralCobraSlot({
         if (step.tumbleWin > 0) {
           applyRunningToHud(running + step.tumbleWin, step.tumbleWin);
           if (!isFree) {
-            setCashflow({ delta: step.tumbleWin, label: "win" });
+            notifyCashflow(step.tumbleWin, "win");
           }
         }
 
@@ -457,10 +509,7 @@ export function CoralCobraSlot({
       if (Math.abs(leftover) >= 0.01) {
         applyRunningToHud(script.totalWin, leftover > 0 ? leftover : 0);
         if (!isFree) {
-          setCashflow({
-            delta: leftover,
-            label: leftover > 0 ? "scatter" : "cap",
-          });
+          notifyCashflow(leftover, leftover > 0 ? "scatter" : "cap");
         }
       } else {
         applyRunningToHud(script.totalWin, 0);
@@ -475,7 +524,7 @@ export function CoralCobraSlot({
       }
       return script;
     },
-    [wait, setBalanceLocal],
+    [wait, setBalanceLocal, notifyCashflow],
   );
 
   const showTotalWin = useCallback(
@@ -602,7 +651,7 @@ export function CoralCobraSlot({
       try {
         if (!isFree) {
           setBalanceLocal(balance - cost);
-          setCashflow({ delta: -cost, label: "bet" });
+          notifyCashflow(-cost, "bet");
         }
 
         await refreshEngineConfig();
@@ -654,7 +703,7 @@ export function CoralCobraSlot({
             setFsSessionWin(0);
             fsSessionRef.current = 0;
             if (settled.fsPayout.amount > 0) {
-              setCashflow({ delta: settled.fsPayout.amount, label: "win" });
+              notifyCashflow(settled.fsPayout.amount, "win");
               showTotalWin(settled.fsPayout.amount, {
                 baseEarn: settled.fsPayout.baseEarn,
                 multiplier: settled.fsPayout.multiplier,
@@ -673,7 +722,6 @@ export function CoralCobraSlot({
       } catch (err) {
         if (!isFree) {
           setBalanceLocal(balance);
-          setCashflow(null);
         }
         if (!(err instanceof DOMException && err.name === "AbortError")) {
           const msg = err instanceof Error ? err.message : "Spin failed — try again";
@@ -720,6 +768,7 @@ export function CoralCobraSlot({
       bet,
       finishBase,
       inFree,
+      notifyCashflow,
       playScript,
       refreshEngineConfig,
       refreshJackpot,
@@ -956,39 +1005,10 @@ export function CoralCobraSlot({
                 aria-hidden
               />
 
-              {/* TOP TRACKER — same well, no nested frame */}
-              <div className="relative z-20 flex w-full shrink-0 justify-center pt-1">
-                <div
-                  className="grid w-[66.666%] overflow-visible"
-                  style={{
-                    gridTemplateColumns: "repeat(4, minmax(0, 1fr))",
-                    aspectRatio: "4 / 1",
-                  }}
-                >
-                  <ReelGrid
-                    indices={TOP_INDICES}
-                    cols={4}
-                    visuals={reelVisuals}
-                    isTop
-                    keyPrefix="top-slot"
-                  />
-                </div>
-              </div>
-
-              {/* Thin gold divider under top reel */}
-              <div
-                className="relative z-10 mx-auto my-0.5 h-px w-[92%] shrink-0 opacity-80"
-                style={{
-                  background:
-                    "linear-gradient(90deg, transparent, var(--p-divider), transparent)",
-                }}
-                aria-hidden
-              />
-
-              {/* MAIN 6×7 — open grid, no cell boxes */}
-              <div className="relative z-10 min-h-0 w-full flex-1 px-0.5 pb-1">
+              {/* MAIN 5×5 — square card tiles (not Golden Panther open reels) */}
+              <div className="relative z-10 flex min-h-0 w-full flex-1 items-center justify-center p-1.5 sm:p-2.5">
                 {showTumbleBadge && (
-                  <div className="pointer-events-none absolute left-1/2 top-0 z-20 -translate-x-1/2 -translate-y-1/2">
+                  <div className="pointer-events-none absolute left-1/2 top-2 z-20 -translate-x-1/2">
                     <div
                       className="rounded-full border-2 px-4 py-1.5 text-center shadow-[0_0_20px_var(--p-spin-shadow)]"
                       style={{
@@ -1013,24 +1033,11 @@ export function CoralCobraSlot({
                   </div>
                 )}
 
-                {/* Subtle column guides only */}
                 <div
-                  className="pointer-events-none absolute inset-x-0 top-0 bottom-1 z-[1] grid opacity-[0.12]"
-                  style={{ gridTemplateColumns: `repeat(${COLS}, minmax(0, 1fr))` }}
-                  aria-hidden
-                >
-                  {Array.from({ length: COLS }).map((_, c) => (
-                    <div
-                      key={c}
-                      className="border-r last:border-r-0"
-                      style={{ borderColor: "var(--p-accent-soft)" }}
-                    />
-                  ))}
-                </div>
-
-                <div
-                  className="relative z-[2] grid size-full overflow-visible"
+                  className="relative z-[2] grid size-full max-h-full max-w-full gap-1 sm:gap-1.5"
                   style={{
+                    aspectRatio: "1 / 1",
+                    width: "min(100%, calc((100dvh - 14rem) * 1))",
                     gridTemplateColumns: `repeat(${COLS}, minmax(0, 1fr))`,
                     gridTemplateRows: `repeat(${ROWS}, minmax(0, 1fr))`,
                   }}
@@ -1039,7 +1046,6 @@ export function CoralCobraSlot({
                     indices={MAIN_INDICES}
                     cols={COLS}
                     visuals={reelVisuals}
-                    indexOffset={TOP_COLS}
                     keyPrefix="slot"
                   />
                 </div>
@@ -1138,24 +1144,6 @@ export function CoralCobraSlot({
                 </div>
               </div>
             </div>
-            {cashflow && (
-              <p
-                className={cn(
-                  "mb-1.5 text-center text-[11px] font-black tabular-nums tracking-wide",
-                  cashflow.delta < 0 ? "text-rose-300" : "text-emerald-300",
-                )}
-              >
-                {cashflow.delta < 0 ? "−" : "+"}
-                {formatMoney(Math.abs(cashflow.delta))}
-                {cashflow.label === "bet"
-                  ? " bet"
-                  : cashflow.label === "scatter"
-                    ? " scatter"
-                    : cashflow.label === "cap"
-                      ? " cap"
-                      : " win"}
-              </p>
-            )}
 
             <div
               className="flex min-w-0 items-center gap-1 rounded-2xl border bg-black/80 px-1 py-1.5 backdrop-blur-md sm:gap-3 sm:px-3 sm:py-2.5"

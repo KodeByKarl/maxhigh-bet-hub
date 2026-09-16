@@ -10,22 +10,17 @@ const TIER_LABEL: Record<WinTier, string> = {
 };
 
 const LETTER_COLORS = [
-  "#ff4dc8",
-  "#ffd60a",
-  "#c44dff",
-  "#3dff8a",
-  "#3de8ff",
-  "#ff6b9d",
-  "#ffe566",
-  "#b388ff",
-  "#69f0ae",
-  "#80d8ff",
-  "#ff8a65",
-  "#f48fb1",
+  "#FAE8FF",
+  "#F5D0FE",
+  "#F0ABFC",
+  "#E879F9",
+  "#D946EF",
+  "#FCE7F3",
+  "#C026D3",
+  "#FBCFE8",
 ];
 
-/** Pick celebration tier from win / bet ratio. */
-export function winTierFor(amount: number, bet: number): WinTier {
+function winTierFor(amount: number, bet: number): WinTier {
   const x = bet > 0 ? amount / bet : 0;
   if (x >= 50) return "sensational";
   if (x >= 20) return "mega";
@@ -41,7 +36,7 @@ export type WinCelebrationProps = {
   onDismiss?: () => void;
 };
 
-/** Win popup — always shows Total Multiplier + earn × mult = total. */
+/** Lotus Lynx win overlay — magenta / orchid petal. */
 export function WinCelebration({
   amount,
   bet,
@@ -54,16 +49,14 @@ export function WinCelebration({
   const letters = label.split("");
 
   const earn = baseEarn != null ? baseEarn : amount;
-  // Collected bombs can be 0 during FS; payout math uses max(1, mult)
-  // Invalid / orphan mult with ₱0 earn must not display as a real multiplier.
   const bankedMult = earn > 0 && multiplier != null ? multiplier : 1;
   const appliedMult = Math.max(1, bankedMult);
-  // Peak bomb ≠ always earn×mult (bombs apply per tumble). Only show formula when it matches.
   const formulaMatches =
     earn > 0 && (appliedMult <= 1 || Math.abs(earn * appliedMult - amount) < 0.02);
   const shownEarn = formulaMatches && appliedMult > 1 ? earn : amount;
   const shownMult = formulaMatches && earn > 0 ? appliedMult : 1;
   const showMultPanel = amount > 0 && formulaMatches && appliedMult > 1;
+  const sparkCount = tier === "sensational" ? 14 : tier === "mega" ? 11 : 8;
 
   return (
     <motion.button
@@ -73,18 +66,17 @@ export function WinCelebration({
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="absolute inset-0 z-40 flex cursor-pointer items-center justify-center overflow-y-auto bg-black/50 p-4 backdrop-blur-[3px]"
+      className="absolute inset-0 z-40 flex cursor-pointer items-center justify-center overflow-y-auto bg-black/55 p-4 backdrop-blur-[3px]"
     >
-      {/* Golden Particle Rain / Burst Effect */}
       <div className="pointer-events-none absolute inset-0 overflow-hidden">
-        {Array.from({ length: tier === "sensational" ? 12 : tier === "mega" ? 10 : 8 }).map((_, i) => (
+        {Array.from({ length: sparkCount }).map((_, i) => (
           <motion.div
-            key={`gold-particle-${i}`}
+            key={`lotus-spark-${i}`}
             initial={{
               x: `${(i * 17) % 100}vw`,
               y: "-10vh",
               opacity: 0,
-              scale: 0.5 + (i % 3) * 0.3,
+              scale: 0.45 + (i % 3) * 0.25,
             }}
             animate={{
               y: "110vh",
@@ -97,9 +89,16 @@ export function WinCelebration({
               delay: (i * 0.12) % 1.5,
               ease: "linear",
             }}
-            className="absolute text-yellow-300 text-lg sm:text-2xl drop-shadow-[0_0_12px_rgba(250,204,21,0.9)]"
+            className="absolute text-lg sm:text-2xl"
+            style={{
+              color: i % 2 === 0 ? "#E879F9" : "#F5D0FE",
+              filter:
+                i % 2 === 0
+                  ? "drop-shadow(0 0 10px rgba(217,70,239,0.9))"
+                  : "drop-shadow(0 0 10px rgba(245,208,254,0.85))",
+            }}
           >
-            {i % 3 === 0 ? "🪙" : i % 3 === 1 ? "✨" : "💎"}
+            {i % 3 === 0 ? "✦" : i % 3 === 1 ? "❀" : "✧"}
           </motion.div>
         ))}
       </div>
@@ -111,31 +110,30 @@ export function WinCelebration({
         transition={{ type: "spring", stiffness: 300, damping: 18 }}
         className="relative flex w-full max-w-[440px] flex-col items-center py-4"
       >
-        <div className="mb-1 flex items-end justify-center gap-4">
-          {[0.7, 1, 0.7].map((s, i) => (
+        <div className="mb-2 flex items-end justify-center gap-3">
+          {[0.75, 1, 0.75].map((s, i) => (
             <motion.span
               key={i}
-              initial={{ scale: 0, rotate: -30 }}
+              initial={{ scale: 0, rotate: -24 }}
               animate={{
                 scale: s,
-                rotate: i === 1 ? 0 : i === 0 ? -16 : 16,
+                rotate: i === 1 ? 0 : i === 0 ? -14 : 14,
               }}
-              transition={{ delay: 0.1 + i * 0.05, type: "spring", stiffness: 420 }}
+              transition={{ delay: 0.08 + i * 0.05, type: "spring", stiffness: 420 }}
               style={{
-                fontSize: i === 1 ? "2.4rem" : "1.45rem",
-                color: "#fde047",
-                filter: "drop-shadow(0 0 10px rgba(250,204,21,0.95))",
-                textShadow: "0 2px 0 #a16207",
+                fontSize: i === 1 ? "2.15rem" : "1.35rem",
+                color: i === 1 ? "#F5D0FE" : "#E879F9",
+                filter: "drop-shadow(0 0 12px rgba(217,70,239,0.9))",
               }}
             >
-              ★
+              ❀
             </motion.span>
           ))}
         </div>
 
         <div
-          className="relative z-[2] mb-3 flex flex-wrap justify-center gap-x-[1px]"
-          style={{ transform: "rotate(-2deg)" }}
+          className="relative z-[2] mb-3 flex flex-wrap justify-center gap-x-[2px]"
+          style={{ transform: "rotate(-1.5deg)" }}
         >
           {letters.map((ch, i) =>
             ch === " " ? (
@@ -155,10 +153,10 @@ export function WinCelebration({
                 style={{
                   fontSize: "clamp(1.85rem, 8.5vw, 3.1rem)",
                   color: LETTER_COLORS[i % LETTER_COLORS.length],
-                  WebkitTextStroke: "0.12em #dc2626",
+                  WebkitTextStroke: "0.1em #701A75",
                   paintOrder: "stroke fill",
                   textShadow:
-                    "0 0.08em 0 #9f1239, 0 0.18em 0.2em rgba(0,0,0,0.4)",
+                    "0 0.08em 0 #86198F, 0 0.16em 0.22em rgba(0,0,0,0.45)",
                 }}
               >
                 {ch}
@@ -167,7 +165,6 @@ export function WinCelebration({
           )}
         </div>
 
-        {/* Total Multiplier — only when there was a real earn */}
         {showMultPanel ? (
           <motion.div
             initial={{ scale: 0.6, opacity: 0 }}
@@ -176,82 +173,75 @@ export function WinCelebration({
             className="relative z-[3] mb-3 w-full max-w-[260px] rounded-[1.25rem] p-[5px]"
             style={{
               background:
-                "linear-gradient(135deg, #FDE68A 0%, #D97706 50%, #064E3B 100%)",
+                "linear-gradient(135deg, #FAE8FF 0%, #D946EF 45%, #701A75 100%)",
               boxShadow: "0 12px 32px rgba(0,0,0,0.65)",
             }}
           >
             <div
-              className="rounded-[1rem] border-2 border-amber-300/80 px-4 py-3 text-center"
+              className="rounded-[1rem] border-2 px-4 py-3 text-center"
               style={{
-                background:
-                  "linear-gradient(180deg, #064E3B 0%, #022014 100%)",
+                borderColor: "rgba(240,171,252,0.8)",
+                background: "linear-gradient(180deg, #A21CAF 0%, #701A75 100%)",
               }}
             >
               <div
-                className="text-[12px] font-black uppercase tracking-wide text-white"
-                style={{
-                  textShadow:
-                    "0 1px 0 #0c4a6e, 0 -1px 0 #0c4a6e, 1px 0 0 #0c4a6e, -1px 0 0 #0c4a6e",
-                }}
+                className="text-[12px] font-black uppercase tracking-wide"
+                style={{ color: "#FAE8FF" }}
               >
                 Total Multiplier
               </div>
               <div
-                className="mt-1 font-black tabular-nums leading-none text-yellow-300"
+                className="mt-1 font-black tabular-nums leading-none"
                 style={{
                   fontSize: "clamp(2.6rem, 12vw, 3.6rem)",
-                  textShadow: "0 3px 0 #78350f, 0 6px 10px rgba(0,0,0,0.45)",
-                  WebkitTextStroke: "1px #92400e",
+                  color: "#F5D0FE",
+                  textShadow: "0 3px 0 #701A75, 0 6px 10px rgba(0,0,0,0.45)",
+                  WebkitTextStroke: "1px #86198F",
                 }}
               >
                 {bankedMult > 0 ? `${bankedMult}x` : "1x"}
               </div>
-              {!formulaMatches && bankedMult > 1 ? (
-                <div className="mt-1 text-[9px] font-bold uppercase tracking-wide text-white/85">
-                  Peak bomb · applied per tumble
-                </div>
-              ) : null}
             </div>
           </motion.div>
         ) : null}
 
-        {/* Total Earn × Multiplier = Total */}
         {showMultPanel && shownMult > 1 ? (
           <motion.div
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.14 }}
-            className="relative z-[2] mb-3 w-full max-w-[380px] rounded-2xl border-[3px] border-white/50 px-3 py-3"
+            className="relative z-[2] mb-3 w-full max-w-[380px] rounded-2xl border-[3px] px-3 py-3"
             style={{
+              borderColor: "rgba(240,171,252,0.55)",
               background:
-                "linear-gradient(180deg, rgba(88,28,135,0.95), rgba(49,16,89,0.96))",
+                "linear-gradient(180deg, rgba(112,26,117,0.96), rgba(12,4,16,0.98))",
               boxShadow: "0 10px 28px rgba(0,0,0,0.4)",
             }}
           >
             <div className="grid grid-cols-[1fr_auto_1fr_auto_1fr] items-end gap-1 text-white">
               <div className="min-w-0 text-center">
-                <div className="text-[8px] font-black uppercase tracking-wider text-pink-200">
+                <div className="text-[8px] font-black uppercase tracking-wider text-fuchsia-200/90">
                   Total Earn
                 </div>
-                <div className="truncate font-black tabular-nums text-base text-yellow-300 sm:text-lg">
+                <div className="truncate font-black tabular-nums text-base text-[#F5D0FE] sm:text-lg">
                   ₱{shownEarn.toFixed(2)}
                 </div>
               </div>
-              <div className="pb-0.5 text-xl font-black text-white/70">×</div>
+              <div className="pb-0.5 text-xl font-black text-fuchsia-100/60">×</div>
               <div className="min-w-0 text-center">
-                <div className="text-[8px] font-black uppercase tracking-wider text-sky-200">
+                <div className="text-[8px] font-black uppercase tracking-wider text-pink-200/90">
                   Multiplier
                 </div>
-                <div className="font-black tabular-nums text-base text-yellow-300 sm:text-lg">
+                <div className="font-black tabular-nums text-base text-[#F0ABFC] sm:text-lg">
                   {shownMult}x
                 </div>
               </div>
-              <div className="pb-0.5 text-xl font-black text-white/70">=</div>
+              <div className="pb-0.5 text-xl font-black text-fuchsia-100/60">=</div>
               <div className="min-w-0 text-center">
-                <div className="text-[8px] font-black uppercase tracking-wider text-emerald-200">
+                <div className="text-[8px] font-black uppercase tracking-wider text-fuchsia-100/90">
                   Total
                 </div>
-                <div className="truncate font-black tabular-nums text-base text-yellow-300 sm:text-lg">
+                <div className="truncate font-black tabular-nums text-base text-[#F5D0FE] sm:text-lg">
                   ₱{amount.toFixed(2)}
                 </div>
               </div>
@@ -259,19 +249,21 @@ export function WinCelebration({
           </motion.div>
         ) : null}
 
-        {/* Final total panther capsule */}
         <div className="relative z-[1] w-full px-1">
           <div
             className="relative mx-auto w-full rounded-full px-6 py-5 sm:px-10 sm:py-6"
             style={{
               background:
-                "linear-gradient(180deg, #fda4af 0%, #fb7185 28%, #f472b6 55%, #ec4899 78%, #db2777 100%)",
+                "linear-gradient(180deg, #FAE8FF 0%, #F0ABFC 22%, #C026D3 55%, #701A75 100%)",
               boxShadow:
-                "0 10px 32px rgba(219,39,119,0.55), inset 0 3px 10px rgba(255,255,255,0.55), inset 0 -4px 10px rgba(157,23,77,0.35)",
-              border: "4px solid rgba(255,255,255,0.75)",
+                "0 10px 32px rgba(192,38,211,0.55), inset 0 3px 10px rgba(255,255,255,0.45), inset 0 -4px 10px rgba(112,26,117,0.35)",
+              border: "4px solid rgba(250,232,255,0.85)",
             }}
           >
-            <div className="relative text-center text-[10px] font-black uppercase tracking-[0.18em] text-white/90">
+            <div
+              className="relative text-center text-[10px] font-black uppercase tracking-[0.18em]"
+              style={{ color: "rgba(250,232,255,0.95)" }}
+            >
               Total Win
             </div>
             <motion.div
@@ -279,12 +271,12 @@ export function WinCelebration({
               initial={{ scale: 0.35, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               transition={{ delay: 0.18, type: "spring", stiffness: 260, damping: 12 }}
-              className="relative text-center font-black tabular-nums leading-none text-white"
+              className="relative text-center font-black tabular-nums leading-none"
               style={{
                 fontSize: "clamp(2.25rem, 11vw, 3.75rem)",
-                textShadow:
-                  "0 3px 0 #7e22ce, 0 7px 16px rgba(88,28,135,0.5)",
-                WebkitTextStroke: "1.5px rgba(126,34,206,0.4)",
+                color: "#FAE8FF",
+                textShadow: "0 3px 0 #701A75, 0 7px 16px rgba(12,4,16,0.55)",
+                WebkitTextStroke: "1.5px rgba(112,26,117,0.45)",
               }}
             >
               ₱{amount.toFixed(2)}
@@ -292,7 +284,10 @@ export function WinCelebration({
           </div>
         </div>
 
-        <div className="mt-4 text-[10px] font-bold uppercase tracking-[0.22em] text-white/75">
+        <div
+          className="mt-4 text-[10px] font-bold uppercase tracking-[0.22em]"
+          style={{ color: "rgba(250,232,255,0.85)" }}
+        >
           Tap to continue
         </div>
       </motion.div>

@@ -9,19 +9,16 @@ const TIER_LABEL: Record<WinTier, string> = {
   sensational: "SENSATIONAL!",
 };
 
+/** Indigo / violet night accents — not rainbow. */
 const LETTER_COLORS = [
-  "#ff4dc8",
-  "#ffd60a",
-  "#c44dff",
-  "#3dff8a",
-  "#3de8ff",
-  "#ff6b9d",
-  "#ffe566",
-  "#b388ff",
-  "#69f0ae",
-  "#80d8ff",
-  "#ff8a65",
-  "#f48fb1",
+  "#EEF2FF",
+  "#E0E7FF",
+  "#C7D2FE",
+  "#A5B4FC",
+  "#818CF8",
+  "#DDD6FE",
+  "#C4B5FD",
+  "#A78BFA",
 ];
 
 /** Pick celebration tier from win / bet ratio. */
@@ -155,10 +152,10 @@ export function WinCelebration({
                 style={{
                   fontSize: "clamp(1.85rem, 8.5vw, 3.1rem)",
                   color: LETTER_COLORS[i % LETTER_COLORS.length],
-                  WebkitTextStroke: "0.12em #dc2626",
+                  WebkitTextStroke: "0.1em #312E81",
                   paintOrder: "stroke fill",
                   textShadow:
-                    "0 0.08em 0 #9f1239, 0 0.18em 0.2em rgba(0,0,0,0.4)",
+                    "0 0.08em 0 #4338CA, 0 0.16em 0.22em rgba(0,0,0,0.45)",
                 }}
               >
                 {ch}

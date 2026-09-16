@@ -9,35 +9,37 @@ type PantherIconProps = {
   mult?: number;
   className?: string;
   showBombBadge?: boolean;
-  /** Light win tint — keep cheap (no multi-layer drop-shadow stacks). */
   winLit?: boolean;
+  fit?: "cover" | "contain";
 };
 
-/**
- * Symbol glyph — memoized; `decoding="async"` avoids main-thread decode stalls
- * when many cells mount during a cascade.
- */
+/** Full glyph visible — contain only, never cover-crop (gem cells clip edges). */
 export const PantherIcon = memo(function PantherIcon({
   kind,
   mult,
   className,
   showBombBadge = true,
   winLit = false,
+  fit = "contain",
 }: PantherIconProps) {
   const isScatter = kind === "lollipop";
   const isBomb = kind === "bomb";
-  const src = ICON_SRC[kind] || "/images/symbols/gp/10.png?v=1";
+  const src = ICON_SRC[kind] || "/images/symbols/ruby-raven/10-cell.png?v=1";
 
   return (
-    <div className={cn("relative grid place-items-center bg-transparent overflow-visible size-full select-none", className)}>
-      {/* CSS-only win ring — GPU-friendly, no animated bloom / box-shadow layers */}
+    <div
+      className={cn(
+        "relative grid size-full place-items-center overflow-hidden bg-transparent select-none",
+        className,
+      )}
+    >
       {winLit && (
         <div
           aria-hidden
-          className="pointer-events-none absolute inset-[8%] z-0 rounded-full ring-2"
+          className="pointer-events-none absolute inset-[10%] z-0 rounded-xl"
           style={{
-            background: "var(--p-win-ring)",
-            boxShadow: "0 0 0 2px color-mix(in srgb, var(--p-accent-soft) 80%, transparent)",
+            background:
+              "radial-gradient(circle at 50% 50%, var(--p-win-ring) 0%, transparent 70%)",
           }}
         />
       )}
@@ -46,30 +48,27 @@ export const PantherIcon = memo(function PantherIcon({
         alt={kind}
         decoding="async"
         loading="eager"
+        draggable={false}
         className={cn(
-          "relative z-[1] size-full object-contain pointer-events-none",
-          isScatter && !winLit && "scale-[1.06]",
-          isBomb && !winLit && "scale-[1.06]",
-          !winLit &&
-            (kind === "heart" || kind === "purple" || kind === "green") &&
-            "scale-[1.04]",
-          winLit && "scale-[1.05] brightness-125 saturate-125",
+          "pointer-events-none relative z-[1] object-center",
+          fit === "cover"
+            ? "size-full object-cover"
+            : "h-full w-full object-contain p-[4%]",
+          winLit && "brightness-125 saturate-125",
         )}
         style={
           winLit
-            ? { filter: "drop-shadow(0 0 8px var(--p-accent))" }
+            ? { filter: "drop-shadow(0 0 6px var(--p-accent))" }
             : isScatter
-              ? { filter: "drop-shadow(0 0 10px var(--p-accent))" }
+              ? { filter: "drop-shadow(0 0 8px var(--p-accent))" }
               : isBomb
-                ? { filter: "drop-shadow(0 0 10px var(--p-bomb-from))" }
-                : kind === "heart" || kind === "purple" || kind === "green"
-                  ? { filter: "drop-shadow(0 0 8px var(--p-accent))" }
-                  : undefined
+                ? { filter: "drop-shadow(0 0 8px var(--p-bomb-from))" }
+                : { filter: "drop-shadow(0 2px 6px rgba(0,0,0,0.45))" }
         }
       />
       {isScatter && (
         <span
-          className="absolute -bottom-2 left-1/2 z-[30] -translate-x-1/2 rounded-full border px-2 py-0.5 text-[9px] font-black uppercase shadow-sm whitespace-nowrap"
+          className="absolute bottom-[6%] left-1/2 z-[30] -translate-x-1/2 rounded-full border px-1.5 py-0.5 text-[7px] font-black uppercase shadow-sm whitespace-nowrap sm:text-[8px]"
           style={{
             borderColor: "var(--p-accent-soft)",
             background:
@@ -81,9 +80,9 @@ export const PantherIcon = memo(function PantherIcon({
         </span>
       )}
       {isBomb && showBombBadge && (
-        <div className="absolute inset-0 grid place-items-center pointer-events-none z-[30]">
+        <div className="absolute inset-0 z-[30] grid place-items-center pointer-events-none">
           <span
-            className="rounded-full border-2 px-2 py-0.5 font-black text-[clamp(12px,2.4vw,18px)] drop-shadow-[0_2px_4px_rgba(0,0,0,0.85)]"
+            className="rounded-full border-2 px-1.5 py-0.5 font-black text-[clamp(10px,2vw,15px)] drop-shadow-[0_2px_4px_rgba(0,0,0,0.85)]"
             style={{
               borderColor: "var(--p-bomb-border)",
               background:

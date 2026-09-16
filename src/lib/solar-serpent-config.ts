@@ -94,8 +94,8 @@ export const DEFAULT_SOLAR_SERPENT_CONFIG: SolarSerpentConfig = {
   schemaVersion: 1,
   deadSpinChancePercent: 82,
   seedMelonBiasPercent: 35,
-  seedClusterMin: 12,
-  seedClusterMax: 13,
+  seedClusterMin: 8,
+  seedClusterMax: 10,
   bombChanceBasePercent: 1.5,
   bombChanceFreeSpinsPercent: 3,
   bombTable: [
@@ -120,7 +120,7 @@ export const DEFAULT_SOLAR_SERPENT_CONFIG: SolarSerpentConfig = {
   /** Super buy unit price (5× normal). */
   superBuyFeatureMult: 212.5,
   anteBetMult: 1.25,
-  minCluster: 12,
+  minCluster: 7,
   /** ₱5 × 10,000× = ₱50,000 round cap (the incident that lacked this clamp). */
   maxWinMult: 10_000,
   /** Bombs only resolve to 2x/3x/4x/5x, including feature-end multiplier. */
@@ -298,8 +298,9 @@ export function normalizeSolarSerpentConfig(raw: unknown): SolarSerpentConfig {
     schemaVersion: 1,
     deadSpinChancePercent: clamp(num(o.deadSpinChancePercent, d.deadSpinChancePercent), 0, 100),
     seedMelonBiasPercent: clamp(num(o.seedMelonBiasPercent, d.seedMelonBiasPercent), 0, 100),
-    seedClusterMin: clamp(Math.round(num(o.seedClusterMin, d.seedClusterMin)), 3, 30),
-    seedClusterMax: clamp(Math.round(num(o.seedClusterMax, d.seedClusterMax)), 3, 30),
+    /** 4×6 sun board has 24 cells — never seed / require more than that. */
+    seedClusterMin: clamp(Math.round(num(o.seedClusterMin, d.seedClusterMin)), 3, 24),
+    seedClusterMax: clamp(Math.round(num(o.seedClusterMax, d.seedClusterMax)), 3, 24),
     bombChanceBasePercent: clamp(num(o.bombChanceBasePercent, d.bombChanceBasePercent), 0, 100),
     bombChanceFreeSpinsPercent: clamp(
       num(o.bombChanceFreeSpinsPercent, d.bombChanceFreeSpinsPercent),
@@ -310,12 +311,12 @@ export function normalizeSolarSerpentConfig(raw: unknown): SolarSerpentConfig {
     freeSpinsTriggerCount: clamp(
       Math.round(num(o.freeSpinsTriggerCount, d.freeSpinsTriggerCount)),
       1,
-      30,
+      24,
     ),
     freeSpinsRetriggerCount: clamp(
       Math.round(num(o.freeSpinsRetriggerCount, d.freeSpinsRetriggerCount)),
       1,
-      30,
+      24,
     ),
     freeSpinsBase: clamp(Math.round(num(o.freeSpinsBase, d.freeSpinsBase)), 1, 100),
     freeSpinsRetrigger: clamp(Math.round(num(o.freeSpinsRetrigger, d.freeSpinsRetrigger)), 0, 100),
@@ -328,7 +329,7 @@ export function normalizeSolarSerpentConfig(raw: unknown): SolarSerpentConfig {
       10_000,
     ),
     anteBetMult: clamp(num(o.anteBetMult, d.anteBetMult), 1, 5),
-    minCluster: clamp(Math.round(num(o.minCluster, d.minCluster)), 3, 30),
+    minCluster: clamp(Math.round(num(o.minCluster, d.minCluster)), 3, 24),
     maxWinMult: clamp(num(o.maxWinMult, d.maxWinMult), 0, 100_000),
     maxFsBombMult: clamp(num(o.maxFsBombMult, d.maxFsBombMult), 0, 5),
     maxFsSessionSpins: clamp(Math.round(num(o.maxFsSessionSpins, d.maxFsSessionSpins)), 0, 200),

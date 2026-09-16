@@ -1995,7 +1995,7 @@ export const slotGames: SlotGame[] = [
     thumb: "/images/thumbnails/honey_hive_thumb.png",
     category: "slot",
     tag: "New",
-    description: "Raid the hive for sweet cluster tumbles, honeycomb bombs, and an adjustable Buy Bonus.",
+    description: "Raid the honeycomb nest for sweet cluster tumbles, hive bombs, and an adjustable Buy Bonus.",
     rating: 4.9,
     reviews: 420,
     rtp: "96.5%",

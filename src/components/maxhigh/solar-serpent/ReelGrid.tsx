@@ -1,6 +1,7 @@
 import { memo } from "react";
 import { ReelCell, type ReelPhase } from "./ReelCell";
 import type { BoardCell } from "./types";
+import { CELLS, COLS, ROWS } from "./types";
 
 type Slot = BoardCell | null;
 
@@ -15,34 +16,29 @@ export type ReelVisuals = {
 };
 
 type ReelGridProps = {
-  indices: readonly number[];
-  cols: number;
   visuals: ReelVisuals;
-  isTop?: boolean;
-  indexOffset?: number;
-  keyPrefix: string;
 };
 
-/** Shared reel cell map — avoids duplicating top/main grid JSX. */
-export const ReelGrid = memo(function ReelGrid({
-  indices,
-  cols,
-  visuals,
-  isTop = false,
-  indexOffset = 0,
-  keyPrefix,
-}: ReelGridProps) {
-  const { slots, phase, winningKeys, payoutByKey, spawnedKeys, fallenKeys, fallDistance } = visuals;
+/** 4×6 board — fill available play height. */
+export const ReelGrid = memo(function ReelGrid({ visuals }: ReelGridProps) {
+  const { slots, phase, winningKeys, payoutByKey, spawnedKeys, fallenKeys, fallDistance } =
+    visuals;
 
   return (
-    <>
-      {indices.map((i) => {
+    <div
+      className="mx-auto grid aspect-[2/3] max-h-[min(64dvh,36rem)] w-[min(92vw,calc(64dvh*2/3),26rem)] gap-1.5 sm:max-h-[min(66dvh,40rem)] sm:w-[min(90vw,calc(66dvh*2/3),28rem)] sm:gap-2"
+      style={{
+        gridTemplateColumns: `repeat(${COLS}, minmax(0, 1fr))`,
+        gridTemplateRows: `repeat(${ROWS}, minmax(0, 1fr))`,
+      }}
+    >
+      {Array.from({ length: CELLS }, (_, i) => {
         const cell = slots[i] ?? null;
         const win = cell ? winningKeys.has(cell.key) : false;
         return (
           <ReelCell
-            key={`${keyPrefix}-${i}`}
-            index={i - indexOffset}
+            key={`slot-${i}`}
+            index={i}
             cell={cell}
             phase={phase}
             win={win}
@@ -50,11 +46,9 @@ export const ReelGrid = memo(function ReelGrid({
             isSpawn={cell ? spawnedKeys.has(cell.key) : false}
             isFallen={cell ? fallenKeys.has(cell.key) : false}
             fallDist={cell ? (fallDistance[cell.key] ?? 0) : 0}
-            cols={cols}
-            isTop={isTop}
           />
         );
       })}
-    </>
+    </div>
   );
 });

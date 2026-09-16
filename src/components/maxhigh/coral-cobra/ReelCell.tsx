@@ -42,11 +42,7 @@ function reelCellPropsEqual(prev: ReelCellProps, next: ReelCellProps): boolean {
 }
 
 /**
- * Single reel cell — memoized with phase-aware equality so idle cells skip
- * re-renders when only winning cells should animate.
- *
- * Win highlight is CSS-only (no per-cell bloom motion layer) so large clusters
- * stay smooth on Android / mid-range devices.
+ * Coral Cobra cell — square card tile; icon is cropped to fill the card.
  */
 export const ReelCell = memo(function ReelCell({
   index,
@@ -58,7 +54,6 @@ export const ReelCell = memo(function ReelCell({
   isFallen,
   fallDist,
   cols,
-  isTop,
 }: ReelCellProps) {
   const col = index % cols;
   const row = Math.floor(index / cols);
@@ -79,28 +74,26 @@ export const ReelCell = memo(function ReelCell({
   return (
     <div
       className={cn(
-        "relative min-h-0 min-w-0",
-        phase === "dropping" || phase === "falling" || isScatter || isWinLit
-          ? "overflow-visible"
-          : "overflow-hidden",
-        isScatter
-          ? "z-[30]"
-          : isWinLit
-            ? "z-[3]"
-            : isInitialDrop || isGravityDrop
-              ? "z-[1]"
-              : "",
+        "relative min-h-0 min-w-0 overflow-hidden rounded-[0.55rem] sm:rounded-xl",
+        "shadow-[inset_0_1px_0_rgba(255,255,255,0.08)]",
+        isScatter || isWinLit ? "z-[3]" : isInitialDrop || isGravityDrop ? "z-[1]" : "z-0",
       )}
+      style={{
+        border: "1px solid color-mix(in srgb, var(--p-accent-soft) 35%, transparent)",
+        background: "color-mix(in srgb, var(--p-well-bottom) 88%, black)",
+        boxShadow: isWinLit
+          ? "inset 0 1px 0 rgba(255,255,255,0.08), 0 0 0 2px var(--p-accent)"
+          : "inset 0 1px 0 rgba(255,255,255,0.08)",
+      }}
     >
       {cell && (
         <motion.div
           key={cell.key}
-          className="absolute inset-[2%] flex items-center justify-center will-change-transform"
+          className="absolute inset-0 flex items-center justify-center overflow-hidden will-change-transform"
           initial={
             isInitialDrop || isGravityDrop
               ? {
-                  x: isTop ? `${(dropRows || cols) * 100}%` : 0,
-                  y: isTop ? 0 : `${-dropRows * 100}%`,
+                  y: `${-dropRows * 100}%`,
                   opacity: isSpawn || isInitialDrop ? 0.55 : 1,
                   scale: isSpawn || isInitialDrop ? 0.92 : 1,
                 }
@@ -116,14 +109,11 @@ export const ReelCell = memo(function ReelCell({
                 }
               : phase === "glow" && win
                 ? {
-                    x: 0,
                     y: 0,
                     opacity: 1,
-                    // One gentle bump — no repeating scale (avoids N× JS animations)
-                    scale: 1.06,
+                    scale: 1.04,
                   }
                 : {
-                    x: 0,
                     y: 0,
                     opacity: 1,
                     scale: 1,
@@ -145,25 +135,13 @@ export const ReelCell = memo(function ReelCell({
                   }
                 : isInitialDrop || isGravityDrop
                   ? {
-                      ...(isTop
-                        ? {
-                            x: {
-                              type: "spring",
-                              stiffness: 420,
-                              damping: 26,
-                              mass: 0.85,
-                              delay: colDelay,
-                            },
-                          }
-                        : {
-                            y: {
-                              type: "spring",
-                              stiffness: 420,
-                              damping: 26,
-                              mass: 0.85,
-                              delay: colDelay + rowDelay,
-                            },
-                          }),
+                      y: {
+                        type: "spring",
+                        stiffness: 420,
+                        damping: 26,
+                        mass: 0.85,
+                        delay: colDelay + rowDelay,
+                      },
                       opacity: { duration: 0.18, delay: colDelay },
                       scale: {
                         type: "spring",
@@ -186,7 +164,7 @@ export const ReelCell = memo(function ReelCell({
           />
           {isWinLit && perPay != null && perPay > 0 && (
             <span
-              className="absolute top-0 left-1/2 z-[2] -translate-x-1/2 whitespace-nowrap rounded-full border border-white/90 px-1.5 py-0.5 text-[10px] font-black tabular-nums shadow-sm"
+              className="absolute top-1 left-1/2 z-[2] -translate-x-1/2 whitespace-nowrap rounded-full border border-white/90 px-1.5 py-0.5 text-[9px] font-black tabular-nums shadow-sm sm:text-[10px]"
               style={{
                 background:
                   "linear-gradient(180deg, var(--p-payout-from) 0%, var(--p-payout-to) 100%)",

@@ -77,9 +77,9 @@ export function PaytableModal({ bet, onClose }: Props) {
 
           <div className="min-h-0 flex-1 space-y-3 overflow-y-auto px-4 py-3">
             <div className="rounded-xl bg-black/25 px-3 py-2 text-[11px] font-semibold leading-relaxed text-white/90">
-              Symbols pay anywhere on the grid. Land {minCluster} or more of the
+              Symbols pay anywhere on the glacier pillars (4-5-6-5-4). Land {minCluster} or more of the
               same symbol to win. Winning symbols tumble away and new ones drop
-              in. {cfg.freeSpinsTriggerCount}+ lollipops trigger Free Spins. Bombs multiply the tumble win.
+              in. {cfg.freeSpinsTriggerCount}+ scatters trigger Free Spins. Bombs multiply the tumble win.
             </div>
 
             <div className="grid gap-2">
@@ -88,7 +88,7 @@ export function PaytableModal({ bet, onClose }: Props) {
                   key={sym.id}
                   className="flex items-center gap-3 rounded-xl border border-white/15 bg-white/10 px-2.5 py-2"
                 >
-                  <PantherIcon kind={sym.kind} className="size-10 shrink-0" />
+                  <PantherIcon kind={sym.kind} fit="contain" className="size-10 shrink-0 overflow-hidden rounded-lg" />
                   <div className="grid min-w-0 flex-1 grid-cols-3 gap-1 text-center text-[10px] font-black tabular-nums text-white sm:text-[11px]">
                     <div>
                       <div className="text-white/55">{minCluster}–{minCluster + 1}</div>
@@ -111,7 +111,7 @@ export function PaytableModal({ bet, onClose }: Props) {
             </div>
 
             <div className="flex items-center gap-3 rounded-xl border border-white/15 bg-white/10 px-2.5 py-2">
-              <PantherIcon kind="lollipop" className="size-10 shrink-0" />
+              <PantherIcon kind="lollipop" fit="contain" className="size-10 shrink-0 overflow-hidden rounded-lg" />
               <div className="text-[11px] font-bold leading-snug text-white">
                 <span className="text-[color:var(--p-menu-accent)]">Scatter</span> — {cfg.freeSpinsTriggerCount}+ awards Free
                 Spins. Pays cash by cane count.
@@ -119,7 +119,7 @@ export function PaytableModal({ bet, onClose }: Props) {
             </div>
 
             <div className="flex items-center gap-3 rounded-xl border border-white/15 bg-white/10 px-2.5 py-2">
-              <PantherIcon kind="bomb" mult={2} className="size-10 shrink-0" />
+              <PantherIcon kind="bomb" mult={2} fit="contain" className="size-10 shrink-0 overflow-hidden rounded-lg" />
               <div className="text-[11px] font-bold leading-snug text-white">
                 <span className="text-[color:var(--p-menu-accent)]">Bomb</span> — 2x, 3x, 4x or 5x
                 only. Multiplies the current tumble win. Free Spins keep the

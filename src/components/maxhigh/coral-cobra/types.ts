@@ -72,9 +72,10 @@ export type SpinScript = {
   bombAccumulator: number;
 };
 
-export const COLS = 6;
-export const ROWS = 7;
-export const TOP_COLS = 4;
-export const MAIN_CELLS = COLS * ROWS; // 42
-export const CELLS = TOP_COLS + MAIN_CELLS; // 46 total cells (4 top + 42 main)
+/** Coral Cobra uses a square 5×5 playfield (no top tracker reel). */
+export const COLS = 5;
+export const ROWS = 5;
+export const TOP_COLS = 0;
+export const MAIN_CELLS = COLS * ROWS; // 25
+export const CELLS = TOP_COLS + MAIN_CELLS; // 25
 export const MIN_CLUSTER = 8;

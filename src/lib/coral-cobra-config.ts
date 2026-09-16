@@ -94,8 +94,8 @@ export const DEFAULT_CORAL_COBRA_CONFIG: CoralCobraConfig = {
   schemaVersion: 1,
   deadSpinChancePercent: 82,
   seedMelonBiasPercent: 35,
-  seedClusterMin: 12,
-  seedClusterMax: 13,
+  seedClusterMin: 8,
+  seedClusterMax: 10,
   bombChanceBasePercent: 1.5,
   bombChanceFreeSpinsPercent: 3,
   bombTable: [
@@ -120,7 +120,8 @@ export const DEFAULT_CORAL_COBRA_CONFIG: CoralCobraConfig = {
   /** Super buy unit price (5× normal). */
   superBuyFeatureMult: 212.5,
   anteBetMult: 1.25,
-  minCluster: 12,
+  /** 5×5 board — cluster pays from 8 matching symbols. */
+  minCluster: 8,
   /** ₱5 × 10,000× = ₱50,000 round cap (the incident that lacked this clamp). */
   maxWinMult: 10_000,
   /** Bombs only resolve to 2x/3x/4x/5x, including feature-end multiplier. */

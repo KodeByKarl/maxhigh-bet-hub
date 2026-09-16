@@ -94,8 +94,8 @@ export const DEFAULT_FROST_FOX_CONFIG: FrostFoxConfig = {
   schemaVersion: 1,
   deadSpinChancePercent: 82,
   seedMelonBiasPercent: 35,
-  seedClusterMin: 12,
-  seedClusterMax: 13,
+  seedClusterMin: 6,
+  seedClusterMax: 8,
   bombChanceBasePercent: 1.5,
   bombChanceFreeSpinsPercent: 3,
   bombTable: [
@@ -120,7 +120,8 @@ export const DEFAULT_FROST_FOX_CONFIG: FrostFoxConfig = {
   /** Super buy unit price (5× normal). */
   superBuyFeatureMult: 212.5,
   anteBetMult: 1.25,
-  minCluster: 12,
+  /** Glacier pillars 4-5-6-5-4 (24 cells) — cluster pays from 6 matching. */
+  minCluster: 6,
   /** ₱5 × 10,000× = ₱50,000 round cap (the incident that lacked this clamp). */
   maxWinMult: 10_000,
   /** Bombs only resolve to 2x/3x/4x/5x, including feature-end multiplier. */

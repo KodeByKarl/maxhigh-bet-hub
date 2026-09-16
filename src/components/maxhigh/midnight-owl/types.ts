@@ -1,4 +1,4 @@
-/** Shared types for Sweet Bonanza engine + render. */
+/** Midnight Owl — 5×4 moon board (cluster tumble). Distinct from honey / frost / ember. */
 
 export type SymKind =
   | "grape"
@@ -16,7 +16,6 @@ export type CellSym = {
   id: string;
   kind: SymKind;
   weight: number;
-  /** Payout multiplier × bet: [min, min+2, min+4+] */
   pay: [number, number, number];
   scatter?: boolean;
   bomb?: boolean;
@@ -25,7 +24,6 @@ export type CellSym = {
 export type BoardCell = {
   key: string;
   sym: CellSym;
-  /** Bomb multiplier when kind is bomb */
   mult?: number;
 };
 
@@ -40,18 +38,14 @@ export type ClusterWin = {
 
 export type TumbleStep = {
   board: BoardCell[];
-  /** Keys that win this step (cluster + bombs that apply) */
   winningKeys: string[];
   clusters: ClusterWin[];
   tumbleWin: number;
   bombSum: number;
-  /** After pop: board with winners cleared (null holes) — optional for anim */
   afterPop: (BoardCell | null)[];
-  /** After gravity + refill */
   afterFall: BoardCell[];
   spawnedKeys: string[];
   fallenKeys: string[];
-  /** Rows traveled downward for fall animation (spawned + moved survivors). */
   fallDistance: Record<string, number>;
 };
 
@@ -59,22 +53,20 @@ export type SpinScript = {
   initialBoard: BoardCell[];
   steps: TumbleStep[];
   totalWin: number;
-  /** Cluster/scatter win before bomb multipliers (for UI breakdown) */
   rawWin: number;
-  /** Multiplier to show on win popup (1 if none) */
   displayMult: number;
   scatters: number;
   scatterPay: number;
   freeSpinsAwarded: number;
   retriggerSpins: number;
   isFreeSpins: boolean;
-  /** Bomb mults collected during FS (display); applied per-tumble in base */
   bombAccumulator: number;
 };
 
-export const COLS = 6;
-export const ROWS = 7;
-export const TOP_COLS = 4;
-export const MAIN_CELLS = COLS * ROWS; // 42
-export const CELLS = TOP_COLS + MAIN_CELLS; // 46 total cells (4 top + 42 main)
-export const MIN_CLUSTER = 8;
+/** 5×4 moon board — wide indigo rectangle. Distinct from Raven / Serpent / Jade. */
+export const COLS = 5;
+export const ROWS = 4;
+export const TOP_COLS = 0;
+export const MAIN_CELLS = COLS * ROWS; // 20
+export const CELLS = MAIN_CELLS;
+export const MIN_CLUSTER = 6;
