@@ -1,4 +1,4 @@
-const SOUND_DIR = "/sounds/lucky9";
+const SOUND_DIR = "/sounds/gentle-v1/drop-deluxe";
 
 export type DropDeluxeSoundKey = "chip" | "deal" | "win" | "lose";
 

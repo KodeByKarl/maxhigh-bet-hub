@@ -11,7 +11,7 @@ type Props = {
   onClose: () => void;
 };
 
-/** Compact game menu — turbo, sound, paytable. */
+/** Compact game menu — turbo, sound, paytable. Theme via CSS vars. */
 export function GameMenuModal({
   turbo,
   muted,
@@ -36,20 +36,29 @@ export function GameMenuModal({
         animate={{ y: 0, opacity: 1, scale: 1 }}
         exit={{ y: 16, opacity: 0 }}
         transition={{ type: "spring", stiffness: 360, damping: 24 }}
-        className="w-full max-w-[360px] overflow-hidden rounded-[1.25rem] border-2 border-[#E8C547]/80 shadow-2xl"
+        className="w-full max-w-[360px] overflow-hidden rounded-[1.25rem] border-2 shadow-2xl"
         style={{
-          background: "linear-gradient(180deg, #6D28D9 0%, #3B0764 100%)",
+          borderColor: "color-mix(in srgb, var(--p-menu-accent) 80%, transparent)",
+          background: "linear-gradient(180deg, var(--p-menu-from) 0%, var(--p-menu-to) 100%)",
         }}
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between border-b border-white/15 px-4 py-3">
-          <div className="text-base font-black uppercase tracking-wide text-[#F5D76E]">
+          <div
+            className="text-base font-black uppercase tracking-wide"
+            style={{ color: "var(--p-menu-accent)" }}
+          >
             Menu
           </div>
           <button
             type="button"
             onClick={onClose}
-            className="grid size-8 place-items-center rounded-full border border-[#E8C547]/70 bg-[#3B0764] text-[#F5D76E]"
+            className="grid size-8 place-items-center rounded-full border"
+            style={{
+              borderColor: "color-mix(in srgb, var(--p-menu-accent) 70%, transparent)",
+              background: "var(--p-menu-to)",
+              color: "var(--p-menu-accent)",
+            }}
             aria-label="Close menu"
           >
             <X size={15} />
@@ -62,20 +71,29 @@ export function GameMenuModal({
             onClick={() => onTurboChange(!turbo)}
             className={cn(
               "flex w-full items-center justify-between rounded-xl border-2 px-3 py-3 text-left transition",
-              turbo
-                ? "border-[#E8C547] bg-gradient-to-r from-[#FFF3B0]/25 to-[#D4A017]/30"
-                : "border-white/20 bg-black/20",
+              !turbo && "border-white/20 bg-black/20",
             )}
+            style={
+              turbo
+                ? {
+                    borderColor: "var(--p-menu-accent)",
+                    background:
+                      "linear-gradient(90deg, color-mix(in srgb, var(--p-accent-soft) 25%, transparent), color-mix(in srgb, var(--p-accent) 30%, transparent))",
+                  }
+                : undefined
+            }
           >
             <span className="flex items-center gap-2 text-sm font-black uppercase text-white">
-              <Zap size={16} className="text-[#F5D76E]" />
+              <Zap size={16} style={{ color: "var(--p-menu-accent)" }} />
               Turbo Spin
             </span>
             <span
-              className={cn(
-                "rounded-full px-2.5 py-0.5 text-[11px] font-black uppercase",
-                turbo ? "bg-[#F5D76E] text-[#3B0764]" : "bg-black/35 text-white/80",
-              )}
+              className="rounded-full px-2.5 py-0.5 text-[11px] font-black uppercase"
+              style={
+                turbo
+                  ? { background: "var(--p-menu-accent)", color: "var(--p-menu-to)" }
+                  : { background: "rgba(0,0,0,0.35)", color: "rgba(255,255,255,0.8)" }
+              }
             >
               {turbo ? "On" : "Off"}
             </span>
@@ -88,17 +106,19 @@ export function GameMenuModal({
           >
             <span className="flex items-center gap-2 text-sm font-black uppercase text-white">
               {muted ? (
-                <VolumeX size={16} className="text-[#F5D76E]" />
+                <VolumeX size={16} style={{ color: "var(--p-menu-accent)" }} />
               ) : (
-                <Volume2 size={16} className="text-[#F5D76E]" />
+                <Volume2 size={16} style={{ color: "var(--p-menu-accent)" }} />
               )}
               Sound
             </span>
             <span
-              className={cn(
-                "rounded-full px-2.5 py-0.5 text-[11px] font-black uppercase",
-                !muted ? "bg-[#F5D76E] text-[#3B0764]" : "bg-black/35 text-white/80",
-              )}
+              className="rounded-full px-2.5 py-0.5 text-[11px] font-black uppercase"
+              style={
+                !muted
+                  ? { background: "var(--p-menu-accent)", color: "var(--p-menu-to)" }
+                  : { background: "rgba(0,0,0,0.35)", color: "rgba(255,255,255,0.8)" }
+              }
             >
               {muted ? "Off" : "On"}
             </span>
@@ -113,7 +133,9 @@ export function GameMenuModal({
             className="flex w-full items-center justify-between rounded-xl border-2 border-white/20 bg-black/20 px-3 py-3 text-left"
           >
             <span className="text-sm font-black uppercase text-white">Paytable</span>
-            <span className="text-[11px] font-bold text-[#F5D76E]">Open →</span>
+            <span className="text-[11px] font-bold" style={{ color: "var(--p-menu-accent)" }}>
+              Open →
+            </span>
           </button>
         </div>
       </motion.div>

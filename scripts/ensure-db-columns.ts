@@ -17,11 +17,13 @@ async function ensureDbColumns() {
     try {
       await db.execute(sql.raw(stmt));
       console.log(`Executed: ${stmt}`);
-    } catch (err: any) {
-      if (err?.code === "ER_DUP_FIELDNAME" || err?.message?.includes("Duplicate column name")) {
+    } catch (err) {
+      const code = typeof err === "object" && err !== null && "code" in err ? err.code : undefined;
+      const message = err instanceof Error ? err.message : String(err);
+      if (code === "ER_DUP_FIELDNAME" || message.includes("Duplicate column name")) {
         console.log(`Column already exists: ${stmt.slice(0, 45)}...`);
       } else {
-        console.warn(`Notice running statement "${stmt}":`, err?.message ?? err);
+        console.warn(`Notice running statement "${stmt}":`, message);
       }
     }
   }

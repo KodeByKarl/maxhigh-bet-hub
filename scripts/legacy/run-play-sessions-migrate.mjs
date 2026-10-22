@@ -19,5 +19,7 @@ const sql = fs
 
 await conn.query(sql);
 const [rows] = await conn.query("SHOW TABLES LIKE 'play_sessions'");
-console.log(Array.isArray(rows) && rows.length ? "OK: play_sessions exists" : "MISSING: play_sessions");
+console.log(
+  Array.isArray(rows) && rows.length ? "OK: play_sessions exists" : "MISSING: play_sessions",
+);
 await conn.end();

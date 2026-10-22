@@ -1,9 +1,15 @@
-/**
- * Superadmin Lucky Neko engine editor — lobby + math config.
- * Persists to game_controls.engineConfig; live spins read the same JSON.
- */
-import { useEffect, useState } from "react";
-import { Coins, Gem, LayoutGrid, Save, Settings2, Store, X } from "lucide-react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
+import {
+  Crown,
+  Dices,
+  Info,
+  LayoutGrid,
+  Save,
+  Settings2,
+  SlidersHorizontal,
+  Sparkles,
+  Store,
+} from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -12,36 +18,31 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import {
+  bombTablePercents,
   DEFAULT_LUCKY_NEKO_CONFIG,
+  LUCKY_NEKO_BOMB_MULTS,
   normalizeLuckyNekoConfig,
+  weightPercents,
   type LuckyNekoConfig,
-  type FgRtpProfileId,
-  type FoSymKind,
+  type LuckyNekoSymbolConfig,
 } from "@/lib/lucky-neko-config";
-import {
-  getLuckyNekoEngineConfigFn,
-  saveLuckyNekoEngineConfigFn,
-} from "@/functions/superadmin";
+import { getLuckyNekoEngineConfigFn, saveLuckyNekoEngineConfigFn } from "@/functions/superadmin";
 import type { SuperGameRow } from "@/lib/superadmin-types";
-import { ICON_SRC } from "@/components/maxhigh/lucky-neko/animationConfig";
 import { toast } from "sonner";
+import { PantherIcon } from "@/components/maxhigh/lucky-neko/PantherIcon";
+import type { LuckyNekoSymKind } from "@/lib/lucky-neko-config";
 import { cn } from "@/lib/utils";
 
-type Section = "lobby" | "symbols" | "mult" | "rtp" | "risk";
+type Section = "lobby" | "dead" | "symbols" | "mult" | "freespins";
 
 const NAV: { id: Section; label: string; icon: typeof Store }[] = [
   { id: "lobby", label: "Lobby", icon: Store },
+  { id: "dead", label: "Dead spin", icon: Dices },
   { id: "symbols", label: "Symbols", icon: LayoutGrid },
-  { id: "mult", label: "Mult Reel", icon: Gem },
-  { id: "rtp", label: "RTP / Weights", icon: Settings2 },
-  { id: "risk", label: "Risk / Cap", icon: Coins },
-];
-
-const RTP_OPTIONS: { id: FgRtpProfileId; label: string }[] = [
-  { id: "rtp_97", label: "97%*" },
-  { id: "rtp_96_65", label: "96.65%*" },
-  { id: "rtp_95_22", label: "95.22%*" },
+  { id: "mult", label: "Wilds/Bombs", icon: Sparkles },
+  { id: "freespins", label: "Free spins", icon: Crown },
 ];
 
 type Props = {
@@ -53,105 +54,64 @@ type Props = {
   ) => Promise<void>;
 };
 
-function Num({
-  value,
-  onChange,
-  step = 1,
-  min,
-  max,
-}: {
-  value: number;
-  onChange: (n: number) => void;
-  step?: number;
-  min?: number;
-  max?: number;
-}) {
-  return (
-    <Input
-      type="number"
-      className="h-9 bg-white/[0.06]"
-      value={Number.isFinite(value) ? value : 0}
-      step={step}
-      min={min}
-      max={max}
-      onChange={(e) => onChange(Number(e.target.value))}
-    />
-  );
-}
-
-function SymThumb({ kind, name }: { kind: FoSymKind; name: string }) {
-  return (
-    <img
-      src={`${ICON_SRC[kind]}?v=gem5`}
-      alt={name}
-      className="size-10 rounded-md object-contain bg-black/40"
-      onError={(e) => {
-        (e.target as HTMLImageElement).style.display = "none";
-      }}
-    />
-  );
-}
-
 export function LuckyNekoConfigModal({ game, open, onOpenChange, onPatchLobby }: Props) {
   const [section, setSection] = useState<Section>("lobby");
-  const [cfg, setCfg] = useState<LuckyNekoConfig>(() =>
-    structuredClone(DEFAULT_LUCKY_NEKO_CONFIG),
-  );
-  const [saving, setSaving] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [cfg, setCfg] = useState<LuckyNekoConfig>(() => structuredClone(DEFAULT_LUCKY_NEKO_CONFIG));
+
   const [tag, setTag] = useState(game.tag ?? "");
-  const [lobbyRtp, setLobbyRtp] = useState(Number(game.rtp) || 97);
-  const [volatility, setVolatility] = useState(game.volatility ?? "Medium");
-  const [lobbyMinBet, setLobbyMinBet] = useState(Number(game.minBet) || 0.1);
-  const [lobbyMaxBet, setLobbyMaxBet] = useState(Number(game.maxBet) || 100);
-  const [lobbyBusy, setLobbyBusy] = useState(false);
+  const [rtp, setRtp] = useState(game.rtp ?? "");
+  const [volatility, setVolatility] = useState(game.volatility ?? "");
+  const [minBet, setMinBet] = useState(game.minBet ?? "");
+  const [maxBet, setMaxBet] = useState(game.maxBet ?? "");
 
   useEffect(() => {
     if (!open) return;
-    setSection("lobby");
-    setTag(game.tag ?? "");
-    setLobbyRtp(Number.parseFloat(String(game.rtp ?? "").replace("%", "")) || 97);
-    setVolatility(game.volatility ?? "Medium");
-    setLobbyMinBet(Number(String(game.minBet ?? "").replace(/[^\d.]/g, "")) || 0.1);
-    setLobbyMaxBet(Number(String(game.maxBet ?? "").replace(/[^\d.]/g, "")) || 100);
     setLoading(true);
+    setTag(game.tag ?? "");
+    setRtp(game.rtp ?? "");
+    setVolatility(game.volatility ?? "");
+    setMinBet(game.minBet ?? "");
+    setMaxBet(game.maxBet ?? "");
+
     void getLuckyNekoEngineConfigFn()
-      .then((c) => setCfg(normalizeLuckyNekoConfig(c)))
+      .then((res) => {
+        setCfg(normalizeLuckyNekoConfig(res));
+      })
       .catch(() => {
-        toast.error("Failed loading config — defaults");
+        toast.error("Failed loading engine config — using defaults");
         setCfg(structuredClone(DEFAULT_LUCKY_NEKO_CONFIG));
       })
       .finally(() => setLoading(false));
   }, [open, game]);
 
-  function patch(p: Partial<LuckyNekoConfig>) {
-    setCfg((c) => {
-      const next = normalizeLuckyNekoConfig({ ...c, ...p });
-      if (p.activeRtpProfile) {
-        const profile = next.rtpProfiles.find((r) => r.id === p.activeRtpProfile);
-        if (profile) next.targetRtp = profile.targetRtp;
-      }
-      return next;
-    });
-  }
+  const cellWeightsForDisplay = useMemo(() => {
+    const list = cfg.symbols
+      .filter((s) => s.weight > 0 && !s.bomb)
+      .map((s) => ({ id: s.id, weight: s.weight }));
+    return weightPercents(list);
+  }, [cfg.symbols]);
 
-  async function saveEngine() {
+  const bombPercents = useMemo(() => bombTablePercents(cfg.bombTable), [cfg.bombTable]);
+
+  async function handleSaveAll() {
     setSaving(true);
     try {
-      const next = await saveLuckyNekoEngineConfigFn({
-        data: { config: normalizeLuckyNekoConfig(cfg) },
-      });
-      setCfg(normalizeLuckyNekoConfig(next));
-      // Keep lobby metadata in sync with engine bet / RTP
       await onPatchLobby({
-        rtp: `${next.targetRtp}%`,
-        minBet: `₱${next.minBet.toFixed(2)}`,
-        maxBet: `₱${next.maxBet.toFixed(2)}`,
+        tag: tag.trim() || undefined,
+        rtp: rtp.trim() || game.rtp,
+        volatility: (volatility.trim() || game.volatility) as SuperGameRow["volatility"],
+        minBet: minBet.trim() || game.minBet,
+        maxBet: maxBet.trim() || game.maxBet,
       });
-      setLobbyRtp(next.targetRtp);
-      setLobbyMinBet(next.minBet);
-      setLobbyMaxBet(next.maxBet);
-      toast.success("Lucky Neko engine saved");
+
+      const normalized = await saveLuckyNekoEngineConfigFn({
+        data: { config: cfg },
+      });
+      setCfg(normalizeLuckyNekoConfig(normalized));
+      toast.success("Lucky Neko engine math & lobby settings saved");
+      onOpenChange(false);
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Save failed");
     } finally {
@@ -159,370 +119,449 @@ export function LuckyNekoConfigModal({ game, open, onOpenChange, onPatchLobby }:
     }
   }
 
-  async function saveLobby() {
-    setLobbyBusy(true);
-    try {
-      await onPatchLobby({
-        tag: tag.trim() || undefined,
-        rtp: String(lobbyRtp),
-        volatility: volatility.trim() || "Medium",
-        minBet: String(lobbyMinBet),
-        maxBet: String(lobbyMaxBet),
-      });
-      // Mirror lobby bet bounds into engine config
-      patch({ minBet: lobbyMinBet, maxBet: lobbyMaxBet, targetRtp: lobbyRtp });
-      toast.success("Lobby settings saved");
-    } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Lobby save failed");
-    } finally {
-      setLobbyBusy(false);
-    }
+  function updateSymbol(id: string, patch: Partial<LuckyNekoSymbolConfig>) {
+    setCfg((prev) => ({
+      ...prev,
+      symbols: prev.symbols.map((s) => (s.id === id ? { ...s, ...patch } : s)),
+    }));
   }
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="flex max-h-[92vh] w-[min(100%-1rem,48rem)] flex-col gap-0 overflow-hidden border-amber-500/20 bg-panel p-0">
-        <div className="relative h-28 shrink-0 overflow-hidden">
-          <img src={game.thumb} alt="" className="size-full object-cover" />
-          <div className="absolute inset-0 bg-gradient-to-t from-[#16120F] to-transparent" />
-          <div className="absolute bottom-3 left-4 right-4 flex items-center justify-between">
-            <DialogHeader className="space-y-0 text-left">
-              <DialogTitle className="flex items-center gap-2 text-xl font-black uppercase text-foreground">
-                <Gem size={18} className="text-amber-400" />
-                {game.name}
+      <DialogContent className="max-w-4xl max-h-[90vh] overflow-hidden flex flex-col p-0 border-amber-500/30 bg-gradient-to-b from-neutral-900 via-black to-neutral-950 text-foreground">
+        <DialogHeader className="px-6 pt-6 pb-4 border-b border-amber-500/20 shrink-0">
+          <div className="flex items-center justify-between gap-4">
+            <div>
+              <DialogTitle className="text-xl font-black uppercase text-amber-300 tracking-wider">
+                Lucky Neko Engine Configuration
               </DialogTitle>
               <DialogDescription className="text-xs text-muted-foreground">
-                Full engine · 3×3 · 5 lines · Mult reel + EX — {game.gameId}
+                Configure live RNG parameters, symbol weights, wild/bomb multipliers, and free
+                spins.
               </DialogDescription>
-            </DialogHeader>
+            </div>
+
             <button
               type="button"
-              onClick={() => onOpenChange(false)}
-              className="rounded-full border border-white/20 p-1.5 text-muted-foreground hover:text-foreground"
+              disabled={loading || saving}
+              onClick={() => void handleSaveAll()}
+              className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 px-4 py-2 text-xs font-black uppercase text-amber-950 shadow-lg hover:brightness-110 active:scale-95 disabled:opacity-50 transition"
             >
-              <X size={16} />
+              <Save size={16} />
+              {saving ? "Saving..." : "Save Config"}
             </button>
           </div>
-        </div>
 
-        <div className="flex shrink-0 gap-1 overflow-x-auto border-b border-amber-500/15 px-3 py-2">
-          {NAV.map((item) => (
-            <button
-              key={item.id}
-              type="button"
-              onClick={() => setSection(item.id)}
-              className={cn(
-                "inline-flex items-center gap-1.5 whitespace-nowrap rounded-lg px-3 py-1.5 text-xs font-bold",
-                section === item.id
-                  ? "bg-amber-500 text-black"
-                  : "bg-white/[0.04] text-muted-foreground hover:text-foreground",
-              )}
-            >
-              <item.icon size={13} />
-              {item.label}
-            </button>
-          ))}
-        </div>
+          <div className="mt-4 flex gap-2 border-t border-amber-500/10 pt-3">
+            {NAV.map((n) => {
+              const Icon = n.icon;
+              const active = section === n.id;
+              return (
+                <button
+                  key={n.id}
+                  type="button"
+                  onClick={() => setSection(n.id)}
+                  className={cn(
+                    "flex items-center gap-2 rounded-lg px-3 py-1.5 text-xs font-bold transition",
+                    active
+                      ? "bg-amber-400/20 text-amber-300 border border-amber-400/40"
+                      : "text-muted-foreground hover:bg-white/5 hover:text-white",
+                  )}
+                >
+                  <Icon size={14} />
+                  {n.label}
+                </button>
+              );
+            })}
+          </div>
+        </DialogHeader>
 
-        <div className="min-h-0 flex-1 space-y-4 overflow-y-auto p-4">
+        <div className="flex-1 overflow-y-auto p-6">
           {loading ? (
-            <p className="py-10 text-center text-sm text-muted-foreground">Loading…</p>
-          ) : section === "lobby" ? (
+            <div className="flex h-48 items-center justify-center text-amber-400 font-bold animate-pulse">
+              Loading engine configuration...
+            </div>
+          ) : (
             <>
-              <div className="flex flex-wrap gap-2">
-                <button
-                  type="button"
-                  onClick={() => void onPatchLobby({ enabled: !game.enabled })}
-                  className={cn(
-                    "rounded-full px-3 py-1.5 text-xs font-bold",
-                    game.enabled
-                      ? "bg-emerald-500/20 text-emerald-400"
-                      : "bg-rose-500/20 text-rose-400",
-                  )}
-                >
-                  {game.enabled ? "Enabled" : "Disabled"}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => void onPatchLobby({ featured: !game.featured })}
-                  className={cn(
-                    "rounded-full px-3 py-1.5 text-xs font-bold",
-                    game.featured
-                      ? "bg-amber-500/20 text-amber-300"
-                      : "bg-white/[0.06] text-muted-foreground",
-                  )}
-                >
-                  {game.featured ? "Featured" : "Not featured"}
-                </button>
-              </div>
-              <div className="grid gap-3 sm:grid-cols-2">
-                <label className="space-y-1 text-xs font-semibold text-muted-foreground">
-                  Tag
-                  <Input
-                    className="h-9 bg-white/[0.06]"
-                    value={tag}
-                    onChange={(e) => setTag(e.target.value)}
-                    placeholder="Hot / New"
-                  />
-                </label>
-                <label className="space-y-1 text-xs font-semibold text-muted-foreground">
-                  Lobby RTP label
-                  <Num value={lobbyRtp} onChange={setLobbyRtp} step={0.01} min={80} max={99} />
-                </label>
-                <label className="space-y-1 text-xs font-semibold text-muted-foreground">
-                  Volatility
-                  <Input
-                    className="h-9 bg-white/[0.06]"
-                    value={volatility}
-                    onChange={(e) => setVolatility(e.target.value)}
-                  />
-                </label>
-                <label className="space-y-1 text-xs font-semibold text-muted-foreground">
-                  Lobby min bet
-                  <Num value={lobbyMinBet} onChange={setLobbyMinBet} step={0.01} min={0.01} />
-                </label>
-                <label className="space-y-1 text-xs font-semibold text-muted-foreground">
-                  Lobby max bet
-                  <Num value={lobbyMaxBet} onChange={setLobbyMaxBet} step={0.01} min={0.01} />
-                </label>
-              </div>
-              <button
-                type="button"
-                disabled={lobbyBusy}
-                onClick={() => void saveLobby()}
-                className="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-amber-500/40 py-2.5 text-sm font-black uppercase text-amber-200 disabled:opacity-50"
-              >
-                <Save size={16} />
-                {lobbyBusy ? "Saving…" : "Save lobby"}
-              </button>
-            </>
-          ) : section === "symbols" ? (
-            <>
-              <p className="text-[11px] text-amber-300/80">
-                Pay × bet-per-line for 3 matching on a payline. Config-pending with design.
-              </p>
-              <div className="space-y-2">
-                {cfg.symbols.map((sym) => (
-                  <div
-                    key={sym.id}
-                    className="grid grid-cols-[auto_minmax(0,1fr)_120px] items-center gap-2 rounded-xl border border-white/5 bg-white/[0.03] p-2 text-[11px]"
-                  >
-                    <SymThumb kind={sym.kind} name={sym.name} />
-                    <div className="min-w-0">
-                      <div className="truncate font-bold text-foreground">{sym.name}</div>
-                      <div className="text-[10px] uppercase text-muted-foreground">
-                        {sym.tier}
-                        {sym.wild ? " · wild" : ""}
+              {section === "lobby" && (
+                <div className="space-y-4 max-w-md">
+                  <h4 className="text-sm font-bold text-amber-300">Lobby Settings</h4>
+                  <div className="grid gap-3">
+                    <div>
+                      <label className="text-xs text-muted-foreground">Tag / Badge</label>
+                      <Input
+                        value={tag}
+                        onChange={(e) => setTag(e.target.value)}
+                        className="mt-1"
+                      />
+                    </div>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <label className="text-xs text-muted-foreground">RTP %</label>
+                        <Input
+                          type="number"
+                          value={rtp}
+                          onChange={(e) => setRtp(e.target.value)}
+                          className="mt-1"
+                        />
+                      </div>
+                      <div>
+                        <label className="text-xs text-muted-foreground">Volatility</label>
+                        <Input
+                          value={volatility}
+                          onChange={(e) => setVolatility(e.target.value)}
+                          className="mt-1"
+                        />
                       </div>
                     </div>
-                    <label className="space-y-0.5 text-[10px] text-muted-foreground">
-                      Pay × bpl
-                      <Num
-                        value={sym.pay}
-                        onChange={(n) => {
-                          const symbols = cfg.symbols.map((s) =>
-                            s.id === sym.id ? { ...s, pay: n } : s,
-                          );
-                          patch({ symbols });
-                        }}
-                        step={1}
-                        min={0}
-                      />
-                    </label>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <label className="text-xs text-muted-foreground">Min Bet (₱)</label>
+                        <Input
+                          type="number"
+                          value={minBet}
+                          onChange={(e) => setMinBet(e.target.value)}
+                          className="mt-1"
+                        />
+                      </div>
+                      <div>
+                        <label className="text-xs text-muted-foreground">Max Bet (₱)</label>
+                        <Input
+                          type="number"
+                          value={maxBet}
+                          onChange={(e) => setMaxBet(e.target.value)}
+                          className="mt-1"
+                        />
+                      </div>
+                    </div>
                   </div>
-                ))}
-              </div>
-              <div className="space-y-2 pt-2">
-                <p className="text-xs font-semibold text-muted-foreground">
-                  Paylines (row index per reel · 0=top)
-                </p>
-                {cfg.paylines.map((line, li) => (
-                  <div key={li} className="flex items-center gap-2">
-                    <span className="w-8 text-xs text-muted-foreground">L{li + 1}</span>
-                    {line.map((row, ri) => (
-                      <Num
-                        key={ri}
-                        value={row}
-                        min={0}
-                        max={2}
-                        onChange={(n) => {
-                          const paylines = cfg.paylines.map((p, j) =>
-                            j === li ? p.map((r, k) => (k === ri ? n : r)) : [...p],
-                          );
-                          patch({ paylines });
-                        }}
-                      />
-                    ))}
-                  </div>
-                ))}
-              </div>
-            </>
-          ) : section === "mult" ? (
-            <div className="grid gap-6 md:grid-cols-2">
-              {(["multiplierStripBase", "multiplierStripEx"] as const).map((key) => (
-                <div key={key} className="space-y-2">
-                  <p className="text-sm font-semibold">
-                    {key === "multiplierStripBase" ? "Base strip weights" : "EX strip weights"}
-                  </p>
-                  {key === "multiplierStripEx" && (
-                    <p className="text-[10px] text-amber-300/80">
-                      Working default: 1× weight = 0. Separate profile — not a runtime modifier.
-                    </p>
-                  )}
-                  {cfg.multiplierValues.map((v) => (
-                    <label key={v} className="flex items-center gap-2 text-xs">
-                      <span className="w-10 font-mono font-bold">{v}×</span>
-                      <Num
-                        value={cfg[key].weights[String(v)] ?? 0}
-                        onChange={(n) => {
-                          patch({
-                            [key]: {
-                              weights: {
-                                ...cfg[key].weights,
-                                [String(v)]: n,
-                              },
-                            },
-                          });
-                        }}
-                        min={0}
-                      />
-                    </label>
-                  ))}
                 </div>
-              ))}
-              <label className="md:col-span-2 space-y-1 text-xs font-semibold text-muted-foreground">
-                EX bet multiplier (1.5 = +50%)
-                <Num
-                  value={cfg.exBetMult}
-                  onChange={(n) => patch({ exBetMult: n })}
-                  step={0.05}
-                  min={1}
-                  max={5}
-                />
-              </label>
-            </div>
-          ) : section === "rtp" ? (
-            <>
-              <p className="text-[11px] text-amber-300/80">
-                Placeholder profiles for conflicting published RTP figures — confirm before launch.
-              </p>
-              <div className="flex flex-wrap gap-2">
-                {RTP_OPTIONS.map((o) => (
-                  <button
-                    key={o.id}
-                    type="button"
-                    onClick={() => patch({ activeRtpProfile: o.id })}
-                    className={cn(
-                      "rounded-full px-3 py-1.5 text-xs font-bold",
-                      cfg.activeRtpProfile === o.id
-                        ? "bg-amber-500 text-black"
-                        : "bg-white/[0.06] text-muted-foreground",
-                    )}
-                  >
-                    {o.label}
-                  </button>
-                ))}
-              </div>
-              <p className="text-sm">
-                Active target: <strong>{cfg.targetRtp}%</strong>
-              </p>
-              <div className="overflow-x-auto text-xs">
-                <table className="w-full border-collapse">
-                  <thead>
-                    <tr className="border-b border-white/10 text-left text-muted-foreground">
-                      <th className="p-2">Symbol</th>
-                      <th className="p-2">R1</th>
-                      <th className="p-2">R2</th>
-                      <th className="p-2">R3</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {cfg.symbols.map((s) => {
-                      const w =
-                        cfg.rtpProfiles.find((p) => p.id === cfg.activeRtpProfile)?.reelWeights[
-                          s.kind
-                        ] ?? s.reelWeights;
+              )}
+
+              {section === "dead" && (
+                <div className="space-y-4 max-w-md">
+                  <h4 className="text-sm font-bold text-amber-300">
+                    Dead Spin & Seeding Parameters
+                  </h4>
+                  <div className="grid gap-4">
+                    <div>
+                      <label className="text-xs text-muted-foreground font-bold">
+                        Dead Spin Chance: {cfg.deadSpinChancePercent}%
+                      </label>
+                      <input
+                        type="range"
+                        min={0}
+                        max={100}
+                        value={cfg.deadSpinChancePercent}
+                        onChange={(e) =>
+                          setCfg((p) => ({ ...p, deadSpinChancePercent: Number(e.target.value) }))
+                        }
+                        className="w-full mt-2"
+                      />
+                      <p className="text-[11px] text-muted-foreground mt-1">
+                        Chance that an initial board contains NO winning cluster.
+                      </p>
+                    </div>
+
+                    <div>
+                      <label className="text-xs text-muted-foreground font-bold">
+                        Seed Q (Melon) Bias: {cfg.seedMelonBiasPercent}%
+                      </label>
+                      <input
+                        type="range"
+                        min={0}
+                        max={100}
+                        value={cfg.seedMelonBiasPercent}
+                        onChange={(e) =>
+                          setCfg((p) => ({ ...p, seedMelonBiasPercent: Number(e.target.value) }))
+                        }
+                        className="w-full mt-2"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="text-xs text-muted-foreground font-bold">
+                        Max win multiplier: {cfg.maxWinMult.toLocaleString()}×
+                      </label>
+                      <Input
+                        type="number"
+                        min={0}
+                        max={100000}
+                        value={cfg.maxWinMult}
+                        onChange={(e) =>
+                          setCfg((p) => ({ ...p, maxWinMult: Number(e.target.value) }))
+                        }
+                        className="mt-2"
+                      />
+                      <p className="text-[11px] text-muted-foreground mt-1">
+                        Round payout is clamped to bet × this value (₱5 × 10,000× = ₱50,000).
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {section === "symbols" && (
+                <div className="space-y-4">
+                  <h4 className="text-sm font-bold text-amber-300">Symbol Weights & Pay Tables</h4>
+                  <div className="grid gap-3">
+                    {cfg.symbols.map((sym) => {
+                      const spawnPct = cellWeightsForDisplay[sym.id] ?? 0;
                       return (
-                        <tr key={s.kind} className="border-b border-white/5">
-                          <td className="p-2 font-medium">{s.name}</td>
-                          {[0, 1, 2].map((ri) => (
-                            <td key={ri} className="p-2">
-                              <Num
-                                value={w[ri] ?? 0}
-                                onChange={(n) => {
-                                  const rtpProfiles = cfg.rtpProfiles.map((p) => {
-                                    if (p.id !== cfg.activeRtpProfile) return p;
-                                    const reelWeights = { ...p.reelWeights };
-                                    const arr = [...(reelWeights[s.kind] ?? [0, 0, 0])];
-                                    arr[ri] = n;
-                                    reelWeights[s.kind] = arr;
-                                    return { ...p, reelWeights };
-                                  });
-                                  patch({ rtpProfiles });
-                                }}
-                                min={0}
+                        <div
+                          key={sym.id}
+                          className="flex flex-wrap items-center justify-between gap-4 rounded-xl border border-white/10 bg-white/[0.02] p-3"
+                        >
+                          <div className="flex items-center gap-3 min-w-[140px]">
+                            <PantherIcon
+                              kind={sym.kind as LuckyNekoSymKind}
+                              className="size-8 object-contain"
+                            />
+                            <div>
+                              <div className="text-xs font-bold text-white">{sym.label}</div>
+                              <div className="text-[10px] text-amber-400">{spawnPct}% spawn</div>
+                            </div>
+                          </div>
+
+                          {!sym.bomb && (
+                            <div className="flex items-center gap-2">
+                              <span className="text-xs text-muted-foreground">Weight:</span>
+                              <Input
+                                type="number"
+                                value={sym.weight}
+                                onChange={(e) =>
+                                  updateSymbol(sym.id, { weight: Number(e.target.value) })
+                                }
+                                className="w-20 h-8 text-xs"
                               />
-                            </td>
-                          ))}
-                        </tr>
+                            </div>
+                          )}
+
+                          {!sym.scatter && !sym.bomb && (
+                            <div className="flex items-center gap-2">
+                              <span className="text-xs text-muted-foreground">
+                                Pay ({cfg.minCluster}–{cfg.minCluster + 1} / {cfg.minCluster + 2}–
+                                {cfg.minCluster + 3} / {cfg.minCluster + 4}+):
+                              </span>
+                              <Input
+                                type="number"
+                                value={sym.pay[0]}
+                                onChange={(e) =>
+                                  updateSymbol(sym.id, {
+                                    pay: [Number(e.target.value), sym.pay[1], sym.pay[2]],
+                                  })
+                                }
+                                className="w-16 h-8 text-xs"
+                              />
+                              <Input
+                                type="number"
+                                value={sym.pay[1]}
+                                onChange={(e) =>
+                                  updateSymbol(sym.id, {
+                                    pay: [sym.pay[0], Number(e.target.value), sym.pay[2]],
+                                  })
+                                }
+                                className="w-16 h-8 text-xs"
+                              />
+                              <Input
+                                type="number"
+                                value={sym.pay[2]}
+                                onChange={(e) =>
+                                  updateSymbol(sym.id, {
+                                    pay: [sym.pay[0], sym.pay[1], Number(e.target.value)],
+                                  })
+                                }
+                                className="w-16 h-8 text-xs"
+                              />
+                            </div>
+                          )}
+                        </div>
                       );
                     })}
-                  </tbody>
-                </table>
-              </div>
+                  </div>
+                </div>
+              )}
+
+              {section === "mult" && (
+                <div className="space-y-6 max-w-lg">
+                  <h4 className="text-sm font-bold text-amber-300">Wild / Bomb Probabilities</h4>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="text-xs text-muted-foreground font-bold">
+                        Base Game Chance: {cfg.bombChanceBasePercent}%
+                      </label>
+                      <Input
+                        type="number"
+                        value={cfg.bombChanceBasePercent}
+                        onChange={(e) =>
+                          setCfg((p) => ({ ...p, bombChanceBasePercent: Number(e.target.value) }))
+                        }
+                        className="mt-1"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-xs text-muted-foreground font-bold">
+                        Free Spins Chance: {cfg.bombChanceFreeSpinsPercent}%
+                      </label>
+                      <Input
+                        type="number"
+                        value={cfg.bombChanceFreeSpinsPercent}
+                        onChange={(e) =>
+                          setCfg((p) => ({
+                            ...p,
+                            bombChanceFreeSpinsPercent: Number(e.target.value),
+                          }))
+                        }
+                        className="mt-1"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="text-xs text-muted-foreground font-bold">
+                      FS bomb multiplier ceiling
+                    </label>
+                    <Input
+                      type="number"
+                      min={0}
+                      max={5}
+                      value={cfg.maxFsBombMult}
+                      onChange={(e) =>
+                        setCfg((p) => ({ ...p, maxFsBombMult: Number(e.target.value) }))
+                      }
+                      className="mt-1 max-w-xs"
+                    />
+                    <p className="text-[11px] text-muted-foreground mt-1">
+                      Only 2x / 3x / 4x / 5x bombs are allowed. Free spins keep the highest winning
+                      bomb and apply it once at the end.
+                    </p>
+                  </div>
+
+                  <div className="space-y-2">
+                    <h5 className="text-xs font-bold text-white">
+                      Multiplier Weights (2x / 3x / 4x / 5x only)
+                    </h5>
+                    <div className="grid grid-cols-2 gap-2">
+                      {LUCKY_NEKO_BOMB_MULTS.map((mult, idx) => {
+                        const b = cfg.bombTable[idx] ?? { mult, weight: 0 };
+                        return (
+                          <div
+                            key={mult}
+                            className="flex items-center justify-between rounded-lg border border-white/10 bg-white/[0.02] px-3 py-1.5"
+                          >
+                            <span className="text-xs font-bold text-yellow-300">{mult}x</span>
+                            <div className="flex items-center gap-2">
+                              <span className="text-[10px] text-muted-foreground">
+                                {bombPercents[mult] ?? 0}%
+                              </span>
+                              <Input
+                                type="number"
+                                value={b.weight}
+                                onChange={(e) => {
+                                  const val = Number(e.target.value);
+                                  setCfg((p) => ({
+                                    ...p,
+                                    bombTable: LUCKY_NEKO_BOMB_MULTS.map((rowMult, rowIdx) => {
+                                      const prev = p.bombTable[rowIdx] ?? {
+                                        mult: rowMult,
+                                        weight: 0,
+                                      };
+                                      return rowIdx === idx
+                                        ? { mult: rowMult, weight: val }
+                                        : { mult: rowMult, weight: prev.weight };
+                                    }),
+                                  }));
+                                }}
+                                className="w-16 h-7 text-xs"
+                              />
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {section === "freespins" && (
+                <div className="space-y-4 max-w-md">
+                  <h4 className="text-sm font-bold text-amber-300">Free Spins & Feature Buy</h4>
+                  <div className="grid gap-3">
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <label className="text-xs text-muted-foreground">Trigger Scatters</label>
+                        <Input
+                          type="number"
+                          value={cfg.freeSpinsTriggerCount}
+                          onChange={(e) =>
+                            setCfg((p) => ({ ...p, freeSpinsTriggerCount: Number(e.target.value) }))
+                          }
+                          className="mt-1"
+                        />
+                      </div>
+                      <div>
+                        <label className="text-xs text-muted-foreground">Base Free Spins</label>
+                        <Input
+                          type="number"
+                          value={cfg.freeSpinsBase}
+                          onChange={(e) =>
+                            setCfg((p) => ({ ...p, freeSpinsBase: Number(e.target.value) }))
+                          }
+                          className="mt-1"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <label className="text-xs text-muted-foreground">Retrigger Scatters</label>
+                        <Input
+                          type="number"
+                          value={cfg.freeSpinsRetriggerCount}
+                          onChange={(e) =>
+                            setCfg((p) => ({
+                              ...p,
+                              freeSpinsRetriggerCount: Number(e.target.value),
+                            }))
+                          }
+                          className="mt-1"
+                        />
+                      </div>
+                      <div>
+                        <label className="text-xs text-muted-foreground">Retrigger Spins</label>
+                        <Input
+                          type="number"
+                          value={cfg.freeSpinsRetrigger}
+                          onChange={(e) =>
+                            setCfg((p) => ({ ...p, freeSpinsRetrigger: Number(e.target.value) }))
+                          }
+                          className="mt-1"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-3 pt-2">
+                      <div>
+                        <label className="text-xs text-muted-foreground">
+                          Buy price per spin at the standard award (× bet; other quantities follow
+                          the calibrated curve)
+                        </label>
+                        <Input
+                          type="number"
+                          value={cfg.buyFeatureMult}
+                          onChange={(e) =>
+                            setCfg((p) => ({ ...p, buyFeatureMult: Number(e.target.value) }))
+                          }
+                          className="mt-1"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
             </>
-          ) : (
-            <div className="space-y-4">
-              <p className="text-[11px] text-amber-300/80">
-                Max win 375× is single-sourced / unconfirmed. Engine min/max bet gate spins.
-              </p>
-              <div className="grid gap-3 sm:grid-cols-2">
-                <label className="space-y-1 text-xs font-semibold text-muted-foreground">
-                  Max win × stake (0 = off)
-                  <Num value={cfg.maxWinMult} onChange={(n) => patch({ maxWinMult: n })} min={0} />
-                </label>
-                <label className="space-y-1 text-xs font-semibold text-muted-foreground">
-                  Engine min bet
-                  <Num
-                    value={cfg.minBet}
-                    onChange={(n) => patch({ minBet: n })}
-                    step={0.01}
-                    min={0.01}
-                  />
-                </label>
-                <label className="space-y-1 text-xs font-semibold text-muted-foreground">
-                  Engine max bet
-                  <Num
-                    value={cfg.maxBet}
-                    onChange={(n) => patch({ maxBet: n })}
-                    step={1}
-                    min={0.01}
-                  />
-                </label>
-              </div>
-            </div>
           )}
         </div>
-
-        {section !== "lobby" && (
-          <div className="flex items-center justify-end gap-2 border-t border-white/10 px-4 py-3">
-            <button
-              type="button"
-              className="rounded-lg border border-white/15 px-3 py-2 text-sm"
-              onClick={() => onOpenChange(false)}
-            >
-              Close
-            </button>
-            <button
-              type="button"
-              disabled={saving}
-              className="inline-flex items-center gap-1 rounded-lg bg-amber-500 px-4 py-2 text-sm font-bold text-black disabled:opacity-50"
-              onClick={() => void saveEngine()}
-            >
-              <Save className="size-4" /> {saving ? "Saving…" : "Save engine"}
-            </button>
-          </div>
-        )}
       </DialogContent>
     </Dialog>
   );

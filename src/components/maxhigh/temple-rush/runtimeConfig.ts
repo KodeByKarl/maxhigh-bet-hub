@@ -1,5 +1,5 @@
 /**
- * Active Pirate Plunder config for the client engine.
+ * Active Temple Rush config for the client engine.
  * Superadmin values are loaded at play time; defaults until then.
  */
 import {

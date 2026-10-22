@@ -4,41 +4,42 @@ import { usePreferences } from "./preferences";
 const DICTIONARY: Record<string, Record<string, string>> = {
   en: {
     // Sidebar / Navigation
-    "Home": "Home",
-    "Favourites": "Favourites",
+    Home: "Home",
+    Favourites: "Favourites",
     "Latest Releases": "Latest Releases",
-    "Slots": "Slots",
-    "Cards": "Cards",
-    "Fishing": "Fishing",
-    "VIP": "VIP",
-    "Live Support": "Live Support",
+    Slots: "Slots",
+    Cards: "Cards",
+    Fishing: "Fishing",
+    VIP: "VIP",
+
     "Mega Jackpot": "Mega Jackpot",
     "Ultra Mega Jackpot": "Ultra Mega Jackpot",
     "Display only · Not winnable": "Display only · Not winnable",
-    
+
     // Navbar
-    "Balance": "Balance",
-    "Deposit": "Deposit",
-    "Withdraw": "Withdraw",
+    Balance: "Balance",
+    Deposit: "Deposit",
+    Withdraw: "Withdraw",
     "Transaction history": "Transaction history",
-    "Notifications": "Notifications",
-    "Settings": "Settings",
-    "World": "World",
+    Notifications: "Notifications",
+    Settings: "Settings",
+    World: "World",
     "Log out": "Log out",
     "Log out?": "Log out?",
-    "Are you sure you want to log out of MaxHigh? You can sign back in anytime.": "Are you sure you want to log out of MaxHigh? You can sign back in anytime.",
-    "Cancel": "Cancel",
+    "Are you sure you want to log out of MaxHigh? You can sign back in anytime.":
+      "Are you sure you want to log out of MaxHigh? You can sign back in anytime.",
+    Cancel: "Cancel",
     "Yes, log out": "Yes, log out",
     "Sign in": "Sign in",
 
     // Lobby
-    "Lobby": "Lobby",
+    Lobby: "Lobby",
     "Popular Games": "Popular Games",
     "Total Bets": "Total Bets",
     "Players Online": "Players Online",
     "Biggest Win 24h": "Biggest Win 24h",
     "Hot Streak": "Hot Streak",
-    
+
     // Settings
     "Change Password": "Change Password",
     "Update your MaxHigh account credentials.": "Update your MaxHigh account credentials.",
@@ -53,44 +54,48 @@ const DICTIONARY: Record<string, Record<string, string>> = {
     "One number": "One number",
     "One special character": "One special character",
     "Enable AutoSave": "Enable AutoSave",
-    "Automatically save password once all rules are met and confirmed.": "Automatically save password once all rules are met and confirmed.",
+    "Automatically save password once all rules are met and confirmed.":
+      "Automatically save password once all rules are met and confirmed.",
     "Hide balance in header": "Hide balance in header",
     "Shows •••• instead of your coin balance.": "Shows •••• instead of your coin balance.",
     "Save Password": "Save Password",
     "Saving changes…": "Saving changes…",
     "Saved successfully": "Saved successfully",
     "Failed to save": "Failed to save",
-    
-    "Gameplay": "Gameplay",
-    "Alerts": "Alerts",
-    "Privacy": "Privacy",
-    "Language": "Language",
-    "Currency": "Currency",
-    "Timezone": "Timezone",
+
+    Gameplay: "Gameplay",
+    Alerts: "Alerts",
+    Privacy: "Privacy",
+    Language: "Language",
+    Currency: "Currency",
+    Timezone: "Timezone",
     "Date format": "Date format",
-    "Fixed": "Fixed",
-    "All balances, bets, and jackpots display in ₱ Philippine Peso.": "All balances, bets, and jackpots display in ₱ Philippine Peso.",
-    
+    Fixed: "Fixed",
+    "All balances, bets, and jackpots display in ₱ Philippine Peso.":
+      "All balances, bets, and jackpots display in ₱ Philippine Peso.",
+
     // Additional keys
-    "Games": "Games",
-    "Account": "Account",
+    Games: "Games",
+    Account: "Account",
     "View All": "View All",
     "Live jackpot · Updates as you play": "Live jackpot · Updates as you play",
-    "Weak": "Weak",
-    "Medium": "Medium",
-    "Strong": "Strong",
-    "None": "None",
+    Weak: "Weak",
+    Medium: "Medium",
+    Strong: "Strong",
+    None: "None",
     "Live Support": "Live Support",
-    "We're online 24/7 — average response 2 minutes.": "We're online 24/7 — average response 2 minutes.",
-    "Email": "Email",
+    "We're online 24/7 — average response 2 minutes.":
+      "We're online 24/7 — average response 2 minutes.",
+    Email: "Email",
     "Help Center": "Help Center",
     "Guides & FAQ": "Guides & FAQ",
-    "Online": "Online",
+    Online: "Online",
     "Live Chat": "Live Chat",
     "Fastest way to reach us": "Fastest way to reach us",
     "Automated Services": "Automated Services",
     "Quick actions to solve problems instantly.": "Quick actions to solve problems instantly.",
-    "Select a service below to run an instant automated diagnostic checkup on your account.": "Select a service below to run an instant automated diagnostic checkup on your account.",
+    "Select a service below to run an instant automated diagnostic checkup on your account.":
+      "Select a service below to run an instant automated diagnostic checkup on your account.",
     "Check Deposit Status": "Check Deposit Status",
     "Check my deposit status": "Check my deposit status",
     "Check Withdrawal Status": "Check Withdrawal Status",
@@ -102,41 +107,42 @@ const DICTIONARY: Record<string, Record<string, string>> = {
   },
   tl: {
     // Sidebar / Navigation
-    "Home": "Umpisa",
-    "Favourites": "Paborito",
+    Home: "Umpisa",
+    Favourites: "Paborito",
     "Latest Releases": "Bagong Labas",
-    "Slots": "Slots",
-    "Cards": "Mga Kard",
-    "Fishing": "Pangingisda",
-    "VIP": "VIP",
-    "Live Support": "Tulong",
+    Slots: "Slots",
+    Cards: "Mga Kard",
+    Fishing: "Pangingisda",
+    VIP: "VIP",
+
     "Mega Jackpot": "Mega Jackpot",
     "Ultra Mega Jackpot": "Ultra Mega Jackpot",
     "Display only · Not winnable": "Display lang · Hindi mapanalunan",
-    
+
     // Navbar
-    "Balance": "Balanse",
-    "Deposit": "Mag-deposit",
-    "Withdraw": "Mag-withdraw",
+    Balance: "Balanse",
+    Deposit: "Mag-deposit",
+    Withdraw: "Mag-withdraw",
     "Transaction history": "Kasaysayan ng Pera",
-    "Notifications": "Mga Abiso",
-    "Settings": "Mga Setting",
-    "World": "Mundo",
+    Notifications: "Mga Abiso",
+    Settings: "Mga Setting",
+    World: "Mundo",
     "Log out": "Mag-log out",
     "Log out?": "Mag-log out?",
-    "Are you sure you want to log out of MaxHigh? You can sign back in anytime.": "Sigurado ka bang gusto mong mag-log out sa MaxHigh? Pwede kang pumasok ulit kahit kailan.",
-    "Cancel": "Kanselahin",
+    "Are you sure you want to log out of MaxHigh? You can sign back in anytime.":
+      "Sigurado ka bang gusto mong mag-log out sa MaxHigh? Pwede kang pumasok ulit kahit kailan.",
+    Cancel: "Kanselahin",
     "Yes, log out": "Oo, mag-log out",
     "Sign in": "Mag-sign in",
 
     // Lobby
-    "Lobby": "Lobby",
+    Lobby: "Lobby",
     "Popular Games": "Mga Sikat na Laro",
     "Total Bets": "Kabuuan ng Pusta",
     "Players Online": "Mga Manlalarong Online",
     "Biggest Win 24h": "Pinakamalaking Panalo ngayon",
     "Hot Streak": "Sunod-sunod na Panalo",
-    
+
     // Settings
     "Change Password": "Palitan ang Password",
     "Update your MaxHigh account credentials.": "I-update ang mga detalye ng iyong password.",
@@ -151,44 +157,48 @@ const DICTIONARY: Record<string, Record<string, string>> = {
     "One number": "May isang numero (0-9)",
     "One special character": "May isang espesyal na karakter (gaya ng @, !, $)",
     "Enable AutoSave": "I-on ang AutoSave",
-    "Automatically save password once all rules are met and confirmed.": "Awtomatikong i-save ang password kapag tama ang lahat ng patakaran.",
+    "Automatically save password once all rules are met and confirmed.":
+      "Awtomatikong i-save ang password kapag tama ang lahat ng patakaran.",
     "Hide balance in header": "Itago ang balanse sa itaas",
     "Shows •••• instead of your coin balance.": "Ipakita ang •••• sa halip na pera mo.",
     "Save Password": "I-save ang Password",
     "Saving changes…": "Sinesave ang mga pagbabago…",
     "Saved successfully": "Matagumpay na na-save",
     "Failed to save": "Bigong ma-save",
-    
-    "Gameplay": "Gameplay",
-    "Alerts": "Mga Alerto",
-    "Privacy": "Privacy",
-    "Language": "Wika",
-    "Currency": "Pera",
-    "Timezone": "Timezone",
+
+    Gameplay: "Gameplay",
+    Alerts: "Mga Alerto",
+    Privacy: "Privacy",
+    Language: "Wika",
+    Currency: "Pera",
+    Timezone: "Timezone",
     "Date format": "Format ng Petsa",
-    "Fixed": "Naka-fix",
-    "All balances, bets, and jackpots display in ₱ Philippine Peso.": "Ang lahat ng balanse, bet, at jackpot ay ipinapakita sa ₱ Philippine Peso.",
-    
+    Fixed: "Naka-fix",
+    "All balances, bets, and jackpots display in ₱ Philippine Peso.":
+      "Ang lahat ng balanse, bet, at jackpot ay ipinapakita sa ₱ Philippine Peso.",
+
     // Additional keys
-    "Games": "Mga Laro",
-    "Account": "Account",
+    Games: "Mga Laro",
+    Account: "Account",
     "View All": "Tingnan Lahat",
     "Live jackpot · Updates as you play": "Live jackpot · Nagbabago habang naglalaro",
-    "Weak": "Mahina",
-    "Medium": "Katamtaman",
-    "Strong": "Malakas",
-    "None": "Wala",
+    Weak: "Mahina",
+    Medium: "Katamtaman",
+    Strong: "Malakas",
+    None: "Wala",
     "Live Support": "Tulong",
-    "We're online 24/7 — average response 2 minutes.": "Online kami 24/7 — sagot sa loob ng 2 minuto.",
-    "Email": "Email",
+    "We're online 24/7 — average response 2 minutes.":
+      "Online kami 24/7 — sagot sa loob ng 2 minuto.",
+    Email: "Email",
     "Help Center": "Gabay at FAQ",
     "Guides & FAQ": "Mga Gabay at FAQ",
-    "Online": "Naka-online",
+    Online: "Naka-online",
     "Live Chat": "Live Chat",
     "Fastest way to reach us": "Pinakamabilis na paraan",
     "Automated Services": "Mabilisang Solusyon",
     "Quick actions to solve problems instantly.": "Mga mabilisang solusyon sa iyong mga tanong.",
-    "Select a service below to run an instant automated diagnostic checkup on your account.": "Pumili ng serbisyo sa ibaba upang awtomatikong suriin ang iyong account.",
+    "Select a service below to run an instant automated diagnostic checkup on your account.":
+      "Pumili ng serbisyo sa ibaba upang awtomatikong suriin ang iyong account.",
     "Check Deposit Status": "Suriin ang Deposit",
     "Check my deposit status": "Suriin ang aking deposit",
     "Check Withdrawal Status": "Suriin ang Withdrawal",
@@ -197,13 +207,13 @@ const DICTIONARY: Record<string, Record<string, string>> = {
     "Claim my weekly bonus": "Kumuha ng aking weekly bonus",
     "Account Security Check": "Suriin ang Seguridad",
     "Check my account security": "Suriin ang aking seguridad",
-  }
+  },
 };
 
-export function useTranslation() {
+export function useTranslation(): { t: (key: string) => string; lang: "en" | "tl" } {
   const prefs = usePreferences();
   const lang = prefs.language === "tl" ? "tl" : "en";
-  
+
   return {
     t: (key: string) => {
       return DICTIONARY[lang]?.[key] ?? key;

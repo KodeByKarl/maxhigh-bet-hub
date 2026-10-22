@@ -1,60 +1,104 @@
 /**
- * Godly Gates — 6×5 ways cascading slot (ported from Golden Empire).
- * Engine resolves on the server; this file plays back the animation script.
+ * Godly Gates — 8×4 cluster-pay tumble slot (panther rectangle board).
+ * Engine resolves spins instantly; this file plays back the animation script.
+ *
+ * Performance notes:
+ * - Playback is abortable (unmount / overlapping spin) to avoid stale setState.
+ * - Timed overlays (banner / win popup) share a cleared timeout registry.
+ * - Auto / free-spin loops call a stable spinRef to avoid stale closures.
+ * - Reel cells are memoized; engine math stays off the animation thread.
  */
 import { useCallback, useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
+import { FastForward, Info, RotateCcw, RotateCw, Square, Volume2, VolumeX } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/lib/auth";
 import { formatMoney, formatMoneyCompact } from "@/lib/currency";
+import { godlyGatesAudio } from "./godly-gates/audio";
 import {
-  getGodlyGatesSessionFn,
   godlyGatesBuyFeatureFn,
   godlyGatesFreeSpinFn,
   godlyGatesSpinFn,
+  getGodlyGatesSessionFn,
 } from "@/functions/api";
-import { ANIM, EASE, columnDominoMs } from "./godly-gates/animationConfig";
-import { geAudio, GE_SOUND_FILES } from "./godly-gates/audio";
-import { AudioLoadBar } from "./godly-gates/AudioLoadBar";
-import { ControlBar } from "./godly-gates/ControlBar";
-import { FreeSpinsBadge } from "./godly-gates/FreeSpinsBadge";
-import { FreeSpinIntro, ScatterGatherOverlay } from "./godly-gates/FreeSpinIntro";
-import { GodlyGatesSidePanel } from "./godly-gates/GodlyGatesSidePanel";
-import { buildBoard, initialBoard, nextKey } from "./godly-gates/gridState";
-import { ASSET, getBuyFeatureMult } from "./godly-gates/paytable";
-import { getRuntimeSymbols, setGodlyGatesConfig } from "./godly-gates/runtimeConfig";
-import type { BoardCell, SpinScript, WayWin } from "./godly-gates/types";
-import { COLS, ROWS } from "./godly-gates/types";
-import { SymbolIcon } from "./godly-gates/SymbolIcon";
-import { WaysWinOverlay } from "./godly-gates/WaysWinOverlay";
+import { ANIM } from "./godly-gates/animationConfig";
+import {
+  getAutoSpinGapMs,
+  getDropWaitMs,
+  getPopWaitMs,
+  getRefillWaitMs,
+  scaleWaitMs,
+} from "./godly-gates/playbackHelpers";
+import { BetSelectModal } from "./godly-gates/BetSelectModal";
+import { buildBuyScatterIntroBoard, initialBoard } from "./godly-gates/gridState";
+import { BET_STEPS, BUY_FS_START_BET, getAnteMult, getBuyUnitPrice } from "./godly-gates/paytable";
+import { setGodlyGatesConfig } from "./godly-gates/runtimeConfig";
+import type { BoardCell, SpinScript } from "./godly-gates/types";
+import { CELLS } from "./godly-gates/types";
 import { WinCelebration } from "./godly-gates/WinCelebration";
-import { PharaohMascot, type MascotMood } from "./godly-gates/PharaohMascot";
+import { FreeSpinsCongrats } from "./godly-gates/FreeSpinsCongrats";
+import { FreeSpinsTriggerModal } from "./godly-gates/FreeSpinsTriggerModal";
+import { BuyFeatureModal } from "./godly-gates/BuyFeatureModal";
+import { PaytableModal } from "./godly-gates/PaytableModal";
+import { AutoSpinModal, type AutoSpinOptions } from "./godly-gates/AutoSpinModal";
+import { ReelGrid, type ReelVisuals } from "./godly-gates/ReelGrid";
+import { godlyGatesTheme } from "./godly-gates/theme";
+import { themeToCssVars } from "./panther-shared/theme";
+import { type ReelPhase } from "./godly-gates/ReelCell";
+import { getGodlyGatesEngineConfigFn } from "@/functions/superadmin";
 import { GODLY_GATES_GAME_ID } from "@/lib/godly-gates-config";
 
-type Phase = "idle" | "dropping" | "glow" | "popping" | "falling" | "scatter";
+type Phase = ReelPhase;
 type Slot = BoardCell | null;
+type WinPopup = {
+  amount: number;
+  baseEarn?: number | null;
+  multiplier?: number | null;
+};
+type FsSummary = {
+  amount: number;
+  baseEarn: number;
+  multiplier: number;
+  spinsPlayed: number;
+};
 
+/** Stable empty collections — avoid allocating on every clear. */
+const EMPTY_SET = new Set<string>();
+const EMPTY_PAY = new Map<string, number>();
+const EMPTY_FALL: Record<string, number> = Object.freeze({}) as Record<string, number>;
+/** Always exactly CELLS slots — never shrink the grid. */
 function asSlots(board: BoardCell[]): Slot[] {
-  const slots: Slot[] = Array.from({ length: COLS * ROWS }, () => null);
-  for (let i = 0; i < Math.min(board.length, slots.length); i++) slots[i] = board[i];
+  const slots: Slot[] = Array.from({ length: CELLS }, () => null);
+  const n = Math.min(board.length, slots.length);
+  for (let i = 0; i < n; i++) slots[i] = board[i];
   return slots;
 }
 
-function rAFWait(ms: number): Promise<void> {
-  return new Promise((resolve) => {
-    const start = performance.now();
-    const tick = (now: number) => {
-      if (now - start >= ms) resolve();
-      else requestAnimationFrame(tick);
-    };
-    requestAnimationFrame(tick);
-  });
+function betIndex(bet: number) {
+  const i = BET_STEPS.findIndex((v) => v >= bet);
+  if (i === -1) return BET_STEPS.length - 1;
+  return i;
+}
+
+/** Prefetch symbol + backdrop images once (browser cache / decode ahead of spin). */
+function preloadAssets() {
+  godlyGatesAudio.preload();
+  if (typeof Image === "undefined") return;
+  const urls = [
+    godlyGatesTheme.assets.backdrop,
+    godlyGatesTheme.assets.loadingBg,
+    ...Object.values(godlyGatesTheme.assets.icons),
+  ];
+  for (const src of urls) {
+    const img = new Image();
+    img.decoding = "async";
+    img.src = src;
+  }
 }
 
 export function GodlyGatesSlot({
   gameId = "godly-gates",
-  gameName = "Godly Gates",
 }: {
   gameId?: string;
   gameName?: string;
@@ -62,892 +106,1270 @@ export function GodlyGatesSlot({
   const { user, setBalanceLocal, refreshJackpot } = useAuth();
   const balance = user?.balance ?? 0;
   const playSessionIdRef = useRef<string | null>(null);
-  const [bet, setBet] = useState(1);
+  const [bet, setBet] = useState(5);
+  const [ante, setAnte] = useState(false);
   const [slots, setSlots] = useState<Slot[]>(() => asSlots(initialBoard()));
   const [phase, setPhase] = useState<Phase>("idle");
-  const [winningKeys, setWinningKeys] = useState<Set<string>>(new Set());
-  const [spawnedKeys, setSpawnedKeys] = useState<Set<string>>(new Set());
-  const [fallenKeys, setFallenKeys] = useState<Set<string>>(new Set());
-  const [fallDistance, setFallDistance] = useState<Record<string, number>>({});
-  const [animTick, setAnimTick] = useState(0);
+  const [winningKeys, setWinningKeys] = useState<Set<string>>(EMPTY_SET);
+  const [payoutByKey, setPayoutByKey] = useState<Map<string, number>>(EMPTY_PAY);
+  const [spawnedKeys, setSpawnedKeys] = useState<Set<string>>(EMPTY_SET);
+  const [fallenKeys, setFallenKeys] = useState<Set<string>>(EMPTY_SET);
+  const [fallDistance, setFallDistance] = useState<Record<string, number>>(EMPTY_FALL);
   const [autoSpin, setAutoSpin] = useState(false);
+  const [autoSpinModalOpen, setAutoSpinModalOpen] = useState(false);
+  const [autoSpinConfig, setAutoSpinConfig] = useState<AutoSpinOptions | null>(null);
+  const [remainingAutoSpins, setRemainingAutoSpins] = useState<number | "infinity">(0);
+  const startBalance = useRef(balance);
   const [turbo, setTurbo] = useState(false);
-  const [muted, setMuted] = useState(() => geAudio.isMuted);
   const [lastWin, setLastWin] = useState(0);
-  const [totalWin, setTotalWin] = useState(0);
   const [freeSpins, setFreeSpins] = useState(0);
   const [inFree, setInFree] = useState(false);
-  const [fsMult, setFsMult] = useState(1);
   const [fsSessionWin, setFsSessionWin] = useState(0);
   const [dropTotal, setDropTotal] = useState(0);
+  const [tumbleStepWin, setTumbleStepWin] = useState(0);
   const [banner, setBanner] = useState<string | null>(null);
-  const [winPopup, setWinPopup] = useState<{ amount: number; multiplier: number } | null>(null);
-  const [fsSummary, setFsSummary] = useState<{
-    amount: number;
-    baseEarn: number;
-    multiplier: number;
-  } | null>(null);
-  const [mascotMood, setMascotMood] = useState<MascotMood>("idle");
-  const [mascotPulse, setMascotPulse] = useState(0);
-  const [overlayWays, setOverlayWays] = useState<WayWin[]>([]);
-  const [overlayMult, setOverlayMult] = useState(1);
-  const [showPaytable, setShowPaytable] = useState(false);
-  const [audioLoaded, setAudioLoaded] = useState(0);
-  const [audioTotal, setAudioTotal] = useState(() => Object.keys(GE_SOUND_FILES).length);
-  const [fsIntroSpins, setFsIntroSpins] = useState<number | null>(null);
-  const [scatterPoints, setScatterPoints] = useState<
-    { x: number; y: number; key: string }[] | null
-  >(null);
+  const [winPopup, setWinPopup] = useState<WinPopup | null>(null);
+  const [fsSummary, setFsSummary] = useState<FsSummary | null>(null);
+  const [triggerModalCount, setTriggerModalCount] = useState<number | null>(null);
+  const [buyOpen, setBuyOpen] = useState(false);
+  const [buyMode, setBuyMode] = useState<"normal" | "super">("normal");
+  const [infoOpen, setInfoOpen] = useState(false);
+  const [betModalOpen, setBetModalOpen] = useState(false);
+  const [fsPaused, setFsPaused] = useState(false);
+  const [muted, setMuted] = useState(() => godlyGatesAudio.isMuted);
 
   const busy = phase !== "idle";
-  const busyRef = useRef(false);
-  const freeSpinsRef = useRef(0);
-  const fsSessionRef = useRef(0);
-  const fsMultRef = useRef(1);
-  const gridRef = useRef<HTMLDivElement>(null);
-  const turboRef = useRef(turbo);
-  turboRef.current = turbo;
+  const totalBet = +(bet * (ante ? getAnteMult() : 1)).toFixed(2);
+  const buyCost = getBuyUnitPrice(BUY_FS_START_BET, 1);
 
+  const busyRef = useRef(false);
+  const skipRef = useRef(false);
+  const turboRef = useRef(turbo);
+  const mountedRef = useRef(true);
+  const playbackGen = useRef(0);
+  const freeSpinsRef = useRef(freeSpins);
+  const fsSessionRef = useRef(fsSessionWin);
+  const fsSpinsPlayedRef = useRef(0);
+  const timersRef = useRef<Set<ReturnType<typeof setTimeout>>>(new Set());
+  const spinRef = useRef<(asFree?: boolean) => Promise<void>>(async () => undefined);
+  const triggerModalResolveRef = useRef<(() => void) | null>(null);
+
+  turboRef.current = turbo;
   freeSpinsRef.current = freeSpins;
   fsSessionRef.current = fsSessionWin;
-  fsMultRef.current = fsMult;
 
-  useEffect(() => {
-    let alive = true;
-    void geAudio
-      .preload((loaded, total) => {
-        if (!alive) return;
-        setAudioLoaded(loaded);
-        setAudioTotal(total);
-      })
-      .finally(() => {
-        if (!alive) return;
-        // Always dismiss the bar when preload settles (even if some files failed).
-        const total = Object.keys(GE_SOUND_FILES).length;
-        setAudioTotal(total);
-        setAudioLoaded(total);
-      });
-    return () => {
-      alive = false;
-      geAudio.stopAmbient();
-    };
+  const reelVisuals: ReelVisuals = {
+    slots,
+    phase,
+    winningKeys,
+    payoutByKey,
+    spawnedKeys,
+    fallenKeys,
+    fallDistance,
+  };
+
+  const clearTrackedTimers = useCallback(() => {
+    for (const id of timersRef.current) clearTimeout(id);
+    timersRef.current.clear();
   }, []);
 
-
-
-  const wait = (ms: number) => rAFWait(turboRef.current ? Math.round(ms * 0.45) : ms);
-
-  /** Staggered reel-stop thunks left→right during column land. */
-  const playColumnStops = (cols: number) => {
-    const factor = turboRef.current ? 0.45 : 1;
-    for (let c = 0; c < cols; c++) {
-      const delay = (c * ANIM.dropStaggerCol + ANIM.dropDuration * 0.72) * factor;
-      window.setTimeout(() => geAudio.playReelStop(c), delay);
-    }
-  };
-
-  const gatherScatters = async (board: BoardCell[]) => {
-    const grid = gridRef.current;
-    if (!grid) return;
-    const rect = grid.getBoundingClientRect();
-    const cellW = rect.width / COLS;
-    const cellH = rect.height / ROWS;
-    const points = board
-      .map((cell, i) => ({ cell, i }))
-      .filter(({ cell }) => cell.sym.scatter)
-      .map(({ cell, i }) => {
-        const col = i % COLS;
-        const row = Math.floor(i / COLS);
-        return {
-          key: cell.key,
-          x: col * cellW + cellW / 2,
-          y: row * cellH + cellH / 2,
-        };
-      });
-    if (points.length < 3) return;
-
-    setPhase("scatter");
-    setScatterPoints(points);
-    geAudio.playScatterTrigger();
-    await wait(ANIM.scatterGather + ANIM.scatterFlash);
-    setScatterPoints(null);
-  };
-
-  const playScript = useCallback(async (script: SpinScript, isFree: boolean) => {
-    if (isFree) {
-      fsMultRef.current = script.endMultiplier;
-      setFsMult(script.endMultiplier);
-    }
-
-    setDropTotal(0);
-    setWinningKeys(new Set());
-    setSpawnedKeys(new Set());
-    setFallenKeys(new Set());
-    setFallDistance({});
-
-    setMascotMood("spin");
-    setMascotPulse((n) => n + 1);
-    setPhase("dropping");
-    setSlots(asSlots(script.initialBoard));
-    setAnimTick((t) => t + 1);
-    geAudio.startSpinLoop();
-    playColumnStops(COLS);
-    await wait(columnDominoMs(COLS));
-    geAudio.stopSpinLoop();
-
-    let running = 0;
-
-    for (const step of script.steps) {
-      setSlots(asSlots(step.board));
-      setWinningKeys(new Set(step.winningKeys));
-      setOverlayWays(step.ways);
-      setOverlayMult(step.multiplier);
-      running += step.cascadeWin;
-      setDropTotal(running);
-      if (step.cascadeWin > 0) {
-        setMascotMood("win");
-        setMascotPulse((n) => n + 1);
-        geAudio.playCascadeTick();
-      }
-      if (isFree && running > 0) {
-        setLastWin(+(fsSessionRef.current + running).toFixed(2));
-      }
-      setPhase("glow");
-      await wait(ANIM.glowDuration);
-
-      setPhase("popping");
-      setOverlayWays([]);
-      await wait(ANIM.popDuration);
-      setSlots(step.afterPop.length === COLS * ROWS ? step.afterPop : asSlots(step.board));
-      setWinningKeys(new Set());
-      await wait(60);
-
-      setSpawnedKeys(new Set(step.spawnedKeys));
-      setFallenKeys(new Set(step.fallenKeys));
-      setFallDistance(step.fallDistance ?? {});
-      setSlots(asSlots(step.afterFall));
-      setAnimTick((t) => t + 1);
-      setPhase("falling");
-      playColumnStops(COLS);
-      geAudio.playCascadeTick();
-      await wait(columnDominoMs(COLS));
-
-      setSpawnedKeys(new Set());
-      setFallenKeys(new Set());
-      setFallDistance({});
-      await wait(ANIM.betweenCascades);
-    }
-
-    if (script.freeSpinsAwarded > 0 && !isFree) {
-      const settleBoard =
-        script.steps.length > 0
-          ? script.steps[script.steps.length - 1].afterFall
-          : script.initialBoard;
-      await gatherScatters(settleBoard);
-    }
-
-    setMascotMood(script.totalWin > 0 || script.freeSpinsAwarded > 0 ? "celebrate" : "idle");
-    setMascotPulse((n) => n + 1);
-    setPhase("idle");
-    setSpawnedKeys(new Set());
-    setFallenKeys(new Set());
-    setFallDistance({});
-    return script;
+  const schedule = useCallback((fn: () => void, ms: number) => {
+    const id = setTimeout(() => {
+      timersRef.current.delete(id);
+      if (mountedRef.current) fn();
+    }, ms);
+    timersRef.current.add(id);
+    return id;
   }, []);
 
-  const showTotalWin = (amount: number, multiplier = 1) => {
-    if (amount <= 0) return;
-    geAudio.playWin(amount, bet);
-    setWinPopup({ amount, multiplier });
-    window.setTimeout(() => setWinPopup(null), ANIM.bannerHold + 1400);
-  };
-
-  const applySession = (session: {
-    sessionId: string | null;
-    freeSpinsLeft: number;
-    fsSessionWin: number;
-    fsMult: number;
-    fsSpinsPlayed: number;
-    inFree: boolean;
-  }) => {
-    playSessionIdRef.current = session.sessionId;
-    setInFree(session.inFree);
-    setFreeSpins(session.freeSpinsLeft);
-    setFsMult(session.fsMult);
-    setFsSessionWin(session.fsSessionWin);
-    freeSpinsRef.current = session.freeSpinsLeft;
-    fsMultRef.current = session.fsMult;
-    fsSessionRef.current = session.fsSessionWin;
-  };
-
-  const finishBase = async (
-    script: SpinScript,
-    session: { sessionId: string | null; freeSpinsLeft: number; inFree: boolean },
-  ) => {
-    if (script.totalWin > 0) {
-      setLastWin(script.totalWin);
-      setTotalWin((t) => +(t + script.totalWin).toFixed(2));
-    } else {
-      setLastWin(0);
-    }
-
-    if (session.inFree && session.freeSpinsLeft > 0) {
-      geAudio.playFreespinIntro();
-      setFsIntroSpins(session.freeSpinsLeft);
-      applySession({
-        sessionId: session.sessionId,
-        freeSpinsLeft: session.freeSpinsLeft,
-        fsSessionWin: 0,
-        fsMult: 1,
-        fsSpinsPlayed: 0,
-        inFree: true,
-      });
-      setLastWin(0);
-      await wait(ANIM.freespinIntroHold);
-      setFsIntroSpins(null);
-    } else if (script.totalWin > 0) {
-      showTotalWin(script.totalWin, script.displayMult);
-    }
-  };
-
-  const spin = async (asFree = false) => {
-    if (busyRef.current) return;
-    const isFree = asFree || (inFree && freeSpins > 0);
-    const cost = isFree ? 0 : bet;
-
-    if (!isFree && balance < cost) {
-      toast.error("Insufficient balance");
-      setAutoSpin(false);
+  /** Overlay toast — never inserts into HUD (avoids layout jump). */
+  const notifyCashflow = useCallback((delta: number, label: "bet" | "win" | "scatter" | "cap") => {
+    const abs = formatMoney(Math.abs(delta));
+    if (label === "bet") {
+      toast.custom(
+        () => (
+          <div
+            className="rounded-2xl border px-4 py-2.5 text-center shadow-[0_10px_28px_rgba(0,0,0,0.45)]"
+            style={{
+              borderColor: "rgba(129,140,248,0.55)",
+              background: "linear-gradient(135deg, rgba(17,24,39,0.96), rgba(45,28,62,0.92))",
+              color: "#c6cbfc",
+            }}
+          >
+            <div className="text-[10px] font-black uppercase tracking-[0.18em] opacity-80">Bet</div>
+            <div className="text-sm font-black tabular-nums">−{abs}</div>
+          </div>
+        ),
+        { duration: 1800 },
+      );
       return;
     }
+    const isWin = label === "win" || label === "scatter";
+    const title = label === "scatter" ? "Scatter" : label === "cap" ? "Cap" : "Win";
+    const prefix = delta < 0 ? "−" : "+";
+    toast.custom(
+      () => (
+        <div
+          className="rounded-2xl border px-4 py-2.5 text-center shadow-[0_10px_28px_rgba(0,0,0,0.45)]"
+          style={{
+            borderColor: isWin ? "rgba(129,140,248,0.65)" : "rgba(129,140,248,0.55)",
+            background: isWin
+              ? "linear-gradient(135deg, #818CF8 0%, rgb(52,35,74) 55%, #111827 100%)"
+              : "linear-gradient(135deg, rgba(17,24,39,0.96), rgba(45,28,62,0.92))",
+            color: isWin ? "#eceefe" : "#c6cbfc",
+          }}
+        >
+          <div
+            className="text-[10px] font-black uppercase tracking-[0.18em]"
+            style={{
+              color: isWin ? "rgba(253,242,248,0.85)" : "rgba(251,207,232,0.85)",
+            }}
+          >
+            {title}
+          </div>
+          <div className="text-sm font-black tabular-nums">
+            {prefix}
+            {abs}
+          </div>
+        </div>
+      ),
+      { duration: 1800 },
+    );
+  }, []);
 
-    busyRef.current = true;
-    setBanner(null);
-    setWinPopup(null);
-    setFsIntroSpins(null);
-
-    try {
-      let settled: Awaited<ReturnType<typeof godlyGatesSpinFn>>;
-      if (isFree) {
-        const sessionId = playSessionIdRef.current;
-        if (!sessionId) {
-          toast.error("Free spin session expired — refresh and try again");
-          setAutoSpin(false);
+  /** Abortable wait — respects turbo + skipRef + playback generation / unmount. */
+  const wait = useCallback((ms: number, gen: number) => {
+    if (skipRef.current) return Promise.resolve();
+    const scaled = scaleWaitMs(ms, turboRef.current);
+    return new Promise<void>((resolve, reject) => {
+      const id = setTimeout(() => {
+        timersRef.current.delete(id);
+        if (!mountedRef.current || gen !== playbackGen.current) {
+          reject(new DOMException("Aborted", "AbortError"));
           return;
         }
-        settled = await godlyGatesFreeSpinFn({ data: { sessionId } });
-      } else {
-        settled = await godlyGatesSpinFn({ data: { bet } });
-        setDropTotal(0);
-        fsMultRef.current = 1;
-        setFsMult(1);
-      }
-
-      setBalanceLocal(settled.balance);
-      void refreshJackpot();
-      applySession(settled.session);
-
-      const script = await playScript(settled.script, isFree);
-
-      if (isFree) {
-        setFsSessionWin(settled.session.fsSessionWin);
-        setFsMult(settled.session.fsMult);
-        setLastWin(settled.session.fsSessionWin || settled.fsPayout?.amount || 0);
-        fsSessionRef.current = settled.session.fsSessionWin;
-        fsMultRef.current = settled.session.fsMult;
-        if (script.totalWin > 0) geAudio.playWin(script.totalWin, bet);
-
-        if (script.retriggerSpins > 0 && settled.session.inFree) {
-          geAudio.playScatterTrigger();
-          setBanner(`+${script.retriggerSpins} FREE SPINS!`);
-          window.setTimeout(() => setBanner(null), 1400);
-        }
-
-        if (settled.fsPayout) {
-          setInFree(false);
-          setFreeSpins(0);
-          freeSpinsRef.current = 0;
-          geAudio.endFreespins();
-          setLastWin(settled.fsPayout.amount);
-          if (settled.fsPayout.amount > 0) {
-            setTotalWin((t) => +(t + settled.fsPayout!.amount).toFixed(2));
-            geAudio.playWin(settled.fsPayout.amount, bet);
-          }
-          setFsSummary({
-            amount: settled.fsPayout.amount,
-            baseEarn: settled.fsPayout.baseEarn,
-            multiplier: settled.fsPayout.multiplier,
-          });
-          setFsMult(1);
-          setFsSessionWin(0);
-          fsMultRef.current = 1;
-          fsSessionRef.current = 0;
-        }
-      } else {
-        await finishBase(script, settled.session);
-      }
-    } catch (err) {
-      console.error("[GodlyGates] spin failed", err);
-      toast.error(err instanceof Error ? err.message : "Spin failed — try again");
-      setAutoSpin(false);
-    } finally {
-      busyRef.current = false;
-      setPhase("idle");
-    }
-  };
-
-  const buyFeature = async () => {
-    if (busyRef.current || phase !== "idle" || inFree) return;
-    const cost = +(bet * getBuyFeatureMult()).toFixed(2);
-    if (balance < cost) {
-      toast.error("Insufficient balance");
-      return;
-    }
-
-    busyRef.current = true;
-    try {
-      const bought = await godlyGatesBuyFeatureFn({ data: { bet } });
-      setBalanceLocal(bought.balance);
-      void refreshJackpot();
-      applySession(bought.session);
-
-      const seeded = buildBoard({ freeSpins: true, seedWin: false });
-      const indices = Array.from({ length: 30 }, (_, i) => i);
-      for (let i = indices.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [indices[i], indices[j]] = [indices[j], indices[i]];
-      }
-      for (let k = 0; k < 3; k++) {
-        seeded[indices[k]] = {
-          key: nextKey(),
-          sym: getRuntimeSymbols().find((s) => s.scatter)!,
-        };
-      }
-      setSlots(asSlots(seeded));
-      await gatherScatters(seeded);
-      geAudio.playFreespinIntro();
-      setFsIntroSpins(bought.awarded);
-      await wait(ANIM.freespinIntroHold);
-      setFsIntroSpins(null);
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Buy feature failed");
-      busyRef.current = false;
-      setPhase("idle");
-      return;
-    } finally {
-      busyRef.current = false;
-      setPhase("idle");
-    }
-    await spin(true);
-  };
-
-  useEffect(() => {
-    void getGodlyGatesSessionFn()
-      .then((session) => {
-        if (!session.sessionId) return;
-        applySession(session);
-        if (session.bet > 0) setBet(session.bet);
-      })
-      .catch(() => undefined);
+        resolve();
+      }, scaled);
+      timersRef.current.add(id);
+    });
   }, []);
 
+  const dismissTriggerModal = useCallback(() => {
+    setTriggerModalCount(null);
+    triggerModalResolveRef.current?.();
+    triggerModalResolveRef.current = null;
+  }, []);
+
+  const waitForTriggerModal = useCallback(() => {
+    return new Promise<void>((resolve) => {
+      triggerModalResolveRef.current = resolve;
+    });
+  }, []);
+
+  /** Buy feature: drop trigger scatters, glow, then Free Spins modal before spin 1. */
+  const playBuyScatterIntro = useCallback(
+    async (gen: number, fsCount: number, useAnte: boolean) => {
+      setWinningKeys(EMPTY_SET);
+      setPayoutByKey(EMPTY_PAY);
+      setSpawnedKeys(EMPTY_SET);
+      setFallenKeys(EMPTY_SET);
+      setFallDistance(EMPTY_FALL);
+      setDropTotal(0);
+      setTumbleStepWin(0);
+      setLastWin(0);
+      setWinPopup(null);
+      setBanner(null);
+
+      const board = buildBuyScatterIntroBoard(useAnte);
+      const scatterKeys = board.filter((c) => c.sym.scatter).map((c) => c.key);
+
+      setPhase("dropping");
+      setSlots(asSlots(board));
+      godlyGatesAudio.startSpinLoop();
+      try {
+        await wait(getDropWaitMs(), gen);
+      } catch {
+        godlyGatesAudio.stopSpinLoop();
+        return;
+      }
+      godlyGatesAudio.stopSpinLoop();
+      godlyGatesAudio.playReelStop(5);
+      godlyGatesAudio.playScatterTrigger();
+
+      setWinningKeys(new Set(scatterKeys));
+      setPhase("glow");
+      try {
+        await wait(ANIM.buyScatterGlow, gen);
+      } catch {
+        setWinningKeys(EMPTY_SET);
+        setPhase("idle");
+        return;
+      }
+
+      setWinningKeys(EMPTY_SET);
+      setPhase("idle");
+      setTriggerModalCount(fsCount);
+      await waitForTriggerModal();
+    },
+    [wait, waitForTriggerModal],
+  );
+
+  useEffect(() => {
+    mountedRef.current = true;
+    preloadAssets();
+    if (gameId === GODLY_GATES_GAME_ID || gameId === "godly-gates") {
+      void getGodlyGatesEngineConfigFn()
+        .then((cfg) => {
+          if (mountedRef.current) setGodlyGatesConfig(cfg);
+        })
+        .catch(() => {
+          /* keep defaults */
+        });
+      void getGodlyGatesSessionFn()
+        .then((session) => {
+          if (!mountedRef.current) return;
+          if (!session.sessionId || session.freeSpinsLeft <= 0) {
+            playSessionIdRef.current = null;
+            setInFree(false);
+            setFreeSpins(0);
+            freeSpinsRef.current = 0;
+            return;
+          }
+          playSessionIdRef.current = session.sessionId;
+          setInFree(true);
+          setFreeSpins(session.freeSpinsLeft);
+          setFsSessionWin(session.fsSessionWin);
+          freeSpinsRef.current = session.freeSpinsLeft;
+          fsSessionRef.current = session.fsSessionWin;
+          fsSpinsPlayedRef.current = session.fsSpinsPlayed;
+          if (session.bet > 0) setBet(session.bet);
+          setAnte(session.ante);
+          setFsPaused(false);
+          setFsSummary(null);
+          toast.message(`Resuming ${session.freeSpinsLeft} free spins`);
+        })
+        .catch((err) => {
+          console.error("[GodlyGates] session load failed", err);
+        });
+    }
+    return () => {
+      mountedRef.current = false;
+      playbackGen.current += 1;
+      clearTrackedTimers();
+      godlyGatesAudio.stopSpinLoop();
+      godlyGatesAudio.stopAmbient();
+    };
+  }, [clearTrackedTimers, gameId]);
+
+  /** Pull latest Superadmin math for local UI (server settle uses its own copy). */
+  const refreshEngineConfig = useCallback(async () => {
+    if (gameId !== GODLY_GATES_GAME_ID && gameId !== "godly-gates") return;
+    try {
+      const cfg = await getGodlyGatesEngineConfigFn();
+      if (mountedRef.current) setGodlyGatesConfig(cfg);
+    } catch {
+      /* keep last known */
+    }
+  }, [gameId]);
+
+  const applySession = useCallback(
+    (session: {
+      sessionId: string | null;
+      freeSpinsLeft: number;
+      fsSessionWin: number;
+      fsSpinsPlayed: number;
+      inFree: boolean;
+    }) => {
+      playSessionIdRef.current = session.sessionId;
+      setInFree(session.inFree);
+      setFreeSpins(session.freeSpinsLeft);
+      setFsSessionWin(session.fsSessionWin);
+      freeSpinsRef.current = session.freeSpinsLeft;
+      fsSessionRef.current = session.fsSessionWin;
+      fsSpinsPlayedRef.current = session.fsSpinsPlayed;
+    },
+    [],
+  );
+
+  const playScript = useCallback(
+    async (script: SpinScript, isFree: boolean, gen: number, startBalance: number) => {
+      setDropTotal(0);
+      setTumbleStepWin(0);
+      setWinningKeys(EMPTY_SET);
+      setPayoutByKey(EMPTY_PAY);
+      setSpawnedKeys(EMPTY_SET);
+      setFallenKeys(EMPTY_SET);
+      let running = 0;
+
+      const applyRunningToHud = (nextRunning: number, stepWin = 0) => {
+        running = +nextRunning.toFixed(2);
+        setDropTotal(running);
+        setTumbleStepWin(stepWin);
+        if (isFree) {
+          if (running > 0) setLastWin(+(fsSessionRef.current + running).toFixed(2));
+          return;
+        }
+        // Paid spins only: wallet already had the bet deducted. Credit the same
+        // running total the WIN meter shows so balance never drifts from tally.
+        setBalanceLocal(+(startBalance + running).toFixed(2));
+      };
+
+      if (skipRef.current) {
+        const lastStep = script.steps[script.steps.length - 1];
+        const finalBoard = lastStep ? lastStep.afterFall : script.initialBoard;
+        setSlots(asSlots(finalBoard));
+        applyRunningToHud(script.totalWin, script.totalWin);
+      } else {
+        setPhase("dropping");
+        setSlots(asSlots(script.initialBoard));
+        godlyGatesAudio.startSpinLoop();
+        await wait(getDropWaitMs(), gen);
+        godlyGatesAudio.stopSpinLoop();
+        godlyGatesAudio.playReelStop(5);
+      }
+
+      for (const step of script.steps) {
+        if (gen !== playbackGen.current) break;
+
+        if (skipRef.current) {
+          const lastStep = script.steps[script.steps.length - 1];
+          const finalBoard = lastStep ? lastStep.afterFall : script.initialBoard;
+          setSlots(asSlots(finalBoard));
+          setWinningKeys(EMPTY_SET);
+          setPayoutByKey(EMPTY_PAY);
+          setSpawnedKeys(EMPTY_SET);
+          setFallenKeys(EMPTY_SET);
+          setFallDistance(EMPTY_FALL);
+          applyRunningToHud(script.totalWin, script.totalWin);
+          break;
+        }
+
+        setSpawnedKeys(EMPTY_SET);
+        setFallenKeys(EMPTY_SET);
+        setFallDistance(EMPTY_FALL);
+        setSlots(asSlots(step.board));
+        setWinningKeys(new Set(step.winningKeys));
+        const payMap = new Map<string, number>();
+        for (const c of step.clusters) {
+          const badgeKey = c.keys[0];
+          if (badgeKey) payMap.set(badgeKey, c.pay);
+        }
+        setPayoutByKey(payMap);
+
+        // Credit BEFORE glow so WIN / badge / balance all show the amount
+        // during the winning appearance — not after it ends.
+        if (step.tumbleWin > 0) {
+          applyRunningToHud(running + step.tumbleWin, step.tumbleWin);
+          if (!isFree) {
+            notifyCashflow(step.tumbleWin, "win");
+          }
+        }
+
+        setPhase("glow");
+        await wait(ANIM.glowDuration, gen);
+
+        setPhase("popping");
+        godlyGatesAudio.playCascadeTick();
+        await wait(getPopWaitMs(step.winningKeys.length), gen);
+
+        setSlots(step.afterPop.length === CELLS ? step.afterPop : asSlots(step.board));
+        setWinningKeys(EMPTY_SET);
+        setPayoutByKey(EMPTY_PAY);
+        setTumbleStepWin(0);
+        await wait(ANIM.holeHold, gen);
+
+        setFallenKeys(new Set(step.fallenKeys));
+        setSpawnedKeys(new Set(step.spawnedKeys));
+        setFallDistance(step.fallDistance ?? EMPTY_FALL);
+        setSlots(asSlots(step.afterFall));
+        setPhase("falling");
+        await wait(getRefillWaitMs(), gen);
+        await wait(ANIM.betweenTumbles, gen);
+      }
+
+      // Scatter / pool-cap: remaining difference vs tumble sum. Paid only —
+      // FS wallet is credited once at feature end from the server.
+      const leftover = +(script.totalWin - running).toFixed(2);
+      if (Math.abs(leftover) >= 0.01) {
+        applyRunningToHud(script.totalWin, leftover > 0 ? leftover : 0);
+        if (!isFree) {
+          notifyCashflow(leftover, leftover > 0 ? "scatter" : "cap");
+        }
+      } else {
+        applyRunningToHud(script.totalWin, 0);
+      }
+
+      if (gen === playbackGen.current) {
+        setPhase("idle");
+        setSpawnedKeys(EMPTY_SET);
+        setFallenKeys(EMPTY_SET);
+        setFallDistance(EMPTY_FALL);
+        setTumbleStepWin(0);
+      }
+      return script;
+    },
+    [wait, setBalanceLocal, notifyCashflow],
+  );
+
+  const showTotalWin = useCallback(
+    (amount: number, opts?: { baseEarn?: number; multiplier?: number }) => {
+      if (amount <= 0) return;
+      setWinPopup({
+        amount,
+        baseEarn: opts?.baseEarn ?? amount,
+        multiplier: opts?.multiplier ?? 1,
+      });
+      schedule(() => setWinPopup(null), ANIM.winPopupHold);
+    },
+    [schedule],
+  );
+
+  const dismissFsSummary = useCallback(() => {
+    setFsSummary(null);
+    fsSpinsPlayedRef.current = 0;
+    godlyGatesAudio.endFreespins();
+  }, []);
+
+  const setMutedState = useCallback((on: boolean) => {
+    godlyGatesAudio.setMuted(on);
+    setMuted(on);
+  }, []);
+
+  const toggleMute = useCallback(() => {
+    setMutedState(!muted);
+  }, [muted, setMutedState]);
+
+  const finishBase = useCallback(
+    (
+      script: SpinScript,
+      session: { sessionId: string | null; freeSpinsLeft: number; inFree: boolean },
+    ) => {
+      if (script.totalWin > 0) {
+        setLastWin(script.totalWin);
+        godlyGatesAudio.playWin(script.totalWin, totalBet);
+      } else {
+        setLastWin(0);
+      }
+
+      if (session.inFree && session.freeSpinsLeft > 0) {
+        godlyGatesAudio.playScatterTrigger();
+        applySession({
+          sessionId: session.sessionId,
+          freeSpinsLeft: session.freeSpinsLeft,
+          fsSessionWin: 0,
+          fsSpinsPlayed: 0,
+          inFree: true,
+        });
+        setLastWin(0);
+        setBanner(`${session.freeSpinsLeft} FREE SPINS!`);
+        setTriggerModalCount(session.freeSpinsLeft);
+        schedule(() => setBanner(null), ANIM.bannerHold);
+      } else if (script.totalWin > 0) {
+        showTotalWin(script.totalWin, {
+          baseEarn: script.rawWin,
+          multiplier: script.displayMult,
+        });
+      }
+    },
+    [applySession, schedule, showTotalWin, totalBet],
+  );
+
+  const spin = useCallback(
+    async (asFree = false) => {
+      if (busyRef.current) return;
+
+      // Prefer free-spin path whenever local OR server still has FS left.
+      // (inFree state can desync after HMR / modal / skip — freeSpinsRef is source of truth.)
+      let preferFree = asFree || freeSpinsRef.current > 0;
+
+      if (!preferFree || (preferFree && !playSessionIdRef.current)) {
+        try {
+          const session = await getGodlyGatesSessionFn();
+          if (session.sessionId && session.freeSpinsLeft > 0) {
+            applySession({
+              sessionId: session.sessionId,
+              freeSpinsLeft: session.freeSpinsLeft,
+              fsSessionWin: session.fsSessionWin,
+              fsSpinsPlayed: session.fsSpinsPlayed,
+              inFree: true,
+            });
+            preferFree = true;
+          } else if (!session.sessionId || session.freeSpinsLeft <= 0) {
+            playSessionIdRef.current = null;
+            if (freeSpinsRef.current > 0 || inFree) {
+              setInFree(false);
+              setFreeSpins(0);
+              freeSpinsRef.current = 0;
+            }
+            preferFree = false;
+          }
+        } catch {
+          /* keep local flags */
+        }
+      }
+
+      const isFree = preferFree && freeSpinsRef.current > 0 && !!playSessionIdRef.current;
+      if (preferFree && !isFree) {
+        toast.error("Free spin session expired — refresh and try again");
+        setInFree(false);
+        setFreeSpins(0);
+        freeSpinsRef.current = 0;
+        playSessionIdRef.current = null;
+        setAutoSpin(false);
+        return;
+      }
+
+      const cost = isFree ? 0 : totalBet;
+
+      if (!isFree && balance < cost) {
+        toast.error("Insufficient balance");
+        setAutoSpin(false);
+        return;
+      }
+
+      const gen = ++playbackGen.current;
+      busyRef.current = true;
+      skipRef.current = false;
+      setBanner(null);
+      setWinPopup(null);
+      setLastWin(0);
+      let recoveredToFree = false;
+
+      try {
+        godlyGatesAudio.startSpinLoop();
+
+        if (!isFree) {
+          setBalanceLocal(balance - cost);
+          notifyCashflow(-cost, "bet");
+        }
+
+        await refreshEngineConfig();
+
+        let settled: Awaited<ReturnType<typeof godlyGatesSpinFn>>;
+        if (isFree) {
+          const sessionId = playSessionIdRef.current;
+          if (!sessionId) {
+            toast.error("Free spin session expired — refresh and try again");
+            setAutoSpin(false);
+            return;
+          }
+          settled = await godlyGatesFreeSpinFn({ data: { sessionId } });
+        } else {
+          settled = await godlyGatesSpinFn({ data: { bet, ante } });
+          setDropTotal(0);
+        }
+
+        void refreshJackpot();
+        applySession(settled.session);
+
+        const script = await playScript(
+          settled.script,
+          isFree,
+          gen,
+          isFree ? balance : balance - cost,
+        );
+        if (gen !== playbackGen.current || !mountedRef.current) return;
+
+        if (isFree) {
+          setFsSessionWin(settled.session.fsSessionWin);
+          setLastWin(settled.session.fsSessionWin || settled.fsPayout?.amount || 0);
+          fsSessionRef.current = settled.session.fsSessionWin;
+          fsSpinsPlayedRef.current = settled.session.fsSpinsPlayed;
+
+          if (script.retriggerSpins > 0 && settled.session.inFree) {
+            godlyGatesAudio.playScatterTrigger();
+            setBanner(`+${script.retriggerSpins} FREE SPINS!`);
+            schedule(() => setBanner(null), ANIM.bannerHold);
+          }
+
+          if (settled.fsPayout) {
+            setInFree(false);
+            setFreeSpins(0);
+            freeSpinsRef.current = 0;
+            playSessionIdRef.current = null;
+            setLastWin(settled.fsPayout.amount);
+            setFsSummary({
+              amount: settled.fsPayout.amount,
+              baseEarn: settled.fsPayout.baseEarn,
+              multiplier: settled.fsPayout.multiplier,
+              spinsPlayed: settled.fsPayout.spinsPlayed,
+            });
+            setFsSessionWin(0);
+            fsSessionRef.current = 0;
+            if (settled.fsPayout.amount > 0) {
+              notifyCashflow(settled.fsPayout.amount, "win");
+              showTotalWin(settled.fsPayout.amount, {
+                baseEarn: settled.fsPayout.baseEarn,
+                multiplier: settled.fsPayout.multiplier,
+              });
+            }
+          }
+        } else {
+          finishBase(script, settled.session);
+        }
+
+        if (gen === playbackGen.current && mountedRef.current) {
+          if (!isFree || settled.fsPayout) {
+            setBalanceLocal(settled.balance);
+          }
+        }
+      } catch (err) {
+        if (!isFree) {
+          setBalanceLocal(balance);
+        }
+        if (!(err instanceof DOMException && err.name === "AbortError")) {
+          const msg = err instanceof Error ? err.message : "Spin failed — try again";
+          // Server still has open FS — restore and continue as free spins
+          if (/finish free spins/i.test(msg)) {
+            try {
+              const session = await getGodlyGatesSessionFn();
+              if (session.sessionId && session.freeSpinsLeft > 0) {
+                applySession({
+                  sessionId: session.sessionId,
+                  freeSpinsLeft: session.freeSpinsLeft,
+                  fsSessionWin: session.fsSessionWin,
+                  fsSpinsPlayed: session.fsSpinsPlayed,
+                  inFree: true,
+                });
+                toast.message(`Resuming ${session.freeSpinsLeft} free spins`);
+                recoveredToFree = true;
+                busyRef.current = false;
+                skipRef.current = false;
+                if (mountedRef.current) setPhase("idle");
+                void spin(true);
+                return;
+              }
+            } catch {
+              /* fall through */
+            }
+          }
+          console.error("[GodlyGates] spin failed", err);
+          toast.error(msg);
+          setAutoSpin(false);
+        }
+      } finally {
+        if (!recoveredToFree && gen === playbackGen.current) {
+          busyRef.current = false;
+          skipRef.current = false;
+          if (mountedRef.current) setPhase("idle");
+        }
+      }
+    },
+    [
+      ante,
+      applySession,
+      balance,
+      bet,
+      finishBase,
+      inFree,
+      playScript,
+      refreshEngineConfig,
+      refreshJackpot,
+      schedule,
+      setBalanceLocal,
+      showTotalWin,
+      totalBet,
+      notifyCashflow,
+    ],
+  );
+
+  spinRef.current = spin;
+
+  const openBuyFeature = useCallback(
+    (mode: "normal" | "super" = "normal") => {
+      if (busyRef.current || phase !== "idle" || inFree) return;
+      godlyGatesAudio.playUiClick();
+      setBuyMode(mode);
+      setBuyOpen(true);
+    },
+    [inFree, phase],
+  );
+
+  const buyFeature = useCallback(
+    async (buyBet: number, quantity: number) => {
+      if (busyRef.current || phase !== "idle") return;
+      const unit = getBuyUnitPrice(buyBet, quantity);
+      const cost = +(unit * quantity).toFixed(2);
+      if (balance < cost) {
+        toast.error("Insufficient balance");
+        return;
+      }
+
+      setBuyOpen(false);
+      setBet(buyBet);
+      try {
+        const bought = await godlyGatesBuyFeatureFn({
+          data: { bet: buyBet, mode: buyMode, quantity },
+        });
+        setBalanceLocal(bought.balance);
+        void refreshJackpot();
+        applySession(bought.session);
+        const useAnte = buyMode === "super";
+        if (useAnte) setAnte(true);
+        const fsCount = bought.session.freeSpinsLeft || quantity;
+
+        setFsSummary(null);
+        setFsPaused(false);
+
+        const gen = ++playbackGen.current;
+        busyRef.current = true;
+        try {
+          await playBuyScatterIntro(gen, fsCount, useAnte);
+        } catch {
+          dismissTriggerModal();
+        } finally {
+          if (gen === playbackGen.current) {
+            busyRef.current = false;
+            if (mountedRef.current) setPhase("idle");
+          }
+        }
+        // First free spin starts via the auto-chain once the modal closes.
+      } catch (err) {
+        toast.error(err instanceof Error ? err.message : "Buy feature failed");
+      }
+    },
+    [
+      applySession,
+      balance,
+      buyMode,
+      dismissTriggerModal,
+      phase,
+      playBuyScatterIntro,
+      refreshJackpot,
+      setBalanceLocal,
+    ],
+  );
+
+  const nudgeBet = useCallback(
+    (dir: -1 | 1) => {
+      if (busy) return;
+      const i = betIndex(bet);
+      const next = BET_STEPS[i + dir];
+      if (next != null) setBet(next);
+    },
+    [bet, busy],
+  );
+
+  // Auto / free-spin chain — always invoke latest spin via ref (no stale closures).
   useEffect(() => {
     if (busyRef.current || busy) return;
-    if (winPopup || fsSummary || fsIntroSpins != null) return;
-    if (inFree && freeSpins > 0) {
-      const t = window.setTimeout(() => void spin(true), turbo ? 350 : 700);
-      return () => clearTimeout(t);
-    }
-    if (autoSpin && !inFree) {
-      const t = window.setTimeout(() => void spin(false), turbo ? 350 : 700);
-      return () => clearTimeout(t);
-    }
-  }, [autoSpin, inFree, freeSpins, busy, turbo, winPopup, fsSummary, fsIntroSpins]);
+    if (
+      winPopup ||
+      fsSummary ||
+      buyOpen ||
+      infoOpen ||
+      autoSpinModalOpen ||
+      betModalOpen ||
+      triggerModalCount != null
+    )
+      return;
 
-  const buyCost = +(bet * getBuyFeatureMult()).toFixed(2);
-  const waysLabel = (ROWS ** COLS).toLocaleString();
-  const glowMs = (turbo ? ANIM.glowDuration * 0.45 : ANIM.glowDuration) / 1000;
-  const dropMs = (turbo ? ANIM.dropDuration * 0.45 : ANIM.dropDuration) / 1000;
-  const popMs = (turbo ? ANIM.popDuration * 0.45 : ANIM.popDuration) / 1000;
+    const spinGap = getAutoSpinGapMs(turbo, autoSpinConfig?.spinWithoutReels);
+
+    if (inFree && freeSpins > 0 && !fsPaused) {
+      const t = setTimeout(() => {
+        void spinRef.current(true);
+      }, spinGap);
+      return () => clearTimeout(t);
+    }
+
+    if (autoSpin && !inFree) {
+      if (typeof remainingAutoSpins === "number" && remainingAutoSpins <= 0) {
+        setAutoSpin(false);
+        setAutoSpinConfig(null);
+        return;
+      }
+
+      if (autoSpinConfig?.stopOnAnyWin && lastWin > 0) {
+        setAutoSpin(false);
+        setAutoSpinConfig(null);
+        toast.info("Auto Spin stopped: Win achieved");
+        return;
+      }
+
+      if (autoSpinConfig?.singleWinExceeds && lastWin >= autoSpinConfig.singleWinExceeds) {
+        setAutoSpin(false);
+        setAutoSpinConfig(null);
+        toast.info(`Auto Spin stopped: Win exceeds ₱${autoSpinConfig.singleWinExceeds.toFixed(2)}`);
+        return;
+      }
+
+      if (
+        autoSpinConfig?.balanceIncreaseBy &&
+        balance - startBalance.current >= autoSpinConfig.balanceIncreaseBy
+      ) {
+        setAutoSpin(false);
+        setAutoSpinConfig(null);
+        toast.info(
+          `Auto Spin stopped: Balance increased by ₱${autoSpinConfig.balanceIncreaseBy.toFixed(2)}`,
+        );
+        return;
+      }
+
+      if (
+        autoSpinConfig?.balanceDecreaseBy &&
+        startBalance.current - balance >= autoSpinConfig.balanceDecreaseBy
+      ) {
+        setAutoSpin(false);
+        setAutoSpinConfig(null);
+        toast.info(
+          `Auto Spin stopped: Balance decreased by ₱${autoSpinConfig.balanceDecreaseBy.toFixed(2)}`,
+        );
+        return;
+      }
+
+      if (typeof remainingAutoSpins === "number") {
+        setRemainingAutoSpins((prev) => (typeof prev === "number" ? prev - 1 : prev));
+      }
+
+      const t = setTimeout(() => {
+        void spinRef.current(false);
+      }, spinGap);
+      return () => clearTimeout(t);
+    }
+  }, [
+    autoSpin,
+    autoSpinConfig,
+    autoSpinModalOpen,
+    balance,
+    busy,
+    fsSummary,
+    buyOpen,
+    infoOpen,
+    winPopup,
+    inFree,
+    freeSpins,
+    lastWin,
+    triggerModalCount,
+    fsPaused,
+    turbo,
+  ]);
+
+  const displayWin = dropTotal > 0 ? dropTotal : inFree ? fsSessionWin : lastWin;
+  const showTumbleBadge = tumbleStepWin > 0 && (phase === "glow" || phase === "popping");
+  const theme = godlyGatesTheme;
+  const themeVars = themeToCssVars(theme);
 
   return (
-    <div className="relative flex h-dvh w-full flex-col overflow-hidden select-none">
+    <div
+      className="relative flex h-full min-h-0 w-full max-w-[100vw] flex-col overflow-hidden select-none"
+      style={themeVars}
+    >
       <img
-        src={ASSET.backdrop}
+        src={theme.assets.backdrop}
         alt=""
         className="absolute inset-0 size-full object-cover"
         aria-hidden
         decoding="async"
         fetchPriority="high"
       />
-      {/* Desert dusk wash + vignette — full viewport, no bottom cut */}
-      <div className="absolute inset-0 bg-gradient-to-t from-[#1c0a00]/90 via-[#78350f]/25 to-[#0c4a6e]/30" />
-      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_35%,rgba(28,10,0,0.72)_100%)]" />
 
-      <AudioLoadBar loaded={audioLoaded} total={audioTotal} />
+      <button
+        type="button"
+        onClick={toggleMute}
+        className="absolute right-2 top-[max(0.4rem,env(safe-area-inset-top))] z-30 grid size-9 place-items-center rounded-full border bg-black/55 backdrop-blur-sm hover:brightness-125"
+        style={{
+          borderColor: "var(--p-mute-border)",
+          color: "var(--p-mute-text)",
+        }}
+        aria-label={muted ? "Unmute" : "Mute"}
+        title={muted ? "Unmute" : "Mute"}
+      >
+        {muted ? <VolumeX size={16} /> : <Volume2 size={16} />}
+      </button>
 
-      {/* Candy Peak–style stage: fill viewport, 3-column rails */}
-      <div className="relative z-10 flex min-h-0 flex-1 items-center justify-center px-2 py-1.5 sm:px-3 sm:py-2">
-        <div className="flex h-full max-h-full w-full max-w-[1600px] flex-col items-center gap-1.5 sm:gap-2">
-          <div className="grid min-h-0 w-full flex-1 grid-cols-1 items-stretch gap-2 sm:grid-cols-[160px_minmax(0,1fr)_160px] sm:gap-3 lg:grid-cols-[180px_minmax(0,1fr)_180px]">
-            {/* LEFT RAIL — features (Candy Peak format) */}
-            <div className="hidden h-full min-w-0 items-center justify-end sm:flex">
-              <div className="flex w-full flex-col items-stretch justify-center gap-2.5">
-                {inFree ? (
-                  <>
-                    <div
-                      className="w-full rounded-2xl border-[3px] border-amber-300 px-2 py-2.5 text-center"
-                      style={{
-                        background: "linear-gradient(180deg,#92400e,#451a03 70%,#1c0a00)",
-                        boxShadow:
-                          "inset 0 1px 0 rgba(253,230,138,0.35), 0 8px 20px rgba(0,0,0,0.4)",
-                      }}
-                    >
-                      <div className="text-[9px] font-black uppercase tracking-[0.16em] text-amber-200">
-                        Multiplier
-                      </div>
-                      <div className="font-black text-2xl text-amber-300 tabular-nums">{fsMult}x</div>
-                    </div>
-                    <div
-                      className="w-full rounded-2xl border-[3px] border-amber-500/70 px-2 py-2.5 text-center"
-                      style={{
-                        background: "linear-gradient(180deg,#78350f,#3b1a05 70%,#1c0a00)",
-                        boxShadow:
-                          "inset 0 1px 0 rgba(253,230,138,0.25), 0 8px 20px rgba(0,0,0,0.4)",
-                      }}
-                    >
-                      <div className="text-[9px] font-black uppercase tracking-[0.16em] text-amber-100">
-                        Session
-                      </div>
-                      <div className="font-black text-base text-amber-300 tabular-nums">
-                        {formatMoney(fsSessionWin)}
-                      </div>
-                    </div>
-                    <FreeSpinsBadge count={freeSpins} className="w-full" />
-                  </>
-                ) : (
-                  <GodlyGatesSidePanel
-                    buyCost={buyCost}
-                    bet={bet}
-                    busy={busy}
-                    onBuy={() => void buyFeature()}
-                  />
-                )}
-              </div>
-            </div>
-
-            {/* CENTER COLUMN — balanced reels */}
-            <div className="flex h-full min-h-0 min-w-0 w-full flex-col items-center">
+      {/* Playfield — sit above Android 3-button nav (safe-area is often 0 there) */}
+      <div className="relative z-10 flex min-h-0 flex-1 flex-col px-1.5 pt-[max(0.25rem,env(safe-area-inset-top))] pb-[max(3.25rem,env(safe-area-inset-bottom))] sm:items-center sm:justify-center sm:px-3 sm:py-2 sm:pb-2">
+        <div className="mx-auto flex h-full min-h-0 w-full max-w-[840px] flex-col">
+          {/* Board well — hug the grid (no dual-grid temple layout) */}
+          <div className="relative flex min-h-0 w-full flex-1 items-center justify-center">
+            <div
+              className="relative flex max-h-full max-w-full flex-col overflow-hidden rounded-[1.25rem] p-1.5 sm:rounded-2xl sm:p-2"
+              style={{
+                width: "fit-content",
+                height: "fit-content",
+                background:
+                  "linear-gradient(180deg, var(--p-well-top) 0%, var(--p-well-bottom) 100%)",
+                boxShadow:
+                  "inset 0 0 0 1.5px var(--p-rim), inset 0 0 40px rgba(0,0,0,0.35), 0 12px 36px rgba(0,0,0,0.45)",
+              }}
+            >
               <div
-                className="flex h-full min-h-0 w-full max-w-full flex-col items-center"
+                className="pointer-events-none absolute inset-x-0 top-0 z-0 h-16"
                 style={{
-                  width: `min(100%, calc(82dvh * ${COLS} / ${ROWS}))`,
+                  background:
+                    "radial-gradient(ellipse at 50% 0%, var(--p-top-glow) 0%, transparent 70%)",
                 }}
-              >
-                {/* Temple title plaque */}
-                <div className="relative z-20 shrink-0 px-2 text-center">
-                  <div
-                    className="mx-auto mb-0.5 h-1 w-36 rounded-full sm:w-48"
-                    style={{
-                      background:
-                        "linear-gradient(90deg, transparent, #fbbf24 20%, #fef3c7 50%, #fbbf24 80%, transparent)",
-                    }}
-                  />
-                  <h1
-                    className="select-none font-black leading-none tracking-[0.08em] text-[clamp(1.5rem,5vw,2.75rem)]"
-                    style={{
-                      color: "#fef3c7",
-                      textShadow:
-                        "0 2px 0 #78350f, 0 4px 0 #451a03, 0 0 22px rgba(251,191,36,0.8), 0 0 2px #000",
-                      WebkitTextStroke: "1px rgba(120,53,15,0.65)",
-                    }}
-                  >
-                    GODLY GATES
-                  </h1>
-                  <div
-                    className="mx-auto mt-0.5 h-1 w-36 rounded-full sm:w-48"
-                    style={{
-                      background:
-                        "linear-gradient(90deg, transparent, #fbbf24 20%, #fef3c7 50%, #fbbf24 80%, transparent)",
-                    }}
-                  />
-                </div>
+                aria-hidden
+              />
 
-                <div
-                  className="relative z-20 mb-1 mt-1 shrink-0 rounded-md border-2 border-amber-200 px-4 py-1 text-[11px] font-black uppercase tracking-[0.18em] text-amber-50 shadow-lg sm:text-[12px]"
-                  style={{
-                    background: "linear-gradient(180deg,#a16207,#78350f 45%,#451a03)",
-                    boxShadow: "inset 0 1px 0 rgba(253,230,138,0.4)",
-                  }}
-                >
-                  {waysLabel} WAYS
-                  {inFree ? ` · FREE ×${freeSpins}` : ""}
-                </div>
-
-                {/* Mobile buy / FS chips */}
-                <div className="mb-1 flex shrink-0 flex-wrap items-center justify-center gap-2 sm:hidden">
-                  {inFree ? (
-                    <FreeSpinsBadge count={freeSpins} />
-                  ) : (
-                    <button
-                      type="button"
-                      disabled={busy}
-                      onClick={() => void buyFeature()}
-                      className="rounded-md border-2 border-amber-100 px-3 py-1.5 text-center disabled:opacity-50"
-                      style={{
-                        background:
-                          "linear-gradient(180deg,#fef3c7 0%,#fbbf24 35%,#d97706 70%,#92400e 100%)",
-                      }}
-                    >
-                      <span className="text-[10px] font-black uppercase text-amber-950">
-                        Buy {formatMoneyCompact(buyCost)}
-                      </span>
-                    </button>
-                  )}
-                </div>
-
-                <div className="relative flex min-h-0 w-full flex-1 items-center justify-center">
-                  <div
-                    className="relative mx-auto size-full max-h-full"
-                    style={{
-                      aspectRatio: `${COLS} / ${ROWS}`,
-                      width: "100%",
-                      height: "auto",
-                      maxHeight: "100%",
-                    }}
-                  >
-                    {dropTotal > 0 &&
-                      (phase === "glow" || phase === "popping" || phase === "falling") && (
-                        <div className="pointer-events-none absolute left-1/2 top-0 z-20 -translate-x-1/2 -translate-y-1/2">
-                          <div
-                            className="rounded-md border-2 border-amber-200 px-4 py-1.5 text-center"
-                            style={{
-                              background: "linear-gradient(180deg,#92400e,#451a03)",
-                              boxShadow: "0 0 22px rgba(251,191,36,0.55)",
-                            }}
-                          >
-                            <div className="text-[9px] font-black uppercase tracking-[0.18em] text-amber-200">
-                              Cascade Win
-                            </div>
-                            <div className="font-black text-lg leading-none text-amber-300 tabular-nums">
-                              {formatMoney(dropTotal)}
-                            </div>
-                          </div>
-                        </div>
-                      )}
-
-                    {/* Golden temple reel frame */}
+              <div className="relative z-10 flex max-h-full max-w-full items-center justify-center">
+                {showTumbleBadge && (
+                  <div className="pointer-events-none absolute left-1/2 top-1 z-20 -translate-x-1/2">
                     <div
-                      className="relative size-full rounded-[1rem] p-[7px] shadow-[0_22px_55px_rgba(69,26,3,0.65)] sm:rounded-[1.15rem] sm:p-[10px]"
+                      className="rounded-full border-2 px-4 py-1.5 text-center shadow-[0_0_20px_var(--p-spin-shadow)]"
                       style={{
+                        borderColor: "var(--p-tumble-border)",
                         background:
-                          "linear-gradient(160deg, #fef3c7 0%, #fbbf24 18%, #b45309 42%, #78350f 68%, #fde68a 88%, #92400e 100%)",
+                          "linear-gradient(180deg, var(--p-tumble-from) 0%, var(--p-tumble-to) 100%)",
                       }}
                     >
-                      {(["top-2 left-2", "top-2 right-2", "bottom-2 left-2", "bottom-2 right-2"] as const).map(
-                        (pos) => (
-                          <span
-                            key={pos}
-                            className={`pointer-events-none absolute z-[2] text-[10px] font-black text-amber-950/70 ${pos}`}
-                          >
-                            ✦
-                          </span>
-                        ),
-                      )}
                       <div
-                        className="relative size-full overflow-hidden rounded-[0.65rem] border-2 border-amber-950/55 sm:rounded-[0.85rem]"
-                        style={{
-                          background:
-                            "linear-gradient(180deg, rgba(69,26,3,0.94) 0%, rgba(28,10,0,0.96) 100%)",
-                          boxShadow: "inset 0 0 40px rgba(0,0,0,0.45)",
-                        }}
+                        className="text-[10px] font-black uppercase tracking-[0.18em]"
+                        style={{ color: "var(--p-accent-soft)" }}
                       >
-                <div
-                  ref={gridRef}
-                  className={cn(
-                    "relative grid size-full gap-1.5 p-2 sm:gap-2 sm:p-2.5",
-                    phase === "dropping" || phase === "falling"
-                      ? "overflow-visible"
-                      : "overflow-hidden",
-                  )}
-                  style={{
-                    gridTemplateColumns: `repeat(${COLS}, minmax(0, 1fr))`,
-                    gridTemplateRows: `repeat(${ROWS}, minmax(0, 1fr))`,
-                  }}
-                >
-                  {slots.map((cell, i) => {
-                    const col = i % COLS;
-                    const row = Math.floor(i / COLS);
-                    const key = cell?.key ?? `empty-${i}`;
-                    const winning = cell ? winningKeys.has(cell.key) : false;
-                    const spawned = cell ? spawnedKeys.has(cell.key) : false;
-                    const fallen = cell ? fallenKeys.has(cell.key) : false;
-                    const fallDist = cell ? (fallDistance[cell.key] ?? 0) : 0;
-                    const isDropping = phase === "dropping";
-                    const isFalling = phase === "falling";
-                    const colDelaySec =
-                      (col * ANIM.dropStaggerCol + row * ANIM.dropStaggerRow) / 1000;
-                    const dropDelay = turbo ? colDelaySec * 0.45 : colDelaySec;
-                    const isInitialDrop = isDropping && !!cell;
-                    const isGravityDrop =
-                      isFalling && !!cell && (spawned || fallen) && fallDist > 0;
-                    const shouldDropIn = isInitialDrop || isGravityDrop;
-                    const isGlow = phase === "glow" && winning;
-                    const isPop = phase === "popping" && winning;
-                    // Start well ABOVE the reel frame so symbols enter from outside the gold rim.
-                    const dropRows = isInitialDrop
-                      ? row + ROWS + 2.25
-                      : Math.max(fallDist, row + ROWS + 2);
-                    const dropFrom = `${-dropRows * 100}%`;
-                    // Remount only for new drop-ins — reuse node for glow/pop/idle.
-                    const motionKey = shouldDropIn ? `${key}-drop-${animTick}` : key;
-
-                    return (
-                      <div
-                        key={`slot-${i}`}
-                        className={cn(
-                          "relative size-full min-h-0 min-w-0 rounded-md",
-                          shouldDropIn || isGlow ? "overflow-visible z-[2]" : "overflow-hidden",
-                          isGlow &&
-                            "ring-2 ring-amber-300 shadow-[0_0_18px_rgba(251,191,36,0.95)]",
-                        )}
-                      >
-                        {cell && (
-                          <motion.div
-                            key={motionKey}
-                            initial={
-                              shouldDropIn
-                                ? {
-                                    y: dropFrom,
-                                    opacity: 0,
-                                    scale: isInitialDrop || spawned ? 0.9 : 0.96,
-                                  }
-                                : false
-                            }
-                            animate={
-                              isPop
-                                ? { scale: 0, opacity: 0, y: 8 }
-                                : isGlow
-                                  ? {
-                                      scale: [1, 1.15, 1],
-                                      opacity: 1,
-                                      y: 0,
-                                    }
-                                  : {
-                                      y: 0,
-                                      opacity: 1,
-                                      scale: 1,
-                                    }
-                            }
-                            transition={
-                              shouldDropIn
-                                ? {
-                                    y: {
-                                      duration: dropMs,
-                                      delay: dropDelay,
-                                      ease: isFalling ? EASE.bounceLand : EASE.reelStop,
-                                    },
-                                    opacity: {
-                                      duration: Math.max(0.12, dropMs * 0.22),
-                                      delay: dropDelay,
-                                      ease: EASE.softOut,
-                                    },
-                                    scale: {
-                                      duration: dropMs,
-                                      delay: dropDelay,
-                                      ease: isFalling ? EASE.bounceLand : EASE.reelStop,
-                                    },
-                                  }
-                                : isPop
-                                  ? {
-                                      duration: popMs,
-                                      delay:
-                                        col * (ANIM.popStagger / 1000) * (turbo ? 0.45 : 1),
-                                      ease: EASE.softOut,
-                                    }
-                                  : isGlow
-                                    ? {
-                                        duration: glowMs,
-                                        ease: EASE.glowPulse,
-                                        times: [0, 0.45, 1],
-                                      }
-                                    : { duration: turbo ? 0.12 : 0.22, ease: EASE.softOut }
-                            }
-                            className="absolute inset-[6%] flex items-center justify-center will-change-transform sm:inset-[7%]"
-                          >
-                            <SymbolIcon kind={cell.sym.kind} className="size-full" />
-                          </motion.div>
-                        )}
+                        Tumble Win
                       </div>
-                    );
-                  })}
-                </div>
-
-                <AnimatePresence>
-                  {phase === "glow" && overlayWays.length > 0 && (
-                    <WaysWinOverlay ways={overlayWays} multiplier={overlayMult} />
-                  )}
-                </AnimatePresence>
-
-                {scatterPoints && gridRef.current && (
-                  <ScatterGatherOverlay
-                    points={scatterPoints}
-                    gridW={gridRef.current.clientWidth}
-                    gridH={gridRef.current.clientHeight}
-                  />
-                )}
+                      <div
+                        className="text-lg font-black leading-none tabular-nums sm:text-xl"
+                        style={{ color: "var(--p-tumble-text)" }}
+                      >
+                        {formatMoney(tumbleStepWin, { signed: true })}
                       </div>
                     </div>
                   </div>
-                </div>
+                )}
 
-          <AnimatePresence>
-            {banner && (
-              <motion.div
-                initial={{ opacity: 0, y: -10 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0 }}
-                className="mt-1 shrink-0 rounded-md border-2 border-amber-200 px-5 py-2 text-sm font-black uppercase tracking-widest text-amber-100"
-                style={{
-                  background: "linear-gradient(180deg,#a16207,#78350f 45%,#451a03)",
-                  boxShadow: "inset 0 1px 0 rgba(253,230,138,0.4), 0 8px 20px rgba(0,0,0,0.35)",
-                }}
-              >
-                {banner}
-              </motion.div>
-            )}
-          </AnimatePresence>
-
-          <div className="mt-auto w-full shrink-0 pt-1.5">
-            <ControlBar
-              balance={balance}
-              bet={bet}
-              win={lastWin}
-              busy={busy}
-              inFree={inFree}
-              turbo={turbo}
-              autoSpin={autoSpin}
-              muted={muted}
-              onBetChange={setBet}
-              onTurbo={() => setTurbo((t) => !t)}
-              onAuto={() => setAutoSpin((a) => !a)}
-              onSpin={() => void spin(false)}
-              onMuteToggle={() => {
-                const next = geAudio.toggleMute();
-                setMuted(next);
-              }}
-              onOpenInfo={() => setShowPaytable(true)}
-              onOpenSettings={() =>
-                toast.message("Settings", {
-                  description: "Use Mute / Turbo / Auto on the control bar.",
-                })
-              }
-            />
-          </div>
+                <ReelGrid visuals={reelVisuals} />
               </div>
             </div>
+          </div>
 
-            {/* RIGHT RAIL — equal spacer keeps reels centered (Candy Peak) */}
-            <div className="relative hidden h-full min-w-0 sm:block" aria-hidden>
-              <PharaohMascot
-                mood={mascotMood}
-                pulse={mascotPulse}
-                className="pointer-events-none absolute inset-x-0 bottom-0 z-[1] flex h-[min(560px,78vh)] items-end justify-center"
-              />
+          {/* Buy feature — compact on phones so the spin row stays on-screen */}
+          {!inFree && (
+            <div className="mt-1 flex shrink-0 justify-center gap-1.5 sm:mt-2 sm:gap-3">
+              <button
+                type="button"
+                disabled={busy}
+                onClick={() => openBuyFeature("normal")}
+                className="min-h-9 rounded-xl border-2 bg-black/70 px-3 py-1.5 text-[10px] font-black uppercase tracking-wide disabled:opacity-40 sm:min-h-10 sm:px-4 sm:py-2 sm:text-[11px]"
+                style={{
+                  borderColor: "var(--p-accent)",
+                  color: "var(--p-accent-soft)",
+                }}
+              >
+                Buy FS {formatMoneyCompact(buyCost)}
+              </button>
             </div>
+          )}
+
+          {/* HUD — compact on Android so Spin sits above the system nav */}
+          <div className="mt-1 w-full min-w-0 shrink-0 sm:mt-3">
+            <div className="mb-1.5 grid grid-cols-3 gap-1 sm:mb-2 sm:gap-2">
+              <div
+                className="min-w-0 rounded-xl border bg-black/75 px-1 py-1.5 text-center sm:px-2 sm:py-2.5"
+                style={{ borderColor: "var(--p-hud-border)" }}
+              >
+                <div
+                  className="text-[9px] font-bold uppercase tracking-wider sm:text-[11px]"
+                  style={{ color: "var(--p-hud-label)" }}
+                >
+                  Bet
+                </div>
+                <div
+                  className="break-all text-[11px] font-black tabular-nums leading-tight sm:text-base"
+                  style={{ color: "var(--p-hud-value)" }}
+                >
+                  {formatMoney(totalBet)}
+                </div>
+              </div>
+              <div
+                className="min-w-0 rounded-xl border px-1 py-1.5 text-center sm:px-2 sm:py-2.5"
+                style={{
+                  borderColor: "var(--p-win-border)",
+                  background: "linear-gradient(180deg, var(--p-win-from) 0%, var(--p-win-to) 100%)",
+                }}
+              >
+                <div
+                  className="text-[9px] font-bold uppercase tracking-wider sm:text-[11px]"
+                  style={{ color: "var(--p-win-label)" }}
+                >
+                  Win
+                </div>
+                <div
+                  className="break-all text-[11px] font-black tabular-nums leading-tight sm:text-base"
+                  style={{ color: "var(--p-win-value)" }}
+                  title={displayWin > 0 ? formatMoney(displayWin) : undefined}
+                >
+                  {displayWin > 0 ? formatMoney(displayWin) : "—"}
+                </div>
+              </div>
+              <div
+                className="min-w-0 rounded-xl border bg-black/75 px-1 py-1.5 text-center sm:px-2 sm:py-2.5"
+                style={{ borderColor: "var(--p-hud-border)" }}
+              >
+                <div
+                  className="text-[9px] font-bold uppercase tracking-wider sm:text-[11px]"
+                  style={{ color: "var(--p-hud-label)" }}
+                >
+                  Balance
+                </div>
+                <div
+                  className="break-all text-[11px] font-black tabular-nums leading-tight sm:text-base"
+                  style={{ color: "var(--p-hud-value)" }}
+                  title={formatMoney(balance)}
+                >
+                  {formatMoney(balance)}
+                </div>
+              </div>
+            </div>
+            <div
+              className="flex min-w-0 items-center gap-1 rounded-2xl border bg-black/80 px-1 py-1.5 backdrop-blur-md sm:gap-3 sm:px-3 sm:py-2.5"
+              style={{ borderColor: "var(--p-hud-border)" }}
+            >
+              <button
+                type="button"
+                onClick={() => {
+                  godlyGatesAudio.playUiClick();
+                  setInfoOpen(true);
+                }}
+                className="grid size-10 shrink-0 place-items-center rounded-xl border border-white/20 bg-neutral-800 text-white sm:size-11"
+                aria-label="Paytable Info"
+              >
+                <Info size={20} />
+              </button>
+
+              <div className="flex min-w-0 flex-1 items-center justify-center gap-0.5 rounded-xl border border-white/15 bg-neutral-900/90 px-0.5 py-0.5 sm:gap-1.5 sm:px-1.5 sm:py-1">
+                <button
+                  type="button"
+                  disabled={busy}
+                  onClick={() => nudgeBet(-1)}
+                  className="grid size-9 shrink-0 place-items-center rounded-lg bg-neutral-700 text-lg font-black text-white disabled:opacity-40 sm:size-10 sm:text-xl"
+                  aria-label="Decrease Bet"
+                >
+                  −
+                </button>
+                <button
+                  type="button"
+                  disabled={busy}
+                  onClick={() => setBetModalOpen(true)}
+                  className="min-w-0 flex-1 px-0.5 text-center disabled:opacity-40 sm:min-w-[4.25rem] sm:flex-none sm:px-1"
+                  aria-label="Select Bet Amount"
+                >
+                  <div className="text-[9px] font-bold uppercase tracking-wider text-white/55 sm:text-[10px]">
+                    Bet
+                  </div>
+                  <div
+                    className="truncate text-xs font-black tabular-nums sm:text-base"
+                    style={{ color: "var(--p-win-value)" }}
+                  >
+                    {formatMoney(totalBet)}
+                  </div>
+                </button>
+                <button
+                  type="button"
+                  disabled={busy}
+                  onClick={() => nudgeBet(1)}
+                  className="grid size-9 shrink-0 place-items-center rounded-lg bg-neutral-700 text-lg font-black text-white disabled:opacity-40 sm:size-10 sm:text-xl"
+                  aria-label="Increase Bet"
+                >
+                  +
+                </button>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => setTurbo((v) => !v)}
+                className={cn(
+                  "grid size-10 shrink-0 place-items-center rounded-xl border sm:size-11",
+                  !turbo && "border-white/20 bg-neutral-800 text-white/70",
+                )}
+                style={
+                  turbo
+                    ? {
+                        borderColor: "var(--p-accent)",
+                        background: "color-mix(in srgb, var(--p-accent) 25%, transparent)",
+                        color: "var(--p-win-value)",
+                      }
+                    : undefined
+                }
+                aria-label="Turbo Fast Mode"
+              >
+                <FastForward size={18} />
+              </button>
+
+              <button
+                type="button"
+                disabled={!busy && !autoSpin && inFree && freeSpins === 0}
+                onClick={() => {
+                  if (busy) {
+                    skipRef.current = true;
+                    if (inFree || freeSpins > 0) setFsPaused(true);
+                  } else if (autoSpin) {
+                    setAutoSpin(false);
+                    setAutoSpinConfig(null);
+                  } else if (inFree || freeSpins > 0) {
+                    setFsPaused(false);
+                    godlyGatesAudio.playUiClick();
+                    void spin(true);
+                  } else {
+                    godlyGatesAudio.playUiClick();
+                    void spin(false);
+                  }
+                }}
+                className="relative grid size-14 shrink-0 place-items-center rounded-full border-[3px] active:scale-95 sm:size-16"
+                style={{
+                  borderColor: "var(--p-accent-soft)",
+                  background:
+                    "linear-gradient(180deg, var(--p-spin-from) 0%, var(--p-spin-mid) 50%, var(--p-spin-to) 100%)",
+                  color: "var(--p-accent-deep)",
+                  boxShadow: "0 6px 22px var(--p-spin-shadow)",
+                }}
+                aria-label="Spin"
+              >
+                <div className="absolute inset-1 flex items-center justify-center rounded-full bg-gradient-to-b from-neutral-900 to-black shadow-inner sm:inset-1.5">
+                  {inFree ? (
+                    <div className="flex flex-col items-center -space-y-0.5">
+                      <span
+                        className="text-xl font-black tabular-nums leading-none sm:text-2xl"
+                        style={{ color: "var(--p-win-value)" }}
+                      >
+                        {freeSpins}
+                      </span>
+                      <span
+                        className="text-[8px] font-black uppercase tracking-widest sm:text-[9px]"
+                        style={{ color: "var(--p-accent)" }}
+                      >
+                        Spins
+                      </span>
+                    </div>
+                  ) : autoSpin ? (
+                    <div className="flex flex-col items-center -space-y-0.5">
+                      <span
+                        className="text-xl font-black tabular-nums leading-none sm:text-2xl"
+                        style={{ color: "var(--p-win-value)" }}
+                      >
+                        {remainingAutoSpins === "infinity" ? "∞" : remainingAutoSpins}
+                      </span>
+                      <span
+                        className="text-[8px] font-black uppercase tracking-widest sm:text-[9px]"
+                        style={{ color: "var(--p-accent)" }}
+                      >
+                        Auto
+                      </span>
+                    </div>
+                  ) : busy ? (
+                    <RotateCw
+                      size={24}
+                      className="animate-spin sm:size-7"
+                      style={{ color: "var(--p-win-value)" }}
+                    />
+                  ) : (
+                    <RotateCw
+                      size={24}
+                      className="sm:size-7"
+                      style={{ color: "var(--p-win-value)" }}
+                    />
+                  )}
+                </div>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  if (busy || autoSpin || inFree) {
+                    setAutoSpin(false);
+                    setAutoSpinConfig(null);
+                    skipRef.current = true;
+                    if (inFree) setFsPaused(true);
+                  } else {
+                    setAutoSpinModalOpen(true);
+                  }
+                }}
+                className={cn(
+                  "grid size-10 shrink-0 place-items-center rounded-xl border sm:size-11",
+                  busy || autoSpin || (inFree && !fsPaused)
+                    ? "border-red-500 bg-red-600 text-white shadow-[0_0_14px_rgba(239,68,68,0.85)]"
+                    : "border-white/20 bg-neutral-800 text-white/70",
+                )}
+                aria-label={busy || autoSpin || inFree ? "Stop Game" : "Auto Spin Settings"}
+              >
+                {busy || autoSpin || (inFree && !fsPaused) ? (
+                  <Square size={16} className="fill-white text-white" />
+                ) : (
+                  <RotateCcw size={18} />
+                )}
+              </button>
+            </div>
+
+            {busy && displayWin <= 0 && (
+              <p className="mt-1 hidden text-center text-[10px] font-bold uppercase tracking-[0.2em] text-amber-200/70 sm:mt-1.5 sm:block sm:text-xs">
+                Spinning…
+              </p>
+            )}
+            {!busy && displayWin <= 0 && !inFree && (
+              <p className="mt-1 hidden text-center text-[10px] font-bold uppercase tracking-[0.2em] text-amber-200/55 sm:mt-1.5 sm:block sm:text-xs">
+                Good luck
+              </p>
+            )}
           </div>
         </div>
       </div>
 
-      {/* Mobile mascot peek */}
-      <div className="pointer-events-none absolute bottom-0 right-0 z-[5] h-40 w-28 overflow-hidden sm:hidden">
-        <PharaohMascot
-          mood={mascotMood}
-          pulse={mascotPulse}
-          className="absolute bottom-0 right-[-20%] flex h-52 items-end"
-        />
-      </div>
-
       <AnimatePresence>
-        {fsIntroSpins != null && (
-          <FreeSpinIntro key="fs-intro" spins={fsIntroSpins} onDone={() => setFsIntroSpins(null)} />
+        {autoSpinModalOpen && (
+          <AutoSpinModal
+            bet={totalBet}
+            onClose={() => setAutoSpinModalOpen(false)}
+            onStart={(options) => {
+              setAutoSpinConfig(options);
+              setRemainingAutoSpins(options.spinCount);
+              startBalance.current = balance;
+              if (options.spinWithoutReels) {
+                setTurbo(true);
+              }
+              setAutoSpinModalOpen(false);
+              setAutoSpin(true);
+            }}
+          />
         )}
       </AnimatePresence>
 
       <AnimatePresence>
-        {showPaytable && (
-          <motion.button
-            type="button"
-            aria-label="Close paytable"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="absolute inset-0 z-50 flex items-center justify-center bg-[#1c0a00]/70 p-4 backdrop-blur-sm"
-            onClick={() => setShowPaytable(false)}
-          >
-            <motion.div
-              initial={{ scale: 0.9, y: 12 }}
-              animate={{ scale: 1, y: 0 }}
-              className="max-h-[80vh] w-full max-w-md overflow-auto rounded-[1.1rem] p-[3px] text-left shadow-2xl"
-              style={{
-                background:
-                  "linear-gradient(135deg, #fef3c7 0%, #fbbf24 22%, #b45309 50%, #fde68a 78%, #92400e 100%)",
-              }}
-              onClick={(e) => e.stopPropagation()}
-            >
-              <div
-                className="rounded-[0.95rem] border border-amber-950/70 p-4"
-                style={{
-                  background: "linear-gradient(180deg, #a16207 0%, #78350f 18%, #451a03 55%, #1c0a00 100%)",
-                }}
-              >
-                <div
-                  className="mb-1 h-1 w-full rounded-full opacity-80"
-                  style={{
-                    background:
-                      "repeating-linear-gradient(90deg,#fbbf24 0 10px,#78350f 10px 14px,#fde68a 14px 22px,#451a03 22px 26px)",
-                  }}
-                />
-                <div className="mb-3 text-center text-lg font-black tracking-[0.12em] text-amber-100">
-                  {gameName} · Paytable
-                </div>
-                <div className="space-y-2">
-                  {getRuntimeSymbols()
-                    .filter((s) => !s.wild && !s.scatter)
-                    .map((s) => (
-                    <div
-                      key={s.id}
-                      className="flex items-center gap-3 rounded-md border border-amber-700/50 px-2 py-1.5"
-                      style={{
-                        background: "linear-gradient(180deg, rgba(69,26,3,0.85), rgba(28,10,0,0.9))",
-                      }}
-                    >
-                      <div className="size-10 shrink-0">
-                        <SymbolIcon kind={s.kind} className="size-full" />
-                      </div>
-                      <div className="min-w-0 flex-1 text-xs text-amber-100/90">
-                        <div className="font-bold capitalize text-amber-200">{s.kind}</div>
-                        <div className="tabular-nums text-amber-200/60">
-                          3×{s.pay[0]} · 4×{s.pay[1]} · 5×{s.pay[2]} · 6×{s.pay[3]}
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-                <p className="mt-3 text-center text-[11px] text-amber-200/60">
-                  Ways pays · Tap outside to close
-                </p>
-              </div>
-            </motion.div>
-          </motion.button>
+        {infoOpen && <PaytableModal bet={totalBet} onClose={() => setInfoOpen(false)} />}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {betModalOpen && (
+          <BetSelectModal
+            currentBet={bet}
+            onSelectBet={(newBet) => setBet(newBet)}
+            onClose={() => setBetModalOpen(false)}
+          />
         )}
       </AnimatePresence>
 
       <AnimatePresence>
-        {winPopup && (
+        {buyOpen && (
+          <BuyFeatureModal
+            balance={balance}
+            mode={buyMode}
+            onCancel={() => setBuyOpen(false)}
+            onConfirm={(buyBet, quantity) => {
+              void buyFeature(buyBet, quantity);
+            }}
+          />
+        )}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {fsSummary && (
+          <FreeSpinsCongrats
+            amount={fsSummary.amount}
+            baseEarn={fsSummary.baseEarn}
+            multiplier={fsSummary.multiplier}
+            spinsPlayed={fsSummary.spinsPlayed}
+            onContinue={dismissFsSummary}
+          />
+        )}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {winPopup && !fsSummary && (
           <WinCelebration
             amount={winPopup.amount}
             bet={bet}
+            baseEarn={winPopup.baseEarn}
             multiplier={winPopup.multiplier}
             onDismiss={() => setWinPopup(null)}
           />
@@ -955,13 +1377,26 @@ export function GodlyGatesSlot({
       </AnimatePresence>
 
       <AnimatePresence>
-        {fsSummary && (
-          <WinCelebration
-            amount={fsSummary.amount}
-            bet={bet}
-            multiplier={fsSummary.multiplier}
-            onDismiss={() => setFsSummary(null)}
-          />
+        {triggerModalCount != null && (
+          <FreeSpinsTriggerModal count={triggerModalCount} onClose={dismissTriggerModal} />
+        )}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {banner && !winPopup && !fsSummary && !triggerModalCount && (
+          <div className="absolute inset-0 z-[100] flex items-center justify-center pointer-events-none animate-in fade-in zoom-in duration-300">
+            <div
+              className="rounded-2xl border-4 border-white px-10 py-5 text-center shadow-2xl"
+              style={{
+                background:
+                  "linear-gradient(180deg, var(--p-spin-from) 0%, var(--p-spin-mid) 100%)",
+              }}
+            >
+              <h2 className="mb-2 font-black uppercase tracking-widest text-white drop-shadow-md sm:text-lg">
+                {banner}
+              </h2>
+            </div>
+          </div>
         )}
       </AnimatePresence>
     </div>

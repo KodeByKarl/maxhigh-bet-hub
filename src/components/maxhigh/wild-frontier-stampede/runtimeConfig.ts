@@ -1,12 +1,12 @@
-﻿import type { BuffaloReignConfig } from "@/lib/buffalo-reign-config";
-import { DEFAULT_BUFFALO_REIGN_CONFIG } from "@/lib/buffalo-reign-config";
+﻿import type { StampedeConfig } from "@/lib/wild-frontier-stampede-config";
+import { DEFAULT_STAMPEDE_CONFIG } from "@/lib/wild-frontier-stampede-config";
 
-let activeConfig: BuffaloReignConfig = { ...DEFAULT_BUFFALO_REIGN_CONFIG };
+let activeConfig: StampedeConfig = { ...DEFAULT_STAMPEDE_CONFIG };
 
-export function getBuffaloReignConfig(): BuffaloReignConfig {
+export function getStampedeConfig(): StampedeConfig {
   return activeConfig;
 }
 
-export function setBuffaloReignConfig(cfg: BuffaloReignConfig) {
+export function setStampedeConfig(cfg: StampedeConfig) {
   activeConfig = cfg;
 }

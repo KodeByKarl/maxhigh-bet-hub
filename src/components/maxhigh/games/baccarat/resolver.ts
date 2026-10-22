@@ -64,17 +64,11 @@ export function resolveBaccaratDeal(opts: {
   const tieBet = +(opts.tieBet ?? 0).toFixed(2);
   const playerPairBet = +(opts.playerPairBet ?? 0).toFixed(2);
   const bankerPairBet = +(opts.bankerPairBet ?? 0).toFixed(2);
-  const totalWager = +(
-    playerBet +
-    bankerBet +
-    tieBet +
-    playerPairBet +
-    bankerPairBet
-  ).toFixed(2);
+  const totalWager = +(playerBet + bankerBet + tieBet + playerPairBet + bankerPairBet).toFixed(2);
 
   const seed = opts.seed ?? newDealSeed("bc-deal");
   const rng = createRng(seed);
-  let shoe = ensureShoe(opts.shoe ?? null, cfg, rng);
+  const shoe = ensureShoe(opts.shoe ?? null, cfg, rng);
 
   // Standard deal: P1, B1, P2, B2
   const p1 = drawCard(shoe);
@@ -135,13 +129,9 @@ export function resolveBaccaratDeal(opts: {
   const playerPairWin = playerPair ? winCredit(playerPairBet, cfg.playerPairPayout) : 0;
   const bankerPairWin = bankerPair ? winCredit(bankerPairBet, cfg.bankerPairPayout) : 0;
 
-  const immediateCredit = +(
-    playerWin +
-    bankerWin +
-    tieWin +
-    playerPairWin +
-    bankerPairWin
-  ).toFixed(2);
+  const immediateCredit = +(playerWin + bankerWin + tieWin + playerPairWin + bankerPairWin).toFixed(
+    2,
+  );
 
   return {
     seed,

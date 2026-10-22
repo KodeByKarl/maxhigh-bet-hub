@@ -4,14 +4,7 @@
  */
 import { AH_ASSET } from "./animationConfig";
 
-export type AceHighSoundKey =
-  | "chip"
-  | "deal"
-  | "flip"
-  | "win"
-  | "tie"
-  | "war"
-  | "bigWin";
+export type AceHighSoundKey = "chip" | "deal" | "flip" | "win" | "tie" | "war" | "bigWin";
 
 const FILES: Record<AceHighSoundKey, string> = {
   chip: "chip.wav",
@@ -58,10 +51,13 @@ export function unlockAceHighAudio() {
       const el = getAudio(key);
       if (!el) continue;
       el.volume = 0.001;
-      void el.play().then(() => {
-        el.pause();
-        el.currentTime = 0;
-      }).catch(() => undefined);
+      void el
+        .play()
+        .then(() => {
+          el.pause();
+          el.currentTime = 0;
+        })
+        .catch(() => undefined);
     }
   } catch {
     /* ignore */

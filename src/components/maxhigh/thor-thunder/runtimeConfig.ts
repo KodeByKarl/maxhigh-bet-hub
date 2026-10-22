@@ -1,5 +1,5 @@
 /**
- * Active Thor Thunder config for the client/server engine.
+ * Active Thor Thunder config for the client engine.
  * Superadmin values are loaded at play time; defaults until then.
  */
 import {

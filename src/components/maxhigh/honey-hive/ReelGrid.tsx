@@ -25,8 +25,7 @@ type ReelGridProps = {
  * Distinct from Frost rounded pillars, Ember circles, Coral squares.
  */
 export const ReelGrid = memo(function ReelGrid({ visuals }: ReelGridProps) {
-  const { slots, phase, winningKeys, payoutByKey, spawnedKeys, fallenKeys, fallDistance } =
-    visuals;
+  const { slots, phase, winningKeys, payoutByKey, spawnedKeys, fallenKeys, fallDistance } = visuals;
 
   return (
     <div className="flex w-full max-w-6xl items-end justify-center overflow-hidden px-0.5">

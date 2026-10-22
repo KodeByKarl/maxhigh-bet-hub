@@ -39,8 +39,22 @@ async function run() {
   };
 
   await db.insert(users).values([
-    { id: ids.ma1, username: `ma1_${TAG}`, publicUserId: `ma1_${TAG}`, passwordHash: "x", role: "master_agent", balance: "0" },
-    { id: ids.ma2, username: `ma2_${TAG}`, publicUserId: `ma2_${TAG}`, passwordHash: "x", role: "master_agent", balance: "0" },
+    {
+      id: ids.ma1,
+      username: `ma1_${TAG}`,
+      publicUserId: `ma1_${TAG}`,
+      passwordHash: "x",
+      role: "master_agent",
+      balance: "0",
+    },
+    {
+      id: ids.ma2,
+      username: `ma2_${TAG}`,
+      publicUserId: `ma2_${TAG}`,
+      passwordHash: "x",
+      role: "master_agent",
+      balance: "0",
+    },
     {
       id: ids.ag1,
       username: `ag1_${TAG}`,
@@ -119,10 +133,16 @@ async function run() {
   const ma1Scope = await scopeToDownline(ma1);
   check("Master1 scope includes own agent", !!ma1Scope?.includes(ids.ag1));
   check("Master1 scope includes own player", !!ma1Scope?.includes(ids.pl1));
-  check("Master1 scope excludes other network", !ma1Scope?.includes(ids.pl2) && !ma1Scope?.includes(ids.ag2));
+  check(
+    "Master1 scope excludes other network",
+    !ma1Scope?.includes(ids.pl2) && !ma1Scope?.includes(ids.ag2),
+  );
 
   const ag1Scope = await scopeToDownline(ag1);
-  check("Agent1 scope includes own player only", !!ag1Scope?.includes(ids.pl1) && ag1Scope.length === 1);
+  check(
+    "Agent1 scope includes own player only",
+    !!ag1Scope?.includes(ids.pl1) && ag1Scope.length === 1,
+  );
   check("Agent1 scope excludes other player", !ag1Scope?.includes(ids.pl2));
 
   check("IDOR: Master1 can see pl1", await isInDownline(ma1, ids.pl1));

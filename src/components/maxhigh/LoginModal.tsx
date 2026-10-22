@@ -1,11 +1,6 @@
 import { useEffect, useState, type FormEvent } from "react";
 import { Eye, EyeOff } from "lucide-react";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogTitle,
-} from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { useAuth } from "@/lib/auth";
 import { toast } from "sonner";
@@ -41,9 +36,7 @@ export function LoginModal() {
 
   return (
     <Dialog open={loginOpen} onOpenChange={(open) => !open && closeLogin()}>
-      <DialogContent
-        className="h-[min(90dvh,42rem)] w-[min(100%-1rem,72rem)] max-w-none gap-0 overflow-hidden border-border bg-panel p-0 text-foreground shadow-2xl sm:rounded-3xl [&>button]:right-4 [&>button]:top-4 [&>button]:z-20 [&>button]:text-muted-foreground"
-      >
+      <DialogContent className="h-[min(90dvh,42rem)] w-[min(100%-1rem,72rem)] max-w-none gap-0 overflow-hidden border-border bg-panel p-0 text-foreground shadow-2xl sm:rounded-3xl [&>button]:right-4 [&>button]:top-4 [&>button]:z-20 [&>button]:text-muted-foreground">
         <div className="grid h-full md:grid-cols-[1.15fr_1fr]">
           <div className="relative hidden h-full min-h-0 overflow-hidden md:block">
             <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_30%_20%,#7C3AED_0%,transparent_55%),radial-gradient(ellipse_at_80%_80%,#A78BFA_0%,transparent_50%),linear-gradient(160deg,#4C1D95_0%,#7C3AED_50%,#5B21B6_100%)]" />

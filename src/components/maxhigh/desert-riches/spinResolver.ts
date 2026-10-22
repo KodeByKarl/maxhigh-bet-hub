@@ -1,132 +1,131 @@
-import { calcFreeSpinsAward } from "@/lib/desert-riches-config";
-import { resolveHoldAndWin } from "./holdAndWin";
-import { evaluatePaylines, evaluateScatterPay } from "./paylineEngine";
-import { countKind, generateGrid, listBonusPositions } from "./reelGenerator";
-import { createRng, newSpinSeed } from "./rng";
 import { getDesertRichesConfig } from "./runtimeConfig";
-import { applyGravity } from "./tumbleEngine";
-import type { CascadeStep, SpinScript } from "./types";
+import { buildBoard, cloneBoard } from "./gridState";
+import { applyBombToTumble, finalizeFreeSpinTotal } from "./multiplierEngine";
+import { resolveScatters } from "./scatterEngine";
+import { applyGravity, evaluateBoard } from "./tumbleEngine";
+import type { BoardCell, SpinScript, TumbleStep } from "./types";
 
-const MAX_CASCADES = 25;
-
-function applyCap(amount: number, already: number, maxPayout: number) {
-  if (!Number.isFinite(maxPayout)) return { credited: amount, hitCap: false };
-  if (already >= maxPayout) return { credited: 0, hitCap: true };
-  if (already + amount > maxPayout) {
-    return { credited: +Math.max(0, maxPayout - already).toFixed(2), hitCap: true };
-  }
-  return { credited: amount, hitCap: false };
-}
+export type ResolveOpts = {
+  bet: number;
+  ante: boolean;
+  isFreeSpins: boolean;
+  /** FS: collect bombs then apply once at end (spec §4) */
+  collectBombsInFreeSpins?: boolean;
+  /** Running FS bomb total from prior spins in this feature. */
+  initialBombAccumulator?: number;
+  forceBoard?: BoardCell[];
+};
 
 /**
- * Server-authoritative spin:
- * diamond connecting-ways cascade (remove → drop → refill) → scatter → Hold & Win → cap.
+ * Resolve entire spin instantly → animation script.
+ * Math never waits on visuals.
  */
-export function resolveFrontierSpin(opts: {
-  totalBet: number;
-  isFreeSpins?: boolean;
-  seed?: string;
-}): SpinScript {
-  const cfg = getDesertRichesConfig();
-  const totalBet = opts.totalBet;
-  const isFreeSpins = !!opts.isFreeSpins;
-  const seed = opts.seed ?? newSpinSeed(isFreeSpins ? "fg-fs" : "fg");
-  const rng = createRng(seed);
-
-  const maxPayout =
-    cfg.maxWinMult > 0 ? +(totalBet * cfg.maxWinMult).toFixed(2) : Number.POSITIVE_INFINITY;
-
-  let grid = generateGrid(rng, cfg, { isFreeSpins });
-  const steps: CascadeStep[] = [];
-  let paylineWinTotal = 0;
+export function resolveSpin(opts: ResolveOpts): SpinScript {
+  const collectMode = opts.isFreeSpins && (opts.collectBombsInFreeSpins ?? true);
+  let board = cloneBoard(
+    opts.forceBoard ??
+      buildBoard(opts.ante && !opts.isFreeSpins, opts.isFreeSpins, !opts.isFreeSpins),
+  );
+  const initialBoard = cloneBoard(board);
+  const steps: TumbleStep[] = [];
   let totalWin = 0;
-  let hitCap = false;
-  let scatterPaid = false;
-  let scatterPay = 0;
-  let peakScatter = 0;
-  let freeSpinsAwarded = 0;
+  let rawWin = 0;
+  let peakBomb = 0;
+  let maxScatters = 0;
+  let accumulator = Math.max(0, opts.initialBombAccumulator ?? 0);
 
-  for (let cascadeIndex = 0; cascadeIndex < MAX_CASCADES; cascadeIndex++) {
-    const { wins, total: rawLine } = evaluatePaylines(grid, totalBet, cfg);
-    const scatterCount = countKind(grid, "scatter");
-    if (scatterCount > peakScatter) peakScatter = scatterCount;
+  // Safety cap on tumble chains
+  for (let guard = 0; guard < 40; guard++) {
+    const ev = evaluateBoard(board, opts.bet);
+    maxScatters = Math.max(maxScatters, ev.scatters);
 
-    if (!scatterPaid && scatterCount >= cfg.freeSpinsTriggerCount) {
-      const rawSc = evaluateScatterPay(scatterCount, totalBet, cfg);
-      const sc = applyCap(rawSc, totalWin, maxPayout);
-      scatterPay = sc.credited;
-      totalWin += sc.credited;
-      hitCap = hitCap || sc.hitCap;
-      scatterPaid = true;
-      freeSpinsAwarded = calcFreeSpinsAward(scatterCount, cfg);
+    if (ev.winningKeys.size === 0) break;
+
+    rawWin += ev.win;
+
+    const bombResult = applyBombToTumble(ev.win, ev.bombs, {
+      freeSpins: opts.isFreeSpins,
+      collectMode,
+      accumulator,
+    });
+    accumulator = bombResult.accumulator;
+    if (bombResult.bombSum > peakBomb) peakBomb = bombResult.bombSum;
+
+    const remove = new Set(ev.winningKeys);
+    if (bombResult.clearBombs) {
+      for (const b of ev.bombs) remove.add(b.key);
     }
 
-    const capped = applyCap(rawLine, totalWin, maxPayout);
-    const stepWin = capped.credited;
-    paylineWinTotal += stepWin;
-    totalWin += stepWin;
-    hitCap = hitCap || capped.hitCap;
-
-    const removed: Array<[number, number]> = [];
-    if (wins.length > 0 && !hitCap && stepWin > 0) {
-      const seen = new Set<string>();
-      for (const w of wins) {
-        for (const [r, row] of w.positions) {
-          const k = `${r},${row}`;
-          if (seen.has(k)) continue;
-          seen.add(k);
-          removed.push([r, row]);
-        }
-      }
+    // Scale per-symbol display if bombs applied to tumble
+    let clusters = ev.clusters;
+    if (bombResult.bombSum > 0 && !collectMode) {
+      clusters = ev.clusters.map((c) => ({
+        ...c,
+        pay: +(c.pay * bombResult.bombSum).toFixed(2),
+        perSymbol: +(c.perSymbol * bombResult.bombSum).toFixed(2),
+      }));
     }
+
+    const gravity = applyGravity(board, remove, opts.ante && !opts.isFreeSpins, opts.isFreeSpins);
 
     steps.push({
-      stepIndex: cascadeIndex,
-      grid: grid.map((col) => [...col]),
-      paylineWins: wins,
-      paylineWin: stepWin,
-      removed,
+      board: cloneBoard(board),
+      winningKeys: [...remove],
+      clusters,
+      tumbleWin: bombResult.win,
+      bombSum: bombResult.bombSum,
+      afterPop: gravity.afterPop,
+      afterFall: gravity.next,
+      spawnedKeys: gravity.spawnedKeys,
+      fallenKeys: gravity.fallenKeys,
+      fallDistance: gravity.fallDistance,
     });
 
-    if (removed.length === 0 || hitCap) break;
-
-    grid = applyGravity(grid, removed, rng, cfg, isFreeSpins);
+    totalWin += bombResult.win;
+    board = gravity.next;
   }
 
-  const finalGrid = steps.length ? steps[steps.length - 1]!.grid : grid;
-  // Recompute bonus on final board (after last tumble fill)
-  // Use live grid after last gravity if we tumbled; else final step grid
-  const boardForBonus = hitCap || steps[steps.length - 1]?.removed.length === 0
-    ? finalGrid
-    : grid;
-  // After loop break without gravity, boardForBonus === finalGrid.
-  // After gravity then break on no wins, last step is the new grid with empty removed.
-  const evalBoard = steps[steps.length - 1]!.grid;
-  const bonusPositions = listBonusPositions(evalBoard);
-  const bonusCoinCount = bonusPositions.length;
+  // Bombs only count when a winning cluster is on the board (handled in applyBombToTumble).
+  // Do NOT bank leftover bombs on a dead / no-win board — those multipliers are invalid.
 
-  let holdWin: SpinScript["holdWin"] = null;
-  if (!hitCap && bonusCoinCount >= cfg.holdWinTriggerCount) {
-    const raw = resolveHoldAndWin(rng, totalBet, cfg, bonusPositions);
-    const capped = applyCap(raw.totalWin, totalWin, maxPayout);
-    holdWin = { ...raw, totalWin: capped.credited };
-    totalWin += capped.credited;
-    hitCap = hitCap || capped.hitCap;
+  const scatter = resolveScatters(maxScatters, opts.bet, opts.isFreeSpins);
+  if (!opts.isFreeSpins) {
+    totalWin += scatter.cashPay;
+    rawWin += scatter.cashPay;
   }
 
-  const first = steps[0]!;
+  let finalTotal = +totalWin.toFixed(2);
+  const finalRaw = +rawWin.toFixed(2);
+  const capMult = getDesertRichesConfig().maxWinMult;
+  if (capMult > 0) {
+    const cap = +(opts.bet * capMult).toFixed(2);
+    if (finalTotal > cap) finalTotal = cap;
+  }
+  // Base: peak bomb only if this spin actually won. FS: banked mult from winning tumbles only.
+  const displayMult =
+    finalRaw > 0
+      ? collectMode
+        ? accumulator > 0
+          ? accumulator
+          : 1
+        : peakBomb > 0
+          ? peakBomb
+          : 1
+      : 1;
+
   return {
-    seed,
+    initialBoard,
     steps,
-    grid: evalBoard,
-    paylineWins: first.paylineWins,
-    paylineWin: +paylineWinTotal.toFixed(2),
-    scatterCount: peakScatter,
-    scatterPay,
-    freeSpinsAwarded,
-    bonusCoinCount,
-    holdWin,
-    totalWin: +totalWin.toFixed(2),
-    hitCap: hitCap || undefined,
+    totalWin: finalTotal,
+    rawWin: finalRaw,
+    displayMult,
+    scatters: maxScatters,
+    scatterPay: scatter.cashPay,
+    freeSpinsAwarded: scatter.freeSpinsAwarded,
+    retriggerSpins: scatter.retriggerSpins,
+    isFreeSpins: opts.isFreeSpins,
+    bombAccumulator: accumulator,
   };
 }
+
+export { finalizeFreeSpinTotal };

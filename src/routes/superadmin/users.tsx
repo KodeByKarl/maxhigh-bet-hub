@@ -35,7 +35,17 @@ function SuperUsersPage() {
   const [editing, setEditing] = useState<SuperUserRow | null>(null);
   const [showAddModal, setShowAddModal] = useState(false);
   const [activeModal, setActiveModal] = useState<{
-    type: "menu" | "view" | "profile" | "edit" | "copy" | "password" | "security" | "winLimit" | "suspicious" | "addChips";
+    type:
+      | "menu"
+      | "view"
+      | "profile"
+      | "edit"
+      | "copy"
+      | "password"
+      | "security"
+      | "winLimit"
+      | "suspicious"
+      | "addChips";
     user: SuperUserRow;
   } | null>(null);
 
@@ -46,8 +56,10 @@ function SuperUsersPage() {
 
   const sortedRows = useMemo(() => {
     return [...rows].sort((a, b) => {
-      if (sortBy === "newest") return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
-      if (sortBy === "oldest") return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
+      if (sortBy === "newest")
+        return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+      if (sortBy === "oldest")
+        return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
       if (sortBy === "az") return a.username.localeCompare(b.username);
       if (sortBy === "za") return b.username.localeCompare(a.username);
       return 0;
@@ -146,14 +158,18 @@ function SuperUsersPage() {
 
       <div className="grid gap-2.5 lg:hidden">
         {sortedRows.length === 0 ? (
-          <div className={`${saGlass} p-8 text-center text-sm text-muted-foreground`}>No accounts found.</div>
+          <div className={`${saGlass} p-8 text-center text-sm text-muted-foreground`}>
+            No accounts found.
+          </div>
         ) : (
           sortedRows.map((u) => (
             <div key={u.id} className={`${saGlass} space-y-3 p-3.5`}>
               <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0">
                   <div className="flex flex-wrap items-center gap-2">
-                    <span className="truncate text-sm font-black text-foreground">@{u.username}</span>
+                    <span className="truncate text-sm font-black text-foreground">
+                      @{u.username}
+                    </span>
                     {u.isLocked === "yes" ? (
                       <span className="shrink-0 rounded-md border border-rose-500/50 bg-rose-500/20 px-2 py-0.5 text-[10px] font-black uppercase tracking-wide text-rose-300">
                         Locked
@@ -165,15 +181,21 @@ function SuperUsersPage() {
                     )}
                   </div>
                   {u.displayName && (
-                    <div className="mt-0.5 truncate text-[11px] text-amber-400">{u.displayName}</div>
+                    <div className="mt-0.5 truncate text-[11px] text-amber-400">
+                      {u.displayName}
+                    </div>
                   )}
                   <div className="mt-0.5 font-mono text-[10px] text-muted-foreground">
                     ID: {u.publicUserId || u.id.slice(0, 8)}
                   </div>
                 </div>
                 <div className="shrink-0 text-right">
-                  <div className="text-[10px] font-bold uppercase tracking-wide text-muted-foreground">Balance</div>
-                  <div className="text-lg font-black tabular-nums text-emerald-400">{formatMoney(u.balance)}</div>
+                  <div className="text-[10px] font-bold uppercase tracking-wide text-muted-foreground">
+                    Balance
+                  </div>
+                  <div className="text-lg font-black tabular-nums text-emerald-400">
+                    {formatMoney(u.balance)}
+                  </div>
                 </div>
               </div>
 
@@ -228,7 +250,10 @@ function SuperUsersPage() {
           </thead>
           <tbody>
             {sortedRows.map((u) => (
-              <tr key={u.id} className="border-b border-white/[0.06] hover:bg-white/[0.02] transition-colors">
+              <tr
+                key={u.id}
+                className="border-b border-white/[0.06] hover:bg-white/[0.02] transition-colors"
+              >
                 <td className="w-[20%] px-4 py-4 align-middle">
                   <div className="flex items-center gap-2 flex-wrap">
                     <span className="font-bold text-foreground truncate">@{u.username}</span>
@@ -245,7 +270,9 @@ function SuperUsersPage() {
                   {u.displayName && (
                     <div className="text-[11px] text-amber-400 truncate">{u.displayName}</div>
                   )}
-                  <div className="mt-0.5 text-[10px] text-muted-foreground font-mono">ID: {u.id.slice(0, 8)}…</div>
+                  <div className="mt-0.5 text-[10px] text-muted-foreground font-mono">
+                    ID: {u.id.slice(0, 8)}…
+                  </div>
                 </td>
 
                 <td className="w-[18%] px-4 py-4 align-middle text-center">
@@ -387,7 +414,8 @@ function AddPlayerModal({
   const isPasswordValid = hasMinLength && hasLetter && hasNumber;
   const passwordsMatch = password === confirmPassword;
 
-  const isUsernameTaken = username.trim() !== "" && existingUsernames.includes(username.trim().toLowerCase());
+  const isUsernameTaken =
+    username.trim() !== "" && existingUsernames.includes(username.trim().toLowerCase());
   const isUsernameValid = username.trim().length >= 3 && !isUsernameTaken;
 
   async function onSubmit(e: FormEvent) {
@@ -429,7 +457,10 @@ function AddPlayerModal({
   const selectedAgent = agents.find((a) => a.id === parentAgentId);
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/60 backdrop-blur-sm sm:items-center sm:p-4" onClick={onClose}>
+    <div
+      className="fixed inset-0 z-50 flex items-end justify-center bg-black/60 backdrop-blur-sm sm:items-center sm:p-4"
+      onClick={onClose}
+    >
       <form
         onSubmit={onSubmit}
         onClick={(e) => e.stopPropagation()}
@@ -438,7 +469,9 @@ function AddPlayerModal({
         <div className="flex items-center justify-between border-b border-amber-500/20 pb-3">
           <div>
             <h2 className="text-xl font-black text-foreground">Add New Player / User</h2>
-            <p className="text-xs text-muted-foreground">Create account with system-generated or custom credentials</p>
+            <p className="text-xs text-muted-foreground">
+              Create account with system-generated or custom credentials
+            </p>
           </div>
           <button
             type="button"
@@ -450,7 +483,9 @@ function AddPlayerModal({
         </div>
 
         <div className="mt-4 rounded-xl border border-amber-500/30 bg-amber-500/10 px-3 py-2.5">
-          <div className="text-[10px] font-bold uppercase tracking-wider text-amber-300">Agent account</div>
+          <div className="text-[10px] font-bold uppercase tracking-wider text-amber-300">
+            Agent account
+          </div>
           <div className="mt-1">
             <select
               value={parentAgentId}
@@ -553,13 +588,19 @@ function AddPlayerModal({
 
           <div className="sm:col-span-2">
             <div className="grid grid-cols-3 gap-2 text-[11px]">
-              <div className={`rounded-lg border px-2 py-1 text-center font-bold ${hasMinLength ? "border-emerald-500/40 bg-emerald-500/10 text-emerald-400" : "border-white/10 text-muted-foreground"}`}>
+              <div
+                className={`rounded-lg border px-2 py-1 text-center font-bold ${hasMinLength ? "border-emerald-500/40 bg-emerald-500/10 text-emerald-400" : "border-white/10 text-muted-foreground"}`}
+              >
                 {hasMinLength ? "✓ 6+ Chars" : "Min 6 Chars"}
               </div>
-              <div className={`rounded-lg border px-2 py-1 text-center font-bold ${hasLetter ? "border-emerald-500/40 bg-emerald-500/10 text-emerald-400" : "border-white/10 text-muted-foreground"}`}>
+              <div
+                className={`rounded-lg border px-2 py-1 text-center font-bold ${hasLetter ? "border-emerald-500/40 bg-emerald-500/10 text-emerald-400" : "border-white/10 text-muted-foreground"}`}
+              >
                 {hasLetter ? "✓ Has Letter" : "Contains Letter"}
               </div>
-              <div className={`rounded-lg border px-2 py-1 text-center font-bold ${hasNumber ? "border-emerald-500/40 bg-emerald-500/10 text-emerald-400" : "border-white/10 text-muted-foreground"}`}>
+              <div
+                className={`rounded-lg border px-2 py-1 text-center font-bold ${hasNumber ? "border-emerald-500/40 bg-emerald-500/10 text-emerald-400" : "border-white/10 text-muted-foreground"}`}
+              >
                 {hasNumber ? "✓ Has Number" : "Contains Number"}
               </div>
             </div>
@@ -663,13 +704,19 @@ function EditUserModal({
       >
         <div className="flex items-center justify-between">
           <h2 className="text-lg font-bold text-foreground">Edit @{user.username}</h2>
-          <button type="button" onClick={onClose} className="rounded-lg p-1 text-muted-foreground hover:bg-white/[0.06]">
+          <button
+            type="button"
+            onClick={onClose}
+            className="rounded-lg p-1 text-muted-foreground hover:bg-white/[0.06]"
+          >
             <X size={18} />
           </button>
         </div>
 
         <label className="block space-y-1">
-          <span className="text-[11px] font-semibold uppercase text-muted-foreground">Username</span>
+          <span className="text-[11px] font-semibold uppercase text-muted-foreground">
+            Username
+          </span>
           <Input
             value={username}
             onChange={(e) => setUsername(e.target.value)}
@@ -690,7 +737,9 @@ function EditUserModal({
         </label>
 
         <label className="block space-y-1">
-          <span className="text-[11px] font-semibold uppercase text-muted-foreground">Display name</span>
+          <span className="text-[11px] font-semibold uppercase text-muted-foreground">
+            Display name
+          </span>
           <Input
             value={displayName}
             onChange={(e) => setDisplayName(e.target.value)}
@@ -740,13 +789,33 @@ function PlayerActionModal({
   onEdit,
 }: {
   modal: {
-    type: "menu" | "view" | "profile" | "edit" | "copy" | "password" | "security" | "winLimit" | "suspicious" | "addChips";
+    type:
+      | "menu"
+      | "view"
+      | "profile"
+      | "edit"
+      | "copy"
+      | "password"
+      | "security"
+      | "winLimit"
+      | "suspicious"
+      | "addChips";
     user: SuperUserRow;
   };
   onClose: () => void;
   onActionComplete?: () => void;
   onNavigate?: (
-    type: "menu" | "view" | "profile" | "edit" | "copy" | "password" | "security" | "winLimit" | "suspicious" | "addChips",
+    type:
+      | "menu"
+      | "view"
+      | "profile"
+      | "edit"
+      | "copy"
+      | "password"
+      | "security"
+      | "winLimit"
+      | "suspicious"
+      | "addChips",
   ) => void;
   onEdit?: () => void;
 }) {
@@ -843,17 +912,28 @@ function PlayerActionModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 grid place-items-center bg-black/65 backdrop-blur-md p-4 overflow-y-auto" onClick={onClose}>
+    <div
+      className="fixed inset-0 z-50 grid place-items-center bg-black/65 backdrop-blur-md p-4 overflow-y-auto"
+      onClick={onClose}
+    >
       <div
         onClick={(e) => e.stopPropagation()}
         className={`${saGlass} my-auto w-full space-y-4 border border-amber-500/30 p-4 shadow-2xl transition-all sm:p-6 ${type === "suspicious" || type === "view" ? "max-w-4xl" : "max-w-xl"}`}
       >
         <div className="flex items-center justify-between border-b border-amber-500/20 pb-3">
           <div>
-            <h2 className="text-xl font-black text-foreground">{titles[type] ?? "Player Action"}</h2>
-            <p className="text-xs text-muted-foreground">Target Player: <span className="text-amber-400 font-bold">@{user.username}</span></p>
+            <h2 className="text-xl font-black text-foreground">
+              {titles[type] ?? "Player Action"}
+            </h2>
+            <p className="text-xs text-muted-foreground">
+              Target Player: <span className="text-amber-400 font-bold">@{user.username}</span>
+            </p>
           </div>
-          <button type="button" onClick={onClose} className="rounded-lg p-1.5 text-muted-foreground hover:bg-white/[0.06]">
+          <button
+            type="button"
+            onClick={onClose}
+            className="rounded-lg p-1.5 text-muted-foreground hover:bg-white/[0.06]"
+          >
             <X size={20} />
           </button>
         </div>
@@ -866,7 +946,9 @@ function PlayerActionModal({
                 type="button"
                 onClick={() => setChipMode("add")}
                 className={`h-9 flex-1 rounded-lg text-xs font-black uppercase ${
-                  chipMode === "add" ? "bg-emerald-500 text-black" : "border border-white/10 text-muted-foreground"
+                  chipMode === "add"
+                    ? "bg-emerald-500 text-black"
+                    : "border border-white/10 text-muted-foreground"
                 }`}
               >
                 Add Chips
@@ -875,17 +957,22 @@ function PlayerActionModal({
                 type="button"
                 onClick={() => setChipMode("withdraw")}
                 className={`h-9 flex-1 rounded-lg text-xs font-black uppercase ${
-                  chipMode === "withdraw" ? "bg-rose-500 text-white" : "border border-white/10 text-muted-foreground"
+                  chipMode === "withdraw"
+                    ? "bg-rose-500 text-white"
+                    : "border border-white/10 text-muted-foreground"
                 }`}
               >
                 Withdraw
               </button>
             </div>
             <p className="text-xs text-muted-foreground">
-              Current balance: <span className="font-bold text-emerald-400">{formatMoney(user.balance)}</span>
+              Current balance:{" "}
+              <span className="font-bold text-emerald-400">{formatMoney(user.balance)}</span>
             </p>
             <div>
-              <label className="block text-[11px] font-bold uppercase text-muted-foreground mb-1">Amount (₱)</label>
+              <label className="block text-[11px] font-bold uppercase text-muted-foreground mb-1">
+                Amount (₱)
+              </label>
               <Input
                 type="number"
                 min={1}
@@ -898,7 +985,9 @@ function PlayerActionModal({
               />
             </div>
             <div>
-              <label className="block text-[11px] font-bold uppercase text-muted-foreground mb-1">Note</label>
+              <label className="block text-[11px] font-bold uppercase text-muted-foreground mb-1">
+                Note
+              </label>
               <Input
                 value={chipNote}
                 onChange={(e) => setChipNote(e.target.value)}
@@ -924,9 +1013,7 @@ function PlayerActionModal({
               type="submit"
               disabled={chipBusy}
               className={`h-11 w-full rounded-xl text-xs font-black uppercase disabled:opacity-60 ${
-                chipMode === "add"
-                  ? "bg-emerald-500 text-black"
-                  : "bg-rose-500 text-white"
+                chipMode === "add" ? "bg-emerald-500 text-black" : "bg-rose-500 text-white"
               }`}
             >
               {chipBusy
@@ -941,7 +1028,9 @@ function PlayerActionModal({
         {/* Win Limit Form */}
         {type === "winLimit" && (
           <div className="space-y-4">
-            <p className="text-xs text-muted-foreground">Manually specify maximum winning payout limit for @{user.username}:</p>
+            <p className="text-xs text-muted-foreground">
+              Manually specify maximum winning payout limit for @{user.username}:
+            </p>
             <div>
               <label className="block text-[11px] font-bold uppercase text-muted-foreground mb-1">
                 Weekly Win Limit Payout (₱)
@@ -958,7 +1047,9 @@ function PlayerActionModal({
             <button
               type="button"
               onClick={() => {
-                toast.success(`Weekly Win Limit set to ₱${Number(winLimitInput).toLocaleString("en-PH")} for @${user.username}!`);
+                toast.success(
+                  `Weekly Win Limit set to ₱${Number(winLimitInput).toLocaleString("en-PH")} for @${user.username}!`,
+                );
                 onClose();
               }}
               className="h-11 w-full rounded-xl bg-amber-500 text-xs font-black uppercase text-black hover:bg-amber-400"
@@ -971,7 +1062,9 @@ function PlayerActionModal({
         {/* Security Code Form */}
         {type === "security" && (
           <div className="space-y-4 text-center py-2">
-            <p className="text-xs text-muted-foreground">System Generated Security Code for Verification:</p>
+            <p className="text-xs text-muted-foreground">
+              System Generated Security Code for Verification:
+            </p>
             <div className="rounded-2xl border border-amber-500/40 bg-amber-500/10 py-4 font-mono text-3xl font-black tracking-widest text-amber-300">
               {loading ? "FETCHING…" : securityCode}
             </div>
@@ -989,9 +1082,15 @@ function PlayerActionModal({
         {type === "copy" && (
           <div className="space-y-4">
             <div>
-              <label className="block text-[11px] font-bold uppercase text-muted-foreground mb-1">User ID</label>
+              <label className="block text-[11px] font-bold uppercase text-muted-foreground mb-1">
+                User ID
+              </label>
               <div className="flex gap-2">
-                <Input value={user.id} readOnly className="h-10 font-mono text-xs bg-white/[0.06] text-foreground" />
+                <Input
+                  value={user.id}
+                  readOnly
+                  className="h-10 font-mono text-xs bg-white/[0.06] text-foreground"
+                />
                 <button
                   type="button"
                   onClick={() => handleCopy(user.id, "User ID")}
@@ -1002,9 +1101,15 @@ function PlayerActionModal({
               </div>
             </div>
             <div>
-              <label className="block text-[11px] font-bold uppercase text-muted-foreground mb-1">Username</label>
+              <label className="block text-[11px] font-bold uppercase text-muted-foreground mb-1">
+                Username
+              </label>
               <div className="flex gap-2">
-                <Input value={user.username} readOnly className="h-10 bg-white/[0.06] text-foreground" />
+                <Input
+                  value={user.username}
+                  readOnly
+                  className="h-10 bg-white/[0.06] text-foreground"
+                />
                 <button
                   type="button"
                   onClick={() => handleCopy(user.username, "Username")}
@@ -1020,11 +1125,13 @@ function PlayerActionModal({
         {/* MENU MODAL: Quick Management Actions */}
         {type === "menu" && (
           <div className="space-y-4">
-            <div className={`p-3 rounded-xl border flex items-center justify-between font-bold text-xs ${
-              isLocked
-                ? "border-rose-500/40 bg-rose-500/15 text-rose-300"
-                : "border-emerald-500/40 bg-emerald-500/15 text-emerald-300"
-            }`}>
+            <div
+              className={`p-3 rounded-xl border flex items-center justify-between font-bold text-xs ${
+                isLocked
+                  ? "border-rose-500/40 bg-rose-500/15 text-rose-300"
+                  : "border-emerald-500/40 bg-emerald-500/15 text-emerald-300"
+              }`}
+            >
               <span>Current Account Status:</span>
               <span className="flex items-center gap-1.5 uppercase font-black tracking-wider">
                 {isLocked ? "🔒 LOCKED" : "🔓 UNLOCKED / ACTIVE"}
@@ -1035,17 +1142,15 @@ function PlayerActionModal({
               Manage <span className="font-bold text-amber-400">@{user.username}</span>
             </p>
             <div className="grid grid-cols-2 gap-2">
-              {(
-                [
-                  { type: "view" as const, label: "View" },
-                  { type: "profile" as const, label: "Profile" },
-                  { type: "addChips" as const, label: "Add / Withdraw" },
-                  { type: "copy" as const, label: "Copy ID" },
-                  { type: "security" as const, label: "Security Code" },
-                  { type: "winLimit" as const, label: "Win Limit" },
-                  { type: "suspicious" as const, label: "Suspicious Check" },
-                ]
-              ).map((item) => (
+              {[
+                { type: "view" as const, label: "View" },
+                { type: "profile" as const, label: "Profile" },
+                { type: "addChips" as const, label: "Add / Withdraw" },
+                { type: "copy" as const, label: "Copy ID" },
+                { type: "security" as const, label: "Security Code" },
+                { type: "winLimit" as const, label: "Win Limit" },
+                { type: "suspicious" as const, label: "Suspicious Check" },
+              ].map((item) => (
                 <button
                   key={item.type}
                   type="button"
@@ -1075,7 +1180,9 @@ function PlayerActionModal({
                     });
                     const lockedNow = res.isLocked === "yes";
                     setIsLocked(lockedNow);
-                    toast.success(`Account @${res.username} ${lockedNow ? "Locked" : "Unlocked"} successfully!`);
+                    toast.success(
+                      `Account @${res.username} ${lockedNow ? "Locked" : "Unlocked"} successfully!`,
+                    );
                     onActionComplete?.();
                   } catch (e) {
                     toast.error(e instanceof Error ? e.message : "Lock action failed");
@@ -1160,30 +1267,47 @@ function PlayerActionModal({
           <div className="space-y-4">
             <div className="grid grid-cols-2 gap-3">
               <div className="rounded-xl border border-amber-500/20 bg-amber-500/5 p-3 text-center">
-                <span className="text-[10px] font-bold uppercase text-muted-foreground block">Total Wagers</span>
-                <span className="text-sm font-black text-amber-400">{formatMoney(auditDetails?.totalBets ?? 0)}</span>
+                <span className="text-[10px] font-bold uppercase text-muted-foreground block">
+                  Total Wagers
+                </span>
+                <span className="text-sm font-black text-amber-400">
+                  {formatMoney(auditDetails?.totalBets ?? 0)}
+                </span>
               </div>
               <div className="rounded-xl border border-emerald-500/20 bg-emerald-500/5 p-3 text-center">
-                <span className="text-[10px] font-bold uppercase text-muted-foreground block">Total Wins</span>
-                <span className="text-sm font-black text-emerald-400">{formatMoney(auditDetails?.totalWins ?? 0)}</span>
+                <span className="text-[10px] font-bold uppercase text-muted-foreground block">
+                  Total Wins
+                </span>
+                <span className="text-sm font-black text-emerald-400">
+                  {formatMoney(auditDetails?.totalWins ?? 0)}
+                </span>
               </div>
             </div>
 
             <div>
-              <h4 className="text-xs font-bold uppercase text-muted-foreground mb-2">Activity & Betting Log</h4>
+              <h4 className="text-xs font-bold uppercase text-muted-foreground mb-2">
+                Activity & Betting Log
+              </h4>
               <div className="max-h-52 overflow-y-auto rounded-xl border border-white/10 bg-black/40 p-3 space-y-2 text-xs">
                 {auditDetails?.recentLogs && auditDetails.recentLogs.length > 0 ? (
                   auditDetails.recentLogs.map((l) => (
-                    <div key={l.id} className="flex justify-between items-center border-b border-white/5 pb-2">
+                    <div
+                      key={l.id}
+                      className="flex justify-between items-center border-b border-white/5 pb-2"
+                    >
                       <div>
                         <div className="font-bold text-foreground">{l.action}</div>
                         <div className="text-[11px] text-muted-foreground">{l.summary}</div>
                       </div>
-                      <span className="text-[10px] font-mono text-amber-400">{new Date(l.timestamp).toLocaleTimeString()}</span>
+                      <span className="text-[10px] font-mono text-amber-400">
+                        {new Date(l.timestamp).toLocaleTimeString()}
+                      </span>
                     </div>
                   ))
                 ) : (
-                  <p className="text-muted-foreground text-center py-4 text-xs">No recent transaction or betting activity found.</p>
+                  <p className="text-muted-foreground text-center py-4 text-xs">
+                    No recent transaction or betting activity found.
+                  </p>
                 )}
               </div>
             </div>
@@ -1224,11 +1348,15 @@ function PlayerActionModal({
               </div>
               <div className="flex justify-between border-b border-white/5 pb-2">
                 <span className="text-muted-foreground font-semibold">Chip Balance:</span>
-                <span className="font-bold text-emerald-400 text-sm">{formatMoney(user.balance)}</span>
+                <span className="font-bold text-emerald-400 text-sm">
+                  {formatMoney(user.balance)}
+                </span>
               </div>
               <div className="flex justify-between">
                 <span className="text-muted-foreground font-semibold">Registration Date:</span>
-                <span className="font-mono text-muted-foreground">{new Date(user.createdAt).toLocaleDateString()}</span>
+                <span className="font-mono text-muted-foreground">
+                  {new Date(user.createdAt).toLocaleDateString()}
+                </span>
               </div>
             </div>
 
@@ -1248,34 +1376,48 @@ function PlayerActionModal({
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {/* LEFT PANEL: Risk & Security Posture Summary */}
               <div className="space-y-4">
-                <div className={`p-4 rounded-xl border text-center ${
-                  auditDetails?.isSuspicious
-                    ? "border-rose-500/40 bg-rose-500/10 text-rose-300"
-                    : "border-emerald-500/40 bg-emerald-500/10 text-emerald-300"
-                }`}>
+                <div
+                  className={`p-4 rounded-xl border text-center ${
+                    auditDetails?.isSuspicious
+                      ? "border-rose-500/40 bg-rose-500/10 text-rose-300"
+                      : "border-emerald-500/40 bg-emerald-500/10 text-emerald-300"
+                  }`}
+                >
                   <div className="text-2xl mb-1">{auditDetails?.isSuspicious ? "⚠️" : "🛡️"}</div>
-                  <div className="font-black text-sm uppercase tracking-wider">{auditDetails?.isSuspicious ? "Suspicious Risk Flagged" : "Clear Security Posture"}</div>
+                  <div className="font-black text-sm uppercase tracking-wider">
+                    {auditDetails?.isSuspicious
+                      ? "Suspicious Risk Flagged"
+                      : "Clear Security Posture"}
+                  </div>
                   <div className="text-xs opacity-80 mt-1">{auditDetails?.statusText}</div>
                 </div>
 
                 <div className="rounded-xl border border-white/10 bg-white/[0.03] p-4 space-y-2.5 text-xs">
                   <div className="flex justify-between border-b border-white/5 pb-2">
                     <span className="text-muted-foreground">Large Payout Wins (≥ ₱10,000):</span>
-                    <span className="font-bold text-amber-400">{auditDetails?.largeWinCount ?? 0} Occurrence(s)</span>
+                    <span className="font-bold text-amber-400">
+                      {auditDetails?.largeWinCount ?? 0} Occurrence(s)
+                    </span>
                   </div>
                   <div className="flex justify-between border-b border-white/5 pb-2">
                     <span className="text-muted-foreground">Failed Login Attempts:</span>
-                    <span className="font-bold text-foreground">{user.failedAttempts ?? 0} Attempt(s)</span>
+                    <span className="font-bold text-foreground">
+                      {user.failedAttempts ?? 0} Attempt(s)
+                    </span>
                   </div>
                   <div className="flex justify-between border-b border-white/5 pb-2">
                     <span className="text-muted-foreground">Lock State:</span>
-                    <span className={`font-bold ${isLocked ? "text-rose-400" : "text-emerald-400"}`}>
+                    <span
+                      className={`font-bold ${isLocked ? "text-rose-400" : "text-emerald-400"}`}
+                    >
                       {isLocked ? "LOCKED" : "UNLOCKED"}
                     </span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">Player Net PnL (Wins - Bets):</span>
-                    <span className={`font-bold ${(auditDetails?.netPnL ?? 0) >= 0 ? "text-rose-400" : "text-emerald-400"}`}>
+                    <span
+                      className={`font-bold ${(auditDetails?.netPnL ?? 0) >= 0 ? "text-rose-400" : "text-emerald-400"}`}
+                    >
                       {formatMoney(auditDetails?.netPnL ?? 0)}
                     </span>
                   </div>
@@ -1289,19 +1431,27 @@ function PlayerActionModal({
                     <span className="h-2.5 w-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
                     <span className="font-bold tracking-wider uppercase">AUDIT_TRAIL.LOG</span>
                   </div>
-                  <span className="text-[10px] text-emerald-500/70 font-mono">KodebyKarl Stream V1</span>
+                  <span className="text-[10px] text-emerald-500/70 font-mono">
+                    KodebyKarl Stream V1
+                  </span>
                 </div>
 
                 <div className="p-3 font-mono text-[11px] text-emerald-400/90 leading-relaxed overflow-y-auto max-h-[280px] min-h-[240px] space-y-2 bg-[#05070a]">
                   {auditDetails?.recentLogs && auditDetails.recentLogs.length > 0 ? (
                     auditDetails.recentLogs.map((log) => (
-                      <div key={log.id} className="border-b border-emerald-500/10 pb-1.5 hover:bg-emerald-500/[0.03]">
+                      <div
+                        key={log.id}
+                        className="border-b border-emerald-500/10 pb-1.5 hover:bg-emerald-500/[0.03]"
+                      >
                         <div className="flex items-center gap-2 text-[10px] text-emerald-500/60">
-                          <span>[{new Date(log.timestamp).toISOString().replace("T", " ").slice(0, 19)}]</span>
+                          <span>
+                            [{new Date(log.timestamp).toISOString().replace("T", " ").slice(0, 19)}]
+                          </span>
                           <span className="text-amber-400 font-bold">[{log.action}]</span>
                         </div>
                         <div className="text-emerald-300 font-mono pl-2">
-                          <span className="text-emerald-500 font-bold">$ </span>{log.summary}
+                          <span className="text-emerald-500 font-bold">$ </span>
+                          {log.summary}
                         </div>
                       </div>
                     ))

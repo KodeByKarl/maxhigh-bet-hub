@@ -53,13 +53,7 @@ export const ReelCell = memo(function ReelCell({
       className={cn(
         "relative min-h-0 min-w-0",
         isDropping || isFalling || isScatter || winFx ? "overflow-visible" : "overflow-hidden",
-        isScatter
-          ? "z-[30]"
-          : winFx
-            ? "z-[25]"
-            : isInitialDrop || isGravityDrop
-              ? "z-[1]"
-              : "",
+        isScatter ? "z-[30]" : winFx ? "z-[25]" : isInitialDrop || isGravityDrop ? "z-[1]" : "",
       )}
     >
       {cell && (
@@ -120,11 +114,9 @@ export const ReelCell = memo(function ReelCell({
                         mass: 0.85,
                         delay:
                           col *
-                            ((isInitialDrop ? ANIM.dropStaggerCol : ANIM.fallStaggerCol) /
-                              1000) +
+                            ((isInitialDrop ? ANIM.dropStaggerCol : ANIM.fallStaggerCol) / 1000) +
                           row *
-                            ((isInitialDrop ? ANIM.dropStaggerRow : ANIM.fallStaggerRow) /
-                              1000) *
+                            ((isInitialDrop ? ANIM.dropStaggerRow : ANIM.fallStaggerRow) / 1000) *
                             0.45,
                       },
                       opacity: {
@@ -139,8 +131,7 @@ export const ReelCell = memo(function ReelCell({
                         damping: 20,
                         delay:
                           col *
-                            ((isInitialDrop ? ANIM.dropStaggerCol : ANIM.fallStaggerCol) /
-                              1000) +
+                            ((isInitialDrop ? ANIM.dropStaggerCol : ANIM.fallStaggerCol) / 1000) +
                           0.1,
                       },
                     }

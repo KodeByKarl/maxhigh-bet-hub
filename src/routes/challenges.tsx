@@ -8,12 +8,20 @@ export const Route = createFileRoute("/challenges")({
       { title: "Challenges — MaxHigh" },
       { name: "description", content: "Complete daily challenges to earn bonuses on MaxHigh." },
       { property: "og:title", content: "Challenges — MaxHigh" },
-      { property: "og:description", content: "Complete daily challenges to earn bonuses on MaxHigh." },
+      {
+        property: "og:description",
+        content: "Complete daily challenges to earn bonuses on MaxHigh.",
+      },
     ],
   }),
   component: () => (
     <>
-      <PageHeader title="Challenges" description="Complete tasks and stack bonus rewards." icon={Target} accent="#DC2626" />
+      <PageHeader
+        title="Challenges"
+        description="Complete tasks and stack bonus rewards."
+        icon={Target}
+        accent="#DC2626"
+      />
       <ComingSoonPanel label="Daily challenges" />
     </>
   ),

@@ -8,10 +8,7 @@ import {
   shouldDraw,
   isNatural,
 } from "../src/lib/lucky9-config";
-import {
-  resolveLucky9Deal,
-  compareHands,
-} from "../src/components/maxhigh/games/lucky9/resolver";
+import { resolveLucky9Deal, compareHands } from "../src/components/maxhigh/games/lucky9/resolver";
 import { createRng } from "../src/components/maxhigh/games/lucky9/rng";
 import { setLucky9Config } from "../src/components/maxhigh/games/lucky9/runtimeConfig";
 
@@ -164,9 +161,7 @@ function main() {
 
   const rtp = (creditSum / wagerSum) * 100;
   console.log(`Lucky 9 sim · ${ROUNDS.toLocaleString()} rounds`);
-  console.log(
-    `  Outcomes P/D/T: ${outcomes.player} / ${outcomes.dealer} / ${outcomes.tie}`,
-  );
+  console.log(`  Outcomes P/D/T: ${outcomes.player} / ${outcomes.dealer} / ${outcomes.tie}`);
   console.log(`  Naturals (either side): ${naturalCount}`);
   console.log(`  Wager ₱${wagerSum.toFixed(2)} · Credit ₱${creditSum.toFixed(2)}`);
   console.log(`  Blended RTP (all bets) ≈ ${rtp.toFixed(3)}%`);

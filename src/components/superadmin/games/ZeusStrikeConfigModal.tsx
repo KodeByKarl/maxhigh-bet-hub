@@ -1,11 +1,12 @@
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 import {
+  Crown,
   Dices,
   Info,
-  Landmark,
   LayoutGrid,
   Save,
   Settings2,
+  SlidersHorizontal,
   Sparkles,
   Store,
 } from "lucide-react";
@@ -19,30 +20,29 @@ import {
 import { Input } from "@/components/ui/input";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import {
+  bombTablePercents,
   DEFAULT_ZEUS_STRIKE_CONFIG,
+  ZEUS_STRIKE_BOMB_MULTS,
   normalizeZeusStrikeConfig,
   weightPercents,
   type ZeusStrikeConfig,
   type ZeusStrikeSymbolConfig,
 } from "@/lib/zeus-strike-config";
-import {
-  getZeusStrikeEngineConfigFn,
-  saveZeusStrikeEngineConfigFn,
-} from "@/functions/superadmin";
+import { getZeusStrikeEngineConfigFn, saveZeusStrikeEngineConfigFn } from "@/functions/superadmin";
 import type { SuperGameRow } from "@/lib/superadmin-types";
 import { toast } from "sonner";
-import { SymbolIcon } from "@/components/maxhigh/zeus-strike/SymbolIcon";
-import type { SymKind } from "@/components/maxhigh/zeus-strike/types";
+import { PantherIcon } from "@/components/maxhigh/zeus-strike/PantherIcon";
+import type { ZeusStrikeSymKind } from "@/lib/zeus-strike-config";
 import { cn } from "@/lib/utils";
 
-type Section = "lobby" | "dead" | "symbols" | "freespins" | "mult";
+type Section = "lobby" | "dead" | "symbols" | "mult" | "freespins";
 
 const NAV: { id: Section; label: string; icon: typeof Store }[] = [
   { id: "lobby", label: "Lobby", icon: Store },
   { id: "dead", label: "Dead spin", icon: Dices },
   { id: "symbols", label: "Symbols", icon: LayoutGrid },
-  { id: "freespins", label: "Free spins", icon: Landmark },
-  { id: "mult", label: "Multiplier", icon: Sparkles },
+  { id: "mult", label: "Wilds/Bombs", icon: Sparkles },
+  { id: "freespins", label: "Free spins", icon: Crown },
 ];
 
 type Props = {
@@ -56,32 +56,64 @@ type Props = {
 
 export function ZeusStrikeConfigModal({ game, open, onOpenChange, onPatchLobby }: Props) {
   const [section, setSection] = useState<Section>("lobby");
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
   const [cfg, setCfg] = useState<ZeusStrikeConfig>(() =>
     structuredClone(DEFAULT_ZEUS_STRIKE_CONFIG),
   );
-  const [loading, setLoading] = useState(false);
-  const [saving, setSaving] = useState(false);
+
+  const [tag, setTag] = useState(game.tag ?? "");
+  const [rtp, setRtp] = useState(game.rtp ?? "");
+  const [volatility, setVolatility] = useState(game.volatility ?? "");
+  const [minBet, setMinBet] = useState(game.minBet ?? "");
+  const [maxBet, setMaxBet] = useState(game.maxBet ?? "");
 
   useEffect(() => {
     if (!open) return;
-    setSection("lobby");
     setLoading(true);
+    setTag(game.tag ?? "");
+    setRtp(game.rtp ?? "");
+    setVolatility(game.volatility ?? "");
+    setMinBet(game.minBet ?? "");
+    setMaxBet(game.maxBet ?? "");
+
     void getZeusStrikeEngineConfigFn()
-      .then((c) => setCfg(normalizeZeusStrikeConfig(c)))
-      .catch(() => setCfg(structuredClone(DEFAULT_ZEUS_STRIKE_CONFIG)))
+      .then((res) => {
+        setCfg(normalizeZeusStrikeConfig(res));
+      })
+      .catch(() => {
+        toast.error("Failed loading engine config — using defaults");
+        setCfg(structuredClone(DEFAULT_ZEUS_STRIKE_CONFIG));
+      })
       .finally(() => setLoading(false));
-  }, [open]);
+  }, [open, game]);
 
-  const spawnPct = useMemo(() => weightPercents(cfg.symbols), [cfg.symbols]);
+  const cellWeightsForDisplay = useMemo(() => {
+    const list = cfg.symbols
+      .filter((s) => s.weight > 0 && !s.bomb)
+      .map((s) => ({ id: s.id, weight: s.weight }));
+    return weightPercents(list);
+  }, [cfg.symbols]);
 
-  async function saveEngine() {
+  const bombPercents = useMemo(() => bombTablePercents(cfg.bombTable), [cfg.bombTable]);
+
+  async function handleSaveAll() {
     setSaving(true);
     try {
-      const next = await saveZeusStrikeEngineConfigFn({
-        data: { config: normalizeZeusStrikeConfig(cfg) },
+      await onPatchLobby({
+        tag: tag.trim() || undefined,
+        rtp: rtp.trim() || game.rtp,
+        volatility: (volatility.trim() || game.volatility) as SuperGameRow["volatility"],
+        minBet: minBet.trim() || game.minBet,
+        maxBet: maxBet.trim() || game.maxBet,
       });
-      setCfg(next);
-      toast.success("Engine config saved");
+
+      const normalized = await saveZeusStrikeEngineConfigFn({
+        data: { config: cfg },
+      });
+      setCfg(normalizeZeusStrikeConfig(normalized));
+      toast.success("Zeus Strike engine math & lobby settings saved");
+      onOpenChange(false);
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Save failed");
     } finally {
@@ -89,692 +121,450 @@ export function ZeusStrikeConfigModal({ game, open, onOpenChange, onPatchLobby }
     }
   }
 
-  function patch(partial: Partial<ZeusStrikeConfig>) {
-    setCfg((c) => normalizeZeusStrikeConfig({ ...c, ...partial }));
-  }
-
-  function patchSymbol(id: string, partial: Partial<ZeusStrikeSymbolConfig>) {
-    setCfg((c) =>
-      normalizeZeusStrikeConfig({
-        ...c,
-        symbols: c.symbols.map((s) => (s.id === id ? { ...s, ...partial } : s)),
-      }),
-    );
+  function updateSymbol(id: string, patch: Partial<ZeusStrikeSymbolConfig>) {
+    setCfg((prev) => ({
+      ...prev,
+      symbols: prev.symbols.map((s) => (s.id === id ? { ...s, ...patch } : s)),
+    }));
   }
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="flex h-[min(92dvh,52rem)] w-[min(100%-1rem,72rem)] max-w-none flex-col gap-0 overflow-hidden border-amber-500/20 bg-panel p-0 text-foreground sm:rounded-3xl">
-        <div className="relative h-32 shrink-0 overflow-hidden sm:h-40">
-          <img
-            src={game.thumb}
-            alt=""
-            className="h-full w-full object-cover object-[center_20%]"
-          />
-          <div className="absolute inset-0 bg-gradient-to-t from-[#16120F] via-[#16120F]/50 to-black/10" />
-          <div className="absolute bottom-0 left-0 right-0 px-5 pb-4 pt-10">
-            <DialogHeader className="space-y-1 text-left">
-              <DialogTitle className="flex items-center gap-2 text-xl font-black uppercase tracking-wide text-foreground sm:text-2xl">
-                <Settings2 size={20} className="text-amber-400" />
-                {game.name}
+      <DialogContent className="max-w-4xl max-h-[90vh] overflow-hidden flex flex-col p-0 border-amber-500/30 bg-gradient-to-b from-neutral-900 via-black to-neutral-950 text-foreground">
+        <DialogHeader className="px-6 pt-6 pb-4 border-b border-amber-500/20 shrink-0">
+          <div className="flex items-center justify-between gap-4">
+            <div>
+              <DialogTitle className="text-xl font-black uppercase text-amber-300 tracking-wider">
+                Zeus Strike Engine Configuration
               </DialogTitle>
               <DialogDescription className="text-xs text-muted-foreground">
-                Lobby visibility and live engine odds — {game.gameId}
+                Configure live RNG parameters, symbol weights, wild/bomb multipliers, and free
+                spins.
               </DialogDescription>
-            </DialogHeader>
-          </div>
-        </div>
+            </div>
 
-        <div className="grid min-h-0 flex-1 md:grid-cols-[12.5rem_1fr]">
-          <nav className="flex gap-1 overflow-x-auto border-b border-amber-500/20 p-2 md:flex-col md:overflow-y-auto md:border-b-0 md:border-r">
-            {NAV.map((item) => {
-              const Icon = item.icon;
-              const active = section === item.id;
+            <button
+              type="button"
+              disabled={loading || saving}
+              onClick={() => void handleSaveAll()}
+              className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 px-4 py-2 text-xs font-black uppercase text-amber-950 shadow-lg hover:brightness-110 active:scale-95 disabled:opacity-50 transition"
+            >
+              <Save size={16} />
+              {saving ? "Saving..." : "Save Config"}
+            </button>
+          </div>
+
+          <div className="mt-4 flex gap-2 border-t border-amber-500/10 pt-3">
+            {NAV.map((n) => {
+              const Icon = n.icon;
+              const active = section === n.id;
               return (
                 <button
-                  key={item.id}
+                  key={n.id}
                   type="button"
-                  onClick={() => setSection(item.id)}
+                  onClick={() => setSection(n.id)}
                   className={cn(
-                    "flex shrink-0 items-center gap-2 rounded-xl px-3 py-2.5 text-left text-sm font-semibold transition-colors",
+                    "flex items-center gap-2 rounded-lg px-3 py-1.5 text-xs font-bold transition",
                     active
-                      ? "bg-amber-500 text-black"
-                      : "text-muted-foreground hover:bg-white/[0.06] hover:text-foreground",
+                      ? "bg-amber-400/20 text-amber-300 border border-amber-400/40"
+                      : "text-muted-foreground hover:bg-white/5 hover:text-white",
                   )}
                 >
-                  <Icon size={16} />
-                  {item.label}
+                  <Icon size={14} />
+                  {n.label}
                 </button>
               );
             })}
-          </nav>
-
-          <div className="min-h-0 overflow-y-auto p-4 sm:p-5">
-            {loading && section !== "lobby" ? (
-              <div className="py-16 text-center text-sm text-muted-foreground">Loading config…</div>
-            ) : section === "lobby" ? (
-              <LobbySection game={game} onPatch={onPatchLobby} />
-            ) : section === "dead" ? (
-              <DeadSpinSection cfg={cfg} onPatch={patch} onSave={saveEngine} saving={saving} />
-            ) : section === "symbols" ? (
-              <SymbolsSection
-                cfg={cfg}
-                spawnPct={spawnPct}
-                onPatchSymbol={patchSymbol}
-                onSave={saveEngine}
-                saving={saving}
-              />
-            ) : section === "freespins" ? (
-              <FreeSpinsSection
-                cfg={cfg}
-                spawnPct={spawnPct}
-                onPatch={patch}
-                onPatchSymbol={patchSymbol}
-                onSave={saveEngine}
-                saving={saving}
-              />
-            ) : (
-              <MultSection cfg={cfg} onPatch={patch} onSave={saveEngine} saving={saving} />
-            )}
           </div>
+        </DialogHeader>
+
+        <div className="flex-1 overflow-y-auto p-6">
+          {loading ? (
+            <div className="flex h-48 items-center justify-center text-amber-400 font-bold animate-pulse">
+              Loading engine configuration...
+            </div>
+          ) : (
+            <>
+              {section === "lobby" && (
+                <div className="space-y-4 max-w-md">
+                  <h4 className="text-sm font-bold text-amber-300">Lobby Settings</h4>
+                  <div className="grid gap-3">
+                    <div>
+                      <label className="text-xs text-muted-foreground">Tag / Badge</label>
+                      <Input
+                        value={tag}
+                        onChange={(e) => setTag(e.target.value)}
+                        className="mt-1"
+                      />
+                    </div>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <label className="text-xs text-muted-foreground">RTP %</label>
+                        <Input
+                          type="number"
+                          value={rtp}
+                          onChange={(e) => setRtp(e.target.value)}
+                          className="mt-1"
+                        />
+                      </div>
+                      <div>
+                        <label className="text-xs text-muted-foreground">Volatility</label>
+                        <Input
+                          value={volatility}
+                          onChange={(e) => setVolatility(e.target.value)}
+                          className="mt-1"
+                        />
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <label className="text-xs text-muted-foreground">Min Bet (₱)</label>
+                        <Input
+                          type="number"
+                          value={minBet}
+                          onChange={(e) => setMinBet(e.target.value)}
+                          className="mt-1"
+                        />
+                      </div>
+                      <div>
+                        <label className="text-xs text-muted-foreground">Max Bet (₱)</label>
+                        <Input
+                          type="number"
+                          value={maxBet}
+                          onChange={(e) => setMaxBet(e.target.value)}
+                          className="mt-1"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {section === "dead" && (
+                <div className="space-y-4 max-w-md">
+                  <h4 className="text-sm font-bold text-amber-300">
+                    Dead Spin & Seeding Parameters
+                  </h4>
+                  <div className="grid gap-4">
+                    <div>
+                      <label className="text-xs text-muted-foreground font-bold">
+                        Dead Spin Chance: {cfg.deadSpinChancePercent}%
+                      </label>
+                      <input
+                        type="range"
+                        min={0}
+                        max={100}
+                        value={cfg.deadSpinChancePercent}
+                        onChange={(e) =>
+                          setCfg((p) => ({ ...p, deadSpinChancePercent: Number(e.target.value) }))
+                        }
+                        className="w-full mt-2"
+                      />
+                      <p className="text-[11px] text-muted-foreground mt-1">
+                        Chance that an initial board contains NO winning cluster.
+                      </p>
+                    </div>
+
+                    <div>
+                      <label className="text-xs text-muted-foreground font-bold">
+                        Seed Q (Melon) Bias: {cfg.seedMelonBiasPercent}%
+                      </label>
+                      <input
+                        type="range"
+                        min={0}
+                        max={100}
+                        value={cfg.seedMelonBiasPercent}
+                        onChange={(e) =>
+                          setCfg((p) => ({ ...p, seedMelonBiasPercent: Number(e.target.value) }))
+                        }
+                        className="w-full mt-2"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="text-xs text-muted-foreground font-bold">
+                        Max win multiplier: {cfg.maxWinMult.toLocaleString()}×
+                      </label>
+                      <Input
+                        type="number"
+                        min={0}
+                        max={100000}
+                        value={cfg.maxWinMult}
+                        onChange={(e) =>
+                          setCfg((p) => ({ ...p, maxWinMult: Number(e.target.value) }))
+                        }
+                        className="mt-2"
+                      />
+                      <p className="text-[11px] text-muted-foreground mt-1">
+                        Round payout is clamped to bet × this value (₱5 × 10,000× = ₱50,000).
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {section === "symbols" && (
+                <div className="space-y-4">
+                  <h4 className="text-sm font-bold text-amber-300">Symbol Weights & Pay Tables</h4>
+                  <div className="grid gap-3">
+                    {cfg.symbols.map((sym) => {
+                      const spawnPct = cellWeightsForDisplay[sym.id] ?? 0;
+                      return (
+                        <div
+                          key={sym.id}
+                          className="flex flex-wrap items-center justify-between gap-4 rounded-xl border border-white/10 bg-white/[0.02] p-3"
+                        >
+                          <div className="flex items-center gap-3 min-w-[140px]">
+                            <PantherIcon
+                              kind={sym.kind as ZeusStrikeSymKind}
+                              className="size-8 object-contain"
+                            />
+                            <div>
+                              <div className="text-xs font-bold text-white">{sym.label}</div>
+                              <div className="text-[10px] text-amber-400">{spawnPct}% spawn</div>
+                            </div>
+                          </div>
+
+                          {!sym.bomb && (
+                            <div className="flex items-center gap-2">
+                              <span className="text-xs text-muted-foreground">Weight:</span>
+                              <Input
+                                type="number"
+                                value={sym.weight}
+                                onChange={(e) =>
+                                  updateSymbol(sym.id, { weight: Number(e.target.value) })
+                                }
+                                className="w-20 h-8 text-xs"
+                              />
+                            </div>
+                          )}
+
+                          {!sym.scatter && !sym.bomb && (
+                            <div className="flex items-center gap-2">
+                              <span className="text-xs text-muted-foreground">
+                                Pay ({cfg.minCluster}–{cfg.minCluster + 1} / {cfg.minCluster + 2}–
+                                {cfg.minCluster + 3} / {cfg.minCluster + 4}+):
+                              </span>
+                              <Input
+                                type="number"
+                                value={sym.pay[0]}
+                                onChange={(e) =>
+                                  updateSymbol(sym.id, {
+                                    pay: [Number(e.target.value), sym.pay[1], sym.pay[2]],
+                                  })
+                                }
+                                className="w-16 h-8 text-xs"
+                              />
+                              <Input
+                                type="number"
+                                value={sym.pay[1]}
+                                onChange={(e) =>
+                                  updateSymbol(sym.id, {
+                                    pay: [sym.pay[0], Number(e.target.value), sym.pay[2]],
+                                  })
+                                }
+                                className="w-16 h-8 text-xs"
+                              />
+                              <Input
+                                type="number"
+                                value={sym.pay[2]}
+                                onChange={(e) =>
+                                  updateSymbol(sym.id, {
+                                    pay: [sym.pay[0], sym.pay[1], Number(e.target.value)],
+                                  })
+                                }
+                                className="w-16 h-8 text-xs"
+                              />
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
+              {section === "mult" && (
+                <div className="space-y-6 max-w-lg">
+                  <h4 className="text-sm font-bold text-amber-300">Wild / Bomb Probabilities</h4>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="text-xs text-muted-foreground font-bold">
+                        Base Game Chance: {cfg.bombChanceBasePercent}%
+                      </label>
+                      <Input
+                        type="number"
+                        value={cfg.bombChanceBasePercent}
+                        onChange={(e) =>
+                          setCfg((p) => ({ ...p, bombChanceBasePercent: Number(e.target.value) }))
+                        }
+                        className="mt-1"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-xs text-muted-foreground font-bold">
+                        Free Spins Chance: {cfg.bombChanceFreeSpinsPercent}%
+                      </label>
+                      <Input
+                        type="number"
+                        value={cfg.bombChanceFreeSpinsPercent}
+                        onChange={(e) =>
+                          setCfg((p) => ({
+                            ...p,
+                            bombChanceFreeSpinsPercent: Number(e.target.value),
+                          }))
+                        }
+                        className="mt-1"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="text-xs text-muted-foreground font-bold">
+                      FS bomb multiplier ceiling
+                    </label>
+                    <Input
+                      type="number"
+                      min={0}
+                      max={5}
+                      value={cfg.maxFsBombMult}
+                      onChange={(e) =>
+                        setCfg((p) => ({ ...p, maxFsBombMult: Number(e.target.value) }))
+                      }
+                      className="mt-1 max-w-xs"
+                    />
+                    <p className="text-[11px] text-muted-foreground mt-1">
+                      Only 2x / 3x / 4x / 5x bombs are allowed. Free spins keep the highest winning
+                      bomb and apply it once at the end.
+                    </p>
+                  </div>
+
+                  <div className="space-y-2">
+                    <h5 className="text-xs font-bold text-white">
+                      Multiplier Weights (2x / 3x / 4x / 5x only)
+                    </h5>
+                    <div className="grid grid-cols-2 gap-2">
+                      {ZEUS_STRIKE_BOMB_MULTS.map((mult, idx) => {
+                        const b = cfg.bombTable[idx] ?? { mult, weight: 0 };
+                        return (
+                          <div
+                            key={mult}
+                            className="flex items-center justify-between rounded-lg border border-white/10 bg-white/[0.02] px-3 py-1.5"
+                          >
+                            <span className="text-xs font-bold text-yellow-300">{mult}x</span>
+                            <div className="flex items-center gap-2">
+                              <span className="text-[10px] text-muted-foreground">
+                                {bombPercents[mult] ?? 0}%
+                              </span>
+                              <Input
+                                type="number"
+                                value={b.weight}
+                                onChange={(e) => {
+                                  const val = Number(e.target.value);
+                                  setCfg((p) => ({
+                                    ...p,
+                                    bombTable: ZEUS_STRIKE_BOMB_MULTS.map((rowMult, rowIdx) => {
+                                      const prev = p.bombTable[rowIdx] ?? {
+                                        mult: rowMult,
+                                        weight: 0,
+                                      };
+                                      return rowIdx === idx
+                                        ? { mult: rowMult, weight: val }
+                                        : { mult: rowMult, weight: prev.weight };
+                                    }),
+                                  }));
+                                }}
+                                className="w-16 h-7 text-xs"
+                              />
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {section === "freespins" && (
+                <div className="space-y-4 max-w-md">
+                  <h4 className="text-sm font-bold text-amber-300">Free Spins & Feature Buy</h4>
+                  <div className="grid gap-3">
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <label className="text-xs text-muted-foreground">Trigger Scatters</label>
+                        <Input
+                          type="number"
+                          value={cfg.freeSpinsTriggerCount}
+                          onChange={(e) =>
+                            setCfg((p) => ({ ...p, freeSpinsTriggerCount: Number(e.target.value) }))
+                          }
+                          className="mt-1"
+                        />
+                      </div>
+                      <div>
+                        <label className="text-xs text-muted-foreground">Base Free Spins</label>
+                        <Input
+                          type="number"
+                          value={cfg.freeSpinsBase}
+                          onChange={(e) =>
+                            setCfg((p) => ({ ...p, freeSpinsBase: Number(e.target.value) }))
+                          }
+                          className="mt-1"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <label className="text-xs text-muted-foreground">Retrigger Scatters</label>
+                        <Input
+                          type="number"
+                          value={cfg.freeSpinsRetriggerCount}
+                          onChange={(e) =>
+                            setCfg((p) => ({
+                              ...p,
+                              freeSpinsRetriggerCount: Number(e.target.value),
+                            }))
+                          }
+                          className="mt-1"
+                        />
+                      </div>
+                      <div>
+                        <label className="text-xs text-muted-foreground">Retrigger Spins</label>
+                        <Input
+                          type="number"
+                          value={cfg.freeSpinsRetrigger}
+                          onChange={(e) =>
+                            setCfg((p) => ({ ...p, freeSpinsRetrigger: Number(e.target.value) }))
+                          }
+                          className="mt-1"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-3 pt-2">
+                      <div>
+                        <label className="text-xs text-muted-foreground">
+                          Buy price per spin at the standard award (× bet; other quantities follow
+                          the calibrated curve)
+                        </label>
+                        <Input
+                          type="number"
+                          value={cfg.buyFeatureMult}
+                          onChange={(e) =>
+                            setCfg((p) => ({ ...p, buyFeatureMult: Number(e.target.value) }))
+                          }
+                          className="mt-1"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </>
+          )}
         </div>
       </DialogContent>
     </Dialog>
-  );
-}
-
-function SectionHead({ title, subtitle }: { title: string; subtitle: string }) {
-  return (
-    <div className="mb-1">
-      <h3 className="text-base font-black text-foreground">{title}</h3>
-      <p className="text-xs text-muted-foreground">{subtitle}</p>
-    </div>
-  );
-}
-
-type FieldGuide = {
-  about: string;
-  levels?: { value: string; mean: string }[];
-  tip?: string;
-};
-
-function Field({
-  label,
-  hint,
-  guide,
-  children,
-}: {
-  label: string;
-  hint?: string;
-  guide?: FieldGuide;
-  children: ReactNode;
-}) {
-  return (
-    <div className="space-y-1.5">
-      <div className="flex items-center justify-between gap-2">
-        <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
-          {label}
-        </label>
-        {guide ? (
-          <Popover>
-            <PopoverTrigger asChild>
-              <button
-                type="button"
-                className="inline-flex size-6 shrink-0 items-center justify-center rounded-full border border-amber-500/25 bg-white/[0.06] text-muted-foreground transition hover:border-amber-400/60 hover:text-amber-300"
-                aria-label={`Guide for ${label}`}
-              >
-                <Info size={12} />
-              </button>
-            </PopoverTrigger>
-            <PopoverContent
-              side="top"
-              align="end"
-              className="z-[100] w-[min(100vw-2rem,20rem)] border-amber-400/30 bg-panel p-3 text-foreground shadow-2xl"
-            >
-              <p className="text-xs font-semibold leading-relaxed text-amber-300">{guide.about}</p>
-              {guide.levels?.length ? (
-                <div className="mt-2 grid grid-cols-2 gap-1.5">
-                  {guide.levels.map((lv) => (
-                    <div key={lv.value} className="rounded-lg bg-amber-500/15 px-2 py-1.5 text-center">
-                      <div className="text-sm font-black text-amber-300">{lv.value}</div>
-                      <div className="text-[10px] leading-tight text-muted-foreground">{lv.mean}</div>
-                    </div>
-                  ))}
-                </div>
-              ) : null}
-              {guide.tip ? <p className="mt-2 text-[11px] text-muted-foreground">{guide.tip}</p> : null}
-            </PopoverContent>
-          </Popover>
-        ) : null}
-      </div>
-      {children}
-      {hint ? <p className="text-xs text-muted-foreground">{hint}</p> : null}
-    </div>
-  );
-}
-
-function Toggle({
-  checked,
-  onChange,
-  label,
-  hint,
-}: {
-  checked: boolean;
-  onChange: (v: boolean) => void;
-  label: string;
-  hint?: string;
-}) {
-  return (
-    <label className="flex cursor-pointer items-start justify-between gap-4 rounded-2xl bg-white/[0.06] px-4 py-3 hover:bg-white/[0.07]">
-      <span className="min-w-0">
-        <span className="block text-sm font-semibold text-foreground">{label}</span>
-        {hint ? <span className="mt-0.5 block text-xs text-muted-foreground">{hint}</span> : null}
-      </span>
-      <button
-        type="button"
-        role="switch"
-        aria-checked={checked}
-        onClick={() => onChange(!checked)}
-        className={cn(
-          "relative mt-0.5 h-6 w-11 shrink-0 rounded-full transition-colors",
-          checked ? "bg-amber-500" : "bg-amber-500/15",
-        )}
-      >
-        <span
-          className={cn(
-            "absolute top-0.5 left-0.5 h-5 w-5 rounded-full bg-white transition-transform",
-            checked && "translate-x-5",
-          )}
-        />
-      </button>
-    </label>
-  );
-}
-
-function NumInput({
-  value,
-  onChange,
-  step = 1,
-  min,
-  max,
-  suffix,
-}: {
-  value: number;
-  onChange: (n: number) => void;
-  step?: number;
-  min?: number;
-  max?: number;
-  suffix?: string;
-}) {
-  return (
-    <div className="relative">
-      <Input
-        type="number"
-        step={step}
-        min={min}
-        max={max}
-        value={value}
-        onChange={(e) => onChange(Number(e.target.value))}
-        className={cn(
-          "h-11 rounded-xl border-transparent bg-white/[0.06] text-foreground",
-          suffix && "pr-10",
-        )}
-      />
-      {suffix ? (
-        <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-xs text-muted-foreground">
-          {suffix}
-        </span>
-      ) : null}
-    </div>
-  );
-}
-
-function SaveEngineButton({ onSave, saving }: { onSave: () => void; saving: boolean }) {
-  return (
-    <button
-      type="button"
-      disabled={saving}
-      onClick={() => void onSave()}
-      className="inline-flex h-11 items-center gap-2 rounded-full bg-amber-500 px-5 text-sm font-bold uppercase tracking-wider text-black hover:brightness-110 disabled:opacity-60"
-    >
-      <Save size={16} />
-      {saving ? "Saving…" : "Save engine"}
-    </button>
-  );
-}
-
-function HintBox({ children }: { children: ReactNode }) {
-  return (
-    <div className="rounded-2xl border border-amber-500/20 bg-amber-500/10 px-4 py-3 text-xs text-muted-foreground">
-      {children}
-    </div>
-  );
-}
-
-function LobbySection({
-  game,
-  onPatch,
-}: {
-  game: SuperGameRow;
-  onPatch: (
-    data: Partial<SuperGameRow> & { enabled?: boolean; featured?: boolean },
-  ) => Promise<void>;
-}) {
-  const [tag, setTag] = useState(game.tag ?? "");
-  const [rtp, setRtp] = useState(game.rtp ?? "");
-  const [minBet, setMinBet] = useState(game.minBet ?? "");
-  const [maxBet, setMaxBet] = useState(game.maxBet ?? "");
-
-  useEffect(() => {
-    setTag(game.tag ?? "");
-    setRtp(game.rtp ?? "");
-    setMinBet(game.minBet ?? "");
-    setMaxBet(game.maxBet ?? "");
-  }, [game]);
-
-  return (
-    <div className="space-y-4">
-      <SectionHead title="Lobby" subtitle="How Zeus Strike appears on the casino site." />
-      <Toggle
-        checked={game.enabled}
-        onChange={(v) => void onPatch({ enabled: v })}
-        label="Enabled on lobby"
-        hint="Off hides this title from players."
-      />
-      <Toggle
-        checked={game.featured}
-        onChange={(v) => void onPatch({ featured: v })}
-        label="Featured"
-        hint="Highlight in featured / promo placements."
-      />
-      <Field label="Tag">
-        <Input
-          value={tag}
-          onChange={(e) => setTag(e.target.value)}
-          onBlur={() => {
-            if (tag !== (game.tag ?? "")) void onPatch({ tag: tag || null });
-          }}
-          className="h-11 rounded-xl border-transparent bg-white/[0.06] text-foreground"
-        />
-      </Field>
-      <Field label="RTP (display)">
-        <Input
-          value={rtp}
-          onChange={(e) => setRtp(e.target.value)}
-          onBlur={() => {
-            if (rtp !== (game.rtp ?? "")) void onPatch({ rtp: rtp || null });
-          }}
-          className="h-11 rounded-xl border-transparent bg-white/[0.06] text-foreground"
-        />
-      </Field>
-      <div className="grid gap-4 sm:grid-cols-2">
-        <Field label="Min bet">
-          <Input
-            value={minBet}
-            onChange={(e) => setMinBet(e.target.value)}
-            onBlur={() => {
-              if (minBet !== (game.minBet ?? "")) void onPatch({ minBet: minBet || null });
-            }}
-            className="h-11 rounded-xl border-transparent bg-white/[0.06] text-foreground"
-          />
-        </Field>
-        <Field label="Max bet">
-          <Input
-            value={maxBet}
-            onChange={(e) => setMaxBet(e.target.value)}
-            onBlur={() => {
-              if (maxBet !== (game.maxBet ?? "")) void onPatch({ maxBet: maxBet || null });
-            }}
-            className="h-11 rounded-xl border-transparent bg-white/[0.06] text-foreground"
-          />
-        </Field>
-      </div>
-      <HintBox>Lobby fields save when you leave each input. Engine tabs need Save engine.</HintBox>
-    </div>
-  );
-}
-
-function DeadSpinSection({
-  cfg,
-  onPatch,
-  onSave,
-  saving,
-}: {
-  cfg: ZeusStrikeConfig;
-  onPatch: (p: Partial<ZeusStrikeConfig>) => void;
-  onSave: () => void;
-  saving: boolean;
-}) {
-  const hitChance = +(100 - cfg.deadSpinChancePercent).toFixed(1);
-  return (
-    <div className="space-y-4">
-      <SectionHead
-        title="Dead spin"
-        subtitle="Chance the opening board is not force-seeded with a ways hit."
-      />
-      <Field
-        label="Dead spin chance"
-        hint={`Forced-hit chance ≈ ${hitChance}% per spin`}
-        guide={{
-          about: "Dead spin = opening board na WALANG seeded ways win. Mas mataas = mas madalas blank ang unang drop.",
-          levels: [
-            { value: "30", mean: "Default — madalas may hit" },
-            { value: "50", mean: "Half blank / half hit" },
-            { value: "75", mean: "Madalas blank" },
-            { value: "100", mean: "Laging blank opening" },
-          ],
-        }}
-      >
-        <NumInput
-          value={cfg.deadSpinChancePercent}
-          min={0}
-          max={100}
-          suffix="%"
-          onChange={(n) => onPatch({ deadSpinChancePercent: n })}
-        />
-      </Field>
-      <div className="grid gap-4 sm:grid-cols-2">
-        <Field label="Seed ways length min">
-          <NumInput
-            value={cfg.seedWinLengthMin}
-            min={3}
-            max={6}
-            onChange={(n) => onPatch({ seedWinLengthMin: n })}
-          />
-        </Field>
-        <Field label="Seed ways length max">
-          <NumInput
-            value={cfg.seedWinLengthMax}
-            min={3}
-            max={6}
-            onChange={(n) => onPatch({ seedWinLengthMax: n })}
-          />
-        </Field>
-        <Field label="Seed wild chance" hint="When seeding a hit, chance a reel cell is wild.">
-          <NumInput
-            value={cfg.seedWildChancePercent}
-            min={0}
-            max={100}
-            suffix="%"
-            onChange={(n) => onPatch({ seedWildChancePercent: n })}
-          />
-        </Field>
-        <Field label="FS board wild chance">
-          <NumInput
-            value={cfg.freeSpinsWildChancePercent}
-            min={0}
-            max={100}
-            suffix="%"
-            onChange={(n) => onPatch({ freeSpinsWildChancePercent: n })}
-          />
-        </Field>
-        <Field label="Cascade wild chance (FS)">
-          <NumInput
-            value={cfg.cascadeWildChancePercent}
-            min={0}
-            max={100}
-            suffix="%"
-            onChange={(n) => onPatch({ cascadeWildChancePercent: n })}
-          />
-        </Field>
-      </div>
-      <div className="flex justify-end pt-2">
-        <SaveEngineButton onSave={onSave} saving={saving} />
-      </div>
-    </div>
-  );
-}
-
-function SymbolsSection({
-  cfg,
-  spawnPct,
-  onPatchSymbol,
-  onSave,
-  saving,
-}: {
-  cfg: ZeusStrikeConfig;
-  spawnPct: Record<string, number>;
-  onPatchSymbol: (id: string, p: Partial<ZeusStrikeSymbolConfig>) => void;
-  onSave: () => void;
-  saving: boolean;
-}) {
-  return (
-    <div className="space-y-4">
-      <SectionHead
-        title="Symbols"
-        subtitle="Spawn weights and way pays × bet for 3 / 4 / 5 / 6 of a kind."
-      />
-      <div className="space-y-3">
-        {cfg.symbols.map((s) => (
-          <div
-            key={s.id}
-            className="rounded-2xl border border-amber-500/15 bg-white/[0.04] p-3 sm:p-4"
-          >
-            <div className="mb-3 flex items-center gap-3">
-              <div className="grid size-12 place-items-center overflow-hidden rounded-lg bg-black/30">
-                <SymbolIcon kind={s.kind as SymKind} className="size-10" />
-              </div>
-              <div className="min-w-0 flex-1">
-                <div className="font-black text-foreground">{s.label}</div>
-                <div className="text-[11px] text-amber-300/90">
-                  Spawn ≈ {spawnPct[s.id] ?? 0}%
-                  {s.wild ? " · WILD" : ""}
-                  {s.scatter ? " · SCATTER" : ""}
-                </div>
-              </div>
-            </div>
-            <div className="grid gap-3 sm:grid-cols-5">
-              <Field label="Weight">
-                <NumInput
-                  value={s.weight}
-                  step={0.1}
-                  min={0}
-                  onChange={(n) => onPatchSymbol(s.id, { weight: n })}
-                />
-              </Field>
-              {([0, 1, 2, 3] as const).map((i) => (
-                  <Field key={i} label={`${i + 3}-kind`}>
-                  <NumInput
-                    value={s.pay[i]}
-                    step={0.05}
-                    min={0}
-                    onChange={(n) => {
-                      if (s.wild || s.scatter) return;
-                      const pay = [...s.pay] as [number, number, number, number];
-                      pay[i] = n;
-                      onPatchSymbol(s.id, { pay });
-                    }}
-                  />
-                </Field>
-              ))}
-            </div>
-          </div>
-        ))}
-      </div>
-      <div className="flex justify-end pt-2">
-        <SaveEngineButton onSave={onSave} saving={saving} />
-      </div>
-    </div>
-  );
-}
-
-function FreeSpinsSection({
-  cfg,
-  spawnPct,
-  onPatch,
-  onPatchSymbol,
-  onSave,
-  saving,
-}: {
-  cfg: ZeusStrikeConfig;
-  spawnPct: Record<string, number>;
-  onPatch: (p: Partial<ZeusStrikeConfig>) => void;
-  onPatchSymbol: (id: string, p: Partial<ZeusStrikeSymbolConfig>) => void;
-  onSave: () => void;
-  saving: boolean;
-}) {
-  const scatter = cfg.symbols.find((s) => s.scatter)!;
-  return (
-    <div className="space-y-4">
-      <SectionHead title="Free spins" subtitle="Scatter trigger, awards, buy feature, cash tiers." />
-      <div className="grid gap-4 sm:grid-cols-2">
-        <Field label="Scatter weight" hint={`Spawn ≈ ${spawnPct.scatter ?? 0}%`}>
-          <NumInput
-            value={scatter.weight}
-            step={0.1}
-            min={0}
-            onChange={(n) => onPatchSymbol("scatter", { weight: n })}
-          />
-        </Field>
-        <Field label="Buy feature cost">
-          <NumInput
-            value={cfg.buyFeatureMult}
-            suffix="× bet"
-            min={1}
-            onChange={(n) => onPatch({ buyFeatureMult: n })}
-          />
-        </Field>
-        <Field label="FS trigger count">
-          <NumInput
-            value={cfg.freeSpinsTriggerCount}
-            min={1}
-            onChange={(n) => onPatch({ freeSpinsTriggerCount: n })}
-          />
-        </Field>
-        <Field label="Retrigger count (in FS)">
-          <NumInput
-            value={cfg.freeSpinsRetriggerCount}
-            min={1}
-            onChange={(n) => onPatch({ freeSpinsRetriggerCount: n })}
-          />
-        </Field>
-        <Field label="Retrigger +spins">
-          <NumInput
-            value={cfg.freeSpinsRetrigger}
-            min={0}
-            onChange={(n) => onPatch({ freeSpinsRetrigger: n })}
-          />
-        </Field>
-      </div>
-
-      <SectionHead title="FS awards by scatter count" subtitle="Spins granted when triggering." />
-      <div className="space-y-2">
-        {cfg.freeSpinsAwards.map((t, i) => (
-          <div
-            key={`${t.count}-${i}`}
-            className="grid grid-cols-2 gap-3 rounded-2xl bg-white/[0.06] px-4 py-3"
-          >
-            <Field label="Scatters ≥">
-              <NumInput
-                value={t.count}
-                onChange={(n) => {
-                  const freeSpinsAwards = cfg.freeSpinsAwards.map((row, idx) =>
-                    idx === i ? { ...row, count: n } : row,
-                  );
-                  onPatch({ freeSpinsAwards });
-                }}
-              />
-            </Field>
-            <Field label="Spins">
-              <NumInput
-                value={t.spins}
-                onChange={(n) => {
-                  const freeSpinsAwards = cfg.freeSpinsAwards.map((row, idx) =>
-                    idx === i ? { ...row, spins: n } : row,
-                  );
-                  onPatch({ freeSpinsAwards });
-                }}
-              />
-            </Field>
-          </div>
-        ))}
-      </div>
-
-      <SectionHead title="Scatter cash" subtitle="× bet by scatter count on base game." />
-      <div className="space-y-2">
-        {cfg.scatterCashTiers.map((t, i) => (
-          <div
-            key={`${t.count}-${i}`}
-            className="grid grid-cols-2 gap-3 rounded-2xl bg-white/[0.06] px-4 py-3"
-          >
-            <Field label="Count ≥">
-              <NumInput
-                value={t.count}
-                onChange={(n) => {
-                  const scatterCashTiers = cfg.scatterCashTiers.map((row, idx) =>
-                    idx === i ? { ...row, count: n } : row,
-                  );
-                  onPatch({ scatterCashTiers });
-                }}
-              />
-            </Field>
-            <Field label="× bet">
-              <NumInput
-                value={t.mult}
-                step={0.5}
-                onChange={(n) => {
-                  const scatterCashTiers = cfg.scatterCashTiers.map((row, idx) =>
-                    idx === i ? { ...row, mult: n } : row,
-                  );
-                  onPatch({ scatterCashTiers });
-                }}
-              />
-            </Field>
-          </div>
-        ))}
-      </div>
-
-      <div className="flex justify-end pt-2">
-        <SaveEngineButton onSave={onSave} saving={saving} />
-      </div>
-    </div>
-  );
-}
-
-function MultSection({
-  cfg,
-  onPatch,
-  onSave,
-  saving,
-}: {
-  cfg: ZeusStrikeConfig;
-  onPatch: (p: Partial<ZeusStrikeConfig>) => void;
-  onSave: () => void;
-  saving: boolean;
-}) {
-  return (
-    <div className="space-y-4">
-      <SectionHead
-        title="Free-spin multiplier"
-        subtitle="Progressive cascade multiplier during free spins."
-      />
-      <div className="grid gap-4 sm:grid-cols-2">
-        <Field label="Start multiplier" hint="Usually 1× at the start of free spins.">
-          <NumInput
-            value={cfg.fsMultStart}
-            min={1}
-            step={1}
-            suffix="×"
-            onChange={(n) => onPatch({ fsMultStart: n })}
-          />
-        </Field>
-        <Field label="Step per cascade" hint="Added after each winning cascade in FS.">
-          <NumInput
-            value={cfg.fsMultStep}
-            min={0}
-            step={1}
-            suffix="+"
-            onChange={(n) => onPatch({ fsMultStep: n })}
-          />
-        </Field>
-      </div>
-      <HintBox>
-        Example: start 1×, step +1 → after 3 cascades the board pays at 4×. Cascade wins already apply
-        this each step.
-      </HintBox>
-      <div className="flex justify-end pt-2">
-        <SaveEngineButton onSave={onSave} saving={saving} />
-      </div>
-    </div>
   );
 }

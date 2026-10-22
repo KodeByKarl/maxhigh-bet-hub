@@ -51,7 +51,7 @@ export const AH_ASSET = {
   symbolDir: "/images/symbols/ace-high",
   cardsDir: "/images/symbols/ace-high/cards",
   chipsDir: "/images/symbols/ace-high/chips",
-  soundDir: "/sounds/ace-high",
+  soundDir: "/sounds/gentle-v1/ace-high",
 } as const;
 
 export const AH_CHIP_VALUES = [1, 5, 10, 25, 100, 200, 500] as const;

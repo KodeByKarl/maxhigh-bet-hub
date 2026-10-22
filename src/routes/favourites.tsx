@@ -18,7 +18,12 @@ export const Route = createFileRoute("/favourites")({
   }),
   component: () => (
     <>
-      <PageHeader title="Favourites" description="Your saved games — one tap to play." icon={Star} accent="#EAB308" />
+      <PageHeader
+        title="Favourites"
+        description="Your saved games — one tap to play."
+        icon={Star}
+        accent="#EAB308"
+      />
       {favouriteGames.length === 0 ? (
         <div className="rounded-2xl border border-border bg-panel p-8 text-center text-sm text-muted-foreground">
           No favourites yet. Star games to see them here.

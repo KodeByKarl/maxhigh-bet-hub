@@ -4,7 +4,7 @@
 
 export const TURTLE_TIDE_ASSET = {
   symbolDir: "/images/symbols/turtle-tide",
-  soundDir: "/sounds/turtle-tide",
+  soundDir: "/sounds/gentle-v1/turtle-tide",
   thumb: "/games/turtle-tide.webp",
   seabed: "/images/symbols/turtle-tide/seabed.webp",
 } as const;

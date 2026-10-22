@@ -1,3 +1,4 @@
+import type { RowDataPacket } from "mysql2";
 import "dotenv/config";
 import mysql from "mysql2/promise";
 import { slotGames } from "../src/lib/games";
@@ -54,7 +55,7 @@ async function main() {
   }
 
   // Ensure a superadmin exists
-  const [rows] = await c.query<any[]>(
+  const [rows] = await c.query<RowDataPacket[]>(
     `SELECT id FROM users WHERE email = ? OR role = 'superadmin' LIMIT 1`,
     ["superadmin@maxhigh.gg"],
   );

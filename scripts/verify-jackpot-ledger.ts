@@ -32,7 +32,10 @@ async function main() {
   const afterBump = Number(
     (await db.select().from(jackpot).where(eq(jackpot.id, "mega")).limit(1))[0]!.amount,
   );
-  assert(Math.abs(afterBump - (before + 0.15)) < 0.001, `expected +0.15, got ${afterBump} from ${before}`);
+  assert(
+    Math.abs(afterBump - (before + 0.15)) < 0.001,
+    `expected +0.15, got ${afterBump} from ${before}`,
+  );
   console.log("✓ concurrent atomic bumps OK →", afterBump);
 
   const [player] = await db
@@ -65,7 +68,10 @@ async function main() {
     const jpAfter = Number(
       (await db.select().from(jackpot).where(eq(jackpot.id, "mega")).limit(1))[0]!.amount,
     );
-    assert(jpAfter >= jpBefore + 0.02 - 0.001, `jackpot should rise by ~0.02: ${jpBefore} → ${jpAfter}`);
+    assert(
+      jpAfter >= jpBefore + 0.02 - 0.001,
+      `jackpot should rise by ~0.02: ${jpBefore} → ${jpAfter}`,
+    );
     console.log("✓ bet ledger OK; jackpot", jpBefore, "→", jpAfter);
 
     // Refund the test bet so we don't drain player1

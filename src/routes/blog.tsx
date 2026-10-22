@@ -13,7 +13,12 @@ export const Route = createFileRoute("/blog")({
   }),
   component: () => (
     <>
-      <PageHeader title="Blog" description="News, strategy guides and product updates." icon={FileText} accent="#0E7490" />
+      <PageHeader
+        title="Blog"
+        description="News, strategy guides and product updates."
+        icon={FileText}
+        accent="#0E7490"
+      />
       <ComingSoonPanel label="Blog posts" />
     </>
   ),

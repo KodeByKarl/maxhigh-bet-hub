@@ -41,8 +41,7 @@ export const PantherIcon = memo(function PantherIcon({
           aria-hidden
           className="pointer-events-none absolute inset-0 z-0 rounded-full"
           style={{
-            background:
-              "radial-gradient(circle at 50% 50%, var(--p-win-ring) 0%, transparent 70%)",
+            background: "radial-gradient(circle at 50% 50%, var(--p-win-ring) 0%, transparent 70%)",
           }}
         />
       )}
@@ -54,7 +53,11 @@ export const PantherIcon = memo(function PantherIcon({
         draggable={false}
         className={cn(
           "pointer-events-none relative z-[1] object-center",
-          fit === "cover" ? "size-full object-cover" : "size-[82%] object-contain",
+          fit === "cover"
+            ? "size-full object-cover"
+            : kind === "grape"
+              ? "size-[74%] object-contain"
+              : "size-[82%] object-contain",
           winLit && "brightness-125 saturate-125",
         )}
         style={
@@ -86,8 +89,7 @@ export const PantherIcon = memo(function PantherIcon({
             className="rounded-full border-2 px-1.5 py-0.5 font-black text-[clamp(10px,2vw,15px)] drop-shadow-[0_2px_4px_rgba(0,0,0,0.85)]"
             style={{
               borderColor: "var(--p-bomb-border)",
-              background:
-                "linear-gradient(135deg, var(--p-bomb-from), var(--p-bomb-to))",
+              background: "linear-gradient(135deg, var(--p-bomb-from), var(--p-bomb-to))",
               color: "var(--p-bomb-text)",
             }}
           >

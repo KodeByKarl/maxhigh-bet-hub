@@ -66,19 +66,19 @@ export function SolarSerpentConfigModal({ game, open, onOpenChange, onPatchLobby
   );
 
   const [tag, setTag] = useState(game.tag ?? "");
-  const [rtp, setRtp] = useState(game.rtp);
-  const [volatility, setVolatility] = useState(game.volatility);
-  const [minBet, setMinBet] = useState(game.minBet);
-  const [maxBet, setMaxBet] = useState(game.maxBet);
+  const [rtp, setRtp] = useState(game.rtp ?? "");
+  const [volatility, setVolatility] = useState(game.volatility ?? "");
+  const [minBet, setMinBet] = useState(game.minBet ?? "");
+  const [maxBet, setMaxBet] = useState(game.maxBet ?? "");
 
   useEffect(() => {
     if (!open) return;
     setLoading(true);
     setTag(game.tag ?? "");
-    setRtp(game.rtp);
-    setVolatility(game.volatility);
-    setMinBet(game.minBet);
-    setMaxBet(game.maxBet);
+    setRtp(game.rtp ?? "");
+    setVolatility(game.volatility ?? "");
+    setMinBet(game.minBet ?? "");
+    setMaxBet(game.maxBet ?? "");
 
     void getSolarSerpentEngineConfigFn()
       .then((res) => {
@@ -98,20 +98,17 @@ export function SolarSerpentConfigModal({ game, open, onOpenChange, onPatchLobby
     return weightPercents(list);
   }, [cfg.symbols]);
 
-  const bombPercents = useMemo(
-    () => bombTablePercents(cfg.bombTable),
-    [cfg.bombTable],
-  );
+  const bombPercents = useMemo(() => bombTablePercents(cfg.bombTable), [cfg.bombTable]);
 
   async function handleSaveAll() {
     setSaving(true);
     try {
       await onPatchLobby({
         tag: tag.trim() || undefined,
-        rtp: Number(rtp) || game.rtp,
+        rtp: rtp.trim() || game.rtp,
         volatility: (volatility.trim() || game.volatility) as SuperGameRow["volatility"],
-        minBet: Number(minBet) || game.minBet,
-        maxBet: Number(maxBet) || game.maxBet,
+        minBet: minBet.trim() || game.minBet,
+        maxBet: maxBet.trim() || game.maxBet,
       });
 
       const normalized = await saveSolarSerpentEngineConfigFn({
@@ -144,7 +141,8 @@ export function SolarSerpentConfigModal({ game, open, onOpenChange, onPatchLobby
                 Solar Serpent Engine Configuration
               </DialogTitle>
               <DialogDescription className="text-xs text-muted-foreground">
-                Configure live RNG parameters, symbol weights, wild/bomb multipliers, and free spins.
+                Configure live RNG parameters, symbol weights, wild/bomb multipliers, and free
+                spins.
               </DialogDescription>
             </div>
 
@@ -196,7 +194,11 @@ export function SolarSerpentConfigModal({ game, open, onOpenChange, onPatchLobby
                   <div className="grid gap-3">
                     <div>
                       <label className="text-xs text-muted-foreground">Tag / Badge</label>
-                      <Input value={tag} onChange={(e) => setTag(e.target.value)} className="mt-1" />
+                      <Input
+                        value={tag}
+                        onChange={(e) => setTag(e.target.value)}
+                        className="mt-1"
+                      />
                     </div>
                     <div className="grid grid-cols-2 gap-3">
                       <div>
@@ -204,7 +206,7 @@ export function SolarSerpentConfigModal({ game, open, onOpenChange, onPatchLobby
                         <Input
                           type="number"
                           value={rtp}
-                          onChange={(e) => setRtp(Number(e.target.value))}
+                          onChange={(e) => setRtp(e.target.value)}
                           className="mt-1"
                         />
                       </div>
@@ -223,7 +225,7 @@ export function SolarSerpentConfigModal({ game, open, onOpenChange, onPatchLobby
                         <Input
                           type="number"
                           value={minBet}
-                          onChange={(e) => setMinBet(Number(e.target.value))}
+                          onChange={(e) => setMinBet(e.target.value)}
                           className="mt-1"
                         />
                       </div>
@@ -232,7 +234,7 @@ export function SolarSerpentConfigModal({ game, open, onOpenChange, onPatchLobby
                         <Input
                           type="number"
                           value={maxBet}
-                          onChange={(e) => setMaxBet(Number(e.target.value))}
+                          onChange={(e) => setMaxBet(e.target.value)}
                           className="mt-1"
                         />
                       </div>
@@ -243,7 +245,9 @@ export function SolarSerpentConfigModal({ game, open, onOpenChange, onPatchLobby
 
               {section === "dead" && (
                 <div className="space-y-4 max-w-md">
-                  <h4 className="text-sm font-bold text-amber-300">Dead Spin & Seeding Parameters</h4>
+                  <h4 className="text-sm font-bold text-amber-300">
+                    Dead Spin & Seeding Parameters
+                  </h4>
                   <div className="grid gap-4">
                     <div>
                       <label className="text-xs text-muted-foreground font-bold">
@@ -314,7 +318,10 @@ export function SolarSerpentConfigModal({ game, open, onOpenChange, onPatchLobby
                           className="flex flex-wrap items-center justify-between gap-4 rounded-xl border border-white/10 bg-white/[0.02] p-3"
                         >
                           <div className="flex items-center gap-3 min-w-[140px]">
-                            <PantherIcon kind={sym.kind as SolarSerpentSymKind} className="size-8 object-contain" />
+                            <PantherIcon
+                              kind={sym.kind as SolarSerpentSymKind}
+                              className="size-8 object-contain"
+                            />
                             <div>
                               <div className="text-xs font-bold text-white">{sym.label}</div>
                               <div className="text-[10px] text-amber-400">{spawnPct}% spawn</div>
@@ -430,44 +437,52 @@ export function SolarSerpentConfigModal({ game, open, onOpenChange, onPatchLobby
                       className="mt-1 max-w-xs"
                     />
                     <p className="text-[11px] text-muted-foreground mt-1">
-                      Only 2x / 3x / 4x / 5x bombs are allowed. Free spins keep the highest
-                      winning bomb and apply it once at the end.
+                      Only 2x / 3x / 4x / 5x bombs are allowed. Free spins keep the highest winning
+                      bomb and apply it once at the end.
                     </p>
                   </div>
 
                   <div className="space-y-2">
-                    <h5 className="text-xs font-bold text-white">Multiplier Weights (2x / 3x / 4x / 5x only)</h5>
+                    <h5 className="text-xs font-bold text-white">
+                      Multiplier Weights (2x / 3x / 4x / 5x only)
+                    </h5>
                     <div className="grid grid-cols-2 gap-2">
                       {SOLAR_SERPENT_BOMB_MULTS.map((mult, idx) => {
                         const b = cfg.bombTable[idx] ?? { mult, weight: 0 };
                         return (
-                        <div
-                          key={mult}
-                          className="flex items-center justify-between rounded-lg border border-white/10 bg-white/[0.02] px-3 py-1.5"
-                        >
-                          <span className="text-xs font-bold text-yellow-300">{mult}x</span>
-                          <div className="flex items-center gap-2">
-                            <span className="text-[10px] text-muted-foreground">
-                              {bombPercents[mult] ?? 0}%
-                            </span>
-                            <Input
-                              type="number"
-                              value={b.weight}
-                              onChange={(e) => {
-                                const val = Number(e.target.value);
-                                setCfg((p) => ({
-                                  ...p,
-                                  bombTable: SOLAR_SERPENT_BOMB_MULTS.map((rowMult, rowIdx) => {
-                                    const prev = p.bombTable[rowIdx] ?? { mult: rowMult, weight: 0 };
-                                    return rowIdx === idx ? { mult: rowMult, weight: val } : { mult: rowMult, weight: prev.weight };
-                                  }),
-                                }));
-                              }}
-                              className="w-16 h-7 text-xs"
-                            />
+                          <div
+                            key={mult}
+                            className="flex items-center justify-between rounded-lg border border-white/10 bg-white/[0.02] px-3 py-1.5"
+                          >
+                            <span className="text-xs font-bold text-yellow-300">{mult}x</span>
+                            <div className="flex items-center gap-2">
+                              <span className="text-[10px] text-muted-foreground">
+                                {bombPercents[mult] ?? 0}%
+                              </span>
+                              <Input
+                                type="number"
+                                value={b.weight}
+                                onChange={(e) => {
+                                  const val = Number(e.target.value);
+                                  setCfg((p) => ({
+                                    ...p,
+                                    bombTable: SOLAR_SERPENT_BOMB_MULTS.map((rowMult, rowIdx) => {
+                                      const prev = p.bombTable[rowIdx] ?? {
+                                        mult: rowMult,
+                                        weight: 0,
+                                      };
+                                      return rowIdx === idx
+                                        ? { mult: rowMult, weight: val }
+                                        : { mult: rowMult, weight: prev.weight };
+                                    }),
+                                  }));
+                                }}
+                                className="w-16 h-7 text-xs"
+                              />
+                            </div>
                           </div>
-                        </div>
-                      )})}
+                        );
+                      })}
                     </div>
                   </div>
                 </div>
@@ -532,23 +547,15 @@ export function SolarSerpentConfigModal({ game, open, onOpenChange, onPatchLobby
 
                     <div className="grid grid-cols-2 gap-3 pt-2">
                       <div>
-                        <label className="text-xs text-muted-foreground">Buy Bonus Price (× bet, per qty)</label>
+                        <label className="text-xs text-muted-foreground">
+                          Buy price per spin at the standard award (× bet; other quantities follow
+                          the calibrated curve)
+                        </label>
                         <Input
                           type="number"
                           value={cfg.buyFeatureMult}
                           onChange={(e) =>
                             setCfg((p) => ({ ...p, buyFeatureMult: Number(e.target.value) }))
-                          }
-                          className="mt-1"
-                        />
-                      </div>
-                      <div>
-                        <label className="text-xs text-muted-foreground">Super Buy Price (× bet, per qty)</label>
-                        <Input
-                          type="number"
-                          value={cfg.superBuyFeatureMult}
-                          onChange={(e) =>
-                            setCfg((p) => ({ ...p, superBuyFeatureMult: Number(e.target.value) }))
                           }
                           className="mt-1"
                         />

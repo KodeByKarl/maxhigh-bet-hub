@@ -191,18 +191,12 @@ export function compareHands(a: HandRank, b: HandRank): number {
 /**
  * Dealer qualifies with pair-or-better, OR high-card ≥ configured threshold (default Queen).
  */
-export function dealerQualifies(
-  hand: HandRank,
-  qualifyRank: QualifyRank = "Q",
-): boolean {
+export function dealerQualifies(hand: HandRank, qualifyRank: QualifyRank = "Q"): boolean {
   if (hand.categoryRank >= HAND_CATEGORY_RANK.pair) return true;
   return hand.highValue >= qualifyThresholdValue(qualifyRank);
 }
 
-export function dealerQualifiesWithConfig(
-  hand: HandRank,
-  cfg: ThreeCardPokerConfig,
-): boolean {
+export function dealerQualifiesWithConfig(hand: HandRank, cfg: ThreeCardPokerConfig): boolean {
   return dealerQualifies(hand, cfg.dealerQualifyRank);
 }
 

@@ -89,7 +89,8 @@ function SuperSettingsPage() {
       <div>
         <h1 className="text-xl font-bold text-foreground sm:text-3xl">System Settings</h1>
         <p className="mt-1 text-xs text-muted-foreground sm:text-sm">
-          Global platform settings, maintenance locks, deposit/withdrawal thresholds, and player banners.
+          Global platform settings, maintenance locks, deposit/withdrawal thresholds, and player
+          banners.
         </p>
       </div>
 
@@ -101,7 +102,9 @@ function SuperSettingsPage() {
             </div>
             <div>
               <h2 className="text-base font-bold text-foreground">Maintenance & Status</h2>
-              <p className="text-xs text-muted-foreground">Toggle platform-wide maintenance locks.</p>
+              <p className="text-xs text-muted-foreground">
+                Toggle platform-wide maintenance locks.
+              </p>
             </div>
           </div>
 
@@ -114,7 +117,9 @@ function SuperSettingsPage() {
             </div>
             <button
               type="button"
-              onClick={() => setForm((prev) => ({ ...prev, maintenanceMode: !prev.maintenanceMode }))}
+              onClick={() =>
+                setForm((prev) => ({ ...prev, maintenanceMode: !prev.maintenanceMode }))
+              }
               className={[
                 "relative inline-flex h-6 w-11 items-center rounded-full transition-colors",
                 form.maintenanceMode ? "bg-amber-500" : "bg-white/20",
@@ -130,7 +135,9 @@ function SuperSettingsPage() {
           </div>
 
           <div className="space-y-2">
-            <label className="text-xs font-semibold text-muted-foreground">Announcement Banner</label>
+            <label className="text-xs font-semibold text-muted-foreground">
+              Announcement Banner
+            </label>
             <Input
               value={form.announcementBanner}
               onChange={(e) => setForm((prev) => ({ ...prev, announcementBanner: e.target.value }))}
@@ -147,7 +154,9 @@ function SuperSettingsPage() {
             </div>
             <div>
               <h2 className="text-base font-bold text-foreground">Deposit & Withdrawal Limits</h2>
-              <p className="text-xs text-muted-foreground">Minimum and maximum transaction thresholds in PHP (₱).</p>
+              <p className="text-xs text-muted-foreground">
+                Minimum and maximum transaction thresholds in PHP (₱).
+              </p>
             </div>
           </div>
 
@@ -157,7 +166,9 @@ function SuperSettingsPage() {
               <Input
                 type="number"
                 value={form.minDeposit}
-                onChange={(e) => setForm((prev) => ({ ...prev, minDeposit: Number(e.target.value) }))}
+                onChange={(e) =>
+                  setForm((prev) => ({ ...prev, minDeposit: Number(e.target.value) }))
+                }
                 className="h-11 border-amber-500/20 bg-white/[0.06] text-foreground"
               />
             </div>
@@ -166,25 +177,35 @@ function SuperSettingsPage() {
               <Input
                 type="number"
                 value={form.maxDeposit}
-                onChange={(e) => setForm((prev) => ({ ...prev, maxDeposit: Number(e.target.value) }))}
+                onChange={(e) =>
+                  setForm((prev) => ({ ...prev, maxDeposit: Number(e.target.value) }))
+                }
                 className="h-11 border-amber-500/20 bg-white/[0.06] text-foreground"
               />
             </div>
             <div className="space-y-1.5">
-              <label className="text-xs font-semibold text-muted-foreground">Min Withdrawal (₱)</label>
+              <label className="text-xs font-semibold text-muted-foreground">
+                Min Withdrawal (₱)
+              </label>
               <Input
                 type="number"
                 value={form.minWithdraw}
-                onChange={(e) => setForm((prev) => ({ ...prev, minWithdraw: Number(e.target.value) }))}
+                onChange={(e) =>
+                  setForm((prev) => ({ ...prev, minWithdraw: Number(e.target.value) }))
+                }
                 className="h-11 border-amber-500/20 bg-white/[0.06] text-foreground"
               />
             </div>
             <div className="space-y-1.5">
-              <label className="text-xs font-semibold text-muted-foreground">Max Withdrawal (₱)</label>
+              <label className="text-xs font-semibold text-muted-foreground">
+                Max Withdrawal (₱)
+              </label>
               <Input
                 type="number"
                 value={form.maxWithdraw}
-                onChange={(e) => setForm((prev) => ({ ...prev, maxWithdraw: Number(e.target.value) }))}
+                onChange={(e) =>
+                  setForm((prev) => ({ ...prev, maxWithdraw: Number(e.target.value) }))
+                }
                 className="h-11 border-amber-500/20 bg-white/[0.06] text-foreground"
               />
             </div>
@@ -209,7 +230,8 @@ function SuperSettingsPage() {
           <div>
             <h2 className="text-base font-bold text-foreground">Play Sessions Cleanup</h2>
             <p className="text-xs text-muted-foreground">
-              Close abandoned opens (24h, no free spins), dedupe open rows, delete closed sessions older than 30 days.
+              Close abandoned opens (24h, no free spins), dedupe open rows, delete closed sessions
+              older than 30 days.
             </p>
           </div>
         </div>

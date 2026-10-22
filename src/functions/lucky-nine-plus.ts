@@ -22,7 +22,10 @@ export const luckyNinePlusDealFn = createServerFn({ method: "POST" })
   });
 
 /** Public engine config for the live table UI (reads game_controls.engineConfig). */
-export const getLuckyNinePlusEngineConfigFn = createServerFn({ method: "GET" }).handler(async () => {
-  const { getLuckyNinePlusEngineConfigPublic } = await import("../server/games/lucky-nine-plus.server");
-  return getLuckyNinePlusEngineConfigPublic();
-});
+export const getLuckyNinePlusEngineConfigFn = createServerFn({ method: "GET" }).handler(
+  async () => {
+    const { getLuckyNinePlusEngineConfigPublic } =
+      await import("../server/games/lucky-nine-plus.server");
+    return getLuckyNinePlusEngineConfigPublic();
+  },
+);

@@ -17,10 +17,7 @@ import {
   normalizeLuckyDropConfig,
   type LuckyDropConfig,
 } from "@/lib/lucky-drop-config";
-import {
-  getLuckyDropEngineConfigFn,
-  saveLuckyDropEngineConfigFn,
-} from "@/functions/superadmin";
+import { getLuckyDropEngineConfigFn, saveLuckyDropEngineConfigFn } from "@/functions/superadmin";
 import type { SuperGameRow } from "@/lib/superadmin-types";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
@@ -69,15 +66,7 @@ function Num({
   );
 }
 
-function Field({
-  label,
-  hint,
-  children,
-}: {
-  label: string;
-  hint?: string;
-  children: ReactNode;
-}) {
+function Field({ label, hint, children }: { label: string; hint?: string; children: ReactNode }) {
   return (
     <label className="block space-y-1.5">
       <span className="text-xs font-medium text-muted-foreground">{label}</span>
@@ -89,9 +78,7 @@ function Field({
 
 export function LuckyDropConfigModal({ game, open, onOpenChange, onPatchLobby }: Props) {
   const [section, setSection] = useState<Section>("lobby");
-  const [cfg, setCfg] = useState<LuckyDropConfig>(() =>
-    structuredClone(DEFAULT_LUCKY_DROP_CONFIG),
-  );
+  const [cfg, setCfg] = useState<LuckyDropConfig>(() => structuredClone(DEFAULT_LUCKY_DROP_CONFIG));
   const [saving, setSaving] = useState(false);
   const [lobbyBusy, setLobbyBusy] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -108,9 +95,7 @@ export function LuckyDropConfigModal({ game, open, onOpenChange, onPatchLobby }:
   );
   const [notes, setNotes] = useState(game.notes ?? "");
   const [sortOrder, setSortOrder] = useState(game.sortOrder ?? 0);
-  const [betStepsText, setBetStepsText] = useState(
-    DEFAULT_LUCKY_DROP_CONFIG.betSteps.join(", "),
-  );
+  const [betStepsText, setBetStepsText] = useState(DEFAULT_LUCKY_DROP_CONFIG.betSteps.join(", "));
 
   useEffect(() => {
     if (!open) return;
@@ -145,7 +130,7 @@ export function LuckyDropConfigModal({ game, open, onOpenChange, onPatchLobby }:
       const next = await saveLuckyDropEngineConfigFn({ data: { config: withSteps } });
       setCfg(next);
       setBetStepsText(next.betSteps.join(", "));
-      toast.success("Lucky Drop engine saved");
+      toast.success("Royal Climb engine saved");
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Save failed");
     } finally {
@@ -178,13 +163,14 @@ export function LuckyDropConfigModal({ game, open, onOpenChange, onPatchLobby }:
       <DialogContent className="flex max-h-[90vh] max-w-2xl flex-col gap-0 overflow-hidden p-0">
         <DialogHeader className="border-b border-white/10 px-5 py-4">
           <DialogTitle className="flex items-center gap-2">
-            Lucky Drop config
+            Royal Climb config
             <button type="button" className="ml-auto" onClick={() => onOpenChange(false)}>
               <X className="h-4 w-4" />
             </button>
           </DialogTitle>
           <DialogDescription>
-            Fair 1–10 die. Default 9× total return ≈ 90% RTP on a single lane.
+            Hi-Lo ladder. Every rung is priced at true odds minus the house edge, so RTP = 100 −
+            edge.
           </DialogDescription>
         </DialogHeader>
 
@@ -249,52 +235,57 @@ export function LuckyDropConfigModal({ game, open, onOpenChange, onPatchLobby }:
             ) : section === "payouts" ? (
               <div className="grid gap-3 sm:grid-cols-2">
                 <Field
-                  label="Payout multiplier"
-                  hint={`Total return incl. stake. Single lane @ 9× → ~${RTP_REFERENCE.singlePick}% RTP.`}
+                  label="House edge %"
+                  hint="Applied on every rung: step mult = (1 − edge) / true probability. RTP = 100 − edge."
                 >
                   <Num
-                    value={cfg.payoutMult}
-                    onChange={(n) => setCfg((c) => ({ ...c, payoutMult: n }))}
+                    value={cfg.houseEdge}
+                    onChange={(n) => setCfg((c) => ({ ...c, houseEdge: n }))}
                     step={0.1}
-                    min={1.01}
+                    min={0.5}
+                    max={20}
                   />
                 </Field>
-                <Field label="Max picks per drop">
+                <Field
+                  label="Rungs to summit"
+                  hint="Correct calls that auto-cash the ladder (2–20)."
+                >
                   <Num
-                    value={cfg.maxPicks}
-                    onChange={(n) => setCfg((c) => ({ ...c, maxPicks: n }))}
-                    min={1}
-                    max={10}
+                    value={cfg.maxSteps}
+                    onChange={(n) => setCfg((c) => ({ ...c, maxSteps: n }))}
+                    min={2}
+                    max={20}
                   />
                 </Field>
-                <Field label="RTP target % (display)">
+                <Field label="Skips per run" hint="Risk-free card swaps (0–5).">
                   <Num
-                    value={cfg.rtpTarget}
-                    onChange={(n) => setCfg((c) => ({ ...c, rtpTarget: n }))}
-                    step={0.1}
+                    value={cfg.skips}
+                    onChange={(n) => setCfg((c) => ({ ...c, skips: n }))}
+                    min={0}
+                    max={5}
+                  />
+                </Field>
+                <Field label="Max multiplier cap" hint="Run auto-cashes when reached.">
+                  <Num
+                    value={cfg.maxMult}
+                    onChange={(n) => setCfg((c) => ({ ...c, maxMult: n }))}
+                    min={5}
                   />
                 </Field>
               </div>
             ) : (
               <div className="grid gap-3 sm:grid-cols-2">
-                <Field label="Min lane bet">
+                <Field label="Min bet">
                   <Num
                     value={cfg.minBet}
                     onChange={(n) => setCfg((c) => ({ ...c, minBet: n }))}
                     step={0.01}
                   />
                 </Field>
-                <Field label="Max total bet">
+                <Field label="Max bet">
                   <Num
                     value={cfg.maxBet}
                     onChange={(n) => setCfg((c) => ({ ...c, maxBet: n }))}
-                    step={0.01}
-                  />
-                </Field>
-                <Field label="Max per lane">
-                  <Num
-                    value={cfg.maxSpotBet}
-                    onChange={(n) => setCfg((c) => ({ ...c, maxSpotBet: n }))}
                     step={0.01}
                   />
                 </Field>

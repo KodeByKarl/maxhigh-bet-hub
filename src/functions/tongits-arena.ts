@@ -48,11 +48,8 @@ export const getTongitsArenaSessionFn = createServerFn({ method: "GET" }).handle
 });
 
 /** Public engine config for the live table UI (reads game_controls.engineConfig). */
-export const getTongitsArenaEngineConfigFn = createServerFn({ method: "GET" }).handler(
-  async () => {
-    const { getTongitsArenaEngineConfigPublic } = await import(
-      "../server/games/tongits-arena.server"
-    );
-    return getTongitsArenaEngineConfigPublic();
-  },
-);
+export const getTongitsArenaEngineConfigFn = createServerFn({ method: "GET" }).handler(async () => {
+  const { getTongitsArenaEngineConfigPublic } =
+    await import("../server/games/tongits-arena.server");
+  return getTongitsArenaEngineConfigPublic();
+});

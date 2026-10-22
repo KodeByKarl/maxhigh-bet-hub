@@ -17,12 +17,18 @@ export function isReportSection(v: string): v is ReportSection {
   return REPORT_SECTIONS.some((s) => s.slug === v);
 }
 
-export function ReportSubnav({ active, prefix = "/superadmin" }: { active: ReportSection; prefix?: "/superadmin" | "/admin" }) {
+export function ReportSubnav({
+  active,
+  prefix = "/superadmin",
+}: {
+  active: ReportSection;
+  prefix?: "/superadmin" | "/admin";
+}) {
   return (
     <div className={`${saGlass} flex flex-wrap gap-1.5 p-2`}>
       {REPORT_SECTIONS.map((s) => {
         const on = s.slug === active;
-        const toPath = (prefix === "/admin" ? "/admin/reports/$view" : "/superadmin/reports/$view") as any;
+        const toPath = prefix === "/admin" ? "/admin/reports/$view" : "/superadmin/reports/$view";
         return (
           <Link
             key={s.slug}
@@ -43,13 +49,7 @@ export function ReportSubnav({ active, prefix = "/superadmin" }: { active: Repor
   );
 }
 
-export function ReportPageHeader({
-  title,
-  blurb,
-}: {
-  title: string;
-  blurb: string;
-}) {
+export function ReportPageHeader({ title, blurb }: { title: string; blurb: string }) {
   const handlePrint = () => {
     window.print();
   };

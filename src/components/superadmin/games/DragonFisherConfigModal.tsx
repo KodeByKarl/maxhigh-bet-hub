@@ -73,15 +73,7 @@ function Num({
   );
 }
 
-function Field({
-  label,
-  hint,
-  children,
-}: {
-  label: string;
-  hint?: string;
-  children: ReactNode;
-}) {
+function Field({ label, hint, children }: { label: string; hint?: string; children: ReactNode }) {
   return (
     <label className="block space-y-1.5">
       <span className="text-xs font-medium text-muted-foreground">{label}</span>
@@ -117,9 +109,7 @@ export function DragonFisherConfigModal({ game, open, onOpenChange, onPatchLobby
     if (!open) return;
     setSection("lobby");
     setTag(game.tag ?? "");
-    setLobbyRtp(
-      Number.parseFloat(String(game.rtp ?? "").replace("%", "")) || RTP_REFERENCE.target,
-    );
+    setLobbyRtp(Number.parseFloat(String(game.rtp ?? "").replace("%", "")) || RTP_REFERENCE.target);
     setVolatility(game.volatility ?? "Medium");
     setLobbyMinBet(Number(String(game.minBet ?? "").replace(/[^\d.]/g, "")) || 1);
     setLobbyMaxBet(Number(String(game.maxBet ?? "").replace(/[^\d.]/g, "")) || 25);
@@ -254,7 +244,11 @@ export function DragonFisherConfigModal({ game, open, onOpenChange, onPatchLobby
                   <LobbyVisibilityToggles game={game} onPatch={onPatchLobby} />
                 </div>
                 <Field label="Tag">
-                  <Input value={tag} onChange={(e) => setTag(e.target.value)} className="h-9 bg-white/[0.06]" />
+                  <Input
+                    value={tag}
+                    onChange={(e) => setTag(e.target.value)}
+                    className="h-9 bg-white/[0.06]"
+                  />
                 </Field>
                 <Field label="Volatility">
                   <Input
@@ -276,7 +270,11 @@ export function DragonFisherConfigModal({ game, open, onOpenChange, onPatchLobby
                   <Num value={lobbyMaxBet} onChange={setLobbyMaxBet} step={0.01} min={0.01} />
                 </Field>
                 <Field label="Notes" hint="Internal superadmin notes">
-                  <Input value={notes} onChange={(e) => setNotes(e.target.value)} className="h-9 bg-white/[0.06]" />
+                  <Input
+                    value={notes}
+                    onChange={(e) => setNotes(e.target.value)}
+                    className="h-9 bg-white/[0.06]"
+                  />
                 </Field>
                 <div className="sm:col-span-2">
                   <button
@@ -293,10 +291,7 @@ export function DragonFisherConfigModal({ game, open, onOpenChange, onPatchLobby
             ) : section === "fish" ? (
               <div className="space-y-4">
                 {cfg.fishTiers.map((f) => (
-                  <div
-                    key={f.id}
-                    className="rounded-xl border border-white/10 bg-white/[0.03] p-3"
-                  >
+                  <div key={f.id} className="rounded-xl border border-white/10 bg-white/[0.03] p-3">
                     <div className="mb-2 text-sm font-bold text-foreground">
                       {f.label}{" "}
                       <span className="text-[10px] font-normal uppercase text-muted-foreground">
@@ -414,9 +409,7 @@ export function DragonFisherConfigModal({ game, open, onOpenChange, onPatchLobby
                 <Field label="Contributor share">
                   <Num
                     value={cfg.boss.contributorShare}
-                    onChange={(n) =>
-                      patch({ boss: { ...cfg.boss, contributorShare: n } })
-                    }
+                    onChange={(n) => patch({ boss: { ...cfg.boss, contributorShare: n } })}
                     step={0.01}
                     min={0}
                     max={1}

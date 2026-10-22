@@ -32,7 +32,13 @@ export type SuperNavItem = {
 };
 
 export const SUPER_NAV: SuperNavItem[] = [
-  { to: "/superadmin", label: "Command center", shortLabel: "Home", icon: LayoutDashboard, exact: true },
+  {
+    to: "/superadmin",
+    label: "Command center",
+    shortLabel: "Home",
+    icon: LayoutDashboard,
+    exact: true,
+  },
   { to: "/superadmin/users", label: "Player List", shortLabel: "Players", icon: Users },
   { to: "/superadmin/admins", label: "Admins", shortLabel: "Admins", icon: UserCog },
   { to: "/superadmin/games", label: "Games control", shortLabel: "Games", icon: Gamepad2 },

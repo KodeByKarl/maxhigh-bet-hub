@@ -1,16 +1,31 @@
+/**
+ * Active Prosperity Lion config for the client engine.
+ * Superadmin values are loaded at play time; defaults until then.
+ */
 import {
+  configToCellSyms,
   DEFAULT_PROSPERITY_LION_CONFIG,
   normalizeProsperityLionConfig,
   type ProsperityLionConfig,
 } from "@/lib/prosperity-lion-config";
+import type { CellSym } from "./types";
 
-let current: ProsperityLionConfig = structuredClone(DEFAULT_PROSPERITY_LION_CONFIG);
+let active: ProsperityLionConfig = structuredClone(DEFAULT_PROSPERITY_LION_CONFIG);
+let cellSyms: CellSym[] = configToCellSyms(active) as CellSym[];
 
 export function getProsperityLionConfig(): ProsperityLionConfig {
-  return current;
+  return active;
 }
 
 export function setProsperityLionConfig(raw: unknown) {
-  current = normalizeProsperityLionConfig(raw);
-  return current;
+  active = normalizeProsperityLionConfig(raw);
+  cellSyms = configToCellSyms(active) as CellSym[];
+}
+
+export function getRuntimeSymbols(): CellSym[] {
+  return cellSyms;
+}
+
+export function getRuntimeSymbol(id: string): CellSym | undefined {
+  return cellSyms.find((s) => s.id === id);
 }

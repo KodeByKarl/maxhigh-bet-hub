@@ -4,7 +4,7 @@
 
 export const CRAB_CANNON_ASSET = {
   symbolDir: "/images/symbols/crab-cannon",
-  soundDir: "/sounds/crab-cannon",
+  soundDir: "/sounds/gentle-v1/crab-cannon",
   thumb: "/games/crab-cannon.webp",
   seabed: "/images/symbols/crab-cannon/seabed.webp",
 } as const;

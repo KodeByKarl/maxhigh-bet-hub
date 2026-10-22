@@ -72,8 +72,7 @@ function render(seconds, fn) {
 function ambientLoop() {
   let lp = 0;
   return render(6, (t) => {
-    const drone =
-      0.24 * sine(55, t) + 0.15 * sine(82.5, t) + 0.1 * sine(110.2, t);
+    const drone = 0.24 * sine(55, t) + 0.15 * sine(82.5, t) + 0.1 * sine(110.2, t);
     lp = lp * 0.97 + noise() * 0.03;
     const wind = lp * 0.55 * (0.35 + 0.65 * (0.5 + 0.5 * Math.sin(t * 0.27)));
     const pluckTimes = [0.35, 1.55, 2.85, 4.1, 5.25];
@@ -150,9 +149,7 @@ function scatterTrigger() {
   return render(1.2, (t) => {
     const swell = envADSR(t, 1.2, 0.08, 0.2, 0.7, 0.4);
     const pad =
-      0.25 * sine(165, t) * swell +
-      0.18 * sine(247, t) * swell +
-      0.12 * sine(330, t) * swell;
+      0.25 * sine(165, t) * swell + 0.18 * sine(247, t) * swell + 0.12 * sine(330, t) * swell;
     const bell =
       0.3 * sine(660, t) * Math.exp(-t * 3) +
       0.2 * sine(990, t) * Math.exp(-t * 4) +

@@ -23,7 +23,8 @@ export type ResolveOpts = {
 export function resolveSpin(opts: ResolveOpts): SpinScript {
   const collectMode = opts.isFreeSpins && (opts.collectBombsInFreeSpins ?? true);
   let board = cloneBoard(
-    opts.forceBoard ?? buildBoard(opts.ante && !opts.isFreeSpins, opts.isFreeSpins, !opts.isFreeSpins),
+    opts.forceBoard ??
+      buildBoard(opts.ante && !opts.isFreeSpins, opts.isFreeSpins, !opts.isFreeSpins),
   );
   const initialBoard = cloneBoard(board);
   const steps: TumbleStep[] = [];

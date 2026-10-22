@@ -61,6 +61,8 @@ export type WildPantherConfig = {
   superBuyFeatureMult: number;
   anteBetMult: number;
   minCluster: number;
+  /** Max win as × bet for a paid spin or a whole free-spin feature. 0 = uncapped. */
+  maxWinMult: number;
   symbols: WildPantherSymbolConfig[];
 };
 
@@ -114,6 +116,8 @@ export const DEFAULT_WILD_PANTHER_CONFIG: WildPantherConfig = {
   superBuyFeatureMult: 500,
   anteBetMult: 1.25,
   minCluster: 8,
+  /** Matches the 10,000× max win advertised in the lobby. */
+  maxWinMult: 10_000,
   symbols: [
     { id: "grape", kind: "grape", label: "10", weight: 18, pay: [1, 3, 8] },
     { id: "plum", kind: "plum", label: "J", weight: 16, pay: [1.2, 3.5, 10] },
@@ -259,6 +263,7 @@ export function normalizeWildPantherConfig(raw: unknown): WildPantherConfig {
     superBuyFeatureMult: clamp(num(o.superBuyFeatureMult, d.superBuyFeatureMult), 1, 10_000),
     anteBetMult: clamp(num(o.anteBetMult, d.anteBetMult), 1, 5),
     minCluster: clamp(Math.round(num(o.minCluster, d.minCluster)), 3, 30),
+    maxWinMult: clamp(num(o.maxWinMult, d.maxWinMult), 0, 100_000),
     symbols,
   };
 }

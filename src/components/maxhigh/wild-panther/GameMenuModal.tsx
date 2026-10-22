@@ -43,9 +43,7 @@ export function GameMenuModal({
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between border-b border-white/15 px-4 py-3">
-          <div className="text-base font-black uppercase tracking-wide text-[#F5D76E]">
-            Menu
-          </div>
+          <div className="text-base font-black uppercase tracking-wide text-[#F5D76E]">Menu</div>
           <button
             type="button"
             onClick={onClose}

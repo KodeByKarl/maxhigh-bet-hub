@@ -1,7 +1,4 @@
-﻿import {
-  type PantherTheme,
-  type PantherSymKind,
-} from "@/components/maxhigh/panther-shared/theme";
+﻿import { type PantherTheme, type PantherSymKind } from "@/components/maxhigh/panther-shared/theme";
 import { JADE_JAGUAR_COLORS } from "@/components/maxhigh/panther-shared/palettes";
 
 function jadeIconPack(version = "1"): Record<PantherSymKind, string> {

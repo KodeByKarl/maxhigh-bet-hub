@@ -25,16 +25,14 @@ export function resolveScatters(
       count: maxScattersSeen,
       cashPay: 0,
       freeSpinsAwarded: 0,
-      retriggerSpins:
-        maxScattersSeen >= cfg.freeSpinsRetriggerCount ? getFreeSpinsRetrigger() : 0,
+      retriggerSpins: maxScattersSeen >= cfg.freeSpinsRetriggerCount ? getFreeSpinsRetrigger() : 0,
     };
   }
 
   return {
     count: maxScattersSeen,
     cashPay,
-    freeSpinsAwarded:
-      maxScattersSeen >= cfg.freeSpinsTriggerCount ? getFreeSpinsBase() : 0,
+    freeSpinsAwarded: maxScattersSeen >= cfg.freeSpinsTriggerCount ? getFreeSpinsBase() : 0,
     retriggerSpins: 0,
   };
 }

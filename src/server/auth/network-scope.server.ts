@@ -44,9 +44,7 @@ export async function resolveNetworkUserIds(
       .where(
         and(
           eq(users.parentAgentId, actor.id),
-          playersOnly
-            ? eq(users.role, "player")
-            : inArray(users.role, ["player", "agent"]),
+          playersOnly ? eq(users.role, "player") : inArray(users.role, ["player", "agent"]),
         ),
       );
     return rows.map((r) => r.id);
@@ -123,13 +121,19 @@ export async function assertCanManageChips(
     const directDownline = target.parentAgentId === actor.id;
     if (directDownline) {
       if (target.role === "agent" || target.role === "player") return;
-      throw new Error("Forbidden — Master Agent can only manage Agents and Players in their downline");
+      throw new Error(
+        "Forbidden — Master Agent can only manage Agents and Players in their downline",
+      );
     }
 
     let underMyAgent = false;
     if (target.parentAgentId) {
       const q = dbOrTx ?? getDb();
-      const uplineRows = await q.select().from(users).where(eq(users.id, target.parentAgentId)).limit(1);
+      const uplineRows = await q
+        .select()
+        .from(users)
+        .where(eq(users.id, target.parentAgentId))
+        .limit(1);
       underMyAgent = uplineRows[0]?.parentAgentId === actor.id;
     }
     if (underMyAgent && target.role === "player") return;

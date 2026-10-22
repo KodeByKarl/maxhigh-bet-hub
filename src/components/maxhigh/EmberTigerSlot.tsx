@@ -32,12 +32,7 @@ import {
 } from "./ember-tiger/playbackHelpers";
 import { BetSelectModal } from "./ember-tiger/BetSelectModal";
 import { buildBuyScatterIntroBoard, initialBoard } from "./ember-tiger/gridState";
-import {
-  BET_STEPS,
-  BUY_FS_START_BET,
-  getAnteMult,
-  getBuyUnitPrice,
-} from "./ember-tiger/paytable";
+import { BET_STEPS, BUY_FS_START_BET, getAnteMult, getBuyUnitPrice } from "./ember-tiger/paytable";
 import { setEmberTigerConfig } from "./ember-tiger/runtimeConfig";
 import type { BoardCell, SpinScript } from "./ember-tiger/types";
 import { CELLS } from "./ember-tiger/types";
@@ -145,8 +140,7 @@ export function EmberTigerSlot({
 
   const busy = phase !== "idle";
   const totalBet = +(bet * (ante ? getAnteMult() : 1)).toFixed(2);
-  const buyCost = getBuyUnitPrice(BUY_FS_START_BET, "normal");
-  const superBuyCost = getBuyUnitPrice(BUY_FS_START_BET, "super");
+  const buyCost = getBuyUnitPrice(BUY_FS_START_BET, 1);
 
   const busyRef = useRef(false);
   const skipRef = useRef(false);
@@ -189,68 +183,61 @@ export function EmberTigerSlot({
   }, []);
 
   /** Overlay toast — never inserts into HUD (avoids layout jump). */
-  const notifyCashflow = useCallback(
-    (delta: number, label: "bet" | "win" | "scatter" | "cap") => {
-      const abs = formatMoney(Math.abs(delta));
-      if (label === "bet") {
-        toast.custom(
-          () => (
-            <div
-              className="rounded-2xl border px-4 py-2.5 text-center shadow-[0_10px_28px_rgba(0,0,0,0.45)]"
-              style={{
-                borderColor: "rgba(248,113,113,0.55)",
-                background:
-                  "linear-gradient(135deg, rgba(69,10,10,0.96), rgba(124,45,18,0.96))",
-                color: "#FCA5A5",
-              }}
-            >
-              <div className="text-[10px] font-black uppercase tracking-[0.18em] text-rose-200/80">
-                Bet
-              </div>
-              <div className="text-sm font-black tabular-nums">−{abs}</div>
-            </div>
-          ),
-          { duration: 1800 },
-        );
-        return;
-      }
-      const isWin = label === "win" || label === "scatter";
-      const title =
-        label === "scatter" ? "Scatter" : label === "cap" ? "Cap" : "Win";
-      const prefix = delta < 0 ? "−" : "+";
+  const notifyCashflow = useCallback((delta: number, label: "bet" | "win" | "scatter" | "cap") => {
+    const abs = formatMoney(Math.abs(delta));
+    if (label === "bet") {
       toast.custom(
         () => (
           <div
             className="rounded-2xl border px-4 py-2.5 text-center shadow-[0_10px_28px_rgba(0,0,0,0.45)]"
             style={{
-              borderColor: isWin
-                ? "rgba(251,146,60,0.65)"
-                : "rgba(248,113,113,0.55)",
-              background: isWin
-                ? "linear-gradient(135deg, #EA580C 0%, #7C2D12 55%, #450A0A 100%)"
-                : "linear-gradient(135deg, rgba(69,10,10,0.96), rgba(124,45,18,0.96))",
-              color: isWin ? "#FED7AA" : "#FCA5A5",
+              borderColor: "rgba(248,113,113,0.55)",
+              background: "linear-gradient(135deg, rgba(69,10,10,0.96), rgba(124,45,18,0.96))",
+              color: "#FCA5A5",
             }}
           >
-            <div
-              className="text-[10px] font-black uppercase tracking-[0.18em]"
-              style={{
-                color: isWin ? "rgba(254,215,170,0.85)" : "rgba(254,202,202,0.85)",
-              }}
-            >
-              {title}
+            <div className="text-[10px] font-black uppercase tracking-[0.18em] text-rose-200/80">
+              Bet
             </div>
-            <div className="text-sm font-black tabular-nums">
-              {prefix}
-              {abs}
-            </div>
+            <div className="text-sm font-black tabular-nums">−{abs}</div>
           </div>
         ),
         { duration: 1800 },
       );
-    },
-    [],
-  );
+      return;
+    }
+    const isWin = label === "win" || label === "scatter";
+    const title = label === "scatter" ? "Scatter" : label === "cap" ? "Cap" : "Win";
+    const prefix = delta < 0 ? "−" : "+";
+    toast.custom(
+      () => (
+        <div
+          className="rounded-2xl border px-4 py-2.5 text-center shadow-[0_10px_28px_rgba(0,0,0,0.45)]"
+          style={{
+            borderColor: isWin ? "rgba(251,146,60,0.65)" : "rgba(248,113,113,0.55)",
+            background: isWin
+              ? "linear-gradient(135deg, #EA580C 0%, #7C2D12 55%, #450A0A 100%)"
+              : "linear-gradient(135deg, rgba(69,10,10,0.96), rgba(124,45,18,0.96))",
+            color: isWin ? "#FED7AA" : "#FCA5A5",
+          }}
+        >
+          <div
+            className="text-[10px] font-black uppercase tracking-[0.18em]"
+            style={{
+              color: isWin ? "rgba(254,215,170,0.85)" : "rgba(254,202,202,0.85)",
+            }}
+          >
+            {title}
+          </div>
+          <div className="text-sm font-black tabular-nums">
+            {prefix}
+            {abs}
+          </div>
+        </div>
+      ),
+      { duration: 1800 },
+    );
+  }, []);
 
   /** Abortable wait — respects turbo + skipRef + playback generation / unmount. */
   const wait = useCallback((ms: number, gen: number) => {
@@ -487,9 +474,7 @@ export function EmberTigerSlot({
         emberTigerAudio.playCascadeTick();
         await wait(getPopWaitMs(step.winningKeys.length), gen);
 
-        setSlots(
-          step.afterPop.length === CELLS ? step.afterPop : asSlots(step.board),
-        );
+        setSlots(step.afterPop.length === CELLS ? step.afterPop : asSlots(step.board));
         setWinningKeys(EMPTY_SET);
         setPayoutByKey(EMPTY_PAY);
         setTumbleStepWin(0);
@@ -557,7 +542,10 @@ export function EmberTigerSlot({
   }, [muted, setMutedState]);
 
   const finishBase = useCallback(
-    (script: SpinScript, session: { sessionId: string | null; freeSpinsLeft: number; inFree: boolean }) => {
+    (
+      script: SpinScript,
+      session: { sessionId: string | null; freeSpinsLeft: number; inFree: boolean },
+    ) => {
       if (script.totalWin > 0) {
         setLastWin(script.totalWin);
         emberTigerAudio.playWin(script.totalWin, totalBet);
@@ -650,6 +638,8 @@ export function EmberTigerSlot({
       let recoveredToFree = false;
 
       try {
+        emberTigerAudio.startSpinLoop();
+
         if (!isFree) {
           setBalanceLocal(balance - cost);
           notifyCashflow(-cost, "bet");
@@ -674,7 +664,12 @@ export function EmberTigerSlot({
         void refreshJackpot();
         applySession(settled.session);
 
-        const script = await playScript(settled.script, isFree, gen, isFree ? balance : balance - cost);
+        const script = await playScript(
+          settled.script,
+          isFree,
+          gen,
+          isFree ? balance : balance - cost,
+        );
         if (gen !== playbackGen.current || !mountedRef.current) return;
 
         if (isFree) {
@@ -795,7 +790,7 @@ export function EmberTigerSlot({
   const buyFeature = useCallback(
     async (buyBet: number, quantity: number) => {
       if (busyRef.current || phase !== "idle") return;
-      const unit = getBuyUnitPrice(buyBet, buyMode);
+      const unit = getBuyUnitPrice(buyBet, quantity);
       const cost = +(unit * quantity).toFixed(2);
       if (balance < cost) {
         toast.error("Insufficient balance");
@@ -860,7 +855,16 @@ export function EmberTigerSlot({
   // Auto / free-spin chain — always invoke latest spin via ref (no stale closures).
   useEffect(() => {
     if (busyRef.current || busy) return;
-    if (winPopup || fsSummary || buyOpen || infoOpen || autoSpinModalOpen || betModalOpen || triggerModalCount != null) return;
+    if (
+      winPopup ||
+      fsSummary ||
+      buyOpen ||
+      infoOpen ||
+      autoSpinModalOpen ||
+      betModalOpen ||
+      triggerModalCount != null
+    )
+      return;
 
     const spinGap = getAutoSpinGapMs(turbo, autoSpinConfig?.spinWithoutReels);
 
@@ -899,7 +903,7 @@ export function EmberTigerSlot({
         setAutoSpin(false);
         setAutoSpinConfig(null);
         toast.info(
-          `Auto Spin stopped: Balance increased by ₱${autoSpinConfig.balanceIncreaseBy.toFixed(2)}`
+          `Auto Spin stopped: Balance increased by ₱${autoSpinConfig.balanceIncreaseBy.toFixed(2)}`,
         );
         return;
       }
@@ -911,7 +915,7 @@ export function EmberTigerSlot({
         setAutoSpin(false);
         setAutoSpinConfig(null);
         toast.info(
-          `Auto Spin stopped: Balance decreased by ₱${autoSpinConfig.balanceDecreaseBy.toFixed(2)}`
+          `Auto Spin stopped: Balance decreased by ₱${autoSpinConfig.balanceDecreaseBy.toFixed(2)}`,
         );
         return;
       }
@@ -920,12 +924,9 @@ export function EmberTigerSlot({
         setRemainingAutoSpins((prev) => (typeof prev === "number" ? prev - 1 : prev));
       }
 
-      const t = setTimeout(
-        () => {
-          void spinRef.current(false);
-        },
-        spinGap,
-      );
+      const t = setTimeout(() => {
+        void spinRef.current(false);
+      }, spinGap);
       return () => clearTimeout(t);
     }
   }, [
@@ -946,10 +947,8 @@ export function EmberTigerSlot({
     turbo,
   ]);
 
-  const displayWin = dropTotal > 0 ? dropTotal : (inFree ? fsSessionWin : lastWin);
-  const showTumbleBadge =
-    tumbleStepWin > 0 &&
-    (phase === "glow" || phase === "popping");
+  const displayWin = dropTotal > 0 ? dropTotal : inFree ? fsSessionWin : lastWin;
+  const showTumbleBadge = tumbleStepWin > 0 && (phase === "glow" || phase === "popping");
   const theme = emberTigerTheme;
   const themeVars = themeToCssVars(theme);
 
@@ -1054,18 +1053,6 @@ export function EmberTigerSlot({
               >
                 Buy FS {formatMoneyCompact(buyCost)}
               </button>
-              <button
-                type="button"
-                disabled={busy}
-                onClick={() => openBuyFeature("super")}
-                className="min-h-9 rounded-xl border-2 bg-black/70 px-3 py-1.5 text-[10px] font-black uppercase tracking-wide disabled:opacity-40 sm:min-h-10 sm:px-4 sm:py-2 sm:text-[11px]"
-                style={{
-                  borderColor: "var(--p-accent)",
-                  color: "var(--p-accent-soft)",
-                }}
-              >
-                Super {formatMoneyCompact(superBuyCost)}
-              </button>
             </div>
           )}
 
@@ -1093,8 +1080,7 @@ export function EmberTigerSlot({
                 className="min-w-0 rounded-xl border px-1 py-1.5 text-center sm:px-2 sm:py-2.5"
                 style={{
                   borderColor: "var(--p-win-border)",
-                  background:
-                    "linear-gradient(180deg, var(--p-win-from) 0%, var(--p-win-to) 100%)",
+                  background: "linear-gradient(180deg, var(--p-win-from) 0%, var(--p-win-to) 100%)",
                 }}
               >
                 <div
@@ -1167,7 +1153,10 @@ export function EmberTigerSlot({
                   <div className="text-[9px] font-bold uppercase tracking-wider text-white/55 sm:text-[10px]">
                     Bet
                   </div>
-                  <div className="truncate text-xs font-black tabular-nums sm:text-base" style={{ color: "var(--p-win-value)" }}>
+                  <div
+                    className="truncate text-xs font-black tabular-nums sm:text-base"
+                    style={{ color: "var(--p-win-value)" }}
+                  >
                     {formatMoney(totalBet)}
                   </div>
                 </button>
@@ -1215,8 +1204,10 @@ export function EmberTigerSlot({
                     setAutoSpinConfig(null);
                   } else if (inFree || freeSpins > 0) {
                     setFsPaused(false);
+                    emberTigerAudio.playUiClick();
                     void spin(true);
                   } else {
+                    emberTigerAudio.playUiClick();
                     void spin(false);
                   }
                 }}
@@ -1262,9 +1253,17 @@ export function EmberTigerSlot({
                       </span>
                     </div>
                   ) : busy ? (
-                    <RotateCw size={24} className="animate-spin sm:size-7" style={{ color: "var(--p-win-value)" }} />
+                    <RotateCw
+                      size={24}
+                      className="animate-spin sm:size-7"
+                      style={{ color: "var(--p-win-value)" }}
+                    />
                   ) : (
-                    <RotateCw size={24} className="sm:size-7" style={{ color: "var(--p-win-value)" }} />
+                    <RotateCw
+                      size={24}
+                      className="sm:size-7"
+                      style={{ color: "var(--p-win-value)" }}
+                    />
                   )}
                 </div>
               </button>
@@ -1331,9 +1330,7 @@ export function EmberTigerSlot({
       </AnimatePresence>
 
       <AnimatePresence>
-        {infoOpen && (
-          <PaytableModal bet={totalBet} onClose={() => setInfoOpen(false)} />
-        )}
+        {infoOpen && <PaytableModal bet={totalBet} onClose={() => setInfoOpen(false)} />}
       </AnimatePresence>
 
       <AnimatePresence>
@@ -1385,10 +1382,7 @@ export function EmberTigerSlot({
 
       <AnimatePresence>
         {triggerModalCount != null && (
-          <FreeSpinsTriggerModal
-            count={triggerModalCount}
-            onClose={dismissTriggerModal}
-          />
+          <FreeSpinsTriggerModal count={triggerModalCount} onClose={dismissTriggerModal} />
         )}
       </AnimatePresence>
 

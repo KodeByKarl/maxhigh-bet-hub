@@ -1,12 +1,6 @@
 import { useEffect, useState, useRef } from "react";
 import { createFileRoute } from "@tanstack/react-router";
-import {
-  Headphones,
-  CheckCircle,
-  Send,
-  AlertCircle,
-  MessageCircle,
-} from "lucide-react";
+import { Headphones, CheckCircle, Send, AlertCircle, MessageCircle } from "lucide-react";
 import {
   getAdminTicketsFn,
   getAdminTicketMessagesFn,
@@ -54,7 +48,7 @@ function AdminSupportPage() {
   const [inputText, setInputText] = useState("");
   const [isSending, setIsSending] = useState(false);
   const [resolveConfirmOpen, setResolveConfirmOpen] = useState(false);
-  
+
   const scrollRef = useRef<HTMLDivElement>(null);
   const pollTicketsIntervalRef = useRef<number | null>(null);
   const pollMessagesIntervalRef = useRef<number | null>(null);
@@ -150,7 +144,7 @@ function AdminSupportPage() {
       ]);
 
       await sendAdminMessageFn({ data: { ticketId: selectedTicket.id, text: textToSend } });
-      
+
       const list = await getAdminTicketMessagesFn({ data: { ticketId: selectedTicket.id } });
       setMessages(list);
     } catch (err) {
@@ -191,7 +185,13 @@ function AdminSupportPage() {
         </p>
       </div>
 
-      <div className={cn("grid gap-5 lg:grid-cols-[300px_1fr] h-[650px]", adminGlass, "p-0 overflow-hidden border border-white/10 rounded-2xl")}>
+      <div
+        className={cn(
+          "grid gap-5 lg:grid-cols-[300px_1fr] h-[650px]",
+          adminGlass,
+          "p-0 overflow-hidden border border-white/10 rounded-2xl",
+        )}
+      >
         {/* Left Side: Tickets List */}
         <div className="flex flex-col border-r border-white/10 overflow-hidden">
           <div className="border-b border-white/10 px-4 py-3 bg-white/[0.02]">
@@ -218,7 +218,7 @@ function AdminSupportPage() {
                       "flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left transition-colors",
                       active
                         ? "bg-gradient-to-r from-violet-600/50 to-fuchsia-600/40 text-white border border-violet-500/30"
-                        : "hover:bg-white/[0.04] text-white/70 hover:text-white"
+                        : "hover:bg-white/[0.04] text-white/70 hover:text-white",
                     )}
                   >
                     <div className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-violet-600/30 text-violet-200 text-xs font-black uppercase">
@@ -227,7 +227,11 @@ function AdminSupportPage() {
                     <div className="min-w-0 flex-1">
                       <div className="text-sm font-bold truncate text-white">@{t.username}</div>
                       <div className="text-[10px] text-white/40 mt-0.5">
-                        Open: {new Date(t.createdAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+                        Open:{" "}
+                        {new Date(t.createdAt).toLocaleTimeString([], {
+                          hour: "2-digit",
+                          minute: "2-digit",
+                        })}
                       </div>
                     </div>
                   </button>
@@ -276,7 +280,7 @@ function AdminSupportPage() {
                       key={msg.id}
                       className={cn(
                         "flex w-full flex-col max-w-[85%]",
-                        isAgent ? "ml-auto items-end" : "mr-auto items-start"
+                        isAgent ? "ml-auto items-end" : "mr-auto items-start",
                       )}
                     >
                       <div className="flex items-end gap-2">
@@ -290,7 +294,7 @@ function AdminSupportPage() {
                             "rounded-2xl px-4 py-2.5 text-sm leading-relaxed",
                             isAgent
                               ? "bg-violet-600/80 text-white rounded-br-none border border-violet-500/25"
-                              : "bg-white/10 text-white/90 rounded-bl-none border border-white/5"
+                              : "bg-white/10 text-white/90 rounded-bl-none border border-white/5",
                           )}
                         >
                           {msg.text}
@@ -302,7 +306,10 @@ function AdminSupportPage() {
                         )}
                       </div>
                       <span className="mt-1 text-[9px] font-semibold text-white/30 uppercase tracking-wider px-9">
-                        {new Date(msg.createdAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+                        {new Date(msg.createdAt).toLocaleTimeString([], {
+                          hour: "2-digit",
+                          minute: "2-digit",
+                        })}
                       </span>
                     </div>
                   );
@@ -338,7 +345,8 @@ function AdminSupportPage() {
               <div>
                 <h3 className="text-sm font-black text-white">Live Support Dashboard</h3>
                 <p className="text-xs text-white/40 mt-1 max-w-sm">
-                  Select an active player chat from the left column list to review the issue and respond.
+                  Select an active player chat from the left column list to review the issue and
+                  respond.
                 </p>
               </div>
             </div>
@@ -351,9 +359,12 @@ function AdminSupportPage() {
         <Dialog open={resolveConfirmOpen} onOpenChange={setResolveConfirmOpen}>
           <DialogContent className="max-w-sm border-white/10 bg-[#160f29] text-white rounded-2xl p-6">
             <DialogHeader className="text-left">
-              <DialogTitle className="text-lg font-black text-white">Close Support Ticket</DialogTitle>
+              <DialogTitle className="text-lg font-black text-white">
+                Close Support Ticket
+              </DialogTitle>
               <DialogDescription className="text-white/60 text-xs mt-1">
-                Are you sure to Close this Ticket? This will delete the ticket and message history from the database permanently and notify the player.
+                Are you sure to Close this Ticket? This will delete the ticket and message history
+                from the database permanently and notify the player.
               </DialogDescription>
             </DialogHeader>
             <DialogFooter className="gap-2 mt-4 flex justify-end">

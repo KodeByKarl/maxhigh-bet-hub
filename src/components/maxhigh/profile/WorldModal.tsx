@@ -152,7 +152,10 @@ export function WorldModal({ open, onOpenChange }: Props) {
                     <span>
                       <span className="block text-sm font-semibold">{f.label}</span>
                       <span
-                        className={cn("text-xs", active ? "text-white/80" : "text-muted-foreground")}
+                        className={cn(
+                          "text-xs",
+                          active ? "text-white/80" : "text-muted-foreground",
+                        )}
                       >
                         {f.example}
                       </span>

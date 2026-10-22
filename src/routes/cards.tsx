@@ -14,7 +14,12 @@ export const Route = createFileRoute("/cards")({
   }),
   component: () => (
     <>
-      <PageHeader title="Cards" description="Poker, blackjack and royal deals — real card tables." icon={Layers2} accent="#7C3AED" />
+      <PageHeader
+        title="Cards"
+        description="Poker, blackjack and royal deals — real card tables."
+        icon={Layers2}
+        accent="#7C3AED"
+      />
       <SlotGameGrid title="Cards" category="cards" />
     </>
   ),

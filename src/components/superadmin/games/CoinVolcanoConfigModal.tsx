@@ -1,13 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import {
-  Coins,
-  Flame,
-  LayoutGrid,
-  Save,
-  Settings2,
-  Store,
-  X,
-} from "lucide-react";
+import { Coins, Flame, LayoutGrid, Save, Settings2, Store, X } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -25,10 +17,8 @@ import {
   type FsRtpProfileId,
   type McSymKind,
 } from "@/lib/coin-volcano-config";
-import {
-  getCoinVolcanoEngineConfigFn,
-  saveCoinVolcanoEngineConfigFn,
-} from "@/functions/superadmin";
+import { getCoinVolcanoEngineConfigFn } from "@/functions/api";
+import { saveCoinVolcanoEngineConfigFn } from "@/functions/superadmin";
 import type { SuperGameRow } from "@/lib/superadmin-types";
 import { ICON_SRC } from "@/components/maxhigh/coin-volcano/animationConfig";
 import { toast } from "sonner";
@@ -493,11 +483,21 @@ export function CoinVolcanoConfigModal({ game, open, onOpenChange, onPatchLobby 
                 </label>
                 <label className="space-y-1 text-xs font-semibold text-muted-foreground">
                   Engine min bet
-                  <Num value={cfg.minBet} onChange={(n) => patch({ minBet: n })} step={0.01} min={0.01} />
+                  <Num
+                    value={cfg.minBet}
+                    onChange={(n) => patch({ minBet: n })}
+                    step={0.01}
+                    min={0.01}
+                  />
                 </label>
                 <label className="space-y-1 text-xs font-semibold text-muted-foreground">
                   Engine max bet
-                  <Num value={cfg.maxBet} onChange={(n) => patch({ maxBet: n })} step={0.01} min={0.01} />
+                  <Num
+                    value={cfg.maxBet}
+                    onChange={(n) => patch({ maxBet: n })}
+                    step={0.01}
+                    min={0.01}
+                  />
                 </label>
               </div>
             </>

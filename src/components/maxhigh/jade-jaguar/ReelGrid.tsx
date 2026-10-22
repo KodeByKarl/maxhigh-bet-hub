@@ -21,8 +21,7 @@ type ReelGridProps = {
 
 /** Compact 3×3 jade altar — big square tiles, not pillar nests. */
 export const ReelGrid = memo(function ReelGrid({ visuals }: ReelGridProps) {
-  const { slots, phase, winningKeys, payoutByKey, spawnedKeys, fallenKeys, fallDistance } =
-    visuals;
+  const { slots, phase, winningKeys, payoutByKey, spawnedKeys, fallenKeys, fallDistance } = visuals;
 
   return (
     <div

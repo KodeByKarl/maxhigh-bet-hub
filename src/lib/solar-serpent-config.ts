@@ -83,9 +83,9 @@ export const SYMBOL_LABELS: Record<SolarSerpentSymKind, string> = {
   melon: "Q",
   apple: "K",
   blue: "A",
-  green: "Owl",
-  purple: "Wolf",
-  heart: "Ram",
+  green: "Solar Cobra",
+  purple: "Serpent Chalice",
+  heart: "Solar Serpent",
   lollipop: "Scatter",
   bomb: "Wild",
 };
@@ -133,9 +133,9 @@ export const DEFAULT_SOLAR_SERPENT_CONFIG: SolarSerpentConfig = {
     { id: "melon", kind: "melon", label: "Q", weight: 14, pay: [0.5, 0.65, 2] },
     { id: "apple", kind: "apple", label: "K", weight: 12, pay: [0.65, 0.8, 4] },
     { id: "blue", kind: "blue", label: "A", weight: 10, pay: [0.8, 2.5, 8] },
-    { id: "green", kind: "green", label: "Owl", weight: 8, pay: [2, 10, 50] },
-    { id: "purple", kind: "purple", label: "Wolf", weight: 6, pay: [6, 25, 150] },
-    { id: "heart", kind: "heart", label: "Ram", weight: 5, pay: [12, 80, 500] },
+    { id: "green", kind: "green", label: "Solar Cobra", weight: 8, pay: [2, 10, 50] },
+    { id: "purple", kind: "purple", label: "Serpent Chalice", weight: 6, pay: [6, 25, 150] },
+    { id: "heart", kind: "heart", label: "Solar Serpent", weight: 5, pay: [12, 80, 500] },
     {
       id: "lollipop",
       kind: "lollipop",
@@ -221,7 +221,11 @@ const LEGACY_PAY_TABLES: Record<string, [number, number, number][]> = {
 
 function paysMatch(pay: unknown, expected: [number, number, number]): boolean {
   if (!Array.isArray(pay) || pay.length < 3) return false;
-  return num(pay[0], NaN) === expected[0] && num(pay[1], NaN) === expected[1] && num(pay[2], NaN) === expected[2];
+  return (
+    num(pay[0], NaN) === expected[0] &&
+    num(pay[1], NaN) === expected[1] &&
+    num(pay[2], NaN) === expected[2]
+  );
 }
 
 function isLegacyDefaultPay(id: string, pay: unknown): boolean {

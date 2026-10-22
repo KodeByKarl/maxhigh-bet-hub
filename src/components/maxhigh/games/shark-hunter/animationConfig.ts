@@ -4,7 +4,7 @@
 
 export const SHARK_HUNTER_ASSET = {
   symbolDir: "/images/symbols/shark-hunter",
-  soundDir: "/sounds/shark-hunter",
+  soundDir: "/sounds/gentle-v1/shark-hunter",
   thumb: "/games/shark-hunter.webp",
   seabed: "/images/symbols/shark-hunter/seabed.webp",
 } as const;

@@ -13,7 +13,12 @@ export const Route = createFileRoute("/weekly-race")({
   }),
   component: () => (
     <>
-      <PageHeader title="Weekly Race" description="Wager more, climb higher · Coming soon." icon={Trophy} accent="#7C3AED" />
+      <PageHeader
+        title="Weekly Race"
+        description="Wager more, climb higher · Coming soon."
+        icon={Trophy}
+        accent="#7C3AED"
+      />
       <ComingSoonPanel label="Weekly race standings" />
     </>
   ),

@@ -164,9 +164,7 @@ function main() {
 
   const rtp = (creditSum / wagerSum) * 100;
   console.log(`Lucky Nine Plus sim · ${ROUNDS.toLocaleString()} rounds`);
-  console.log(
-    `  Outcomes P/D/T: ${outcomes.player} / ${outcomes.dealer} / ${outcomes.tie}`,
-  );
+  console.log(`  Outcomes P/D/T: ${outcomes.player} / ${outcomes.dealer} / ${outcomes.tie}`);
   console.log(`  Naturals (either side): ${naturalCount}`);
   console.log(`  Wager ₱${wagerSum.toFixed(2)} · Credit ₱${creditSum.toFixed(2)}`);
   console.log(`  Blended RTP (all bets) ≈ ${rtp.toFixed(3)}%`);

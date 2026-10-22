@@ -6,7 +6,13 @@ import { useAuth } from "@/lib/auth";
 const nav = [
   { to: "/admin" as const, label: "Dashboard", icon: LayoutDashboard, exact: true },
   { to: "/admin/users" as const, label: "Player List", icon: Users, exact: false },
-  { to: "/admin/reports/$view" as const, params: { view: "winlose" }, label: "Reports", icon: ScrollText, exact: false },
+  {
+    to: "/admin/reports/$view" as const,
+    params: { view: "winlose" },
+    label: "Reports",
+    icon: ScrollText,
+    exact: false,
+  },
   { to: "/admin/support" as const, label: "Live Support", icon: Headphones, exact: false },
 ];
 
@@ -39,7 +45,7 @@ export function AdminSidebar() {
               <Link
                 key={item.to}
                 to={item.to}
-                params={(item as any).params}
+                params={item.params}
                 activeOptions={{ exact: item.exact }}
                 className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-white/50 transition-colors hover:bg-white/[0.05] hover:text-white data-[status=active]:bg-gradient-to-r data-[status=active]:from-violet-600/90 data-[status=active]:to-fuchsia-600/80 data-[status=active]:text-white data-[status=active]:shadow-[0_0_24px_rgba(124,58,237,0.35)]"
               >

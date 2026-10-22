@@ -42,8 +42,7 @@ export function FreeSpinsCongrats({
         transition={{ type: "spring", stiffness: 280, damping: 18 }}
         className="relative w-full max-w-[560px] rounded-[1.75rem] p-[10px]"
         style={{
-          background:
-            "linear-gradient(135deg, #FDE68A 0%, #D97706 50%, #064E3B 100%)",
+          background: "linear-gradient(135deg, #FDE68A 0%, #D97706 50%, #064E3B 100%)",
           boxShadow: "0 20px 50px rgba(0,0,0,0.85)",
         }}
       >
@@ -66,8 +65,7 @@ export function FreeSpinsCongrats({
         <div
           className="relative overflow-visible rounded-[1.35rem] px-4 py-7 text-center sm:px-6"
           style={{
-            background:
-              "linear-gradient(180deg, #064E3B 0%, #022014 100%)",
+            background: "linear-gradient(180deg, #064E3B 0%, #022014 100%)",
             boxShadow: "inset 0 0 40px rgba(0,0,0,0.5)",
           }}
         >
@@ -96,10 +94,8 @@ export function FreeSpinsCongrats({
             <div
               className="relative w-full rounded-full border-2 border-amber-300 px-4 py-3.5 sm:px-8 sm:py-4 shadow-xl"
               style={{
-                background:
-                  "linear-gradient(180deg, #D97706 0%, #78350F 100%)",
-                boxShadow:
-                  "0 8px 24px rgba(0,0,0,0.6), inset 0 3px 10px rgba(255,255,255,0.25)",
+                background: "linear-gradient(180deg, #D97706 0%, #78350F 100%)",
+                boxShadow: "0 8px 24px rgba(0,0,0,0.6), inset 0 3px 10px rgba(255,255,255,0.25)",
               }}
             >
               <motion.div

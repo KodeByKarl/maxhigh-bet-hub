@@ -1,7 +1,4 @@
-import {
-  applyWinCap,
-  type AceHighConfig,
-} from "@/lib/ace-high-config";
+import { applyWinCap, type AceHighConfig } from "@/lib/ace-high-config";
 import {
   drawCard,
   ensureShoe,

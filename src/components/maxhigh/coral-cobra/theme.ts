@@ -1,7 +1,4 @@
-﻿import {
-  themedIconPack,
-  type PantherTheme,
-} from "@/components/maxhigh/panther-shared/theme";
+import { themedIconPack, type PantherTheme } from "@/components/maxhigh/panther-shared/theme";
 import { CORAL_COBRA_COLORS } from "@/components/maxhigh/panther-shared/palettes";
 
 export const coralCobraTheme: PantherTheme = {
@@ -10,7 +7,7 @@ export const coralCobraTheme: PantherTheme = {
   assets: {
     backdrop: "/images/symbols/coral-cobra/backdrop.webp",
     loadingBg: "/images/symbols/coral-cobra/loading-bg.webp",
-    icons: themedIconPack("coral-cobra", "5"),
+    icons: themedIconPack("coral-cobra", "7"),
   },
   colors: CORAL_COBRA_COLORS,
 };

@@ -17,14 +17,7 @@
 
 export const FIRE_SPIKE_GAME_ID = "fire-spike";
 
-export type FsSymKind =
-  | "bar"
-  | "dice"
-  | "diamond"
-  | "chip"
-  | "lucky7"
-  | "wild"
-  | "scatter";
+export type FsSymKind = "bar" | "dice" | "diamond" | "chip" | "lucky7" | "wild" | "scatter";
 
 export type FsSymbolTier = "low" | "high" | "wild" | "scatter";
 
@@ -130,15 +123,7 @@ function rw(reels: [number, number, number, number, number]): number[] {
   return [...reels];
 }
 
-const SYM_KINDS: FsSymKind[] = [
-  "bar",
-  "dice",
-  "diamond",
-  "chip",
-  "lucky7",
-  "wild",
-  "scatter",
-];
+const SYM_KINDS: FsSymKind[] = ["bar", "dice", "diamond", "chip", "lucky7", "wild", "scatter"];
 
 function profileWeights(
   entries: Record<FsSymKind, [number, number, number, number, number]>,
@@ -212,14 +197,15 @@ export const DEFAULT_FIRE_SPIKE_CONFIG: FireSpikeConfig = {
   rtpProfiles: DEFAULT_RTP_PROFILES.map((p) => ({
     id: p.id,
     targetRtp: p.targetRtp,
-    reelWeights: Object.fromEntries(
-      SYM_KINDS.map((k) => [k, [...p.reelWeights[k]]]),
-    ) as Record<FsSymKind, number[]>,
+    reelWeights: Object.fromEntries(SYM_KINDS.map((k) => [k, [...p.reelWeights[k]]])) as Record<
+      FsSymKind,
+      number[]
+    >,
   })),
   instantMixTable: { ...DEFAULT_INSTANT_MIX_TABLE },
   grandJackpotMult: 25_000,
   targetRtp: 96.5,
-    symbols: [
+  symbols: [
     {
       id: "bar",
       kind: "bar",
@@ -322,8 +308,7 @@ function normalizeRtpProfiles(raw: unknown, d: FireSpikeConfig): FsRtpProfile[] 
   return RTP_IDS.map((id) => {
     const fb = d.rtpProfiles.find((p) => p.id === id) ?? d.rtpProfiles[0];
     const found = src.find((p) => (p as { id?: string })?.id === id) as
-      | Partial<FsRtpProfile>
-      | undefined;
+      Partial<FsRtpProfile> | undefined;
     const weightsIn = found?.reelWeights ?? fb.reelWeights;
     const reelWeights = {} as Record<FsSymKind, number[]>;
     for (const k of SYM_KINDS) {
@@ -343,8 +328,7 @@ function normalizeRtpProfiles(raw: unknown, d: FireSpikeConfig): FsRtpProfile[] 
 
 /** Resolve effective per-symbol reel weights for the active RTP profile. */
 export function effectiveReelWeights(cfg: FireSpikeConfig): Record<FsSymKind, number[]> {
-  const profile =
-    cfg.rtpProfiles.find((p) => p.id === cfg.activeRtpProfile) ?? cfg.rtpProfiles[0];
+  const profile = cfg.rtpProfiles.find((p) => p.id === cfg.activeRtpProfile) ?? cfg.rtpProfiles[0];
   const out = {} as Record<FsSymKind, number[]>;
   for (const s of cfg.symbols) {
     out[s.kind] = profile?.reelWeights[s.kind]

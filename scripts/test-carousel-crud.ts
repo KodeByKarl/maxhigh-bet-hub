@@ -89,10 +89,19 @@ async function runCarouselCrudTests() {
 
   // 3. Update Slide
   console.log("\n--- TEST 3: Update Carousel Slide ---");
-  await db.update(carouselSlides).set({ title: "Summer VIP Reload 300% (Updated)", enabled: "no" }).where(eq(carouselSlides.id, slide1Id));
-  const [updatedSlide] = await db.select().from(carouselSlides).where(eq(carouselSlides.id, slide1Id)).limit(1);
+  await db
+    .update(carouselSlides)
+    .set({ title: "Summer VIP Reload 300% (Updated)", enabled: "no" })
+    .where(eq(carouselSlides.id, slide1Id));
+  const [updatedSlide] = await db
+    .select()
+    .from(carouselSlides)
+    .where(eq(carouselSlides.id, slide1Id))
+    .limit(1);
 
-  console.log(`✅ Slide updated. New Title: '${updatedSlide?.title}', Enabled: '${updatedSlide?.enabled}'`);
+  console.log(
+    `✅ Slide updated. New Title: '${updatedSlide?.title}', Enabled: '${updatedSlide?.enabled}'`,
+  );
 
   // 4. Reorder Slides
   console.log("\n--- TEST 4: Reorder Carousel Slides ---");

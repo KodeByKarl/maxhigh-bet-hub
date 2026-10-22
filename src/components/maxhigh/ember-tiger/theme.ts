@@ -1,7 +1,4 @@
-﻿import {
-  type PantherTheme,
-  type PantherSymKind,
-} from "@/components/maxhigh/panther-shared/theme";
+﻿import { type PantherTheme, type PantherSymKind } from "@/components/maxhigh/panther-shared/theme";
 import { EMBER_TIGER_COLORS } from "@/components/maxhigh/panther-shared/palettes";
 
 /** Single-subject crops (multi-symbol sheets were leaking into circular cells). */

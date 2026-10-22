@@ -18,10 +18,7 @@ import {
   type ColorGameConfig,
   type ColorSpotDef,
 } from "@/lib/color-game-config";
-import {
-  getColorGameEngineConfigFn,
-  saveColorGameEngineConfigFn,
-} from "@/functions/superadmin";
+import { getColorGameEngineConfigFn, saveColorGameEngineConfigFn } from "@/functions/superadmin";
 import type { SuperGameRow } from "@/lib/superadmin-types";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
@@ -70,15 +67,7 @@ function Num({
   );
 }
 
-function Field({
-  label,
-  hint,
-  children,
-}: {
-  label: string;
-  hint?: string;
-  children: ReactNode;
-}) {
+function Field({ label, hint, children }: { label: string; hint?: string; children: ReactNode }) {
   return (
     <label className="block space-y-1.5">
       <span className="text-xs font-medium text-muted-foreground">{label}</span>
@@ -90,9 +79,7 @@ function Field({
 
 export function ColorGameConfigModal({ game, open, onOpenChange, onPatchLobby }: Props) {
   const [section, setSection] = useState<Section>("lobby");
-  const [cfg, setCfg] = useState<ColorGameConfig>(() =>
-    structuredClone(DEFAULT_COLOR_GAME_CONFIG),
-  );
+  const [cfg, setCfg] = useState<ColorGameConfig>(() => structuredClone(DEFAULT_COLOR_GAME_CONFIG));
   const [saving, setSaving] = useState(false);
   const [lobbyBusy, setLobbyBusy] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -109,9 +96,7 @@ export function ColorGameConfigModal({ game, open, onOpenChange, onPatchLobby }:
   );
   const [notes, setNotes] = useState(game.notes ?? "");
   const [sortOrder, setSortOrder] = useState(game.sortOrder ?? 0);
-  const [betStepsText, setBetStepsText] = useState(
-    DEFAULT_COLOR_GAME_CONFIG.betSteps.join(", "),
-  );
+  const [betStepsText, setBetStepsText] = useState(DEFAULT_COLOR_GAME_CONFIG.betSteps.join(", "));
 
   useEffect(() => {
     if (!open) return;
@@ -257,7 +242,8 @@ export function ColorGameConfigModal({ game, open, onOpenChange, onPatchLobby }:
             ) : section === "payouts" ? (
               <div className="space-y-3">
                 <p className="text-[11px] text-muted-foreground">
-                  payoutMult = total return (incl. stake). Equal weight + 5.5× → ~{RTP_REFERENCE.singleColor}% RTP.
+                  payoutMult = total return (incl. stake). Equal weight + 5.5× → ~
+                  {RTP_REFERENCE.singleColor}% RTP.
                 </p>
                 {cfg.spots.map((sp) => (
                   <div

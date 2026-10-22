@@ -1,9 +1,4 @@
-import type {
-  CrateDropId,
-  FishTierId,
-  PowerUpId,
-  WeaponTierId,
-} from "@/lib/dragon-fisher-config";
+import type { CrateDropId, FishTierId, PowerUpId, WeaponTierId } from "@/lib/dragon-fisher-config";
 import type { CrateDropResult, ShotResolveResult } from "./hitResolver";
 import type { SwimPathKind } from "./animationConfig";
 

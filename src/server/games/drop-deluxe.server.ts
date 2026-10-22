@@ -1,19 +1,24 @@
 /**
- * Drop Deluxe — server-authoritative one-shot deal + settlement.
+ * Deluxe Draw (drop-deluxe) — server-authoritative 5-card draw video poker.
+ * Deck + dealt hand live in play_sessions.feature_state; the draw is resolved
+ * server-side from the held positions only.
  */
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import {
   DROP_DELUXE_GAME_ID,
-  DROP_DELUXE_SPOTS,
+  cardFromId,
+  evaluateHand,
   normalizeDropDeluxeConfig,
   type DropDeluxeConfig,
-  type DropDeluxeSpot,
 } from "@/lib/drop-deluxe-config";
-import { resolveDropDeluxeDeal } from "@/components/maxhigh/games/drop-deluxe/resolver";
-import { setDropDeluxeConfig } from "@/components/maxhigh/games/drop-deluxe/runtimeConfig";
-import type { PublicDealScript } from "@/components/maxhigh/games/drop-deluxe/types";
+import type {
+  DealResult,
+  DrawResult,
+  OpenHand,
+  OpenHandResult,
+} from "@/components/maxhigh/games/drop-deluxe/types";
 import { getDb } from "../db/client";
-import { gameControls, users } from "../db/schema";
+import { gameControls, playSessions, users } from "../db/schema";
 import { newId, requireUser } from "../session";
 import {
   assertNotInMaintenanceForBets,
@@ -24,7 +29,9 @@ import {
 } from "../wallet.server";
 import { recordGameEngineAuditLog } from "./game-audit.server";
 
-const GAME_NAME = "Drop Deluxe";
+const GAME_NAME = "Deluxe Draw";
+
+type HandState = { deck: number[]; hand: number[] };
 
 let cachedConfig: { cfg: DropDeluxeConfig; time: number } | null = null;
 
@@ -57,87 +64,164 @@ export async function getDropDeluxeEngineConfigPublic(): Promise<DropDeluxeConfi
   return loadEngineConfig();
 }
 
-export type DropDeluxeDealResult = {
-  balance: number;
-  script: PublicDealScript;
-};
+/** Fisher–Yates with a CSPRNG (modulo bias on 2^32 / ≤52 is ~1e-8). */
+function shuffledDeck(): number[] {
+  const deck = Array.from({ length: 52 }, (_, i) => i);
+  const buf = new Uint32Array(52);
+  crypto.getRandomValues(buf);
+  for (let i = 51; i > 0; i--) {
+    const j = buf[i] % (i + 1);
+    [deck[i], deck[j]] = [deck[j], deck[i]];
+  }
+  return deck;
+}
 
-export async function dropDeluxePaidDeal(input: {
-  bets: Partial<Record<DropDeluxeSpot, number>>;
-}): Promise<DropDeluxeDealResult> {
+function money(n: number) {
+  return +n.toFixed(2);
+}
+
+function parseState(raw: string | null): HandState | null {
+  if (!raw) return null;
+  try {
+    const st = JSON.parse(raw) as HandState;
+    if (!Array.isArray(st.deck) || !Array.isArray(st.hand) || st.hand.length !== 5) return null;
+    return st;
+  } catch {
+    return null;
+  }
+}
+
+function openOf(bet: number, st: HandState): OpenHand {
+  return { bet, hand: st.hand.map(cardFromId) };
+}
+
+const openWhere = (userId: string) =>
+  and(
+    eq(playSessions.userId, userId),
+    eq(playSessions.gameId, DROP_DELUXE_GAME_ID),
+    eq(playSessions.status, "open"),
+  );
+
+export async function getDropDeluxeOpenHand(): Promise<OpenHandResult> {
+  const user = await requireUser();
+  const db = getDb();
+  const rows = await db.select().from(playSessions).where(openWhere(user.id)).limit(1);
+  const row = rows[0];
+  const st = row ? parseState(row.featureState) : null;
+  if (!row || !st) return { open: null };
+  return { open: openOf(Number(row.bet), st) };
+}
+
+export async function dropDeluxeDeal(input: { bet: number }): Promise<DealResult> {
   await assertNotInMaintenanceForBets();
   const user = await requireUser();
-
   const db = getDb();
+
   const controlRows = await db
     .select({ enabled: gameControls.enabled })
     .from(gameControls)
     .where(eq(gameControls.gameId, DROP_DELUXE_GAME_ID))
     .limit(1);
-  if (controlRows[0]?.enabled === "no") {
-    throw new Error("Drop Deluxe is currently disabled");
-  }
+  if (controlRows[0]?.enabled === "no") throw new Error("Deluxe Draw is currently disabled");
 
   const cfg = await loadEngineConfig();
-  setDropDeluxeConfig(cfg);
-
-  const bets: Partial<Record<DropDeluxeSpot, number>> = {};
-  let pickCount = 0;
-  for (const n of DROP_DELUXE_SPOTS) {
-    const v = +Number(input.bets?.[n] ?? 0).toFixed(2);
-    if (v < 0 || !Number.isFinite(v)) throw new Error(`Invalid lane ${n} bet`);
-    if (v === 0) continue;
-    if (v < cfg.minBet || v > cfg.maxSpotBet) {
-      throw new Error(`Lane ${n} bet must be between ₱${cfg.minBet} and ₱${cfg.maxSpotBet}`);
-    }
-    bets[n] = v;
-    pickCount += 1;
+  const bet = money(Number(input.bet));
+  if (!Number.isFinite(bet) || bet < cfg.minBet || bet > cfg.maxBet) {
+    throw new Error(`Bet must be between ₱${cfg.minBet} and ₱${cfg.maxBet}`);
   }
-
-  if (pickCount === 0) throw new Error("Place at least one lane bet");
-  if (pickCount > cfg.maxPicks) throw new Error(`Max ${cfg.maxPicks} lanes per drop`);
-
-  const totalWager = +Object.values(bets).reduce((s, n) => s + (n ?? 0), 0).toFixed(2);
-  if (totalWager < cfg.minBet) throw new Error(`Min total wager is ₱${cfg.minBet}`);
-  if (totalWager > cfg.maxBet) throw new Error(`Max total wager is ₱${cfg.maxBet}`);
-
   const maxSingle = await getMaxSingleBet();
-  if (totalWager > maxSingle) {
-    throw new Error(`Max single wager is ₱${maxSingle.toFixed(2)}`);
-  }
+  if (bet > maxSingle) throw new Error(`Max single wager is ₱${maxSingle.toFixed(2)}`);
 
-  const resolved = resolveDropDeluxeDeal({ bets, cfg });
+  const deck = shuffledDeck();
+  const hand = deck.splice(0, 5);
+  const state: HandState = { deck, hand };
 
-  const result = await db.transaction(async (tx) => {
-    const urows = await tx.select().from(users).where(eq(users.id, user.id)).limit(1);
+  const balance = await db.transaction(async (tx) => {
+    const urows = await tx.select().from(users).where(eq(users.id, user.id)).limit(1).for("update");
     const row = urows[0];
     if (!row) throw new Error("User not found");
 
-    const pending = await sumPendingWithdrawals(tx, user.id);
-    const available = availableFrom(Number(row.balance), pending);
-    if (available < totalWager) throw new Error("Insufficient balance");
+    const open = await tx
+      .select({ id: playSessions.id })
+      .from(playSessions)
+      .where(openWhere(user.id))
+      .limit(1);
+    if (open.length > 0) throw new Error("Finish your current hand first");
 
-    let ledger = await writeLedgerDelta(tx, {
+    const pending = await sumPendingWithdrawals(tx, user.id);
+    if (availableFrom(Number(row.balance), pending) < bet) throw new Error("Insufficient balance");
+
+    const ledger = await writeLedgerDelta(tx, {
       userId: user.id,
       username: row.username,
-      delta: -totalWager,
+      delta: -bet,
       type: "bet",
       game: GAME_NAME,
-      note: `${DROP_DELUXE_GAME_ID} · ${GAME_NAME} · ₱${totalWager.toFixed(2)}`,
+      note: `${DROP_DELUXE_GAME_ID} · ${GAME_NAME} · ₱${bet.toFixed(2)}`,
     });
 
-    if (resolved.immediateCredit > 0) {
-      ledger = await writeLedgerDelta(tx, {
+    await tx.insert(playSessions).values({
+      id: newId(),
+      userId: user.id,
+      gameId: DROP_DELUXE_GAME_ID,
+      status: "open",
+      bet: bet.toFixed(2),
+      featureState: JSON.stringify(state),
+    });
+    return ledger.balance;
+  });
+
+  return { balance, open: openOf(bet, state) };
+}
+
+export async function dropDeluxeDraw(input: { holds: boolean[] }): Promise<DrawResult> {
+  await assertNotInMaintenanceForBets();
+  const user = await requireUser();
+  const cfg = await loadEngineConfig();
+  const db = getDb();
+  if (input.holds.length !== 5) throw new Error("Invalid holds");
+
+  const out = await db.transaction(async (tx) => {
+    const rows = await tx
+      .select()
+      .from(playSessions)
+      .where(openWhere(user.id))
+      .limit(1)
+      .for("update");
+    const row = rows[0];
+    const st = row ? parseState(row.featureState) : null;
+    if (!row || !st) throw new Error("No active hand — deal first");
+
+    const bet = Number(row.bet);
+    const replaced = input.holds.map((h) => !h);
+    const hand = st.hand.map((id, i) => (replaced[i] ? (st.deck.shift() as number) : id));
+    if (hand.some((id) => id === undefined)) throw new Error("Deck exhausted");
+
+    const result = evaluateHand(hand);
+    const mult = result === "none" ? 0 : cfg.paytable[result];
+    const payout = money(bet * mult);
+
+    const urows = await tx.select().from(users).where(eq(users.id, user.id)).limit(1).for("update");
+    const urow = urows[0];
+    if (!urow) throw new Error("User not found");
+    let balance = Number(urow.balance);
+    if (payout > 0) {
+      const ledger = await writeLedgerDelta(tx, {
         userId: user.id,
-        username: row.username,
-        delta: resolved.immediateCredit,
+        username: urow.username,
+        delta: payout,
         type: "win",
         game: GAME_NAME,
-        note: `${DROP_DELUXE_GAME_ID} · ${GAME_NAME} · #${resolved.winningNumber} ₱${resolved.immediateCredit.toFixed(2)}`,
+        note: `${DROP_DELUXE_GAME_ID} · ${GAME_NAME} · ${result} ×${mult} ₱${payout.toFixed(2)}`,
       });
+      balance = ledger.balance;
     }
+    await tx
+      .update(playSessions)
+      .set({ status: "closed", featureState: null })
+      .where(eq(playSessions.id, row.id));
 
-    return { balance: ledger.balance };
+    return { balance, bet, hand, replaced, result, mult, payout };
   });
 
   await recordGameEngineAuditLog({
@@ -145,24 +229,19 @@ export async function dropDeluxePaidDeal(input: {
     roundId: newId(),
     userId: user.id,
     username: user.username,
-    betAmount: totalWager,
-    payoutAmount: resolved.immediateCredit,
-    multiplier: totalWager > 0 ? +(resolved.immediateCredit / totalWager).toFixed(4) : 0,
-    resultMeta: {
-      winningNumber: resolved.winningNumber,
-      bets: resolved.bets,
-      laneWins: resolved.laneWins,
-    },
+    betAmount: out.bet,
+    payoutAmount: out.payout,
+    multiplier: out.mult,
+    resultMeta: { result: out.result, held: input.holds.filter(Boolean).length },
   });
 
   return {
-    balance: result.balance,
-    script: {
-      winningNumber: resolved.winningNumber,
-      bets: resolved.bets,
-      laneWins: resolved.laneWins,
-      immediateCredit: resolved.immediateCredit,
-      totalWager: resolved.totalWager,
-    },
+    balance: out.balance,
+    hand: out.hand.map(cardFromId),
+    replaced: out.replaced,
+    result: out.result,
+    mult: out.mult,
+    bet: out.bet,
+    payout: out.payout,
   };
 }

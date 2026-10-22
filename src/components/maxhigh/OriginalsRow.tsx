@@ -31,7 +31,9 @@ export function OriginalsRow() {
             >
               <c.icon size={36} strokeWidth={2} />
               <div>
-                <div className="text-[10px] font-bold uppercase tracking-[0.18em] opacity-70">MaxHigh</div>
+                <div className="text-[10px] font-bold uppercase tracking-[0.18em] opacity-70">
+                  MaxHigh
+                </div>
                 <div className="text-xl font-black uppercase tracking-wide">{c.label}</div>
               </div>
             </button>

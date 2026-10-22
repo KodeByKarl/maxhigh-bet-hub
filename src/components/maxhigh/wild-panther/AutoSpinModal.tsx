@@ -98,7 +98,7 @@ export function AutoSpinModal({ bet, onClose, onStart }: Props) {
                       "flex h-11 items-center justify-center rounded-lg text-sm font-black transition-all",
                       isSelected
                         ? "bg-[#FDE047] text-black shadow-lg shadow-yellow-500/20"
-                        : "bg-[#222] text-white/90 hover:bg-[#2a2a2a]"
+                        : "bg-[#222] text-white/90 hover:bg-[#2a2a2a]",
                     )}
                   >
                     {cnt === "infinity" ? "∞" : cnt}
@@ -115,7 +115,7 @@ export function AutoSpinModal({ bet, onClose, onStart }: Props) {
               "cursor-pointer flex items-center gap-3 rounded-full border-2 px-4 py-3 transition-all",
               spinWithoutReels
                 ? "border-[#FDE047] bg-[#FDE047]/10"
-                : "border-[#FDE047]/60 bg-[#1a1a1a] hover:border-[#FDE047]"
+                : "border-[#FDE047]/60 bg-[#1a1a1a] hover:border-[#FDE047]",
             )}
           >
             <div className="grid size-9 shrink-0 place-items-center rounded-full bg-[#FDE047] text-black">

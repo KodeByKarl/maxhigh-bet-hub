@@ -74,7 +74,9 @@ export function AdminEarningsChart() {
         if (!cancelled) setLoading(false);
       }
     })();
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, [period]);
 
   // Chart layout constants
@@ -97,10 +99,8 @@ export function AdminEarningsChart() {
   const yMax = rawMax + spread * 0.1;
   const yRange = yMax - yMin || 1;
 
-  const toX = (i: number) =>
-    PAD_LEFT + (i / Math.max(points.length - 1, 1)) * chartW;
-  const toY = (v: number) =>
-    PAD_TOP + chartH - ((v - yMin) / yRange) * chartH;
+  const toX = (i: number) => PAD_LEFT + (i / Math.max(points.length - 1, 1)) * chartW;
+  const toY = (v: number) => PAD_TOP + chartH - ((v - yMin) / yRange) * chartH;
 
   const coords: [number, number][] = points.map((p, i) => [toX(i), toY(p.earnings)]);
   const linePath = buildSmoothPath(coords);
@@ -132,7 +132,10 @@ export function AdminEarningsChart() {
     let minD = Infinity;
     coords.forEach(([cx], i) => {
       const d = Math.abs(cx - mx);
-      if (d < minD) { minD = d; closest = i; }
+      if (d < minD) {
+        minD = d;
+        closest = i;
+      }
     });
     const [cx, cy] = coords[closest];
     setTooltip({ idx: closest, x: cx, y: cy, pt: points[closest] });
@@ -148,9 +151,7 @@ export function AdminEarningsChart() {
   }
 
   return (
-    <div
-      className="rounded-2xl border border-white/[0.07] bg-[rgba(12,10,22,0.90)] shadow-[0_8px_40px_rgba(0,0,0,0.45)] overflow-hidden"
-    >
+    <div className="rounded-2xl border border-white/[0.07] bg-[rgba(12,10,22,0.90)] shadow-[0_8px_40px_rgba(0,0,0,0.45)] overflow-hidden">
       {/* ── Header ─────────────────────── */}
       <div className="flex flex-col gap-3 border-b border-white/[0.06] px-3 pt-3 pb-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between sm:px-5 sm:pt-5 sm:pb-4">
         <div className="flex items-center gap-2.5">
@@ -285,10 +286,7 @@ export function AdminEarningsChart() {
 
             {/* Area */}
             {areaPath && (
-              <path
-                d={areaPath}
-                fill={isPositive ? "url(#acGradPos)" : "url(#acGradNeg)"}
-              />
+              <path d={areaPath} fill={isPositive ? "url(#acGradPos)" : "url(#acGradNeg)"} />
             )}
 
             {/* Glow line (blurred) */}
@@ -343,48 +341,94 @@ export function AdminEarningsChart() {
                   fill={points[i].earnings >= 0 ? "#A855F7" : "#F43F5E"}
                   opacity="0.5"
                 />
-              )
+              ),
             )}
 
             {/* Crosshair & tooltip */}
-            {tooltip && (() => {
-              const isLeft = tooltip.x > SVG_W * 0.65;
-              const bx = isLeft ? tooltip.x - 132 : tooltip.x + 14;
-              const by = Math.max(PAD_TOP, Math.min(tooltip.y - 40, bottomY - 80));
-              const ptPos = tooltip.pt.earnings >= 0;
-              return (
-                <g>
-                  <line
-                    x1={tooltip.x}
-                    y1={PAD_TOP}
-                    x2={tooltip.x}
-                    y2={bottomY}
-                    stroke="rgba(255,255,255,0.12)"
-                    strokeWidth="1"
-                    strokeDasharray="4 4"
-                  />
-                  <circle cx={tooltip.x} cy={tooltip.y} r={9} fill="rgba(168,85,247,0.22)" />
-                  <circle cx={tooltip.x} cy={tooltip.y} r={5} fill="#A855F7" />
+            {tooltip &&
+              (() => {
+                const isLeft = tooltip.x > SVG_W * 0.65;
+                const bx = isLeft ? tooltip.x - 132 : tooltip.x + 14;
+                const by = Math.max(PAD_TOP, Math.min(tooltip.y - 40, bottomY - 80));
+                const ptPos = tooltip.pt.earnings >= 0;
+                return (
+                  <g>
+                    <line
+                      x1={tooltip.x}
+                      y1={PAD_TOP}
+                      x2={tooltip.x}
+                      y2={bottomY}
+                      stroke="rgba(255,255,255,0.12)"
+                      strokeWidth="1"
+                      strokeDasharray="4 4"
+                    />
+                    <circle cx={tooltip.x} cy={tooltip.y} r={9} fill="rgba(168,85,247,0.22)" />
+                    <circle cx={tooltip.x} cy={tooltip.y} r={5} fill="#A855F7" />
 
-                  <rect x={bx} y={by} width={122} height={68} rx={8}
-                    fill="rgba(8,6,18,0.97)" stroke="rgba(255,255,255,0.12)" strokeWidth="1" />
-                  <text x={bx + 10} y={by + 16} fontSize="10" fontWeight="700" fill="white" fontFamily="Inter,sans-serif">
-                    {tooltip.pt.label}
-                  </text>
-                  <text x={bx + 10} y={by + 30} fontSize="9.5" fill="rgba(255,255,255,0.38)" fontFamily="Inter,sans-serif">Earnings:</text>
-                  <text x={bx + 68} y={by + 30} fontSize="9.5" fontWeight="700"
-                    fill={ptPos ? "#34D399" : "#F87171"} fontFamily="Inter,sans-serif">
-                    {formatCurrency(tooltip.pt.earnings)}
-                  </text>
-                  <text x={bx + 10} y={by + 46} fontSize="9" fill="rgba(255,255,255,0.28)" fontFamily="Inter,sans-serif">
-                    Vol: {formatCurrency(tooltip.pt.volume)}
-                  </text>
-                  <text x={bx + 10} y={by + 60} fontSize="9" fill="rgba(255,255,255,0.2)" fontFamily="Inter,sans-serif">
-                    Margin: {tooltip.pt.volume > 0 ? ((tooltip.pt.earnings / tooltip.pt.volume) * 100).toFixed(1) : "—"}%
-                  </text>
-                </g>
-              );
-            })()}
+                    <rect
+                      x={bx}
+                      y={by}
+                      width={122}
+                      height={68}
+                      rx={8}
+                      fill="rgba(8,6,18,0.97)"
+                      stroke="rgba(255,255,255,0.12)"
+                      strokeWidth="1"
+                    />
+                    <text
+                      x={bx + 10}
+                      y={by + 16}
+                      fontSize="10"
+                      fontWeight="700"
+                      fill="white"
+                      fontFamily="Inter,sans-serif"
+                    >
+                      {tooltip.pt.label}
+                    </text>
+                    <text
+                      x={bx + 10}
+                      y={by + 30}
+                      fontSize="9.5"
+                      fill="rgba(255,255,255,0.38)"
+                      fontFamily="Inter,sans-serif"
+                    >
+                      Earnings:
+                    </text>
+                    <text
+                      x={bx + 68}
+                      y={by + 30}
+                      fontSize="9.5"
+                      fontWeight="700"
+                      fill={ptPos ? "#34D399" : "#F87171"}
+                      fontFamily="Inter,sans-serif"
+                    >
+                      {formatCurrency(tooltip.pt.earnings)}
+                    </text>
+                    <text
+                      x={bx + 10}
+                      y={by + 46}
+                      fontSize="9"
+                      fill="rgba(255,255,255,0.28)"
+                      fontFamily="Inter,sans-serif"
+                    >
+                      Vol: {formatCurrency(tooltip.pt.volume)}
+                    </text>
+                    <text
+                      x={bx + 10}
+                      y={by + 60}
+                      fontSize="9"
+                      fill="rgba(255,255,255,0.2)"
+                      fontFamily="Inter,sans-serif"
+                    >
+                      Margin:{" "}
+                      {tooltip.pt.volume > 0
+                        ? ((tooltip.pt.earnings / tooltip.pt.volume) * 100).toFixed(1)
+                        : "—"}
+                      %
+                    </text>
+                  </g>
+                );
+              })()}
           </svg>
         )}
       </div>

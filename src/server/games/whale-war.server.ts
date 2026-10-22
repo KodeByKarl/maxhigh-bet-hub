@@ -259,9 +259,7 @@ function parseFeature(raw: string | null | undefined): SessionFeature {
     const o = JSON.parse(raw) as Partial<SessionFeature>;
     const weaponId = isWeaponTierId(o.weaponId) ? o.weaponId : "bamboo";
     const goldenHookMult =
-      typeof o.goldenHookMult === "number" && o.goldenHookMult >= 1
-        ? o.goldenHookMult
-        : 1;
+      typeof o.goldenHookMult === "number" && o.goldenHookMult >= 1 ? o.goldenHookMult : 1;
     const powerUps: Partial<Record<PowerUpId, number>> = {};
     if (o.powerUps && typeof o.powerUps === "object") {
       for (const [k, v] of Object.entries(o.powerUps)) {
@@ -658,7 +656,7 @@ export async function whaleWarSetWeapon(input: { weaponId: string }) {
   const user = await requireUser();
   if (!isWeaponTierId(input.weaponId)) throw new Error("Invalid weapon");
   const cfg = await loadEngineConfig();
-  let session = await loadOpenSessionRow(user.id);
+  const session = await loadOpenSessionRow(user.id);
   if (!session) {
     await whaleWarEnsureSession({ weaponId: input.weaponId });
     return getWhaleWarOpenSession();

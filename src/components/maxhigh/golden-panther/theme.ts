@@ -1,5 +1,4 @@
 import {
-  gpIconPack,
   type PantherTheme,
   type PantherThemeColors,
 } from "@/components/maxhigh/panther-shared/theme";
@@ -55,9 +54,20 @@ export const goldenPantherTheme: PantherTheme = {
   id: "golden-panther",
   name: "Golden Panther",
   assets: {
-    backdrop: "/images/symbols/panther/backdrop.webp",
-    loadingBg: "/images/symbols/panther/loading-bg.webp",
-    icons: gpIconPack("2"),
+    backdrop: "/images/symbols/golden-panther/backdrop-v20261012-unique.webp",
+    loadingBg: "/images/symbols/golden-panther/backdrop-v20261012-unique.webp",
+    icons: {
+      grape: "/images/symbols/golden-panther/10-v20261012-unique.png",
+      plum: "/images/symbols/golden-panther/J-v20261012-unique.png",
+      melon: "/images/symbols/golden-panther/Q-v20261012-unique.png",
+      apple: "/images/symbols/golden-panther/K-v20261012-unique.png",
+      blue: "/images/symbols/golden-panther/A-v20261012-unique.png",
+      green: "/images/symbols/golden-panther/owl-v20261012-unique.png",
+      purple: "/images/symbols/golden-panther/wolf-v20261012-unique.png",
+      heart: "/images/symbols/golden-panther/ram-v20261012-unique.png",
+      lollipop: "/images/symbols/golden-panther/scatter-v20261012-unique.png",
+      bomb: "/images/symbols/golden-panther/wild-v20261012-unique.png",
+    },
   },
   colors: GOLDEN_PANTHER_COLORS,
 };

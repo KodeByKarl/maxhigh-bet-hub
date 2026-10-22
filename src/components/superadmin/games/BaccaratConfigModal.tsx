@@ -18,10 +18,7 @@ import {
   normalizeBaccaratConfig,
   type BaccaratConfig,
 } from "@/lib/baccarat-config";
-import {
-  getBaccaratAdminConfigFn,
-  saveBaccaratAdminConfigFn,
-} from "@/functions/baccarat";
+import { getBaccaratAdminConfigFn, saveBaccaratAdminConfigFn } from "@/functions/baccarat";
 import type { SuperGameRow } from "@/lib/superadmin-types";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
@@ -70,15 +67,7 @@ function Num({
   );
 }
 
-function Field({
-  label,
-  hint,
-  children,
-}: {
-  label: string;
-  hint?: string;
-  children: ReactNode;
-}) {
+function Field({ label, hint, children }: { label: string; hint?: string; children: ReactNode }) {
   return (
     <label className="block space-y-1.5">
       <span className="text-xs font-medium text-muted-foreground">{label}</span>
@@ -90,9 +79,7 @@ function Field({
 
 export function BaccaratConfigModal({ game, open, onOpenChange, onPatchLobby }: Props) {
   const [section, setSection] = useState<Section>("lobby");
-  const [cfg, setCfg] = useState<BaccaratConfig>(() =>
-    structuredClone(DEFAULT_BACCARAT_CONFIG),
-  );
+  const [cfg, setCfg] = useState<BaccaratConfig>(() => structuredClone(DEFAULT_BACCARAT_CONFIG));
   const [saving, setSaving] = useState(false);
   const [lobbyBusy, setLobbyBusy] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -109,17 +96,13 @@ export function BaccaratConfigModal({ game, open, onOpenChange, onPatchLobby }: 
   );
   const [notes, setNotes] = useState(game.notes ?? "");
   const [sortOrder, setSortOrder] = useState(game.sortOrder ?? 0);
-  const [betStepsText, setBetStepsText] = useState(
-    DEFAULT_BACCARAT_CONFIG.betSteps.join(", "),
-  );
+  const [betStepsText, setBetStepsText] = useState(DEFAULT_BACCARAT_CONFIG.betSteps.join(", "));
 
   useEffect(() => {
     if (!open) return;
     setSection("lobby");
     setTag(game.tag ?? "");
-    setLobbyRtp(
-      Number.parseFloat(String(game.rtp ?? "").replace("%", "")) || RTP_REFERENCE.banker,
-    );
+    setLobbyRtp(Number.parseFloat(String(game.rtp ?? "").replace("%", "")) || RTP_REFERENCE.banker);
     setVolatility(game.volatility ?? "Low");
     setLobbyMinBet(Number(String(game.minBet ?? "").replace(/[^\d.]/g, "")) || 1);
     setLobbyMaxBet(Number(String(game.maxBet ?? "").replace(/[^\d.]/g, "")) || 500);
@@ -420,19 +403,39 @@ export function BaccaratConfigModal({ game, open, onOpenChange, onPatchLobby }: 
               </Field>
               <Field label="Player min / max">
                 <div className="flex gap-2">
-                  <Num value={cfg.minPlayerBet} onChange={(n) => patch({ minPlayerBet: n })} step={0.01} />
-                  <Num value={cfg.maxPlayerBet} onChange={(n) => patch({ maxPlayerBet: n })} step={1} />
+                  <Num
+                    value={cfg.minPlayerBet}
+                    onChange={(n) => patch({ minPlayerBet: n })}
+                    step={0.01}
+                  />
+                  <Num
+                    value={cfg.maxPlayerBet}
+                    onChange={(n) => patch({ maxPlayerBet: n })}
+                    step={1}
+                  />
                 </div>
               </Field>
               <Field label="Banker min / max">
                 <div className="flex gap-2">
-                  <Num value={cfg.minBankerBet} onChange={(n) => patch({ minBankerBet: n })} step={0.01} />
-                  <Num value={cfg.maxBankerBet} onChange={(n) => patch({ maxBankerBet: n })} step={1} />
+                  <Num
+                    value={cfg.minBankerBet}
+                    onChange={(n) => patch({ minBankerBet: n })}
+                    step={0.01}
+                  />
+                  <Num
+                    value={cfg.maxBankerBet}
+                    onChange={(n) => patch({ maxBankerBet: n })}
+                    step={1}
+                  />
                 </div>
               </Field>
               <Field label="Tie min / max">
                 <div className="flex gap-2">
-                  <Num value={cfg.minTieBet} onChange={(n) => patch({ minTieBet: n })} step={0.01} />
+                  <Num
+                    value={cfg.minTieBet}
+                    onChange={(n) => patch({ minTieBet: n })}
+                    step={0.01}
+                  />
                   <Num value={cfg.maxTieBet} onChange={(n) => patch({ maxTieBet: n })} step={1} />
                 </div>
               </Field>
@@ -487,8 +490,8 @@ export function BaccaratConfigModal({ game, open, onOpenChange, onPatchLobby }: 
                 />
               </Field>
               <p className="rounded-md border border-white/10 bg-white/[0.03] p-3 text-[11px] text-muted-foreground">
-                Baccarat RTP is fixed by the Punto Banco tableau. Changing payouts alters house edge;
-                the target field is for lobby / compliance display only. Persisted in{" "}
+                Baccarat RTP is fixed by the Punto Banco tableau. Changing payouts alters house
+                edge; the target field is for lobby / compliance display only. Persisted in{" "}
                 <code className="text-emerald-300/90">game_controls.engineConfig</code>.
               </p>
             </div>

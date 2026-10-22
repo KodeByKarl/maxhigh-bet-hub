@@ -1,37 +1,75 @@
-import { getEnchantedGroveConfig, getRuntimeSymbols } from "./runtimeConfig";
+import { clampBombMult } from "@/lib/enchanted-grove-config";
 import type { BoardCell, CellSym } from "./types";
-import { CELLS } from "./types";
+import { CELLS, COLS, ROWS } from "./types";
+import { getEnchantedGroveConfig, getRuntimeSymbols } from "./runtimeConfig";
 
 let keySeq = 0;
 export function nextKey() {
   keySeq += 1;
-  return `ge-${keySeq}`;
+  return `sb-${keySeq}`;
 }
 
-export function pickSym(boostScatter = false): CellSym {
+function pools() {
   const symbols = getRuntimeSymbols();
-  const pool = symbols.filter((s) => s.weight > 0);
-  let total = pool.reduce((a, s) => a + s.weight, 0);
-  if (boostScatter) {
-    const sc = symbols.find((s) => s.scatter);
-    if (sc) total += sc.weight;
-  }
+  const weighted = symbols.filter((s) => s.weight > 0);
+  const weightTotal = weighted.reduce((a, s) => a + s.weight, 0);
+  const scatter = symbols.find((s) => s.scatter)!;
+  const bomb = symbols.find((s) => s.bomb)!;
+  const pay = symbols.filter((s) => !s.scatter && !s.bomb);
+  return { weighted, weightTotal, scatter, bomb, pay };
+}
+
+export function pickSym(ante: boolean): CellSym {
+  const cfg = getEnchantedGroveConfig();
+  const { weighted, weightTotal, scatter } = pools();
+  let total = weightTotal;
+  if (ante) total += scatter.weight * (cfg.anteScatterWeightMult - 1);
   let r = Math.random() * total;
-  for (const s of pool) {
-    const w = boostScatter && s.scatter ? s.weight * 2 : s.weight;
+  for (const s of weighted) {
+    const w = ante && s.scatter ? s.weight * cfg.anteScatterWeightMult : s.weight;
     if (r < w) return s;
     r -= w;
   }
-  return pool[0];
+  return weighted[0];
 }
 
-export function makeCell(sym?: CellSym): BoardCell {
-  return { key: nextKey(), sym: sym ?? pickSym() };
+export function pickBombMult(): number {
+  const table = getEnchantedGroveConfig().bombTable;
+  const total = table.reduce((a, b) => a + b.weight, 0);
+  let r = Math.random() * total;
+  for (const b of table) {
+    if (r < b.weight) return clampBombMult(b.mult);
+    r -= b.weight;
+  }
+  return clampBombMult(table[0]?.mult ?? 2);
+}
+
+export function makeCell(
+  sym: CellSym,
+  freeSpins: boolean,
+  forceBomb = false,
+  opts?: { allowScatter?: boolean },
+): BoardCell {
+  const cfg = getEnchantedGroveConfig();
+  const { bomb, pay } = pools();
+  let use = sym;
+  if (opts?.allowScatter === false && use.scatter) {
+    use = pay[Math.floor(Math.random() * pay.length)] ?? use;
+  }
+  const bombChance = (freeSpins ? cfg.bombChanceFreeSpinsPercent : cfg.bombChanceBasePercent) / 100;
+  if (forceBomb || use.bomb || Math.random() < bombChance) {
+    return {
+      key: nextKey(),
+      sym: bomb,
+      mult: pickBombMult(),
+    };
+  }
+  return { key: nextKey(), sym: use };
 }
 
 export function fillerCell(i: number): BoardCell {
-  const pool = getRuntimeSymbols().filter((s) => !s.scatter && !s.wild);
-  return { key: `init-${i}`, sym: pool[i % pool.length] };
+  const { pay } = pools();
+  return { key: `init-${i}`, sym: pay[i % pay.length] };
 }
 
 export function initialBoard(): BoardCell[] {
@@ -47,46 +85,86 @@ function shuffle<T>(arr: T[]): T[] {
   return a;
 }
 
-/** Build random board; optionally force-seed a ways hit from config. */
-export function buildBoard(opts?: {
-  freeSpins?: boolean;
-  boostScatter?: boolean;
-  seedWin?: boolean;
-}): BoardCell[] {
-  const freeSpins = opts?.freeSpins ?? false;
-  const boostScatter = opts?.boostScatter ?? false;
-  const seedWin = opts?.seedWin ?? true;
+const ALL_INDICES = Array.from({ length: CELLS }, (_, i) => i);
+
+/** True if board already has a paying cluster (≥ minCluster matching pays). */
+function boardHasPayCluster(board: BoardCell[], minCluster: number): boolean {
+  const counts = new Map<string, number>();
+  for (const cell of board) {
+    if (cell.sym.scatter || cell.sym.bomb) continue;
+    counts.set(cell.sym.id, (counts.get(cell.sym.id) ?? 0) + 1);
+  }
+  for (const n of counts.values()) {
+    if (n >= minCluster) return true;
+  }
+  return false;
+}
+
+function randomFill(ante: boolean, freeSpins: boolean): BoardCell[] {
+  return Array.from({ length: CELLS }, () => makeCell(pickSym(ante), freeSpins));
+}
+
+/**
+ * Build a random board.
+ * Dead-spin path = no forced seed AND no opening pay cluster (retries until blank).
+ * Seed path = plant a winning cluster for hit feel.
+ */
+export function buildBoard(ante: boolean, freeSpins: boolean, seedWin = true): BoardCell[] {
   const cfg = getEnchantedGroveConfig();
-  const symbols = getRuntimeSymbols();
-  const wild = symbols.find((s) => s.wild)!;
+  const { pay } = pools();
+  const deadChance = cfg.deadSpinChancePercent / 100;
+  const seedChance = 1 - deadChance;
+  const minCluster = cfg.minCluster;
 
-  const board = Array.from({ length: CELLS }, () => {
-    if (freeSpins && Math.random() * 100 < cfg.freeSpinsWildChancePercent) {
-      return makeCell(wild);
+  // Forced-hit path (only when seedWin allowed)
+  if (seedWin && Math.random() < seedChance) {
+    const board = randomFill(ante, freeSpins);
+    const min = Math.min(cfg.seedClusterMin, cfg.seedClusterMax);
+    const max = Math.max(cfg.seedClusterMin, cfg.seedClusterMax);
+    const lows = pay.filter((s) => ["grape", "plum", "melon", "apple", "blue"].includes(s.id));
+    const pool = lows.length ? lows : pay;
+    const target =
+      Math.random() < cfg.seedMelonBiasPercent / 100
+        ? (pay.find((s) => s.id === "melon") ?? pool[0])
+        : pool[Math.floor(Math.random() * pool.length)];
+    const count = min + Math.floor(Math.random() * (max - min + 1));
+    const indices = shuffle(ALL_INDICES);
+    for (let k = 0; k < Math.min(count, CELLS); k++) {
+      board[indices[k]] = makeCell(target, freeSpins);
     }
-    return makeCell(pickSym(boostScatter));
-  });
+    return board;
+  }
 
-  const forceSeed = seedWin && Math.random() * 100 >= cfg.deadSpinChancePercent;
-  if (forceSeed) {
-    const paySyms = symbols.filter((s) => !s.scatter && !s.wild);
-    const target = paySyms[Math.floor(Math.random() * paySyms.length)];
-    const row = Math.floor(Math.random() * 5);
-    const span = cfg.seedWinLengthMax - cfg.seedWinLengthMin + 1;
-    const len = cfg.seedWinLengthMin + Math.floor(Math.random() * Math.max(1, span));
-    for (let col = 0; col < len && col < 6; col++) {
-      const idx = col + row * 6;
-      board[idx] = makeCell(
-        Math.random() * 100 < cfg.seedWildChancePercent ? wild : target,
-      );
+  // Dead-spin path: opening board must not already pay (owners expect this).
+  // Retries keep natural RNG while guaranteeing no opening cluster.
+  if (seedWin) {
+    for (let attempt = 0; attempt < 40; attempt++) {
+      const board = randomFill(ante, freeSpins);
+      if (!boardHasPayCluster(board, minCluster)) return board;
     }
   }
 
-  return board;
+  return randomFill(ante, freeSpins);
 }
 
 export function cloneBoard(board: BoardCell[]): BoardCell[] {
   return board.map((c) => ({ ...c, sym: c.sym }));
 }
 
-export { CELLS, shuffle };
+/**
+ * Buy-feature intro board — filler symbols plus exactly `freeSpinsTriggerCount`
+ * scatters placed at random cells (always 4 by default).
+ */
+export function buildBuyScatterIntroBoard(ante: boolean): BoardCell[] {
+  const cfg = getEnchantedGroveConfig();
+  const { scatter } = pools();
+  const board = randomFill(ante, false);
+  const indices = shuffle(Array.from({ length: CELLS }, (_, i) => i));
+  const count = Math.min(cfg.freeSpinsTriggerCount, CELLS);
+  for (let k = 0; k < count; k++) {
+    board[indices[k]] = { key: nextKey(), sym: scatter };
+  }
+  return board;
+}
+
+export { COLS, ROWS, CELLS };

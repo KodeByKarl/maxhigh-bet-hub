@@ -59,12 +59,13 @@ export type ShotResolveResult = {
   isBossKill: boolean;
 };
 
-function rollCrateDrop(cfg: DragonFisherConfig, rng: DragonFisherRng, betCost: number): CrateDropResult {
-  const drop = rng.pickWeighted(
-    cfg.crateDrops.map((d) => ({ ...d, weight: d.weight })),
-  );
-  const coinCredit =
-    drop.id === "coin-burst" ? +(betCost * drop.value).toFixed(2) : 0;
+function rollCrateDrop(
+  cfg: DragonFisherConfig,
+  rng: DragonFisherRng,
+  betCost: number,
+): CrateDropResult {
+  const drop = rng.pickWeighted(cfg.crateDrops.map((d) => ({ ...d, weight: d.weight })));
+  const coinCredit = drop.id === "coin-burst" ? +(betCost * drop.value).toFixed(2) : 0;
   return {
     id: drop.id,
     label: drop.label,

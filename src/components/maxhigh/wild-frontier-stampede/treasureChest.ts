@@ -1,8 +1,8 @@
-import type { BuffaloReignConfig } from "@/lib/buffalo-reign-config";
+import type { StampedeConfig } from "@/lib/wild-frontier-stampede-config";
 import { pickWeighted, type Rng } from "./rng";
 import type { ChestCoin, TreasureChestScript, TreasureChestStep } from "./types";
 
-function rollChest(rng: Rng, cfg: BuffaloReignConfig): ChestCoin {
+function rollChest(rng: Rng, cfg: StampedeConfig): ChestCoin {
   if (rng() < cfg.chestJackpotChance) {
     const jp = pickWeighted(rng, cfg.jackpots);
     return {
@@ -29,7 +29,7 @@ function rollChest(rng: Rng, cfg: BuffaloReignConfig): ChestCoin {
 export function resolveTreasureChest(
   rng: Rng,
   totalBet: number,
-  cfg: BuffaloReignConfig,
+  cfg: StampedeConfig,
   triggerPositions: Array<[number, number]>,
 ): TreasureChestScript {
   const cells = cfg.reelsCount * cfg.maxReelHeight;

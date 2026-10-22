@@ -172,7 +172,9 @@ export const recordAdminLoginFn = createServerFn({ method: "POST" }).handler(asy
 
 const txListSchema = z.object({
   q: z.string().max(128).optional(),
-  type: z.enum(["deposit", "withdraw", "bet", "win", "adjust", "jackpot", "all", "fund", "game"]).optional(),
+  type: z
+    .enum(["deposit", "withdraw", "bet", "win", "adjust", "jackpot", "all", "fund", "game"])
+    .optional(),
   game: z.string().max(64).optional(),
   limit: z.number().int().min(1).max(500).optional(),
 });

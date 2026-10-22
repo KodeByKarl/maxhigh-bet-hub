@@ -250,7 +250,9 @@ export function BettingPanel({
         onClick={() => onDeal?.()}
         className={cn(
           "flex items-center justify-center rounded-2xl border border-[#e8c96a]/55 bg-gradient-to-b from-[#f0d78c] via-[#c9a227] to-[#8a6b12] text-base font-black tracking-[0.22em] text-[#1a1205] shadow-[0_6px_20px_rgba(232,201,106,0.28)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#e8c96a] active:scale-[0.99] disabled:opacity-50",
-          rail ? "mt-auto h-14 w-full" : "h-14 w-full short-h:h-12 short-h:text-sm sm:h-12 sm:rounded-xl sm:text-sm",
+          rail
+            ? "mt-auto h-14 w-full"
+            : "h-14 w-full short-h:h-12 short-h:text-sm sm:h-12 sm:rounded-xl sm:text-sm",
         )}
       >
         DEAL

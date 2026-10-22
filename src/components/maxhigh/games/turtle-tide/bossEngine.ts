@@ -160,7 +160,8 @@ export function bossPotFromKill(opts: {
   payoutMult: number;
   goldenHookMult?: number;
 }): number {
-  const mult = opts.payoutMult * (opts.goldenHookMult && opts.goldenHookMult > 1 ? opts.goldenHookMult : 1);
+  const mult =
+    opts.payoutMult * (opts.goldenHookMult && opts.goldenHookMult > 1 ? opts.goldenHookMult : 1);
   return +(opts.betCost * mult).toFixed(2);
 }
 

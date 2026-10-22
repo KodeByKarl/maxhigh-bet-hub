@@ -339,9 +339,7 @@ export type TcpSettleResult = {
   script: PublicSettleScript;
 };
 
-export async function threeCardPokerPlay(input: {
-  sessionId: string;
-}): Promise<TcpSettleResult> {
+export async function threeCardPokerPlay(input: { sessionId: string }): Promise<TcpSettleResult> {
   await assertNotInMaintenanceForBets();
   const user = await requireUser();
   await assertGameEnabled();
@@ -418,9 +416,7 @@ export async function threeCardPokerPlay(input: {
         featureState: null,
         fsSessionWin: String(settled.immediateCredit + feat.pairPlusWin),
       })
-      .where(
-        and(eq(playSessions.id, current.id), eq(playSessions.status, "open")),
-      );
+      .where(and(eq(playSessions.id, current.id), eq(playSessions.status, "open")));
     if ((claimed[0]?.affectedRows ?? 0) === 0) {
       throw new Error("Hand already settled");
     }
@@ -493,9 +489,7 @@ export async function threeCardPokerPlay(input: {
   return { balance: result.balance, script };
 }
 
-export async function threeCardPokerFold(input: {
-  sessionId: string;
-}): Promise<TcpSettleResult> {
+export async function threeCardPokerFold(input: { sessionId: string }): Promise<TcpSettleResult> {
   await assertNotInMaintenanceForBets();
   const user = await requireUser();
   await assertGameEnabled();
@@ -555,9 +549,7 @@ export async function threeCardPokerFold(input: {
         featureState: null,
         fsSessionWin: String(feat.pairPlusWin),
       })
-      .where(
-        and(eq(playSessions.id, current.id), eq(playSessions.status, "open")),
-      );
+      .where(and(eq(playSessions.id, current.id), eq(playSessions.status, "open")));
     if ((claimed[0]?.affectedRows ?? 0) === 0) {
       throw new Error("Hand already settled");
     }

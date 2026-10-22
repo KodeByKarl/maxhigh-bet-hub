@@ -1,55 +1,77 @@
 /**
- * MaxHigh Drop Deluxe — instant number drop (1–10).
+ * MaxHigh Deluxe Draw — 5-card draw video poker, Jacks or Better (game id kept as `drop-deluxe`).
  * Pure functions only: no React, no I/O.
  *
- * Fair single-pick of 10 → 10× total return. Default payoutMult 9× ≈ 90% RTP
- * when betting one lane. Multi-pick: each lane settles independently at the
- * same payoutMult (EV scales with how many lanes are covered).
- *
- * `payoutMult` is TOTAL return multiplier (incl. stake).
+ * Deal 5, hold any, draw once. Paytable values are TOTAL return multipliers
+ * (incl. stake). The default 7/5 Jacks-or-Better table returns ≈96.4% with
+ * optimal holds — mistakes cost the player, so skill matters.
  */
-
-import { winCredit } from "@/lib/baccarat-config";
-
-export { winCredit };
 
 export const DROP_DELUXE_GAME_ID = "drop-deluxe";
 export const GAME_ID = DROP_DELUXE_GAME_ID;
-export const DROP_DELUXE_TITLE = "Drop Deluxe";
+export const DROP_DELUXE_TITLE = "Deluxe Draw";
 
-export const DROP_DELUXE_SPOTS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10] as const;
-export type DropDeluxeSpot = (typeof DROP_DELUXE_SPOTS)[number];
+export const HAND_KEYS = [
+  "royal",
+  "straightFlush",
+  "four",
+  "fullHouse",
+  "flush",
+  "straight",
+  "three",
+  "twoPair",
+  "jacks",
+] as const;
+export type HandKey = (typeof HAND_KEYS)[number];
+export type HandResult = HandKey | "none";
 
-/**
- * Reference RTP (fair 1–10 die, default 9× single pick).
- * Approximate — not enforced at runtime.
- */
-export const RTP_REFERENCE = {
-  singlePick: 90.0,
-  overall: 90.0,
-} as const;
+export const HAND_LABEL: Record<HandKey, string> = {
+  royal: "Royal Flush",
+  straightFlush: "Straight Flush",
+  four: "Four of a Kind",
+  fullHouse: "Full House",
+  flush: "Flush",
+  straight: "Straight",
+  three: "Three of a Kind",
+  twoPair: "Two Pair",
+  jacks: "Jacks or Better",
+};
+
+export const SUITS = ["S", "H", "D", "C"] as const;
+export type Suit = (typeof SUITS)[number];
+export type PublicCard = { rank: number; suit: Suit };
+
+/** Reference RTP of the default paytable with optimal play (7/5 JoB ≈ 96.39%). */
+export const RTP_REFERENCE = { overall: 96.4 } as const;
 
 export type DropDeluxeConfig = {
-  schemaVersion: 1;
-  /** Total-return multiplier on a hitting lane (default 9× → ~90% RTP). */
-  payoutMult: number;
-  /** Max number of lanes a player may stake in one round. */
-  maxPicks: number;
+  schemaVersion: 2;
+  /** Total-return multiplier per hand (stake included). */
+  paytable: Record<HandKey, number>;
   rtpTarget: number;
   minBet: number;
   maxBet: number;
-  maxSpotBet: number;
   betSteps: number[];
 };
 
+export const DEFAULT_PAYTABLE: Record<HandKey, number> = {
+  royal: 800,
+  straightFlush: 50,
+  four: 25,
+  fullHouse: 7,
+  flush: 5,
+  straight: 4,
+  three: 3,
+  twoPair: 2,
+  jacks: 1,
+};
+
 export const DEFAULT_DROP_DELUXE_CONFIG: DropDeluxeConfig = {
-  schemaVersion: 1,
-  payoutMult: 9,
-  maxPicks: 3,
+  schemaVersion: 2,
+  paytable: { ...DEFAULT_PAYTABLE },
   rtpTarget: RTP_REFERENCE.overall,
   minBet: 1,
   maxBet: 500,
-  maxSpotBet: 500,
   betSteps: [1, 2, 5, 10, 20, 50, 100, 200, 500],
 };
 
@@ -81,27 +103,56 @@ export function normalizeDropDeluxeConfig(raw: unknown): DropDeluxeConfig {
   if (!raw || typeof raw !== "object") return structuredClone(DEFAULT_DROP_DELUXE_CONFIG);
   const o = raw as Partial<DropDeluxeConfig>;
   const d = DEFAULT_DROP_DELUXE_CONFIG;
+  const rawPay = (o.paytable && typeof o.paytable === "object" ? o.paytable : {}) as Partial<
+    Record<HandKey, unknown>
+  >;
+
+  const paytable = {} as Record<HandKey, number>;
+  for (const k of HAND_KEYS) {
+    paytable[k] = clamp(num(rawPay[k], d.paytable[k]), 0, 10_000);
+  }
 
   const minBet = clamp(num(o.minBet, d.minBet), 0.01, 10_000);
   const maxBet = clamp(num(o.maxBet, d.maxBet), minBet, 100_000);
-  const maxSpotBet = clamp(num(o.maxSpotBet, d.maxSpotBet), minBet, 100_000);
+  const steps = normalizeBetSteps(o.betSteps, d.betSteps).filter((s) => s <= maxBet);
 
   return {
-    schemaVersion: 1,
-    payoutMult: clamp(num(o.payoutMult, d.payoutMult), 1.01, 100),
-    maxPicks: clamp(Math.round(num(o.maxPicks, d.maxPicks)), 1, 10),
-    rtpTarget: clamp(num(o.rtpTarget, d.rtpTarget), 80, 99.5),
+    schemaVersion: 2,
+    paytable,
+    rtpTarget: clamp(num(o.rtpTarget, d.rtpTarget), 50, 99.9),
     minBet,
     maxBet,
-    maxSpotBet,
-    betSteps: normalizeBetSteps(o.betSteps, d.betSteps).filter((s) => s <= maxBet),
+    betSteps: steps.length > 0 ? steps : [minBet],
   };
 }
 
-export function profitOddsFromMult(payoutMult: number): number {
-  return Math.max(0, payoutMult - 1);
+/** Card id 0–51 → rank 2–14 (Ace high) + suit. */
+export function cardFromId(id: number): PublicCard {
+  return { rank: 2 + (id % 13), suit: SUITS[Math.floor(id / 13)] };
 }
 
-export function creditForLaneWin(stake: number, payoutMult: number): number {
-  return winCredit(stake, profitOddsFromMult(payoutMult));
+/** Classify a 5-card hand (ids 0–51). */
+export function evaluateHand(ids: number[]): HandResult {
+  const cards = ids.map(cardFromId);
+  const ranks = cards.map((c) => c.rank).sort((a, b) => a - b);
+  const flush = cards.every((c) => c.suit === cards[0].suit);
+  const counts = new Map<number, number>();
+  for (const r of ranks) counts.set(r, (counts.get(r) ?? 0) + 1);
+  const groups = [...counts.values()].sort((a, b) => b - a);
+
+  const wheel = ranks.join(",") === "2,3,4,5,14";
+  const straight = wheel || (groups[0] === 1 && ranks[4] - ranks[0] === 4);
+  const high = wheel ? 5 : ranks[4];
+
+  if (straight && flush) return high === 14 ? "royal" : "straightFlush";
+  if (groups[0] === 4) return "four";
+  if (groups[0] === 3 && groups[1] === 2) return "fullHouse";
+  if (flush) return "flush";
+  if (straight) return "straight";
+  if (groups[0] === 3) return "three";
+  if (groups[0] === 2 && groups[1] === 2) return "twoPair";
+  if (groups[0] === 2) {
+    for (const [r, c] of counts) if (c === 2 && r >= 11) return "jacks";
+  }
+  return "none";
 }

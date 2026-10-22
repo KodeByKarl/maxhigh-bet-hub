@@ -84,8 +84,7 @@ export function FreeSpinsTriggerModal({ count = 10, onClose }: Props) {
           <div
             className="relative mx-auto mt-1 h-px w-24"
             style={{
-              background:
-                "linear-gradient(90deg, transparent, var(--p-menu-accent), transparent)",
+              background: "linear-gradient(90deg, transparent, var(--p-menu-accent), transparent)",
             }}
           />
 
@@ -155,8 +154,7 @@ export function FreeSpinsTriggerModal({ count = 10, onClose }: Props) {
             className="relative mt-5 w-full rounded-lg border py-2.5 text-sm font-black uppercase tracking-wider transition active:scale-[0.98]"
             style={{
               borderColor: "color-mix(in srgb, var(--p-accent) 60%, transparent)",
-              background:
-                "linear-gradient(180deg, var(--p-spin-from) 0%, var(--p-spin-to) 100%)",
+              background: "linear-gradient(180deg, var(--p-spin-from) 0%, var(--p-spin-to) 100%)",
               color: "var(--p-accent-deep)",
               boxShadow: "0 0 20px var(--p-spin-shadow)",
             }}

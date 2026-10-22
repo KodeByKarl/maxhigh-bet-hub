@@ -38,14 +38,14 @@ export const SYM_COLOR: Record<FsSymKind, string> = {
 
 /** Real art path — renderer falls back to glyph if file missing. */
 export const ICON_SRC: Record<FsSymKind, string> = {
-  bar: "/images/symbols/fire-spike/bar.webp",
-  dice: "/images/symbols/fire-spike/dice.webp",
-  diamond: "/images/symbols/fire-spike/diamond.webp",
-  chip: "/images/symbols/fire-spike/chip.webp",
-  lucky7: "/images/symbols/fire-spike/lucky7.webp",
-  wild: "/images/symbols/fire-spike/wild.webp",
-  scatter: "/images/symbols/fire-spike/scatter.webp",
+  bar: "/images/symbols/fire-spike/bar-v20261012-unique.png",
+  dice: "/images/symbols/fire-spike/dice-v20261012-unique.png",
+  diamond: "/images/symbols/fire-spike/diamond-v20261012-unique.png",
+  chip: "/images/symbols/fire-spike/chip-v20261012-unique.png",
+  lucky7: "/images/symbols/fire-spike/lucky7-v20261012-unique.png",
+  wild: "/images/symbols/fire-spike/wild-v20261012-unique.png",
+  scatter: "/images/symbols/fire-spike/scatter-v20261012-unique.png",
 };
 
 /** Ornate metal frame overlay (Frontier-style card border, fire palette). */
-export const CARD_FRAME_SRC = "/images/symbols/fire-spike/card-frame.png";
+export const CARD_FRAME_SRC = "/images/symbols/fire-spike/card-frame-v20261012-unique.png";

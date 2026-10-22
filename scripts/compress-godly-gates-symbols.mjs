@@ -12,7 +12,11 @@ for (const file of files) {
   const quality = isBackdrop ? 80 : 85;
   const tmp = full + ".tmp.png";
   await sharp(full)
-    .resize(size, size, { fit: isBackdrop ? "inside" : "contain", withoutEnlargement: true, background: { r: 0, g: 0, b: 0, alpha: 0 } })
+    .resize(size, size, {
+      fit: isBackdrop ? "inside" : "contain",
+      withoutEnlargement: true,
+      background: { r: 0, g: 0, b: 0, alpha: 0 },
+    })
     .png({ compressionLevel: 9, quality, palette: !isBackdrop })
     .toFile(tmp);
   fs.renameSync(tmp, full);

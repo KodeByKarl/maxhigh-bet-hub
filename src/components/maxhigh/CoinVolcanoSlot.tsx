@@ -6,6 +6,7 @@
  * A single runId cancels stale timers. Highlights clear on every step change + on done.
  */
 import { useCallback, useEffect, useRef, useState } from "react";
+import { Volume2, VolumeX } from "lucide-react";
 import { toast } from "sonner";
 import { coinVolcanoSpinFn, getCoinVolcanoEngineConfigFn } from "@/functions/api";
 import { useAuth } from "@/lib/auth";
@@ -20,6 +21,7 @@ import { MoneyBorder } from "./coin-volcano/MoneyBorder";
 import { ReelCell, type ReelPhase } from "./coin-volcano/ReelCell";
 import { getCoinVolcanoConfig, setCoinVolcanoConfig } from "./coin-volcano/runtimeConfig";
 import { planCoinVolcanoPlayback, type McPlaybackStep } from "./coin-volcano/spinPlayback";
+import { coinVolcanoAudio } from "./coin-volcano/audio";
 import { cellKey, type McGrid } from "./coin-volcano/types";
 
 function idleGrid(): McGrid {
@@ -63,6 +65,8 @@ const INITIAL_UI = (): UiSnap => ({
   locked: false,
 });
 
+const getCfgReels = () => getCoinVolcanoConfig().reelsCount;
+
 export function CoinVolcanoSlot({
   gameId = COIN_VOLCANO_GAME_ID,
 }: {
@@ -75,6 +79,7 @@ export function CoinVolcanoSlot({
   const [bet, setBet] = useState(1);
   const [autoSpin, setAutoSpin] = useState(false);
   const [turbo, setTurbo] = useState(false);
+  const [muted, setMuted] = useState(() => coinVolcanoAudio.isMuted);
   const [cfgSnap, setCfgSnap] = useState<CoinVolcanoConfig>(() => getCoinVolcanoConfig());
   const [ui, setUi] = useState<UiSnap>(INITIAL_UI);
 
@@ -127,12 +132,15 @@ export function CoinVolcanoSlot({
     if (!mountedRef.current) return;
     // Auto mode: always chain. Manual: only after a win (another paid chance).
     if (reason === "auto" && !autoRef.current) return;
-    autoTimerRef.current = setTimeout(() => {
-      autoTimerRef.current = null;
-      if (!mountedRef.current || lockedRef.current) return;
-      if (reason === "auto" && !autoRef.current) return;
-      startSpinRef.current();
-    }, turboRef.current ? 150 : 500);
+    autoTimerRef.current = setTimeout(
+      () => {
+        autoTimerRef.current = null;
+        if (!mountedRef.current || lockedRef.current) return;
+        if (reason === "auto" && !autoRef.current) return;
+        startSpinRef.current();
+      },
+      turboRef.current ? 150 : 500,
+    );
   }, []);
 
   const fadeOutWin = useCallback((runId: number, then: () => void) => {
@@ -250,22 +258,54 @@ export function CoinVolcanoSlot({
         return;
       }
 
+      switch (step.type) {
+        case "spinning":
+          coinVolcanoAudio.startAmbient();
+          coinVolcanoAudio.startSpinLoop();
+          break;
+        case "stopping": {
+          coinVolcanoAudio.stopSpinLoop();
+          const reels = getCfgReels();
+          for (let r = 0; r < reels; r++) {
+            setTimeout(() => {
+              if (mountedRef.current && runId === runIdRef.current)
+                coinVolcanoAudio.playReelStop(r);
+            }, r * 90);
+          }
+          break;
+        }
+        case "highlight_lines":
+        case "highlight_mix":
+        case "tally":
+          coinVolcanoAudio.playWin(step.amount, betRef.current);
+          break;
+        case "highlight_jackpot":
+          coinVolcanoAudio.playScatterTrigger();
+          coinVolcanoAudio.playWin(step.amount, betRef.current);
+          break;
+        default:
+          break;
+      }
+
       const ms = "ms" in step ? step.ms : 0;
       clearTimer();
-      timerRef.current = setTimeout(() => {
-        timerRef.current = null;
-        if (runId !== runIdRef.current) return;
-        const isCelebrate =
-          step.type === "highlight_lines" ||
-          step.type === "highlight_mix" ||
-          step.type === "highlight_jackpot" ||
-          step.type === "tally";
-        if (isCelebrate) {
-          fadeOutWin(runId, () => runStep(runId, steps, index + 1));
-          return;
-        }
-        runStep(runId, steps, index + 1);
-      }, Math.max(16, ms));
+      timerRef.current = setTimeout(
+        () => {
+          timerRef.current = null;
+          if (runId !== runIdRef.current) return;
+          const isCelebrate =
+            step.type === "highlight_lines" ||
+            step.type === "highlight_mix" ||
+            step.type === "highlight_jackpot" ||
+            step.type === "tally";
+          if (isCelebrate) {
+            fadeOutWin(runId, () => runStep(runId, steps, index + 1));
+            return;
+          }
+          runStep(runId, steps, index + 1);
+        },
+        Math.max(16, ms),
+      );
     },
     [applyIdle, fadeOutWin, scheduleContinue],
   );
@@ -304,6 +344,7 @@ export function CoinVolcanoSlot({
         if (runId !== runIdRef.current) return;
         const msg = e instanceof Error ? e.message : "Spin failed";
         toast.error(msg);
+        coinVolcanoAudio.stopSpinLoop();
         setAutoSpin(false);
         applyIdle();
       }
@@ -314,21 +355,20 @@ export function CoinVolcanoSlot({
 
   useEffect(() => {
     mountedRef.current = true;
+    coinVolcanoAudio.preload();
     void getCoinVolcanoEngineConfigFn()
       .then((cfg) => {
         if (!mountedRef.current) return;
         const next = setCoinVolcanoConfig(cfg);
         setCfgSnap(next);
-        setUi((prev) =>
-          prev.locked
-            ? prev
-            : { ...prev, grid: idleGrid() },
-        );
+        setUi((prev) => (prev.locked ? prev : { ...prev, grid: idleGrid() }));
         setBet((b) => Math.max(next.minBet, Math.min(next.maxBet, b)));
       })
       .catch(() => undefined);
     return () => {
       mountedRef.current = false;
+      coinVolcanoAudio.stopSpinLoop();
+      coinVolcanoAudio.stopAmbient();
       runIdRef.current += 1;
       clearTimer();
       clearAutoTimer();
@@ -341,6 +381,7 @@ export function CoinVolcanoSlot({
     const id = setTimeout(() => {
       console.warn("[CoinVolcano] watchdog unlock — spin exceeded 12s");
       runIdRef.current += 1;
+      coinVolcanoAudio.stopSpinLoop();
       clearTimer();
       lockedRef.current = false;
       applyIdle();
@@ -388,7 +429,9 @@ export function CoinVolcanoSlot({
       `}</style>
       <div
         className="pointer-events-none absolute inset-0 bg-cover bg-center bg-no-repeat"
-        style={{ backgroundImage: "url(/images/coin-volcano-bg.webp)" }}
+        style={{
+          backgroundImage: "url(/images/symbols/coin-volcano/backdrop-v20261012-unique.webp)",
+        }}
       />
       <div
         className="pointer-events-none absolute inset-0"
@@ -481,9 +524,7 @@ export function CoinVolcanoSlot({
                             spinId={ui.spinId}
                             winning={winKeySet.has(key)}
                             mixHighlight={mixKeySet.has(key)}
-                            fading={
-                              ui.fading && (winKeySet.has(key) || mixKeySet.has(key))
-                            }
+                            fading={ui.fading && (winKeySet.has(key) || mixKeySet.has(key))}
                             dimmed={
                               (winKeySet.size > 0 || mixKeySet.size > 0) &&
                               !winKeySet.has(key) &&
@@ -545,8 +586,12 @@ export function CoinVolcanoSlot({
               </button>
 
               <div className="min-w-[6rem] rounded-xl border border-amber-500/45 bg-gradient-to-b from-[#3a1608] to-[#0c0402] px-3 py-1.5 text-center">
-                <p className="text-[8px] font-black uppercase tracking-[0.2em] text-orange-400/75">Bet</p>
-                <p className="text-base font-black tabular-nums text-amber-100">{formatMoney(bet)}</p>
+                <p className="text-[8px] font-black uppercase tracking-[0.2em] text-orange-400/75">
+                  Bet
+                </p>
+                <p className="text-base font-black tabular-nums text-amber-100">
+                  {formatMoney(bet)}
+                </p>
               </div>
 
               <button
@@ -560,6 +605,15 @@ export function CoinVolcanoSlot({
             </div>
 
             <div className="flex flex-wrap items-center justify-center gap-2">
+              <button
+                type="button"
+                aria-label={muted ? "Unmute" : "Mute"}
+                onClick={() => setMuted(coinVolcanoAudio.toggleMute())}
+                className="grid size-9 place-items-center rounded-xl border border-orange-600/55 bg-[#1a0a06] text-orange-200/85"
+              >
+                {muted ? <VolumeX size={16} /> : <Volume2 size={16} />}
+              </button>
+
               <button
                 type="button"
                 onClick={() => setTurbo((t) => !t)}

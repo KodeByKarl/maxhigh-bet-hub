@@ -70,15 +70,7 @@ function Num({
   );
 }
 
-function Field({
-  label,
-  hint,
-  children,
-}: {
-  label: string;
-  hint?: string;
-  children: ReactNode;
-}) {
+function Field({ label, hint, children }: { label: string; hint?: string; children: ReactNode }) {
   return (
     <label className="block space-y-1.5">
       <span className="text-xs font-medium text-muted-foreground">{label}</span>
@@ -257,7 +249,8 @@ export function ColorGameProConfigModal({ game, open, onOpenChange, onPatchLobby
             ) : section === "payouts" ? (
               <div className="space-y-3">
                 <p className="text-[11px] text-muted-foreground">
-                  payoutMult = total return (incl. stake). Equal weight + 5.5× → ~{RTP_REFERENCE.singleColor}% RTP.
+                  payoutMult = total return (incl. stake). Equal weight + 5.5× → ~
+                  {RTP_REFERENCE.singleColor}% RTP.
                 </p>
                 {cfg.spots.map((sp) => (
                   <div

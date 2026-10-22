@@ -102,9 +102,7 @@ export function PromoCarousel() {
                 <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-black/20" />
 
                 <div className="relative z-10 flex h-full flex-col justify-between p-6 sm:p-8 lg:p-10">
-                  <span
-                    className="w-fit rounded-full px-3 py-1 text-[11px] font-bold uppercase tracking-wider bg-black/50 text-white border border-white/20"
-                  >
+                  <span className="w-fit rounded-full px-3 py-1 text-[11px] font-bold uppercase tracking-wider bg-black/50 text-white border border-white/20">
                     {p.badge}
                   </span>
 

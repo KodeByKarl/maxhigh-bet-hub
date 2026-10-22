@@ -7,13 +7,31 @@ import { hash } from "bcryptjs";
 import { getDb } from "../db/client";
 import { auditLogs, liveWins, transactions, users } from "../db/schema";
 import type { PublicUser, UserRole } from "@/lib/user";
-import type { AdminAuditLogRow, AdminDashboardStats, AdminUserRow, AdminTransactionRow, AdminDayPulse, WinLoseSummary, WinLoseByLevelRow, WinLoseByProductRow } from "@/lib/admin-types";
+import type {
+  AdminAuditLogRow,
+  AdminDashboardStats,
+  AdminUserRow,
+  AdminTransactionRow,
+  AdminDayPulse,
+  WinLoseSummary,
+  WinLoseByLevelRow,
+  WinLoseByProductRow,
+} from "@/lib/admin-types";
 import { destroyUserSessions, money, newId, requireAdmin, toPublicUser } from "../session";
 import { writeAuditLog } from "./audit.server";
 import { requirePermission } from "../auth/rbac.server";
 import { assertCanManageChips, scopeToDownline, isInDownline } from "../auth/network-scope.server";
 
-export type { AdminDashboardStats, AdminUserRow, AdminAuditLogRow, AdminTransactionRow, AdminDayPulse, WinLoseSummary, WinLoseByLevelRow, WinLoseByProductRow };
+export type {
+  AdminDashboardStats,
+  AdminUserRow,
+  AdminAuditLogRow,
+  AdminTransactionRow,
+  AdminDayPulse,
+  WinLoseSummary,
+  WinLoseByLevelRow,
+  WinLoseByProductRow,
+};
 
 const WEEK_LABELS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"] as const;
 
@@ -192,14 +210,21 @@ export async function listAdminUsers(opts?: {
     ? await db.select().from(users).where(whereClause).orderBy(desc(users.createdAt)).limit(limit)
     : await db.select().from(users).orderBy(desc(users.createdAt)).limit(limit);
 
-  const uplineIds = Array.from(new Set(rows.map((u) => u.parentAgentId).filter(Boolean))) as string[];
+  const uplineIds = Array.from(
+    new Set(rows.map((u) => u.parentAgentId).filter(Boolean)),
+  ) as string[];
   const agentMap = new Map<string, string>();
 
   if (uplineIds.length > 0) {
     const agents = await db
       .select({ id: users.id, username: users.username, displayName: users.displayName })
       .from(users)
-      .where(sql`${users.id} in (${sql.join(uplineIds.map((id) => sql`${id}`), sql`, `)})`);
+      .where(
+        sql`${users.id} in (${sql.join(
+          uplineIds.map((id) => sql`${id}`),
+          sql`, `,
+        )})`,
+      );
     for (const a of agents) {
       agentMap.set(a.id, a.displayName || a.username);
     }
@@ -207,10 +232,15 @@ export async function listAdminUsers(opts?: {
 
   return rows.map((u) => ({
     ...toPublicUser(u),
-    isLocked: u.isLocked === "yes" || (u.failedAttempts ?? 0) >= 3 || Boolean(u.lockedUntil && new Date() < new Date(u.lockedUntil)),
+    isLocked:
+      u.isLocked === "yes" ||
+      (u.failedAttempts ?? 0) >= 3 ||
+      Boolean(u.lockedUntil && new Date() < new Date(u.lockedUntil)),
     failedAttempts: u.failedAttempts ?? 0,
     parentAgentId: u.parentAgentId ?? null,
-    agentName: u.parentAgentId ? (agentMap.get(u.parentAgentId) ?? "System / Direct") : "System / Direct",
+    agentName: u.parentAgentId
+      ? (agentMap.get(u.parentAgentId) ?? "System / Direct")
+      : "System / Direct",
     createdAt: u.createdAt?.toISOString?.() ?? String(u.createdAt),
   }));
 }
@@ -263,7 +293,7 @@ export async function adminCreatePlayer(data: {
   role?: UserRole;
   displayName?: string;
   publicUserId?: string;
-}): Promise<PublicUser> {
+}): Promise<PublicUser & { agentPromoted: boolean }> {
   const actor = await requirePermission("USER_CREATE");
   const role: UserRole = data.role ?? "player";
 
@@ -294,7 +324,11 @@ export async function adminCreatePlayer(data: {
   if (publicUserId.length < 3) throw new Error("User ID must be at least 3 characters");
   if (!/^[a-z0-9_]+$/.test(publicUserId)) throw new Error("User ID must be letters, numbers, or _");
 
-  const [existingUsername] = await db.select({ id: users.id }).from(users).where(eq(users.username, username)).limit(1);
+  const [existingUsername] = await db
+    .select({ id: users.id })
+    .from(users)
+    .where(eq(users.username, username))
+    .limit(1);
   if (existingUsername) throw new Error("Username already exists");
   const [existingPublicId] = await db
     .select({ id: users.id })
@@ -411,7 +445,10 @@ export async function adminAdjustUserBalance(data: {
   note?: string;
   confirmPassword?: string;
 }): Promise<PublicUser> {
-  const actor = await requirePermission("USER_ADJUST_BALANCE", { targetType: "user", targetId: data.userId });
+  const actor = await requirePermission("USER_ADJUST_BALANCE", {
+    targetType: "user",
+    targetId: data.userId,
+  });
   if (!Number.isFinite(data.delta) || data.delta === 0) {
     throw new Error("Invalid amount");
   }
@@ -454,9 +491,14 @@ export async function adminAdjustUserBalance(data: {
       }
       actorNextBalance = +(Number(actorUser.balance) - data.delta).toFixed(2);
       if (actorNextBalance < 0) {
-        throw new Error(`Insufficient chip balance. You have ₱${Number(actorUser.balance).toFixed(2)}.`);
+        throw new Error(
+          `Insufficient chip balance. You have ₱${Number(actorUser.balance).toFixed(2)}.`,
+        );
       }
-      await tx.update(users).set({ balance: money(actorNextBalance) }).where(eq(users.id, actor.id));
+      await tx
+        .update(users)
+        .set({ balance: money(actorNextBalance) })
+        .where(eq(users.id, actor.id));
       await tx.insert(transactions).values({
         id: newId(),
         userId: actor.id,
@@ -480,7 +522,10 @@ export async function adminAdjustUserBalance(data: {
       );
     }
 
-    await tx.update(users).set({ balance: money(next) }).where(eq(users.id, target.id));
+    await tx
+      .update(users)
+      .set({ balance: money(next) })
+      .where(eq(users.id, target.id));
     await tx.insert(transactions).values({
       id: newId(),
       userId: target.id,
@@ -575,10 +620,11 @@ export async function adminLockUser(data: {
   return toPublicUser(updatedRows[0]!);
 }
 
-export async function adminUnlockUser(data: {
-  userId: string;
-}): Promise<PublicUser> {
-  const actor = await requirePermission("USER_UNLOCK", { targetType: "user", targetId: data.userId });
+export async function adminUnlockUser(data: { userId: string }): Promise<PublicUser> {
+  const actor = await requirePermission("USER_UNLOCK", {
+    targetType: "user",
+    targetId: data.userId,
+  });
   const db = getDb();
   const now = new Date();
 
@@ -618,7 +664,10 @@ export async function adminUnlockUser(data: {
 export async function adminForceLogoutUser(data: {
   userId: string;
 }): Promise<{ ok: boolean; username: string; terminatedSessionsCount: number }> {
-  const actor = await requirePermission("USER_FORCE_LOGOUT", { targetType: "user", targetId: data.userId });
+  const actor = await requirePermission("USER_FORCE_LOGOUT", {
+    targetType: "user",
+    targetId: data.userId,
+  });
   const db = getDb();
 
   const rows = await db.select().from(users).where(eq(users.id, data.userId)).limit(1);
@@ -646,7 +695,10 @@ export async function adminForceLogoutUser(data: {
 export async function adminResetFailedAttempts(data: {
   userId: string;
 }): Promise<{ ok: boolean; username: string; failedAttempts: number }> {
-  const actor = await requirePermission("USER_RESET_FAILED", { targetType: "user", targetId: data.userId });
+  const actor = await requirePermission("USER_RESET_FAILED", {
+    targetType: "user",
+    targetId: data.userId,
+  });
   const db = getDb();
 
   const rows = await db.select().from(users).where(eq(users.id, data.userId)).limit(1);
@@ -654,10 +706,7 @@ export async function adminResetFailedAttempts(data: {
   if (!user) throw new Error("User not found");
   await assertCanManageAccount(actor, user.id);
 
-  await db
-    .update(users)
-    .set({ failedAttempts: 0 })
-    .where(eq(users.id, user.id));
+  await db.update(users).set({ failedAttempts: 0 }).where(eq(users.id, user.id));
 
   await writeAuditLog({
     actor,
@@ -741,9 +790,7 @@ export async function listAdminAuditLogs(opts?: {
   }
   if (scope === "system") {
     // Player gameplay belongs in Player ledger (transactions), not System actions
-    filters.push(
-      sql`${auditLogs.action} NOT IN ('game.bet', 'game.win', 'game.adjust')`,
-    );
+    filters.push(sql`${auditLogs.action} NOT IN ('game.bet', 'game.win', 'game.adjust')`);
   }
   if (q) {
     filters.push(
@@ -759,7 +806,9 @@ export async function listAdminAuditLogs(opts?: {
   }
   if (opts?.dayIndex !== undefined && opts.dayIndex !== null) {
     const { start, end } = dayBounds(opts.dayIndex);
-    filters.push(and(sql`${auditLogs.createdAt} >= ${start}`, sql`${auditLogs.createdAt} < ${end}`));
+    filters.push(
+      and(sql`${auditLogs.createdAt} >= ${start}`, sql`${auditLogs.createdAt} < ${end}`),
+    );
   }
 
   const rows =
@@ -792,7 +841,9 @@ export async function fetchAdminDayPulse(dayIndex: number): Promise<AdminDayPuls
   const networkIds = await scopeToDownline(actor, { playersOnly: true });
   const emptyNetwork = networkIds !== null && networkIds.length === 0;
   const txScope =
-    networkIds !== null && networkIds.length > 0 ? inArray(transactions.userId, networkIds) : undefined;
+    networkIds !== null && networkIds.length > 0
+      ? inArray(transactions.userId, networkIds)
+      : undefined;
 
   const [txRow] = emptyNetwork
     ? [{ bets: 0, wins: 0, betVolume: "0", winVolume: "0", playersActive: 0 }]
@@ -935,7 +986,10 @@ export async function listAdminTransactions(opts?: {
 
   const rows =
     filters.length > 0
-      ? await base.where(and(...filters)).orderBy(desc(transactions.seq)).limit(limit)
+      ? await base
+          .where(and(...filters))
+          .orderBy(desc(transactions.seq))
+          .limit(limit)
       : await base.orderBy(desc(transactions.seq)).limit(limit);
 
   return rows.map((r) => {
@@ -1052,7 +1106,9 @@ export async function fetchWinLoseByLevel(opts?: { limit?: number }): Promise<Wi
 }
 
 /** Win/Lose by product (game name). */
-export async function fetchWinLoseByProduct(opts?: { limit?: number }): Promise<WinLoseByProductRow[]> {
+export async function fetchWinLoseByProduct(opts?: {
+  limit?: number;
+}): Promise<WinLoseByProductRow[]> {
   const actor = await requirePermission("REPORTS_VIEW");
   const db = getDb();
   const limit = Math.min(Math.max(opts?.limit ?? 100, 1), 200);
@@ -1061,7 +1117,11 @@ export async function fetchWinLoseByProduct(opts?: { limit?: number }): Promise<
   if (networkIds !== null && networkIds.length === 0) return [];
 
   const filters = [
-    or(eq(transactions.type, "bet"), eq(transactions.type, "win"), eq(transactions.type, "jackpot"))!,
+    or(
+      eq(transactions.type, "bet"),
+      eq(transactions.type, "win"),
+      eq(transactions.type, "jackpot"),
+    )!,
   ];
   if (networkIds !== null) filters.push(inArray(transactions.userId, networkIds));
 
@@ -1122,10 +1182,7 @@ export async function listChipDistributionLogs(opts?: {
   if (networkIds !== null && networkIds.length === 0) return [];
 
   const filters = [
-    or(
-      eq(auditLogs.action, "user.balance_adjust"),
-      eq(auditLogs.action, "super.balance_adjust"),
-    )!,
+    or(eq(auditLogs.action, "user.balance_adjust"), eq(auditLogs.action, "super.balance_adjust"))!,
   ];
   if (networkIds !== null) {
     filters.push(inArray(auditLogs.targetId, networkIds));

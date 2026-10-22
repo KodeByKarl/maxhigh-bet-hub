@@ -3,10 +3,15 @@
  * Client only receives scripts + balances; it cannot choose win amounts.
  */
 import { and, eq } from "drizzle-orm";
-import { TEMPLE_RUSH_GAME_ID, normalizeTempleRushConfig } from "@/lib/temple-rush-config";
+import {
+  TEMPLE_RUSH_GAME_ID,
+  normalizeTempleRushConfig,
+  remainingFreeSpinsAfterSpin,
+} from "@/lib/temple-rush-config";
 import { getDb } from "../db/client";
 import { gameControls, playSessions, users } from "../db/schema";
 import { money, newId, requireUser } from "../session";
+import { applyCapToScriptTotalWin, enforcePoolCap } from "../settlement/enforcePoolCap";
 import {
   assertNotInMaintenanceForBets,
   availableFrom,
@@ -14,6 +19,7 @@ import {
   sumPendingWithdrawals,
   writeLedgerDelta,
 } from "../wallet.server";
+import { pantherBuyPricePerSpin } from "@/components/maxhigh/panther-shared/buyPricing";
 
 const GAME_NAME = "Temple Rush";
 
@@ -48,19 +54,20 @@ async function resolveOnServer(opts: {
   bet: number;
   ante: boolean;
   isFreeSpins: boolean;
+  initialBombAccumulator?: number;
 }) {
   const cfg = await loadEngineConfig();
   return withEngineExclusive(async () => {
     const { setTempleRushConfig } = await import("@/components/maxhigh/temple-rush/runtimeConfig");
-    const { resolveSpin, finalizeFreeSpinTotal } = await import(
-      "@/components/maxhigh/temple-rush/spinResolver"
-    );
+    const { resolveSpin, finalizeFreeSpinTotal } =
+      await import("@/components/maxhigh/temple-rush/spinResolver");
     setTempleRushConfig(cfg);
     const script = resolveSpin({
       bet: opts.bet,
       ante: opts.ante && !opts.isFreeSpins,
       isFreeSpins: opts.isFreeSpins,
       collectBombsInFreeSpins: true,
+      initialBombAccumulator: opts.initialBombAccumulator,
     });
     return { script, finalizeFreeSpinTotal, cfg };
   });
@@ -79,7 +86,9 @@ export type TempleRushSessionState = {
 
 export type TempleRushSpinResult = {
   balance: number;
-  script: Awaited<ReturnType<typeof import("@/components/maxhigh/temple-rush/spinResolver").resolveSpin>>;
+  script: Awaited<
+    ReturnType<typeof import("@/components/maxhigh/temple-rush/spinResolver").resolveSpin>
+  >;
   session: TempleRushSessionState;
   /** Set when a free-spin feature just finished and win was paid. */
   fsPayout?: {
@@ -129,7 +138,10 @@ async function closeOtherOpenSessions(userId: string, keepId?: string) {
     );
   for (const row of open) {
     if (keepId && row.id === keepId) continue;
-    await db.update(playSessions).set({ status: "closed", freeSpinsLeft: 0 }).where(eq(playSessions.id, row.id));
+    await db
+      .update(playSessions)
+      .set({ status: "closed", freeSpinsLeft: 0 })
+      .where(eq(playSessions.id, row.id));
   }
 }
 
@@ -186,6 +198,13 @@ export async function templeRushPaidSpin(data: {
     ante: data.ante,
     isFreeSpins: false,
   });
+  applyCapToScriptTotalWin(script, {
+    gameId: TEMPLE_RUSH_GAME_ID,
+    gameName: GAME_NAME,
+    bet: data.bet,
+    maxWinMult: cfg.maxWinMult,
+    context: "paid-spin",
+  });
 
   const result = await db.transaction(async (tx) => {
     const userRows = await tx.select().from(users).where(eq(users.id, user.id)).limit(1);
@@ -239,7 +258,10 @@ export async function templeRushPaidSpin(data: {
           ),
         );
       for (const s of stale) {
-        await tx.update(playSessions).set({ status: "closed", freeSpinsLeft: 0 }).where(eq(playSessions.id, s.id));
+        await tx
+          .update(playSessions)
+          .set({ status: "closed", freeSpinsLeft: 0 })
+          .where(eq(playSessions.id, s.id));
       }
 
       const id = newId();
@@ -292,10 +314,18 @@ export async function templeRushFreeSpin(data: {
   if (Number(session.freeSpinsLeft) <= 0) throw new Error("No free spins remaining");
 
   const bet = Number(session.bet);
-  const { script, finalizeFreeSpinTotal } = await resolveOnServer({
+  const { script, finalizeFreeSpinTotal, cfg } = await resolveOnServer({
     bet,
     ante: session.ante === "yes",
     isFreeSpins: true,
+    initialBombAccumulator: Number(session.fsBombAcc) || 0,
+  });
+  applyCapToScriptTotalWin(script, {
+    gameId: TEMPLE_RUSH_GAME_ID,
+    gameName: GAME_NAME,
+    bet,
+    maxWinMult: cfg.maxWinMult,
+    context: "free-spin",
   });
 
   const result = await db.transaction(async (tx) => {
@@ -314,18 +344,31 @@ export async function templeRushFreeSpin(data: {
     const u = userRows[0];
     if (!u) throw new Error("User not found");
 
-    let nextWin = +(Number(row.fsSessionWin) + script.totalWin).toFixed(2);
-    let nextBomb = Number(row.fsBombAcc) + script.bombAccumulator;
-    let nextPlayed = Number(row.fsSpinsPlayed) + 1;
-    let nextLeft = left - 1;
-    if (script.retriggerSpins > 0) nextLeft += script.retriggerSpins;
-    nextLeft = Math.max(0, nextLeft);
+    const nextWin = +(Number(row.fsSessionWin) + script.totalWin).toFixed(2);
+    const bombCeiling = cfg.maxFsBombMult > 0 ? cfg.maxFsBombMult : Number.POSITIVE_INFINITY;
+    // Paytable rule: free spins keep the strongest bomb. The engine already started
+    // from the banked value (initialBombAccumulator), so don't add it again.
+    const nextBomb = Math.min(bombCeiling, script.bombAccumulator);
+    const nextPlayed = Number(row.fsSpinsPlayed) + 1;
+    const nextLeft = remainingFreeSpinsAfterSpin({
+      leftBefore: left,
+      retrigger: script.retriggerSpins,
+      playedAfter: nextPlayed,
+      maxSessionSpins: cfg.maxFsSessionSpins,
+    });
 
     let balance = Number(u.balance);
     let fsPayout: TempleRushSpinResult["fsPayout"];
 
     if (nextLeft === 0) {
-      const final = finalizeFreeSpinTotal(nextWin, nextBomb);
+      const final = enforcePoolCap({
+        gameId: TEMPLE_RUSH_GAME_ID,
+        gameName: GAME_NAME,
+        bet,
+        maxWinMult: cfg.maxWinMult,
+        computedWin: finalizeFreeSpinTotal(nextWin, nextBomb),
+        context: "free-spins-final",
+      }).payout;
       if (final > 0) {
         const winRes = await writeLedgerDelta(tx, {
           userId: user.id,
@@ -374,7 +417,11 @@ export async function templeRushFreeSpin(data: {
       })
       .where(eq(playSessions.id, row.id));
 
-    const updated = await tx.select().from(playSessions).where(eq(playSessions.id, row.id)).limit(1);
+    const updated = await tx
+      .select()
+      .from(playSessions)
+      .where(eq(playSessions.id, row.id))
+      .limit(1);
     return {
       balance,
       sessionRow: updated[0] ?? null,
@@ -408,19 +455,31 @@ export async function templeRushFreeSpin(data: {
 export async function templeRushBuyFeature(data: {
   bet: number;
   mode: "normal" | "super";
+  /** Bonus units to purchase. Price = bet × unitMult; Total = Price × quantity. */
+  quantity: number;
 }): Promise<{ balance: number; session: TempleRushSessionState }> {
   const user = await requireUser();
   if (!Number.isFinite(data.bet) || data.bet <= 0) throw new Error("Invalid bet");
+  const quantity = Math.round(data.quantity);
+  if (!Number.isFinite(quantity) || quantity < 1 || quantity > 50) {
+    throw new Error("Invalid quantity");
+  }
 
   const cfg = await loadEngineConfig();
-  const mult = data.mode === "super" ? cfg.superBuyFeatureMult : cfg.buyFeatureMult;
-  const cost = +(data.bet * mult).toFixed(2);
-  const maxBet = await getMaxSingleBet();
-  if (cost > maxBet * Math.max(mult, 1)) {
-    // buy feature can exceed single spin max; still cap at risk max * buy mult
+  if (data.mode === "super") throw new Error("Super Buy is no longer available");
+  // Never sell more spins than one feature can play (maxFsSessionSpins).
+  if (cfg.maxFsSessionSpins > 0 && quantity > cfg.maxFsSessionSpins) {
+    throw new Error(`Max ${cfg.maxFsSessionSpins} free spins per purchase`);
   }
-  if (cost > Number((await getMaxSingleBet()) * 500)) {
-    throw new Error("Buy feature amount too large");
+  const mult = pantherBuyPricePerSpin(
+    TEMPLE_RUSH_GAME_ID,
+    cfg.buyFeatureMult,
+    cfg.freeSpinsBase,
+    quantity,
+  );
+  const cost = +(data.bet * mult * quantity).toFixed(2);
+  if (data.bet > 100_000) {
+    throw new Error("Buy feature bet too large");
   }
 
   await assertNotInMaintenanceForBets();
@@ -454,7 +513,10 @@ export async function templeRushBuyFeature(data: {
         ),
       );
     for (const s of stale) {
-      await tx.update(playSessions).set({ status: "closed", freeSpinsLeft: 0 }).where(eq(playSessions.id, s.id));
+      await tx
+        .update(playSessions)
+        .set({ status: "closed", freeSpinsLeft: 0 })
+        .where(eq(playSessions.id, s.id));
     }
 
     const betRes = await writeLedgerDelta(tx, {
@@ -465,8 +527,8 @@ export async function templeRushBuyFeature(data: {
       game: GAME_NAME,
       note:
         data.mode === "super"
-          ? `${TEMPLE_RUSH_GAME_ID} · ${GAME_NAME} · buy super feature ₱${cost.toFixed(2)}`
-          : `${TEMPLE_RUSH_GAME_ID} · ${GAME_NAME} · buy feature ₱${cost.toFixed(2)}`,
+          ? `${TEMPLE_RUSH_GAME_ID} · ${GAME_NAME} · buy super feature ×${quantity} ₱${cost.toFixed(2)}`
+          : `${TEMPLE_RUSH_GAME_ID} · ${GAME_NAME} · buy feature ×${quantity} ₱${cost.toFixed(2)}`,
     });
 
     const id = newId();
@@ -478,7 +540,7 @@ export async function templeRushBuyFeature(data: {
       status: "open",
       bet: money(data.bet),
       ante,
-      freeSpinsLeft: cfg.freeSpinsBase,
+      freeSpinsLeft: quantity,
       fsSessionWin: "0.00",
       fsBombAcc: "0.00",
       fsSpinsPlayed: 0,

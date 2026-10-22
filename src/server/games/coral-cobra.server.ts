@@ -3,14 +3,15 @@
  * Client only receives scripts + balances; it cannot choose win amounts.
  */
 import { and, eq } from "drizzle-orm";
-import { CORAL_COBRA_GAME_ID, normalizeCoralCobraConfig, remainingFreeSpinsAfterSpin } from "@/lib/coral-cobra-config";
+import {
+  CORAL_COBRA_GAME_ID,
+  normalizeCoralCobraConfig,
+  remainingFreeSpinsAfterSpin,
+} from "@/lib/coral-cobra-config";
 import { getDb } from "../db/client";
 import { gameControls, playSessions, users } from "../db/schema";
 import { money, newId, requireUser } from "../session";
-import {
-  applyCapToScriptTotalWin,
-  enforcePoolCap,
-} from "../settlement/enforcePoolCap";
+import { applyCapToScriptTotalWin, enforcePoolCap } from "../settlement/enforcePoolCap";
 import {
   assertNotInMaintenanceForBets,
   availableFrom,
@@ -18,6 +19,7 @@ import {
   sumPendingWithdrawals,
   writeLedgerDelta,
 } from "../wallet.server";
+import { pantherBuyPricePerSpin } from "@/components/maxhigh/panther-shared/buyPricing";
 
 const GAME_NAME = "Coral Cobra";
 
@@ -57,9 +59,8 @@ async function resolveOnServer(opts: {
   const cfg = await loadEngineConfig();
   return withEngineExclusive(async () => {
     const { setCoralCobraConfig } = await import("@/components/maxhigh/coral-cobra/runtimeConfig");
-    const { resolveSpin, finalizeFreeSpinTotal } = await import(
-      "@/components/maxhigh/coral-cobra/spinResolver"
-    );
+    const { resolveSpin, finalizeFreeSpinTotal } =
+      await import("@/components/maxhigh/coral-cobra/spinResolver");
     setCoralCobraConfig(cfg);
     const script = resolveSpin({
       bet: opts.bet,
@@ -85,7 +86,9 @@ export type CoralCobraSessionState = {
 
 export type CoralCobraSpinResult = {
   balance: number;
-  script: Awaited<ReturnType<typeof import("@/components/maxhigh/coral-cobra/spinResolver").resolveSpin>>;
+  script: Awaited<
+    ReturnType<typeof import("@/components/maxhigh/coral-cobra/spinResolver").resolveSpin>
+  >;
   session: CoralCobraSessionState;
   /** Set when a free-spin feature just finished and win was paid. */
   fsPayout?: {
@@ -135,7 +138,10 @@ async function closeOtherOpenSessions(userId: string, keepId?: string) {
     );
   for (const row of open) {
     if (keepId && row.id === keepId) continue;
-    await db.update(playSessions).set({ status: "closed", freeSpinsLeft: 0 }).where(eq(playSessions.id, row.id));
+    await db
+      .update(playSessions)
+      .set({ status: "closed", freeSpinsLeft: 0 })
+      .where(eq(playSessions.id, row.id));
   }
 }
 
@@ -252,7 +258,10 @@ export async function coralCobraPaidSpin(data: {
           ),
         );
       for (const s of stale) {
-        await tx.update(playSessions).set({ status: "closed", freeSpinsLeft: 0 }).where(eq(playSessions.id, s.id));
+        await tx
+          .update(playSessions)
+          .set({ status: "closed", freeSpinsLeft: 0 })
+          .where(eq(playSessions.id, s.id));
       }
 
       const id = newId();
@@ -335,11 +344,13 @@ export async function coralCobraFreeSpin(data: {
     const u = userRows[0];
     if (!u) throw new Error("User not found");
 
-    let nextWin = +(Number(row.fsSessionWin) + script.totalWin).toFixed(2);
+    const nextWin = +(Number(row.fsSessionWin) + script.totalWin).toFixed(2);
     const bombCeiling = cfg.maxFsBombMult > 0 ? cfg.maxFsBombMult : Number.POSITIVE_INFINITY;
-    let nextBomb = Math.min(bombCeiling, Number(row.fsBombAcc) + script.bombAccumulator);
-    let nextPlayed = Number(row.fsSpinsPlayed) + 1;
-    let nextLeft = remainingFreeSpinsAfterSpin({
+    // Paytable rule: free spins keep the strongest bomb. The engine already started
+    // from the banked value (initialBombAccumulator), so don't add it again.
+    const nextBomb = Math.min(bombCeiling, script.bombAccumulator);
+    const nextPlayed = Number(row.fsSpinsPlayed) + 1;
+    const nextLeft = remainingFreeSpinsAfterSpin({
       leftBefore: left,
       retrigger: script.retriggerSpins,
       playedAfter: nextPlayed,
@@ -406,7 +417,11 @@ export async function coralCobraFreeSpin(data: {
       })
       .where(eq(playSessions.id, row.id));
 
-    const updated = await tx.select().from(playSessions).where(eq(playSessions.id, row.id)).limit(1);
+    const updated = await tx
+      .select()
+      .from(playSessions)
+      .where(eq(playSessions.id, row.id))
+      .limit(1);
     return {
       balance,
       sessionRow: updated[0] ?? null,
@@ -451,7 +466,17 @@ export async function coralCobraBuyFeature(data: {
   }
 
   const cfg = await loadEngineConfig();
-  const mult = data.mode === "super" ? cfg.superBuyFeatureMult : cfg.buyFeatureMult;
+  if (data.mode === "super") throw new Error("Super Buy is no longer available");
+  // Never sell more spins than one feature can play (maxFsSessionSpins).
+  if (cfg.maxFsSessionSpins > 0 && quantity > cfg.maxFsSessionSpins) {
+    throw new Error(`Max ${cfg.maxFsSessionSpins} free spins per purchase`);
+  }
+  const mult = pantherBuyPricePerSpin(
+    CORAL_COBRA_GAME_ID,
+    cfg.buyFeatureMult,
+    cfg.freeSpinsBase,
+    quantity,
+  );
   const cost = +(data.bet * mult * quantity).toFixed(2);
   if (data.bet > 100_000) {
     throw new Error("Buy feature bet too large");
@@ -488,7 +513,10 @@ export async function coralCobraBuyFeature(data: {
         ),
       );
     for (const s of stale) {
-      await tx.update(playSessions).set({ status: "closed", freeSpinsLeft: 0 }).where(eq(playSessions.id, s.id));
+      await tx
+        .update(playSessions)
+        .set({ status: "closed", freeSpinsLeft: 0 })
+        .where(eq(playSessions.id, s.id));
     }
 
     const betRes = await writeLedgerDelta(tx, {

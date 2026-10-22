@@ -11,13 +11,7 @@ import { formatMoney } from "@/lib/currency";
 import type { AdminUserRow } from "@/lib/admin-types";
 import { X } from "lucide-react";
 
-export function UsersTable({
-  users,
-  onChanged,
-}: {
-  users: AdminUserRow[];
-  onChanged: () => void;
-}) {
+export function UsersTable({ users, onChanged }: { users: AdminUserRow[]; onChanged: () => void }) {
   const [busyId, setBusyId] = useState<string | null>(null);
   const [lockModalUser, setLockModalUser] = useState<AdminUserRow | null>(null);
   const [lockReason, setLockReason] = useState("");
@@ -77,7 +71,9 @@ export function UsersTable({
       const res = await adminForceLogoutUserFn({
         data: { userId: user.id },
       });
-      toast.success(`Force logout successful for @${res.username} (${res.terminatedSessionsCount} session(s) terminated)`);
+      toast.success(
+        `Force logout successful for @${res.username} (${res.terminatedSessionsCount} session(s) terminated)`,
+      );
       onChanged();
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Force logout failed");
@@ -127,7 +123,10 @@ export function UsersTable({
             {users.map((u) => {
               const locked = Boolean(u.isLocked || (u.failedAttempts ?? 0) >= 3);
               return (
-                <tr key={u.id} className="border-b border-border/60 last:border-0 hover:bg-panel-hover/50">
+                <tr
+                  key={u.id}
+                  className="border-b border-border/60 last:border-0 hover:bg-panel-hover/50"
+                >
                   <td className="px-4 py-3">
                     <div className="font-semibold text-foreground">@{u.username}</div>
                     <div className="text-xs text-muted-foreground">{u.email ?? "—"}</div>
@@ -230,7 +229,10 @@ export function UsersTable({
       </div>
 
       {lockModalUser && (
-        <div className="fixed inset-0 z-50 grid place-items-center bg-black/60 backdrop-blur-sm p-4" onClick={() => setLockModalUser(null)}>
+        <div
+          className="fixed inset-0 z-50 grid place-items-center bg-black/60 backdrop-blur-sm p-4"
+          onClick={() => setLockModalUser(null)}
+        >
           <form
             onSubmit={handleLockSubmit}
             onClick={(e) => e.stopPropagation()}
@@ -238,8 +240,12 @@ export function UsersTable({
           >
             <div className="flex items-center justify-between border-b border-border pb-3">
               <div>
-                <h3 className="text-lg font-bold text-danger">Lock Account @{lockModalUser.username}</h3>
-                <p className="text-xs text-muted-foreground">User will be blocked from logging in and forced logged out immediately.</p>
+                <h3 className="text-lg font-bold text-danger">
+                  Lock Account @{lockModalUser.username}
+                </h3>
+                <p className="text-xs text-muted-foreground">
+                  User will be blocked from logging in and forced logged out immediately.
+                </p>
               </div>
               <button
                 type="button"

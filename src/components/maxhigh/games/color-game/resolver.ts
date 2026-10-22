@@ -2,11 +2,7 @@
  * Color Game deal resolver — pure math, no wallet I/O.
  * Weighted roll over configurable color spots; credit winning bets only.
  */
-import {
-  creditForSpotWin,
-  type ColorGameConfig,
-  type ColorSpotId,
-} from "@/lib/color-game-config";
+import { creditForSpotWin, type ColorGameConfig, type ColorSpotId } from "@/lib/color-game-config";
 import { createRng, newDealSeed } from "./rng";
 import { getColorGameConfig } from "./runtimeConfig";
 
@@ -21,10 +17,7 @@ export type DealResolveResult = {
   totalWager: number;
 };
 
-function pickWeighted(
-  spots: ColorGameConfig["spots"],
-  rng: () => number,
-): ColorSpotId {
+function pickWeighted(spots: ColorGameConfig["spots"], rng: () => number): ColorSpotId {
   const total = spots.reduce((s, sp) => s + sp.weight, 0);
   let roll = rng() * total;
   for (const sp of spots) {
@@ -58,8 +51,7 @@ export function resolveColorGameDeal(opts: {
   let immediateCredit = 0;
   for (const sp of cfg.spots) {
     const stake = bets[sp.id] ?? 0;
-    const win =
-      sp.id === winningColor && stake > 0 ? creditForSpotWin(stake, sp.payoutMult) : 0;
+    const win = sp.id === winningColor && stake > 0 ? creditForSpotWin(stake, sp.payoutMult) : 0;
     spotWins[sp.id] = win;
     immediateCredit += win;
   }

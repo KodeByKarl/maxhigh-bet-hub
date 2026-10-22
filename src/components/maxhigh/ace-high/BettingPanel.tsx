@@ -110,9 +110,7 @@ export function BettingPanel({
     onClearSpot?.(activeSpot);
   }
 
-  const steps = (cfg.betSteps?.length ? cfg.betSteps : BET_STEPS).filter(
-    (s) => s <= cfg.maxBet,
-  );
+  const steps = (cfg.betSteps?.length ? cfg.betSteps : BET_STEPS).filter((s) => s <= cfg.maxBet);
 
   const spots = [
     { id: "base" as const, value: baseBet, hint: "1:1" },

@@ -1,7 +1,4 @@
-import {
-  DEFAULT_COLOR_GAME_CONFIG,
-  type ColorGameConfig,
-} from "@/lib/color-game-config";
+import { DEFAULT_COLOR_GAME_CONFIG, type ColorGameConfig } from "@/lib/color-game-config";
 
 let active: ColorGameConfig = structuredClone(DEFAULT_COLOR_GAME_CONFIG);
 

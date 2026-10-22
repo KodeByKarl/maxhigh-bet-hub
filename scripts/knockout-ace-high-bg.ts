@@ -39,7 +39,10 @@ function restoreChipSources() {
 }
 
 async function circularChipMask(file: string) {
-  const { data, info } = await sharp(file).ensureAlpha().raw().toBuffer({ resolveWithObject: true });
+  const { data, info } = await sharp(file)
+    .ensureAlpha()
+    .raw()
+    .toBuffer({ resolveWithObject: true });
   const { width, height } = info;
   const out = Buffer.from(data);
   const cx = width / 2;
@@ -82,12 +85,17 @@ async function circularChipMask(file: string) {
     }
   }
 
-  await sharp(out, { raw: { width, height, channels: 4 } }).png().toFile(file);
+  await sharp(out, { raw: { width, height, channels: 4 } })
+    .png()
+    .toFile(file);
   console.log("chip OK", file.replace(process.cwd(), ""), `r=${radius.toFixed(1)}`);
 }
 
 async function roundedCardMask(file: string) {
-  const { data, info } = await sharp(file).ensureAlpha().raw().toBuffer({ resolveWithObject: true });
+  const { data, info } = await sharp(file)
+    .ensureAlpha()
+    .raw()
+    .toBuffer({ resolveWithObject: true });
   const { width, height } = info;
   const out = Buffer.from(data);
 
@@ -144,7 +152,9 @@ async function roundedCardMask(file: string) {
     }
   }
 
-  await sharp(out, { raw: { width, height, channels: 4 } }).png().toFile(file);
+  await sharp(out, { raw: { width, height, channels: 4 } })
+    .png()
+    .toFile(file);
   console.log("card OK", file.replace(process.cwd(), ""));
 }
 

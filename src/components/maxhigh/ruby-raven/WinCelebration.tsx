@@ -156,8 +156,7 @@ export function WinCelebration({
                   color: LETTER_COLORS[i % LETTER_COLORS.length],
                   WebkitTextStroke: "0.1em #881337",
                   paintOrder: "stroke fill",
-                  textShadow:
-                    "0 0.08em 0 #9F1239, 0 0.16em 0.22em rgba(0,0,0,0.45)",
+                  textShadow: "0 0.08em 0 #9F1239, 0 0.16em 0.22em rgba(0,0,0,0.45)",
                 }}
               >
                 {ch}
@@ -173,8 +172,7 @@ export function WinCelebration({
             transition={{ delay: 0.08, type: "spring", stiffness: 380 }}
             className="relative z-[3] mb-3 w-full max-w-[260px] rounded-[1.25rem] p-[5px]"
             style={{
-              background:
-                "linear-gradient(135deg, #FFE4E6 0%, #F43F5E 45%, #881337 100%)",
+              background: "linear-gradient(135deg, #FFE4E6 0%, #F43F5E 45%, #881337 100%)",
               boxShadow: "0 12px 32px rgba(0,0,0,0.65)",
             }}
           >
@@ -214,8 +212,7 @@ export function WinCelebration({
             className="relative z-[2] mb-3 w-full max-w-[380px] rounded-2xl border-[3px] px-3 py-3"
             style={{
               borderColor: "rgba(251,113,133,0.55)",
-              background:
-                "linear-gradient(180deg, rgba(136,19,55,0.96), rgba(15,4,8,0.98))",
+              background: "linear-gradient(180deg, rgba(136,19,55,0.96), rgba(15,4,8,0.98))",
               boxShadow: "0 10px 28px rgba(0,0,0,0.4)",
             }}
           >

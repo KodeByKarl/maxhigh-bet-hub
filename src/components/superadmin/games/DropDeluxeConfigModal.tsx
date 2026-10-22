@@ -13,14 +13,13 @@ import {
 import { Input } from "@/components/ui/input";
 import {
   DEFAULT_DROP_DELUXE_CONFIG,
+  HAND_KEYS,
+  HAND_LABEL,
   RTP_REFERENCE,
   normalizeDropDeluxeConfig,
   type DropDeluxeConfig,
 } from "@/lib/drop-deluxe-config";
-import {
-  getDropDeluxeEngineConfigFn,
-  saveDropDeluxeEngineConfigFn,
-} from "@/functions/superadmin";
+import { getDropDeluxeEngineConfigFn, saveDropDeluxeEngineConfigFn } from "@/functions/superadmin";
 import type { SuperGameRow } from "@/lib/superadmin-types";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
@@ -69,15 +68,7 @@ function Num({
   );
 }
 
-function Field({
-  label,
-  hint,
-  children,
-}: {
-  label: string;
-  hint?: string;
-  children: ReactNode;
-}) {
+function Field({ label, hint, children }: { label: string; hint?: string; children: ReactNode }) {
   return (
     <label className="block space-y-1.5">
       <span className="text-xs font-medium text-muted-foreground">{label}</span>
@@ -108,9 +99,7 @@ export function DropDeluxeConfigModal({ game, open, onOpenChange, onPatchLobby }
   );
   const [notes, setNotes] = useState(game.notes ?? "");
   const [sortOrder, setSortOrder] = useState(game.sortOrder ?? 0);
-  const [betStepsText, setBetStepsText] = useState(
-    DEFAULT_DROP_DELUXE_CONFIG.betSteps.join(", "),
-  );
+  const [betStepsText, setBetStepsText] = useState(DEFAULT_DROP_DELUXE_CONFIG.betSteps.join(", "));
 
   useEffect(() => {
     if (!open) return;
@@ -145,7 +134,7 @@ export function DropDeluxeConfigModal({ game, open, onOpenChange, onPatchLobby }
       const next = await saveDropDeluxeEngineConfigFn({ data: { config: withSteps } });
       setCfg(next);
       setBetStepsText(next.betSteps.join(", "));
-      toast.success("Drop Deluxe engine saved");
+      toast.success("Deluxe Draw engine saved");
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Save failed");
     } finally {
@@ -178,14 +167,12 @@ export function DropDeluxeConfigModal({ game, open, onOpenChange, onPatchLobby }
       <DialogContent className="flex max-h-[90vh] max-w-2xl flex-col gap-0 overflow-hidden p-0">
         <DialogHeader className="border-b border-white/10 px-5 py-4">
           <DialogTitle className="flex items-center gap-2">
-            Drop Deluxe config
+            Deluxe Draw config
             <button type="button" className="ml-auto" onClick={() => onOpenChange(false)}>
               <X className="h-4 w-4" />
             </button>
           </DialogTitle>
-          <DialogDescription>
-            Fair 1–10 die. Default 9× total return ≈ 90% RTP on a single lane.
-          </DialogDescription>
+          <DialogDescription>Video poker paytable — Jacks or Better.</DialogDescription>
         </DialogHeader>
 
         <div className="flex min-h-0 flex-1">
@@ -248,25 +235,22 @@ export function DropDeluxeConfigModal({ game, open, onOpenChange, onPatchLobby }
               </div>
             ) : section === "payouts" ? (
               <div className="grid gap-3 sm:grid-cols-2">
-                <Field
-                  label="Payout multiplier"
-                  hint={`Total return incl. stake. Single lane @ 9× → ~${RTP_REFERENCE.singlePick}% RTP.`}
-                >
-                  <Num
-                    value={cfg.payoutMult}
-                    onChange={(n) => setCfg((c) => ({ ...c, payoutMult: n }))}
-                    step={0.1}
-                    min={1.01}
-                  />
-                </Field>
-                <Field label="Max picks per drop">
-                  <Num
-                    value={cfg.maxPicks}
-                    onChange={(n) => setCfg((c) => ({ ...c, maxPicks: n }))}
-                    min={1}
-                    max={10}
-                  />
-                </Field>
+                <p className="text-[11px] text-muted-foreground sm:col-span-2">
+                  Total-return multipliers (stake included). Default is 7/5 Jacks or Better ≈ 96.4%
+                  RTP with optimal holds.
+                </p>
+                {HAND_KEYS.map((k) => (
+                  <Field key={k} label={HAND_LABEL[k]}>
+                    <Num
+                      value={cfg.paytable[k]}
+                      onChange={(n) =>
+                        setCfg((c) => ({ ...c, paytable: { ...c.paytable, [k]: n } }))
+                      }
+                      step={0.5}
+                      min={0}
+                    />
+                  </Field>
+                ))}
                 <Field label="RTP target % (display)">
                   <Num
                     value={cfg.rtpTarget}
@@ -277,24 +261,17 @@ export function DropDeluxeConfigModal({ game, open, onOpenChange, onPatchLobby }
               </div>
             ) : (
               <div className="grid gap-3 sm:grid-cols-2">
-                <Field label="Min lane bet">
+                <Field label="Min bet">
                   <Num
                     value={cfg.minBet}
                     onChange={(n) => setCfg((c) => ({ ...c, minBet: n }))}
                     step={0.01}
                   />
                 </Field>
-                <Field label="Max total bet">
+                <Field label="Max bet">
                   <Num
                     value={cfg.maxBet}
                     onChange={(n) => setCfg((c) => ({ ...c, maxBet: n }))}
-                    step={0.01}
-                  />
-                </Field>
-                <Field label="Max per lane">
-                  <Num
-                    value={cfg.maxSpotBet}
-                    onChange={(n) => setCfg((c) => ({ ...c, maxSpotBet: n }))}
                     step={0.01}
                   />
                 </Field>

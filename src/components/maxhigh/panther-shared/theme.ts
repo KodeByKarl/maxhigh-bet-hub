@@ -121,12 +121,17 @@ const VAR_MAP: Record<keyof PantherThemeColors, string> = {
   muteText: "--p-mute-text",
 };
 
-export function themeToCssVars(theme: PantherTheme): CSSProperties {
+/** CSS custom properties for a color set (shared by every cluster-tumble family). */
+export function colorsToCssVars(colors: PantherThemeColors): CSSProperties {
   const vars: Record<string, string> = {};
   for (const [key, cssVar] of Object.entries(VAR_MAP) as [keyof PantherThemeColors, string][]) {
-    vars[cssVar] = theme.colors[key];
+    vars[cssVar] = colors[key];
   }
   return vars as CSSProperties;
+}
+
+export function themeToCssVars(theme: PantherTheme): CSSProperties {
+  return colorsToCssVars(theme.colors);
 }
 
 /** Shared GP symbol pack (math SymKinds map to these files). */

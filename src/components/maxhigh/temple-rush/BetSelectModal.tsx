@@ -25,9 +25,12 @@ export function BetSelectModal({ currentBet, onSelectBet, onClose }: Props) {
         exit={{ scale: 0.85, opacity: 0 }}
         transition={{ type: "spring", stiffness: 350, damping: 22 }}
         onClick={(e) => e.stopPropagation()}
-        className="relative w-full max-w-lg rounded-[2rem] border-2 border-amber-400/60 bg-gradient-to-b from-neutral-900 via-neutral-950 to-black p-6 text-center shadow-[0_0_50px_rgba(217,119,6,0.5)] cursor-default"
+        className="relative w-full max-w-lg rounded-[2rem] border-2 bg-gradient-to-b from-neutral-900 via-neutral-950 to-black p-6 text-center cursor-default"
+        style={{
+          borderColor: "color-mix(in srgb, var(--p-accent) 60%, transparent)",
+          boxShadow: "0 0 50px var(--p-spin-shadow)",
+        }}
       >
-        {/* Close Button */}
         <button
           type="button"
           onClick={onClose}
@@ -37,15 +40,16 @@ export function BetSelectModal({ currentBet, onSelectBet, onClose }: Props) {
           <X size={18} />
         </button>
 
-        {/* Title */}
-        <h3 className="mb-1 text-lg font-black uppercase tracking-wider text-yellow-400 drop-shadow-md sm:text-xl">
+        <h3
+          className="mb-1 text-lg font-black uppercase tracking-wider drop-shadow-md sm:text-xl"
+          style={{ color: "var(--p-modal-title)" }}
+        >
           Select Bet Amount
         </h3>
         <p className="mb-5 text-xs text-white/50 font-medium">
           Choose a total bet size to wager per spin
         </p>
 
-        {/* Bet Selection Grid */}
         <div className="grid grid-cols-4 gap-2.5 sm:gap-3">
           {bets.map((val) => {
             const isSelected = val === currentBet;
@@ -59,16 +63,25 @@ export function BetSelectModal({ currentBet, onSelectBet, onClose }: Props) {
                 }}
                 className={`flex flex-col items-center justify-center rounded-xl py-3 px-2 font-black transition border ${
                   isSelected
-                    ? "border-amber-300 bg-gradient-to-b from-amber-400 via-amber-500 to-amber-600 text-amber-950 shadow-[0_0_15px_rgba(245,158,11,0.6)] scale-105"
-                    : "border-white/10 bg-neutral-800/80 text-white hover:bg-neutral-700 hover:border-amber-400/40"
+                    ? "scale-105"
+                    : "border-white/10 bg-neutral-800/80 text-white hover:bg-neutral-700"
                 }`}
+                style={
+                  isSelected
+                    ? {
+                        borderColor: "var(--p-accent-soft)",
+                        background:
+                          "linear-gradient(180deg, var(--p-spin-from) 0%, var(--p-spin-mid) 50%, var(--p-spin-to) 100%)",
+                        color: "var(--p-accent-deep)",
+                        boxShadow: "0 0 15px var(--p-spin-shadow)",
+                      }
+                    : undefined
+                }
               >
                 <span className="text-[10px] opacity-70 uppercase tracking-tight font-bold">
                   Bet
                 </span>
-                <span className="text-sm sm:text-base tabular-nums">
-                  ₱{val.toFixed(2)}
-                </span>
+                <span className="text-sm sm:text-base tabular-nums">₱{val.toFixed(2)}</span>
               </button>
             );
           })}

@@ -1,87 +1,72 @@
-import type { BuffaloSymbolConfig, BuffaloSymKind } from "@/lib/cleopatra-gold-config";
+/** Cleopatra Gold — 3×4 cluster tumble (panther rectangle board). */
+
+export type SymKind =
+  | "grape"
+  | "plum"
+  | "melon"
+  | "apple"
+  | "blue"
+  | "green"
+  | "purple"
+  | "heart"
+  | "lollipop"
+  | "bomb";
+
+export type CellSym = {
+  id: string;
+  kind: SymKind;
+  weight: number;
+  pay: [number, number, number];
+  scatter?: boolean;
+  bomb?: boolean;
+};
 
 export type BoardCell = {
   key: string;
-  reelIndex: number;
-  rowIndex: number;
-  sym: BuffaloSymbolConfig;
+  sym: CellSym;
+  mult?: number;
 };
 
-export type WaysWin = {
-  symbolId: string;
-  kind: BuffaloSymKind;
-  name: string;
-  consecutiveReels: number;
-  waysCount: number;
-  basePayMultiplier: number;
-  totalWinAmount: number;
-  winningKeys: string[];
+export type ClusterWin = {
+  id: string;
+  kind: SymKind;
+  count: number;
+  pay: number;
+  perSymbol: number;
+  keys: string[];
 };
 
-export type EvalResult = {
-  waysWins: WaysWin[];
-  winningKeys: string[];
-  winAmount: number;
-  scatterCount: number;
-  scatterKeys: string[];
-  totalWays: number;
-};
-
-export type CascadeStep = {
-  stepIndex: number;
+export type TumbleStep = {
   board: BoardCell[];
-  evalResult: EvalResult;
-  multiplier: number;
-  stepWin: number;
+  winningKeys: string[];
+  clusters: ClusterWin[];
+  tumbleWin: number;
+  bombSum: number;
+  afterPop: (BoardCell | null)[];
+  afterFall: BoardCell[];
   spawnedKeys: string[];
   fallenKeys: string[];
-};
-
-export type ChestCoin = {
-  reel: number;
-  row: number;
-  mult: number;
-  jackpotId?: string;
-  label: string;
-};
-
-export type TreasureChestStep = {
-  stepIndex: number;
-  respinsLeft: number;
-  chests: ChestCoin[];
-  newChests: ChestCoin[];
-};
-
-export type TreasureChestScript = {
-  triggerChests: ChestCoin[];
-  steps: TreasureChestStep[];
-  totalMult: number;
-  totalWin: number;
-  filledGrid: boolean;
-  legendAwarded: boolean;
+  fallDistance: Record<string, number>;
 };
 
 export type SpinScript = {
-  initialReelHeights: number[];
   initialBoard: BoardCell[];
-  steps: CascadeStep[];
-  totalWays: number;
-  baseWin: number;
+  steps: TumbleStep[];
   totalWin: number;
-  scattersCount: number;
+  rawWin: number;
+  displayMult: number;
+  scatters: number;
+  scatterPay: number;
   freeSpinsAwarded: number;
-  bonusChestCount: number;
-  treasureChest: TreasureChestScript | null;
-  sessionMultiplier: number;
-  hitCap?: boolean;
+  retriggerSpins: number;
+  isFreeSpins: boolean;
+  bombAccumulator: number;
 };
 
-export type BuffaloSessionState = {
-  sessionId: string | null;
-  freeSpinsLeft: number;
-  fsSessionWin: number;
-  fsSpinsPlayed: number;
-  inFree: boolean;
-  bet: number;
-  ante: boolean;
-};
+/** 3×4 board — unique rectangle for Cleopatra Gold. */
+export const COLS = 3;
+export const ROWS = 4;
+export const TOP_COLS = 0;
+export const MAIN_CELLS = COLS * ROWS; // 12
+export const CELLS = MAIN_CELLS;
+export const MIN_CLUSTER = 4;

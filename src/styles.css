@@ -260,6 +260,15 @@ iframe[src*="lovable"] {
   filter: drop-shadow(0 3px 0 #451A03) drop-shadow(0 8px 24px rgba(245, 158, 11, 0.5));
 }
 
+/* Realms family — neutral silver; each title's accent shows in the loader art. */
+.realms-title {
+  background: linear-gradient(180deg, #FFFFFF 0%, #F1F5F9 40%, #CBD5E1 70%, #64748B 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  filter: drop-shadow(0 3px 0 #0F172A) drop-shadow(0 8px 24px rgba(255, 255, 255, 0.25));
+}
+
 /* Fortune Gems */
 .fortune-title {
   background: linear-gradient(180deg, #FFF7ED 0%, #FBBF24 30%, #F43F5E 70%, #7C2D12 100%);

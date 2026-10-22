@@ -1,3 +1,4 @@
+import type { RowDataPacket } from "mysql2";
 /**
  * Idempotent additive sync for existing MaxHigh MySQL DBs.
  * Prefer `npm run db:push` when possible; this script fills gaps without dropping data.
@@ -18,7 +19,7 @@ async function main() {
   const conn = await mysql.createConnection({ host, port, user, password, database });
 
   const addColumnIfNotExists = async (table: string, column: string, definition: string) => {
-    const [rows] = await conn.query<any[]>(
+    const [rows] = await conn.query<RowDataPacket[]>(
       `SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = ? AND TABLE_NAME = ? AND COLUMN_NAME = ?`,
       [database, table, column],
     );
@@ -30,7 +31,7 @@ async function main() {
   };
 
   const addIndexIfNotExists = async (table: string, indexName: string, ddl: string) => {
-    const [rows] = await conn.query<any[]>(
+    const [rows] = await conn.query<RowDataPacket[]>(
       `SELECT INDEX_NAME FROM INFORMATION_SCHEMA.STATISTICS WHERE TABLE_SCHEMA = ? AND TABLE_NAME = ? AND INDEX_NAME = ? LIMIT 1`,
       [database, table, indexName],
     );
@@ -81,10 +82,14 @@ async function main() {
   await addColumnIfNotExists("users", "display_name", "VARCHAR(128) NULL");
   await addColumnIfNotExists("users", "avatar_url", "VARCHAR(512) NULL");
   await addColumnIfNotExists("users", "upline_id", "VARCHAR(36) NULL");
-  await addColumnIfNotExists("users", "updated_at", "DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP");
+  await addColumnIfNotExists(
+    "users",
+    "updated_at",
+    "DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP",
+  );
 
   // Stable ledger ordering — created_at is second-precision so bet/win pairs can tie.
-  const [txSeqCol] = await conn.query<any[]>(
+  const [txSeqCol] = await conn.query<RowDataPacket[]>(
     `SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = ? AND TABLE_NAME = 'transactions' AND COLUMN_NAME = 'seq'`,
     [database],
   );
@@ -116,7 +121,9 @@ async function main() {
       ) x ON t.id = x.id
       SET t.seq = x.new_seq
     `);
-    const [maxRow] = await conn.query<any[]>(`SELECT COALESCE(MAX(seq), 0) + 1 AS next_seq FROM transactions`);
+    const [maxRow] = await conn.query<RowDataPacket[]>(
+      `SELECT COALESCE(MAX(seq), 0) + 1 AS next_seq FROM transactions`,
+    );
     const nextSeq = Number(maxRow?.[0]?.next_seq ?? 1);
     await conn.query(
       `ALTER TABLE transactions MODIFY seq BIGINT UNSIGNED NOT NULL AUTO_INCREMENT UNIQUE, AUTO_INCREMENT = ${nextSeq}`,
@@ -130,15 +137,19 @@ async function main() {
   `);
   try {
     await conn.query(`ALTER TABLE users MODIFY COLUMN public_user_id VARCHAR(64) NOT NULL`);
-  } catch (err: any) {
-    console.warn("public_user_id NOT NULL:", err?.message ?? err);
+  } catch (err) {
+    console.warn("public_user_id NOT NULL:", err instanceof Error ? err.message : err);
   }
   await addIndexIfNotExists(
     "users",
     "users_public_user_id_uq",
     "CREATE UNIQUE INDEX users_public_user_id_uq ON users (public_user_id)",
   );
-  await addIndexIfNotExists("users", "users_upline_idx", "CREATE INDEX users_upline_idx ON users (upline_id)");
+  await addIndexIfNotExists(
+    "users",
+    "users_upline_idx",
+    "CREATE INDEX users_upline_idx ON users (upline_id)",
+  );
 
   await conn.query(`
     CREATE TABLE IF NOT EXISTS \`sessions\` (
@@ -150,7 +161,11 @@ async function main() {
       \`created_at\` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
   `);
-  await addColumnIfNotExists("sessions", "last_seen_at", "DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP");
+  await addColumnIfNotExists(
+    "sessions",
+    "last_seen_at",
+    "DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP",
+  );
 
   await addColumnIfNotExists("jackpot", "enabled", "ENUM('yes','no') NOT NULL DEFAULT 'yes'");
   await addColumnIfNotExists("jackpot", "display_amount", "DECIMAL(18,2) NOT NULL DEFAULT 0.00");
@@ -223,7 +238,11 @@ async function main() {
       \`updated_at\` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
   `);
-  await addColumnIfNotExists("risk_controls", "max_weekly_limit", "DECIMAL(14,2) NOT NULL DEFAULT '20000.00'");
+  await addColumnIfNotExists(
+    "risk_controls",
+    "max_weekly_limit",
+    "DECIMAL(14,2) NOT NULL DEFAULT '20000.00'",
+  );
 
   await conn.query(`
     CREATE TABLE IF NOT EXISTS \`game_settings_logs\` (

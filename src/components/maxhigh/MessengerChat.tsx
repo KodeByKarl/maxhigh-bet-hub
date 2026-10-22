@@ -64,12 +64,12 @@ export function MessengerChat({ onBack }: { onBack?: () => void }) {
           setTicketId(res.ticket.id);
           setAgentName(res.ticket.agentName || null);
           setMessages(
-            res.messages.map((m: any) => ({
+            res.messages.map((m) => ({
               id: m.id,
               sender: m.sender,
               text: m.text,
               timestamp: new Date(m.createdAt),
-            }))
+            })),
           );
         } else {
           setTicketId(null);
@@ -89,42 +89,45 @@ export function MessengerChat({ onBack }: { onBack?: () => void }) {
     async function poll() {
       try {
         const res = await getSupportTicketFn();
-        
+
         // If ticketId was set, and the fetched ticket has a different ID or is null, it means the old one was resolved!
         if (ticketId && (!res.ticket || res.ticket.id !== ticketId)) {
           if (pollIntervalRef.current) {
             window.clearInterval(pollIntervalRef.current);
           }
-          
+
           // Notify the player
           const rawNotifs = localStorage.getItem("maxhigh.notifications");
           let list = [];
           try {
             if (rawNotifs) list = JSON.parse(rawNotifs);
-          } catch (e) {}
-          
+          } catch {
+            // Browser audio may be unavailable; ticket resolution still succeeds.
+          }
+
           const newNotif = {
             id: Math.random().toString(),
             title: lang === "tl" ? "Naresolba ang Support Ticket" : "Live Chat Resolved",
-            body: lang === "tl" 
-              ? "Ang iyong live support ticket ay naresolba at isinara ni Agent Chloe. Salamat!"
-              : "Your live support ticket was resolved and closed by Agent Chloe. Thank you!",
+            body:
+              lang === "tl"
+                ? "Ang iyong live support ticket ay naresolba at isinara ni Agent Chloe. Salamat!"
+                : "Your live support ticket was resolved and closed by Agent Chloe. Thank you!",
             time: "Just now",
             type: "system" as const,
             read: false,
           };
           list.unshift(newNotif);
           localStorage.setItem("maxhigh.notifications", JSON.stringify(list));
-          
+
           // Dispatch event to update navbar/notifications
           window.dispatchEvent(new CustomEvent("maxhigh:notifications_updated"));
-          
+
           toast.success(
-            lang === "tl" 
-              ? "Naresolba na ang iyong support ticket!" 
-              : "Your support ticket has been resolved!"
+            lang === "tl"
+              ? "Naresolba na ang iyong support ticket!"
+              : "Your support ticket has been resolved!",
           );
-          
+
           if (onBack) onBack();
           return;
         }
@@ -133,12 +136,12 @@ export function MessengerChat({ onBack }: { onBack?: () => void }) {
         if (res.ticket) {
           setAgentName(res.ticket.agentName || null);
           setMessages(
-            res.messages.map((m: any) => ({
+            res.messages.map((m) => ({
               id: m.id,
               sender: m.sender,
               text: m.text,
               timestamp: new Date(m.createdAt),
-            }))
+            })),
           );
         }
       } catch (err) {
@@ -183,12 +186,12 @@ export function MessengerChat({ onBack }: { onBack?: () => void }) {
         setTicketId(res.ticketId);
         setAgentName(ticketRes.ticket?.agentName || null);
         setMessages(
-          ticketRes.messages.map((m: any) => ({
+          ticketRes.messages.map((m) => ({
             id: m.id,
             sender: m.sender,
             text: m.text,
             timestamp: new Date(m.createdAt),
-          }))
+          })),
         );
         toast.success(lang === "tl" ? "Nagsimula na ang chat!" : "Support ticket created!");
       }
@@ -221,16 +224,16 @@ export function MessengerChat({ onBack }: { onBack?: () => void }) {
       ]);
 
       await sendSupportMessageFn({ data: { text: userText, lang } });
-      
+
       // Instantly load new messages
       const res = await getSupportTicketFn();
       setMessages(
-        res.messages.map((m: any) => ({
+        res.messages.map((m) => ({
           id: m.id,
           sender: m.sender,
           text: m.text,
           timestamp: new Date(m.createdAt),
-        }))
+        })),
       );
     } catch (err) {
       console.error("Error sending support message:", err);
@@ -270,17 +273,17 @@ export function MessengerChat({ onBack }: { onBack?: () => void }) {
       ]);
 
       await sendSupportMessageFn({ data: { text: userText, lang } });
-      
+
       // Delay slightly then reload messages to get the automated agent reply
       await new Promise((resolve) => setTimeout(resolve, 900));
       const res = await getSupportTicketFn();
       setMessages(
-        res.messages.map((m: any) => ({
+        res.messages.map((m) => ({
           id: m.id,
           sender: m.sender,
           text: m.text,
           timestamp: new Date(m.createdAt),
-        }))
+        })),
       );
     } catch (err) {
       console.error("Error triggering automation:", err);
@@ -297,7 +300,9 @@ export function MessengerChat({ onBack }: { onBack?: () => void }) {
     return (
       <div className="flex h-full items-center justify-center bg-panel text-muted-foreground p-8 gap-2">
         <Loader2 className="h-5 w-5 animate-spin text-primary" />
-        <span>{lang === "tl" ? "Sineset-up ang live support..." : "Setting up live support..."}</span>
+        <span>
+          {lang === "tl" ? "Sineset-up ang live support..." : "Setting up live support..."}
+        </span>
       </div>
     );
   }
@@ -325,15 +330,18 @@ export function MessengerChat({ onBack }: { onBack?: () => void }) {
               {lang === "tl" ? "Simulan ang Live Support" : "Start Live Support"}
             </h2>
             <p className="text-xs text-muted-foreground leading-relaxed">
-              {lang === "tl" 
-                ? "Ilagay ang iyong pangalan at detalye ng concern para simulan ang chat." 
+              {lang === "tl"
+                ? "Ilagay ang iyong pangalan at detalye ng concern para simulan ang chat."
                 : "Enter your name and concerns to initialize chat session."}
             </p>
           </div>
 
           <form onSubmit={handleStartChat} className="space-y-4">
             <div className="space-y-1.5">
-              <label htmlFor="formPlayerName" className="flex items-center gap-1.5 text-xs font-bold text-foreground">
+              <label
+                htmlFor="formPlayerName"
+                className="flex items-center gap-1.5 text-xs font-bold text-foreground"
+              >
                 <User size={13} className="text-primary" />
                 {lang === "tl" ? "Pangalan ng Player" : "Player Name"}
               </label>
@@ -349,7 +357,10 @@ export function MessengerChat({ onBack }: { onBack?: () => void }) {
             </div>
 
             <div className="space-y-1.5">
-              <label htmlFor="formConcern" className="flex items-center gap-1.5 text-xs font-bold text-foreground">
+              <label
+                htmlFor="formConcern"
+                className="flex items-center gap-1.5 text-xs font-bold text-foreground"
+              >
                 <HelpCircle size={13} className="text-primary" />
                 {lang === "tl" ? "Mga Detalye ng Concern" : "Concerns"}
               </label>
@@ -357,7 +368,11 @@ export function MessengerChat({ onBack }: { onBack?: () => void }) {
                 id="formConcern"
                 value={formConcern}
                 onChange={(e) => setFormConcern(e.target.value)}
-                placeholder={lang === "tl" ? "Ano ang iyong concern? (hal. GCash deposit issue, game error...)" : "Describe your concern... (e.g. GCash deposit issue, game error...)"}
+                placeholder={
+                  lang === "tl"
+                    ? "Ano ang iyong concern? (hal. GCash deposit issue, game error...)"
+                    : "Describe your concern... (e.g. GCash deposit issue, game error...)"
+                }
                 required
                 rows={3}
                 className="w-full rounded-2xl border border-border bg-panel px-4 py-3 text-sm text-foreground outline-none focus:border-primary transition-colors resize-none"
@@ -417,7 +432,9 @@ export function MessengerChat({ onBack }: { onBack?: () => void }) {
 
         <div className="rounded-xl border border-border bg-muted/40 p-3">
           <p className="text-[10px] text-muted-foreground leading-relaxed">
-            {t("Select a service below to run an instant automated diagnostic checkup on your account.")}
+            {t(
+              "Select a service below to run an instant automated diagnostic checkup on your account.",
+            )}
           </p>
         </div>
       </div>
@@ -443,39 +460,37 @@ export function MessengerChat({ onBack }: { onBack?: () => void }) {
               <span
                 className={cn(
                   "absolute bottom-0 right-0 h-3 w-3 rounded-full border-2 border-panel",
-                  agentName ? "bg-emerald-500" : "bg-amber-500 animate-pulse"
+                  agentName ? "bg-emerald-500" : "bg-amber-500 animate-pulse",
                 )}
               />
             </div>
             <div>
               <div className="text-sm font-black text-foreground">
-                {agentName 
-                  ? `Agent ${agentName}` 
-                  : (lang === "tl" ? "Naghihintay ng Agent..." : "Waiting for Agent...")}
+                {agentName
+                  ? `Agent ${agentName}`
+                  : lang === "tl"
+                    ? "Naghihintay ng Agent..."
+                    : "Waiting for Agent..."}
               </div>
               <div
                 className={cn(
                   "flex items-center gap-1 text-[10px] font-semibold uppercase tracking-wider",
-                  agentName ? "text-emerald-500" : "text-amber-500"
+                  agentName ? "text-emerald-500" : "text-amber-500",
                 )}
               >
-                <span>●</span> {agentName ? t("Live") : (lang === "tl" ? "Naka-pila" : "Queued")}
+                <span>●</span> {agentName ? t("Live") : lang === "tl" ? "Naka-pila" : "Queued"}
               </div>
             </div>
           </div>
           <div
             className={cn(
               "flex items-center gap-1 text-[10px] font-bold uppercase tracking-widest px-2.5 py-1 rounded-full",
-              agentName 
-                ? "text-muted-foreground bg-muted" 
-                : "text-amber-600 bg-amber-500/10"
+              agentName ? "text-muted-foreground bg-muted" : "text-amber-600 bg-amber-500/10",
             )}
           >
             <AlertCircle size={12} className={agentName ? "text-primary" : "text-amber-500"} />
             <span>
-              {agentName 
-                ? t("Support Agent") 
-                : (lang === "tl" ? "Naka-antabay" : "Waiting")}
+              {agentName ? t("Support Agent") : lang === "tl" ? "Naka-antabay" : "Waiting"}
             </span>
           </div>
         </div>
@@ -492,7 +507,7 @@ export function MessengerChat({ onBack }: { onBack?: () => void }) {
                 key={msg.id}
                 className={cn(
                   "flex w-full flex-col max-w-[85%]",
-                  isUser ? "ml-auto items-end" : "mr-auto items-start"
+                  isUser ? "ml-auto items-end" : "mr-auto items-start",
                 )}
               >
                 <div className="flex items-end gap-2">
@@ -506,7 +521,7 @@ export function MessengerChat({ onBack }: { onBack?: () => void }) {
                       "rounded-2xl px-4 py-2.5 text-sm leading-relaxed",
                       isUser
                         ? "bg-primary text-primary-foreground rounded-br-none"
-                        : "bg-muted text-foreground rounded-bl-none border border-border"
+                        : "bg-muted text-foreground rounded-bl-none border border-border",
                     )}
                   >
                     {msg.text}

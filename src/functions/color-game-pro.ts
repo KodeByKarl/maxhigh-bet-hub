@@ -20,6 +20,7 @@ export const colorGameProDealFn = createServerFn({ method: "POST" })
   });
 
 export const getColorGameProEngineConfigFn = createServerFn({ method: "GET" }).handler(async () => {
-  const { getColorGameProEngineConfigPublic } = await import("../server/games/color-game-pro.server");
+  const { getColorGameProEngineConfigPublic } =
+    await import("../server/games/color-game-pro.server");
   return getColorGameProEngineConfigPublic();
 });

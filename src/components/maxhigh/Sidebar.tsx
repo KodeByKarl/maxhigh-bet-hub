@@ -1,14 +1,5 @@
 import { useState, useEffect, memo } from "react";
-import {
-  House,
-  Star,
-  Bolt,
-  Gamepad2,
-  Layers2,
-  Waves,
-  Headset,
-  X,
-} from "lucide-react";
+import { House, Star, Bolt, Gamepad2, Layers2, Waves, Headset, X } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { Link, useRouterState } from "@tanstack/react-router";
 import { useAuth } from "@/lib/auth";
@@ -41,13 +32,7 @@ const supportItems: NavItem[] = [
   { label: "Live Support", icon: Headset, to: "/support", accent: "#C6FF3D" },
 ];
 
-const Row = memo(function Row({
-  item,
-  onNavigate,
-}: {
-  item: NavItem;
-  onNavigate?: () => void;
-}) {
+const Row = memo(function Row({ item, onNavigate }: { item: NavItem; onNavigate?: () => void }) {
   const { t } = useTranslation();
   const Icon = item.icon;
   return (
@@ -57,7 +42,11 @@ const Row = memo(function Row({
       activeOptions={{ exact: item.to === "/" }}
       className="group flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm font-semibold text-foreground/90 transition-colors hover:bg-panel-hover active:bg-panel-hover data-[status=active]:bg-primary data-[status=active]:text-primary-foreground touch-manipulation select-none"
     >
-      <Icon size={18} strokeWidth={2.25} className="shrink-0 text-foreground/70 group-hover:text-foreground group-data-[status=active]:text-primary-foreground" />
+      <Icon
+        size={18}
+        strokeWidth={2.25}
+        className="shrink-0 text-foreground/70 group-hover:text-foreground group-data-[status=active]:text-primary-foreground"
+      />
       <span className="min-w-0 flex-1 truncate">{t(item.label)}</span>
       {item.badge && (
         <span className="rounded-full bg-lime px-2 py-0.5 text-[11px] font-bold text-on-lime">
@@ -68,13 +57,7 @@ const Row = memo(function Row({
   );
 });
 
-function Group({
-  items,
-  onNavigate,
-}: {
-  items: NavItem[];
-  onNavigate?: () => void;
-}) {
+function Group({ items, onNavigate }: { items: NavItem[]; onNavigate?: () => void }) {
   return (
     <div className="rounded-2xl border border-border bg-panel p-1.5">
       {items.map((it) => (
@@ -94,7 +77,7 @@ export function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
   const { user, isLoggedIn, openLogin, jackpot } = useAuth();
   const balance = user?.balance ?? 0;
   const initial = (user?.username?.[0] ?? "?").toUpperCase();
-  const name = isLoggedIn ? (user!.displayName || user!.username) : "Guest";
+  const name = isLoggedIn ? user!.displayName || user!.username : "Guest";
 
   return (
     <div className="flex h-full flex-col gap-3 overflow-y-auto no-scrollbar bg-sidebar/50 backdrop-blur-md p-3">
@@ -107,7 +90,9 @@ export function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
             <div className="truncate text-sm font-semibold text-foreground">{name}</div>
             <div className="mt-0.5 flex items-center gap-2">
               <span className="text-xs tabular-nums text-muted-foreground">
-                {mounted && prefs.hideBalance ? formatMoney(balance).replace(/\d/g, "•") : formatMoney(balance)}
+                {mounted && prefs.hideBalance
+                  ? formatMoney(balance).replace(/\d/g, "•")
+                  : formatMoney(balance)}
               </span>
             </div>
           </div>
@@ -145,11 +130,15 @@ export function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
       <Group items={supportItems} onNavigate={onNavigate} />
 
       <div className="mt-2 rounded-2xl border-2 border-lime bg-panel/70 backdrop-blur-md p-3 shadow-[0_0_0_1px_rgba(198,255,61,0.25)]">
-        <div className="text-[10px] font-bold uppercase tracking-widest text-primary">{t("Ultra Mega Jackpot")}</div>
+        <div className="text-[10px] font-bold uppercase tracking-widest text-primary">
+          {t("Ultra Mega Jackpot")}
+        </div>
         <div className="mt-1 text-xl font-black tabular-nums text-foreground">
           {formatMoney(jackpot)}
         </div>
-        <div className="mt-0.5 text-[11px] text-muted-foreground">{t("Display only · Not winnable")}</div>
+        <div className="mt-0.5 text-[11px] text-muted-foreground">
+          {t("Display only · Not winnable")}
+        </div>
       </div>
     </div>
   );
@@ -163,13 +152,7 @@ export function Sidebar() {
   );
 }
 
-export function MobileSidebar({
-  isOpen,
-  onClose,
-}: {
-  isOpen: boolean;
-  onClose: () => void;
-}) {
+export function MobileSidebar({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
 
   useEffect(() => {

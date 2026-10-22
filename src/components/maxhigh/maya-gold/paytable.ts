@@ -1,5 +1,7 @@
 import type { CellSym, SymKind } from "./types";
 import { getMayaGoldConfig, getRuntimeSymbols } from "./runtimeConfig";
+import { mayaGoldTheme } from "./theme";
+import { pantherBuyPricePerSpin } from "@/components/maxhigh/panther-shared/buyPricing";
 
 /** Default symbol table (also used before config hydrate). Prefer getRuntimeSymbols() in engine. */
 export const SYMBOLS: CellSym[] = getRuntimeSymbols().map((s) => ({
@@ -7,18 +9,7 @@ export const SYMBOLS: CellSym[] = getRuntimeSymbols().map((s) => ({
   pay: [...s.pay] as [number, number, number],
 }));
 
-export const ICON_SRC: Record<SymKind, string> = {
-  grape: "/images/symbols/gp/10.png?v=1",
-  plum: "/images/symbols/gp/J.png?v=1",
-  melon: "/images/symbols/gp/Q.png?v=1",
-  apple: "/images/symbols/gp/K.webp?v=1",
-  blue: "/images/symbols/gp/A.png?v=1",
-  green: "/images/symbols/gp/owl.png?v=1",
-  purple: "/images/symbols/gp/wolf.png?v=1",
-  heart: "/images/symbols/gp/ram.png?v=1",
-  lollipop: "/images/symbols/gp/scatter.webp?v=1",
-  bomb: "/images/symbols/gp/wild.webp?v=1",
-};
+export const ICON_SRC: Record<SymKind, string> = { ...mayaGoldTheme.assets.icons };
 
 export function payForCount(sym: CellSym, count: number): number {
   const min = getMayaGoldConfig().minCluster;
@@ -40,8 +31,27 @@ export function scatterCashPay(count: number, bet: number): number {
 export function getBuyFeatureMult() {
   return getMayaGoldConfig().buyFeatureMult;
 }
+/** Most free spins one Buy Bonus can purchase (never above the FS session cap). */
+export function getBuyMaxQuantity() {
+  const cap = getMayaGoldConfig().maxFsSessionSpins;
+  return cap > 0 ? Math.min(50, cap) : 50;
+}
+
 export function getSuperBuyFeatureMult() {
   return getMayaGoldConfig().superBuyFeatureMult;
+}
+
+/** Buy Bonus always opens on this bet (reference: ₱1 → Price ₱42.5). */
+export const BUY_FS_START_BET = 1;
+export const BUY_FS_BET_MIN = 1;
+export const BUY_FS_BET_MAX = 100_000;
+
+/** Price of one free spin at `bet` when buying `quantity` spins (fair per-quantity curve). */
+export function getBuyUnitPrice(bet: number, quantity = 1) {
+  const cfg = getMayaGoldConfig();
+  return +(
+    bet * pantherBuyPricePerSpin("maya-gold", cfg.buyFeatureMult, cfg.freeSpinsBase, quantity)
+  ).toFixed(2);
 }
 export function getAnteMult() {
   return getMayaGoldConfig().anteBetMult;
@@ -54,8 +64,8 @@ export function getFreeSpinsRetrigger() {
 }
 
 /** @deprecated use getters — kept for existing imports */
-export const BUY_FEATURE_MULT = 100;
-export const SUPER_BUY_FEATURE_MULT = 500;
+export const BUY_FEATURE_MULT = 42.5;
+export const SUPER_BUY_FEATURE_MULT = 212.5;
 export const ANTE_MULT = 1.25;
 export const FREE_SPINS_BASE = 10;
 export const FREE_SPINS_RETRIGGER = 5;

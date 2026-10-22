@@ -1,7 +1,17 @@
 import { eq, desc, sql, and, gt, gte, or } from "drizzle-orm";
 import { compare, hash } from "bcryptjs";
 import { getDb } from "./db/client";
-import { jackpot, liveWins, sessions, transactions, users, walletRequests, auditLogs, supportTickets, supportMessages } from "./db/schema";
+import {
+  jackpot,
+  liveWins,
+  sessions,
+  transactions,
+  users,
+  walletRequests,
+  auditLogs,
+  supportTickets,
+  supportMessages,
+} from "./db/schema";
 import type { PublicUser } from "@/lib/user";
 import { isStaffRole } from "@/lib/user";
 import {
@@ -394,7 +404,7 @@ export async function fetchOrCreatePlayerTicket() {
     .where(and(eq(supportTickets.userId, session.id), eq(supportTickets.status, "open")))
     .limit(1);
 
-  let ticket = tickets[0];
+  const ticket = tickets[0];
   if (!ticket) {
     return { ticket: null, messages: [] };
   }
@@ -452,32 +462,51 @@ export async function addPlayerSupportMessage(text: string, lang: "en" | "tl") {
   let replyText = "";
 
   if (lang === "tl") {
-    if (query.includes("deposit") || query.includes("deposito") || query.includes("pasok ng pera")) {
-      replyText = "Para mag-deposit, i-click lamang ang kulay lilang 'Mag-deposit' button sa kanang itaas ng screen. Pwede kang pumili ng GCash o PayMaya para magpadala. Agad itong papasok sa iyong account!";
-    } else if (query.includes("withdraw") || query.includes("labas ng pera") || query.includes("cashout")) {
-      replyText = "Ang withdraw ay napakabilis! I-click ang iyong wallet button sa itaas, piliin ang 'Mag-withdraw', at ilagay ang halaga at iyong GCash account. Pinoproseso ito sa loob ng 2-5 minuto.";
+    if (
+      query.includes("deposit") ||
+      query.includes("deposito") ||
+      query.includes("pasok ng pera")
+    ) {
+      replyText =
+        "Para mag-deposit, i-click lamang ang kulay lilang 'Mag-deposit' button sa kanang itaas ng screen. Pwede kang pumili ng GCash o PayMaya para magpadala. Agad itong papasok sa iyong account!";
+    } else if (
+      query.includes("withdraw") ||
+      query.includes("labas ng pera") ||
+      query.includes("cashout")
+    ) {
+      replyText =
+        "Ang withdraw ay napakabilis! I-click ang iyong wallet button sa itaas, piliin ang 'Mag-withdraw', at ilagay ang halaga at iyong GCash account. Pinoproseso ito sa loob ng 2-5 minuto.";
     } else if (query.includes("laro") || query.includes("game") || query.includes("slot")) {
-      replyText = "Marami kaming sikat na laro ngayon tulad ng Candy Peak, Sugar Surge, at Godly Gates! Subukan mong maglaro ngayon gamit ang tab na 'Slots' sa lobby.";
+      replyText =
+        "Marami kaming sikat na laro ngayon tulad ng Candy Peak, Sugar Surge, at Godly Gates! Subukan mong maglaro ngayon gamit ang tab na 'Slots' sa lobby.";
     } else if (query.includes("bonus") || query.includes("libre") || query.includes("free")) {
-      replyText = "Mayroon kaming daily at weekly races na may malalaking premyo! Abangan din ang mga promo banner sa ating lobby para sa karagdagang bonus.";
+      replyText =
+        "Mayroon kaming daily at weekly races na may malalaking premyo! Abangan din ang mga promo banner sa ating lobby para sa karagdagang bonus.";
     } else if (query.includes("salamat") || query.includes("ok") || query.includes("thanks")) {
       replyText = "Walang anuman! Lagi akong nandito para tumulong. Good luck sa iyong paglalaro!";
     } else {
-      replyText = "Salamat sa iyong mensahe. Ipinapasa ko na ito sa aming team ng mga live agents. May maitutulong pa ba ako tungkol sa deposit, withdraw, o slots?";
+      replyText =
+        "Salamat sa iyong mensahe. Ipinapasa ko na ito sa aming team ng mga live agents. May maitutulong pa ba ako tungkol sa deposit, withdraw, o slots?";
     }
   } else {
     if (query.includes("deposit") || query.includes("add money")) {
-      replyText = "To make a deposit, click the purple 'Deposit' button at the top right of the page. You can use GCash or PayMaya to transfer. Funds will be credited instantly!";
+      replyText =
+        "To make a deposit, click the purple 'Deposit' button at the top right of the page. You can use GCash or PayMaya to transfer. Funds will be credited instantly!";
     } else if (query.includes("withdraw") || query.includes("cash out")) {
-      replyText = "Withdrawals are processed instantly! Click on the wallet button at the top, select 'Withdraw', enter the amount and your GCash details. It takes 2-5 minutes to complete.";
+      replyText =
+        "Withdrawals are processed instantly! Click on the wallet button at the top, select 'Withdraw', enter the amount and your GCash details. It takes 2-5 minutes to complete.";
     } else if (query.includes("game") || query.includes("slot") || query.includes("play")) {
-      replyText = "We have hot featured slots like Candy Peak, Sugar Surge, and Godly Gates! Head over to the 'Slots' tab in the lobby to start playing.";
+      replyText =
+        "We have hot featured slots like Candy Peak, Sugar Surge, and Godly Gates! Head over to the 'Slots' tab in the lobby to start playing.";
     } else if (query.includes("bonus") || query.includes("free") || query.includes("promo")) {
-      replyText = "Check out our lobby promotions for weekly race awards! Active players can win massive peso pools daily.";
+      replyText =
+        "Check out our lobby promotions for weekly race awards! Active players can win massive peso pools daily.";
     } else if (query.includes("thanks") || query.includes("thank you") || query.includes("ok")) {
-      replyText = "You're very welcome! If you need anything else, feel free to ask. Good luck at MaxHigh!";
+      replyText =
+        "You're very welcome! If you need anything else, feel free to ask. Good luck at MaxHigh!";
     } else {
-      replyText = "Thank you for your message. I am forwarding this details to our live support team. Is there anything else about deposits, withdrawals, or games I can help with?";
+      replyText =
+        "Thank you for your message. I am forwarding this details to our live support team. Is there anything else about deposits, withdrawals, or games I can help with?";
     }
   }
 
@@ -586,16 +615,17 @@ export async function assignAgentToTicket(ticketId: string) {
   }
   const db = getDb();
 
-  const tickets = await db.select().from(supportTickets).where(eq(supportTickets.id, ticketId)).limit(1);
+  const tickets = await db
+    .select()
+    .from(supportTickets)
+    .where(eq(supportTickets.id, ticketId))
+    .limit(1);
   const ticket = tickets[0];
   if (!ticket) throw new Error("Ticket not found");
 
   if (!ticket.agentName) {
     const name = session.displayName || session.username;
-    await db
-      .update(supportTickets)
-      .set({ agentName: name })
-      .where(eq(supportTickets.id, ticketId));
+    await db.update(supportTickets).set({ agentName: name }).where(eq(supportTickets.id, ticketId));
   }
 
   return { ok: true };
@@ -630,7 +660,11 @@ export async function resolveSupportTicket(ticketId: string) {
   }
   const db = getDb();
 
-  const tickets = await db.select().from(supportTickets).where(eq(supportTickets.id, ticketId)).limit(1);
+  const tickets = await db
+    .select()
+    .from(supportTickets)
+    .where(eq(supportTickets.id, ticketId))
+    .limit(1);
   const ticket = tickets[0];
   if (!ticket) return { ok: false };
 
@@ -680,10 +714,7 @@ export type MyWalletSummary = {
   byGame: MyPlayGameRow[];
 };
 
-function myTxLabel(
-  type: MyTransactionRow["type"],
-  amount: number,
-): string {
+function myTxLabel(type: MyTransactionRow["type"], amount: number): string {
   if (type === "deposit" || (type === "adjust" && amount > 0)) return "Fund In";
   if (type === "withdraw" || (type === "adjust" && amount < 0)) return "Fund Out";
   if (type === "bet") return "Bet";
@@ -841,4 +872,3 @@ export async function fetchMyWalletSummary(): Promise<MyWalletSummary> {
     byGame,
   };
 }
-

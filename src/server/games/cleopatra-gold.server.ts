@@ -1,17 +1,17 @@
 /**
- * Cleopatra Gold � server-authoritative spin settlement and round lifecycle.
- * Integrates with platform wallet ledger (writeLedgerDelta) and session persistence (playSessions).
+ * Cleopatra Gold — server-authoritative spin settle.
+ * Client only receives scripts + balances; it cannot choose win amounts.
  */
-
 import { and, eq } from "drizzle-orm";
 import {
   CLEOPATRA_GOLD_GAME_ID,
   normalizeCleopatraGoldConfig,
-  type CleopatraGoldConfig,
+  remainingFreeSpinsAfterSpin,
 } from "@/lib/cleopatra-gold-config";
 import { getDb } from "../db/client";
 import { gameControls, playSessions, users } from "../db/schema";
-import { newId, requireUser } from "../session";
+import { money, newId, requireUser } from "../session";
+import { applyCapToScriptTotalWin, enforcePoolCap } from "../settlement/enforcePoolCap";
 import {
   assertNotInMaintenanceForBets,
   availableFrom,
@@ -19,25 +19,22 @@ import {
   sumPendingWithdrawals,
   writeLedgerDelta,
 } from "../wallet.server";
-import { recordGameEngineAuditLog } from "./game-audit.server";
-
-import { setCleopatraGoldConfig } from "@/components/maxhigh/cleopatra-gold/runtimeConfig";
-import { resolveCleopatraGoldSpin } from "@/components/maxhigh/cleopatra-gold/spinResolver";
+import { pantherBuyPricePerSpin } from "@/components/maxhigh/panther-shared/buyPricing";
 
 const GAME_NAME = "Cleopatra Gold";
 
-let cachedConfig: { cfg: CleopatraGoldConfig; time: number } | null = null;
-
-/** Invalidate after Superadmin saves engine config. */
-export function clearCleopatraGoldEngineCache() {
-  cachedConfig = null;
+/** Serialize engine config mutation — module-level runtimeConfig is process-global. */
+let engineChain: Promise<unknown> = Promise.resolve();
+function withEngineExclusive<T>(fn: () => T | Promise<T>): Promise<T> {
+  const run = engineChain.then(fn, fn);
+  engineChain = run.then(
+    () => undefined,
+    () => undefined,
+  );
+  return run;
 }
 
-async function loadEngineConfig(): Promise<CleopatraGoldConfig> {
-  const now = Date.now();
-  if (cachedConfig && now - cachedConfig.time < 30000) {
-    return cachedConfig.cfg;
-  }
+async function loadEngineConfig() {
   const db = getDb();
   try {
     const rows = await db
@@ -46,13 +43,10 @@ async function loadEngineConfig(): Promise<CleopatraGoldConfig> {
       .where(eq(gameControls.gameId, CLEOPATRA_GOLD_GAME_ID))
       .limit(1);
     const raw = rows[0]?.engineConfig;
-    const cfg = raw ? normalizeCleopatraGoldConfig(JSON.parse(raw) as unknown) : normalizeCleopatraGoldConfig(null);
-    cachedConfig = { cfg, time: now };
-    return cfg;
+    if (!raw) return normalizeCleopatraGoldConfig(null);
+    return normalizeCleopatraGoldConfig(JSON.parse(raw) as unknown);
   } catch {
-    const cfg = normalizeCleopatraGoldConfig(null);
-    cachedConfig = { cfg, time: now };
-    return cfg;
+    return normalizeCleopatraGoldConfig(null);
   }
 }
 
@@ -60,23 +54,31 @@ async function resolveOnServer(opts: {
   bet: number;
   ante: boolean;
   isFreeSpins: boolean;
-  sessionMultiplier?: number;
+  initialBombAccumulator?: number;
 }) {
   const cfg = await loadEngineConfig();
-  setCleopatraGoldConfig(cfg);
-  const script = resolveCleopatraGoldSpin({
-    bet: opts.bet,
-    ante: opts.ante && !opts.isFreeSpins,
-    isFreeSpins: opts.isFreeSpins,
-    sessionMultiplier: opts.sessionMultiplier,
+  return withEngineExclusive(async () => {
+    const { setCleopatraGoldConfig } =
+      await import("@/components/maxhigh/cleopatra-gold/runtimeConfig");
+    const { resolveSpin, finalizeFreeSpinTotal } =
+      await import("@/components/maxhigh/cleopatra-gold/spinResolver");
+    setCleopatraGoldConfig(cfg);
+    const script = resolveSpin({
+      bet: opts.bet,
+      ante: opts.ante && !opts.isFreeSpins,
+      isFreeSpins: opts.isFreeSpins,
+      collectBombsInFreeSpins: true,
+      initialBombAccumulator: opts.initialBombAccumulator,
+    });
+    return { script, finalizeFreeSpinTotal, cfg };
   });
-  return { script, cfg };
 }
 
 export type CleopatraGoldSessionState = {
   sessionId: string | null;
   freeSpinsLeft: number;
   fsSessionWin: number;
+  fsBombAcc: number;
   fsSpinsPlayed: number;
   inFree: boolean;
   bet: number;
@@ -86,11 +88,14 @@ export type CleopatraGoldSessionState = {
 export type CleopatraGoldSpinResult = {
   balance: number;
   script: Awaited<
-    ReturnType<typeof import("@/components/maxhigh/cleopatra-gold/spinResolver").resolveCleopatraGoldSpin>
+    ReturnType<typeof import("@/components/maxhigh/cleopatra-gold/spinResolver").resolveSpin>
   >;
   session: CleopatraGoldSessionState;
+  /** Set when a free-spin feature just finished and win was paid. */
   fsPayout?: {
     amount: number;
+    baseEarn: number;
+    multiplier: number;
     spinsPlayed: number;
   };
 };
@@ -101,6 +106,7 @@ function sessionState(row: typeof playSessions.$inferSelect | null): CleopatraGo
       sessionId: null,
       freeSpinsLeft: 0,
       fsSessionWin: 0,
+      fsBombAcc: 0,
       fsSpinsPlayed: 0,
       inFree: false,
       bet: 0,
@@ -111,11 +117,33 @@ function sessionState(row: typeof playSessions.$inferSelect | null): CleopatraGo
     sessionId: row.id,
     freeSpinsLeft: Number(row.freeSpinsLeft),
     fsSessionWin: Number(row.fsSessionWin),
+    fsBombAcc: Number(row.fsBombAcc),
     fsSpinsPlayed: Number(row.fsSpinsPlayed),
     inFree: Number(row.freeSpinsLeft) > 0,
     bet: Number(row.bet),
     ante: row.ante === "yes",
   };
+}
+
+async function closeOtherOpenSessions(userId: string, keepId?: string) {
+  const db = getDb();
+  const open = await db
+    .select()
+    .from(playSessions)
+    .where(
+      and(
+        eq(playSessions.userId, userId),
+        eq(playSessions.gameId, CLEOPATRA_GOLD_GAME_ID),
+        eq(playSessions.status, "open"),
+      ),
+    );
+  for (const row of open) {
+    if (keepId && row.id === keepId) continue;
+    await db
+      .update(playSessions)
+      .set({ status: "closed", freeSpinsLeft: 0 })
+      .where(eq(playSessions.id, row.id));
+  }
 }
 
 export async function getCleopatraGoldOpenSession(): Promise<CleopatraGoldSessionState> {
@@ -140,18 +168,18 @@ export async function cleopatraGoldPaidSpin(data: {
   ante: boolean;
 }): Promise<CleopatraGoldSpinResult> {
   const user = await requireUser();
-  if (!Number.isFinite(data.bet) || data.bet <= 0) throw new Error("Invalid bet amount");
+  if (!Number.isFinite(data.bet) || data.bet <= 0) throw new Error("Invalid bet");
 
   const cfg = await loadEngineConfig();
   const anteMult = data.ante ? cfg.anteBetMult : 1;
   const cost = +(data.bet * anteMult).toFixed(2);
   const maxBet = await getMaxSingleBet();
-  if (cost > maxBet) throw new Error(`Max single bet limit is ?${maxBet.toFixed(2)}`);
+  if (cost > maxBet) throw new Error(`Max bet is ₱${maxBet.toFixed(2)}`);
 
   await assertNotInMaintenanceForBets();
 
   const db = getDb();
-  const existingSession = await db
+  const existing = await db
     .select()
     .from(playSessions)
     .where(
@@ -162,9 +190,8 @@ export async function cleopatraGoldPaidSpin(data: {
       ),
     )
     .limit(1);
-
-  if (existingSession[0] && Number(existingSession[0].freeSpinsLeft) > 0) {
-    throw new Error("Active free spins feature in progress. Please complete free spins before placing a new bet.");
+  if (existing[0] && Number(existing[0].freeSpinsLeft) > 0) {
+    throw new Error("Finish free spins before placing a new bet");
   }
 
   const { script } = await resolveOnServer({
@@ -172,13 +199,18 @@ export async function cleopatraGoldPaidSpin(data: {
     ante: data.ante,
     isFreeSpins: false,
   });
-
-  const roundId = newId();
+  applyCapToScriptTotalWin(script, {
+    gameId: CLEOPATRA_GOLD_GAME_ID,
+    gameName: GAME_NAME,
+    bet: data.bet,
+    maxWinMult: cfg.maxWinMult,
+    context: "paid-spin",
+  });
 
   const result = await db.transaction(async (tx) => {
     const userRows = await tx.select().from(users).where(eq(users.id, user.id)).limit(1);
     const row = userRows[0];
-    if (!row) throw new Error("User account not found");
+    if (!row) throw new Error("User not found");
 
     const balance = Number(row.balance);
     const pending = await sumPendingWithdrawals(tx, user.id);
@@ -186,22 +218,20 @@ export async function cleopatraGoldPaidSpin(data: {
     if (cost > available) {
       throw new Error(
         pending > 0
-          ? `Insufficient available balance (?${pending.toFixed(2)} held for pending withdrawal)`
+          ? `Insufficient available balance (₱${pending.toFixed(2)} held for pending withdrawal)`
           : "Insufficient balance",
       );
     }
 
-    // 1. Deduct Wager (placeWager)
     let ledger = await writeLedgerDelta(tx, {
       userId: user.id,
       username: row.username,
       delta: -cost,
       type: "bet",
       game: GAME_NAME,
-      note: `${CLEOPATRA_GOLD_GAME_ID} � ${GAME_NAME} � wager ?${cost.toFixed(2)}`,
+      note: `${CLEOPATRA_GOLD_GAME_ID} · ${GAME_NAME} · wager ₱${cost.toFixed(2)}`,
     });
 
-    // 2. Credit Spin Win (settlePayout)
     if (script.totalWin > 0) {
       ledger = await writeLedgerDelta(tx, {
         userId: user.id,
@@ -209,14 +239,15 @@ export async function cleopatraGoldPaidSpin(data: {
         delta: script.totalWin,
         type: "win",
         game: GAME_NAME,
-        note: `${CLEOPATRA_GOLD_GAME_ID} � ${GAME_NAME} � win ?${script.totalWin.toFixed(2)}`,
+        note: `${CLEOPATRA_GOLD_GAME_ID} · ${GAME_NAME} · win ₱${script.totalWin.toFixed(2)}`,
       });
     }
 
-    // 4. Persist Free Spins session if triggered
+    const balanceAfterBet = ledger.balance;
+
     let sessionRow: typeof playSessions.$inferSelect | null = null;
     if (script.freeSpinsAwarded > 0) {
-      // Close old open sessions
+      // Close any stale sessions then open FS feature
       const stale = await tx
         .select()
         .from(playSessions)
@@ -234,50 +265,24 @@ export async function cleopatraGoldPaidSpin(data: {
           .where(eq(playSessions.id, s.id));
       }
 
-      const sid = newId();
+      const id = newId();
       await tx.insert(playSessions).values({
-        id: sid,
+        id,
         userId: user.id,
         gameId: CLEOPATRA_GOLD_GAME_ID,
         status: "open",
-        freeSpinsLeft: script.freeSpinsAwarded,
-        fsSessionWin: "0",
-        fsBombAcc: "0",
-        fsSpinsPlayed: 0,
-        bet: String(data.bet),
+        bet: money(data.bet),
         ante: data.ante ? "yes" : "no",
+        freeSpinsLeft: script.freeSpinsAwarded,
+        fsSessionWin: "0.00",
+        fsBombAcc: "0.00",
+        fsSpinsPlayed: 0,
       });
-
-      const updated = await tx
-        .select()
-        .from(playSessions)
-        .where(eq(playSessions.id, sid))
-        .limit(1);
-      sessionRow = updated[0] ?? null;
+      const created = await tx.select().from(playSessions).where(eq(playSessions.id, id)).limit(1);
+      sessionRow = created[0] ?? null;
     }
 
-    return {
-      balance: ledger.balance,
-      sessionRow,
-      username: row.username,
-    };
-  });
-
-  // Audit AFTER commit � never inside the wallet tx (FK to users deadlocks on a second connection).
-  void recordGameEngineAuditLog({
-    gameId: CLEOPATRA_GOLD_GAME_ID,
-    roundId,
-    userId: user.id,
-    username: result.username,
-    betAmount: cost,
-    payoutAmount: script.totalWin,
-    multiplier: cost > 0 ? script.totalWin / cost : 0,
-    resultMeta: {
-      reelsHeights: script.initialReelHeights,
-      totalWays: script.totalWays,
-      cascadeStepsCount: script.steps.length,
-      freeSpinsAwarded: script.freeSpinsAwarded,
-    },
+    return { balance: balanceAfterBet, sessionRow };
   });
 
   return {
@@ -291,10 +296,9 @@ export async function cleopatraGoldFreeSpin(data: {
   sessionId: string;
 }): Promise<CleopatraGoldSpinResult> {
   const user = await requireUser();
-  await assertNotInMaintenanceForBets();
-
   const db = getDb();
-  const sessionRows = await db
+
+  const sessions = await db
     .select()
     .from(playSessions)
     .where(
@@ -306,210 +310,245 @@ export async function cleopatraGoldFreeSpin(data: {
       ),
     )
     .limit(1);
+  const session = sessions[0];
+  if (!session) throw new Error("Free spin session not found");
+  if (Number(session.freeSpinsLeft) <= 0) throw new Error("No free spins remaining");
 
-  const currentSession = sessionRows[0];
-  if (!currentSession || Number(currentSession.freeSpinsLeft) <= 0) {
-    throw new Error("No active free spins remaining for this session");
-  }
-
-  const bet = Number(currentSession.bet);
-  const ante = currentSession.ante === "yes";
-  const cfg = await loadEngineConfig();
-  const playedSoFar = Number(currentSession.fsSpinsPlayed);
-  const sessionMultiplier =
-    cfg.freeSpinsSessionMultStart + playedSoFar * cfg.freeSpinsSessionMultStep;
-
-  const { script } = await resolveOnServer({
+  const bet = Number(session.bet);
+  const { script, finalizeFreeSpinTotal, cfg } = await resolveOnServer({
     bet,
-    ante,
+    ante: session.ante === "yes",
     isFreeSpins: true,
-    sessionMultiplier,
+    initialBombAccumulator: Number(session.fsBombAcc) || 0,
+  });
+  applyCapToScriptTotalWin(script, {
+    gameId: CLEOPATRA_GOLD_GAME_ID,
+    gameName: GAME_NAME,
+    bet,
+    maxWinMult: cfg.maxWinMult,
+    context: "free-spin",
   });
 
-  const roundId = newId();
-
   const result = await db.transaction(async (tx) => {
+    const locked = await tx
+      .select()
+      .from(playSessions)
+      .where(and(eq(playSessions.id, data.sessionId), eq(playSessions.status, "open")))
+      .for("update")
+      .limit(1);
+    const row = locked[0];
+    if (!row) throw new Error("Free spin session not found");
+    const left = Number(row.freeSpinsLeft);
+    if (left <= 0) throw new Error("No free spins remaining");
+
     const userRows = await tx.select().from(users).where(eq(users.id, user.id)).limit(1);
-    const row = userRows[0];
-    if (!row) throw new Error("User account not found");
+    const u = userRows[0];
+    if (!u) throw new Error("User not found");
 
-    const left = Number(currentSession.freeSpinsLeft) - 1 + script.freeSpinsAwarded;
-    const played = Number(currentSession.fsSpinsPlayed) + 1;
-    const accumulatedWin = +(Number(currentSession.fsSessionWin) + script.totalWin).toFixed(2);
-    const isFinished = left <= 0;
+    const nextWin = +(Number(row.fsSessionWin) + script.totalWin).toFixed(2);
+    const bombCeiling = cfg.maxFsBombMult > 0 ? cfg.maxFsBombMult : Number.POSITIVE_INFINITY;
+    // Paytable rule: free spins keep the strongest bomb. The engine already started
+    // from the banked value (initialBombAccumulator), so don't add it again.
+    const nextBomb = Math.min(bombCeiling, script.bombAccumulator);
+    const nextPlayed = Number(row.fsSpinsPlayed) + 1;
+    const nextLeft = remainingFreeSpinsAfterSpin({
+      leftBefore: left,
+      retrigger: script.retriggerSpins,
+      playedAfter: nextPlayed,
+      maxSessionSpins: cfg.maxFsSessionSpins,
+    });
 
+    let balance = Number(u.balance);
     let fsPayout: CleopatraGoldSpinResult["fsPayout"];
+
+    if (nextLeft === 0) {
+      const final = enforcePoolCap({
+        gameId: CLEOPATRA_GOLD_GAME_ID,
+        gameName: GAME_NAME,
+        bet,
+        maxWinMult: cfg.maxWinMult,
+        computedWin: finalizeFreeSpinTotal(nextWin, nextBomb),
+        context: "free-spins-final",
+      }).payout;
+      if (final > 0) {
+        const winRes = await writeLedgerDelta(tx, {
+          userId: user.id,
+          username: u.username,
+          delta: final,
+          type: "win",
+          game: GAME_NAME,
+          note: `${CLEOPATRA_GOLD_GAME_ID} · ${GAME_NAME} · free spins win ₱${final.toFixed(2)}`,
+        });
+        balance = winRes.balance;
+      }
+      fsPayout = {
+        amount: final,
+        baseEarn: nextWin,
+        multiplier: nextBomb,
+        spinsPlayed: Math.max(nextPlayed, 1),
+      };
+      await tx
+        .update(playSessions)
+        .set({
+          status: "closed",
+          freeSpinsLeft: 0,
+          fsSessionWin: money(nextWin),
+          fsBombAcc: money(nextBomb),
+          fsSpinsPlayed: nextPlayed,
+        })
+        .where(eq(playSessions.id, row.id));
+      return {
+        balance,
+        sessionRow: null as typeof playSessions.$inferSelect | null,
+        fsPayout,
+        closed: true as const,
+        nextWin,
+        nextBomb,
+        nextPlayed,
+      };
+    }
 
     await tx
       .update(playSessions)
       .set({
-        freeSpinsLeft: Math.max(0, left),
-        fsSpinsPlayed: played,
-        fsSessionWin: String(accumulatedWin),
-        status: isFinished ? "closed" : "open",
+        freeSpinsLeft: nextLeft,
+        fsSessionWin: money(nextWin),
+        fsBombAcc: money(nextBomb),
+        fsSpinsPlayed: nextPlayed,
       })
-      .where(eq(playSessions.id, currentSession.id));
+      .where(eq(playSessions.id, row.id));
 
-    let currentBalance = Number(row.balance);
-
-    if (isFinished && accumulatedWin > 0) {
-      const ledger = await writeLedgerDelta(tx, {
-        userId: user.id,
-        username: row.username,
-        delta: accumulatedWin,
-        type: "win",
-        game: GAME_NAME,
-        note: `${CLEOPATRA_GOLD_GAME_ID} � ${GAME_NAME} � Free spins feature final payout ?${accumulatedWin.toFixed(2)}`,
-      });
-      currentBalance = ledger.balance;
-      fsPayout = {
-        amount: accumulatedWin,
-        spinsPlayed: played,
-      };
-    }
-
-    const updatedSession = await tx
+    const updated = await tx
       .select()
       .from(playSessions)
-      .where(eq(playSessions.id, currentSession.id))
+      .where(eq(playSessions.id, row.id))
       .limit(1);
-
     return {
-      balance: currentBalance,
-      sessionRow: updatedSession[0] ?? null,
-      fsPayout,
-      username: row.username,
-      left,
-      played,
-      accumulatedWin,
+      balance,
+      sessionRow: updated[0] ?? null,
+      fsPayout: undefined,
+      closed: false as const,
+      nextWin,
+      nextBomb,
+      nextPlayed,
     };
-  });
-
-  void recordGameEngineAuditLog({
-    gameId: CLEOPATRA_GOLD_GAME_ID,
-    roundId,
-    userId: user.id,
-    username: result.username,
-    betAmount: 0,
-    payoutAmount: script.totalWin,
-    multiplier: bet > 0 ? script.totalWin / bet : 0,
-    resultMeta: {
-      isFreeSpin: true,
-      freeSpinsLeft: result.left,
-      fsSpinsPlayed: result.played,
-      fsAccumulatedWin: result.accumulatedWin,
-    },
   });
 
   return {
     balance: result.balance,
     script,
-    session: sessionState(result.sessionRow),
+    session: result.closed
+      ? {
+          sessionId: null,
+          freeSpinsLeft: 0,
+          fsSessionWin: result.nextWin,
+          fsBombAcc: result.nextBomb,
+          fsSpinsPlayed: result.nextPlayed,
+          inFree: false,
+          bet,
+          ante: session.ante === "yes",
+        }
+      : sessionState(result.sessionRow),
     fsPayout: result.fsPayout,
   };
 }
 
 export async function cleopatraGoldBuyFeature(data: {
   bet: number;
-}): Promise<CleopatraGoldSpinResult> {
+  mode: "normal" | "super";
+  /** Bonus units to purchase. Price = bet × unitMult; Total = Price × quantity. */
+  quantity: number;
+}): Promise<{ balance: number; session: CleopatraGoldSessionState }> {
   const user = await requireUser();
-  if (!Number.isFinite(data.bet) || data.bet <= 0) throw new Error("Invalid bet amount");
-
-  const cfg = await loadEngineConfig();
-  const cost = +(data.bet * cfg.buyFeatureMult).toFixed(2);
-  const maxBet = await getMaxSingleBet();
-  if (cost > maxBet) throw new Error(`Buy Feature cost ?${cost.toFixed(2)} exceeds max single bet limit ?${maxBet.toFixed(2)}`);
-
-  await assertNotInMaintenanceForBets();
-
-  const db = getDb();
-  // Force seed 3 scatters into first spin
-  const { script } = await resolveOnServer({
-    bet: data.bet,
-    ante: false,
-    isFreeSpins: false,
-  });
-
-  // Ensure minimum 10 free spins awarded on buy feature
-  if (script.freeSpinsAwarded < cfg.freeSpinsBaseCount) {
-    script.freeSpinsAwarded = cfg.freeSpinsBaseCount;
-    script.scattersCount = Math.max(script.scattersCount, 3);
+  if (!Number.isFinite(data.bet) || data.bet <= 0) throw new Error("Invalid bet");
+  const quantity = Math.round(data.quantity);
+  if (!Number.isFinite(quantity) || quantity < 1 || quantity > 50) {
+    throw new Error("Invalid quantity");
   }
 
-  const roundId = newId();
+  const cfg = await loadEngineConfig();
+  if (data.mode === "super") throw new Error("Super Buy is no longer available");
+  // Never sell more spins than one feature can play (maxFsSessionSpins).
+  if (cfg.maxFsSessionSpins > 0 && quantity > cfg.maxFsSessionSpins) {
+    throw new Error(`Max ${cfg.maxFsSessionSpins} free spins per purchase`);
+  }
+  const mult = pantherBuyPricePerSpin(
+    CLEOPATRA_GOLD_GAME_ID,
+    cfg.buyFeatureMult,
+    cfg.freeSpinsBase,
+    quantity,
+  );
+  const cost = +(data.bet * mult * quantity).toFixed(2);
+  if (data.bet > 100_000) {
+    throw new Error("Buy feature bet too large");
+  }
 
+  await assertNotInMaintenanceForBets();
+  await closeOtherOpenSessions(user.id);
+
+  const db = getDb();
   const result = await db.transaction(async (tx) => {
     const userRows = await tx.select().from(users).where(eq(users.id, user.id)).limit(1);
     const row = userRows[0];
-    if (!row) throw new Error("User account not found");
+    if (!row) throw new Error("User not found");
 
     const balance = Number(row.balance);
     const pending = await sumPendingWithdrawals(tx, user.id);
     const available = availableFrom(balance, pending);
     if (cost > available) {
-      throw new Error(`Insufficient available balance to buy feature (?${cost.toFixed(2)} required)`);
+      throw new Error(
+        pending > 0
+          ? `Insufficient available balance (₱${pending.toFixed(2)} held for pending withdrawal)`
+          : "Insufficient balance",
+      );
     }
 
-    let ledger = await writeLedgerDelta(tx, {
+    const stale = await tx
+      .select()
+      .from(playSessions)
+      .where(
+        and(
+          eq(playSessions.userId, user.id),
+          eq(playSessions.gameId, CLEOPATRA_GOLD_GAME_ID),
+          eq(playSessions.status, "open"),
+        ),
+      );
+    for (const s of stale) {
+      await tx
+        .update(playSessions)
+        .set({ status: "closed", freeSpinsLeft: 0 })
+        .where(eq(playSessions.id, s.id));
+    }
+
+    const betRes = await writeLedgerDelta(tx, {
       userId: user.id,
       username: row.username,
       delta: -cost,
       type: "bet",
       game: GAME_NAME,
-      note: `${CLEOPATRA_GOLD_GAME_ID} � ${GAME_NAME} � Feature Buy ?${cost.toFixed(2)}`,
+      note:
+        data.mode === "super"
+          ? `${CLEOPATRA_GOLD_GAME_ID} · ${GAME_NAME} · buy super feature ×${quantity} ₱${cost.toFixed(2)}`
+          : `${CLEOPATRA_GOLD_GAME_ID} · ${GAME_NAME} · buy feature ×${quantity} ₱${cost.toFixed(2)}`,
     });
 
-    if (script.totalWin > 0) {
-      ledger = await writeLedgerDelta(tx, {
-        userId: user.id,
-        username: row.username,
-        delta: script.totalWin,
-        type: "win",
-        game: GAME_NAME,
-        note: `${CLEOPATRA_GOLD_GAME_ID} � ${GAME_NAME} � Feature Buy initial spin win ?${script.totalWin.toFixed(2)}`,
-      });
-    }
-
-    const sid = newId();
+    const id = newId();
+    const ante = data.mode === "super" ? ("yes" as const) : ("no" as const);
     await tx.insert(playSessions).values({
-      id: sid,
+      id,
       userId: user.id,
       gameId: CLEOPATRA_GOLD_GAME_ID,
       status: "open",
-      freeSpinsLeft: script.freeSpinsAwarded,
-      fsSessionWin: "0",
-      fsBombAcc: "0",
+      bet: money(data.bet),
+      ante,
+      freeSpinsLeft: quantity,
+      fsSessionWin: "0.00",
+      fsBombAcc: "0.00",
       fsSpinsPlayed: 0,
-      bet: String(data.bet),
-      ante: "no",
     });
-
-    const updated = await tx.select().from(playSessions).where(eq(playSessions.id, sid)).limit(1);
-
-    return {
-      balance: ledger.balance,
-      sessionRow: updated[0] ?? null,
-      username: row.username,
-    };
+    const created = await tx.select().from(playSessions).where(eq(playSessions.id, id)).limit(1);
+    return { balance: betRes.balance, sessionRow: created[0]! };
   });
 
-  void recordGameEngineAuditLog({
-    gameId: CLEOPATRA_GOLD_GAME_ID,
-    roundId,
-    userId: user.id,
-    username: result.username,
-    betAmount: cost,
-    payoutAmount: script.totalWin,
-    multiplier: cost > 0 ? script.totalWin / cost : 0,
-    resultMeta: {
-      isBuyFeature: true,
-      freeSpinsAwarded: script.freeSpinsAwarded,
-    },
-  });
-
-  return {
-    balance: result.balance,
-    script,
-    session: sessionState(result.sessionRow),
-  };
+  return { balance: result.balance, session: sessionState(result.sessionRow) };
 }

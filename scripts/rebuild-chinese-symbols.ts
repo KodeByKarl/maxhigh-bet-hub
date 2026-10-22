@@ -17,8 +17,13 @@ function isBgBlack(r: number, g: number, b: number): boolean {
   return max < 42 && max - min < 18;
 }
 
-async function knockoutBuffer(input: Buffer): Promise<{ data: Buffer; width: number; height: number }> {
-  const { data, info } = await sharp(input).ensureAlpha().raw().toBuffer({ resolveWithObject: true });
+async function knockoutBuffer(
+  input: Buffer,
+): Promise<{ data: Buffer; width: number; height: number }> {
+  const { data, info } = await sharp(input)
+    .ensureAlpha()
+    .raw()
+    .toBuffer({ resolveWithObject: true });
   const { width, height } = info;
   const out = Buffer.from(data);
   const n = width * height;

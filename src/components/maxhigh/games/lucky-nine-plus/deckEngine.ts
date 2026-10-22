@@ -60,7 +60,11 @@ export function needsReshuffle(shoe: ShoeState, cfg: LuckyNinePlusConfig): boole
   return remaining(shoe) / total <= cfg.reshuffleBelowFraction;
 }
 
-export function ensureShoe(shoe: ShoeState | null, cfg: LuckyNinePlusConfig, rng: L9Rng): ShoeState {
+export function ensureShoe(
+  shoe: ShoeState | null,
+  cfg: LuckyNinePlusConfig,
+  rng: L9Rng,
+): ShoeState {
   if (!shoe || shoe.cards.length === 0 || needsReshuffle(shoe, cfg)) {
     return freshShuffledShoe(cfg, rng);
   }

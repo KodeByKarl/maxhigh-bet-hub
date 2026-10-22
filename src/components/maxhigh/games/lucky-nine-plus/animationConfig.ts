@@ -50,7 +50,7 @@ export const L9_ASSET = {
   symbolDir: "/images/symbols/baccarat",
   cardsDir: "/images/symbols/baccarat/cards",
   chipsDir: "/images/symbols/baccarat/chips",
-  soundDir: "/sounds/lucky-nine-plus",
+  soundDir: "/sounds/gentle-v1/lucky-nine-plus",
 } as const;
 
 /** Theme tokens — jade night (distinct from Baccarat navy / Ace High amber). */

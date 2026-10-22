@@ -1,3 +1,4 @@
+import type { RowDataPacket } from "mysql2";
 /**
  * One-time / repair: re-number transactions.seq in chronological order.
  * Run: npx tsx --env-file=.env scripts/backfill-tx-seq.ts
@@ -30,7 +31,9 @@ async function main() {
     ) x ON t.id = x.id
     SET t.seq = x.new_seq
   `);
-  const [maxRow] = await conn.query<any[]>(`SELECT COALESCE(MAX(seq), 0) + 1 AS next_seq FROM transactions`);
+  const [maxRow] = await conn.query<RowDataPacket[]>(
+    `SELECT COALESCE(MAX(seq), 0) + 1 AS next_seq FROM transactions`,
+  );
   const nextSeq = Number(maxRow?.[0]?.next_seq ?? 1);
   await conn.query(
     `ALTER TABLE transactions MODIFY seq BIGINT UNSIGNED NOT NULL AUTO_INCREMENT UNIQUE, AUTO_INCREMENT = ${nextSeq}`,

@@ -122,13 +122,19 @@ function normalizeBetSteps(raw: unknown, fallback: number[]): number[] {
  * Symmetric third-card rule: draw when total ≤ drawThreshold (default 5 → stand on 6+).
  * Used for both Player and Dealer in independent mode.
  */
-export function shouldDraw(total: number, threshold = DEFAULT_LUCKY_NINE_PLUS_CONFIG.drawThreshold): boolean {
+export function shouldDraw(
+  total: number,
+  threshold = DEFAULT_LUCKY_NINE_PLUS_CONFIG.drawThreshold,
+): boolean {
   const t = Math.max(0, Math.min(8, Math.round(threshold)));
   return total >= 0 && total <= t;
 }
 
 /** Two-card natural when total equals configured naturalTotal (default 9). */
-export function isNatural(twoCardTotal: number, naturalTotal = DEFAULT_LUCKY_NINE_PLUS_CONFIG.naturalTotal): boolean {
+export function isNatural(
+  twoCardTotal: number,
+  naturalTotal = DEFAULT_LUCKY_NINE_PLUS_CONFIG.naturalTotal,
+): boolean {
   return twoCardTotal === naturalTotal;
 }
 

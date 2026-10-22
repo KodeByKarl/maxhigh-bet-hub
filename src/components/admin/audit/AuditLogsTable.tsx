@@ -3,7 +3,8 @@ import type { AdminAuditLogRow } from "@/lib/admin-types";
 function actionTone(action: string) {
   if (action.includes("login")) return "bg-cyan-500/15 text-cyan-800";
   if (action.includes("create")) return "bg-emerald-500/15 text-emerald-700";
-  if (action.includes("balance") || action.includes("wallet")) return "bg-amber-500/15 text-amber-800";
+  if (action.includes("balance") || action.includes("wallet"))
+    return "bg-amber-500/15 text-amber-800";
   return "bg-muted text-muted-foreground";
 }
 

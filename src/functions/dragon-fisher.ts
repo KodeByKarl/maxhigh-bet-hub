@@ -9,12 +9,12 @@ const targetSchema = z.object({
 });
 
 const fireSchema = z.object({
-  weaponId: z.enum(["bamboo", "spinning", "trolling", "harpoon", "master"]),
+  weaponId: z.enum(["mini", "half", "bamboo", "spinning", "trolling", "harpoon", "master"]),
   target: targetSchema,
 });
 
 const weaponSchema = z.object({
-  weaponId: z.enum(["bamboo", "spinning", "trolling", "harpoon", "master"]),
+  weaponId: z.enum(["mini", "half", "bamboo", "spinning", "trolling", "harpoon", "master"]),
 });
 
 const powerSchema = z.object({
@@ -22,7 +22,7 @@ const powerSchema = z.object({
 });
 
 const netBombSchema = z.object({
-  weaponId: z.enum(["bamboo", "spinning", "trolling", "harpoon", "master"]),
+  weaponId: z.enum(["mini", "half", "bamboo", "spinning", "trolling", "harpoon", "master"]),
   targets: z.array(targetSchema).max(12),
 });
 
@@ -48,7 +48,8 @@ export const getDragonFisherSessionFn = createServerFn({ method: "GET" }).handle
 });
 
 export const getDragonFisherEngineConfigFn = createServerFn({ method: "GET" }).handler(async () => {
-  const { getDragonFisherEngineConfigPublic } = await import("../server/games/dragon-fisher.server");
+  const { getDragonFisherEngineConfigPublic } =
+    await import("../server/games/dragon-fisher.server");
   return getDragonFisherEngineConfigPublic();
 });
 
@@ -79,7 +80,6 @@ export const dragonFisherUseFreezeLureFn = createServerFn({ method: "POST" }).ha
   const { dragonFisherUseFreezeLure } = await import("../server/games/dragon-fisher.server");
   return dragonFisherUseFreezeLure();
 });
-
 
 export const dragonFisherSyncSpawnsFn = createServerFn({ method: "POST" }).handler(async () => {
   const { dragonFisherSyncSpawns } = await import("../server/games/dragon-fisher.server");

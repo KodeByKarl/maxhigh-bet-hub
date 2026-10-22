@@ -9,7 +9,10 @@ import { join } from "node:path";
 const ROOT = join(process.cwd(), "public/images/symbols/chinese");
 
 async function cropOne(file: string, name: string) {
-  const { data, info } = await sharp(file).ensureAlpha().raw().toBuffer({ resolveWithObject: true });
+  const { data, info } = await sharp(file)
+    .ensureAlpha()
+    .raw()
+    .toBuffer({ resolveWithObject: true });
   const { width: w, height: h } = info;
   let minX = w;
   let minY = h;

@@ -1,7 +1,4 @@
-import {
-  DEFAULT_CRAB_CANNON_CONFIG,
-  type CrabCannonConfig,
-} from "@/lib/crab-cannon-config";
+import { DEFAULT_CRAB_CANNON_CONFIG, type CrabCannonConfig } from "@/lib/crab-cannon-config";
 
 /** Framework-agnostic singleton — server injects DB config before resolve. */
 let active: CrabCannonConfig = structuredClone(DEFAULT_CRAB_CANNON_CONFIG);

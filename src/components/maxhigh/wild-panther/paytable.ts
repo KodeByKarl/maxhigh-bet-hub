@@ -8,16 +8,16 @@ export const SYMBOLS: CellSym[] = getRuntimeSymbols().map((s) => ({
 }));
 
 export const ICON_SRC: Record<SymKind, string> = {
-  grape: "/images/symbols/wild-panther/10.png?v=1",
-  plum: "/images/symbols/wild-panther/J.png?v=1",
-  melon: "/images/symbols/wild-panther/Q.png?v=1",
-  apple: "/images/symbols/wild-panther/K.webp?v=1",
-  blue: "/images/symbols/wild-panther/A.png?v=1",
-  green: "/images/symbols/wild-panther/owl.png?v=1",
-  purple: "/images/symbols/wild-panther/wolf.png?v=1",
-  heart: "/images/symbols/wild-panther/ram.png?v=1",
-  lollipop: "/images/symbols/wild-panther/scatter.webp?v=1",
-  bomb: "/images/symbols/wild-panther/wild.webp?v=1",
+  grape: "/images/symbols/wild-panther/10-v20261012-unique.png",
+  plum: "/images/symbols/wild-panther/J-v20261012-unique.png",
+  melon: "/images/symbols/wild-panther/Q-v20261012-unique.png",
+  apple: "/images/symbols/wild-panther/K-v20261012-unique.png",
+  blue: "/images/symbols/wild-panther/A-v20261012-unique.png",
+  green: "/images/symbols/wild-panther/owl-v20261012-unique.png",
+  purple: "/images/symbols/wild-panther/wolf-v20261012-unique.png",
+  heart: "/images/symbols/wild-panther/ram-v20261012-unique.png",
+  lollipop: "/images/symbols/wild-panther/scatter-v20261012-unique.png",
+  bomb: "/images/symbols/wild-panther/wild-v20261012-unique.png",
 };
 
 export function payForCount(sym: CellSym, count: number): number {

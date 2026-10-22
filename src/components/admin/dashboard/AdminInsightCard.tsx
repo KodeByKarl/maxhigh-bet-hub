@@ -17,9 +17,10 @@ export function AdminInsightCard({ stats }: { stats: AdminDashboardStats | null 
       </div>
       <p className="mt-4 text-sm leading-relaxed text-white/60">
         Platform has <span className="font-semibold text-white">{players}</span> players with{" "}
-        <span className="font-semibold text-emerald-300">{wins}</span> recorded wins in the last 24h.
-        Lifetime bet volume sits at <span className="font-semibold text-violet-200">{volume}</span>.
-        Review audit logs after any balance adjustment.
+        <span className="font-semibold text-emerald-300">{wins}</span> recorded wins in the last
+        24h. Lifetime bet volume sits at{" "}
+        <span className="font-semibold text-violet-200">{volume}</span>. Review audit logs after any
+        balance adjustment.
       </p>
     </section>
   );

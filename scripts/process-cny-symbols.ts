@@ -33,7 +33,10 @@ async function processOne(name: string) {
   const dest = join(ROOT, name);
   if (existsSync(bak)) copyFileSync(bak, dest);
 
-  const { data, info } = await sharp(dest).ensureAlpha().raw().toBuffer({ resolveWithObject: true });
+  const { data, info } = await sharp(dest)
+    .ensureAlpha()
+    .raw()
+    .toBuffer({ resolveWithObject: true });
   const { width: w, height: h } = info;
   const out = Buffer.from(data);
   const n = w * h;
@@ -226,7 +229,10 @@ async function processOne(name: string) {
   writeFileSync(dest, png);
 
   // Stats
-  const { data: d2, info: i2 } = await sharp(png).ensureAlpha().raw().toBuffer({ resolveWithObject: true });
+  const { data: d2, info: i2 } = await sharp(png)
+    .ensureAlpha()
+    .raw()
+    .toBuffer({ resolveWithObject: true });
   let clear = 0;
   let solidBlack = 0;
   for (let i = 0; i < i2.width * i2.height; i++) {

@@ -418,9 +418,7 @@ export async function tongitsArenaPlay(input: {
         featureState: null,
         fsSessionWin: String(settled.immediateCredit + feat.pairPlusWin),
       })
-      .where(
-        and(eq(playSessions.id, current.id), eq(playSessions.status, "open")),
-      );
+      .where(and(eq(playSessions.id, current.id), eq(playSessions.status, "open")));
     if ((claimed[0]?.affectedRows ?? 0) === 0) {
       throw new Error("Hand already settled");
     }
@@ -555,9 +553,7 @@ export async function tongitsArenaFold(input: {
         featureState: null,
         fsSessionWin: String(feat.pairPlusWin),
       })
-      .where(
-        and(eq(playSessions.id, current.id), eq(playSessions.status, "open")),
-      );
+      .where(and(eq(playSessions.id, current.id), eq(playSessions.status, "open")));
     if ((claimed[0]?.affectedRows ?? 0) === 0) {
       throw new Error("Hand already settled");
     }

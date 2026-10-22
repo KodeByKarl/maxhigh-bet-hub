@@ -98,7 +98,7 @@ export function AutoSpinModal({ bet, onClose, onStart }: Props) {
                       "flex h-11 items-center justify-center rounded-lg text-sm font-black transition-all",
                       isSelected
                         ? "bg-[var(--p-accent-soft)] text-black shadow-lg shadow-yellow-500/20"
-                        : "bg-[#222] text-white/90 hover:bg-[#2a2a2a]"
+                        : "bg-[#222] text-white/90 hover:bg-[#2a2a2a]",
                     )}
                   >
                     {cnt === "infinity" ? "∞" : cnt}

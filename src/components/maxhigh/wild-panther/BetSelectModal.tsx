@@ -66,9 +66,7 @@ export function BetSelectModal({ currentBet, onSelectBet, onClose }: Props) {
                 <span className="text-[10px] opacity-70 uppercase tracking-tight font-bold">
                   Bet
                 </span>
-                <span className="text-sm sm:text-base tabular-nums">
-                  ₱{val.toFixed(2)}
-                </span>
+                <span className="text-sm sm:text-base tabular-nums">₱{val.toFixed(2)}</span>
               </button>
             );
           })}

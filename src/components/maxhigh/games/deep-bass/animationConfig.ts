@@ -4,7 +4,7 @@
 
 export const DEEP_BASS_ASSET = {
   symbolDir: "/images/symbols/deep-bass",
-  soundDir: "/sounds/deep-bass",
+  soundDir: "/sounds/gentle-v1/deep-bass",
   thumb: "/games/deep-bass.webp",
   /** Top-down seabed plate (boat / fish-table camera). */
   seabed: "/images/symbols/deep-bass/seabed.webp",

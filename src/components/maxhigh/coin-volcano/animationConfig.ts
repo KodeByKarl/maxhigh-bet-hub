@@ -38,14 +38,14 @@ export const SYM_COLOR: Record<McSymKind, string> = {
 
 /** Real art path — renderer falls back to glyph if file missing. */
 export const ICON_SRC: Record<McSymKind, string> = {
-  bar: "/images/symbols/coin-volcano/bar.webp",
-  dice: "/images/symbols/coin-volcano/dice.webp",
-  diamond: "/images/symbols/coin-volcano/diamond.webp",
-  chip: "/images/symbols/coin-volcano/chip.webp",
-  lucky7: "/images/symbols/coin-volcano/lucky7.webp",
-  wild: "/images/symbols/coin-volcano/wild.webp",
-  scatter: "/images/symbols/coin-volcano/scatter.webp",
+  bar: "/images/symbols/coin-volcano/bar-v20261012-unique.png",
+  dice: "/images/symbols/coin-volcano/dice-v20261012-unique.png",
+  diamond: "/images/symbols/coin-volcano/diamond-v20261012-unique.png",
+  chip: "/images/symbols/coin-volcano/chip-v20261012-unique.png",
+  lucky7: "/images/symbols/coin-volcano/lucky7-v20261012-unique.png",
+  wild: "/images/symbols/coin-volcano/wild-v20261012-unique.png",
+  scatter: "/images/symbols/coin-volcano/scatter-v20261012-unique.png",
 };
 
 /** Ornate metal frame overlay (Frontier-style card border, fire palette). */
-export const CARD_FRAME_SRC = "/images/symbols/coin-volcano/card-frame.png";
+export const CARD_FRAME_SRC = "/images/symbols/coin-volcano/card-frame-v20261012-unique.png";

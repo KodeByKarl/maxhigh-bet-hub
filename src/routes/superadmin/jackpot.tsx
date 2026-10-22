@@ -196,7 +196,10 @@ function SuperJackpotPage() {
         </button>
       </form>
 
-      <form onSubmit={onUltraSubmit} className={`${saGlass} space-y-4 p-5 border border-violet-500/30`}>
+      <form
+        onSubmit={onUltraSubmit}
+        className={`${saGlass} space-y-4 p-5 border border-violet-500/30`}
+      >
         <div className="text-sm font-bold text-foreground">Ultra Mega Jackpot (Display Only)</div>
         <p className="text-xs text-muted-foreground">
           Cosmetic amount shown on the Player Board. Not winnable and not tied to payout logic.
@@ -223,14 +226,17 @@ function SuperJackpotPage() {
         </button>
       </form>
 
-      <form onSubmit={onAssignJackpot} className={`${saGlass} space-y-4 p-5 border border-amber-500/30`}>
+      <form
+        onSubmit={onAssignJackpot}
+        className={`${saGlass} space-y-4 p-5 border border-amber-500/30`}
+      >
         <div className="flex items-center gap-2 text-sm font-bold text-foreground">
           <UserCheck className="h-4 w-4 text-emerald-400" />
           <span>Assign Jackpot Win to Specific Player</span>
         </div>
         <p className="text-xs text-muted-foreground">
-          Directly awards the current jackpot pool to a player account and resets the progressive pool.
-          Disabled when Mega Jackpot is Off.
+          Directly awards the current jackpot pool to a player account and resets the progressive
+          pool. Disabled when Mega Jackpot is Off.
         </p>
 
         <div className="space-y-3">

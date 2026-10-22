@@ -209,7 +209,12 @@ fs.mkdirSync(OUT_DIR, { recursive: true });
   mixInto(out, pentatonicSparkle(dur, rand, 0.85), 0, 1);
   let t = 0.05;
   while (t < dur) {
-    mixInto(out, firecracker(rand, 0.7 + rand() * 0.5), Math.floor(t * SAMPLE_RATE), 0.22 + rand() * 0.18);
+    mixInto(
+      out,
+      firecracker(rand, 0.7 + rand() * 0.5),
+      Math.floor(t * SAMPLE_RATE),
+      0.22 + rand() * 0.18,
+    );
     t += 0.11 + rand() * 0.14;
   }
   for (let i = 0; i < n; i++) {
@@ -283,7 +288,12 @@ fs.mkdirSync(OUT_DIR, { recursive: true });
   const out = new Float32Array(n);
   // ground explosion — deeper crackle
   for (let k = 0; k < 4; k++) {
-    mixInto(out, firecracker(rand, 0.55 + k * 0.08), Math.floor(SAMPLE_RATE * (0.02 + k * 0.03)), 0.7);
+    mixInto(
+      out,
+      firecracker(rand, 0.55 + k * 0.08),
+      Math.floor(SAMPLE_RATE * (0.02 + k * 0.03)),
+      0.7,
+    );
   }
   for (let i = 0; i < n; i++) {
     const t = i / SAMPLE_RATE;
@@ -334,7 +344,12 @@ fs.mkdirSync(OUT_DIR, { recursive: true });
   const n = Math.floor(SAMPLE_RATE * 0.55);
   const out = new Float32Array(n);
   for (let k = 0; k < 4; k++) {
-    mixInto(out, coinClink(rand, 0.9 + k * 0.12), Math.floor(SAMPLE_RATE * (0.02 + k * 0.07)), 0.55);
+    mixInto(
+      out,
+      coinClink(rand, 0.9 + k * 0.12),
+      Math.floor(SAMPLE_RATE * (0.02 + k * 0.07)),
+      0.55,
+    );
   }
   mixInto(out, gongHit(rand, 220), Math.floor(SAMPLE_RATE * 0.05), 0.25);
   normalize(out, 0.78);

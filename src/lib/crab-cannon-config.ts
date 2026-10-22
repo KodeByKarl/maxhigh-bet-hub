@@ -19,30 +19,15 @@ export const RTP_REFERENCE = {
   max: 96.5,
 } as const;
 
-export type FishTierId =
-  | "common"
-  | "uncommon"
-  | "rare"
-  | "elite"
-  | "boss"
-  | "crate";
+export type FishTierId = "common" | "uncommon" | "rare" | "elite" | "boss" | "crate";
 
 export type WeaponTierId =
-  | "bamboo"
-  | "spinning"
-  | "trolling"
-  | "harpoon"
-  | "master";
+  "mini" | "half" | "bamboo" | "spinning" | "trolling" | "harpoon" | "master";
 
 export type PowerUpId = "net-bomb" | "freeze-lure" | "golden-hook";
 
 export type CrateDropId =
-  | "coin-burst"
-  | "mult-2x"
-  | "mult-3x"
-  | "net-bomb"
-  | "freeze-lure"
-  | "golden-hook";
+  "coin-burst" | "mult-2x" | "mult-3x" | "net-bomb" | "freeze-lure" | "golden-hook";
 
 export type FishTierConfig = {
   id: FishTierId;
@@ -123,7 +108,7 @@ export type CrabCannonConfig = {
 export const DEFAULT_FISH_TIERS: FishTierConfig[] = [
   {
     id: "common",
-    label: "Silver Shiner",
+    label: "Sand Crab",
     sprite: "shiner",
     payoutMin: 1,
     payoutMax: 3,
@@ -136,7 +121,7 @@ export const DEFAULT_FISH_TIERS: FishTierConfig[] = [
   },
   {
     id: "uncommon",
-    label: "Smallmouth Bass",
+    label: "Blue Crab",
     sprite: "smallmouth",
     payoutMin: 3,
     payoutMax: 8,
@@ -149,7 +134,7 @@ export const DEFAULT_FISH_TIERS: FishTierConfig[] = [
   },
   {
     id: "rare",
-    label: "Largemouth Bass",
+    label: "Spider Crab",
     sprite: "largemouth",
     payoutMin: 8,
     payoutMax: 20,
@@ -162,7 +147,7 @@ export const DEFAULT_FISH_TIERS: FishTierConfig[] = [
   },
   {
     id: "elite",
-    label: "Striped Trophy Bass",
+    label: "Spiny Lobster",
     sprite: "striped-trophy",
     payoutMin: 20,
     payoutMax: 60,
@@ -175,7 +160,7 @@ export const DEFAULT_FISH_TIERS: FishTierConfig[] = [
   },
   {
     id: "boss",
-    label: "The Crab Cannon",
+    label: "The King Crab",
     sprite: "crab-cannon-boss",
     payoutMin: 100,
     payoutMax: 500,
@@ -201,6 +186,8 @@ export const DEFAULT_FISH_TIERS: FishTierConfig[] = [
 ];
 
 export const DEFAULT_WEAPONS: WeaponTierConfig[] = [
+  { id: "mini", label: "Minnow Line", betCost: 0.1, hitMod: 0.9 },
+  { id: "half", label: "Half-Peso Line", betCost: 0.5, hitMod: 0.9 },
   { id: "bamboo", label: "Bamboo Rod", betCost: 1, hitMod: 0.9 },
   { id: "spinning", label: "Spinning Reel", betCost: 2, hitMod: 0.95 },
   { id: "trolling", label: "Trolling Rig", betCost: 5, hitMod: 1.0 },
@@ -260,7 +247,7 @@ export const DEFAULT_CRAB_CANNON_CONFIG: CrabCannonConfig = {
   spawnIntervalSec: 1.4,
   maxHitChance: 0.92,
   rtpTarget: RTP_REFERENCE.target,
-  minBet: 1,
+  minBet: 0.1,
   maxBet: 25,
 };
 
@@ -274,15 +261,10 @@ function num(v: unknown, fallback: number) {
   return Number.isFinite(n) ? n : fallback;
 }
 
-const FISH_IDS: FishTierId[] = [
-  "common",
-  "uncommon",
-  "rare",
-  "elite",
-  "boss",
-  "crate",
-];
+const FISH_IDS: FishTierId[] = ["common", "uncommon", "rare", "elite", "boss", "crate"];
 const WEAPON_IDS: WeaponTierId[] = [
+  "mini",
+  "half",
   "bamboo",
   "spinning",
   "trolling",
@@ -409,17 +391,11 @@ function normalizePowerUps(raw: unknown): PowerUpConfig[] {
   });
 }
 
-export function getFishTier(
-  cfg: CrabCannonConfig,
-  id: FishTierId,
-): FishTierConfig {
+export function getFishTier(cfg: CrabCannonConfig, id: FishTierId): FishTierConfig {
   return cfg.fishTiers.find((f) => f.id === id) ?? DEFAULT_FISH_TIERS.find((f) => f.id === id)!;
 }
 
-export function getWeapon(
-  cfg: CrabCannonConfig,
-  id: WeaponTierId,
-): WeaponTierConfig {
+export function getWeapon(cfg: CrabCannonConfig, id: WeaponTierId): WeaponTierConfig {
   return cfg.weapons.find((w) => w.id === id) ?? DEFAULT_WEAPONS.find((w) => w.id === id)!;
 }
 
@@ -477,8 +453,16 @@ export function normalizeCrabCannonConfig(raw: unknown): CrabCannonConfig {
   const d = DEFAULT_CRAB_CANNON_CONFIG;
   const weapons = normalizeWeapons(o.weapons);
   const betCosts = weapons.map((w) => w.betCost);
-  const minBet = clamp(num(o.minBet, Math.min(...betCosts)), 0.01, 10_000);
-  const maxBet = clamp(num(o.maxBet, Math.max(...betCosts)), minBet, 100_000);
+  const minBet = clamp(
+    Math.min(num(o.minBet, Math.min(...betCosts)), Math.min(...betCosts)),
+    0.01,
+    10_000,
+  );
+  const maxBet = clamp(
+    Math.max(num(o.maxBet, Math.max(...betCosts)), Math.max(...betCosts)),
+    minBet,
+    100_000,
+  );
 
   return {
     schemaVersion: 1,

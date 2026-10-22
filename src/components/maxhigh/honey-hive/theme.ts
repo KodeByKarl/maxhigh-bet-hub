@@ -1,7 +1,4 @@
-﻿import {
-  type PantherTheme,
-  type PantherSymKind,
-} from "@/components/maxhigh/panther-shared/theme";
+﻿import { type PantherTheme, type PantherSymKind } from "@/components/maxhigh/panther-shared/theme";
 import { HONEY_HIVE_COLORS } from "@/components/maxhigh/panther-shared/palettes";
 
 /** Padded single-subject crops for hex cells. */

@@ -1,6 +1,17 @@
-/**
- * Fish sprite — animated top-down graphic model (boat camera).
- * Replaces static PNG cutouts so fish look like they're swimming.
- */
-export { SwimmingFishGraphic as FishSprite, SwimmingFishGraphic } from "./SwimmingFishGraphic";
-export { fishSpritePath } from "./fishSpritePath";
+import type { FishTierId } from "@/lib/deep-bass-config";
+import { FAUNA } from "../fishing-shared/fauna";
+import { FaunaFish } from "../fishing-shared/species";
+
+const CAST = FAUNA["deep-bass"];
+
+export function FishSprite(props: {
+  tierId: FishTierId;
+  size?: number;
+  flipped?: boolean;
+  hitFlash?: boolean;
+  frozen?: boolean;
+  className?: string;
+  animSeed?: number;
+}) {
+  return <FaunaFish {...props} spec={CAST[props.tierId]} crate={CAST.crate.pal} />;
+}

@@ -1,11 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { lucky9DealFn, getLucky9EngineConfigFn } from "@/functions/lucky9";
-import {
-  LUCKY9_GAME_ID,
-  DEFAULT_LUCKY9_CONFIG,
-  type Lucky9Config,
-} from "@/lib/lucky9-config";
+import { LUCKY9_GAME_ID, DEFAULT_LUCKY9_CONFIG, type Lucky9Config } from "@/lib/lucky9-config";
 import { cn } from "@/lib/utils";
 import { BettingPanel, type ChipPlaceEvent } from "./BettingPanel";
 import { CardCell } from "./CardCell";
@@ -87,11 +83,7 @@ function CardFan({
  * Lucky 9 Arena — oval felt race-to-9.
  * Intentionally unlike Baccarat (no side-by-side panels, no RESULT box, no side rail).
  */
-export function Lucky9Table({
-  gameId = LUCKY9_GAME_ID,
-  gameName = "Lucky 9",
-  onBalance,
-}: Props) {
+export function Lucky9Table({ gameId = LUCKY9_GAME_ID, gameName = "Lucky 9", onBalance }: Props) {
   void gameId;
   const animRef = useRef<L9AnimProfile>(getLucky9Anim());
   const [cfg, setCfg] = useState<Lucky9Config>(() => getLucky9Config());
@@ -366,12 +358,7 @@ export function Lucky9Table({
           {/* Mid: score orbs + status over the 9 */}
           <div className="relative z-[2] flex min-h-0 flex-1 flex-col items-center justify-center gap-2.5 px-3 short-h:gap-1.5">
             <div className="flex w-full max-w-xs items-center justify-between gap-2">
-              <div
-                className={cn(
-                  "flex flex-col items-center",
-                  pWin && "scale-110 transition",
-                )}
-              >
+              <div className={cn("flex flex-col items-center", pWin && "scale-110 transition")}>
                 <span className="text-[10px] font-extrabold tracking-widest text-sky-300 short-h:text-[8px]">
                   YOU
                 </span>
@@ -413,12 +400,7 @@ export function Lucky9Table({
                 )}
               </div>
 
-              <div
-                className={cn(
-                  "flex flex-col items-center",
-                  dWin && "scale-110 transition",
-                )}
-              >
+              <div className={cn("flex flex-col items-center", dWin && "scale-110 transition")}>
                 <span className="text-[10px] font-extrabold tracking-widest text-lime-300 short-h:text-[8px]">
                   HOUSE
                 </span>

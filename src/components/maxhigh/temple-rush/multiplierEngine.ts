@@ -1,16 +1,29 @@
+import { clampBombMult } from "@/lib/temple-rush-config";
 import type { BoardCell } from "./types";
+import { getTempleRushConfig } from "./runtimeConfig";
 
 /**
- * Base game: sum bomb mults on the board when a tumble wins; apply to that tumble's win.
- * Free spins: bombs can be collected into accumulator (optional mode) OR applied per tumble.
- * Spec §4 FS: collect then apply at end — we support both via `collectMode`.
+ * Base game: use a single applied bomb multiplier from the winning board.
+ * Free spins: keep the strongest winning bomb seen in the feature.
  *
  * Rule: a bomb is ONLY valid when there is a winning cluster (tumbleWin > 0).
  * Dead-spin / no-match bombs are declined and do not bank.
  */
-export function sumBombs(bombs: BoardCell[]): number {
+export function strongestBomb(bombs: BoardCell[]): number {
   if (bombs.length === 0) return 0;
-  return bombs.reduce((a, b) => a + (b.mult ?? 2), 0);
+  return bombs.reduce((top, b) => Math.max(top, clampBombMult(b.mult ?? 2)), 0);
+}
+
+function fsBombCeiling(): number {
+  const cap = getTempleRushConfig().maxFsBombMult;
+  if (cap == null || !Number.isFinite(cap) || cap <= 0) return Number.POSITIVE_INFINITY;
+  return cap;
+}
+
+function baseBombCeiling(): number {
+  const cap = getTempleRushConfig().maxBaseBombSum;
+  if (cap == null || !Number.isFinite(cap) || cap <= 0) return Number.POSITIVE_INFINITY;
+  return cap;
 }
 
 export function applyBombToTumble(
@@ -24,7 +37,7 @@ export function applyBombToTumble(
   /** Bombs that should pop this step */
   clearBombs: boolean;
 } {
-  const bombSum = sumBombs(bombs);
+  const bombSum = strongestBomb(bombs);
   // No matching win → multiplier is invalid this step (do not bank / apply)
   if (tumbleWin <= 0 || bombSum <= 0) {
     return {
@@ -36,19 +49,22 @@ export function applyBombToTumble(
   }
 
   if (opts.freeSpins && opts.collectMode) {
-    // Collect bombs with this winning tumble; don't multiply tumble yet
+    const ceiling = fsBombCeiling();
+    const next = Math.max(opts.accumulator, bombSum);
     return {
       win: tumbleWin,
       bombSum,
-      accumulator: opts.accumulator + bombSum,
+      accumulator: Number.isFinite(ceiling) ? Math.min(ceiling, next) : next,
       clearBombs: true,
     };
   }
 
-  // Base (and FS non-collect): apply sum to this tumble
+  // Base (and FS non-collect): apply one clean 2x/3x/4x/5x multiplier
+  const baseCeil = baseBombCeiling();
+  const applied = Number.isFinite(baseCeil) ? Math.min(baseCeil, bombSum) : bombSum;
   return {
-    win: +(tumbleWin * bombSum).toFixed(2),
-    bombSum,
+    win: +(tumbleWin * applied).toFixed(2),
+    bombSum: applied,
     accumulator: opts.accumulator,
     clearBombs: true,
   };
@@ -57,7 +73,9 @@ export function applyBombToTumble(
 /** Apply collected bomb multiplier to free-spin session earnings. 0–1x = no boost. */
 export function finalizeFreeSpinTotal(totalWin: number, accumulator: number): number {
   if (totalWin <= 0) return 0;
-  const mult = Math.max(1, accumulator);
+  const ceiling = fsBombCeiling();
+  const uncapped = Math.max(1, accumulator);
+  const mult = Number.isFinite(ceiling) ? Math.min(ceiling, uncapped) : uncapped;
   return +(totalWin * mult).toFixed(2);
 }
 

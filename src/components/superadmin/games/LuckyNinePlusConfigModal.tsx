@@ -70,15 +70,7 @@ function Num({
   );
 }
 
-function Field({
-  label,
-  hint,
-  children,
-}: {
-  label: string;
-  hint?: string;
-  children: ReactNode;
-}) {
+function Field({ label, hint, children }: { label: string; hint?: string; children: ReactNode }) {
   return (
     <label className="block space-y-1.5">
       <span className="text-xs font-medium text-muted-foreground">{label}</span>
@@ -117,9 +109,7 @@ export function LuckyNinePlusConfigModal({ game, open, onOpenChange, onPatchLobb
     if (!open) return;
     setSection("lobby");
     setTag(game.tag ?? "");
-    setLobbyRtp(
-      Number.parseFloat(String(game.rtp ?? "").replace("%", "")) || RTP_REFERENCE.dealer,
-    );
+    setLobbyRtp(Number.parseFloat(String(game.rtp ?? "").replace("%", "")) || RTP_REFERENCE.dealer);
     setVolatility(game.volatility ?? "Low");
     setLobbyMinBet(Number(String(game.minBet ?? "").replace(/[^\d.]/g, "")) || 1);
     setLobbyMaxBet(Number(String(game.maxBet ?? "").replace(/[^\d.]/g, "")) || 500);
@@ -432,19 +422,39 @@ export function LuckyNinePlusConfigModal({ game, open, onOpenChange, onPatchLobb
               </Field>
               <Field label="Player min / max">
                 <div className="flex gap-2">
-                  <Num value={cfg.minPlayerBet} onChange={(n) => patch({ minPlayerBet: n })} step={0.01} />
-                  <Num value={cfg.maxPlayerBet} onChange={(n) => patch({ maxPlayerBet: n })} step={1} />
+                  <Num
+                    value={cfg.minPlayerBet}
+                    onChange={(n) => patch({ minPlayerBet: n })}
+                    step={0.01}
+                  />
+                  <Num
+                    value={cfg.maxPlayerBet}
+                    onChange={(n) => patch({ maxPlayerBet: n })}
+                    step={1}
+                  />
                 </div>
               </Field>
               <Field label="Dealer min / max">
                 <div className="flex gap-2">
-                  <Num value={cfg.minDealerBet} onChange={(n) => patch({ minDealerBet: n })} step={0.01} />
-                  <Num value={cfg.maxDealerBet} onChange={(n) => patch({ maxDealerBet: n })} step={1} />
+                  <Num
+                    value={cfg.minDealerBet}
+                    onChange={(n) => patch({ minDealerBet: n })}
+                    step={0.01}
+                  />
+                  <Num
+                    value={cfg.maxDealerBet}
+                    onChange={(n) => patch({ maxDealerBet: n })}
+                    step={1}
+                  />
                 </div>
               </Field>
               <Field label="Tie min / max">
                 <div className="flex gap-2">
-                  <Num value={cfg.minTieBet} onChange={(n) => patch({ minTieBet: n })} step={0.01} />
+                  <Num
+                    value={cfg.minTieBet}
+                    onChange={(n) => patch({ minTieBet: n })}
+                    step={0.01}
+                  />
                   <Num value={cfg.maxTieBet} onChange={(n) => patch({ maxTieBet: n })} step={1} />
                 </div>
               </Field>
@@ -471,8 +481,8 @@ export function LuckyNinePlusConfigModal({ game, open, onOpenChange, onPatchLobb
                 />
               </Field>
               <p className="rounded-md border border-white/10 bg-white/[0.03] p-3 text-[11px] text-muted-foreground">
-                Lucky Nine Plus RTP is fixed by the closer-to-9 math and draw threshold. Dealer pays even
-                money with no commission (unlike Baccarat&apos;s 5% Banker fee). Natural is{" "}
+                Lucky Nine Plus RTP is fixed by the closer-to-9 math and draw threshold. Dealer pays
+                even money with no commission (unlike Baccarat&apos;s 5% Banker fee). Natural is{" "}
                 {cfg.naturalTotal} only — not Baccarat&apos;s 8/9. Persisted in{" "}
                 <code className="text-lime-300/90">game_controls.engineConfig</code>.
               </p>

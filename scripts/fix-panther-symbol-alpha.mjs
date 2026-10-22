@@ -74,11 +74,7 @@ async function main() {
     for (const [srcName, destName] of MAP) {
       const src = path.join(dir, srcName);
       const dest = path.join(dir, destName);
-      const input = fs.existsSync(src)
-        ? src
-        : fs.existsSync(dest)
-          ? dest
-          : null;
+      const input = fs.existsSync(src) ? src : fs.existsSync(dest) ? dest : null;
       if (!input) {
         console.warn("missing", path.join(dir, srcName));
         continue;
@@ -91,10 +87,7 @@ async function main() {
   for (const g of GAMES) {
     const theme = path.join(ROOT, "src/components/maxhigh", g, "theme.ts");
     let t = fs.readFileSync(theme, "utf8");
-    t = t.replace(
-      /themedIconPack\("([^"]+)",\s*"[^"]+"\)/,
-      'themedIconPack("$1", "4")',
-    );
+    t = t.replace(/themedIconPack\("([^"]+)",\s*"[^"]+"\)/, 'themedIconPack("$1", "4")');
     fs.writeFileSync(theme, t);
   }
   console.log("themes bumped to v=4");

@@ -14,7 +14,12 @@ export const Route = createFileRoute("/slots")({
   }),
   component: () => (
     <>
-      <PageHeader title="Slots" description="Reels, bonus rounds and jackpots." icon={Dice5} accent="#A21CAF" />
+      <PageHeader
+        title="Slots"
+        description="Reels, bonus rounds and jackpots."
+        icon={Dice5}
+        accent="#A21CAF"
+      />
       <SlotGameGrid title="Slots" category="slot" />
     </>
   ),

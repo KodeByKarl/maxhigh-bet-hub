@@ -1,7 +1,14 @@
 import { useState, type ReactNode } from "react";
 import { motion } from "framer-motion";
 import { emberTigerAudio } from "./audio";
-import { BUY_FS_BET_MAX, BUY_FS_BET_MIN, BUY_FS_START_BET, ICON_SRC, getBuyUnitPrice } from "./paytable";
+import {
+  BUY_FS_BET_MAX,
+  BUY_FS_BET_MIN,
+  BUY_FS_START_BET,
+  ICON_SRC,
+  getBuyUnitPrice,
+  getBuyMaxQuantity,
+} from "./paytable";
 
 export const BUY_FS_QTY_MIN = 1;
 export const BUY_FS_QTY_MAX = 50;
@@ -14,19 +21,15 @@ export type BuyFeatureModalProps = {
 };
 
 /** Buy Bonus: starts at bet ₱1 / qty 1. Bet goes 1,2,3…10… Price = bet × 42.5. */
-export function BuyFeatureModal({
-  balance,
-  mode,
-  onConfirm,
-  onCancel,
-}: BuyFeatureModalProps) {
+export function BuyFeatureModal({ balance, mode, onConfirm, onCancel }: BuyFeatureModalProps) {
   const [buyBet, setBuyBet] = useState(BUY_FS_START_BET);
   const [quantity, setQuantity] = useState(BUY_FS_QTY_MIN);
   const canBetMinus = buyBet > BUY_FS_BET_MIN;
   const canBetPlus = buyBet < BUY_FS_BET_MAX;
   const canQtyMinus = quantity > BUY_FS_QTY_MIN;
-  const canQtyPlus = quantity < BUY_FS_QTY_MAX;
-  const unitPrice = getBuyUnitPrice(buyBet, mode);
+  const maxQuantity = getBuyMaxQuantity();
+  const canQtyPlus = quantity < maxQuantity;
+  const unitPrice = getBuyUnitPrice(buyBet, quantity);
   const totalPrice = +(unitPrice * quantity).toFixed(2);
   const canAfford = balance >= totalPrice;
 
@@ -35,7 +38,7 @@ export function BuyFeatureModal({
   };
 
   const nudgeQty = (dir: -1 | 1) => {
-    setQuantity((q) => Math.min(BUY_FS_QTY_MAX, Math.max(BUY_FS_QTY_MIN, q + dir)));
+    setQuantity((q) => Math.min(maxQuantity, Math.max(BUY_FS_QTY_MIN, q + dir)));
   };
 
   return (
@@ -57,8 +60,10 @@ export function BuyFeatureModal({
         className="relative w-full max-w-[340px] overflow-hidden rounded-2xl border"
         style={{
           borderColor: "var(--p-modal-border)",
-          background: "linear-gradient(180deg, color-mix(in srgb, var(--p-accent-deep) 55%, #1a1208) 0%, #0c0a06 100%)",
-          boxShadow: "0 22px 50px rgba(0,0,0,0.85), inset 0 1px 0 color-mix(in srgb, var(--p-accent-soft) 12%, transparent)",
+          background:
+            "linear-gradient(180deg, color-mix(in srgb, var(--p-accent-deep) 55%, #1a1208) 0%, #0c0a06 100%)",
+          boxShadow:
+            "0 22px 50px rgba(0,0,0,0.85), inset 0 1px 0 color-mix(in srgb, var(--p-accent-soft) 12%, transparent)",
         }}
         onClick={(e) => e.stopPropagation()}
       >
@@ -87,7 +92,8 @@ export function BuyFeatureModal({
             Buy Bonus
           </div>
           <p className="mx-auto mt-2 max-w-[280px] text-center text-[11px] font-semibold leading-snug text-yellow-200/90">
-            Click &apos;Buy &amp; Play&apos; to purchase and activate the featured game automatically.
+            Click &apos;Buy &amp; Play&apos; to purchase and activate the featured game
+            automatically.
           </p>
 
           <div
@@ -171,15 +177,7 @@ function formatPrice(n: number) {
   return Number.isInteger(n) ? String(n) : n.toFixed(2);
 }
 
-function Row({
-  label,
-  children,
-  last,
-}: {
-  label: string;
-  children: ReactNode;
-  last?: boolean;
-}) {
+function Row({ label, children, last }: { label: string; children: ReactNode; last?: boolean }) {
   return (
     <div
       className={`flex items-center justify-between gap-3 py-2 ${last ? "" : "border-b border-amber-700/35"}`}
@@ -240,19 +238,11 @@ function StepBtn({
   );
 }
 
-function ValueBox({
-  children,
-  emphasize,
-}: {
-  children: ReactNode;
-  emphasize?: boolean;
-}) {
+function ValueBox({ children, emphasize }: { children: ReactNode; emphasize?: boolean }) {
   return (
     <div
       className={`min-w-[88px] rounded-md border px-2 py-1.5 text-center text-sm font-black tabular-nums ${
-        emphasize
-          ? "border-yellow-400/70 text-yellow-300"
-          : "border-amber-600/45 text-amber-50"
+        emphasize ? "border-yellow-400/70 text-yellow-300" : "border-amber-600/45 text-amber-50"
       }`}
       style={{
         background: emphasize

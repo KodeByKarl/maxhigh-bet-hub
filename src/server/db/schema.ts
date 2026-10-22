@@ -21,7 +21,9 @@ export const users = mysqlTable(
     passwordHash: varchar("password_hash", { length: 255 }).notNull(),
     /** Wallet balance stored as decimal string, e.g. "1284.50" */
     balance: decimal("balance", { precision: 14, scale: 2 }).notNull().default("0.00"),
-    role: mysqlEnum("role", ["player", "admin", "agent", "master_agent", "superadmin"]).notNull().default("player"),
+    role: mysqlEnum("role", ["player", "admin", "agent", "master_agent", "superadmin"])
+      .notNull()
+      .default("player"),
     isLocked: mysqlEnum("is_locked", ["yes", "no"]).notNull().default("no"),
     failedAttempts: bigint("failed_attempts", { mode: "number" }).notNull().default(0),
     lockedUntil: timestamp("locked_until"),
@@ -33,7 +35,9 @@ export const users = mysqlTable(
     displayName: varchar("display_name", { length: 128 }),
     avatarUrl: varchar("avatar_url", { length: 512 }),
     parentAgentId: varchar("upline_id", { length: 36 }),
-    createdAt: timestamp("created_at").notNull().default(sql`CURRENT_TIMESTAMP`),
+    createdAt: timestamp("created_at")
+      .notNull()
+      .default(sql`CURRENT_TIMESTAMP`),
     updatedAt: timestamp("updated_at")
       .notNull()
       .default(sql`CURRENT_TIMESTAMP`)
@@ -57,8 +61,12 @@ export const sessions = mysqlTable(
     token: varchar("token", { length: 128 }).notNull().unique(),
     expiresAt: timestamp("expires_at").notNull(),
     /** Last activity — used for accurate Players Online (active in last few minutes). */
-    lastSeenAt: timestamp("last_seen_at").notNull().default(sql`CURRENT_TIMESTAMP`),
-    createdAt: timestamp("created_at").notNull().default(sql`CURRENT_TIMESTAMP`),
+    lastSeenAt: timestamp("last_seen_at")
+      .notNull()
+      .default(sql`CURRENT_TIMESTAMP`),
+    createdAt: timestamp("created_at")
+      .notNull()
+      .default(sql`CURRENT_TIMESTAMP`),
   },
   (t) => [
     index("sessions_token_idx").on(t.token),
@@ -98,7 +106,9 @@ export const transactions = mysqlTable(
     /** Game / source label, e.g. "Candy Peak" */
     game: varchar("game", { length: 64 }),
     note: text("note"),
-    createdAt: timestamp("created_at").notNull().default(sql`CURRENT_TIMESTAMP`),
+    createdAt: timestamp("created_at")
+      .notNull()
+      .default(sql`CURRENT_TIMESTAMP`),
   },
   (t) => [
     index("tx_user_idx").on(t.userId),
@@ -117,7 +127,9 @@ export const liveWins = mysqlTable(
     username: varchar("username", { length: 64 }).notNull(),
     game: varchar("game", { length: 64 }).notNull(),
     amount: decimal("amount", { precision: 14, scale: 2 }).notNull(),
-    createdAt: timestamp("created_at").notNull().default(sql`CURRENT_TIMESTAMP`),
+    createdAt: timestamp("created_at")
+      .notNull()
+      .default(sql`CURRENT_TIMESTAMP`),
   },
   (t) => [index("live_wins_created_idx").on(t.createdAt)],
 );
@@ -139,7 +151,9 @@ export const walletRequests = mysqlTable(
       onDelete: "set null",
     }),
     reviewedAt: timestamp("reviewed_at"),
-    createdAt: timestamp("created_at").notNull().default(sql`CURRENT_TIMESTAMP`),
+    createdAt: timestamp("created_at")
+      .notNull()
+      .default(sql`CURRENT_TIMESTAMP`),
   },
   (t) => [
     index("wr_status_idx").on(t.status),
@@ -153,14 +167,18 @@ export const auditLogs = mysqlTable(
   "audit_logs",
   {
     id: varchar("id", { length: 36 }).primaryKey(),
-    actorId: varchar("actor_id", { length: 36 }).references(() => users.id, { onDelete: "set null" }),
+    actorId: varchar("actor_id", { length: 36 }).references(() => users.id, {
+      onDelete: "set null",
+    }),
     actorUsername: varchar("actor_username", { length: 64 }).notNull(),
     action: varchar("action", { length: 64 }).notNull(),
     targetType: varchar("target_type", { length: 64 }),
     targetId: varchar("target_id", { length: 64 }),
     summary: varchar("summary", { length: 512 }).notNull(),
     meta: text("meta"),
-    createdAt: timestamp("created_at").notNull().default(sql`CURRENT_TIMESTAMP`),
+    createdAt: timestamp("created_at")
+      .notNull()
+      .default(sql`CURRENT_TIMESTAMP`),
   },
   (t) => [
     index("audit_created_idx").on(t.createdAt),
@@ -201,7 +219,9 @@ export const gameSettingsLogs = mysqlTable(
   "game_settings_logs",
   {
     id: varchar("id", { length: 36 }).primaryKey(),
-    actorId: varchar("actor_id", { length: 36 }).references(() => users.id, { onDelete: "set null" }),
+    actorId: varchar("actor_id", { length: 36 }).references(() => users.id, {
+      onDelete: "set null",
+    }),
     actorUsername: varchar("actor_username", { length: 64 }).notNull(),
     scope: varchar("scope", { length: 64 }).notNull(),
     affectedCount: bigint("affected_count", { mode: "number" }).notNull().default(0),
@@ -211,12 +231,11 @@ export const gameSettingsLogs = mysqlTable(
     rtp: decimal("rtp", { precision: 5, scale: 2 }).notNull(),
     beforeSnapshot: text("before_snapshot"),
     afterSnapshot: text("after_snapshot"),
-    createdAt: timestamp("created_at").notNull().default(sql`CURRENT_TIMESTAMP`),
+    createdAt: timestamp("created_at")
+      .notNull()
+      .default(sql`CURRENT_TIMESTAMP`),
   },
-  (t) => [
-    index("gsl_created_idx").on(t.createdAt),
-    index("gsl_actor_idx").on(t.actorId),
-  ],
+  (t) => [index("gsl_created_idx").on(t.createdAt), index("gsl_actor_idx").on(t.actorId)],
 );
 
 /**
@@ -239,7 +258,9 @@ export const playSessions = mysqlTable(
     fsBombAcc: decimal("fs_bomb_acc", { precision: 14, scale: 2 }).notNull().default("0.00"),
     fsSpinsPlayed: bigint("fs_spins_played", { mode: "number" }).notNull().default(0),
     featureState: text("feature_state"),
-    createdAt: timestamp("created_at").notNull().default(sql`CURRENT_TIMESTAMP`),
+    createdAt: timestamp("created_at")
+      .notNull()
+      .default(sql`CURRENT_TIMESTAMP`),
     updatedAt: timestamp("updated_at")
       .notNull()
       .default(sql`CURRENT_TIMESTAMP`)
@@ -286,7 +307,9 @@ export const carouselSlides = mysqlTable("carousel_slides", {
   imageUrl: varchar("image_url", { length: 512 }).notNull(),
   sortOrder: bigint("sort_order", { mode: "number" }).notNull().default(0),
   enabled: mysqlEnum("enabled", ["yes", "no"]).notNull().default("yes"),
-  createdAt: timestamp("created_at").notNull().default(sql`CURRENT_TIMESTAMP`),
+  createdAt: timestamp("created_at")
+    .notNull()
+    .default(sql`CURRENT_TIMESTAMP`),
 });
 
 export const promotions = mysqlTable("promotions", {
@@ -295,18 +318,30 @@ export const promotions = mysqlTable("promotions", {
   description: text("description"),
   bonusPercent: decimal("bonus_percent", { precision: 6, scale: 2 }).notNull().default("100.00"),
   maxBonus: decimal("max_bonus", { precision: 14, scale: 2 }).notNull().default("1000.00"),
-  wageringMultiplier: decimal("wagering_multiplier", { precision: 6, scale: 2 }).notNull().default("15.00"),
+  wageringMultiplier: decimal("wagering_multiplier", { precision: 6, scale: 2 })
+    .notNull()
+    .default("15.00"),
   enabled: mysqlEnum("enabled", ["yes", "no"]).notNull().default("yes"),
-  createdAt: timestamp("created_at").notNull().default(sql`CURRENT_TIMESTAMP`),
+  createdAt: timestamp("created_at")
+    .notNull()
+    .default(sql`CURRENT_TIMESTAMP`),
 });
 
 export const riskControls = mysqlTable("risk_controls", {
   id: varchar("id", { length: 32 }).primaryKey().default("default"),
-  maxSingleBet: decimal("max_single_bet", { precision: 14, scale: 2 }).notNull().default("10000.00"),
-  maxDailyPayout: decimal("max_daily_payout", { precision: 14, scale: 2 }).notNull().default("500000.00"),
-  maxWeeklyLimit: decimal("max_weekly_limit", { precision: 14, scale: 2 }).notNull().default("20000.00"),
+  maxSingleBet: decimal("max_single_bet", { precision: 14, scale: 2 })
+    .notNull()
+    .default("10000.00"),
+  maxDailyPayout: decimal("max_daily_payout", { precision: 14, scale: 2 })
+    .notNull()
+    .default("500000.00"),
+  maxWeeklyLimit: decimal("max_weekly_limit", { precision: 14, scale: 2 })
+    .notNull()
+    .default("20000.00"),
   autoFlagLargeWins: mysqlEnum("auto_flag_large_wins", ["yes", "no"]).notNull().default("yes"),
-  largeWinThreshold: decimal("large_win_threshold", { precision: 14, scale: 2 }).notNull().default("50000.00"),
+  largeWinThreshold: decimal("large_win_threshold", { precision: 14, scale: 2 })
+    .notNull()
+    .default("50000.00"),
   updatedAt: timestamp("updated_at")
     .notNull()
     .default(sql`CURRENT_TIMESTAMP`)
@@ -326,16 +361,15 @@ export const supportTickets = mysqlTable(
     concern: text("concern"),
     agentName: varchar("agent_name", { length: 128 }),
     status: mysqlEnum("status", ["open", "resolved"]).notNull().default("open"),
-    createdAt: timestamp("created_at").notNull().default(sql`CURRENT_TIMESTAMP`),
+    createdAt: timestamp("created_at")
+      .notNull()
+      .default(sql`CURRENT_TIMESTAMP`),
     updatedAt: timestamp("updated_at")
       .notNull()
       .default(sql`CURRENT_TIMESTAMP`)
       .onUpdateNow(),
   },
-  (t) => [
-    index("st_user_idx").on(t.userId),
-    index("st_status_idx").on(t.status),
-  ],
+  (t) => [index("st_user_idx").on(t.userId), index("st_status_idx").on(t.status)],
 );
 
 /** Support Message inside a ticket conversation. */
@@ -348,12 +382,11 @@ export const supportMessages = mysqlTable(
       .references(() => supportTickets.id, { onDelete: "cascade" }),
     sender: mysqlEnum("sender", ["user", "agent"]).notNull(),
     text: text("text").notNull(),
-    createdAt: timestamp("created_at").notNull().default(sql`CURRENT_TIMESTAMP`),
+    createdAt: timestamp("created_at")
+      .notNull()
+      .default(sql`CURRENT_TIMESTAMP`),
   },
-  (t) => [
-    index("sm_ticket_idx").on(t.ticketId),
-    index("sm_created_idx").on(t.createdAt),
-  ],
+  (t) => [index("sm_ticket_idx").on(t.ticketId), index("sm_created_idx").on(t.createdAt)],
 );
 
 export const provablyFairSeeds = mysqlTable(
@@ -368,16 +401,15 @@ export const provablyFairSeeds = mysqlTable(
     clientSeed: varchar("client_seed", { length: 128 }).notNull(),
     nonce: bigint("nonce", { mode: "number" }).notNull().default(0),
     status: mysqlEnum("status", ["active", "revealed"]).notNull().default("active"),
-    createdAt: timestamp("created_at").notNull().default(sql`CURRENT_TIMESTAMP`),
+    createdAt: timestamp("created_at")
+      .notNull()
+      .default(sql`CURRENT_TIMESTAMP`),
     updatedAt: timestamp("updated_at")
       .notNull()
       .default(sql`CURRENT_TIMESTAMP`)
       .onUpdateNow(),
   },
-  (t) => [
-    index("pfs_user_idx").on(t.userId),
-    index("pfs_status_idx").on(t.status),
-  ],
+  (t) => [index("pfs_user_idx").on(t.userId), index("pfs_status_idx").on(t.status)],
 );
 
 export type PlatformSettings = typeof platformSettings.$inferSelect;
@@ -387,4 +419,3 @@ export type RiskControl = typeof riskControls.$inferSelect;
 export type SupportTicket = typeof supportTickets.$inferSelect;
 export type SupportMessage = typeof supportMessages.$inferSelect;
 export type ProvablyFairSeed = typeof provablyFairSeeds.$inferSelect;
-

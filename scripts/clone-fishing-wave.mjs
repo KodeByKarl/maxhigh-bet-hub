@@ -124,11 +124,7 @@ function cloneOne(g) {
   if (fs.existsSync(uiDest)) fs.rmSync(uiDest, { recursive: true, force: true });
   copyTextTree(uiSrc, uiDest, g, (name) => {
     // DeepBassGame.tsx → SharkHunterGame.tsx
-    return name
-      .split(g.parentPascal)
-      .join(g.pascal)
-      .split(g.parent)
-      .join(g.id);
+    return name.split(g.parentPascal).join(g.pascal).split(g.parent).join(g.id);
   });
   console.log("ui", path.relative(ROOT, uiDest));
 

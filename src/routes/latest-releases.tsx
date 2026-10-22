@@ -14,7 +14,12 @@ export const Route = createFileRoute("/latest-releases")({
   }),
   component: () => (
     <>
-      <PageHeader title="Latest Releases" description="Fresh drops — brand new games this week." icon={Zap} accent="#C6FF3D" />
+      <PageHeader
+        title="Latest Releases"
+        description="Fresh drops — brand new games this week."
+        icon={Zap}
+        accent="#C6FF3D"
+      />
       <SlotGameGrid title="New Slots" />
     </>
   ),

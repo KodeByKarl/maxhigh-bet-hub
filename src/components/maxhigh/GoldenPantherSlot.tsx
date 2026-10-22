@@ -148,8 +148,7 @@ export function GoldenPantherSlot({
 
   const busy = phase !== "idle";
   const totalBet = +(bet * (ante ? getAnteMult() : 1)).toFixed(2);
-  const buyCost = getBuyUnitPrice(BUY_FS_START_BET, "normal");
-  const superBuyCost = getBuyUnitPrice(BUY_FS_START_BET, "super");
+  const buyCost = getBuyUnitPrice(BUY_FS_START_BET, 1);
 
   const busyRef = useRef(false);
   const skipRef = useRef(false);
@@ -434,9 +433,7 @@ export function GoldenPantherSlot({
         pantherAudio.playCascadeTick();
         await wait(getPopWaitMs(step.winningKeys.length), gen);
 
-        setSlots(
-          step.afterPop.length === CELLS ? step.afterPop : asSlots(step.board),
-        );
+        setSlots(step.afterPop.length === CELLS ? step.afterPop : asSlots(step.board));
         setWinningKeys(EMPTY_SET);
         setPayoutByKey(EMPTY_PAY);
         setTumbleStepWin(0);
@@ -507,7 +504,10 @@ export function GoldenPantherSlot({
   }, [muted, setMutedState]);
 
   const finishBase = useCallback(
-    (script: SpinScript, session: { sessionId: string | null; freeSpinsLeft: number; inFree: boolean }) => {
+    (
+      script: SpinScript,
+      session: { sessionId: string | null; freeSpinsLeft: number; inFree: boolean },
+    ) => {
       if (script.totalWin > 0) {
         setLastWin(script.totalWin);
         pantherAudio.playWin(script.totalWin, totalBet);
@@ -600,6 +600,8 @@ export function GoldenPantherSlot({
       let recoveredToFree = false;
 
       try {
+        pantherAudio.startSpinLoop();
+
         if (!isFree) {
           setBalanceLocal(balance - cost);
           setCashflow({ delta: -cost, label: "bet" });
@@ -624,7 +626,12 @@ export function GoldenPantherSlot({
         void refreshJackpot();
         applySession(settled.session);
 
-        const script = await playScript(settled.script, isFree, gen, isFree ? balance : balance - cost);
+        const script = await playScript(
+          settled.script,
+          isFree,
+          gen,
+          isFree ? balance : balance - cost,
+        );
         if (gen !== playbackGen.current || !mountedRef.current) return;
 
         if (isFree) {
@@ -745,7 +752,7 @@ export function GoldenPantherSlot({
   const buyFeature = useCallback(
     async (buyBet: number, quantity: number) => {
       if (busyRef.current || phase !== "idle") return;
-      const unit = getBuyUnitPrice(buyBet, buyMode);
+      const unit = getBuyUnitPrice(buyBet, quantity);
       const cost = +(unit * quantity).toFixed(2);
       if (balance < cost) {
         toast.error("Insufficient balance");
@@ -810,7 +817,16 @@ export function GoldenPantherSlot({
   // Auto / free-spin chain — always invoke latest spin via ref (no stale closures).
   useEffect(() => {
     if (busyRef.current || busy) return;
-    if (winPopup || fsSummary || buyOpen || infoOpen || autoSpinModalOpen || betModalOpen || triggerModalCount != null) return;
+    if (
+      winPopup ||
+      fsSummary ||
+      buyOpen ||
+      infoOpen ||
+      autoSpinModalOpen ||
+      betModalOpen ||
+      triggerModalCount != null
+    )
+      return;
 
     const spinGap = getAutoSpinGapMs(turbo, autoSpinConfig?.spinWithoutReels);
 
@@ -849,7 +865,7 @@ export function GoldenPantherSlot({
         setAutoSpin(false);
         setAutoSpinConfig(null);
         toast.info(
-          `Auto Spin stopped: Balance increased by ₱${autoSpinConfig.balanceIncreaseBy.toFixed(2)}`
+          `Auto Spin stopped: Balance increased by ₱${autoSpinConfig.balanceIncreaseBy.toFixed(2)}`,
         );
         return;
       }
@@ -861,7 +877,7 @@ export function GoldenPantherSlot({
         setAutoSpin(false);
         setAutoSpinConfig(null);
         toast.info(
-          `Auto Spin stopped: Balance decreased by ₱${autoSpinConfig.balanceDecreaseBy.toFixed(2)}`
+          `Auto Spin stopped: Balance decreased by ₱${autoSpinConfig.balanceDecreaseBy.toFixed(2)}`,
         );
         return;
       }
@@ -870,12 +886,9 @@ export function GoldenPantherSlot({
         setRemainingAutoSpins((prev) => (typeof prev === "number" ? prev - 1 : prev));
       }
 
-      const t = setTimeout(
-        () => {
-          void spinRef.current(false);
-        },
-        spinGap,
-      );
+      const t = setTimeout(() => {
+        void spinRef.current(false);
+      }, spinGap);
       return () => clearTimeout(t);
     }
   }, [
@@ -896,10 +909,8 @@ export function GoldenPantherSlot({
     turbo,
   ]);
 
-  const displayWin = dropTotal > 0 ? dropTotal : (inFree ? fsSessionWin : lastWin);
-  const showTumbleBadge =
-    tumbleStepWin > 0 &&
-    (phase === "glow" || phase === "popping");
+  const displayWin = dropTotal > 0 ? dropTotal : inFree ? fsSessionWin : lastWin;
+  const showTumbleBadge = tumbleStepWin > 0 && (phase === "glow" || phase === "popping");
   const theme = goldenPantherTheme;
   const themeVars = themeToCssVars(theme);
 
@@ -979,8 +990,7 @@ export function GoldenPantherSlot({
               <div
                 className="relative z-10 mx-auto my-0.5 h-px w-[92%] shrink-0 opacity-80"
                 style={{
-                  background:
-                    "linear-gradient(90deg, transparent, var(--p-divider), transparent)",
+                  background: "linear-gradient(90deg, transparent, var(--p-divider), transparent)",
                 }}
                 aria-hidden
               />
@@ -1062,18 +1072,6 @@ export function GoldenPantherSlot({
               >
                 Buy FS {formatMoneyCompact(buyCost)}
               </button>
-              <button
-                type="button"
-                disabled={busy}
-                onClick={() => openBuyFeature("super")}
-                className="min-h-9 rounded-xl border-2 bg-black/70 px-3 py-1.5 text-[10px] font-black uppercase tracking-wide disabled:opacity-40 sm:min-h-10 sm:px-4 sm:py-2 sm:text-[11px]"
-                style={{
-                  borderColor: "var(--p-accent)",
-                  color: "var(--p-accent-soft)",
-                }}
-              >
-                Super {formatMoneyCompact(superBuyCost)}
-              </button>
             </div>
           )}
 
@@ -1101,8 +1099,7 @@ export function GoldenPantherSlot({
                 className="min-w-0 rounded-xl border px-1 py-1.5 text-center sm:px-2 sm:py-2.5"
                 style={{
                   borderColor: "var(--p-win-border)",
-                  background:
-                    "linear-gradient(180deg, var(--p-win-from) 0%, var(--p-win-to) 100%)",
+                  background: "linear-gradient(180deg, var(--p-win-from) 0%, var(--p-win-to) 100%)",
                 }}
               >
                 <div
@@ -1193,7 +1190,10 @@ export function GoldenPantherSlot({
                   <div className="text-[9px] font-bold uppercase tracking-wider text-white/55 sm:text-[10px]">
                     Bet
                   </div>
-                  <div className="truncate text-xs font-black tabular-nums sm:text-base" style={{ color: "var(--p-win-value)" }}>
+                  <div
+                    className="truncate text-xs font-black tabular-nums sm:text-base"
+                    style={{ color: "var(--p-win-value)" }}
+                  >
                     {formatMoney(totalBet)}
                   </div>
                 </button>
@@ -1241,8 +1241,10 @@ export function GoldenPantherSlot({
                     setAutoSpinConfig(null);
                   } else if (inFree || freeSpins > 0) {
                     setFsPaused(false);
+                    pantherAudio.playUiClick();
                     void spin(true);
                   } else {
+                    pantherAudio.playUiClick();
                     void spin(false);
                   }
                 }}
@@ -1288,9 +1290,17 @@ export function GoldenPantherSlot({
                       </span>
                     </div>
                   ) : busy ? (
-                    <RotateCw size={24} className="animate-spin sm:size-7" style={{ color: "var(--p-win-value)" }} />
+                    <RotateCw
+                      size={24}
+                      className="animate-spin sm:size-7"
+                      style={{ color: "var(--p-win-value)" }}
+                    />
                   ) : (
-                    <RotateCw size={24} className="sm:size-7" style={{ color: "var(--p-win-value)" }} />
+                    <RotateCw
+                      size={24}
+                      className="sm:size-7"
+                      style={{ color: "var(--p-win-value)" }}
+                    />
                   )}
                 </div>
               </button>
@@ -1357,9 +1367,7 @@ export function GoldenPantherSlot({
       </AnimatePresence>
 
       <AnimatePresence>
-        {infoOpen && (
-          <PaytableModal bet={totalBet} onClose={() => setInfoOpen(false)} />
-        )}
+        {infoOpen && <PaytableModal bet={totalBet} onClose={() => setInfoOpen(false)} />}
       </AnimatePresence>
 
       <AnimatePresence>
@@ -1411,10 +1419,7 @@ export function GoldenPantherSlot({
 
       <AnimatePresence>
         {triggerModalCount != null && (
-          <FreeSpinsTriggerModal
-            count={triggerModalCount}
-            onClose={dismissTriggerModal}
-          />
+          <FreeSpinsTriggerModal count={triggerModalCount} onClose={dismissTriggerModal} />
         )}
       </AnimatePresence>
 

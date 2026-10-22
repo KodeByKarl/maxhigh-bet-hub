@@ -22,21 +22,18 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import {
   bombTablePercents,
   DEFAULT_MAYA_GOLD_CONFIG,
+  MAYA_GOLD_BOMB_MULTS,
   normalizeMayaGoldConfig,
   weightPercents,
   type MayaGoldConfig,
   type MayaGoldSymbolConfig,
 } from "@/lib/maya-gold-config";
-import {
-  getMayaGoldEngineConfigFn,
-  saveMayaGoldEngineConfigFn,
-} from "@/functions/superadmin";
+import { getMayaGoldEngineConfigFn, saveMayaGoldEngineConfigFn } from "@/functions/superadmin";
 import type { SuperGameRow } from "@/lib/superadmin-types";
 import { toast } from "sonner";
-import { MayaGoldIcon } from "@/components/maxhigh/maya-gold/MayaGoldIcon";
+import { PantherIcon } from "@/components/maxhigh/maya-gold/PantherIcon";
 import type { MayaGoldSymKind } from "@/lib/maya-gold-config";
 import { cn } from "@/lib/utils";
-import { LobbyVisibilityToggles } from "@/components/superadmin/games/LobbyVisibilityToggles";
 
 type Section = "lobby" | "dead" | "symbols" | "mult" | "freespins";
 
@@ -61,13 +58,11 @@ export function MayaGoldConfigModal({ game, open, onOpenChange, onPatchLobby }: 
   const [section, setSection] = useState<Section>("lobby");
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [cfg, setCfg] = useState<MayaGoldConfig>(() =>
-    structuredClone(DEFAULT_MAYA_GOLD_CONFIG),
-  );
+  const [cfg, setCfg] = useState<MayaGoldConfig>(() => structuredClone(DEFAULT_MAYA_GOLD_CONFIG));
 
   const [tag, setTag] = useState(game.tag ?? "");
   const [rtp, setRtp] = useState(game.rtp ?? "");
-  const [volatility, setVolatility] = useState(game.volatility ?? "High");
+  const [volatility, setVolatility] = useState(game.volatility ?? "");
   const [minBet, setMinBet] = useState(game.minBet ?? "");
   const [maxBet, setMaxBet] = useState(game.maxBet ?? "");
 
@@ -76,7 +71,7 @@ export function MayaGoldConfigModal({ game, open, onOpenChange, onPatchLobby }: 
     setLoading(true);
     setTag(game.tag ?? "");
     setRtp(game.rtp ?? "");
-    setVolatility(game.volatility ?? "High");
+    setVolatility(game.volatility ?? "");
     setMinBet(game.minBet ?? "");
     setMaxBet(game.maxBet ?? "");
 
@@ -98,27 +93,24 @@ export function MayaGoldConfigModal({ game, open, onOpenChange, onPatchLobby }: 
     return weightPercents(list);
   }, [cfg.symbols]);
 
-  const bombPercents = useMemo(
-    () => bombTablePercents(cfg.bombTable),
-    [cfg.bombTable],
-  );
+  const bombPercents = useMemo(() => bombTablePercents(cfg.bombTable), [cfg.bombTable]);
 
   async function handleSaveAll() {
     setSaving(true);
     try {
       await onPatchLobby({
         tag: tag.trim() || undefined,
-        rtp: String(Number(rtp) || game.rtp || ""),
-        volatility: (volatility.trim() || game.volatility || "High") as SuperGameRow["volatility"],
-        minBet: String(Number(minBet) || game.minBet || ""),
-        maxBet: String(Number(maxBet) || game.maxBet || ""),
+        rtp: rtp.trim() || game.rtp,
+        volatility: (volatility.trim() || game.volatility) as SuperGameRow["volatility"],
+        minBet: minBet.trim() || game.minBet,
+        maxBet: maxBet.trim() || game.maxBet,
       });
 
       const normalized = await saveMayaGoldEngineConfigFn({
         data: { config: cfg },
       });
       setCfg(normalizeMayaGoldConfig(normalized));
-      toast.success("Aztec Treasure engine math & lobby settings saved");
+      toast.success("Maya Gold engine math & lobby settings saved");
       onOpenChange(false);
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Save failed");
@@ -141,10 +133,11 @@ export function MayaGoldConfigModal({ game, open, onOpenChange, onPatchLobby }: 
           <div className="flex items-center justify-between gap-4">
             <div>
               <DialogTitle className="text-xl font-black uppercase text-amber-300 tracking-wider">
-                Aztec Treasure Engine Configuration
+                Maya Gold Engine Configuration
               </DialogTitle>
               <DialogDescription className="text-xs text-muted-foreground">
-                Configure live RNG parameters, symbol weights, wild/bomb multipliers, and free spins.
+                Configure live RNG parameters, symbol weights, wild/bomb multipliers, and free
+                spins.
               </DialogDescription>
             </div>
 
@@ -193,11 +186,14 @@ export function MayaGoldConfigModal({ game, open, onOpenChange, onPatchLobby }: 
               {section === "lobby" && (
                 <div className="space-y-4 max-w-md">
                   <h4 className="text-sm font-bold text-amber-300">Lobby Settings</h4>
-                  <LobbyVisibilityToggles game={game} onPatch={onPatchLobby} />
                   <div className="grid gap-3">
                     <div>
                       <label className="text-xs text-muted-foreground">Tag / Badge</label>
-                      <Input value={tag} onChange={(e) => setTag(e.target.value)} className="mt-1" />
+                      <Input
+                        value={tag}
+                        onChange={(e) => setTag(e.target.value)}
+                        className="mt-1"
+                      />
                     </div>
                     <div className="grid grid-cols-2 gap-3">
                       <div>
@@ -244,7 +240,9 @@ export function MayaGoldConfigModal({ game, open, onOpenChange, onPatchLobby }: 
 
               {section === "dead" && (
                 <div className="space-y-4 max-w-md">
-                  <h4 className="text-sm font-bold text-amber-300">Dead Spin & Seeding Parameters</h4>
+                  <h4 className="text-sm font-bold text-amber-300">
+                    Dead Spin & Seeding Parameters
+                  </h4>
                   <div className="grid gap-4">
                     <div>
                       <label className="text-xs text-muted-foreground font-bold">
@@ -280,6 +278,25 @@ export function MayaGoldConfigModal({ game, open, onOpenChange, onPatchLobby }: 
                         className="w-full mt-2"
                       />
                     </div>
+
+                    <div>
+                      <label className="text-xs text-muted-foreground font-bold">
+                        Max win multiplier: {cfg.maxWinMult.toLocaleString()}×
+                      </label>
+                      <Input
+                        type="number"
+                        min={0}
+                        max={100000}
+                        value={cfg.maxWinMult}
+                        onChange={(e) =>
+                          setCfg((p) => ({ ...p, maxWinMult: Number(e.target.value) }))
+                        }
+                        className="mt-2"
+                      />
+                      <p className="text-[11px] text-muted-foreground mt-1">
+                        Round payout is clamped to bet × this value (₱5 × 10,000× = ₱50,000).
+                      </p>
+                    </div>
                   </div>
                 </div>
               )}
@@ -296,7 +313,10 @@ export function MayaGoldConfigModal({ game, open, onOpenChange, onPatchLobby }: 
                           className="flex flex-wrap items-center justify-between gap-4 rounded-xl border border-white/10 bg-white/[0.02] p-3"
                         >
                           <div className="flex items-center gap-3 min-w-[140px]">
-                            <MayaGoldIcon kind={sym.kind as MayaGoldSymKind} className="size-8 object-contain" />
+                            <PantherIcon
+                              kind={sym.kind as MayaGoldSymKind}
+                              className="size-8 object-contain"
+                            />
                             <div>
                               <div className="text-xs font-bold text-white">{sym.label}</div>
                               <div className="text-[10px] text-amber-400">{spawnPct}% spawn</div>
@@ -319,7 +339,10 @@ export function MayaGoldConfigModal({ game, open, onOpenChange, onPatchLobby }: 
 
                           {!sym.scatter && !sym.bomb && (
                             <div className="flex items-center gap-2">
-                              <span className="text-xs text-muted-foreground">Pay (8-9 / 10-11 / 12+):</span>
+                              <span className="text-xs text-muted-foreground">
+                                Pay ({cfg.minCluster}–{cfg.minCluster + 1} / {cfg.minCluster + 2}–
+                                {cfg.minCluster + 3} / {cfg.minCluster + 4}+):
+                              </span>
                               <Input
                                 type="number"
                                 value={sym.pay[0]}
@@ -394,36 +417,67 @@ export function MayaGoldConfigModal({ game, open, onOpenChange, onPatchLobby }: 
                     </div>
                   </div>
 
+                  <div>
+                    <label className="text-xs text-muted-foreground font-bold">
+                      FS bomb multiplier ceiling
+                    </label>
+                    <Input
+                      type="number"
+                      min={0}
+                      max={5}
+                      value={cfg.maxFsBombMult}
+                      onChange={(e) =>
+                        setCfg((p) => ({ ...p, maxFsBombMult: Number(e.target.value) }))
+                      }
+                      className="mt-1 max-w-xs"
+                    />
+                    <p className="text-[11px] text-muted-foreground mt-1">
+                      Only 2x / 3x / 4x / 5x bombs are allowed. Free spins keep the highest winning
+                      bomb and apply it once at the end.
+                    </p>
+                  </div>
+
                   <div className="space-y-2">
-                    <h5 className="text-xs font-bold text-white">Multiplier Weights</h5>
+                    <h5 className="text-xs font-bold text-white">
+                      Multiplier Weights (2x / 3x / 4x / 5x only)
+                    </h5>
                     <div className="grid grid-cols-2 gap-2">
-                      {cfg.bombTable.map((b, idx) => (
-                        <div
-                          key={b.mult}
-                          className="flex items-center justify-between rounded-lg border border-white/10 bg-white/[0.02] px-3 py-1.5"
-                        >
-                          <span className="text-xs font-bold text-yellow-300">{b.mult}x</span>
-                          <div className="flex items-center gap-2">
-                            <span className="text-[10px] text-muted-foreground">
-                              {bombPercents[b.mult]}%
-                            </span>
-                            <Input
-                              type="number"
-                              value={b.weight}
-                              onChange={(e) => {
-                                const val = Number(e.target.value);
-                                setCfg((p) => ({
-                                  ...p,
-                                  bombTable: p.bombTable.map((row, i) =>
-                                    i === idx ? { ...row, weight: val } : row,
-                                  ),
-                                }));
-                              }}
-                              className="w-16 h-7 text-xs"
-                            />
+                      {MAYA_GOLD_BOMB_MULTS.map((mult, idx) => {
+                        const b = cfg.bombTable[idx] ?? { mult, weight: 0 };
+                        return (
+                          <div
+                            key={mult}
+                            className="flex items-center justify-between rounded-lg border border-white/10 bg-white/[0.02] px-3 py-1.5"
+                          >
+                            <span className="text-xs font-bold text-yellow-300">{mult}x</span>
+                            <div className="flex items-center gap-2">
+                              <span className="text-[10px] text-muted-foreground">
+                                {bombPercents[mult] ?? 0}%
+                              </span>
+                              <Input
+                                type="number"
+                                value={b.weight}
+                                onChange={(e) => {
+                                  const val = Number(e.target.value);
+                                  setCfg((p) => ({
+                                    ...p,
+                                    bombTable: MAYA_GOLD_BOMB_MULTS.map((rowMult, rowIdx) => {
+                                      const prev = p.bombTable[rowIdx] ?? {
+                                        mult: rowMult,
+                                        weight: 0,
+                                      };
+                                      return rowIdx === idx
+                                        ? { mult: rowMult, weight: val }
+                                        : { mult: rowMult, weight: prev.weight };
+                                    }),
+                                  }));
+                                }}
+                                className="w-16 h-7 text-xs"
+                              />
+                            </div>
                           </div>
-                        </div>
-                      ))}
+                        );
+                      })}
                     </div>
                   </div>
                 </div>
@@ -488,23 +542,15 @@ export function MayaGoldConfigModal({ game, open, onOpenChange, onPatchLobby }: 
 
                     <div className="grid grid-cols-2 gap-3 pt-2">
                       <div>
-                        <label className="text-xs text-muted-foreground">Buy Feature Cost (x bet)</label>
+                        <label className="text-xs text-muted-foreground">
+                          Buy price per spin at the standard award (× bet; other quantities follow
+                          the calibrated curve)
+                        </label>
                         <Input
                           type="number"
                           value={cfg.buyFeatureMult}
                           onChange={(e) =>
                             setCfg((p) => ({ ...p, buyFeatureMult: Number(e.target.value) }))
-                          }
-                          className="mt-1"
-                        />
-                      </div>
-                      <div>
-                        <label className="text-xs text-muted-foreground">Super Buy Cost (x bet)</label>
-                        <Input
-                          type="number"
-                          value={cfg.superBuyFeatureMult}
-                          onChange={(e) =>
-                            setCfg((p) => ({ ...p, superBuyFeatureMult: Number(e.target.value) }))
                           }
                           className="mt-1"
                         />

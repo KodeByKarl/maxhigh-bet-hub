@@ -174,7 +174,10 @@ function brassStab(rand, baseFreq = 220) {
     const env = Math.exp(-t * 4.2) * (1 - Math.min(1, t / 0.6) * 0.2);
     let s = 0;
     for (let p = 0; p < partials.length; p++) {
-      s += Math.sin(2 * Math.PI * baseFreq * partials[p] * t) * gains[p] * Math.exp(-t * (1.8 + p * 0.6));
+      s +=
+        Math.sin(2 * Math.PI * baseFreq * partials[p] * t) *
+        gains[p] *
+        Math.exp(-t * (1.8 + p * 0.6));
     }
     out[i] = (s + (rand() * 2 - 1) * Math.exp(-t * 70) * 0.2) * env;
   }
@@ -193,7 +196,12 @@ fs.mkdirSync(OUT_DIR, { recursive: true });
   mixInto(out, saloonSparkle(dur, rand, 0.7), 0, 0.85);
   let t = 0.04;
   while (t < dur) {
-    mixInto(out, spurClack(rand, 0.85 + rand() * 0.35), Math.floor(t * SAMPLE_RATE), 0.28 + rand() * 0.2);
+    mixInto(
+      out,
+      spurClack(rand, 0.85 + rand() * 0.35),
+      Math.floor(t * SAMPLE_RATE),
+      0.28 + rand() * 0.2,
+    );
     t += 0.1 + rand() * 0.12;
   }
   for (let i = 0; i < n; i++) {
@@ -233,7 +241,12 @@ fs.mkdirSync(OUT_DIR, { recursive: true });
   mixInto(out, brassStab(rand, 196), 0, 0.4);
   mixInto(out, saloonSparkle(0.95, rand, 1.5), Math.floor(SAMPLE_RATE * 0.04), 1.15);
   for (let k = 0; k < 7; k++) {
-    mixInto(out, goldClink(rand, 0.92 + k * 0.07), Math.floor(SAMPLE_RATE * (0.06 + k * 0.08)), 0.42);
+    mixInto(
+      out,
+      goldClink(rand, 0.92 + k * 0.07),
+      Math.floor(SAMPLE_RATE * (0.06 + k * 0.08)),
+      0.42,
+    );
   }
   normalize(out, 0.82);
   writeWav(path.join(OUT_DIR, "win.wav"), out);

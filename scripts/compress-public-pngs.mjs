@@ -60,8 +60,7 @@ async function optimizeUnique(canonical) {
   const { f, before } = canonical;
   const meta = await sharp(f).metadata();
   const w = meta.width ?? 0;
-  const isLobbyThumb =
-    /[\\/]games[\\/][^\\/]+\.png$/i.test(f) && !/-bg\.png$/i.test(f);
+  const isLobbyThumb = /[\\/]games[\\/][^\\/]+\.png$/i.test(f) && !/-bg\.png$/i.test(f);
   const isSeabed = /seabed\.png$/i.test(f);
   const isPanel = /mult-panel\.png$/i.test(f);
   const isBg = /-bg\.png$/i.test(f) || /backdrop\.png$/i.test(f);
@@ -100,9 +99,7 @@ async function optimizeUnique(canonical) {
     return { kind: "skip", outPath: f, after: before, deletePng: false };
   }
 
-  await pipeline
-    .png({ compressionLevel: 9, adaptiveFiltering: true, effort: 8 })
-    .toFile(tmp);
+  await pipeline.png({ compressionLevel: 9, adaptiveFiltering: true, effort: 8 }).toFile(tmp);
   const after = fs.statSync(tmp).size;
   if (after < before * 0.98) {
     fs.renameSync(tmp, f);
@@ -112,9 +109,7 @@ async function optimizeUnique(canonical) {
   return { kind: "skip", outPath: f, after: before, deletePng: false };
 }
 
-console.log(
-  `Groups: ${byHash.size} unique among ${allPng.length} PNGs >500KB`,
-);
+console.log(`Groups: ${byHash.size} unique among ${allPng.length} PNGs >500KB`);
 
 for (const [, group] of byHash) {
   const canonical = group[0];
@@ -123,10 +118,7 @@ for (const [, group] of byHash) {
     const buf = fs.readFileSync(opt.outPath);
 
     for (const row of group) {
-      const target =
-        opt.kind === "webp"
-          ? row.f.replace(/\.png$/i, ".webp")
-          : row.f;
+      const target = opt.kind === "webp" ? row.f.replace(/\.png$/i, ".webp") : row.f;
 
       if (target !== opt.outPath) {
         fs.mkdirSync(path.dirname(target), { recursive: true });

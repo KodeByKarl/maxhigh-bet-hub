@@ -12,6 +12,8 @@ type Props = {
   bets: Record<ColorSpotId, number>;
   disabled?: boolean;
   activeSpot: ColorSpotId;
+  /** Color that just won — its pad glows. */
+  winning?: ColorSpotId | null;
   onActiveSpot: (s: ColorSpotId) => void;
   onBet: (spot: ColorSpotId, n: number) => void;
   onChipPlaced?: (ev: ChipPlaceEvent) => void;
@@ -19,6 +21,25 @@ type Props = {
   onDeal?: () => void;
   dealBusy?: boolean;
 };
+
+const CHIP_COLORS = [
+  "#2563eb",
+  "#16a34a",
+  "#dc2626",
+  "#7c3aed",
+  "#ea580c",
+  "#0891b2",
+  "#be185d",
+  "#ca8a04",
+  "#334155",
+];
+function chipColor(v: number) {
+  const steps = [1, 2, 5, 10, 20, 50, 100, 200, 500];
+  const i = steps.indexOf(v);
+  return CHIP_COLORS[
+    (i >= 0 ? i : Math.abs(Math.round(v)) % CHIP_COLORS.length) % CHIP_COLORS.length
+  ]!;
+}
 
 function clampBet(n: number, min: number, max: number) {
   if (!Number.isFinite(n)) return min;
@@ -30,6 +51,7 @@ export function BettingPanel({
   bets,
   disabled,
   activeSpot,
+  winning,
   onActiveSpot,
   onBet,
   onChipPlaced,
@@ -64,6 +86,7 @@ export function BettingPanel({
 
   return (
     <div className="space-y-2.5 px-2 pb-[max(0.6rem,env(safe-area-inset-bottom))] pt-1">
+      <style>{PANEL_CSS}</style>
       <div className="grid grid-cols-3 gap-1.5 sm:grid-cols-6">
         {cfg.spots.map((sp) => {
           const amt = bets[sp.id] ?? 0;
@@ -75,18 +98,26 @@ export function BettingPanel({
               disabled={disabled}
               onClick={() => onActiveSpot(sp.id)}
               className={cn(
-                "relative flex min-h-[3.4rem] flex-col items-center justify-center rounded-xl border-2 px-1 py-1.5 transition",
-                active ? "scale-[1.03] shadow-lg" : "opacity-90",
+                "relative flex min-h-[3.6rem] flex-col items-center justify-center overflow-hidden rounded-xl border-2 px-1 py-1.5 transition-all duration-150",
+                active ? "-translate-y-0.5 scale-[1.04] shadow-xl" : "opacity-90",
+                winning === sp.id && "cg-pad-win",
                 disabled && "pointer-events-none opacity-50",
               )}
               style={{
-                background: `linear-gradient(160deg, ${sp.hex}cc, ${sp.hex}66)`,
+                background: `linear-gradient(165deg, ${sp.hex} 0%, ${sp.hex}aa 55%, ${sp.hex}66 100%)`,
                 borderColor: active ? "#fff" : `${sp.hex}`,
                 color: sp.id === "white" || sp.id === "yellow" ? "#0f172a" : "#fff",
+                boxShadow: active
+                  ? `0 0 0 2px ${sp.hex}66, 0 8px 18px ${sp.hex}66, inset 0 1px 0 rgba(255,255,255,.55)`
+                  : "inset 0 1px 0 rgba(255,255,255,.35), 0 2px 6px rgba(0,0,0,.4)",
+                ["--pad" as string]: sp.hex,
               }}
             >
-              <span className="text-[10px] font-black tracking-wide uppercase">{sp.label}</span>
-              <span className="text-sm font-bold tabular-nums">
+              <span className="pointer-events-none absolute inset-x-0 top-0 h-1/2 bg-gradient-to-b from-white/35 to-transparent" />
+              <span className="relative text-[10px] font-black tracking-wide uppercase">
+                {sp.label}
+              </span>
+              <span className="relative text-sm font-bold tabular-nums">
                 {amt > 0 ? `₱${amt}` : `${sp.payoutMult}×`}
               </span>
             </button>
@@ -101,14 +132,20 @@ export function BettingPanel({
             type="button"
             disabled={disabled}
             onClick={() => addChip(v)}
+            aria-label={`Chip ${v}`}
             className={cn(
-              "h-11 w-11 rounded-full border-2 text-xs font-black tabular-nums shadow-md transition",
-              selectedChip === v
-                ? "border-white bg-amber-400 text-slate-900"
-                : "border-white/40 bg-slate-800/80 text-white",
+              "cg-chip relative grid h-12 w-12 place-items-center rounded-full text-xs font-black tabular-nums transition-transform duration-150 active:scale-90",
+              selectedChip === v ? "-translate-y-1 scale-110" : "hover:-translate-y-0.5",
             )}
+            style={{
+              ["--chip" as string]: chipColor(v),
+              boxShadow:
+                selectedChip === v
+                  ? `0 0 0 2px #fff, 0 8px 14px ${chipColor(v)}88`
+                  : "0 3px 6px rgba(0,0,0,.55)",
+            }}
           >
-            {v}
+            <span className="cg-chip-face grid place-items-center">{v}</span>
           </button>
         ))}
       </div>
@@ -138,10 +175,10 @@ export function BettingPanel({
           disabled={!canDeal}
           onClick={onDeal}
           className={cn(
-            "min-w-[7.5rem] rounded-xl px-4 py-2.5 text-sm font-black tracking-wide uppercase shadow-lg transition",
+            "min-w-[7.5rem] rounded-xl border-2 px-5 py-2.5 text-sm font-black tracking-widest uppercase transition",
             canDeal
-              ? "bg-gradient-to-b from-amber-300 to-amber-500 text-slate-900"
-              : "bg-slate-700 text-white/40",
+              ? "cg-spin-btn border-amber-100/80 bg-gradient-to-b from-amber-200 via-amber-400 to-orange-600 text-slate-900 shadow-[0_0_22px_rgba(251,191,36,.55)] active:scale-95"
+              : "border-white/10 bg-slate-700 text-white/40",
           )}
         >
           {dealBusy ? "…" : "SPIN"}
@@ -150,3 +187,21 @@ export function BettingPanel({
     </div>
   );
 }
+
+const PANEL_CSS = `
+.cg-chip {
+  background: repeating-conic-gradient(#fff 0 12deg, var(--chip) 12deg 30deg);
+  border: 2px solid rgba(255,255,255,.85);
+}
+.cg-chip-face {
+  width: 74%; height: 74%; border-radius: 9999px; color: #fff;
+  background: radial-gradient(circle at 35% 28%, color-mix(in srgb, var(--chip) 70%, #fff), var(--chip) 70%);
+  border: 1.5px dashed rgba(255,255,255,.75);
+  text-shadow: 0 1px 2px rgba(0,0,0,.6);
+}
+.cg-pad-win { animation: cg-pad .5s ease-in-out infinite alternate; border-color: #fff !important; }
+@keyframes cg-pad { from { box-shadow: 0 0 6px 1px var(--pad); } to { box-shadow: 0 0 26px 6px var(--pad); transform: scale(1.06); } }
+.cg-spin-btn { animation: cg-spin-pulse 1.6s ease-in-out infinite; }
+@keyframes cg-spin-pulse { 50% { box-shadow: 0 0 34px rgba(251,191,36,.85); } }
+@media (prefers-reduced-motion: reduce) { .cg-pad-win, .cg-spin-btn { animation: none; } }
+`;

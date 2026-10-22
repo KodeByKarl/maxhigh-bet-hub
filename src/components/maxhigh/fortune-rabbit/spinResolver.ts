@@ -1,72 +1,131 @@
-import { betPerLine } from "@/lib/fortune-rabbit-config";
-import { applyMultiplier, generateMultiplierReel } from "./multiplierReel";
-import { evaluatePaylines } from "./paylineEngine";
-import { generateGrid } from "./reelGenerator";
-import { createRng, newSpinSeed } from "./rng";
 import { getFortuneRabbitConfig } from "./runtimeConfig";
-import type { MultiplierReelResult, SpinScript } from "./types";
+import { buildBoard, cloneBoard } from "./gridState";
+import { applyBombToTumble, finalizeFreeSpinTotal } from "./multiplierEngine";
+import { resolveScatters } from "./scatterEngine";
+import { applyGravity, evaluateBoard } from "./tumbleEngine";
+import type { BoardCell, SpinScript, TumbleStep } from "./types";
+
+export type ResolveOpts = {
+  bet: number;
+  ante: boolean;
+  isFreeSpins: boolean;
+  /** FS: collect bombs then apply once at end (spec §4) */
+  collectBombsInFreeSpins?: boolean;
+  /** Running FS bomb total from prior spins in this feature. */
+  initialBombAccumulator?: number;
+  forceBoard?: BoardCell[];
+};
 
 /**
- * Server-authoritative full spin resolution (base game only).
- *
- * Section 6 order:
- * 1. Stake already validated/uplifted by caller (EX → +50%)
- * 2. Generate 3×3 main grid from weighted reel strips
- * 3. Generate multiplier reel from base or EX strip profile
- * 4. Evaluate 5 paylines
- * 5. Apply center multiplier to payline total (no-op if no win)
- * 6. Apply max-win cap (provisional 375×)
+ * Resolve entire spin instantly → animation script.
+ * Math never waits on visuals.
  */
-export function resolveFortuneRabbitSpin(opts: {
-  /** Actual stake deducted (already includes EX uplift if active). */
-  totalBet: number;
-  /** Player-selected base bet before EX uplift. */
-  baseBet?: number;
-  exMode?: boolean;
-  seed?: string;
-  /** Optional fixed grid for unit tests (skips RNG grid generation). */
-  grid?: SpinScript["grid"];
-  /** Optional fixed multiplier reel for unit tests. */
-  multiplierReel?: MultiplierReelResult;
-}): SpinScript {
-  const cfg = getFortuneRabbitConfig();
-  const exMode = !!opts.exMode;
-  const totalBet = opts.totalBet;
-  const baseBet = opts.baseBet ?? totalBet;
-  const seed = opts.seed ?? newSpinSeed("fg");
-  const rng = createRng(seed);
+export function resolveSpin(opts: ResolveOpts): SpinScript {
+  const collectMode = opts.isFreeSpins && (opts.collectBombsInFreeSpins ?? true);
+  let board = cloneBoard(
+    opts.forceBoard ??
+      buildBoard(opts.ante && !opts.isFreeSpins, opts.isFreeSpins, !opts.isFreeSpins),
+  );
+  const initialBoard = cloneBoard(board);
+  const steps: TumbleStep[] = [];
+  let totalWin = 0;
+  let rawWin = 0;
+  let peakBomb = 0;
+  let maxScatters = 0;
+  let accumulator = Math.max(0, opts.initialBombAccumulator ?? 0);
 
-  const maxPayout =
-    cfg.maxWinMult > 0 ? +(totalBet * cfg.maxWinMult).toFixed(2) : Number.POSITIVE_INFINITY;
+  // Safety cap on tumble chains
+  for (let guard = 0; guard < 40; guard++) {
+    const ev = evaluateBoard(board, opts.bet);
+    maxScatters = Math.max(maxScatters, ev.scatters);
 
-  const grid = opts.grid ?? generateGrid(rng, cfg);
-  const multiplierReel =
-    opts.multiplierReel ?? generateMultiplierReel(rng, cfg, exMode);
+    if (ev.winningKeys.size === 0) break;
 
-  const { wins: paylineWins, total: paylineWinRaw } = evaluatePaylines(grid, totalBet, cfg);
-  const multipliedWin = applyMultiplier(paylineWinRaw, multiplierReel.center);
-  const rawTotalWin = multipliedWin;
+    rawWin += ev.win;
 
-  let totalWin = rawTotalWin;
-  let hitCap = false;
-  if (Number.isFinite(maxPayout) && totalWin > maxPayout) {
-    totalWin = maxPayout;
-    hitCap = true;
+    const bombResult = applyBombToTumble(ev.win, ev.bombs, {
+      freeSpins: opts.isFreeSpins,
+      collectMode,
+      accumulator,
+    });
+    accumulator = bombResult.accumulator;
+    if (bombResult.bombSum > peakBomb) peakBomb = bombResult.bombSum;
+
+    const remove = new Set(ev.winningKeys);
+    if (bombResult.clearBombs) {
+      for (const b of ev.bombs) remove.add(b.key);
+    }
+
+    // Scale per-symbol display if bombs applied to tumble
+    let clusters = ev.clusters;
+    if (bombResult.bombSum > 0 && !collectMode) {
+      clusters = ev.clusters.map((c) => ({
+        ...c,
+        pay: +(c.pay * bombResult.bombSum).toFixed(2),
+        perSymbol: +(c.perSymbol * bombResult.bombSum).toFixed(2),
+      }));
+    }
+
+    const gravity = applyGravity(board, remove, opts.ante && !opts.isFreeSpins, opts.isFreeSpins);
+
+    steps.push({
+      board: cloneBoard(board),
+      winningKeys: [...remove],
+      clusters,
+      tumbleWin: bombResult.win,
+      bombSum: bombResult.bombSum,
+      afterPop: gravity.afterPop,
+      afterFall: gravity.next,
+      spawnedKeys: gravity.spawnedKeys,
+      fallenKeys: gravity.fallenKeys,
+      fallDistance: gravity.fallDistance,
+    });
+
+    totalWin += bombResult.win;
+    board = gravity.next;
   }
 
+  // Bombs only count when a winning cluster is on the board (handled in applyBombToTumble).
+  // Do NOT bank leftover bombs on a dead / no-win board — those multipliers are invalid.
+
+  const scatter = resolveScatters(maxScatters, opts.bet, opts.isFreeSpins);
+  if (!opts.isFreeSpins) {
+    totalWin += scatter.cashPay;
+    rawWin += scatter.cashPay;
+  }
+
+  let finalTotal = +totalWin.toFixed(2);
+  const finalRaw = +rawWin.toFixed(2);
+  const capMult = getFortuneRabbitConfig().maxWinMult;
+  if (capMult > 0) {
+    const cap = +(opts.bet * capMult).toFixed(2);
+    if (finalTotal > cap) finalTotal = cap;
+  }
+  // Base: peak bomb only if this spin actually won. FS: banked mult from winning tumbles only.
+  const displayMult =
+    finalRaw > 0
+      ? collectMode
+        ? accumulator > 0
+          ? accumulator
+          : 1
+        : peakBomb > 0
+          ? peakBomb
+          : 1
+      : 1;
+
   return {
-    seed,
-    baseBet: +baseBet.toFixed(2),
-    totalBet: +totalBet.toFixed(2),
-    betPerLine: betPerLine(totalBet, cfg),
-    exMode,
-    grid,
-    paylineWins,
-    paylineWin: paylineWinRaw,
-    multiplierReel,
-    multipliedWin,
-    rawTotalWin,
-    totalWin: +totalWin.toFixed(2),
-    hitCap,
+    initialBoard,
+    steps,
+    totalWin: finalTotal,
+    rawWin: finalRaw,
+    displayMult,
+    scatters: maxScatters,
+    scatterPay: scatter.cashPay,
+    freeSpinsAwarded: scatter.freeSpinsAwarded,
+    retriggerSpins: scatter.retriggerSpins,
+    isFreeSpins: opts.isFreeSpins,
+    bombAccumulator: accumulator,
   };
 }
+
+export { finalizeFreeSpinTotal };

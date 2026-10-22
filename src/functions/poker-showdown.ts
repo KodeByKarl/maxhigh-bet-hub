@@ -50,9 +50,8 @@ export const getPokerShowdownSessionFn = createServerFn({ method: "GET" }).handl
 /** Public engine config for the live table UI (reads game_controls.engineConfig). */
 export const getPokerShowdownEngineConfigFn = createServerFn({ method: "GET" }).handler(
   async () => {
-    const { getPokerShowdownEngineConfigPublic } = await import(
-      "../server/games/poker-showdown.server"
-    );
+    const { getPokerShowdownEngineConfigPublic } =
+      await import("../server/games/poker-showdown.server");
     return getPokerShowdownEngineConfigPublic();
   },
 );

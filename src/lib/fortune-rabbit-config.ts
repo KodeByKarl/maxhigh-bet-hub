@@ -1,529 +1,394 @@
 /**
- * Fortune Rabbit — 3×3 / 5-payline + multiplier-reel slot math config.
- * Shared by server resolver, client playback, and Superadmin editor.
- *
- * PENDING DESIGN / COMPLIANCE CONFIRMATION (config-pending — do not treat as final):
- * 1. Full symbol roster + payline paytable ladder (gemstone/temple theme only confirmed)
- * 2. Exact shapes/paths of the 5 paylines (classic 3×3 5-line map used as starting point)
- * 3. Whether multiplier reel is meaningfully displayed on no-win spins (payout logic: ×0 = 0 either way)
- * 4. Exact EX-mode odds shift ("1x removed entirely" is working default from a single source)
- * 5. RTP target — conflicting sources cite 97%, 96.65%, and 95.22% floor; profiles seeded as placeholders
- * 6. Max win 375× — single-sourced / unconfirmed; treat with caution until compliance sign-off
- *
- * Locked product rules for this title (NOT Fortune Rabbit 2/3):
- * - No scatters, free spins, cascade/tumble, ways-to-win, or bonus round
- * - Single-pass: grid → paylines → multiplier reel → settle
- * - Multiplier reel is independent of the 3×3 payline grid
- * - Math identical to Fortune Gems; Ox is a thematic skin
+ * Fortune Rabbit math config — shared by engine (client) and Superadmin (server).
+ * Defaults match the original hardcoded Sweet Bonanza-style values.
  */
 
 export const FORTUNE_RABBIT_GAME_ID = "fortune-rabbit";
 
-export type FrSymKind =
-  | "ruby"
-  | "emerald"
-  | "sapphire"
-  | "amethyst"
-  | "topaz"
-  | "temple"
-  | "wild";
+export type FortuneRabbitSymKind =
+  | "grape"
+  | "plum"
+  | "melon"
+  | "apple"
+  | "blue"
+  | "green"
+  | "purple"
+  | "heart"
+  | "lollipop"
+  | "bomb";
 
-export type FgSymbolTier = "low" | "high" | "wild";
+export type FortuneRabbitBombEntry = { mult: 2 | 3 | 4 | 5; weight: number };
 
-/**
- * RTP profile ids — placeholder labels for the three conflicting published figures.
- * Confirm which (or whether multi-tier like Super Ace) applies before launch.
- */
-export type FgRtpProfileId = "rtp_97" | "rtp_96_65" | "rtp_95_22";
+export const FORTUNE_RABBIT_BOMB_MULTS = [2, 3, 4, 5] as const;
 
-/** Allowed multiplier-reel face values (center position is active). */
-export const FR_MULTIPLIER_VALUES = [1, 2, 3, 5, 10, 15] as const;
-export type FgMultiplierValue = (typeof FR_MULTIPLIER_VALUES)[number];
+export type FortuneRabbitScatterCashTier = {
+  count: number;
+  /** × bet */
+  mult: number;
+};
 
-export type FgSymbolConfig = {
+export type FortuneRabbitSymbolConfig = {
   id: string;
-  kind: FrSymKind;
-  name: string;
-  tier: FgSymbolTier;
-  /**
-   * Pay × bet-per-line for a full 3-symbol payline match.
-   * TODO/config-pending — provisional gemstone ladder; confirm with design.
-   */
-  pay: number;
-  /** Base relative weight per main-grid reel (overridden by active RTP profile). */
-  reelWeights: number[];
-  wild?: boolean;
-};
-
-/** Per-symbol main-grid reel weight overrides for one RTP profile. */
-export type FgRtpProfile = {
-  id: FgRtpProfileId;
-  /** Target RTP % for docs / simulation (placeholder until confirmed). */
-  targetRtp: number;
-  /** kind → weights[reelIndex] for the 3 main reels */
-  reelWeights: Record<FrSymKind, number[]>;
-};
-
-/** Independently tunable multiplier-reel strip weighting (base or EX). */
-export type FgMultiplierStrip = {
-  /** Relative weights keyed by multiplier face value as string ("1","2",…). */
-  weights: Record<string, number>;
+  kind: FortuneRabbitSymKind;
+  label: string;
+  /** Relative spawn weight (0 = never from pool; bombs use separate chance) */
+  weight: number;
+  /** Fixed payout multiplier × bet for [min, min+2, min+4] matching symbols */
+  pay: [number, number, number];
+  scatter?: boolean;
+  bomb?: boolean;
 };
 
 export type FortuneRabbitConfig = {
   schemaVersion: 1;
-  reelsCount: number;
-  rowsCount: number;
-  paylineCount: number;
-  /**
-   * Payline map: paylines[lineIndex][reelIndex] = row index (0 = top).
-   * TODO/config-pending — confirm exact paths with design.
-   */
-  paylines: number[][];
-  minMatchLength: number;
-  minBet: number;
-  maxBet: number;
-  /**
-   * Cap total resolved win as × stake (0 = off).
-   * TODO/config-pending — provisional 375 (single-sourced, unconfirmed).
-   */
+  /** Chance (0–100) the initial board is NOT force-seeded with a winning cluster */
+  deadSpinChancePercent: number;
+  /** When seeding a win, bias toward melon (0–100) */
+  seedMelonBiasPercent: number;
+  /** 6×3 board has 18 cells — never require more matches than CELLS. */
+  seedClusterMin: number;
+  seedClusterMax: number;
+  /** Per-cell chance to become a bomb instead of the picked symbol */
+  bombChanceBasePercent: number;
+  bombChanceFreeSpinsPercent: number;
+  bombTable: FortuneRabbitBombEntry[];
+  /** Panther cane (lollipop) free-spins */
+  freeSpinsTriggerCount: number;
+  freeSpinsRetriggerCount: number;
+  freeSpinsBase: number;
+  freeSpinsRetrigger: number;
+  /** Ante multiplies scatter weight by this factor */
+  anteScatterWeightMult: number;
+  scatterCashTiers: FortuneRabbitScatterCashTier[];
+  buyFeatureMult: number;
+  superBuyFeatureMult: number;
+  anteBetMult: number;
+  minCluster: number;
+  /** Max win as × bet for the round (paid spin + FS feature). 0 = uncapped. */
   maxWinMult: number;
-  /** Extra Bets (EX) stake multiplier applied before debit (default 1.5 = +50%). */
-  exBetMult: number;
-  /** Active RTP profile id — selects main-grid reelWeights. */
-  activeRtpProfile: FgRtpProfileId;
-  rtpProfiles: FgRtpProfile[];
-  /** Multiplier reel faces + base-mode weights. */
-  multiplierValues: number[];
-  multiplierStripBase: FgMultiplierStrip;
   /**
-   * EX-mode multiplier reel profile — fully separate from base (not a runtime modifier).
-   * Working default: 1x weight = 0; 10x/15x elevated. Confirm with design.
+   * Ceiling on collected FS bomb multiplier (applied once at feature end).
+   * Separate from and well below maxWinMult. 0 = uncapped.
    */
-  multiplierStripEx: FgMultiplierStrip;
-  /** Mirror of active profile target for Superadmin display. */
-  targetRtp: number;
-  symbols: FgSymbolConfig[];
+  maxFsBombMult: number;
+  /** Hard stop on FS + retriggers so sticky-scatter cascades cannot run away. 0 = uncapped. */
+  maxFsSessionSpins: number;
+  /** Base-game: strongest bomb on the winning tumble, capped here. 0 = uncapped. */
+  maxBaseBombSum: number;
+  symbols: FortuneRabbitSymbolConfig[];
 };
 
-export const SYMBOL_NAMES: Record<FrSymKind, string> = {
-  ruby: "Golden Rabbit",
-  emerald: "Jade Lantern",
-  sapphire: "Lucky Drum",
-  amethyst: "Red Envelope",
-  topaz: "Fortune Peach",
-  temple: "Rabbit Shrine",
-  wild: "Fortune Rabbit Wild",
-};
-
-/**
- * Classic 3×3 / 5 fixed paylines (row: 0 top, 1 mid, 2 bottom).
- * TODO/config-pending — confirm exact paths with design (not assumed final).
- */
-export const DEFAULT_PAYLINES_3X3_5: number[][] = [
-  [1, 1, 1], // middle
-  [0, 0, 0], // top
-  [2, 2, 2], // bottom
-  [0, 1, 2], // diagonal TL→BR
-  [2, 1, 0], // diagonal BL→TR
-];
-
-const SYM_KINDS: FrSymKind[] = [
-  "ruby",
-  "emerald",
-  "sapphire",
-  "amethyst",
-  "topaz",
-  "temple",
-  "wild",
-];
-
-function rw(reels: [number, number, number]): number[] {
-  return [...reels];
-}
-
-function profileWeights(
-  entries: Record<FrSymKind, [number, number, number]>,
-): Record<FrSymKind, number[]> {
-  const out = {} as Record<FrSymKind, number[]>;
-  for (const k of SYM_KINDS) {
-    out[k] = rw(entries[k]);
-  }
-  return out;
-}
-
-/**
- * Provisional RTP reel-strip profiles (placeholder targets from conflicting sources).
- * Tune via simulation before live — do not treat as compliance-approved.
- */
-export const DEFAULT_RTP_PROFILES: FgRtpProfile[] = [
-  {
-    id: "rtp_97",
-    targetRtp: 97,
-    reelWeights: profileWeights({
-      ruby: [8, 8, 8],
-      emerald: [10, 10, 10],
-      sapphire: [14, 14, 14],
-      amethyst: [18, 18, 18],
-      topaz: [22, 22, 22],
-      temple: [24, 24, 24],
-      wild: [4, 4, 4],
-    }),
-  },
-  {
-    id: "rtp_96_65",
-    targetRtp: 96.65,
-    reelWeights: profileWeights({
-      ruby: [7, 7, 7],
-      emerald: [9, 9, 9],
-      sapphire: [13, 13, 13],
-      amethyst: [18, 18, 18],
-      topaz: [23, 23, 23],
-      temple: [26, 26, 26],
-      wild: [4, 4, 4],
-    }),
-  },
-  {
-    id: "rtp_95_22",
-    targetRtp: 95.22,
-    reelWeights: profileWeights({
-      ruby: [6, 6, 6],
-      emerald: [8, 8, 8],
-      sapphire: [12, 12, 12],
-      amethyst: [18, 18, 18],
-      topaz: [24, 24, 24],
-      temple: [28, 28, 28],
-      wild: [3, 3, 3],
-    }),
-  },
-];
-
-/** Base-mode multiplier reel weights. TODO/config-pending — tune for RTP. */
-export const DEFAULT_MULTIPLIER_STRIP_BASE: FgMultiplierStrip = {
-  weights: {
-    "1": 40,
-    "2": 28,
-    "3": 16,
-    "5": 10,
-    "10": 4,
-    "15": 2,
-  },
-};
-
-/**
- * EX-mode multiplier reel — separate profile.
- * Working default: 1x removed (weight 0); higher faces present but rare so
- * avg multiplier ≈ base (~2.6) → EX RTP stays near base target (stake uplift
- * cancels via bet-per-line pays). TODO/config-pending — confirm with design.
- */
-export const DEFAULT_MULTIPLIER_STRIP_EX: FgMultiplierStrip = {
-  weights: {
-    "1": 0,
-    "2": 70,
-    "3": 20,
-    "5": 7,
-    "10": 2,
-    "15": 1,
-  },
+export const SYMBOL_LABELS: Record<FortuneRabbitSymKind, string> = {
+  grape: "10",
+  plum: "J",
+  melon: "Q",
+  apple: "K",
+  blue: "A",
+  green: "Peach Blossom",
+  purple: "Mooncake Treasure",
+  heart: "Fortune Rabbit",
+  lollipop: "Scatter",
+  bomb: "Wild",
 };
 
 export const DEFAULT_FORTUNE_RABBIT_CONFIG: FortuneRabbitConfig = {
   schemaVersion: 1,
-  reelsCount: 3,
-  rowsCount: 3,
-  paylineCount: 5,
-  paylines: DEFAULT_PAYLINES_3X3_5.map((p) => [...p]),
-  minMatchLength: 3,
-  minBet: 0.1,
-  maxBet: 100,
-  // TODO/config-pending — single-sourced 375×; confirm before launch.
-  maxWinMult: 375,
-  exBetMult: 1.5,
-  activeRtpProfile: "rtp_97",
-  rtpProfiles: DEFAULT_RTP_PROFILES.map((p) => ({
-    id: p.id,
-    targetRtp: p.targetRtp,
-    reelWeights: Object.fromEntries(
-      SYM_KINDS.map((k) => [k, [...p.reelWeights[k]]]),
-    ) as Record<FrSymKind, number[]>,
-  })),
-  multiplierValues: [...FR_MULTIPLIER_VALUES],
-  multiplierStripBase: {
-    weights: { ...DEFAULT_MULTIPLIER_STRIP_BASE.weights },
-  },
-  multiplierStripEx: {
-    weights: { ...DEFAULT_MULTIPLIER_STRIP_EX.weights },
-  },
-  targetRtp: 97,
+  deadSpinChancePercent: 82,
+  seedMelonBiasPercent: 35,
+  seedClusterMin: 6,
+  seedClusterMax: 8,
+  bombChanceBasePercent: 1.5,
+  bombChanceFreeSpinsPercent: 3,
+  bombTable: [
+    { mult: 2, weight: 34 },
+    { mult: 3, weight: 28 },
+    { mult: 4, weight: 22 },
+    { mult: 5, weight: 16 },
+  ],
+  freeSpinsTriggerCount: 4,
+  freeSpinsRetriggerCount: 4,
+  freeSpinsBase: 10,
+  freeSpinsRetrigger: 3,
+  anteScatterWeightMult: 2,
+  scatterCashTiers: [
+    { count: 3, mult: 1 },
+    { count: 4, mult: 3 },
+    { count: 5, mult: 5 },
+    { count: 6, mult: 100 },
+  ],
+  /** Per-quantity Buy Bonus price: Price = bet × this. */
+  buyFeatureMult: 42.5,
+  /** Super buy unit price (5× normal). */
+  superBuyFeatureMult: 212.5,
+  anteBetMult: 1.25,
+  minCluster: 5,
+  /** ₱5 × 10,000× = ₱50,000 round cap (the incident that lacked this clamp). */
+  maxWinMult: 10_000,
+  /** Bombs only resolve to 2x/3x/4x/5x, including feature-end multiplier. */
+  maxFsBombMult: 5,
+  maxFsSessionSpins: 25,
+  maxBaseBombSum: 5,
   symbols: [
+    { id: "grape", kind: "grape", label: "10", weight: 18, pay: [0.2, 0.35, 0.8] },
+    { id: "plum", kind: "plum", label: "J", weight: 16, pay: [0.35, 0.5, 1.2] },
+    { id: "melon", kind: "melon", label: "Q", weight: 14, pay: [0.5, 0.65, 2] },
+    { id: "apple", kind: "apple", label: "K", weight: 12, pay: [0.65, 0.8, 4] },
+    { id: "blue", kind: "blue", label: "A", weight: 10, pay: [0.8, 2.5, 8] },
+    { id: "green", kind: "green", label: "Peach Blossom", weight: 8, pay: [2, 10, 50] },
+    { id: "purple", kind: "purple", label: "Mooncake Treasure", weight: 6, pay: [6, 25, 150] },
+    { id: "heart", kind: "heart", label: "Fortune Rabbit", weight: 5, pay: [12, 80, 500] },
     {
-      id: "ruby",
-      kind: "ruby",
-      name: "Golden Rabbit",
-      tier: "high",
-      // TODO/config-pending — provisional × bet-per-line; sim-tuned toward ~97% base
-      pay: 25,
-      reelWeights: rw([8, 8, 8]),
+      id: "lollipop",
+      kind: "lollipop",
+      label: "Scatter",
+      weight: 1.5,
+      pay: [0, 0, 0],
+      scatter: true,
     },
     {
-      id: "emerald",
-      kind: "emerald",
-      name: "Jade Lantern",
-      tier: "high",
-      pay: 17,
-      reelWeights: rw([10, 10, 10]),
-    },
-    {
-      id: "sapphire",
-      kind: "sapphire",
-      name: "Lucky Drum",
-      tier: "high",
-      pay: 11,
-      reelWeights: rw([14, 14, 14]),
-    },
-    {
-      id: "amethyst",
-      kind: "amethyst",
-      name: "Red Envelope",
-      tier: "low",
-      pay: 7,
-      reelWeights: rw([18, 18, 18]),
-    },
-    {
-      id: "topaz",
-      kind: "topaz",
-      name: "Fortune Peach",
-      tier: "low",
-      pay: 4,
-      reelWeights: rw([22, 22, 22]),
-    },
-    {
-      id: "temple",
-      kind: "temple",
-      name: "Rabbit Shrine",
-      tier: "low",
-      pay: 3,
-      reelWeights: rw([24, 24, 24]),
-    },
-    {
-      id: "wild",
-      kind: "wild",
-      name: "Fortune Rabbit Wild",
-      tier: "wild",
-      pay: 42,
-      reelWeights: rw([4, 4, 4]),
-      wild: true,
+      id: "bomb",
+      kind: "bomb",
+      label: "Wild",
+      weight: 0,
+      pay: [0, 0, 0],
+      bomb: true,
     },
   ],
 };
 
-function clamp(n: number, lo: number, hi: number): number {
-  if (!Number.isFinite(n)) return lo;
-  return Math.min(hi, Math.max(lo, n));
+function clamp(n: number, min: number, max: number) {
+  if (!Number.isFinite(n)) return min;
+  return Math.min(max, Math.max(min, n));
 }
 
-function num(v: unknown, fallback: number): number {
-  const n = typeof v === "number" ? v : Number(v);
-  return Number.isFinite(n) ? n : fallback;
+/** Map any bomb value onto the only allowed set: 2x / 3x / 4x / 5x. */
+export function clampBombMult(v: unknown): FortuneRabbitBombEntry["mult"] {
+  const n = Math.round(num(v, 2));
+  if (n <= 2) return 2;
+  if (n === 3) return 3;
+  if (n === 4) return 4;
+  return 5;
 }
 
-function normalizePaylines(
-  raw: unknown,
-  reelsCount: number,
-  rowsCount: number,
-  paylineCount: number,
-  fallback: number[][],
-): number[][] {
-  const src = Array.isArray(raw) ? raw : fallback;
-  const out: number[][] = [];
-  for (let i = 0; i < paylineCount; i++) {
-    const fb = fallback[i] ?? fallback[0] ?? Array.from({ length: reelsCount }, () => 1);
-    const row = Array.isArray(src[i]) ? (src[i] as unknown[]) : fb;
-    out.push(
-      Array.from({ length: reelsCount }, (_, r) =>
-        clamp(Math.round(num(row[r], fb[r] ?? 1)), 0, rowsCount - 1),
-      ),
-    );
+function num(v: unknown, fallback: number) {
+  return typeof v === "number" && Number.isFinite(v) ? v : fallback;
+}
+
+/** Old package buy was 100x / 500x for 10 spins. Unit price is now 42.5x / 212.5x per quantity. */
+function migrateBuyUnitMult(v: unknown, fallback: number, superBuy = false) {
+  if (typeof v === "number" && Number.isFinite(v)) {
+    if (!superBuy && v === 100) return 42.5;
+    if (superBuy && v === 500) return 212.5;
+    return v;
   }
-  return out;
+  return fallback;
 }
 
-const RTP_IDS: FgRtpProfileId[] = ["rtp_97", "rtp_96_65", "rtp_95_22"];
+/** Prior default tables — migrate stored engine JSON onto the current multipliers. */
+const LEGACY_PAY_TABLES: Record<string, [number, number, number][]> = {
+  grape: [
+    [0.25, 0.75, 2],
+    [1, 3, 8],
+  ],
+  plum: [
+    [0.4, 0.9, 4],
+    [1.2, 3.5, 10],
+  ],
+  melon: [
+    [0.5, 1, 5],
+    [1.5, 4, 12],
+  ],
+  apple: [
+    [1, 1.5, 10],
+    [2, 5, 20],
+  ],
+  blue: [
+    [1.5, 2, 12],
+    [2.5, 6, 25],
+  ],
+  green: [
+    [2, 5, 15],
+    [4, 10, 35],
+  ],
+  purple: [
+    [2.5, 10, 25],
+    [6, 18, 50],
+  ],
+  heart: [
+    [10, 25, 50],
+    [12, 30, 80],
+  ],
+};
 
-function normalizeRtpProfiles(raw: unknown, d: FortuneRabbitConfig): FgRtpProfile[] {
-  const src = Array.isArray(raw) ? raw : d.rtpProfiles;
-  return RTP_IDS.map((id) => {
-    const fb = d.rtpProfiles.find((p) => p.id === id) ?? d.rtpProfiles[0];
-    const found = src.find((p) => (p as { id?: string })?.id === id) as
-      | Partial<FgRtpProfile>
-      | undefined;
-    const weightsIn = found?.reelWeights ?? fb.reelWeights;
-    const reelWeights = {} as Record<FrSymKind, number[]>;
-    for (const k of SYM_KINDS) {
-      const wSrc = weightsIn?.[k];
-      const wFb = fb.reelWeights[k];
-      reelWeights[k] = Array.from({ length: d.reelsCount }, (_, i) =>
-        clamp(num(Array.isArray(wSrc) ? wSrc[i] : undefined, wFb[i] ?? 0), 0, 10_000),
-      );
-    }
-    return {
-      id,
-      targetRtp: clamp(num(found?.targetRtp, fb.targetRtp), 80, 99.5),
-      reelWeights,
-    };
-  });
+function paysMatch(pay: unknown, expected: [number, number, number]): boolean {
+  if (!Array.isArray(pay) || pay.length < 3) return false;
+  return (
+    num(pay[0], NaN) === expected[0] &&
+    num(pay[1], NaN) === expected[1] &&
+    num(pay[2], NaN) === expected[2]
+  );
 }
 
-function normalizeMultiplierStrip(
-  raw: unknown,
-  fallback: FgMultiplierStrip,
-  values: number[],
-): FgMultiplierStrip {
-  const src =
-    raw && typeof raw === "object" && "weights" in (raw as object)
-      ? ((raw as FgMultiplierStrip).weights ?? {})
-      : raw && typeof raw === "object"
-        ? (raw as Record<string, unknown>)
-        : null;
-  const weights: Record<string, number> = {};
-  for (const v of values) {
-    const key = String(v);
-    weights[key] = clamp(
-      num(src?.[key], fallback.weights[key] ?? 0),
-      0,
-      10_000,
-    );
-  }
-  return { weights };
+function isLegacyDefaultPay(id: string, pay: unknown): boolean {
+  const tables = LEGACY_PAY_TABLES[id];
+  if (!tables) return false;
+  return tables.some((legacy) => paysMatch(pay, legacy));
 }
 
-/** Resolve effective per-symbol main-grid reel weights for the active RTP profile. */
-export function effectiveReelWeights(cfg: FortuneRabbitConfig): Record<FrSymKind, number[]> {
-  const profile =
-    cfg.rtpProfiles.find((p) => p.id === cfg.activeRtpProfile) ?? cfg.rtpProfiles[0];
-  const out = {} as Record<FrSymKind, number[]>;
-  for (const s of cfg.symbols) {
-    out[s.kind] = profile?.reelWeights[s.kind]
-      ? [...profile.reelWeights[s.kind]]
-      : [...s.reelWeights];
-  }
-  return out;
-}
-
-/** Active multiplier-reel strip for the given EX mode flag. */
-export function activeMultiplierStrip(
-  cfg: FortuneRabbitConfig,
-  exMode: boolean,
-): FgMultiplierStrip {
-  return exMode ? cfg.multiplierStripEx : cfg.multiplierStripBase;
-}
-
-/**
- * Total stake deducted for a spin.
- * EX mode applies +50% (cfg.exBetMult) to the player's selected base bet.
- */
-export function spinStake(baseBet: number, exMode: boolean, cfg: FortuneRabbitConfig): number {
-  const mult = exMode ? cfg.exBetMult : 1;
-  return +(baseBet * mult).toFixed(2);
-}
-
+/** Merge partial / stored JSON onto defaults (safe for DB blobs). */
 export function normalizeFortuneRabbitConfig(raw: unknown): FortuneRabbitConfig {
   const d = DEFAULT_FORTUNE_RABBIT_CONFIG;
   if (!raw || typeof raw !== "object") return structuredClone(d);
-  const o = raw as Partial<FortuneRabbitConfig>;
-
-  const reelsCount = clamp(Math.round(num(o.reelsCount, d.reelsCount)), 3, 3);
-  const rowsCount = clamp(Math.round(num(o.rowsCount, d.rowsCount)), 3, 3);
-  const paylineCount = clamp(Math.round(num(o.paylineCount, d.paylineCount)), 1, 20);
-
-  const multValuesSrc = Array.isArray(o.multiplierValues) ? o.multiplierValues : d.multiplierValues;
-  const multiplierValues = (multValuesSrc.length > 0 ? multValuesSrc : d.multiplierValues)
-    .map((v) => clamp(Math.round(num(v, 1)), 1, 1000))
-    .filter((v, i, arr) => arr.indexOf(v) === i);
-  if (multiplierValues.length === 0) multiplierValues.push(...FR_MULTIPLIER_VALUES);
+  const o = raw as Record<string, unknown>;
 
   const symbolsIn = Array.isArray(o.symbols) ? o.symbols : null;
-  const symbols: FgSymbolConfig[] = d.symbols.map((def) => {
+  const symbols: FortuneRabbitSymbolConfig[] = d.symbols.map((def) => {
     const found = symbolsIn?.find(
-      (s) => (s as FgSymbolConfig)?.kind === def.kind || (s as FgSymbolConfig)?.id === def.id,
-    ) as Partial<FgSymbolConfig> | undefined;
-    if (!found) {
-      return {
-        ...def,
-        reelWeights: [...def.reelWeights],
-      };
-    }
-    const padWeights = (src: unknown, fb: number[]) => {
-      const arr = Array.isArray(src) ? src : fb;
-      return Array.from({ length: reelsCount }, (_, i) =>
-        clamp(num(arr[i], fb[i] ?? 0), 0, 10_000),
-      );
-    };
+      (s) => s && typeof s === "object" && (s as { id?: string }).id === def.id,
+    ) as Partial<FortuneRabbitSymbolConfig> | undefined;
+    if (!found) return { ...def, pay: [...def.pay] as [number, number, number] };
+    const paySrc = isLegacyDefaultPay(def.id, found.pay)
+      ? def.pay
+      : Array.isArray(found.pay)
+        ? found.pay
+        : def.pay;
     return {
       ...def,
-      name: typeof found.name === "string" && found.name.trim() ? found.name : def.name,
-      pay: clamp(num(found.pay, def.pay), 0, 1_000_000),
-      reelWeights: padWeights(found.reelWeights, def.reelWeights),
-      wild: def.wild,
+      label: typeof found.label === "string" && found.label.trim() ? found.label : def.label,
+      weight: clamp(num(found.weight, def.weight), 0, 10_000),
+      pay: [
+        clamp(num(paySrc[0], def.pay[0]), 0, 1_000_000),
+        clamp(num(paySrc[1], def.pay[1]), 0, 1_000_000),
+        clamp(num(paySrc[2], def.pay[2]), 0, 1_000_000),
+      ],
+      scatter: def.scatter,
+      bomb: def.bomb,
     };
   });
 
-  const rtpProfiles = normalizeRtpProfiles(o.rtpProfiles, d);
-  const activeRaw = o.activeRtpProfile;
-  const activeRtpProfile: FgRtpProfileId = RTP_IDS.includes(activeRaw as FgRtpProfileId)
-    ? (activeRaw as FgRtpProfileId)
-    : d.activeRtpProfile;
-  const activeProfile = rtpProfiles.find((p) => p.id === activeRtpProfile) ?? rtpProfiles[0];
+  const bombIn = Array.isArray(o.bombTable) ? o.bombTable : null;
+  const bombWeights = new Map<FortuneRabbitBombEntry["mult"], number>();
+  for (const mult of FORTUNE_RABBIT_BOMB_MULTS) {
+    bombWeights.set(mult, d.bombTable.find((b) => b.mult === mult)?.weight ?? 1);
+  }
+  if (bombIn && bombIn.length > 0) {
+    for (const b of bombIn) {
+      const row = b as Partial<FortuneRabbitBombEntry>;
+      const n = Math.round(num(row.mult, 0));
+      if (!(FORTUNE_RABBIT_BOMB_MULTS as readonly number[]).includes(n)) continue;
+      const weight = clamp(num(row.weight, 1), 0, 10_000);
+      bombWeights.set(n as FortuneRabbitBombEntry["mult"], weight);
+    }
+  }
+  const bombTable: FortuneRabbitBombEntry[] = FORTUNE_RABBIT_BOMB_MULTS.map((mult) => ({
+    mult,
+    weight: bombWeights.get(mult) ?? 0,
+  }));
+
+  const tiersIn = Array.isArray(o.scatterCashTiers) ? o.scatterCashTiers : null;
+  const scatterCashTiers: FortuneRabbitScatterCashTier[] =
+    tiersIn && tiersIn.length > 0
+      ? tiersIn
+          .map((t) => {
+            const row = t as Partial<FortuneRabbitScatterCashTier>;
+            return {
+              count: clamp(Math.round(num(row.count, 3)), 1, 30),
+              mult: clamp(num(row.mult, 1), 0, 1_000_000),
+            };
+          })
+          .sort((a, b) => a.count - b.count)
+      : d.scatterCashTiers.map((t) => ({ ...t }));
 
   return {
     schemaVersion: 1,
-    reelsCount,
-    rowsCount,
-    paylineCount,
-    paylines: normalizePaylines(o.paylines, reelsCount, rowsCount, paylineCount, d.paylines),
-    minMatchLength: clamp(Math.round(num(o.minMatchLength, d.minMatchLength)), 3, 3),
-    minBet: clamp(num(o.minBet, d.minBet), 0.01, 1_000_000),
-    maxBet: clamp(num(o.maxBet, d.maxBet), 0.01, 1_000_000),
-    maxWinMult: clamp(num(o.maxWinMult, d.maxWinMult), 0, 1_000_000),
-    exBetMult: clamp(num(o.exBetMult, d.exBetMult), 1, 5),
-    activeRtpProfile,
-    rtpProfiles,
-    multiplierValues,
-    multiplierStripBase: normalizeMultiplierStrip(
-      o.multiplierStripBase,
-      d.multiplierStripBase,
-      multiplierValues,
+    deadSpinChancePercent: clamp(num(o.deadSpinChancePercent, d.deadSpinChancePercent), 0, 100),
+    seedMelonBiasPercent: clamp(num(o.seedMelonBiasPercent, d.seedMelonBiasPercent), 0, 100),
+    seedClusterMin: clamp(Math.round(num(o.seedClusterMin, d.seedClusterMin)), 3, 18),
+    seedClusterMax: clamp(Math.round(num(o.seedClusterMax, d.seedClusterMax)), 3, 18),
+    bombChanceBasePercent: clamp(num(o.bombChanceBasePercent, d.bombChanceBasePercent), 0, 100),
+    bombChanceFreeSpinsPercent: clamp(
+      num(o.bombChanceFreeSpinsPercent, d.bombChanceFreeSpinsPercent),
+      0,
+      100,
     ),
-    multiplierStripEx: normalizeMultiplierStrip(
-      o.multiplierStripEx,
-      d.multiplierStripEx,
-      multiplierValues,
+    bombTable: bombTable.length ? bombTable : d.bombTable.map((b) => ({ ...b })),
+    freeSpinsTriggerCount: clamp(
+      Math.round(num(o.freeSpinsTriggerCount, d.freeSpinsTriggerCount)),
+      1,
+      18,
     ),
-    targetRtp: clamp(num(o.targetRtp, activeProfile.targetRtp), 80, 99.5),
+    freeSpinsRetriggerCount: clamp(
+      Math.round(num(o.freeSpinsRetriggerCount, d.freeSpinsRetriggerCount)),
+      1,
+      18,
+    ),
+    freeSpinsBase: clamp(Math.round(num(o.freeSpinsBase, d.freeSpinsBase)), 1, 100),
+    freeSpinsRetrigger: clamp(Math.round(num(o.freeSpinsRetrigger, d.freeSpinsRetrigger)), 0, 100),
+    anteScatterWeightMult: clamp(num(o.anteScatterWeightMult, d.anteScatterWeightMult), 1, 10),
+    scatterCashTiers,
+    buyFeatureMult: clamp(migrateBuyUnitMult(o.buyFeatureMult, d.buyFeatureMult), 1, 10_000),
+    superBuyFeatureMult: clamp(
+      migrateBuyUnitMult(o.superBuyFeatureMult, d.superBuyFeatureMult, true),
+      1,
+      10_000,
+    ),
+    anteBetMult: clamp(num(o.anteBetMult, d.anteBetMult), 1, 5),
+    minCluster: clamp(Math.round(num(o.minCluster, d.minCluster)), 3, 18),
+    maxWinMult: clamp(num(o.maxWinMult, d.maxWinMult), 0, 100_000),
+    maxFsBombMult: clamp(num(o.maxFsBombMult, d.maxFsBombMult), 0, 5),
+    maxFsSessionSpins: clamp(Math.round(num(o.maxFsSessionSpins, d.maxFsSessionSpins)), 0, 200),
+    maxBaseBombSum: clamp(num(o.maxBaseBombSum, d.maxBaseBombSum), 0, 5),
     symbols,
   };
 }
 
-export function betPerLine(totalBet: number, cfg: FortuneRabbitConfig): number {
-  const lines = Math.max(1, cfg.paylineCount);
-  return +(totalBet / lines).toFixed(6);
+/** Remaining FS after this spin, honoring maxFsSessionSpins. */
+export function remainingFreeSpinsAfterSpin(opts: {
+  leftBefore: number;
+  retrigger: number;
+  playedAfter: number;
+  maxSessionSpins: number;
+}): number {
+  let left = Math.max(0, opts.leftBefore - 1 + Math.max(0, opts.retrigger));
+  if (opts.maxSessionSpins > 0) {
+    left = Math.min(left, Math.max(0, opts.maxSessionSpins - opts.playedAfter));
+  }
+  return left;
 }
 
-export function weightPercents(
-  weights: Record<string, number[] | number>,
-  reelIndex = 0,
-): Record<string, number> {
-  const keys = Object.keys(weights);
-  const total = keys.reduce((a, k) => {
-    const w = weights[k];
-    const n = Array.isArray(w) ? (w[reelIndex] ?? 0) : (w ?? 0);
-    return a + Math.max(0, n);
-  }, 0);
+export function configToCellSyms(cfg: FortuneRabbitConfig): {
+  id: string;
+  kind: FortuneRabbitSymKind;
+  weight: number;
+  pay: [number, number, number];
+  scatter?: boolean;
+  bomb?: boolean;
+}[] {
+  return cfg.symbols.map((s) => ({
+    id: s.id,
+    kind: s.kind,
+    weight: s.weight,
+    pay: [...s.pay] as [number, number, number],
+    scatter: s.scatter,
+    bomb: s.bomb,
+  }));
+}
+
+/** Per-cell spawn % from relative weights (excludes bombs with weight 0). */
+export function weightPercents(weights: { id: string; weight: number }[]): Record<string, number> {
+  const total = weights.reduce((a, w) => a + Math.max(0, w.weight), 0);
   const out: Record<string, number> = {};
-  for (const k of keys) {
-    const w = weights[k];
-    const n = Array.isArray(w) ? (w[reelIndex] ?? 0) : (w ?? 0);
-    out[k] = total > 0 ? +((Math.max(0, n) / total) * 100).toFixed(2) : 0;
+  for (const w of weights) {
+    out[w.id] = total > 0 ? +((Math.max(0, w.weight) / total) * 100).toFixed(2) : 0;
+  }
+  return out;
+}
+
+export function bombTablePercents(table: FortuneRabbitBombEntry[]): Record<number, number> {
+  const total = table.reduce((a, b) => a + Math.max(0, b.weight), 0);
+  const out: Record<number, number> = {};
+  for (const b of table) {
+    out[b.mult] = total > 0 ? +((Math.max(0, b.weight) / total) * 100).toFixed(2) : 0;
   }
   return out;
 }

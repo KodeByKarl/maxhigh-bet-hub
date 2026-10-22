@@ -1,4 +1,13 @@
-import { Dice5, Bomb, TrendingUp, Dices, Building2, Disc3, ChevronLeft, ChevronRight } from "lucide-react";
+import {
+  Dice5,
+  Bomb,
+  TrendingUp,
+  Dices,
+  Building2,
+  Disc3,
+  ChevronLeft,
+  ChevronRight,
+} from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
 type Tile = { label: string; icon: LucideIcon; color: string };

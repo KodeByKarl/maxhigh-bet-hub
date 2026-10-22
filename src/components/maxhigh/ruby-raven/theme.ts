@@ -1,7 +1,4 @@
-﻿import {
-  type PantherTheme,
-  type PantherSymKind,
-} from "@/components/maxhigh/panther-shared/theme";
+﻿import { type PantherTheme, type PantherSymKind } from "@/components/maxhigh/panther-shared/theme";
 import { RUBY_RAVEN_COLORS } from "@/components/maxhigh/panther-shared/palettes";
 
 /** Padded single-subject crops for diamond gem cells. */
@@ -26,9 +23,20 @@ export const rubyRavenTheme: PantherTheme = {
   id: "ruby-raven",
   name: "Ruby Raven",
   assets: {
-    backdrop: "/images/symbols/ruby-raven/backdrop.webp",
-    loadingBg: "/images/symbols/ruby-raven/loading-bg.webp",
-    icons: ravenIconPack("1"),
+    backdrop: "/images/symbols/ruby-raven/backdrop-v20261013.webp",
+    loadingBg: "/images/symbols/ruby-raven/backdrop-v20261013.webp",
+    icons: {
+      grape: "/images/symbols/ruby-raven/10-v20261013.png",
+      plum: "/images/symbols/ruby-raven/J-v20261013.png",
+      melon: "/images/symbols/ruby-raven/Q-v20261013.png",
+      apple: "/images/symbols/ruby-raven/K-v20261013.png",
+      blue: "/images/symbols/ruby-raven/A-v20261013.png",
+      green: "/images/symbols/ruby-raven/premium-a-v20261013.png",
+      purple: "/images/symbols/ruby-raven/premium-b-v20261013.png",
+      heart: "/images/symbols/ruby-raven/premium-c-v20261013.png",
+      lollipop: "/images/symbols/ruby-raven/scatter-v20261013.png",
+      bomb: "/images/symbols/ruby-raven/wild-v20261013.png",
+    },
   },
   colors: RUBY_RAVEN_COLORS,
 };

@@ -46,7 +46,10 @@ function runUnitTests() {
   assert(normalized.activeRtpProfile === "rtp_97", "default RTP profile placeholder");
   assert(normalized.exBetMult === 1.5, "EX +50%");
   assert(normalized.paylines.length === 5, "payline map length");
-  assert(normalized.symbols.some((s) => s.wild), "Wild present");
+  assert(
+    normalized.symbols.some((s) => s.wild),
+    "Wild present",
+  );
 
   const rng = createRng("fg-grid-test");
   const g = generateGrid(rng, cfg);
@@ -219,7 +222,12 @@ function runUnitTests() {
   assert(full.exMode === true, "exMode flag");
   assert(full.baseBet === 10 && full.totalBet === 15, "base vs total bet");
   assert(full.grid.length === 3, "grid present");
-  assert(FO_MULTIPLIER_VALUES.includes(full.multiplierReel.center as (typeof FO_MULTIPLIER_VALUES)[number]), "valid mult");
+  assert(
+    FO_MULTIPLIER_VALUES.includes(
+      full.multiplierReel.center as (typeof FO_MULTIPLIER_VALUES)[number],
+    ),
+    "valid mult",
+  );
   assert(typeof full.totalWin === "number", "totalWin");
   console.log("✓ Spin script audit fields");
 
@@ -262,18 +270,13 @@ function runRtpSim(spins: number) {
         paid += script.totalWin;
         if (script.totalWin > 0) hits++;
         if (script.hitCap) caps++;
-        multHist[script.multiplierReel.center] =
-          (multHist[script.multiplierReel.center] ?? 0) + 1;
+        multHist[script.multiplierReel.center] = (multHist[script.multiplierReel.center] ?? 0) + 1;
       }
 
       const rtp = wagered > 0 ? (paid / wagered) * 100 : 0;
       const hitRate = (hits / spins) * 100;
-      console.log(
-        `\n[${profileId}] ${exMode ? "EX" : "BASE"}  target=${profile.targetRtp}%`,
-      );
-      console.log(
-        `  RTP=${rtp.toFixed(3)}%  hitRate=${hitRate.toFixed(2)}%  caps=${caps}`,
-      );
+      console.log(`\n[${profileId}] ${exMode ? "EX" : "BASE"}  target=${profile.targetRtp}%`);
+      console.log(`  RTP=${rtp.toFixed(3)}%  hitRate=${hitRate.toFixed(2)}%  caps=${caps}`);
       console.log(
         `  mult hist: ${FO_MULTIPLIER_VALUES.map((v) => `${v}x=${((multHist[v] / spins) * 100).toFixed(1)}%`).join("  ")}`,
       );
@@ -286,8 +289,7 @@ function runRtpSim(spins: number) {
 }
 
 const rtpArg = process.argv.indexOf("--rtp");
-const rtpSpins =
-  rtpArg >= 0 ? Math.max(1_000, Number(process.argv[rtpArg + 1]) || 100_000) : 0;
+const rtpSpins = rtpArg >= 0 ? Math.max(1_000, Number(process.argv[rtpArg + 1]) || 100_000) : 0;
 
 runUnitTests();
 if (rtpSpins > 0) {

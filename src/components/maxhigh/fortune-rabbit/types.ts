@@ -1,51 +1,72 @@
-/** Shared types for Fortune Rabbit 3×3 + multiplier-reel engine. */
+/** Fortune Rabbit — 6×3 cluster tumble (panther rectangle board). */
 
-import type { FrSymKind } from "@/lib/fortune-rabbit-config";
+export type SymKind =
+  | "grape"
+  | "plum"
+  | "melon"
+  | "apple"
+  | "blue"
+  | "green"
+  | "purple"
+  | "heart"
+  | "lollipop"
+  | "bomb";
 
-/** Grid[reel][row] */
-export type FrGrid = FrSymKind[][];
-
-export type PaylineWin = {
-  lineIndex: number;
-  symbol: FrSymKind;
-  count: number;
-  /** Positions [reel, row] */
-  positions: Array<[number, number]>;
-  /** Base payline payout before multiplier reel. */
-  payout: number;
+export type CellSym = {
+  id: string;
+  kind: SymKind;
+  weight: number;
+  pay: [number, number, number];
+  scatter?: boolean;
+  bomb?: boolean;
 };
 
-/** Independent 4th reel — center face is the active spin multiplier. */
-export type MultiplierReelResult = {
-  /** Display strip [top, center, bottom] for frontend animation. */
-  faces: [number, number, number];
-  /** Active multiplier (= faces[1]). */
-  center: number;
+export type BoardCell = {
+  key: string;
+  sym: CellSym;
+  mult?: number;
+};
+
+export type ClusterWin = {
+  id: string;
+  kind: SymKind;
+  count: number;
+  pay: number;
+  perSymbol: number;
+  keys: string[];
+};
+
+export type TumbleStep = {
+  board: BoardCell[];
+  winningKeys: string[];
+  clusters: ClusterWin[];
+  tumbleWin: number;
+  bombSum: number;
+  afterPop: (BoardCell | null)[];
+  afterFall: BoardCell[];
+  spawnedKeys: string[];
+  fallenKeys: string[];
+  fallDistance: Record<string, number>;
 };
 
 export type SpinScript = {
-  seed: string;
-  /** Player-selected base bet (before EX uplift). */
-  baseBet: number;
-  /** Actual stake deducted (baseBet × exBetMult when EX on). */
-  totalBet: number;
-  betPerLine: number;
-  exMode: boolean;
-  grid: FrGrid;
-  paylineWins: PaylineWin[];
-  /** Sum of payline wins before multiplier. */
-  paylineWin: number;
-  multiplierReel: MultiplierReelResult;
-  /** paylineWin × multiplierReel.center (before max-win cap). */
-  multipliedWin: number;
-  /** Sum before max-win trim (= multipliedWin; kept for audit clarity). */
-  rawTotalWin: number;
+  initialBoard: BoardCell[];
+  steps: TumbleStep[];
   totalWin: number;
-  hitCap: boolean;
+  rawWin: number;
+  displayMult: number;
+  scatters: number;
+  scatterPay: number;
+  freeSpinsAwarded: number;
+  retriggerSpins: number;
+  isFreeSpins: boolean;
+  bombAccumulator: number;
 };
 
-export type CellKey = string;
-
-export function cellKey(reel: number, row: number): CellKey {
-  return `${reel}:${row}`;
-}
+/** 6×3 board — unique rectangle for Fortune Rabbit. */
+export const COLS = 6;
+export const ROWS = 3;
+export const TOP_COLS = 0;
+export const MAIN_CELLS = COLS * ROWS; // 18
+export const CELLS = MAIN_CELLS;
+export const MIN_CLUSTER = 5;

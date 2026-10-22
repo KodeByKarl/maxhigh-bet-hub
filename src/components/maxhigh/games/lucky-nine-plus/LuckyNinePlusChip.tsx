@@ -81,7 +81,15 @@ export function LuckyNinePlusChipFace({ value, className, size = 56 }: ChipFaceP
         stroke={look.dash}
         strokeWidth="1.8"
       />
-      <circle cx="32" cy="32" r="16.5" fill="none" stroke={look.rim} strokeWidth="1.4" opacity="0.5" />
+      <circle
+        cx="32"
+        cy="32"
+        r="16.5"
+        fill="none"
+        stroke={look.rim}
+        strokeWidth="1.4"
+        opacity="0.5"
+      />
       <text
         x="32"
         y="32"

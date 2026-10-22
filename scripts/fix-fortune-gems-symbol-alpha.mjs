@@ -68,9 +68,7 @@ async function punchAndTrim(filePath) {
   console.log("punched+trim", path.basename(filePath), `(cleared ${cleared})`);
 }
 
-const files = fs
-  .readdirSync(DIR)
-  .filter((f) => f.endsWith(".png") && !SKIP.has(f));
+const files = fs.readdirSync(DIR).filter((f) => f.endsWith(".png") && !SKIP.has(f));
 
 for (const f of files) {
   await punchAndTrim(path.join(DIR, f));

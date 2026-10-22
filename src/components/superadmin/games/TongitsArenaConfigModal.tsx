@@ -71,15 +71,7 @@ function Num({
   );
 }
 
-function Field({
-  label,
-  hint,
-  children,
-}: {
-  label: string;
-  hint?: string;
-  children: ReactNode;
-}) {
+function Field({ label, hint, children }: { label: string; hint?: string; children: ReactNode }) {
   return (
     <label className="block space-y-1.5">
       <span className="text-xs font-medium text-muted-foreground">{label}</span>
@@ -360,9 +352,7 @@ export function TongitsArenaConfigModal({ game, open, onOpenChange, onPatchLobby
                   <select
                     className="flex h-9 w-full rounded-md border border-input bg-white/[0.06] px-3 text-sm"
                     value={cfg.dealerQualifyRank}
-                    onChange={(e) =>
-                      patch({ dealerQualifyRank: e.target.value as QualifyRank })
-                    }
+                    onChange={(e) => patch({ dealerQualifyRank: e.target.value as QualifyRank })}
                   >
                     {(["10", "J", "Q", "K", "A"] as QualifyRank[]).map((r) => (
                       <option key={r} value={r}>
@@ -408,9 +398,7 @@ export function TongitsArenaConfigModal({ game, open, onOpenChange, onPatchLobby
                   <Field label="Three of a Kind" hint="Often 30:1 or 25:1">
                     <Num
                       value={cfg.pairPlus.threeOfAKind}
-                      onChange={(n) =>
-                        patch({ pairPlus: { ...cfg.pairPlus, threeOfAKind: n } })
-                      }
+                      onChange={(n) => patch({ pairPlus: { ...cfg.pairPlus, threeOfAKind: n } })}
                       step={1}
                       min={1}
                       max={200}
@@ -419,9 +407,7 @@ export function TongitsArenaConfigModal({ game, open, onOpenChange, onPatchLobby
                   <Field label="Straight Flush">
                     <Num
                       value={cfg.pairPlus.straightFlush}
-                      onChange={(n) =>
-                        patch({ pairPlus: { ...cfg.pairPlus, straightFlush: n } })
-                      }
+                      onChange={(n) => patch({ pairPlus: { ...cfg.pairPlus, straightFlush: n } })}
                       step={1}
                       min={1}
                       max={500}
@@ -461,9 +447,7 @@ export function TongitsArenaConfigModal({ game, open, onOpenChange, onPatchLobby
                   <Field label="Three of a Kind">
                     <Num
                       value={cfg.anteBonus.threeOfAKind}
-                      onChange={(n) =>
-                        patch({ anteBonus: { ...cfg.anteBonus, threeOfAKind: n } })
-                      }
+                      onChange={(n) => patch({ anteBonus: { ...cfg.anteBonus, threeOfAKind: n } })}
                       step={0.5}
                       min={0}
                       max={100}
@@ -472,9 +456,7 @@ export function TongitsArenaConfigModal({ game, open, onOpenChange, onPatchLobby
                   <Field label="Straight Flush">
                     <Num
                       value={cfg.anteBonus.straightFlush}
-                      onChange={(n) =>
-                        patch({ anteBonus: { ...cfg.anteBonus, straightFlush: n } })
-                      }
+                      onChange={(n) => patch({ anteBonus: { ...cfg.anteBonus, straightFlush: n } })}
                       step={0.5}
                       min={0}
                       max={200}
@@ -551,8 +533,8 @@ export function TongitsArenaConfigModal({ game, open, onOpenChange, onPatchLobby
                 />
               </Field>
               <p className="rounded-lg border border-white/10 bg-white/[0.03] p-3 text-[11px] leading-relaxed text-muted-foreground">
-                Ranking: Straight Flush &gt; Trips &gt; Straight &gt; Flush &gt; Pair &gt; High Card.
-                Ace is high except A-2-3 (wheel). Pair Plus settles on the player hand only,
+                Ranking: Straight Flush &gt; Trips &gt; Straight &gt; Flush &gt; Pair &gt; High
+                Card. Ace is high except A-2-3 (wheel). Pair Plus settles on the player hand only,
                 independent of Play/Fold and dealer qualification.
               </p>
             </div>

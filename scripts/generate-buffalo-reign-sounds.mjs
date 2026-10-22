@@ -191,7 +191,10 @@ function hornStab(rand, baseFreq = 196) {
     const env = Math.exp(-t * 3.8) * (1 - Math.min(1, t / 0.65) * 0.2);
     let s = 0;
     for (let p = 0; p < partials.length; p++) {
-      s += Math.sin(2 * Math.PI * baseFreq * partials[p] * t) * gains[p] * Math.exp(-t * (1.6 + p * 0.55));
+      s +=
+        Math.sin(2 * Math.PI * baseFreq * partials[p] * t) *
+        gains[p] *
+        Math.exp(-t * (1.6 + p * 0.55));
     }
     out[i] = (s + (rand() * 2 - 1) * Math.exp(-t * 65) * 0.18) * env;
   }
@@ -282,7 +285,12 @@ fs.mkdirSync(OUT_DIR, { recursive: true });
   mixInto(out, hornStab(rand, 174), Math.floor(SAMPLE_RATE * 0.14), 0.55);
   mixInto(out, campSparkle(1.25, rand, 2.1), Math.floor(SAMPLE_RATE * 0.08), 1.35);
   for (let k = 0; k < 11; k++) {
-    mixInto(out, goldClink(rand, 0.88 + k * 0.08), Math.floor(SAMPLE_RATE * (0.1 + k * 0.08)), 0.45);
+    mixInto(
+      out,
+      goldClink(rand, 0.88 + k * 0.08),
+      Math.floor(SAMPLE_RATE * (0.1 + k * 0.08)),
+      0.45,
+    );
   }
   normalize(out, 0.88);
   writeWav(path.join(OUT_DIR, "jackpot.wav"), out);

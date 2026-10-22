@@ -7,7 +7,8 @@ export type Db = MySql2Database<typeof schema>;
 
 function requireEnv(name: string): string {
   const v = process.env[name];
-  if (!v) throw new Error(`Missing env ${name}. Copy .env.example to .env and set MariaDB credentials.`);
+  if (!v)
+    throw new Error(`Missing env ${name}. Copy .env.example to .env and set MariaDB credentials.`);
   return v;
 }
 

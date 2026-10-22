@@ -2,10 +2,7 @@
  * Baccarat (Punto Banco) RTP / EV simulation.
  * Run: npx tsx scripts/test-baccarat.ts
  */
-import {
-  DEFAULT_BACCARAT_CONFIG,
-  normalizeBaccaratConfig,
-} from "../src/lib/baccarat-config";
+import { DEFAULT_BACCARAT_CONFIG, normalizeBaccaratConfig } from "../src/lib/baccarat-config";
 import { resolveBaccaratDeal } from "../src/components/maxhigh/games/baccarat/resolver";
 import { createRng } from "../src/components/maxhigh/games/baccarat/rng";
 import { setBaccaratConfig } from "../src/components/maxhigh/games/baccarat/runtimeConfig";
@@ -129,9 +126,7 @@ function main() {
 
   const rtp = (creditSum / wagerSum) * 100;
   console.log(`Baccarat sim · ${ROUNDS.toLocaleString()} rounds`);
-  console.log(
-    `  Outcomes P/B/T: ${outcomes.player} / ${outcomes.banker} / ${outcomes.tie}`,
-  );
+  console.log(`  Outcomes P/B/T: ${outcomes.player} / ${outcomes.banker} / ${outcomes.tie}`);
   console.log(`  Wager ₱${wagerSum.toFixed(2)} · Credit ₱${creditSum.toFixed(2)}`);
   console.log(`  Blended RTP (all bets) ≈ ${rtp.toFixed(3)}%`);
   console.log(`  Config target (Banker label) ${cfg.rtpTarget}%`);

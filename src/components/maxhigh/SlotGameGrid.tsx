@@ -14,7 +14,13 @@ type Props = {
   category?: SlotGame["category"];
 };
 
-export function SlotGameGrid({ title = "Slots", games, limit, useCatalog = !games, category }: Props) {
+export function SlotGameGrid({
+  title = "Slots",
+  games,
+  limit,
+  useCatalog = !games,
+  category,
+}: Props) {
   const { t } = useTranslation();
   const { games: catalog } = useCatalogGames();
   const source = games ?? (useCatalog ? catalog : catalog);
@@ -58,13 +64,19 @@ export function SlotGameGrid({ title = "Slots", games, limit, useCatalog = !game
               </span>
             )}
             <div className="absolute inset-x-0 bottom-0 p-2.5 transition-transform duration-300 ease-out group-hover:translate-y-[-2px]">
-              <div className="truncate text-xs font-bold uppercase tracking-wide text-white">{game.name}</div>
+              <div className="truncate text-xs font-bold uppercase tracking-wide text-white">
+                {game.name}
+              </div>
             </div>
           </button>
         ))}
       </div>
 
-      <GameModal game={selected} open={Boolean(selected)} onOpenChange={(o) => !o && setSelected(null)} />
+      <GameModal
+        game={selected}
+        open={Boolean(selected)}
+        onOpenChange={(o) => !o && setSelected(null)}
+      />
     </section>
   );
 }

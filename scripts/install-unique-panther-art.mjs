@@ -149,9 +149,7 @@ async function makeRoyals(id) {
 
 async function bumpIconVersions() {
   // Bust browser cache for themed icons
-  const themeFiles = GAMES.map((id) =>
-    path.join(ROOT, "src/components/maxhigh", id, "theme.ts"),
-  );
+  const themeFiles = GAMES.map((id) => path.join(ROOT, "src/components/maxhigh", id, "theme.ts"));
   for (const f of themeFiles) {
     let t = fs.readFileSync(f, "utf8");
     t = t.replace(/themedIconPack\("([^"]+)",\s*"[^"]+"\)/, 'themedIconPack("$1", "3")');

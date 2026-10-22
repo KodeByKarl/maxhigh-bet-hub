@@ -1,62 +1,79 @@
-import { applyGravity, evaluateBoard } from "./cascadeEngine";
+import { getOlympusWrathConfig } from "./runtimeConfig";
 import { buildBoard, cloneBoard } from "./gridState";
-import { createMultiplier } from "./multiplierEngine";
+import { applyBombToTumble, finalizeFreeSpinTotal } from "./multiplierEngine";
 import { resolveScatters } from "./scatterEngine";
-import type { BoardCell, CascadeStep, SpinScript } from "./types";
+import { applyGravity, evaluateBoard } from "./tumbleEngine";
+import type { BoardCell, SpinScript, TumbleStep } from "./types";
 
 export type ResolveOpts = {
   bet: number;
+  ante: boolean;
   isFreeSpins: boolean;
-  startMultiplier?: number;
+  /** FS: collect bombs then apply once at end (spec §4) */
+  collectBombsInFreeSpins?: boolean;
+  /** Running FS bomb total from prior spins in this feature. */
+  initialBombAccumulator?: number;
   forceBoard?: BoardCell[];
 };
 
 /**
  * Resolve entire spin instantly → animation script.
- * Math never waits on visuals. Wilds are normal symbols (no sticky lock).
+ * Math never waits on visuals.
  */
 export function resolveSpin(opts: ResolveOpts): SpinScript {
-  const mult = createMultiplier(opts.isFreeSpins ? (opts.startMultiplier ?? 1) : 1);
-
+  const collectMode = opts.isFreeSpins && (opts.collectBombsInFreeSpins ?? true);
   let board = cloneBoard(
     opts.forceBoard ??
-      buildBoard({
-        freeSpins: opts.isFreeSpins,
-        boostScatter: false,
-        seedWin: true,
-      }),
+      buildBoard(opts.ante && !opts.isFreeSpins, opts.isFreeSpins, !opts.isFreeSpins),
   );
-
   const initialBoard = cloneBoard(board);
-  const steps: CascadeStep[] = [];
+  const steps: TumbleStep[] = [];
   let totalWin = 0;
   let rawWin = 0;
+  let peakBomb = 0;
   let maxScatters = 0;
+  let accumulator = Math.max(0, opts.initialBombAccumulator ?? 0);
 
+  // Safety cap on tumble chains
   for (let guard = 0; guard < 40; guard++) {
     const ev = evaluateBoard(board, opts.bet);
     maxScatters = Math.max(maxScatters, ev.scatters);
+
     if (ev.winningKeys.size === 0) break;
 
     rawWin += ev.win;
-    const cascadeWin = opts.isFreeSpins ? mult.apply(ev.win) : ev.win;
-    const currentMult = opts.isFreeSpins ? mult.get() : 1;
+
+    const bombResult = applyBombToTumble(ev.win, ev.bombs, {
+      freeSpins: opts.isFreeSpins,
+      collectMode,
+      accumulator,
+    });
+    accumulator = bombResult.accumulator;
+    if (bombResult.bombSum > peakBomb) peakBomb = bombResult.bombSum;
 
     const remove = new Set(ev.winningKeys);
+    if (bombResult.clearBombs) {
+      for (const b of ev.bombs) remove.add(b.key);
+    }
 
-    const ways =
-      opts.isFreeSpins && currentMult > 1
-        ? ev.ways.map((w) => ({ ...w, pay: +(w.pay * currentMult).toFixed(2) }))
-        : ev.ways;
+    // Scale per-symbol display if bombs applied to tumble
+    let clusters = ev.clusters;
+    if (bombResult.bombSum > 0 && !collectMode) {
+      clusters = ev.clusters.map((c) => ({
+        ...c,
+        pay: +(c.pay * bombResult.bombSum).toFixed(2),
+        perSymbol: +(c.perSymbol * bombResult.bombSum).toFixed(2),
+      }));
+    }
 
-    const gravity = applyGravity(board, remove, opts.isFreeSpins);
+    const gravity = applyGravity(board, remove, opts.ante && !opts.isFreeSpins, opts.isFreeSpins);
 
     steps.push({
       board: cloneBoard(board),
-      winningKeys: [...ev.winningKeys],
-      ways,
-      cascadeWin,
-      multiplier: currentMult,
+      winningKeys: [...remove],
+      clusters,
+      tumbleWin: bombResult.win,
+      bombSum: bombResult.bombSum,
       afterPop: gravity.afterPop,
       afterFall: gravity.next,
       spawnedKeys: gravity.spawnedKeys,
@@ -64,33 +81,51 @@ export function resolveSpin(opts: ResolveOpts): SpinScript {
       fallDistance: gravity.fallDistance,
     });
 
-    totalWin += cascadeWin;
+    totalWin += bombResult.win;
     board = gravity.next;
-
-    if (opts.isFreeSpins) mult.bump();
   }
 
-  maxScatters = Math.max(maxScatters, evaluateBoard(board, opts.bet).scatters);
-  const scatter = resolveScatters(maxScatters, opts.bet, opts.isFreeSpins);
+  // Bombs only count when a winning cluster is on the board (handled in applyBombToTumble).
+  // Do NOT bank leftover bombs on a dead / no-win board — those multipliers are invalid.
 
+  const scatter = resolveScatters(maxScatters, opts.bet, opts.isFreeSpins);
   if (!opts.isFreeSpins) {
     totalWin += scatter.cashPay;
     rawWin += scatter.cashPay;
   }
 
+  let finalTotal = +totalWin.toFixed(2);
+  const finalRaw = +rawWin.toFixed(2);
+  const capMult = getOlympusWrathConfig().maxWinMult;
+  if (capMult > 0) {
+    const cap = +(opts.bet * capMult).toFixed(2);
+    if (finalTotal > cap) finalTotal = cap;
+  }
+  // Base: peak bomb only if this spin actually won. FS: banked mult from winning tumbles only.
+  const displayMult =
+    finalRaw > 0
+      ? collectMode
+        ? accumulator > 0
+          ? accumulator
+          : 1
+        : peakBomb > 0
+          ? peakBomb
+          : 1
+      : 1;
+
   return {
     initialBoard,
     steps,
-    totalWin: +totalWin.toFixed(2),
-    rawWin: +rawWin.toFixed(2),
-    displayMult: opts.isFreeSpins ? mult.get() : 1,
+    totalWin: finalTotal,
+    rawWin: finalRaw,
+    displayMult,
     scatters: maxScatters,
     scatterPay: scatter.cashPay,
     freeSpinsAwarded: scatter.freeSpinsAwarded,
     retriggerSpins: scatter.retriggerSpins,
     isFreeSpins: opts.isFreeSpins,
-    endMultiplier: mult.get(),
+    bombAccumulator: accumulator,
   };
 }
 
-export { finalizeFreeSpinTotal } from "./multiplierEngine";
+export { finalizeFreeSpinTotal };

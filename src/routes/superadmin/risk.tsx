@@ -18,6 +18,7 @@ function SuperRiskPage() {
   const [form, setForm] = useState<RiskControlData>({
     maxSingleBet: 10000,
     maxDailyPayout: 500000,
+    maxWeeklyLimit: 20000,
     autoFlagLargeWins: true,
     largeWinThreshold: 50000,
   });
@@ -80,35 +81,49 @@ function SuperRiskPage() {
             </div>
             <div>
               <h2 className="text-base font-bold text-foreground">Wagering & Payout Limits</h2>
-              <p className="text-xs text-muted-foreground">Enforce system-wide cap rules per player transaction.</p>
+              <p className="text-xs text-muted-foreground">
+                Enforce system-wide cap rules per player transaction.
+              </p>
             </div>
           </div>
 
           <div className="grid gap-4 sm:grid-cols-3">
             <div className="space-y-1.5">
-              <label className="text-xs font-semibold text-muted-foreground">Max Single Bet Limit (₱)</label>
+              <label className="text-xs font-semibold text-muted-foreground">
+                Max Single Bet Limit (₱)
+              </label>
               <Input
                 type="number"
                 value={form.maxSingleBet}
-                onChange={(e) => setForm((prev) => ({ ...prev, maxSingleBet: Number(e.target.value) }))}
+                onChange={(e) =>
+                  setForm((prev) => ({ ...prev, maxSingleBet: Number(e.target.value) }))
+                }
                 className="h-11 border-amber-500/20 bg-white/[0.06] text-foreground"
               />
             </div>
             <div className="space-y-1.5">
-              <label className="text-xs font-semibold text-muted-foreground">Max Daily Payout Limit (₱)</label>
+              <label className="text-xs font-semibold text-muted-foreground">
+                Max Daily Payout Limit (₱)
+              </label>
               <Input
                 type="number"
                 value={form.maxDailyPayout}
-                onChange={(e) => setForm((prev) => ({ ...prev, maxDailyPayout: Number(e.target.value) }))}
+                onChange={(e) =>
+                  setForm((prev) => ({ ...prev, maxDailyPayout: Number(e.target.value) }))
+                }
                 className="h-11 border-amber-500/20 bg-white/[0.06] text-foreground"
               />
             </div>
             <div className="space-y-1.5">
-              <label className="text-xs font-semibold text-amber-400">Weekly Limit Setting (₱)</label>
+              <label className="text-xs font-semibold text-amber-400">
+                Weekly Limit Setting (₱)
+              </label>
               <Input
                 type="number"
                 value={form.maxWeeklyLimit ?? 20000}
-                onChange={(e) => setForm((prev) => ({ ...prev, maxWeeklyLimit: Number(e.target.value) }))}
+                onChange={(e) =>
+                  setForm((prev) => ({ ...prev, maxWeeklyLimit: Number(e.target.value) }))
+                }
                 className="h-11 border-amber-500/30 bg-amber-500/10 text-foreground font-bold"
               />
             </div>
@@ -122,7 +137,9 @@ function SuperRiskPage() {
             </div>
             <div>
               <h2 className="text-base font-bold text-foreground">Automated Fraud Detection</h2>
-              <p className="text-xs text-muted-foreground">Automatically trigger review flags on abnormal user events.</p>
+              <p className="text-xs text-muted-foreground">
+                Automatically trigger review flags on abnormal user events.
+              </p>
             </div>
           </div>
 
@@ -135,7 +152,9 @@ function SuperRiskPage() {
             </div>
             <button
               type="button"
-              onClick={() => setForm((prev) => ({ ...prev, autoFlagLargeWins: !prev.autoFlagLargeWins }))}
+              onClick={() =>
+                setForm((prev) => ({ ...prev, autoFlagLargeWins: !prev.autoFlagLargeWins }))
+              }
               className={[
                 "relative inline-flex h-6 w-11 items-center rounded-full transition-colors",
                 form.autoFlagLargeWins ? "bg-amber-500" : "bg-white/20",
@@ -151,11 +170,15 @@ function SuperRiskPage() {
           </div>
 
           <div className="space-y-1.5">
-            <label className="text-xs font-semibold text-muted-foreground">Large Win Flag Threshold (₱)</label>
+            <label className="text-xs font-semibold text-muted-foreground">
+              Large Win Flag Threshold (₱)
+            </label>
             <Input
               type="number"
               value={form.largeWinThreshold}
-              onChange={(e) => setForm((prev) => ({ ...prev, largeWinThreshold: Number(e.target.value) }))}
+              onChange={(e) =>
+                setForm((prev) => ({ ...prev, largeWinThreshold: Number(e.target.value) }))
+              }
               className="h-11 border-amber-500/20 bg-white/[0.06] text-foreground"
             />
           </div>

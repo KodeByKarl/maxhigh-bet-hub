@@ -60,11 +60,8 @@ export type ShotResolveResult = {
 };
 
 function rollCrateDrop(cfg: WhaleWarConfig, rng: WhaleWarRng, betCost: number): CrateDropResult {
-  const drop = rng.pickWeighted(
-    cfg.crateDrops.map((d) => ({ ...d, weight: d.weight })),
-  );
-  const coinCredit =
-    drop.id === "coin-burst" ? +(betCost * drop.value).toFixed(2) : 0;
+  const drop = rng.pickWeighted(cfg.crateDrops.map((d) => ({ ...d, weight: d.weight })));
+  const coinCredit = drop.id === "coin-burst" ? +(betCost * drop.value).toFixed(2) : 0;
   return {
     id: drop.id,
     label: drop.label,

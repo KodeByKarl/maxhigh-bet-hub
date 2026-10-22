@@ -11,11 +11,7 @@ export function PasswordInput({ className, ...props }: Props) {
 
   return (
     <div className="relative">
-      <Input
-        type={show ? "text" : "password"}
-        className={cn("pr-12", className)}
-        {...props}
-      />
+      <Input type={show ? "text" : "password"} className={cn("pr-12", className)} {...props} />
       <button
         type="button"
         onClick={() => setShow((v) => !v)}

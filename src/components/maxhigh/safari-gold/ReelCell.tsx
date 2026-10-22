@@ -2,66 +2,89 @@ import { memo } from "react";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { ANIM } from "./animationConfig";
-import { SafariGoldIcon } from "./SafariGoldIcon";
-import { WinSparkles } from "./WinSparkles";
+import { PantherIcon } from "./PantherIcon";
 import type { BoardCell } from "./types";
+import { COLS } from "./types";
 
 export type ReelPhase = "idle" | "dropping" | "glow" | "popping" | "falling";
 
-type ReelCellProps = {
+export type ReelCellProps = {
+  index: number;
   cell: BoardCell | null;
-  col: number;
-  row: number;
   phase: ReelPhase;
   win: boolean;
+  perPay?: number;
   isSpawn: boolean;
   isFallen: boolean;
   fallDist: number;
 };
 
-/**
- * Single reel cell � memoized so only cells whose props change re-render
- * during tumble phases.
- */
+function cellPhaseRelevant(props: ReelCellProps, phase: ReelPhase): boolean {
+  if (!props.cell) return phase === "dropping" || phase === "falling";
+  if (props.win) return phase === "glow" || phase === "popping";
+  if (props.isSpawn || props.isFallen) return phase === "falling";
+  return phase === "dropping";
+}
+
+function reelCellPropsEqual(prev: ReelCellProps, next: ReelCellProps): boolean {
+  if (prev.index !== next.index) return false;
+  if (prev.cell?.key !== next.cell?.key) return false;
+  if (prev.win !== next.win) return false;
+  if (prev.perPay !== next.perPay) return false;
+  if (prev.isSpawn !== next.isSpawn) return false;
+  if (prev.isFallen !== next.isFallen) return false;
+  if (prev.fallDist !== next.fallDist) return false;
+  if (prev.phase === next.phase) return true;
+  return !cellPhaseRelevant(prev, prev.phase) && !cellPhaseRelevant(next, next.phase);
+}
+
+/** Soft rounded square — Safari Gold tile well. */
 export const ReelCell = memo(function ReelCell({
+  index,
   cell,
-  col,
-  row,
   phase,
   win,
+  perPay,
   isSpawn,
   isFallen,
   fallDist,
 }: ReelCellProps) {
+  const col = index % COLS;
+  const row = Math.floor(index / COLS);
   const popping = phase === "popping" && win;
-  const glowing = phase === "glow" && win;
-  const winFx = glowing || popping;
   const isInitialDrop = phase === "dropping" && !!cell;
-  const isGravityDrop =
-    phase === "falling" && !!cell && (isSpawn || isFallen) && fallDist > 0;
+  const isGravityDrop = phase === "falling" && !!cell && (isSpawn || isFallen) && fallDist > 0;
   const dropRows = isInitialDrop ? row + 1.35 : fallDist;
-  const isScatter = cell?.sym.scatter;
+
+  const isScatter = cell?.sym.kind === "lollipop";
+  const isWinLit = win && (phase === "glow" || phase === "popping");
+  const staggerMode = isInitialDrop ? "drop" : "fall";
+  const staggerCol = staggerMode === "drop" ? ANIM.dropStaggerCol : ANIM.fallStaggerCol;
+  const staggerRow = staggerMode === "drop" ? ANIM.dropStaggerRow : ANIM.fallStaggerRow;
+  const colDelay = (col * staggerCol) / 1000;
+  const rowDelay = (row * staggerRow * 0.45) / 1000;
 
   return (
     <div
       className={cn(
-        "relative min-h-0 min-w-0",
-        phase === "dropping" || phase === "falling" || isScatter || winFx
-          ? "overflow-visible"
-          : "overflow-hidden",
-        isScatter
-          ? "z-[30]"
-          : winFx
-            ? "z-[25]"
-            : isInitialDrop || isGravityDrop
-              ? "z-[1]"
-              : "",
+        "relative min-h-0 min-w-0 overflow-hidden rounded-xl isolate",
+        "border-[3px] bg-[#0f0a12]/95 shadow-[0_4px_16px_rgba(0,0,0,0.5),inset_0_0_14px_rgba(202,138,4,0.16)]",
+        isScatter || isWinLit ? "z-[3]" : isInitialDrop || isGravityDrop ? "z-[1]" : "z-0",
+        isWinLit && "scale-[1.04]",
       )}
+      style={{
+        borderColor: isWinLit
+          ? "var(--p-accent-soft)"
+          : "color-mix(in srgb, var(--p-accent) 70%, transparent)",
+        boxShadow: isWinLit
+          ? "0 0 18px var(--p-spin-shadow), inset 0 0 14px rgba(251,207,232,0.35)"
+          : undefined,
+      }}
     >
       {cell && (
         <motion.div
           key={cell.key}
-          className="absolute inset-[4%] flex items-center justify-center will-change-transform"
+          className="absolute inset-0 flex items-center justify-center overflow-hidden rounded-2xl will-change-transform"
           initial={
             isInitialDrop || isGravityDrop
               ? {
@@ -74,34 +97,14 @@ export const ReelCell = memo(function ReelCell({
           animate={
             popping
               ? {
-                  scale: [1.08, 1.28, 0],
+                  scale: [1.08, 1.18, 0],
                   opacity: [1, 1, 0],
-                  rotate: [0, -12, 18],
-                  y: [0, -10, 14],
-                  filter: [
-                    "brightness(1) saturate(1)",
-                    "brightness(1.45) saturate(1.35)",
-                    "brightness(2) saturate(0.5)",
-                  ],
+                  rotate: [0, -8, 10],
+                  y: [0, -6, 10],
                 }
-              : glowing
-                ? {
-                    y: 0,
-                    opacity: 1,
-                    scale: [1, 1.12, 1.06],
-                    filter: [
-                      "brightness(1) saturate(1)",
-                      "brightness(1.25) saturate(1.2)",
-                      "brightness(1.1) saturate(1.1)",
-                    ],
-                  }
-                : {
-                    y: 0,
-                    opacity: 1,
-                    scale: 1,
-                    rotate: 0,
-                    filter: "brightness(1) saturate(1)",
-                  }
+              : phase === "glow" && win
+                ? { y: 0, opacity: 1, scale: 1.04 }
+                : { y: 0, opacity: 1, scale: 1, rotate: 0 }
           }
           transition={
             popping
@@ -111,13 +114,8 @@ export const ReelCell = memo(function ReelCell({
                   ease: [0.4, 0, 0.2, 1],
                   times: [0, 0.35, 1],
                 }
-              : glowing
-                ? {
-                    duration: 0.5,
-                    repeat: Infinity,
-                    repeatType: "mirror",
-                    ease: "easeInOut",
-                  }
+              : phase === "glow" && win
+                ? { duration: 0.22, ease: "easeOut" }
                 : isInitialDrop || isGravityDrop
                   ? {
                       y: {
@@ -125,58 +123,41 @@ export const ReelCell = memo(function ReelCell({
                         stiffness: 420,
                         damping: 26,
                         mass: 0.85,
-                        delay:
-                          col *
-                            ((isInitialDrop
-                              ? ANIM.dropStaggerCol
-                              : ANIM.fallStaggerCol) /
-                              1000) +
-                          row *
-                            ((isInitialDrop
-                              ? ANIM.dropStaggerRow
-                              : ANIM.fallStaggerRow) /
-                              1000) *
-                            0.45,
+                        delay: colDelay + rowDelay,
                       },
-                      opacity: {
-                        duration: 0.18,
-                        delay:
-                          col *
-                          ((isInitialDrop
-                            ? ANIM.dropStaggerCol
-                            : ANIM.fallStaggerCol) /
-                            1000),
-                      },
+                      opacity: { duration: 0.18, delay: colDelay },
                       scale: {
                         type: "spring",
                         stiffness: 520,
                         damping: 20,
-                        delay:
-                          col *
-                            ((isInitialDrop
-                              ? ANIM.dropStaggerCol
-                              : ANIM.fallStaggerCol) /
-                              1000) +
-                          0.1,
+                        delay: colDelay + 0.1,
                       },
                     }
-                  : {
-                      duration: 0.22,
-                      ease: [0.22, 1, 0.36, 1],
-                    }
+                  : { duration: 0.22, ease: [0.22, 1, 0.36, 1] }
           }
         >
-          <WinSparkles phase={phase} active={winFx} />
-          <SafariGoldIcon
-            kind={cell.sym.kind}
-            winning={winFx}
-            className={cn(
-              "relative z-[1] size-full",
-              winFx && "drop-shadow-[0_0_16px_rgba(250,204,21,0.95)]",
-            )}
-          />
+          <div className="absolute inset-[12%] flex items-center justify-center">
+            <PantherIcon
+              kind={cell.sym.kind}
+              mult={cell.mult}
+              winLit={isWinLit}
+              className="relative z-[1] size-full"
+            />
+          </div>
+          {isWinLit && perPay != null && perPay > 0 && (
+            <span
+              className="absolute top-[12%] left-1/2 z-[2] -translate-x-1/2 whitespace-nowrap rounded-full border border-white/90 px-1.5 py-0.5 text-[8px] font-black tabular-nums shadow-sm sm:text-[10px]"
+              style={{
+                background:
+                  "linear-gradient(180deg, var(--p-payout-from) 0%, var(--p-payout-to) 100%)",
+                color: "var(--p-payout-text)",
+              }}
+            >
+              +₱{Number.isInteger(perPay) ? perPay : perPay.toFixed(2)}
+            </span>
+          )}
         </motion.div>
       )}
     </div>
   );
-});
+}, reelCellPropsEqual);

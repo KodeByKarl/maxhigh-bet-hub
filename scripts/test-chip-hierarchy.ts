@@ -63,9 +63,30 @@ async function run() {
   };
 
   await db.insert(users).values([
-    { id: ids.sa, username: `sa_${TAG}`, publicUserId: `sa_${TAG}`, passwordHash: "x", role: "superadmin", balance: "0" },
-    { id: ids.ma1, username: `ma1_${TAG}`, publicUserId: `ma1_${TAG}`, passwordHash: "x", role: "master_agent", balance: "10000" },
-    { id: ids.ma2, username: `ma2_${TAG}`, publicUserId: `ma2_${TAG}`, passwordHash: "x", role: "master_agent", balance: "10000" },
+    {
+      id: ids.sa,
+      username: `sa_${TAG}`,
+      publicUserId: `sa_${TAG}`,
+      passwordHash: "x",
+      role: "superadmin",
+      balance: "0",
+    },
+    {
+      id: ids.ma1,
+      username: `ma1_${TAG}`,
+      publicUserId: `ma1_${TAG}`,
+      passwordHash: "x",
+      role: "master_agent",
+      balance: "10000",
+    },
+    {
+      id: ids.ma2,
+      username: `ma2_${TAG}`,
+      publicUserId: `ma2_${TAG}`,
+      passwordHash: "x",
+      role: "master_agent",
+      balance: "10000",
+    },
     {
       id: ids.ag1,
       username: `ag1_${TAG}`,
@@ -123,27 +144,42 @@ async function run() {
   // Happy paths
   await check(
     await expectOk("SuperAdmin → Master Agent", () =>
-      assertCanManageChips(actor(ids.sa, "superadmin", "sa"), target(ids.ma1, "master_agent", null, "ma1")),
+      assertCanManageChips(
+        actor(ids.sa, "superadmin", "sa"),
+        target(ids.ma1, "master_agent", null, "ma1"),
+      ),
     ),
   );
   await check(
     await expectOk("SuperAdmin → Agent", () =>
-      assertCanManageChips(actor(ids.sa, "superadmin", "sa"), target(ids.ag1, "agent", ids.ma1, "ag1")),
+      assertCanManageChips(
+        actor(ids.sa, "superadmin", "sa"),
+        target(ids.ag1, "agent", ids.ma1, "ag1"),
+      ),
     ),
   );
   await check(
     await expectOk("SuperAdmin → Player", () =>
-      assertCanManageChips(actor(ids.sa, "superadmin", "sa"), target(ids.pl1, "player", ids.ag1, "pl1")),
+      assertCanManageChips(
+        actor(ids.sa, "superadmin", "sa"),
+        target(ids.pl1, "player", ids.ag1, "pl1"),
+      ),
     ),
   );
   await check(
     await expectOk("Master → own Agent", () =>
-      assertCanManageChips(actor(ids.ma1, "master_agent", "ma1"), target(ids.ag1, "agent", ids.ma1, "ag1")),
+      assertCanManageChips(
+        actor(ids.ma1, "master_agent", "ma1"),
+        target(ids.ag1, "agent", ids.ma1, "ag1"),
+      ),
     ),
   );
   await check(
     await expectOk("Master → player under own Agent", () =>
-      assertCanManageChips(actor(ids.ma1, "master_agent", "ma1"), target(ids.pl1, "player", ids.ag1, "pl1")),
+      assertCanManageChips(
+        actor(ids.ma1, "master_agent", "ma1"),
+        target(ids.pl1, "player", ids.ag1, "pl1"),
+      ),
     ),
   );
   await check(
@@ -156,34 +192,52 @@ async function run() {
   );
   await check(
     await expectOk("Agent → own Player", () =>
-      assertCanManageChips(actor(ids.ag1, "agent", "ag1"), target(ids.pl1, "player", ids.ag1, "pl1")),
+      assertCanManageChips(
+        actor(ids.ag1, "agent", "ag1"),
+        target(ids.pl1, "player", ids.ag1, "pl1"),
+      ),
     ),
   );
 
   // Blocked paths
   await check(
     await expectForbidden("Agent → other Agent's player", () =>
-      assertCanManageChips(actor(ids.ag1, "agent", "ag1"), target(ids.pl2, "player", ids.ag2, "pl2")),
+      assertCanManageChips(
+        actor(ids.ag1, "agent", "ag1"),
+        target(ids.pl2, "player", ids.ag2, "pl2"),
+      ),
     ),
   );
   await check(
     await expectForbidden("Agent → another Agent", () =>
-      assertCanManageChips(actor(ids.ag1, "agent", "ag1"), target(ids.ag2, "agent", ids.ma2, "ag2")),
+      assertCanManageChips(
+        actor(ids.ag1, "agent", "ag1"),
+        target(ids.ag2, "agent", ids.ma2, "ag2"),
+      ),
     ),
   );
   await check(
     await expectForbidden("Master → outside network player", () =>
-      assertCanManageChips(actor(ids.ma1, "master_agent", "ma1"), target(ids.pl2, "player", ids.ag2, "pl2")),
+      assertCanManageChips(
+        actor(ids.ma1, "master_agent", "ma1"),
+        target(ids.pl2, "player", ids.ag2, "pl2"),
+      ),
     ),
   );
   await check(
     await expectForbidden("Master → other Master's agent", () =>
-      assertCanManageChips(actor(ids.ma1, "master_agent", "ma1"), target(ids.ag2, "agent", ids.ma2, "ag2")),
+      assertCanManageChips(
+        actor(ids.ma1, "master_agent", "ma1"),
+        target(ids.ag2, "agent", ids.ma2, "ag2"),
+      ),
     ),
   );
   await check(
     await expectForbidden("SuperAdmin → another SuperAdmin", () =>
-      assertCanManageChips(actor(ids.sa, "superadmin", "sa"), target(ids.sa, "superadmin", null, "sa")),
+      assertCanManageChips(
+        actor(ids.sa, "superadmin", "sa"),
+        target(ids.sa, "superadmin", null, "sa"),
+      ),
     ),
   );
 

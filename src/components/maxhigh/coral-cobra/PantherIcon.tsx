@@ -31,19 +31,13 @@ export const PantherIcon = memo(function PantherIcon({
   const src = ICON_SRC[kind] || "/images/symbols/coral-cobra/10.png?v=1";
 
   return (
-    <div
-      className={cn(
-        "relative size-full select-none overflow-hidden bg-transparent",
-        className,
-      )}
-    >
+    <div className={cn("relative size-full select-none overflow-hidden bg-transparent", className)}>
       {winLit && (
         <div
           aria-hidden
           className="pointer-events-none absolute inset-0 z-0"
           style={{
-            background:
-              "radial-gradient(circle at 50% 50%, var(--p-win-ring) 0%, transparent 70%)",
+            background: "radial-gradient(circle at 50% 50%, var(--p-win-ring) 0%, transparent 70%)",
           }}
         />
       )}
@@ -54,7 +48,11 @@ export const PantherIcon = memo(function PantherIcon({
         loading="eager"
         className={cn(
           "absolute inset-0 z-[1] size-full object-center pointer-events-none",
-          fit === "cover" ? "object-cover" : "object-contain p-[6%]",
+          fit === "cover"
+            ? "object-cover"
+            : kind === "grape"
+              ? "object-contain p-[10%]"
+              : "object-contain p-[6%]",
           winLit && "brightness-125 saturate-125",
         )}
         style={
@@ -86,8 +84,7 @@ export const PantherIcon = memo(function PantherIcon({
             className="rounded-full border-2 px-1.5 py-0.5 font-black text-[clamp(11px,2.2vw,16px)] drop-shadow-[0_2px_4px_rgba(0,0,0,0.85)]"
             style={{
               borderColor: "var(--p-bomb-border)",
-              background:
-                "linear-gradient(135deg, var(--p-bomb-from), var(--p-bomb-to))",
+              background: "linear-gradient(135deg, var(--p-bomb-from), var(--p-bomb-to))",
               color: "var(--p-bomb-text)",
             }}
           >

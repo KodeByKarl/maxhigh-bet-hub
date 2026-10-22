@@ -10,7 +10,17 @@
  */
 import { useCallback, useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { FastForward, Info, Menu, RotateCcw, RotateCw, Square, Volume2, VolumeX, Zap } from "lucide-react";
+import {
+  FastForward,
+  Info,
+  Menu,
+  RotateCcw,
+  RotateCw,
+  Square,
+  Volume2,
+  VolumeX,
+  Zap,
+} from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/lib/auth";
@@ -95,8 +105,8 @@ function preloadAssets() {
   pantherAudio.preload();
   if (typeof Image === "undefined") return;
   const urls = [
-    "/images/symbols/panther/backdrop.webp",
-    "/images/symbols/panther/loading-bg.webp",
+    "/images/symbols/wild-panther/backdrop-v20261012-unique.webp",
+    "/images/symbols/wild-panther/backdrop-v20261012-unique.webp",
     ...Object.values(ICON_SRC),
   ];
   for (const src of urls) {
@@ -375,14 +385,9 @@ export function WildPantherSlot({
 
         setPhase("popping");
         pantherAudio.playCascadeTick();
-        await wait(
-          ANIM.popDuration + Math.min(step.winningKeys.length, 12) * ANIM.popStagger,
-          gen,
-        );
+        await wait(ANIM.popDuration + Math.min(step.winningKeys.length, 12) * ANIM.popStagger, gen);
 
-        setSlots(
-          step.afterPop.length === CELLS ? step.afterPop : asSlots(step.board),
-        );
+        setSlots(step.afterPop.length === CELLS ? step.afterPop : asSlots(step.board));
         setWinningKeys(EMPTY_SET);
         setPayoutByKey(EMPTY_PAY);
         await wait(ANIM.holeHold, gen);
@@ -392,10 +397,7 @@ export function WildPantherSlot({
         setFallDistance(step.fallDistance ?? EMPTY_FALL);
         setSlots(asSlots(step.afterFall));
         setPhase("falling");
-        await wait(
-          ANIM.refillDuration + COLS * ANIM.fallStaggerCol + ANIM.fallStaggerRow * 2,
-          gen,
-        );
+        await wait(ANIM.refillDuration + COLS * ANIM.fallStaggerCol + ANIM.fallStaggerRow * 2, gen);
         await wait(ANIM.betweenTumbles, gen);
       }
 
@@ -429,7 +431,10 @@ export function WildPantherSlot({
   }, []);
 
   const finishBase = useCallback(
-    (script: SpinScript, session: { sessionId: string | null; freeSpinsLeft: number; inFree: boolean }) => {
+    (
+      script: SpinScript,
+      session: { sessionId: string | null; freeSpinsLeft: number; inFree: boolean },
+    ) => {
       if (script.totalWin > 0) {
         setLastWin(script.totalWin);
         pantherAudio.playWin(script.totalWin, totalBet);
@@ -548,7 +553,12 @@ export function WildPantherSlot({
         void refreshJackpot();
         applySession(settled.session);
 
-        const script = await playScript(settled.script, isFree, gen, isFree ? balance : balance - cost);
+        const script = await playScript(
+          settled.script,
+          isFree,
+          gen,
+          isFree ? balance : balance - cost,
+        );
         if (gen !== playbackGen.current || !mountedRef.current) return;
 
         if (isFree) {
@@ -764,12 +774,25 @@ export function WildPantherSlot({
   // Auto / free-spin chain — always invoke latest spin via ref (no stale closures).
   useEffect(() => {
     if (busyRef.current || busy) return;
-    if (winPopup || fsSummary || buyOpen || menuOpen || infoOpen || autoSpinModalOpen || betModalOpen || triggerModalCount != null) return;
+    if (
+      winPopup ||
+      fsSummary ||
+      buyOpen ||
+      menuOpen ||
+      infoOpen ||
+      autoSpinModalOpen ||
+      betModalOpen ||
+      triggerModalCount != null
+    )
+      return;
 
     if (inFree && freeSpins > 0 && !fsPaused) {
-      const t = setTimeout(() => {
-        void spinRef.current(true);
-      }, turbo ? 350 : 700);
+      const t = setTimeout(
+        () => {
+          void spinRef.current(true);
+        },
+        turbo ? 350 : 700,
+      );
       return () => clearTimeout(t);
     }
 
@@ -801,7 +824,7 @@ export function WildPantherSlot({
         setAutoSpin(false);
         setAutoSpinConfig(null);
         toast.info(
-          `Auto Spin stopped: Balance increased by ₱${autoSpinConfig.balanceIncreaseBy.toFixed(2)}`
+          `Auto Spin stopped: Balance increased by ₱${autoSpinConfig.balanceIncreaseBy.toFixed(2)}`,
         );
         return;
       }
@@ -813,7 +836,7 @@ export function WildPantherSlot({
         setAutoSpin(false);
         setAutoSpinConfig(null);
         toast.info(
-          `Auto Spin stopped: Balance decreased by ₱${autoSpinConfig.balanceDecreaseBy.toFixed(2)}`
+          `Auto Spin stopped: Balance decreased by ₱${autoSpinConfig.balanceDecreaseBy.toFixed(2)}`,
         );
         return;
       }
@@ -826,7 +849,7 @@ export function WildPantherSlot({
         () => {
           void spinRef.current(false);
         },
-        autoSpinConfig?.spinWithoutReels ? 120 : turbo ? 350 : 700
+        autoSpinConfig?.spinWithoutReels ? 120 : turbo ? 350 : 700,
       );
       return () => clearTimeout(t);
     }
@@ -855,15 +878,14 @@ export function WildPantherSlot({
 
   const toggleMute = useCallback(() => setMutedState(!muted), [muted, setMutedState]);
 
-  const displayWin = dropTotal > 0 ? dropTotal : (inFree ? fsSessionWin : lastWin);
+  const displayWin = dropTotal > 0 ? dropTotal : inFree ? fsSessionWin : lastWin;
   const showTumbleBadge =
-    dropTotal > 0 &&
-    (phase === "glow" || phase === "popping" || phase === "falling");
+    dropTotal > 0 && (phase === "glow" || phase === "popping" || phase === "falling");
 
   return (
     <div className="relative flex h-dvh w-full flex-col overflow-hidden select-none">
       <img
-        src="/images/symbols/panther/backdrop.webp"
+        src="/images/symbols/wild-panther/backdrop-v20261012-unique.webp"
         alt=""
         className="absolute inset-0 size-full object-cover"
         aria-hidden
@@ -880,8 +902,7 @@ export function WildPantherSlot({
               className="relative mx-auto flex h-full min-h-0 w-full flex-col overflow-hidden rounded-[1.25rem] sm:rounded-2xl"
               style={{
                 maxWidth: "min(100%, 800px)",
-                background:
-                  "linear-gradient(180deg, rgba(12,8,4,0.55) 0%, rgba(8,5,3,0.72) 100%)",
+                background: "linear-gradient(180deg, rgba(12,8,4,0.55) 0%, rgba(8,5,3,0.72) 100%)",
                 boxShadow:
                   "inset 0 0 0 1.5px rgba(245,215,110,0.55), inset 0 0 40px rgba(0,0,0,0.35), 0 12px 36px rgba(0,0,0,0.45)",
               }}
@@ -964,10 +985,7 @@ export function WildPantherSlot({
                   aria-hidden
                 >
                   {Array.from({ length: COLS }).map((_, c) => (
-                    <div
-                      key={c}
-                      className="border-r border-amber-200/80 last:border-r-0"
-                    />
+                    <div key={c} className="border-r border-amber-200/80 last:border-r-0" />
                   ))}
                 </div>
 
@@ -1012,14 +1030,6 @@ export function WildPantherSlot({
                 className="min-h-11 rounded-xl border-2 border-amber-400/80 bg-black/70 px-4 py-2 text-xs font-black uppercase tracking-wide text-amber-200 disabled:opacity-40 sm:min-h-10 sm:text-[11px]"
               >
                 Buy FS {formatMoneyCompact(buyCost)}
-              </button>
-              <button
-                type="button"
-                disabled={busy}
-                onClick={() => openBuyFeature("super")}
-                className="min-h-11 rounded-xl border-2 border-amber-400/80 bg-black/70 px-4 py-2 text-xs font-black uppercase tracking-wide text-amber-200 disabled:opacity-40 sm:min-h-10 sm:text-[11px]"
-              >
-                Super {formatMoneyCompact(superBuyCost)}
               </button>
             </div>
           )}
@@ -1236,9 +1246,7 @@ export function WildPantherSlot({
       </AnimatePresence>
 
       <AnimatePresence>
-        {infoOpen && (
-          <PaytableModal bet={totalBet} onClose={() => setInfoOpen(false)} />
-        )}
+        {infoOpen && <PaytableModal bet={totalBet} onClose={() => setInfoOpen(false)} />}
       </AnimatePresence>
 
       <AnimatePresence>

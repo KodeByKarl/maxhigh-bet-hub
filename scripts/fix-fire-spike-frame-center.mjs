@@ -37,7 +37,16 @@ function isCheckerOrWhite(r, g, b) {
   // Light gray checker tiles (~180–220)
   if (r > 160 && g > 160 && b > 160 && Math.abs(r - g) < 18 && Math.abs(g - b) < 18) return true;
   // Mid gray checker (~120–150)
-  if (r > 110 && r < 170 && g > 110 && g < 170 && b > 110 && b < 170 && Math.abs(r - g) < 12 && Math.abs(g - b) < 12)
+  if (
+    r > 110 &&
+    r < 170 &&
+    g > 110 &&
+    g < 170 &&
+    b > 110 &&
+    b < 170 &&
+    Math.abs(r - g) < 12 &&
+    Math.abs(g - b) < 12
+  )
     return true;
   return false;
 }
@@ -101,5 +110,7 @@ for (let y = 0; y < height; y++) {
   }
 }
 
-await sharp(data, { raw: { width, height, channels: 4 } }).png().toFile(FILE);
+await sharp(data, { raw: { width, height, channels: 4 } })
+  .png()
+  .toFile(FILE);
 console.log(`Frame cleaned — kept ${kept} border px, cleared ${cleared}`);

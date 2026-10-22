@@ -74,13 +74,7 @@ function CardBack({ failed, onFail }: { failed: boolean; onFail: () => void }) {
 /**
  * Playing card with CSS 3D flip: back → face when `faceDown` goes false.
  */
-export function CardIcon({
-  card,
-  faceDown = false,
-  size = "md",
-  className,
-  highlight,
-}: Props) {
+export function CardIcon({ card, faceDown = false, size = "md", className, highlight }: Props) {
   const [faceFailed, setFaceFailed] = useState(false);
   const [backFailed, setBackFailed] = useState(false);
   const [flipMs, setFlipMs] = useState(280);

@@ -13,7 +13,12 @@ export type PublicUser = {
 };
 
 export function isStaffRole(role: UserRole | undefined | null): boolean {
-  return role === "agent" || role === "master_agent" || role === "superadmin" || (role as string) === "admin";
+  return (
+    role === "agent" ||
+    role === "master_agent" ||
+    role === "superadmin" ||
+    (role as string) === "admin"
+  );
 }
 
 export function isSuperadminRole(role: UserRole | undefined | null): boolean {

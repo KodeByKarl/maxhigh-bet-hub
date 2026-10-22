@@ -23,7 +23,9 @@ export function SuperShell() {
 
   if (!isReady) {
     return (
-      <div className={`grid min-h-screen place-items-center ${saPageBg} text-sm text-muted-foreground`}>
+      <div
+        className={`grid min-h-screen place-items-center ${saPageBg} text-sm text-muted-foreground`}
+      >
         Loading superadmin…
       </div>
     );
@@ -34,7 +36,9 @@ export function SuperShell() {
       <div className={`grid min-h-screen place-items-center ${saPageBg} px-4`}>
         <div className={`${saGlass} max-w-md p-8 text-center`}>
           <h1 className="text-xl font-bold text-foreground">Superadmin only</h1>
-          <p className="mt-2 text-sm text-muted-foreground">Domain 3 requires a superadmin account.</p>
+          <p className="mt-2 text-sm text-muted-foreground">
+            Domain 3 requires a superadmin account.
+          </p>
           <Link
             to="/superadmin/login"
             className="mt-6 inline-flex h-10 items-center rounded-xl bg-amber-500 px-4 text-sm font-bold text-black"
@@ -48,7 +52,9 @@ export function SuperShell() {
   }
 
   return (
-    <div className={`flex min-h-screen w-full max-w-[100vw] overflow-x-clip ${saPageBg} text-foreground`}>
+    <div
+      className={`flex min-h-screen w-full max-w-[100vw] overflow-x-clip ${saPageBg} text-foreground`}
+    >
       <SuperSidebar />
       <div className="flex min-w-0 flex-1 flex-col">
         <SuperTopBar />

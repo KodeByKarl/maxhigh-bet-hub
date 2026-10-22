@@ -5,11 +5,7 @@
  */
 
 import { eq } from "drizzle-orm";
-import {
-  LUCKY9_GAME_ID,
-  normalizeLucky9Config,
-  type Lucky9Config,
-} from "@/lib/lucky9-config";
+import { LUCKY9_GAME_ID, normalizeLucky9Config, type Lucky9Config } from "@/lib/lucky9-config";
 import { resolveLucky9Deal } from "@/components/maxhigh/games/lucky9/resolver";
 import { setLucky9Config } from "@/components/maxhigh/games/lucky9/runtimeConfig";
 import type { PublicDealScript } from "@/components/maxhigh/games/lucky9/types";

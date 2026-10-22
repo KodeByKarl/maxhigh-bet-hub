@@ -19,10 +19,4 @@ export const ANIM = {
   bannerHold: 1800,
 } as const;
 
-export type PlaybackPhase =
-  | "idle"
-  | "dropping"
-  | "glow"
-  | "popping"
-  | "falling"
-  | "settled";
+export type PlaybackPhase = "idle" | "dropping" | "glow" | "popping" | "falling" | "settled";

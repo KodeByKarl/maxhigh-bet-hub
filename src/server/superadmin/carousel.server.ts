@@ -30,7 +30,9 @@ export type UpdateCarouselSlideInput = {
   enabled?: "yes" | "no";
 };
 
-export async function listCarouselSlides(opts?: { includeDisabled?: boolean }): Promise<CarouselSlide[]> {
+export async function listCarouselSlides(opts?: {
+  includeDisabled?: boolean;
+}): Promise<CarouselSlide[]> {
   const db = getDb();
   const includeDisabled = opts?.includeDisabled ?? false;
 
@@ -74,7 +76,11 @@ export async function createCarouselSlide(input: CreateCarouselSlideInput): Prom
     meta: { title: newSlide.title, imageUrl: newSlide.imageUrl },
   });
 
-  const [created] = await db.select().from(carouselSlides).where(eq(carouselSlides.id, id)).limit(1);
+  const [created] = await db
+    .select()
+    .from(carouselSlides)
+    .where(eq(carouselSlides.id, id))
+    .limit(1);
   return created!;
 }
 
@@ -82,7 +88,11 @@ export async function updateCarouselSlide(input: UpdateCarouselSlideInput): Prom
   const actor = await requirePermission("PROMOTION_MANAGE");
   const db = getDb();
 
-  const [existing] = await db.select().from(carouselSlides).where(eq(carouselSlides.id, input.id)).limit(1);
+  const [existing] = await db
+    .select()
+    .from(carouselSlides)
+    .where(eq(carouselSlides.id, input.id))
+    .limit(1);
   if (!existing) {
     throw new Error("Carousel slide not found");
   }
@@ -109,7 +119,11 @@ export async function updateCarouselSlide(input: UpdateCarouselSlideInput): Prom
     meta: { updates },
   });
 
-  const [updated] = await db.select().from(carouselSlides).where(eq(carouselSlides.id, input.id)).limit(1);
+  const [updated] = await db
+    .select()
+    .from(carouselSlides)
+    .where(eq(carouselSlides.id, input.id))
+    .limit(1);
   return updated!;
 }
 
@@ -117,7 +131,11 @@ export async function deleteCarouselSlide(id: string): Promise<{ ok: boolean; id
   const actor = await requirePermission("PROMOTION_MANAGE");
   const db = getDb();
 
-  const [existing] = await db.select().from(carouselSlides).where(eq(carouselSlides.id, id)).limit(1);
+  const [existing] = await db
+    .select()
+    .from(carouselSlides)
+    .where(eq(carouselSlides.id, id))
+    .limit(1);
   if (!existing) {
     throw new Error("Carousel slide not found");
   }
@@ -135,12 +153,17 @@ export async function deleteCarouselSlide(id: string): Promise<{ ok: boolean; id
   return { ok: true, id };
 }
 
-export async function reorderCarouselSlides(items: { id: string; sortOrder: number }[]): Promise<{ ok: boolean }> {
+export async function reorderCarouselSlides(
+  items: { id: string; sortOrder: number }[],
+): Promise<{ ok: boolean }> {
   const actor = await requirePermission("PROMOTION_MANAGE");
   const db = getDb();
 
   for (const item of items) {
-    await db.update(carouselSlides).set({ sortOrder: item.sortOrder }).where(eq(carouselSlides.id, item.id));
+    await db
+      .update(carouselSlides)
+      .set({ sortOrder: item.sortOrder })
+      .where(eq(carouselSlides.id, item.id));
   }
 
   await writeAuditLog({

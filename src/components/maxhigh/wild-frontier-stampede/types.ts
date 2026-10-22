@@ -1,15 +1,15 @@
-﻿import type { BuffaloSymbolConfig, BuffaloSymKind } from "@/lib/buffalo-reign-config";
+﻿import type { StampedeSymbolConfig, StampedeSymKind } from "@/lib/wild-frontier-stampede-config";
 
 export type BoardCell = {
   key: string;
   reelIndex: number;
   rowIndex: number;
-  sym: BuffaloSymbolConfig;
+  sym: StampedeSymbolConfig;
 };
 
 export type WaysWin = {
   symbolId: string;
-  kind: BuffaloSymKind;
+  kind: StampedeSymKind;
   name: string;
   consecutiveReels: number;
   waysCount: number;

@@ -1,10 +1,7 @@
 import { cn } from "@/lib/utils";
 
 /** Casino chip colourways by denomination (standard house colours). */
-const CHIP_SKIN: Record<
-  number,
-  { body: string; dark: string; edge: string; ink: string }
-> = {
+const CHIP_SKIN: Record<number, { body: string; dark: string; edge: string; ink: string }> = {
   1: { body: "#f4f1ea", dark: "#b9b2a4", edge: "#8e8578", ink: "#2a2620" },
   5: { body: "#c8102e", dark: "#7d0a1d", edge: "#ffffff", ink: "#fff5f5" },
   10: { body: "#1d4ed8", dark: "#132f80", edge: "#ffffff", ink: "#eef4ff" },
@@ -137,11 +134,7 @@ export function ChipStack({ amount, size = 34, maxChips = 5, className }: StackP
       aria-label={`₱${amount}`}
     >
       {chips.map((v, i) => (
-        <span
-          key={`${v}-${i}`}
-          className="absolute left-0"
-          style={{ bottom: i * lift, zIndex: i }}
-        >
+        <span key={`${v}-${i}`} className="absolute left-0" style={{ bottom: i * lift, zIndex: i }}>
           <Chip value={v} size={size} />
         </span>
       ))}

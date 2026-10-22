@@ -33,11 +33,7 @@ export function rollHitsRequired(
   return tier.hitsMin + rng.nextInt(tier.hitsMax - tier.hitsMin + 1);
 }
 
-export function rollPayoutMult(
-  tierId: FishTierId,
-  cfg: WhaleWarConfig,
-  rng: WhaleWarRng,
-): number {
+export function rollPayoutMult(tierId: FishTierId, cfg: WhaleWarConfig, rng: WhaleWarRng): number {
   const tier = getFishTier(cfg, tierId);
   if (tier.id === "crate") return 0;
   const raw = rng.range(tier.payoutMin, tier.payoutMax);

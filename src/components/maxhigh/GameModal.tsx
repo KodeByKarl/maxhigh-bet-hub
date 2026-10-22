@@ -123,15 +123,17 @@ export function GameModal({ game, open, onOpenChange }: Props) {
               <DialogTitle className="text-xl font-black uppercase tracking-wide text-foreground max-[380px]:text-lg sm:text-3xl">
                 {game.name}
               </DialogTitle>
-              <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
-                <Stars rating={game.rating} />
-                <span className="text-xs font-bold tabular-nums text-foreground sm:text-sm">
-                  {game.rating.toFixed(1)}
-                </span>
-                <span className="text-[11px] text-muted-foreground sm:text-xs">
-                  ({game.reviews.toLocaleString()} reviews)
-                </span>
-              </div>
+              {game.reviews > 0 && (
+                <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
+                  <Stars rating={game.rating} />
+                  <span className="text-xs font-bold tabular-nums text-foreground sm:text-sm">
+                    {game.rating.toFixed(1)}
+                  </span>
+                  <span className="text-[11px] text-muted-foreground sm:text-xs">
+                    ({game.reviews.toLocaleString()} reviews)
+                  </span>
+                </div>
+              )}
               <DialogDescription className="line-clamp-3 text-xs leading-relaxed text-muted-foreground sm:line-clamp-none sm:text-sm">
                 {game.description}
               </DialogDescription>

@@ -1,7 +1,4 @@
-﻿import {
-  type PantherTheme,
-  type PantherSymKind,
-} from "@/components/maxhigh/panther-shared/theme";
+﻿import { type PantherTheme, type PantherSymKind } from "@/components/maxhigh/panther-shared/theme";
 import { MIDNIGHT_OWL_COLORS } from "@/components/maxhigh/panther-shared/palettes";
 
 /** Soft moon-disc crops for circle cells. */

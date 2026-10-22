@@ -109,7 +109,10 @@ export function CardCell({
         className={cn(
           "relative h-full w-full ease-out [transform-style:preserve-3d] [backface-visibility:hidden]",
           highlight &&
-            cn("rounded-[0.55rem] ring-[3px] ring-offset-2 ring-offset-[#061a14] short-h:ring-2 short-h:ring-offset-1", rim),
+            cn(
+              "rounded-[0.55rem] ring-[3px] ring-offset-2 ring-offset-[#061a14] short-h:ring-2 short-h:ring-offset-1",
+              rim,
+            ),
         )}
         style={{
           transform: showFace ? "rotateY(180deg)" : "rotateY(0deg)",

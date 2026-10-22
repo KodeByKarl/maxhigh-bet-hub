@@ -1,9 +1,4 @@
-import type {
-  CrateDropId,
-  FishTierId,
-  PowerUpId,
-  WeaponTierId,
-} from "@/lib/crab-cannon-config";
+import type { CrateDropId, FishTierId, PowerUpId, WeaponTierId } from "@/lib/crab-cannon-config";
 import type { CrateDropResult, ShotResolveResult } from "./hitResolver";
 import type { SwimPathKind } from "./animationConfig";
 

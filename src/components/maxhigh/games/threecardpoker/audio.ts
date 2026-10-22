@@ -4,15 +4,7 @@
 import { TCP_ASSET } from "./animationConfig";
 
 export type ThreeCardPokerSoundKey =
-  | "chip"
-  | "deal"
-  | "flip"
-  | "fold"
-  | "play"
-  | "qualifyFail"
-  | "win"
-  | "tie"
-  | "bigWin";
+  "chip" | "deal" | "flip" | "fold" | "play" | "qualifyFail" | "win" | "tie" | "bigWin";
 
 const FILES: Record<ThreeCardPokerSoundKey, string> = {
   chip: "chip.wav",

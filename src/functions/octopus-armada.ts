@@ -9,12 +9,12 @@ const targetSchema = z.object({
 });
 
 const fireSchema = z.object({
-  weaponId: z.enum(["bamboo", "spinning", "trolling", "harpoon", "master"]),
+  weaponId: z.enum(["mini", "half", "bamboo", "spinning", "trolling", "harpoon", "master"]),
   target: targetSchema,
 });
 
 const weaponSchema = z.object({
-  weaponId: z.enum(["bamboo", "spinning", "trolling", "harpoon", "master"]),
+  weaponId: z.enum(["mini", "half", "bamboo", "spinning", "trolling", "harpoon", "master"]),
 });
 
 const powerSchema = z.object({
@@ -22,7 +22,7 @@ const powerSchema = z.object({
 });
 
 const netBombSchema = z.object({
-  weaponId: z.enum(["bamboo", "spinning", "trolling", "harpoon", "master"]),
+  weaponId: z.enum(["mini", "half", "bamboo", "spinning", "trolling", "harpoon", "master"]),
   targets: z.array(targetSchema).max(12),
 });
 
@@ -47,10 +47,13 @@ export const getOctopusArmadaSessionFn = createServerFn({ method: "GET" }).handl
   return getOctopusArmadaOpenSession();
 });
 
-export const getOctopusArmadaEngineConfigFn = createServerFn({ method: "GET" }).handler(async () => {
-  const { getOctopusArmadaEngineConfigPublic } = await import("../server/games/octopus-armada.server");
-  return getOctopusArmadaEngineConfigPublic();
-});
+export const getOctopusArmadaEngineConfigFn = createServerFn({ method: "GET" }).handler(
+  async () => {
+    const { getOctopusArmadaEngineConfigPublic } =
+      await import("../server/games/octopus-armada.server");
+    return getOctopusArmadaEngineConfigPublic();
+  },
+);
 
 export const octopusArmadaSetWeaponFn = createServerFn({ method: "POST" })
   .validator(weaponSchema)
@@ -79,7 +82,6 @@ export const octopusArmadaUseFreezeLureFn = createServerFn({ method: "POST" }).h
   const { octopusArmadaUseFreezeLure } = await import("../server/games/octopus-armada.server");
   return octopusArmadaUseFreezeLure();
 });
-
 
 export const octopusArmadaSyncSpawnsFn = createServerFn({ method: "POST" }).handler(async () => {
   const { octopusArmadaSyncSpawns } = await import("../server/games/octopus-armada.server");

@@ -4,7 +4,7 @@
 
 export const OCTOPUS_ARMADA_ASSET = {
   symbolDir: "/images/symbols/octopus-armada",
-  soundDir: "/sounds/octopus-armada",
+  soundDir: "/sounds/gentle-v1/octopus-armada",
   thumb: "/games/octopus-armada.webp",
   seabed: "/images/symbols/octopus-armada/seabed.webp",
 } as const;

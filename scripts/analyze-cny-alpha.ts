@@ -18,9 +18,7 @@ async function analyze(name: string) {
     [Math.floor(w / 2), 5],
   ] as const) {
     const o = (y * w + x) * 4;
-    console.log(
-      `  (${x},${y}) rgba=${data[o]},${data[o + 1]},${data[o + 2]},${data[o + 3]}`,
-    );
+    console.log(`  (${x},${y}) rgba=${data[o]},${data[o + 1]},${data[o + 2]},${data[o + 3]}`);
   }
   for (let i = 0; i < w * h; i++) {
     const o = i * 4;

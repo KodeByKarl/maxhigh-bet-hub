@@ -1,30 +1,17 @@
 import type { FishTierId } from "@/lib/octopus-armada-config";
-import { SwimmingFishGraphic } from "../deep-bass/SwimmingFishGraphic";
-import { OCTOPUS_ARMADA_ASSET } from "./animationConfig";
+import { FAUNA } from "../fishing-shared/fauna";
+import { FaunaFish } from "../fishing-shared/species";
 
-export function FishSprite(
-  props: {
-    tierId: FishTierId;
-    size?: number;
-    flipped?: boolean;
-    hitFlash?: boolean;
-    frozen?: boolean;
-    className?: string;
-    animSeed?: number;
-  },
-) {
-  return <SwimmingFishGraphic {...props} />;
-}
+const CAST = FAUNA["octopus-armada"];
 
-const SPRITE_FILE: Record<FishTierId, string> = {
-  common: "shiner.png",
-  uncommon: "smallmouth.png",
-  rare: "largemouth.png",
-  elite: "striped-trophy.png",
-  boss: "octopus-armada-boss.png",
-  crate: "golden-lure-crate.png",
-};
-
-export function fishSpritePath(tierId: FishTierId): string {
-  return `${OCTOPUS_ARMADA_ASSET.symbolDir}/${SPRITE_FILE[tierId]}`;
+export function FishSprite(props: {
+  tierId: FishTierId;
+  size?: number;
+  flipped?: boolean;
+  hitFlash?: boolean;
+  frozen?: boolean;
+  className?: string;
+  animSeed?: number;
+}) {
+  return <FaunaFish {...props} spec={CAST[props.tierId]} crate={CAST.crate.pal} />;
 }

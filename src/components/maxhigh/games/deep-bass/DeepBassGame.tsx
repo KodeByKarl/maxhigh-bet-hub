@@ -39,6 +39,8 @@ import { DEEP_BASS_ASSET, pathAmpFor, SWIM, TIMING } from "./animationConfig";
 import { playDeepBassSound, setDeepBassMuted, unlockDeepBassAudio } from "./audio";
 import { BoatCannon, type CannonImpact, type CannonShot } from "./BoatCannon";
 import { FishSprite } from "./FishSprite";
+import { FishingSeabed } from "../fishing-shared/FishingSeabed";
+
 import { getDeepBassConfig, setDeepBassConfig } from "./runtimeConfig";
 import type { ArenaFish } from "./types";
 
@@ -214,9 +216,7 @@ export function DeepBassGame({
 
       if (!sessionResult.ok) {
         toast.error(
-          sessionResult.e instanceof Error
-            ? sessionResult.e.message
-            : "Failed to open session",
+          sessionResult.e instanceof Error ? sessionResult.e.message : "Failed to open session",
         );
         return;
       }
@@ -351,9 +351,7 @@ export function DeepBassGame({
   const weapon = getWeapon(cfg, weaponId);
 
   const removeFish = useCallback((instanceId: string) => {
-    setFish((prev) =>
-      prev.map((f) => (f.instanceId === instanceId ? { ...f, dying: true } : f)),
-    );
+    setFish((prev) => prev.map((f) => (f.instanceId === instanceId ? { ...f, dying: true } : f)));
     window.setTimeout(() => {
       setFish((prev) => prev.filter((f) => f.instanceId !== instanceId));
       fishElsRef.current.delete(instanceId);
@@ -417,13 +415,7 @@ export function DeepBassGame({
         const didHit = Boolean(res.shot.hit);
         const waitFx = Math.max(0, TIMING.shotTravelMs - (performance.now() - shotStarted));
         window.setTimeout(() => {
-          playDeepBassSound(
-            didHit
-              ? target.tierId === "super"
-                ? "superHit"
-                : "hit"
-              : "splash",
-          );
+          playDeepBassSound(didHit ? (target.tierId === "super" ? "superHit" : "hit") : "splash");
           setImpacts((prev) => [
             ...prev.slice(-4),
             { id: `imp-${shotId}`, x: toX, y: toY, hit: didHit },
@@ -555,7 +547,7 @@ export function DeepBassGame({
     }
   }
 
-  async function useNetBomb() {
+  async function activateNetBomb() {
     if ((powerUps["net-bomb"] ?? 0) < 1) {
       toast.error("No Net Bomb");
       return;
@@ -580,9 +572,7 @@ export function DeepBassGame({
         if (r.hit) {
           playDeepBassSound("hit", 0.35);
           setFish((prev) =>
-            prev.map((f) =>
-              f.instanceId === instanceId ? { ...f, hitsTaken: r.hitsTaken } : f,
-            ),
+            prev.map((f) => (f.instanceId === instanceId ? { ...f, hitsTaken: r.hitsTaken } : f)),
           );
         }
         if (r.killed) killedIds.add(instanceId);
@@ -597,7 +587,7 @@ export function DeepBassGame({
     }
   }
 
-  async function useFreeze() {
+  async function activateFreeze() {
     if ((powerUps["freeze-lure"] ?? 0) < 1) {
       toast.error("No Freeze Lure");
       return;
@@ -624,11 +614,7 @@ export function DeepBassGame({
     };
     const prev = aimRef.current;
     // Skip tiny pointer jitter to cut re-renders
-    if (
-      prev &&
-      Math.abs(prev.x - next.x) < 0.8 &&
-      Math.abs(prev.y - next.y) < 0.8
-    ) {
+    if (prev && Math.abs(prev.x - next.x) < 0.8 && Math.abs(prev.y - next.y) < 0.8) {
       return;
     }
     aimRef.current = next;
@@ -704,11 +690,7 @@ export function DeepBassGame({
         onMouseMove={onArenaMove}
         onMouseLeave={() => setAim(null)}
       >
-        <div
-          className="pointer-events-none absolute inset-0 bg-[#034a5c] bg-cover bg-center"
-          style={{ backgroundImage: `url(${DEEP_BASS_ASSET.seabed})` }}
-          aria-hidden
-        />
+        <FishingSeabed theme="lake" />
         {/* Water caustics / depth vignette */}
         <div
           className="pointer-events-none absolute inset-0 opacity-55"
@@ -801,8 +783,7 @@ export function DeepBassGame({
                 }
                 className="absolute -translate-x-1/2 -translate-y-1/2 border-0 bg-transparent p-0"
                 style={{
-                  zIndex:
-                    f.tierId === "boss" ? 5 : f.tierId === "super" ? 4 : 2,
+                  zIndex: f.tierId === "boss" ? 5 : f.tierId === "super" ? 4 : 2,
                 }}
                 onClick={(e) => {
                   e.stopPropagation();
@@ -837,9 +818,7 @@ export function DeepBassGame({
                     <span
                       className={cn(
                         "absolute left-1/2 -translate-x-1/2 text-[9px] font-black drop-shadow",
-                        f.tierId === "super"
-                          ? "-top-7 text-fuchsia-200"
-                          : "-top-1 text-amber-200",
+                        f.tierId === "super" ? "-top-7 text-fuchsia-200" : "-top-1 text-amber-200",
                       )}
                     >
                       {f.payoutMult}×
@@ -954,8 +933,8 @@ export function DeepBassGame({
                   type="button"
                   onClick={() => {
                     if ((powerUps[p.id] ?? 0) > 0) {
-                      if (p.id === "net-bomb") void useNetBomb();
-                      else if (p.id === "freeze-lure") void useFreeze();
+                      if (p.id === "net-bomb") void activateNetBomb();
+                      else if (p.id === "freeze-lure") void activateFreeze();
                       else toast.message("Golden Hook arms on next kill");
                     } else {
                       void buyPower(p.id);
@@ -969,10 +948,7 @@ export function DeepBassGame({
                     <Zap className="h-3.5 w-3.5 shrink-0" />
                   )}
                   <span className="whitespace-nowrap font-semibold">
-                    {p.label}{" "}
-                    {(powerUps[p.id] ?? 0) > 0
-                      ? `×${powerUps[p.id]}`
-                      : formatPhp(p.cost)}
+                    {p.label} {(powerUps[p.id] ?? 0) > 0 ? `×${powerUps[p.id]}` : formatPhp(p.cost)}
                   </span>
                 </button>
               ))}

@@ -17,7 +17,17 @@ import { formatMoney } from "@/lib/currency";
 import { Input } from "@/components/ui/input";
 import { PasswordInput } from "@/components/ui/password-input";
 import { toast } from "sonner";
-import { MoreHorizontal, Pencil, X, KeyRound, ShieldAlert, UserPlus, RefreshCw, Lock, Unlock } from "lucide-react";
+import {
+  MoreHorizontal,
+  Pencil,
+  X,
+  KeyRound,
+  ShieldAlert,
+  UserPlus,
+  RefreshCw,
+  Lock,
+  Unlock,
+} from "lucide-react";
 
 export const Route = createFileRoute("/admin/users")({
   component: AdminUsersPage,
@@ -55,11 +65,15 @@ function AdminUsersPage() {
       filtered = filtered.filter((r) => r.role === role);
     }
     if (myPlayersOnly && user) {
-      filtered = filtered.filter((r) => r.parentAgentId === user.id || r.agentName === (user.displayName || user.username));
+      filtered = filtered.filter(
+        (r) => r.parentAgentId === user.id || r.agentName === (user.displayName || user.username),
+      );
     }
     return filtered.sort((a, b) => {
-      if (sortBy === "newest") return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
-      if (sortBy === "oldest") return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
+      if (sortBy === "newest")
+        return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+      if (sortBy === "oldest")
+        return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
       if (sortBy === "az") return a.username.localeCompare(b.username);
       if (sortBy === "za") return b.username.localeCompare(a.username);
       return 0;
@@ -94,8 +108,12 @@ function AdminUsersPage() {
           </p>
           {user && (user.role === "agent" || user.role === "master_agent") && (
             <p className="mt-1.5 text-xs font-semibold text-amber-300">
-              Wallet: <span className="font-black text-emerald-400">{formatMoney(user.balance)}</span>
-              <span className="hidden font-normal text-muted-foreground sm:inline"> — you can only give what you have</span>
+              Wallet:{" "}
+              <span className="font-black text-emerald-400">{formatMoney(user.balance)}</span>
+              <span className="hidden font-normal text-muted-foreground sm:inline">
+                {" "}
+                — you can only give what you have
+              </span>
             </p>
           )}
           {user?.role === "agent" && (
@@ -179,7 +197,9 @@ function AdminUsersPage() {
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0">
                     <div className="flex flex-wrap items-center gap-2">
-                      <span className="truncate text-sm font-black text-foreground">@{u.username}</span>
+                      <span className="truncate text-sm font-black text-foreground">
+                        @{u.username}
+                      </span>
                       {locked ? (
                         <span className="shrink-0 rounded-md border border-rose-500/50 bg-rose-500/15 px-2 py-0.5 text-[10px] font-black uppercase tracking-wide text-rose-400">
                           Locked
@@ -191,15 +211,21 @@ function AdminUsersPage() {
                       )}
                     </div>
                     {u.displayName && (
-                      <div className="mt-0.5 truncate text-[11px] text-primary/90">{u.displayName}</div>
+                      <div className="mt-0.5 truncate text-[11px] text-primary/90">
+                        {u.displayName}
+                      </div>
                     )}
                     <div className="mt-0.5 font-mono text-[10px] text-muted-foreground">
                       {u.publicUserId}
                     </div>
                   </div>
                   <div className="shrink-0 text-right">
-                    <div className="text-[10px] font-bold uppercase tracking-wide text-muted-foreground">Balance</div>
-                    <div className="text-lg font-black tabular-nums text-emerald-400">{formatMoney(u.balance)}</div>
+                    <div className="text-[10px] font-bold uppercase tracking-wide text-muted-foreground">
+                      Balance
+                    </div>
+                    <div className="text-lg font-black tabular-nums text-emerald-400">
+                      {formatMoney(u.balance)}
+                    </div>
                   </div>
                 </div>
 
@@ -257,7 +283,10 @@ function AdminUsersPage() {
               sortedRows.map((u) => {
                 const locked = u.isLocked || (u.failedAttempts ?? 0) >= 3;
                 return (
-                  <tr key={u.id} className="border-b border-border/50 hover:bg-white/[0.02] transition-colors">
+                  <tr
+                    key={u.id}
+                    className="border-b border-border/50 hover:bg-white/[0.02] transition-colors"
+                  >
                     <td className="px-4 py-4 align-middle">
                       <div className="flex items-center gap-2 flex-wrap">
                         <span className="font-bold text-foreground">@{u.username}</span>
@@ -272,12 +301,16 @@ function AdminUsersPage() {
                         )}
                       </div>
                       {u.displayName && (
-                        <div className="text-xs text-primary/90 font-medium truncate">{u.displayName}</div>
+                        <div className="text-xs text-primary/90 font-medium truncate">
+                          {u.displayName}
+                        </div>
                       )}
                       <div className="text-[10px] text-muted-foreground font-mono truncate">
                         User ID: {u.publicUserId}
                       </div>
-                      <div className="text-xs text-muted-foreground truncate">{u.email ?? "No email"}</div>
+                      <div className="text-xs text-muted-foreground truncate">
+                        {u.email ?? "No email"}
+                      </div>
                     </td>
 
                     <td className="px-4 py-4 align-middle text-center">
@@ -487,7 +520,10 @@ function AddChipsModal({
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 p-4 backdrop-blur-sm" onClick={onClose}>
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 p-4 backdrop-blur-sm"
+      onClick={onClose}
+    >
       <form
         onSubmit={handleSubmit}
         onClick={(e) => e.stopPropagation()}
@@ -498,7 +534,11 @@ function AddChipsModal({
             <h3 className="font-bold text-foreground">Manage Chips</h3>
             <p className="text-xs text-primary font-medium">@{target.username}</p>
           </div>
-          <button type="button" onClick={onClose} className="rounded-lg p-1.5 text-muted-foreground hover:bg-panel-hover">
+          <button
+            type="button"
+            onClick={onClose}
+            className="rounded-lg p-1.5 text-muted-foreground hover:bg-panel-hover"
+          >
             <X size={18} />
           </button>
         </div>
@@ -508,7 +548,9 @@ function AddChipsModal({
             type="button"
             onClick={() => setMode("add")}
             className={`h-9 flex-1 rounded-lg text-xs font-black uppercase ${
-              mode === "add" ? "bg-emerald-500 text-black" : "border border-border text-muted-foreground"
+              mode === "add"
+                ? "bg-emerald-500 text-black"
+                : "border border-border text-muted-foreground"
             }`}
           >
             Add
@@ -517,45 +559,58 @@ function AddChipsModal({
             type="button"
             onClick={() => setMode("withdraw")}
             className={`h-9 flex-1 rounded-lg text-xs font-black uppercase ${
-              mode === "withdraw" ? "bg-rose-500 text-white" : "border border-border text-muted-foreground"
+              mode === "withdraw"
+                ? "bg-rose-500 text-white"
+                : "border border-border text-muted-foreground"
             }`}
           >
             Withdraw
           </button>
         </div>
 
-        <div className={`rounded-xl border p-3 text-xs ${
-          mode === "add"
-            ? unlimited
-              ? "border-amber-500/30 bg-amber-500/10 text-amber-200"
-              : "border-emerald-500/30 bg-emerald-500/10 text-emerald-200"
-            : "border-rose-500/30 bg-rose-500/10 text-rose-200"
-        }`}>
+        <div
+          className={`rounded-xl border p-3 text-xs ${
+            mode === "add"
+              ? unlimited
+                ? "border-amber-500/30 bg-amber-500/10 text-amber-200"
+                : "border-emerald-500/30 bg-emerald-500/10 text-emerald-200"
+              : "border-rose-500/30 bg-rose-500/10 text-rose-200"
+          }`}
+        >
           {mode === "add" ? (
             unlimited ? (
-              <>Superadmin credit is <span className="font-black">unlimited</span>.</>
+              <>
+                Superadmin credit is <span className="font-black">unlimited</span>.
+              </>
             ) : (
               <>
                 Your wallet: <span className="font-black">{formatMoney(actorBalance)}</span>
-                <div className="mt-1 text-muted-foreground">Chips leave your wallet and go to the target.</div>
+                <div className="mt-1 text-muted-foreground">
+                  Chips leave your wallet and go to the target.
+                </div>
               </>
             )
           ) : (
             <>
               Withdraw chips from <span className="font-black">@{target.username}</span>
               {!unlimited && (
-                <div className="mt-1 text-muted-foreground">Withdrawn chips return to your wallet.</div>
+                <div className="mt-1 text-muted-foreground">
+                  Withdrawn chips return to your wallet.
+                </div>
               )}
             </>
           )}
         </div>
 
         <p className="text-xs text-muted-foreground">
-          Target balance: <span className="font-bold text-emerald-400">{formatMoney(target.balance)}</span>
+          Target balance:{" "}
+          <span className="font-bold text-emerald-400">{formatMoney(target.balance)}</span>
         </p>
 
         <div>
-          <label className="mb-1 block text-[11px] font-bold uppercase text-muted-foreground">Chip Amount (₱)</label>
+          <label className="mb-1 block text-[11px] font-bold uppercase text-muted-foreground">
+            Chip Amount (₱)
+          </label>
           <Input
             type="number"
             min={1}
@@ -569,11 +624,15 @@ function AddChipsModal({
         </div>
 
         <div>
-          <label className="mb-1 block text-[11px] font-bold uppercase text-muted-foreground">Note (Optional)</label>
+          <label className="mb-1 block text-[11px] font-bold uppercase text-muted-foreground">
+            Note (Optional)
+          </label>
           <Input
             value={note}
             onChange={(e) => setNote(e.target.value)}
-            placeholder={mode === "add" ? "e.g. Reload for weekend play" : "e.g. Collect unused chips"}
+            placeholder={
+              mode === "add" ? "e.g. Reload for weekend play" : "e.g. Collect unused chips"
+            }
           />
         </div>
 
@@ -605,7 +664,13 @@ function actorRoleLabel(role?: string) {
 }
 
 /** Modal to create new Player or Agent accounts */
-function CreateUserModal({ onClose, onSuccess }: { onClose: () => void; onSuccess: (promoted: boolean) => void }) {
+function CreateUserModal({
+  onClose,
+  onSuccess,
+}: {
+  onClose: () => void;
+  onSuccess: (promoted: boolean) => void;
+}) {
   const { user } = useAuth();
   const isSuper = user?.role === "superadmin";
   const canCreateAgent = user?.role === "agent" || user?.role === "master_agent" || isSuper;
@@ -646,9 +711,7 @@ function CreateUserModal({ onClose, onSuccess }: { onClose: () => void; onSucces
         },
       });
       if (created.agentPromoted) {
-        toast.success(
-          `Agent @${username.trim()} created. You earned Master Agent!`,
-        );
+        toast.success(`Agent @${username.trim()} created. You earned Master Agent!`);
       } else {
         toast.success(`Account @${username.trim()} created successfully!`);
       }
@@ -665,14 +728,20 @@ function CreateUserModal({ onClose, onSuccess }: { onClose: () => void; onSucces
       <div className="flex max-h-[min(92dvh,calc(100dvh-3.5rem))] w-full max-w-md flex-col overflow-y-auto rounded-t-2xl border border-border bg-panel p-5 pb-[max(1.25rem,env(safe-area-inset-bottom))] shadow-2xl sm:rounded-2xl sm:p-6">
         <div className="flex items-center justify-between border-b border-border pb-4">
           <h3 className="text-lg font-bold text-foreground">Create New Account</h3>
-          <button type="button" onClick={onClose} className="rounded-lg p-1.5 text-muted-foreground hover:bg-panel-hover">
+          <button
+            type="button"
+            onClick={onClose}
+            className="rounded-lg p-1.5 text-muted-foreground hover:bg-panel-hover"
+          >
             <X size={18} />
           </button>
         </div>
 
         <form onSubmit={handleSubmit} className="mt-4 space-y-4">
           <div className="rounded-xl border border-violet-400/30 bg-violet-500/10 px-3 py-2.5">
-            <div className="text-[10px] font-bold uppercase tracking-wider text-violet-300">Agent account</div>
+            <div className="text-[10px] font-bold uppercase tracking-wider text-violet-300">
+              Agent account
+            </div>
             <div className="mt-0.5 truncate text-sm font-black text-foreground">
               @{user?.username ?? "—"}
             </div>
@@ -682,7 +751,9 @@ function CreateUserModal({ onClose, onSuccess }: { onClose: () => void; onSucces
           </div>
 
           <div>
-            <label className="mb-1 block text-xs font-semibold uppercase text-muted-foreground">Account Role</label>
+            <label className="mb-1 block text-xs font-semibold uppercase text-muted-foreground">
+              Account Role
+            </label>
             {isSuper ? (
               <select
                 value={role}
@@ -715,7 +786,9 @@ function CreateUserModal({ onClose, onSuccess }: { onClose: () => void; onSucces
           </div>
 
           <div>
-            <label className="mb-1 block text-xs font-semibold uppercase text-muted-foreground">Username *</label>
+            <label className="mb-1 block text-xs font-semibold uppercase text-muted-foreground">
+              Username *
+            </label>
             <Input
               value={username}
               onChange={(e) => setUsername(e.target.value)}
@@ -727,7 +800,9 @@ function CreateUserModal({ onClose, onSuccess }: { onClose: () => void; onSucces
           </div>
 
           <div>
-            <label className="mb-1 block text-xs font-semibold uppercase text-muted-foreground">Email (Optional)</label>
+            <label className="mb-1 block text-xs font-semibold uppercase text-muted-foreground">
+              Email (Optional)
+            </label>
             <Input
               type="email"
               value={email}
@@ -738,7 +813,9 @@ function CreateUserModal({ onClose, onSuccess }: { onClose: () => void; onSucces
           </div>
 
           <div>
-            <label className="mb-1 block text-xs font-semibold uppercase text-muted-foreground">Password *</label>
+            <label className="mb-1 block text-xs font-semibold uppercase text-muted-foreground">
+              Password *
+            </label>
             <PasswordInput
               value={password}
               onChange={(e) => setPassword(e.target.value)}
@@ -751,7 +828,9 @@ function CreateUserModal({ onClose, onSuccess }: { onClose: () => void; onSucces
           </div>
 
           <div>
-            <label className="mb-1 block text-xs font-semibold uppercase text-muted-foreground">Confirm Password *</label>
+            <label className="mb-1 block text-xs font-semibold uppercase text-muted-foreground">
+              Confirm Password *
+            </label>
             <PasswordInput
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
@@ -767,7 +846,9 @@ function CreateUserModal({ onClose, onSuccess }: { onClose: () => void; onSucces
           </div>
 
           <div>
-            <label className="mb-1 block text-xs font-semibold uppercase text-muted-foreground">Initial Balance (₱)</label>
+            <label className="mb-1 block text-xs font-semibold uppercase text-muted-foreground">
+              Initial Balance (₱)
+            </label>
             <Input
               type="number"
               value={balance}
@@ -819,7 +900,11 @@ function UserMenuModal({
             <h3 className="font-bold text-foreground">Account Actions</h3>
             <p className="text-xs text-primary font-medium">@{user.username}</p>
           </div>
-          <button type="button" onClick={onClose} className="rounded-lg p-1.5 text-muted-foreground hover:bg-panel-hover">
+          <button
+            type="button"
+            onClick={onClose}
+            className="rounded-lg p-1.5 text-muted-foreground hover:bg-panel-hover"
+          >
             <X size={18} />
           </button>
         </div>
@@ -899,7 +984,11 @@ function ViewUserModal({ user, onClose }: { user: AdminUserRow; onClose: () => v
       <div className="w-full max-w-md rounded-2xl border border-border bg-panel p-6 shadow-2xl space-y-4">
         <div className="flex items-center justify-between border-b border-border pb-3">
           <h3 className="font-bold text-foreground">Player Profile Details</h3>
-          <button type="button" onClick={onClose} className="rounded-lg p-1.5 text-muted-foreground hover:bg-panel-hover">
+          <button
+            type="button"
+            onClick={onClose}
+            className="rounded-lg p-1.5 text-muted-foreground hover:bg-panel-hover"
+          >
             <X size={18} />
           </button>
         </div>
@@ -933,7 +1022,9 @@ function ViewUserModal({ user, onClose }: { user: AdminUserRow; onClose: () => v
           </div>
           <div className="flex justify-between">
             <span className="text-muted-foreground">Registered Date</span>
-            <span className="text-muted-foreground">{new Date(user.createdAt).toLocaleString("en-PH")}</span>
+            <span className="text-muted-foreground">
+              {new Date(user.createdAt).toLocaleString("en-PH")}
+            </span>
           </div>
         </div>
 
@@ -950,7 +1041,15 @@ function ViewUserModal({ user, onClose }: { user: AdminUserRow; onClose: () => v
 }
 
 /** Edit Profile Modal */
-function EditProfileModal({ user, onClose, onSuccess }: { user: AdminUserRow; onClose: () => void; onSuccess: () => void }) {
+function EditProfileModal({
+  user,
+  onClose,
+  onSuccess,
+}: {
+  user: AdminUserRow;
+  onClose: () => void;
+  onSuccess: () => void;
+}) {
   const [displayName, setDisplayName] = useState(user.displayName ?? "");
   const [email, setEmail] = useState(user.email ?? "");
   const [submitting, setSubmitting] = useState(false);
@@ -980,14 +1079,20 @@ function EditProfileModal({ user, onClose, onSuccess }: { user: AdminUserRow; on
       <div className="w-full max-w-md rounded-2xl border border-border bg-panel p-6 shadow-2xl space-y-4">
         <div className="flex items-center justify-between border-b border-border pb-3">
           <h3 className="font-bold text-foreground">Edit Profile — @{user.username}</h3>
-          <button type="button" onClick={onClose} className="rounded-lg p-1.5 text-muted-foreground hover:bg-panel-hover">
+          <button
+            type="button"
+            onClick={onClose}
+            className="rounded-lg p-1.5 text-muted-foreground hover:bg-panel-hover"
+          >
             <X size={18} />
           </button>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-xs font-semibold uppercase text-muted-foreground mb-1">Display Name</label>
+            <label className="block text-xs font-semibold uppercase text-muted-foreground mb-1">
+              Display Name
+            </label>
             <Input
               value={displayName}
               onChange={(e) => setDisplayName(e.target.value)}
@@ -997,7 +1102,9 @@ function EditProfileModal({ user, onClose, onSuccess }: { user: AdminUserRow; on
           </div>
 
           <div>
-            <label className="block text-xs font-semibold uppercase text-muted-foreground mb-1">Email</label>
+            <label className="block text-xs font-semibold uppercase text-muted-foreground mb-1">
+              Email
+            </label>
             <Input
               type="email"
               value={email}
@@ -1030,7 +1137,15 @@ function EditProfileModal({ user, onClose, onSuccess }: { user: AdminUserRow; on
 }
 
 /** Reset Password Modal */
-function ResetPasswordModal({ user, onClose, onSuccess }: { user: AdminUserRow; onClose: () => void; onSuccess: () => void }) {
+function ResetPasswordModal({
+  user,
+  onClose,
+  onSuccess,
+}: {
+  user: AdminUserRow;
+  onClose: () => void;
+  onSuccess: () => void;
+}) {
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [submitting, setSubmitting] = useState(false);
@@ -1067,14 +1182,20 @@ function ResetPasswordModal({ user, onClose, onSuccess }: { user: AdminUserRow; 
       <div className="w-full max-w-md space-y-4 rounded-t-2xl border border-border bg-panel p-5 pb-[max(1.25rem,env(safe-area-inset-bottom))] shadow-2xl sm:rounded-2xl sm:p-6">
         <div className="flex items-center justify-between border-b border-border pb-3">
           <h3 className="font-bold text-foreground">Reset Password — @{user.username}</h3>
-          <button type="button" onClick={onClose} className="rounded-lg p-1.5 text-muted-foreground hover:bg-panel-hover">
+          <button
+            type="button"
+            onClick={onClose}
+            className="rounded-lg p-1.5 text-muted-foreground hover:bg-panel-hover"
+          >
             <X size={18} />
           </button>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="mb-1 block text-xs font-semibold uppercase text-muted-foreground">New Password *</label>
+            <label className="mb-1 block text-xs font-semibold uppercase text-muted-foreground">
+              New Password *
+            </label>
             <PasswordInput
               value={password}
               onChange={(e) => setPassword(e.target.value)}
@@ -1086,7 +1207,9 @@ function ResetPasswordModal({ user, onClose, onSuccess }: { user: AdminUserRow; 
             />
           </div>
           <div>
-            <label className="mb-1 block text-xs font-semibold uppercase text-muted-foreground">Confirm Password *</label>
+            <label className="mb-1 block text-xs font-semibold uppercase text-muted-foreground">
+              Confirm Password *
+            </label>
             <PasswordInput
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
@@ -1124,7 +1247,15 @@ function ResetPasswordModal({ user, onClose, onSuccess }: { user: AdminUserRow; 
 }
 
 /** Security Details Modal */
-function SecurityDetailsModal({ user, onClose, onSuccess }: { user: AdminUserRow; onClose: () => void; onSuccess: () => void }) {
+function SecurityDetailsModal({
+  user,
+  onClose,
+  onSuccess,
+}: {
+  user: AdminUserRow;
+  onClose: () => void;
+  onSuccess: () => void;
+}) {
   const [submitting, setSubmitting] = useState(false);
 
   async function handleResetSecurity() {
@@ -1145,7 +1276,11 @@ function SecurityDetailsModal({ user, onClose, onSuccess }: { user: AdminUserRow
       <div className="w-full max-w-md rounded-2xl border border-border bg-panel p-6 shadow-2xl space-y-4">
         <div className="flex items-center justify-between border-b border-border pb-3">
           <h3 className="font-bold text-foreground">Security Details — @{user.username}</h3>
-          <button type="button" onClick={onClose} className="rounded-lg p-1.5 text-muted-foreground hover:bg-panel-hover">
+          <button
+            type="button"
+            onClick={onClose}
+            className="rounded-lg p-1.5 text-muted-foreground hover:bg-panel-hover"
+          >
             <X size={18} />
           </button>
         </div>
@@ -1159,7 +1294,9 @@ function SecurityDetailsModal({ user, onClose, onSuccess }: { user: AdminUserRow
           </div>
           <div className="flex justify-between border-b border-border/50 pb-2">
             <span className="text-muted-foreground">Failed Login Attempts</span>
-            <span className="font-mono font-bold text-foreground">{user.failedAttempts ?? 0} / 3</span>
+            <span className="font-mono font-bold text-foreground">
+              {user.failedAttempts ?? 0} / 3
+            </span>
           </div>
         </div>
 

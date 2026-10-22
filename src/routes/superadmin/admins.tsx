@@ -30,7 +30,7 @@ function SuperAdminsPage() {
   const [q, setQ] = useState("");
   const [role, setRole] = useState<UserRole | "all">("all");
   const [sortBy, setSortBy] = useState<"newest" | "oldest" | "az" | "za">("newest");
-  
+
   const [showAddModal, setShowAddModal] = useState(false);
   const [activeModal, setActiveModal] = useState<{
     type: "menu" | "view" | "profile" | "addChips" | "copy" | "security" | "suspicious";
@@ -112,20 +112,36 @@ function SuperAdminsPage() {
             onChange={(e) => setRole(e.target.value as UserRole | "all")}
             className="h-11 rounded-xl border border-amber-500/20 bg-[#1C1916] px-3 text-sm text-foreground [color-scheme:dark]"
           >
-            <option value="all" className="bg-white text-stone-900">All Roles</option>
-            <option value="agent" className="bg-white text-stone-900">Agent</option>
-            <option value="master_agent" className="bg-white text-stone-900">Master Agent</option>
-            <option value="superadmin" className="bg-white text-stone-900">SuperAdmin</option>
+            <option value="all" className="bg-white text-stone-900">
+              All Roles
+            </option>
+            <option value="agent" className="bg-white text-stone-900">
+              Agent
+            </option>
+            <option value="master_agent" className="bg-white text-stone-900">
+              Master Agent
+            </option>
+            <option value="superadmin" className="bg-white text-stone-900">
+              SuperAdmin
+            </option>
           </select>
           <select
             value={sortBy}
             onChange={(e) => setSortBy(e.target.value as "newest" | "oldest" | "az" | "za")}
             className="h-11 rounded-xl border border-amber-500/20 bg-[#1C1916] px-3 text-sm font-bold text-amber-400 [color-scheme:dark]"
           >
-            <option value="newest" className="bg-white text-stone-900">Newest → Oldest</option>
-            <option value="oldest" className="bg-white text-stone-900">Oldest → Newest</option>
-            <option value="az" className="bg-white text-stone-900">Alphabetical (A - Z)</option>
-            <option value="za" className="bg-white text-stone-900">Alphabetical (Z - A)</option>
+            <option value="newest" className="bg-white text-stone-900">
+              Newest → Oldest
+            </option>
+            <option value="oldest" className="bg-white text-stone-900">
+              Oldest → Newest
+            </option>
+            <option value="az" className="bg-white text-stone-900">
+              Alphabetical (A - Z)
+            </option>
+            <option value="za" className="bg-white text-stone-900">
+              Alphabetical (Z - A)
+            </option>
           </select>
         </div>
         <div className="grid grid-cols-2 gap-2 sm:contents">
@@ -148,14 +164,18 @@ function SuperAdminsPage() {
 
       <div className="grid gap-2.5 lg:hidden">
         {sortedRows.length === 0 ? (
-          <div className={`${saGlass} p-8 text-center text-sm text-muted-foreground`}>No staff accounts found.</div>
+          <div className={`${saGlass} p-8 text-center text-sm text-muted-foreground`}>
+            No staff accounts found.
+          </div>
         ) : (
           sortedRows.map((u) => (
             <div key={u.id} className={`${saGlass} space-y-3 p-3.5`}>
               <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0">
                   <div className="flex flex-wrap items-center gap-2">
-                    <span className="truncate text-sm font-black text-foreground">@{u.username}</span>
+                    <span className="truncate text-sm font-black text-foreground">
+                      @{u.username}
+                    </span>
                     {u.isLocked === "yes" ? (
                       <span className="shrink-0 rounded-md border border-rose-500/50 bg-rose-500/20 px-2 py-0.5 text-[10px] font-black uppercase tracking-wide text-rose-300">
                         Locked
@@ -167,15 +187,21 @@ function SuperAdminsPage() {
                     )}
                   </div>
                   {u.displayName && (
-                    <div className="mt-0.5 truncate text-[11px] text-amber-400">{u.displayName}</div>
+                    <div className="mt-0.5 truncate text-[11px] text-amber-400">
+                      {u.displayName}
+                    </div>
                   )}
                   <div className="mt-0.5 font-mono text-[10px] text-muted-foreground">
                     ID: {u.publicUserId || u.id.slice(0, 8)}
                   </div>
                 </div>
                 <div className="shrink-0 text-right">
-                  <div className="text-[10px] font-bold uppercase tracking-wide text-muted-foreground">Balance</div>
-                  <div className="text-lg font-black tabular-nums text-emerald-400">{formatMoney(u.balance)}</div>
+                  <div className="text-[10px] font-bold uppercase tracking-wide text-muted-foreground">
+                    Balance
+                  </div>
+                  <div className="text-lg font-black tabular-nums text-emerald-400">
+                    {formatMoney(u.balance)}
+                  </div>
                 </div>
               </div>
 
@@ -236,7 +262,10 @@ function SuperAdminsPage() {
               </tr>
             ) : (
               sortedRows.map((u) => (
-                <tr key={u.id} className="border-b border-white/[0.06] hover:bg-white/[0.02] transition-colors">
+                <tr
+                  key={u.id}
+                  className="border-b border-white/[0.06] hover:bg-white/[0.02] transition-colors"
+                >
                   <td className="w-[20%] px-4 py-4 align-middle">
                     <div className="flex items-center gap-2 flex-wrap">
                       <span className="font-bold text-foreground truncate">@{u.username}</span>
@@ -401,7 +430,10 @@ function AddAdminModal({
   const selectedUpline = masterAgents.find((ma) => ma.id === parentAgentId);
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center overflow-y-auto bg-black/65 backdrop-blur-md sm:items-center sm:p-4" onClick={onClose}>
+    <div
+      className="fixed inset-0 z-50 flex items-end justify-center overflow-y-auto bg-black/65 backdrop-blur-md sm:items-center sm:p-4"
+      onClick={onClose}
+    >
       <div
         onClick={(e) => e.stopPropagation()}
         className={`${saGlass} my-auto flex max-h-[min(92dvh,calc(100dvh-3.5rem))] w-full max-w-lg flex-col overflow-y-auto rounded-t-2xl border border-amber-500/30 p-5 pb-[max(1.25rem,env(safe-area-inset-bottom))] shadow-2xl sm:rounded-2xl sm:p-6`}
@@ -409,22 +441,34 @@ function AddAdminModal({
         <div className="flex items-center justify-between border-b border-amber-500/20 pb-3">
           <div>
             <h2 className="text-xl font-black text-foreground">+ Add Agent / Staff Account</h2>
-            <p className="text-xs text-muted-foreground">Create a new Agent, Master Agent, or SuperAdmin account.</p>
+            <p className="text-xs text-muted-foreground">
+              Create a new Agent, Master Agent, or SuperAdmin account.
+            </p>
           </div>
-          <button type="button" onClick={onClose} className="rounded-lg p-1.5 text-muted-foreground hover:bg-white/[0.06]">
+          <button
+            type="button"
+            onClick={onClose}
+            className="rounded-lg p-1.5 text-muted-foreground hover:bg-white/[0.06]"
+          >
             <X size={20} />
           </button>
         </div>
 
         <form onSubmit={onSubmit} className="mt-4 space-y-4">
           <div className="rounded-xl border border-amber-500/30 bg-amber-500/10 px-3 py-2.5">
-            <div className="text-[10px] font-bold uppercase tracking-wider text-amber-300">Created by</div>
-            <div className="mt-0.5 truncate text-sm font-black text-foreground">@{user?.username ?? "—"}</div>
+            <div className="text-[10px] font-bold uppercase tracking-wider text-amber-300">
+              Created by
+            </div>
+            <div className="mt-0.5 truncate text-sm font-black text-foreground">
+              @{user?.username ?? "—"}
+            </div>
             <div className="text-[11px] text-muted-foreground">Superadmin</div>
           </div>
 
           <div>
-            <label className="mb-1 block text-[11px] font-bold uppercase text-muted-foreground">Username</label>
+            <label className="mb-1 block text-[11px] font-bold uppercase text-muted-foreground">
+              Username
+            </label>
             <Input
               value={username}
               onChange={(e) => setUsername(e.target.value)}
@@ -433,11 +477,17 @@ function AddAdminModal({
               autoComplete="off"
               className="h-11 rounded-xl bg-white/[0.06] text-foreground"
             />
-            {isUsernameTaken && <div className="mt-1 text-[11px] font-semibold text-rose-400">Username already taken!</div>}
+            {isUsernameTaken && (
+              <div className="mt-1 text-[11px] font-semibold text-rose-400">
+                Username already taken!
+              </div>
+            )}
           </div>
 
           <div>
-            <label className="mb-1 block text-[11px] font-bold uppercase text-muted-foreground">Password *</label>
+            <label className="mb-1 block text-[11px] font-bold uppercase text-muted-foreground">
+              Password *
+            </label>
             <PasswordInput
               value={password}
               onChange={(e) => setPassword(e.target.value)}
@@ -449,7 +499,9 @@ function AddAdminModal({
           </div>
 
           <div>
-            <label className="mb-1 block text-[11px] font-bold uppercase text-muted-foreground">Confirm Password *</label>
+            <label className="mb-1 block text-[11px] font-bold uppercase text-muted-foreground">
+              Confirm Password *
+            </label>
             <PasswordInput
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
@@ -464,7 +516,9 @@ function AddAdminModal({
           </div>
 
           <div>
-            <label className="mb-1 block text-[11px] font-bold uppercase text-muted-foreground">Role</label>
+            <label className="mb-1 block text-[11px] font-bold uppercase text-muted-foreground">
+              Role
+            </label>
             <select
               value={role}
               onChange={(e) => setRole(e.target.value as UserRole)}
@@ -478,7 +532,9 @@ function AddAdminModal({
 
           {role === "agent" && (
             <div>
-              <label className="mb-1 block text-[11px] font-bold uppercase text-muted-foreground">Agent account (upline)</label>
+              <label className="mb-1 block text-[11px] font-bold uppercase text-muted-foreground">
+                Agent account (upline)
+              </label>
               <select
                 value={parentAgentId}
                 onChange={(e) => setParentAgentId(e.target.value)}
@@ -500,10 +556,18 @@ function AddAdminModal({
           )}
 
           <div className="flex justify-end gap-2 pt-2">
-            <button type="button" onClick={onClose} className="h-11 rounded-xl border border-amber-500/25 px-4 text-sm font-semibold text-foreground hover:bg-white/[0.06]">
+            <button
+              type="button"
+              onClick={onClose}
+              className="h-11 rounded-xl border border-amber-500/25 px-4 text-sm font-semibold text-foreground hover:bg-white/[0.06]"
+            >
               Cancel
             </button>
-            <button type="submit" disabled={busy || isUsernameTaken} className="h-11 rounded-xl bg-amber-500 px-5 text-sm font-bold text-black disabled:opacity-60">
+            <button
+              type="submit"
+              disabled={busy || isUsernameTaken}
+              className="h-11 rounded-xl bg-amber-500 px-5 text-sm font-bold text-black disabled:opacity-60"
+            >
               {busy ? "Creating…" : "Create Agent"}
             </button>
           </div>
@@ -525,7 +589,9 @@ function StaffActionModal({
   };
   onClose: () => void;
   onActionComplete?: () => void;
-  onNavigate?: (type: "menu" | "view" | "profile" | "addChips" | "copy" | "security" | "suspicious") => void;
+  onNavigate?: (
+    type: "menu" | "view" | "profile" | "addChips" | "copy" | "security" | "suspicious",
+  ) => void;
 }) {
   const { user, type } = modal;
   const [isLocked, setIsLocked] = useState(user.isLocked === "yes");
@@ -598,14 +664,26 @@ function StaffActionModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 grid place-items-center bg-black/65 backdrop-blur-md p-4 overflow-y-auto" onClick={onClose}>
-      <div onClick={(e) => e.stopPropagation()} className={`${saGlass} w-full ${type === "suspicious" || type === "view" ? "max-w-4xl" : "max-w-xl"} space-y-4 p-6 border border-amber-500/30 shadow-2xl my-auto`}>
+    <div
+      className="fixed inset-0 z-50 grid place-items-center bg-black/65 backdrop-blur-md p-4 overflow-y-auto"
+      onClick={onClose}
+    >
+      <div
+        onClick={(e) => e.stopPropagation()}
+        className={`${saGlass} w-full ${type === "suspicious" || type === "view" ? "max-w-4xl" : "max-w-xl"} space-y-4 p-6 border border-amber-500/30 shadow-2xl my-auto`}
+      >
         <div className="flex items-center justify-between border-b border-amber-500/20 pb-3">
           <div>
             <h2 className="text-xl font-black text-foreground">Staff Action · @{user.username}</h2>
-            <p className="text-xs text-muted-foreground">Action type: <span className="text-amber-400 font-bold uppercase">{type}</span></p>
+            <p className="text-xs text-muted-foreground">
+              Action type: <span className="text-amber-400 font-bold uppercase">{type}</span>
+            </p>
           </div>
-          <button type="button" onClick={onClose} className="rounded-lg p-1.5 text-muted-foreground hover:bg-white/[0.06]">
+          <button
+            type="button"
+            onClick={onClose}
+            className="rounded-lg p-1.5 text-muted-foreground hover:bg-white/[0.06]"
+          >
             <X size={20} />
           </button>
         </div>
@@ -636,22 +714,30 @@ function StaffActionModal({
                 Withdraw
               </button>
             </div>
-            <div className={`rounded-xl border p-3 text-xs ${
-              chipMode === "add"
-                ? "border-amber-500/30 bg-amber-500/10 text-amber-200"
-                : "border-rose-500/30 bg-rose-500/10 text-rose-200"
-            }`}>
+            <div
+              className={`rounded-xl border p-3 text-xs ${
+                chipMode === "add"
+                  ? "border-amber-500/30 bg-amber-500/10 text-amber-200"
+                  : "border-rose-500/30 bg-rose-500/10 text-rose-200"
+              }`}
+            >
               {chipMode === "add" ? (
-                <>Superadmin can <span className="font-black">add unlimited</span> chips to this account.</>
+                <>
+                  Superadmin can <span className="font-black">add unlimited</span> chips to this
+                  account.
+                </>
               ) : (
                 <>Withdraw chips from this account (balance cannot go below ₱0).</>
               )}
             </div>
             <p className="text-xs text-muted-foreground">
-              Current balance: <span className="font-bold text-emerald-400">{formatMoney(user.balance)}</span>
+              Current balance:{" "}
+              <span className="font-bold text-emerald-400">{formatMoney(user.balance)}</span>
             </p>
             <div>
-              <label className="block text-[11px] font-bold uppercase text-muted-foreground mb-1">Chip Amount (₱)</label>
+              <label className="block text-[11px] font-bold uppercase text-muted-foreground mb-1">
+                Chip Amount (₱)
+              </label>
               <Input
                 type="number"
                 min={1}
@@ -664,11 +750,15 @@ function StaffActionModal({
               />
             </div>
             <div>
-              <label className="block text-[11px] font-bold uppercase text-muted-foreground mb-1">Note (Optional)</label>
+              <label className="block text-[11px] font-bold uppercase text-muted-foreground mb-1">
+                Note (Optional)
+              </label>
               <Input
                 value={chipNote}
                 onChange={(e) => setChipNote(e.target.value)}
-                placeholder={chipMode === "add" ? "e.g. Weekly agent float" : "e.g. Recall unused chips"}
+                placeholder={
+                  chipMode === "add" ? "e.g. Weekly agent float" : "e.g. Recall unused chips"
+                }
                 className="h-10 bg-white/[0.06] text-foreground"
               />
             </div>
@@ -707,27 +797,31 @@ function StaffActionModal({
         {/* MENU MODAL */}
         {type === "menu" && (
           <div className="space-y-4">
-            <div className={`p-3 rounded-xl border flex items-center justify-between font-bold text-xs ${
-              isLocked ? "border-rose-500/40 bg-rose-500/15 text-rose-300" : "border-emerald-500/40 bg-emerald-500/15 text-emerald-300"
-            }`}>
+            <div
+              className={`p-3 rounded-xl border flex items-center justify-between font-bold text-xs ${
+                isLocked
+                  ? "border-rose-500/40 bg-rose-500/15 text-rose-300"
+                  : "border-emerald-500/40 bg-emerald-500/15 text-emerald-300"
+              }`}
+            >
               <span>Current Account Status:</span>
-              <span className="font-black uppercase tracking-wider">{isLocked ? "🔒 LOCKED" : "🔓 UNLOCKED / ACTIVE"}</span>
+              <span className="font-black uppercase tracking-wider">
+                {isLocked ? "🔒 LOCKED" : "🔓 UNLOCKED / ACTIVE"}
+              </span>
             </div>
 
             <p className="text-xs text-muted-foreground">
               Manage <span className="font-bold text-amber-400">@{user.username}</span>
             </p>
             <div className="grid grid-cols-2 gap-2">
-              {(
-                [
-                  { type: "view" as const, label: "View" },
-                  { type: "profile" as const, label: "Profile" },
-                  { type: "addChips" as const, label: "Add / Withdraw" },
-                  { type: "copy" as const, label: "Copy ID" },
-                  { type: "security" as const, label: "Security Code" },
-                  { type: "suspicious" as const, label: "Risk Check" },
-                ]
-              ).map((item) => (
+              {[
+                { type: "view" as const, label: "View" },
+                { type: "profile" as const, label: "Profile" },
+                { type: "addChips" as const, label: "Add / Withdraw" },
+                { type: "copy" as const, label: "Copy ID" },
+                { type: "security" as const, label: "Security Code" },
+                { type: "suspicious" as const, label: "Risk Check" },
+              ].map((item) => (
                 <button
                   key={item.type}
                   type="button"
@@ -748,14 +842,18 @@ function StaffActionModal({
                       data: { userId: user.id, lock: !isLocked },
                     });
                     setIsLocked(res.isLocked === "yes");
-                    toast.success(`Account @${res.username} ${res.isLocked === "yes" ? "Locked" : "Unlocked"}!`);
+                    toast.success(
+                      `Account @${res.username} ${res.isLocked === "yes" ? "Locked" : "Unlocked"}!`,
+                    );
                     onActionComplete?.();
                   } catch (e) {
                     toast.error("Action failed");
                   }
                 }}
                 className={`p-3.5 rounded-xl border font-bold text-xs flex flex-col items-center gap-1.5 ${
-                  isLocked ? "border-emerald-500/40 bg-emerald-500/10 text-emerald-400" : "border-rose-500/40 bg-rose-500/10 text-rose-400"
+                  isLocked
+                    ? "border-emerald-500/40 bg-emerald-500/10 text-emerald-400"
+                    : "border-rose-500/40 bg-rose-500/10 text-rose-400"
                 }`}
               >
                 <span className="text-lg">{isLocked ? "🔓" : "🔒"}</span>
@@ -787,9 +885,15 @@ function StaffActionModal({
         {type === "suspicious" && (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="space-y-4">
-              <div className={`p-4 rounded-xl border text-center ${auditDetails?.isSuspicious ? "border-rose-500/40 bg-rose-500/10 text-rose-300" : "border-emerald-500/40 bg-emerald-500/10 text-emerald-300"}`}>
+              <div
+                className={`p-4 rounded-xl border text-center ${auditDetails?.isSuspicious ? "border-rose-500/40 bg-rose-500/10 text-rose-300" : "border-emerald-500/40 bg-emerald-500/10 text-emerald-300"}`}
+              >
                 <div className="text-2xl mb-1">{auditDetails?.isSuspicious ? "⚠️" : "🛡️"}</div>
-                <div className="font-black text-sm uppercase tracking-wider">{auditDetails?.isSuspicious ? "Suspicious Risk Flagged" : "Clear Security Posture"}</div>
+                <div className="font-black text-sm uppercase tracking-wider">
+                  {auditDetails?.isSuspicious
+                    ? "Suspicious Risk Flagged"
+                    : "Clear Security Posture"}
+                </div>
                 <div className="text-xs opacity-80 mt-1">{auditDetails?.statusText}</div>
               </div>
 
@@ -800,7 +904,9 @@ function StaffActionModal({
                 </div>
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Lock State:</span>
-                  <span className={`font-bold ${isLocked ? "text-rose-400" : "text-emerald-400"}`}>{isLocked ? "LOCKED" : "UNLOCKED"}</span>
+                  <span className={`font-bold ${isLocked ? "text-rose-400" : "text-emerald-400"}`}>
+                    {isLocked ? "LOCKED" : "UNLOCKED"}
+                  </span>
                 </div>
               </div>
             </div>
@@ -808,18 +914,24 @@ function StaffActionModal({
             <div className="flex flex-col rounded-xl border border-emerald-500/30 bg-[#090b10] overflow-hidden">
               <div className="flex items-center justify-between border-b border-emerald-500/20 bg-[#0e121a] px-3 py-2 text-[11px] font-mono text-emerald-400">
                 <span className="font-bold tracking-wider uppercase">STAFF_AUDIT.LOG</span>
-                <span className="text-[10px] text-emerald-500/70 font-mono">KodebyKarl Stream V1</span>
+                <span className="text-[10px] text-emerald-500/70 font-mono">
+                  KodebyKarl Stream V1
+                </span>
               </div>
               <div className="p-3 font-mono text-[11px] text-emerald-400/90 leading-relaxed overflow-y-auto max-h-[280px] min-h-[240px] space-y-2 bg-[#05070a]">
                 {auditDetails?.recentLogs && auditDetails.recentLogs.length > 0 ? (
                   auditDetails.recentLogs.map((log) => (
                     <div key={log.id} className="border-b border-emerald-500/10 pb-1.5">
-                      <div className="text-[10px] text-emerald-500/60">[{new Date(log.timestamp).toISOString().slice(0, 19)}] [{log.action}]</div>
+                      <div className="text-[10px] text-emerald-500/60">
+                        [{new Date(log.timestamp).toISOString().slice(0, 19)}] [{log.action}]
+                      </div>
                       <div className="text-emerald-300 pl-2">$ {log.summary}</div>
                     </div>
                   ))
                 ) : (
-                  <div className="text-emerald-500/50 py-8 text-center font-mono">[SYS_LOG] No audit records found.</div>
+                  <div className="text-emerald-500/50 py-8 text-center font-mono">
+                    [SYS_LOG] No audit records found.
+                  </div>
                 )}
               </div>
             </div>
@@ -843,7 +955,9 @@ function StaffActionModal({
             </div>
             <div className="flex justify-between">
               <span className="text-muted-foreground font-semibold">Balance:</span>
-              <span className="font-bold text-emerald-400 text-sm">{formatMoney(user.balance)}</span>
+              <span className="font-bold text-emerald-400 text-sm">
+                {formatMoney(user.balance)}
+              </span>
             </div>
           </div>
         )}

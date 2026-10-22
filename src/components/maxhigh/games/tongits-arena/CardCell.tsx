@@ -132,7 +132,11 @@ export function CardCell({
       <div
         className={cn(
           "relative h-full w-full ease-out [transform-style:preserve-3d]",
-          highlight && cn("rounded-[0.5rem] ring-[3px] ring-offset-2 ring-offset-[#0b3a26] short-h:ring-2 short-h:ring-offset-1", rim),
+          highlight &&
+            cn(
+              "rounded-[0.5rem] ring-[3px] ring-offset-2 ring-offset-[#0b3a26] short-h:ring-2 short-h:ring-offset-1",
+              rim,
+            ),
         )}
         style={{
           transform: showFace ? "rotateY(180deg)" : "rotateY(0deg)",

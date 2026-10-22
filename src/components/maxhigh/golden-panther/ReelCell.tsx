@@ -64,8 +64,7 @@ export const ReelCell = memo(function ReelCell({
   const row = Math.floor(index / cols);
   const popping = phase === "popping" && win;
   const isInitialDrop = phase === "dropping" && !!cell;
-  const isGravityDrop =
-    phase === "falling" && !!cell && (isSpawn || isFallen) && fallDist > 0;
+  const isGravityDrop = phase === "falling" && !!cell && (isSpawn || isFallen) && fallDist > 0;
   const dropRows = isInitialDrop ? row + 1.35 : fallDist;
 
   const isScatter = cell?.sym.kind === "lollipop";
@@ -83,13 +82,7 @@ export const ReelCell = memo(function ReelCell({
         phase === "dropping" || phase === "falling" || isScatter || isWinLit
           ? "overflow-visible"
           : "overflow-hidden",
-        isScatter
-          ? "z-[30]"
-          : isWinLit
-            ? "z-[3]"
-            : isInitialDrop || isGravityDrop
-              ? "z-[1]"
-              : "",
+        isScatter ? "z-[30]" : isWinLit ? "z-[3]" : isInitialDrop || isGravityDrop ? "z-[1]" : "",
       )}
     >
       {cell && (

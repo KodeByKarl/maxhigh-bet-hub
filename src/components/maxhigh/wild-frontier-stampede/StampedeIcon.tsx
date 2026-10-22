@@ -1,9 +1,9 @@
 /** Wild Frontier Stampede symbol tiles — wood-framed card art. */
 import { memo } from "react";
 import { cn } from "@/lib/utils";
-import type { BuffaloSymKind } from "@/lib/buffalo-reign-config";
+import type { StampedeSymKind } from "@/lib/wild-frontier-stampede-config";
 
-export const TILE_IMAGE_MAP: Record<BuffaloSymKind, string> = {
+export const TILE_IMAGE_MAP: Record<StampedeSymKind, string> = {
   sym_10: "/images/symbols/buffalo-reign/sym_10.png",
   sym_j: "/images/symbols/buffalo-reign/sym_j.png",
   sym_q: "/images/symbols/buffalo-reign/sym_q.png",
@@ -23,7 +23,7 @@ export const TILE_IMAGE_MAP: Record<BuffaloSymKind, string> = {
 };
 
 type Props = {
-  kind: BuffaloSymKind;
+  kind: StampedeSymKind;
   className?: string;
   winning?: boolean;
 };

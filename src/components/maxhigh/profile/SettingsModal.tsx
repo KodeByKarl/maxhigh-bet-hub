@@ -1,15 +1,5 @@
 import { useEffect, useState, type ReactNode } from "react";
-import {
-  Settings,
-  User,
-  Gamepad2,
-  Bell,
-  Shield,
-  Volume2,
-  Eye,
-  EyeOff,
-  Save,
-} from "lucide-react";
+import { Settings, User, Gamepad2, Bell, Shield, Volume2, Eye, EyeOff, Save } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -19,11 +9,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { useAuth } from "@/lib/auth";
-import {
-  loadPreferences,
-  savePreferences,
-  type AppPreferences,
-} from "@/lib/preferences";
+import { loadPreferences, savePreferences, type AppPreferences } from "@/lib/preferences";
 import { changePasswordFn } from "@/functions/api";
 import { useTranslation } from "@/lib/i18n";
 import { toast } from "sonner";
@@ -118,7 +104,8 @@ export function SettingsModal({ open, onOpenChange }: Props) {
   ];
 
   function getPasswordStrength(pwd: string) {
-    if (!pwd) return { score: 0, label: "None", color: "bg-border", textClass: "text-muted-foreground" };
+    if (!pwd)
+      return { score: 0, label: "None", color: "bg-border", textClass: "text-muted-foreground" };
     let score = 0;
     if (pwd.length >= 8) score++;
     if (/[A-Z]/.test(pwd)) score++;
@@ -126,8 +113,10 @@ export function SettingsModal({ open, onOpenChange }: Props) {
     if (/[0-9]/.test(pwd)) score++;
     if (/[^A-Za-z0-9]/.test(pwd)) score++;
 
-    if (score <= 2) return { score, label: t("Weak"), color: "bg-rose-500", textClass: "text-rose-400" };
-    if (score <= 4) return { score, label: t("Medium"), color: "bg-amber-500", textClass: "text-amber-400" };
+    if (score <= 2)
+      return { score, label: t("Weak"), color: "bg-rose-500", textClass: "text-rose-400" };
+    if (score <= 4)
+      return { score, label: t("Medium"), color: "bg-amber-500", textClass: "text-amber-400" };
     return { score, label: t("Strong"), color: "bg-emerald-500", textClass: "text-emerald-400" };
   }
 
@@ -227,8 +216,11 @@ export function SettingsModal({ open, onOpenChange }: Props) {
           <div className="min-h-0 overflow-y-auto p-4 sm:p-5">
             {section === "account" && (
               <div className="space-y-4">
-                <SectionHead title={t("Change Password")} subtitle={t("Update your MaxHigh account credentials.")} />
-                
+                <SectionHead
+                  title={t("Change Password")}
+                  subtitle={t("Update your MaxHigh account credentials.")}
+                />
+
                 <Field label={t("Old Password")}>
                   <div className="relative">
                     <Input
@@ -315,12 +307,14 @@ export function SettingsModal({ open, onOpenChange }: Props) {
                               "flex h-4 w-4 shrink-0 items-center justify-center rounded-full border text-[9px] font-bold",
                               passed
                                 ? "border-emerald-500 bg-emerald-500/10 text-emerald-500"
-                                : "border-border text-muted-foreground"
+                                : "border-border text-muted-foreground",
                             )}
                           >
                             {passed ? "✓" : "•"}
                           </span>
-                          <span className={cn(passed ? "text-foreground" : "text-muted-foreground")}>
+                          <span
+                            className={cn(passed ? "text-foreground" : "text-muted-foreground")}
+                          >
                             {t(rule.label)}
                           </span>
                         </div>
@@ -362,13 +356,19 @@ export function SettingsModal({ open, onOpenChange }: Props) {
                   </button>
 
                   {saveStatus === "saving" && (
-                    <span className="text-xs text-muted-foreground animate-pulse">{t("Saving changes…")}</span>
+                    <span className="text-xs text-muted-foreground animate-pulse">
+                      {t("Saving changes…")}
+                    </span>
                   )}
                   {saveStatus === "success" && (
-                    <span className="text-xs text-emerald-400 font-medium">✓ {t("Saved successfully")}</span>
+                    <span className="text-xs text-emerald-400 font-medium">
+                      ✓ {t("Saved successfully")}
+                    </span>
                   )}
                   {saveStatus === "error" && (
-                    <span className="text-xs text-rose-400 font-medium">✗ {t("Failed to save")}</span>
+                    <span className="text-xs text-rose-400 font-medium">
+                      ✗ {t("Failed to save")}
+                    </span>
                   )}
                 </div>
               </div>

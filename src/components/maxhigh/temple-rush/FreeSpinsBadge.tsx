@@ -1,15 +1,7 @@
-import { TempleRushFeatureBadge } from "./TempleRushFeatureBadge";
+import { PantherFeatureBadge } from "./PantherFeatureBadge";
 
 /** Panther-cane FREE SPINS LEFT counter. */
-export function FreeSpinsBadge({
-  count,
-  className,
-}: {
-  count: number;
-  className?: string;
-}) {
+export function FreeSpinsBadge({ count, className }: { count: number; className?: string }) {
   if (count <= 0) return null;
-  return (
-    <TempleRushFeatureBadge variant="freespins" value={count} className={className} />
-  );
+  return <PantherFeatureBadge variant="freespins" value={count} className={className} />;
 }

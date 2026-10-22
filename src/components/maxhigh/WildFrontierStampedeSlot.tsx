@@ -1,5 +1,5 @@
 ﻿/**
- * Buffalo Reign — polished layout matching Candy Peak chrome.
+ * Wild Frontier Stampede — polished layout matching Candy Peak chrome.
  * Engine resolves spins instantly; this file plays back the animation script.
  */
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -9,20 +9,20 @@ import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/lib/auth";
 import { formatMoney, formatMoneyCompact } from "@/lib/currency";
-import { DEFAULT_BUFFALO_REIGN_CONFIG } from "@/lib/buffalo-reign-config";
-import { getBuffaloReignEngineConfigFn } from "@/functions/superadmin";
+import { DEFAULT_STAMPEDE_CONFIG } from "@/lib/wild-frontier-stampede-config";
 import {
-  getBuffaloReignSessionFn,
-  buffaloReignBuyFeatureFn,
-  buffaloReignFreeSpinFn,
-  buffaloReignSpinFn,
+  getStampedeEngineConfigFn,
+  getStampedeSessionFn,
+  stampedeBuyFeatureFn,
+  stampedeFreeSpinFn,
+  stampedeSpinFn,
 } from "@/functions/api";
 import { ANIM } from "./wild-frontier-stampede/animationConfig";
 import { stampedeAudio } from "./wild-frontier-stampede/audio";
 import { TILE_IMAGE_MAP } from "./wild-frontier-stampede/StampedeIcon";
 import { StampedeSidePanel } from "./wild-frontier-stampede/StampedeSidePanel";
 import { ReelCell, type ReelPhase } from "./wild-frontier-stampede/ReelCell";
-import { getBuffaloReignConfig, setBuffaloReignConfig } from "./wild-frontier-stampede/runtimeConfig";
+import { getStampedeConfig, setStampedeConfig } from "./wild-frontier-stampede/runtimeConfig";
 import type { BoardCell, SpinScript } from "./wild-frontier-stampede/types";
 
 type WildFrontierStampedeSlotProps = {
@@ -36,7 +36,7 @@ const EMPTY_FALL: Record<string, number> = Object.freeze({}) as Record<string, n
 const BET_STEPS = [1, 2, 5, 10, 20, 50, 100];
 
 function createInitialBoard(): BoardCell[] {
-  const symbols = DEFAULT_BUFFALO_REIGN_CONFIG.symbols;
+  const symbols = DEFAULT_STAMPEDE_CONFIG.symbols;
   const board: BoardCell[] = [];
   let keyCounter = 1;
 
@@ -128,7 +128,7 @@ export function WildFrontierStampedeSlot({ onBalanceUpdate }: WildFrontierStampe
   const isGlowing = phase === "glow";
   const isPopping = phase === "popping";
   const isFalling = phase === "falling";
-  const engineCfg = getBuffaloReignConfig();
+  const engineCfg = getStampedeConfig();
   const anteMult = engineCfg.anteBetMult;
   const buyMult = engineCfg.buyFeatureMult;
   const totalBet = +(bet * (ante ? anteMult : 1)).toFixed(2);
@@ -169,14 +169,14 @@ export function WildFrontierStampedeSlot({ onBalanceUpdate }: WildFrontierStampe
     mountedRef.current = true;
     preloadAssets();
     stampedeAudio.preload();
-    void getBuffaloReignEngineConfigFn()
+    void getStampedeEngineConfigFn()
       .then((cfg) => {
         if (!mountedRef.current) return;
-        setBuffaloReignConfig(cfg);
+        setStampedeConfig(cfg);
         setCfgTick((n) => n + 1);
       })
       .catch(() => undefined);
-    getBuffaloReignSessionFn()
+    getStampedeSessionFn()
       .then((sess) => {
         if (sess && sess.inFree && mountedRef.current) {
           setSessionId(sess.sessionId);
@@ -198,9 +198,9 @@ export function WildFrontierStampedeSlot({ onBalanceUpdate }: WildFrontierStampe
 
   const refreshEngineConfig = useCallback(async () => {
     try {
-      const cfg = await getBuffaloReignEngineConfigFn();
+      const cfg = await getStampedeEngineConfigFn();
       if (!mountedRef.current) return;
-      setBuffaloReignConfig(cfg);
+      setStampedeConfig(cfg);
       setCfgTick((n) => n + 1);
     } catch {
       /* keep current */
@@ -226,10 +226,7 @@ export function WildFrontierStampedeSlot({ onBalanceUpdate }: WildFrontierStampe
       setBoard([]);
       await wait(32, gen);
       setBoard(script.initialBoard);
-      await wait(
-        ANIM.dropDuration + COLS * ANIM.dropStaggerCol + ROWS * ANIM.dropStaggerRow,
-        gen,
-      );
+      await wait(ANIM.dropDuration + COLS * ANIM.dropStaggerCol + ROWS * ANIM.dropStaggerRow, gen);
       stampedeAudio.playReelStop();
 
       let cascadeWin = 0;
@@ -259,10 +256,7 @@ export function WildFrontierStampedeSlot({ onBalanceUpdate }: WildFrontierStampe
         await wait(ANIM.glowDuration, gen);
 
         setPhase("popping");
-        await wait(
-          ANIM.popDuration + Math.min(winKeys.length, 12) * ANIM.popStagger,
-          gen,
-        );
+        await wait(ANIM.popDuration + Math.min(winKeys.length, 12) * ANIM.popStagger, gen);
 
         setWinningKeys(EMPTY_SET);
         await wait(ANIM.holeHold, gen);
@@ -333,7 +327,7 @@ export function WildFrontierStampedeSlot({ onBalanceUpdate }: WildFrontierStampe
     try {
       await refreshEngineConfig();
       if (inFree && sessionId) {
-        const res = await buffaloReignFreeSpinFn({ data: { sessionId } });
+        const res = await stampedeFreeSpinFn({ data: { sessionId } });
         if (abortIfStale()) return;
         setSessionId(res.session.sessionId);
         setFreeSpinsLeft(res.session.freeSpinsLeft);
@@ -348,7 +342,7 @@ export function WildFrontierStampedeSlot({ onBalanceUpdate }: WildFrontierStampe
           });
         }
       } else {
-        const res = await buffaloReignSpinFn({ data: { bet, ante } });
+        const res = await stampedeSpinFn({ data: { bet, ante } });
         if (abortIfStale()) return;
         const triggeredFs = res.session.inFree;
         if (triggeredFs) {
@@ -398,7 +392,7 @@ export function WildFrontierStampedeSlot({ onBalanceUpdate }: WildFrontierStampe
     stampedeAudio.playSpin();
 
     try {
-      const res = await buffaloReignBuyFeatureFn({ data: { bet } });
+      const res = await stampedeBuyFeatureFn({ data: { bet } });
       if (!mountedRef.current || gen !== playbackGen.current) return;
       if (res.session.inFree) {
         setSessionId(res.session.sessionId);
@@ -719,9 +713,7 @@ export function WildFrontierStampedeSlot({ onBalanceUpdate }: WildFrontierStampe
                       onClick={() => setAnte((v) => !v)}
                       className={cn(
                         "rounded-lg border-2 border-[#E8C547] px-3 py-1.5 text-[10px] font-black uppercase",
-                        ante
-                          ? "bg-[#F5D76E] text-[#450a0a]"
-                          : "bg-[#14532d] text-[#F5D76E]",
+                        ante ? "bg-[#F5D76E] text-[#450a0a]" : "bg-[#14532d] text-[#F5D76E]",
                       )}
                     >
                       Ante {ante ? "ON" : "OFF"}
@@ -844,11 +836,7 @@ export function WildFrontierStampedeSlot({ onBalanceUpdate }: WildFrontierStampe
                               strokeWidth="2.4"
                             >
                               <path d="M21 12a9 9 0 1 1-3-6.7" strokeLinecap="round" />
-                              <path
-                                d="M21 3v6h-6"
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                              />
+                              <path d="M21 3v6h-6" strokeLinecap="round" strokeLinejoin="round" />
                             </svg>
                           ) : (
                             <svg
@@ -859,11 +847,7 @@ export function WildFrontierStampedeSlot({ onBalanceUpdate }: WildFrontierStampe
                               strokeWidth="2.4"
                             >
                               <path d="M21 12a9 9 0 1 1-3-6.7" strokeLinecap="round" />
-                              <path
-                                d="M21 3v6h-6"
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                              />
+                              <path d="M21 3v6h-6" strokeLinecap="round" strokeLinejoin="round" />
                             </svg>
                           )}
                         </button>
@@ -952,16 +936,14 @@ export function WildFrontierStampedeSlot({ onBalanceUpdate }: WildFrontierStampe
               >
                 <h3 className="mb-1 text-lg font-black text-[#F5D76E]">BUY FREE SPINS</h3>
                 <p className="mb-3 text-xs text-amber-100/80">
-                  Instantly trigger Free Spins (12 base +2 per extra scatter) with progressive cascade
-                  multipliers (×2 → ×10).
+                  Instantly trigger Free Spins (12 base +2 per extra scatter) with progressive
+                  cascade multipliers (×2 → ×10).
                 </p>
                 <div className="mb-4 rounded-xl border border-[#E8C547]/30 bg-black/40 p-3">
                   <span className="block text-[10px] font-semibold uppercase text-amber-400">
                     Cost
                   </span>
-                  <span className="text-2xl font-black text-[#F5D76E]">
-                    {formatMoney(buyCost)}
-                  </span>
+                  <span className="text-2xl font-black text-[#F5D76E]">{formatMoney(buyCost)}</span>
                 </div>
                 <div className="flex gap-3">
                   <button

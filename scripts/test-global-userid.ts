@@ -23,8 +23,22 @@ async function run() {
   const pwd = await hash("testpass", 4);
 
   await db.insert(users).values([
-    { id: ma1, username: `ma1_${TAG}`, publicUserId: `ma1_${TAG}`, passwordHash: pwd, role: "master_agent", balance: "0" },
-    { id: ma2, username: `ma2_${TAG}`, publicUserId: `ma2_${TAG}`, passwordHash: pwd, role: "master_agent", balance: "0" },
+    {
+      id: ma1,
+      username: `ma1_${TAG}`,
+      publicUserId: `ma1_${TAG}`,
+      passwordHash: pwd,
+      role: "master_agent",
+      balance: "0",
+    },
+    {
+      id: ma2,
+      username: `ma2_${TAG}`,
+      publicUserId: `ma2_${TAG}`,
+      passwordHash: pwd,
+      role: "master_agent",
+      balance: "0",
+    },
     {
       id: ag1,
       username: `aga_${TAG}`,

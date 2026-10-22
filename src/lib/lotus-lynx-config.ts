@@ -221,7 +221,11 @@ const LEGACY_PAY_TABLES: Record<string, [number, number, number][]> = {
 
 function paysMatch(pay: unknown, expected: [number, number, number]): boolean {
   if (!Array.isArray(pay) || pay.length < 3) return false;
-  return num(pay[0], NaN) === expected[0] && num(pay[1], NaN) === expected[1] && num(pay[2], NaN) === expected[2];
+  return (
+    num(pay[0], NaN) === expected[0] &&
+    num(pay[1], NaN) === expected[1] &&
+    num(pay[2], NaN) === expected[2]
+  );
 }
 
 function isLegacyDefaultPay(id: string, pay: unknown): boolean {

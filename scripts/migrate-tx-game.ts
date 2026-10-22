@@ -1,3 +1,4 @@
+import type { RowDataPacket } from "mysql2";
 import "dotenv/config";
 import mysql from "mysql2/promise";
 
@@ -10,16 +11,14 @@ async function main() {
     database: process.env.MYSQL_DATABASE || "maxhigh",
   });
 
-  const [cols] = await c.query<any[]>(
+  const [cols] = await c.query<RowDataPacket[]>(
     `SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS
      WHERE TABLE_SCHEMA = ? AND TABLE_NAME = 'transactions' AND COLUMN_NAME = 'game'`,
     [process.env.MYSQL_DATABASE || "maxhigh"],
   );
 
   if (!cols.length) {
-    await c.query(
-      `ALTER TABLE transactions ADD COLUMN game VARCHAR(64) NULL AFTER balance_after`,
-    );
+    await c.query(`ALTER TABLE transactions ADD COLUMN game VARCHAR(64) NULL AFTER balance_after`);
     console.log("Added transactions.game");
   } else {
     console.log("transactions.game already exists");

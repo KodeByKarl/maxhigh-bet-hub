@@ -64,7 +64,9 @@ export function enforcePoolCap(input: PoolCapInput): PoolCapResult {
           alreadyCredited: input.alreadyCredited,
         });
 
-  const payout = Number.isFinite(remainingPool) ? money2(Math.min(computedWin, remainingPool)) : computedWin;
+  const payout = Number.isFinite(remainingPool)
+    ? money2(Math.min(computedWin, remainingPool))
+    : computedWin;
   const clamped = computedWin - payout > 0.001;
   const excess = clamped ? money2(computedWin - payout) : 0;
 

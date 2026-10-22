@@ -1,51 +1,25 @@
 import type { CellSym, SymKind } from "./types";
 import { getGodlyGatesConfig, getRuntimeSymbols } from "./runtimeConfig";
+import { godlyGatesTheme } from "./theme";
+import { pantherBuyPricePerSpin } from "@/components/maxhigh/panther-shared/buyPricing";
 
-/** Default symbol table snapshot. Prefer getRuntimeSymbols() in the engine. */
+/** Default symbol table (also used before config hydrate). Prefer getRuntimeSymbols() in engine. */
 export const SYMBOLS: CellSym[] = getRuntimeSymbols().map((s) => ({
   ...s,
-  pay: [...s.pay] as [number, number, number, number],
+  pay: [...s.pay] as [number, number, number],
 }));
 
-export const ICON_SRC: Record<SymKind, string> = {
-  ten: "/images/symbols/godly-gates/ten.png",
-  jack: "/images/symbols/godly-gates/jack.png",
-  queen: "/images/symbols/godly-gates/queen.png",
-  king: "/images/symbols/godly-gates/king.png",
-  ace: "/images/symbols/godly-gates/ace.png",
-  scarab: "/images/symbols/godly-gates/scarab.png",
-  ankh: "/images/symbols/godly-gates/ankh.png",
-  horus: "/images/symbols/godly-gates/horus.png",
-  anubis: "/images/symbols/godly-gates/anubis.png",
-  pharaoh: "/images/symbols/godly-gates/pharaoh.png",
-  wild: "/images/symbols/godly-gates/wild.png",
-  scatter: "/images/symbols/godly-gates/scatter.png",
-};
+export const ICON_SRC: Record<SymKind, string> = { ...godlyGatesTheme.assets.icons };
 
-export const SYM_COLORS: Record<
-  SymKind,
-  { primary: string; secondary: string; glow: string; label: string }
-> = {
-  ten: { primary: "#86efac", secondary: "#15803d", glow: "#4ade80", label: "10" },
-  jack: { primary: "#93c5fd", secondary: "#1d4ed8", glow: "#60a5fa", label: "J" },
-  queen: { primary: "#c4b5fd", secondary: "#6d28d9", glow: "#a78bfa", label: "Q" },
-  king: { primary: "#fca5a5", secondary: "#b91c1c", glow: "#f87171", label: "K" },
-  ace: { primary: "#5eead4", secondary: "#0f766e", glow: "#2dd4bf", label: "A" },
-  scarab: { primary: "#5eead4", secondary: "#0f766e", glow: "#2dd4bf", label: "Scarab" },
-  ankh: { primary: "#c4b5fd", secondary: "#6d28d9", glow: "#a78bfa", label: "Ankh" },
-  horus: { primary: "#86efac", secondary: "#15803d", glow: "#4ade80", label: "Horus" },
-  anubis: { primary: "#93c5fd", secondary: "#1e3a8a", glow: "#60a5fa", label: "Anubis" },
-  pharaoh: { primary: "#f9a8d4", secondary: "#be185d", glow: "#f472b6", label: "Pharaoh" },
-  wild: { primary: "#fde68a", secondary: "#b45309", glow: "#fbbf24", label: "WILD" },
-  scatter: { primary: "#fef3c7", secondary: "#92400e", glow: "#f59e0b", label: "SCATTER" },
-};
-
-export function payForLength(sym: CellSym, length: number): number {
-  if (length < 3 || length > 6) return 0;
-  return sym.pay[length - 3] ?? 0;
+export function payForCount(sym: CellSym, count: number): number {
+  const min = getGodlyGatesConfig().minCluster;
+  if (count >= min + 4) return sym.pay[2];
+  if (count >= min + 2) return sym.pay[1];
+  if (count >= min) return sym.pay[0];
+  return 0;
 }
 
-/** Scatter cash when landing gates (tiers from config). */
+/** Scatter cash when landing panther canes (tiers from config). */
 export function scatterCashPay(count: number, bet: number): number {
   const tiers = [...getGodlyGatesConfig().scatterCashTiers].sort((a, b) => b.count - a.count);
   for (const t of tiers) {
@@ -57,32 +31,45 @@ export function scatterCashPay(count: number, bet: number): number {
 export function getBuyFeatureMult() {
   return getGodlyGatesConfig().buyFeatureMult;
 }
+/** Most free spins one Buy Bonus can purchase (never above the FS session cap). */
+export function getBuyMaxQuantity() {
+  const cap = getGodlyGatesConfig().maxFsSessionSpins;
+  return cap > 0 ? Math.min(50, cap) : 50;
+}
 
+export function getSuperBuyFeatureMult() {
+  return getGodlyGatesConfig().superBuyFeatureMult;
+}
+
+/** Buy Bonus always opens on this bet (reference: ₱1 → Price ₱42.5). */
+export const BUY_FS_START_BET = 1;
+export const BUY_FS_BET_MIN = 1;
+export const BUY_FS_BET_MAX = 100_000;
+
+/** Price of one free spin at `bet` when buying `quantity` spins (fair per-quantity curve). */
+export function getBuyUnitPrice(bet: number, quantity = 1) {
+  const cfg = getGodlyGatesConfig();
+  return +(
+    bet * pantherBuyPricePerSpin("godly-gates", cfg.buyFeatureMult, cfg.freeSpinsBase, quantity)
+  ).toFixed(2);
+}
+export function getAnteMult() {
+  return getGodlyGatesConfig().anteBetMult;
+}
+export function getFreeSpinsBase() {
+  return getGodlyGatesConfig().freeSpinsBase;
+}
 export function getFreeSpinsRetrigger() {
   return getGodlyGatesConfig().freeSpinsRetrigger;
 }
 
-export function getFsMultStart() {
-  return getGodlyGatesConfig().fsMultStart;
-}
-
-export function getFsMultStep() {
-  return getGodlyGatesConfig().fsMultStep;
-}
-
 /** @deprecated use getters — kept for existing imports */
-export const FREE_SPINS_AWARDS: Record<number, number> = {
-  3: 10,
-  4: 12,
-  5: 15,
-  6: 20,
-};
+export const BUY_FEATURE_MULT = 42.5;
+export const SUPER_BUY_FEATURE_MULT = 212.5;
+export const ANTE_MULT = 1.25;
+export const FREE_SPINS_BASE = 10;
 export const FREE_SPINS_RETRIGGER = 5;
-export const BUY_FEATURE_MULT = 80;
-export const FS_MULT_START = 1;
-export const FS_MULT_STEP = 1;
 
-export const ASSET = {
-  backdrop: "/images/symbols/godly-gates/backdrop.webp?v=3",
-  mascot: "/images/symbols/godly-gates/mascot-cut.webp?v=4",
-} as const;
+export const BET_STEPS = [
+  0.2, 0.4, 0.6, 0.8, 1, 1.2, 1.6, 2, 2.4, 3, 4, 5, 6.25, 8, 10, 20, 50, 100,
+];

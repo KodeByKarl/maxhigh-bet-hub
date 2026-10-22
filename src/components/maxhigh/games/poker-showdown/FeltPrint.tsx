@@ -51,8 +51,7 @@ function Plaque({ title, rows, tone }: { title: string; rows: Row[]; tone: strin
     <div
       className="rounded-lg px-2.5 py-1.5"
       style={{
-        background:
-          "linear-gradient(180deg, rgba(24,20,14,0.94), rgba(8,7,5,0.94))",
+        background: "linear-gradient(180deg, rgba(24,20,14,0.94), rgba(8,7,5,0.94))",
         boxShadow: `0 0 0 1px ${tone}66, inset 0 1px 0 rgba(255,255,255,0.12), 0 6px 16px rgba(0,0,0,0.55)`,
       }}
     >
@@ -132,7 +131,13 @@ export function PayTables({ cfg, className }: { cfg: PokerShowdownConfig; classN
  * light, layered weave texture, and a heavy vignette so it reads as real cloth
  * under a pit light rather than a flat plastic panel.
  */
-export function FeltSurface({ children, className }: { children: React.ReactNode; className?: string }) {
+export function FeltSurface({
+  children,
+  className,
+}: {
+  children: React.ReactNode;
+  className?: string;
+}) {
   return (
     <div
       className={cn("relative overflow-hidden isolate", className)}

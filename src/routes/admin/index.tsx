@@ -10,15 +10,7 @@ import { useAuth } from "@/lib/auth";
 import { isStaffRole } from "@/lib/user";
 import { adminGlass, adminGlassElevated } from "@/components/admin/ui/glass";
 import { AGENT_MASTER_PROMOTE_HINT } from "@/lib/agent-promotion";
-import {
-  Plus,
-  ScrollText,
-  Users,
-  Headphones,
-  ShieldCheck,
-  ArrowRight,
-  Clock,
-} from "lucide-react";
+import { Plus, ScrollText, Users, Headphones, ShieldCheck, ArrowRight, Clock } from "lucide-react";
 
 export const Route = createFileRoute("/admin/")({
   component: AdminDashboardPage,
@@ -47,11 +39,7 @@ function AdminDashboardPage() {
 
   const firstName = (user?.displayName || user?.username || "Admin").split(" ")[0];
   const roleLabel =
-    user?.role === "master_agent"
-      ? "Master Agent"
-      : user?.role === "agent"
-        ? "Agent"
-        : "Admin";
+    user?.role === "master_agent" ? "Master Agent" : user?.role === "agent" ? "Agent" : "Admin";
 
   useEffect(() => {
     if (!isReady || !user || !isStaffRole(user.role)) return;
@@ -64,7 +52,9 @@ function AdminDashboardPage() {
         if (!cancelled) setStats(null);
       }
     })();
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, [isReady, user]);
 
   useEffect(() => {
@@ -80,7 +70,9 @@ function AdminDashboardPage() {
         if (!cancelled) setLogs([]);
       }
     })();
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, [isReady, user, selectedDay]);
 
   const timeStr = now.toLocaleTimeString("en-PH", {
@@ -96,7 +88,6 @@ function AdminDashboardPage() {
 
   return (
     <div className="space-y-4 pb-2 sm:space-y-5 sm:pb-8">
-
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <div className="mb-1.5 inline-flex items-center gap-1.5 rounded-full border border-violet-400/30 bg-violet-500/[0.12] px-2.5 py-1 text-[10px] font-bold uppercase tracking-widest text-violet-300 sm:mb-2 sm:px-3 sm:text-[11px]">
@@ -154,7 +145,6 @@ function AdminDashboardPage() {
 
       {/* ── Quick Actions + Wallet Rules ──────────────────────────── */}
       <div className="grid gap-4 lg:grid-cols-2">
-
         {/* Quick Actions */}
         <div className={`${adminGlass} space-y-3 p-4 sm:space-y-4 sm:p-5`}>
           <div className="flex items-center justify-between border-b border-white/[0.06] pb-3">
@@ -194,7 +184,7 @@ function AdminDashboardPage() {
               <Link
                 key={label}
                 to={to}
-                params={params as any}
+                params={params}
                 className={`${adminGlassElevated} flex items-center justify-between p-3.5 group`}
               >
                 <div className="flex items-center gap-3">
@@ -240,8 +230,6 @@ function AdminDashboardPage() {
                 .
               </p>
             </div>
-
-
           </div>
         </div>
       </div>

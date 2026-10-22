@@ -20,8 +20,7 @@ export type ReelCellProps = {
 };
 
 /** Pointy-top hex — soft enough that padded icons stay fully visible. */
-const HEX_CLIP =
-  "polygon(50% 2%, 96% 26%, 96% 74%, 50% 98%, 4% 74%, 4% 26%)";
+const HEX_CLIP = "polygon(50% 2%, 96% 26%, 96% 74%, 50% 98%, 4% 74%, 4% 26%)";
 
 function cellPhaseRelevant(props: ReelCellProps, phase: ReelPhase): boolean {
   if (!props.cell) return phase === "dropping" || phase === "falling";
@@ -57,8 +56,7 @@ export const ReelCell = memo(function ReelCell({
 }: ReelCellProps) {
   const popping = phase === "popping" && win;
   const isInitialDrop = phase === "dropping" && !!cell;
-  const isGravityDrop =
-    phase === "falling" && !!cell && (isSpawn || isFallen) && fallDist > 0;
+  const isGravityDrop = phase === "falling" && !!cell && (isSpawn || isFallen) && fallDist > 0;
   const dropRows = isInitialDrop ? row + 1.35 : fallDist;
 
   const isScatter = cell?.sym.kind === "lollipop";

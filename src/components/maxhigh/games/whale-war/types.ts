@@ -1,9 +1,4 @@
-import type {
-  CrateDropId,
-  FishTierId,
-  PowerUpId,
-  WeaponTierId,
-} from "@/lib/whale-war-config";
+import type { CrateDropId, FishTierId, PowerUpId, WeaponTierId } from "@/lib/whale-war-config";
 import type { CrateDropResult, ShotResolveResult } from "./hitResolver";
 import type { SwimPathKind } from "./animationConfig";
 

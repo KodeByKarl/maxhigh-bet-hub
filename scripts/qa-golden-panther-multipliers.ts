@@ -16,7 +16,10 @@ import { gameControls } from "../src/server/db/schema";
 import { setGoldenPantherConfig } from "../src/components/maxhigh/golden-panther/runtimeConfig";
 import { resolveSpin } from "../src/components/maxhigh/golden-panther/spinResolver";
 import { evaluateBoard } from "../src/components/maxhigh/golden-panther/tumbleEngine";
-import { applyBombToTumble, finalizeFreeSpinTotal } from "../src/components/maxhigh/golden-panther/multiplierEngine";
+import {
+  applyBombToTumble,
+  finalizeFreeSpinTotal,
+} from "../src/components/maxhigh/golden-panther/multiplierEngine";
 
 const ALLOWED = new Set<number>(GOLDEN_PANTHER_BOMB_MULTS);
 const PAID_SPINS = 1500;
@@ -45,7 +48,11 @@ async function loadCfg() {
 
 type Fail = string;
 
-function checkBoardBombs(board: { sym: { kind: string }; mult?: number }[], fails: Fail[], tag: string) {
+function checkBoardBombs(
+  board: { sym: { kind: string }; mult?: number }[],
+  fails: Fail[],
+  tag: string,
+) {
   for (const cell of board) {
     if (cell?.sym.kind !== "bomb") continue;
     const m = cell.mult ?? 0;
@@ -155,7 +162,9 @@ async function main() {
     const expectedMult = Math.max(1, accOut);
     const expectPay = +(earned * expectedMult).toFixed(2);
     if (Math.abs(projected - expectPay) > 0.02) {
-      fails.push(`fs#${i + 1}: end ${php(earned)} × ${expectedMult}x = ${php(expectPay)}, got ${php(projected)}`);
+      fails.push(
+        `fs#${i + 1}: end ${php(earned)} × ${expectedMult}x = ${php(expectPay)}, got ${php(projected)}`,
+      );
     } else if (expectedMult > 1 && earned > 0 && samples.length < 18) {
       samples.push(`FS: earn ${php(earned)} × ${expectedMult}x = ${php(projected)}`);
     }
@@ -165,15 +174,31 @@ async function main() {
   console.log("GOLDEN PANTHER — MULTIPLIER QA");
   console.log("============================================================");
   console.log(`Allowed bombs:  ${[...GOLDEN_PANTHER_BOMB_MULTS].map((n) => `${n}x`).join(", ")}`);
-  console.log(`Config table:   ${cfg.bombTable.map((b) => `${b.mult}x w=${b.weight}`).join(" | ")}`);
+  console.log(
+    `Config table:   ${cfg.bombTable.map((b) => `${b.mult}x w=${b.weight}`).join(" | ")}`,
+  );
   console.log(`Paid spins:     ${PAID_SPINS}`);
   console.log(`Free spins:     ${FS_SPINS}`);
   console.log(`Stake:          ${php(BET)}`);
   console.log(`Cluster wins:   ${clusterWins}`);
   console.log(`Base bomb wins: ${bombWins}`);
   console.log(`FS bomb steps:  ${fsBombWins}`);
-  console.log(`Bombs on reels: ${[...seenBombs].sort((a, b) => a - b).map((n) => `${n}x`).join(", ") || "none"}`);
-  console.log(`Applied bombs:  ${[...seenApplied].sort((a, b) => a - b).map((n) => `${n}x`).join(", ") || "none"}`);
+  console.log(
+    `Bombs on reels: ${
+      [...seenBombs]
+        .sort((a, b) => a - b)
+        .map((n) => `${n}x`)
+        .join(", ") || "none"
+    }`,
+  );
+  console.log(
+    `Applied bombs:  ${
+      [...seenApplied]
+        .sort((a, b) => a - b)
+        .map((n) => `${n}x`)
+        .join(", ") || "none"
+    }`,
+  );
   console.log("------------------------------------------------------------");
   for (const s of samples) console.log(`  ${s}`);
   console.log("------------------------------------------------------------");

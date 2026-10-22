@@ -42,7 +42,9 @@ export function AdminPlatformPulse({
         if (!cancelled) {
           setPulse(data);
           // Trigger bar animation after data loads
-          setTimeout(() => { if (!cancelled) setAnimate(true); }, 80);
+          setTimeout(() => {
+            if (!cancelled) setAnimate(true);
+          }, 80);
         }
       } catch {
         if (!cancelled) setPulse(null);
@@ -50,7 +52,9 @@ export function AdminPlatformPulse({
         if (!cancelled) setLoading(false);
       }
     })();
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, [selectedDay]);
 
   const allVals = [
@@ -114,7 +118,7 @@ export function AdminPlatformPulse({
           </div>
         </div>
         <span className="rounded-full border border-white/10 bg-white/[0.04] px-2.5 py-1 text-[11px] font-semibold text-white/50">
-          {loading ? "Loading…" : pulse?.dateLabel ?? "—"}
+          {loading ? "Loading…" : (pulse?.dateLabel ?? "—")}
         </span>
       </div>
 
@@ -146,13 +150,15 @@ export function AdminPlatformPulse({
           { label: "Sessions", value: pulse?.labels.sessions ?? "—" },
           {
             label: "Net",
-            value:
-              pulse
-                ? `₱${Math.max(0, pulse.betVolume - pulse.winVolume).toLocaleString("en-PH", { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`
-                : "—",
+            value: pulse
+              ? `₱${Math.max(0, pulse.betVolume - pulse.winVolume).toLocaleString("en-PH", { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`
+              : "—",
           },
         ].map(({ label, value }) => (
-          <div key={label} className="rounded-xl border border-white/[0.06] bg-white/[0.03] px-2.5 py-2.5 text-center">
+          <div
+            key={label}
+            className="rounded-xl border border-white/[0.06] bg-white/[0.03] px-2.5 py-2.5 text-center"
+          >
             <div className="text-sm font-black text-white tabular-nums">{value}</div>
             <div className="text-[10px] text-white/30 mt-0.5">{label}</div>
           </div>

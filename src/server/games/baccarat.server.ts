@@ -62,9 +62,7 @@ export type BaccaratDealResult = {
   script: PublicDealScript;
 };
 
-function toPublicScript(
-  script: ReturnType<typeof resolveBaccaratDeal>,
-): PublicDealScript {
+function toPublicScript(script: ReturnType<typeof resolveBaccaratDeal>): PublicDealScript {
   return {
     playerCards: script.playerCards,
     bankerCards: script.bankerCards,
@@ -137,28 +135,10 @@ export async function baccaratPaidDeal(input: {
   assertBetRange(playerBet, cfg.minPlayerBet, cfg.maxPlayerBet, "Player", true);
   assertBetRange(bankerBet, cfg.minBankerBet, cfg.maxBankerBet, "Banker", true);
   assertBetRange(tieBet, cfg.minTieBet, cfg.maxTieBet, "Tie", true);
-  assertBetRange(
-    playerPairBet,
-    cfg.minPlayerPairBet,
-    cfg.maxPlayerPairBet,
-    "Player Pair",
-    true,
-  );
-  assertBetRange(
-    bankerPairBet,
-    cfg.minBankerPairBet,
-    cfg.maxBankerPairBet,
-    "Banker Pair",
-    true,
-  );
+  assertBetRange(playerPairBet, cfg.minPlayerPairBet, cfg.maxPlayerPairBet, "Player Pair", true);
+  assertBetRange(bankerPairBet, cfg.minBankerPairBet, cfg.maxBankerPairBet, "Banker Pair", true);
 
-  const totalWager = +(
-    playerBet +
-    bankerBet +
-    tieBet +
-    playerPairBet +
-    bankerPairBet
-  ).toFixed(2);
+  const totalWager = +(playerBet + bankerBet + tieBet + playerPairBet + bankerPairBet).toFixed(2);
   if (totalWager <= 0) throw new Error("Place at least one bet");
 
   const maxSingle = await getMaxSingleBet();

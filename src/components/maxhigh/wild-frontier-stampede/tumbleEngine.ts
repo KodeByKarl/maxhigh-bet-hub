@@ -1,5 +1,5 @@
-﻿import type { BuffaloSymbolConfig } from "@/lib/buffalo-reign-config";
-import { getBuffaloReignConfig } from "./runtimeConfig";
+﻿import type { StampedeSymbolConfig } from "@/lib/wild-frontier-stampede-config";
+import { getStampedeConfig } from "./runtimeConfig";
 import type { BoardCell } from "./types";
 
 let keyCounter = 1;
@@ -9,8 +9,8 @@ export function nextCellKey(): string {
 }
 
 /** Weighted pick (ante boosts scatter; free spins suppress bonus chests). */
-export function pickRandomSymbol(ante: boolean, isFreeSpins: boolean): BuffaloSymbolConfig {
-  const config = getBuffaloReignConfig();
+export function pickRandomSymbol(ante: boolean, isFreeSpins: boolean): StampedeSymbolConfig {
+  const config = getStampedeConfig();
   let total = 0;
   const weights: number[] = [];
 
@@ -32,7 +32,11 @@ export function pickRandomSymbol(ante: boolean, isFreeSpins: boolean): BuffaloSy
   return config.symbols[config.symbols.length - 1]!;
 }
 
-export function makeCell(sym: BuffaloSymbolConfig, reelIndex: number, rowIndex: number): BoardCell {
+export function makeCell(
+  sym: StampedeSymbolConfig,
+  reelIndex: number,
+  rowIndex: number,
+): BoardCell {
   return {
     key: nextCellKey(),
     reelIndex,
@@ -71,7 +75,7 @@ export function applyGravity(
   spawnedKeys: string[];
   fallenKeys: string[];
 } {
-  const config = getBuffaloReignConfig();
+  const config = getStampedeConfig();
   const reelsCount = config.reelsCount;
   const nextBoard: BoardCell[] = [];
   const spawnedKeys: string[] = [];

@@ -34,9 +34,27 @@ async function runRbacTests() {
   ];
 
   await db.insert(users).values([
-    { id: playerId, username: playerUsername, passwordHash: "test_hash", role: "player", balance: "100.00" },
-    { id: adminId, username: adminUsername, passwordHash: "test_hash", role: "admin", balance: "100.00" },
-    { id: superadminId, username: superadminUsername, passwordHash: "test_hash", role: "superadmin", balance: "100.00" },
+    {
+      id: playerId,
+      username: playerUsername,
+      passwordHash: "test_hash",
+      role: "player",
+      balance: "100.00",
+    },
+    {
+      id: adminId,
+      username: adminUsername,
+      passwordHash: "test_hash",
+      role: "admin",
+      balance: "100.00",
+    },
+    {
+      id: superadminId,
+      username: superadminUsername,
+      passwordHash: "test_hash",
+      role: "superadmin",
+      balance: "100.00",
+    },
   ]);
 
   console.log("✅ Created test accounts: Player, Admin, Superadmin");
@@ -58,7 +76,12 @@ async function runRbacTests() {
 
   // TEST 1: Role-Based Denial for Player
   console.log("\n--- TEST 1: Player Account DENIED on Admin & Superadmin Permissions ---");
-  const playerUser = { id: playerId, username: playerUsername, role: "player" as const, balance: 100 };
+  const playerUser = {
+    id: playerId,
+    username: playerUsername,
+    role: "player" as const,
+    balance: 100,
+  };
 
   const adminPermissions = Object.keys(PERMISSION_MAP) as (keyof typeof PERMISSION_MAP)[];
   let playerDenialCount = 0;
@@ -75,9 +98,13 @@ async function runRbacTests() {
   }
 
   if (playerDenialCount === adminPermissions.length) {
-    console.log(`✅ Player correctly denied on ALL ${playerDenialCount} restricted admin/superadmin permissions (403 Forbidden).`);
+    console.log(
+      `✅ Player correctly denied on ALL ${playerDenialCount} restricted admin/superadmin permissions (403 Forbidden).`,
+    );
   } else {
-    console.error(`❌ Player denial test failed! Denied count: ${playerDenialCount}/${adminPermissions.length}`);
+    console.error(
+      `❌ Player denial test failed! Denied count: ${playerDenialCount}/${adminPermissions.length}`,
+    );
   }
 
   // TEST 2: Admin Account DENIED on Superadmin-Only Permissions
@@ -103,9 +130,13 @@ async function runRbacTests() {
   }
 
   if (adminDenialCount === superadminOnlyPermissions.length) {
-    console.log(`✅ Admin account correctly denied on all ${adminDenialCount} superadmin-only permissions.`);
+    console.log(
+      `✅ Admin account correctly denied on all ${adminDenialCount} superadmin-only permissions.`,
+    );
   } else {
-    console.error(`❌ Admin denial test failed! Denied count: ${adminDenialCount}/${superadminOnlyPermissions.length}`);
+    console.error(
+      `❌ Admin denial test failed! Denied count: ${adminDenialCount}/${superadminOnlyPermissions.length}`,
+    );
   }
 
   // TEST 3: Immediate Session Invalidation on Role Demotion
@@ -119,10 +150,14 @@ async function runRbacTests() {
   await db.delete(sessions).where(eq(sessions.userId, adminId));
 
   const activeSessionsAfter = await db.select().from(sessions).where(eq(sessions.userId, adminId));
-  console.log(`Active sessions for demoted account AFTER role change: ${activeSessionsAfter.length}`);
+  console.log(
+    `Active sessions for demoted account AFTER role change: ${activeSessionsAfter.length}`,
+  );
 
   if (activeSessionsBefore.length === 1 && activeSessionsAfter.length === 0) {
-    console.log("✅ Immediate session termination verified! Demoted admin session destroyed instantly.");
+    console.log(
+      "✅ Immediate session termination verified! Demoted admin session destroyed instantly.",
+    );
   } else {
     console.error("❌ Session termination on role change failed!");
   }

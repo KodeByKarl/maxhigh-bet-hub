@@ -1,43 +1,123 @@
-import type { FgSymKind, DesertRichesConfig } from "@/lib/desert-riches-config";
-import { pickSymbol } from "./reelGenerator";
-import type { Rng } from "./rng";
-import type { FgGrid } from "./types";
+import { payForCount } from "./paytable";
+import { makeCell, pickSym } from "./gridState";
+import { getDesertRichesConfig } from "./runtimeConfig";
+import type { BoardCell, ClusterWin } from "./types";
+import { CELLS, COLS, ROWS } from "./types";
 
-/**
- * Cascade gravity on variable-height diamond columns:
- * remove winning cells → drop survivors down → fill tops to reelHeights[reel].
- */
-export function applyGravity(
-  grid: FgGrid,
-  remove: Array<[number, number]>,
-  rng: Rng,
-  cfg: DesertRichesConfig,
-  isFreeSpins: boolean,
-): FgGrid {
-  const kill = new Set(remove.map(([r, row]) => `${r},${row}`));
-  const next: FgGrid = [];
+export type EvalResult = {
+  clusters: ClusterWin[];
+  winningKeys: Set<string>;
+  payoutByKey: Map<string, number>;
+  win: number;
+  scatters: number;
+  bombs: BoardCell[];
+};
 
-  for (let reel = 0; reel < cfg.reelsCount; reel++) {
-    const height = cfg.reelHeights?.[reel] ?? cfg.rowsCount;
-    const survivors: FgSymKind[] = [];
-    const colLen = grid[reel]?.length ?? height;
-    for (let row = colLen - 1; row >= 0; row--) {
-      if (kill.has(`${reel},${row}`)) continue;
-      const sym = grid[reel]?.[row];
-      if (sym) survivors.push(sym);
+export function evaluateBoard(board: BoardCell[], bet: number): EvalResult {
+  const minCluster = getDesertRichesConfig().minCluster;
+  const counts = new Map<string, BoardCell[]>();
+  let scatters = 0;
+  const bombs: BoardCell[] = [];
+
+  for (const cell of board) {
+    if (!cell) continue;
+    if (cell.sym.scatter) {
+      scatters++;
+      continue;
     }
-    // survivors are bottom→top; rebuild column top→bottom to target height
-    const col: FgSymKind[] = [];
-    const need = Math.max(0, height - survivors.length);
-    for (let i = 0; i < need; i++) {
-      col.push(pickSymbol(rng, reel, cfg, isFreeSpins));
+    if (cell.sym.bomb) {
+      bombs.push(cell);
+      continue;
     }
-    for (let i = survivors.length - 1; i >= 0; i--) {
-      col.push(survivors[i]!);
-    }
-    // Trim if somehow over height (shouldn't happen)
-    while (col.length > height) col.shift();
-    next.push(col);
+    const list = counts.get(cell.sym.id) ?? [];
+    list.push(cell);
+    counts.set(cell.sym.id, list);
   }
-  return next;
+
+  const winningKeys = new Set<string>();
+  const payoutByKey = new Map<string, number>();
+  const clusters: ClusterWin[] = [];
+  let win = 0;
+
+  for (const [, cells] of counts) {
+    if (cells.length < minCluster) continue;
+    const sym = cells[0].sym;
+    const mult = payForCount(sym, cells.length);
+    const pay = +(bet * mult).toFixed(2);
+    const perSymbol = +(pay / cells.length).toFixed(2);
+    win += pay;
+    clusters.push({
+      id: sym.id,
+      kind: sym.kind,
+      count: cells.length,
+      pay,
+      perSymbol,
+      keys: cells.map((c) => c.key),
+    });
+    for (const c of cells) {
+      winningKeys.add(c.key);
+      payoutByKey.set(c.key, perSymbol);
+    }
+  }
+
+  return { clusters, winningKeys, payoutByKey, win, scatters, bombs };
+}
+
+/** Gravity per column on the 7×4 board. */
+export function applyGravity(
+  board: BoardCell[],
+  remove: Set<string>,
+  ante: boolean,
+  freeSpins: boolean,
+): {
+  next: BoardCell[];
+  spawnedKeys: string[];
+  fallenKeys: string[];
+  fallDistance: Record<string, number>;
+  afterPop: (BoardCell | null)[];
+} {
+  const afterPop: (BoardCell | null)[] = board.map((c) => (c && remove.has(c.key) ? null : c));
+  const next: BoardCell[] = Array(CELLS);
+  const spawnedKeys: string[] = [];
+  const fallenKeys: string[] = [];
+  const fallDistance: Record<string, number> = {};
+  const spawnedSet = new Set<string>();
+
+  const oldRowByKey = new Map<string, number>();
+  for (let i = 0; i < CELLS; i++) {
+    const c = board[i];
+    if (c && !remove.has(c.key)) oldRowByKey.set(c.key, Math.floor(i / COLS));
+  }
+
+  for (let col = 0; col < COLS; col++) {
+    const kept: BoardCell[] = [];
+    for (let row = ROWS - 1; row >= 0; row--) {
+      const cell = board[col + row * COLS];
+      if (cell && !remove.has(cell.key)) kept.push(cell);
+    }
+    while (kept.length < ROWS) {
+      const cell = makeCell(pickSym(ante), freeSpins, false, { allowScatter: false });
+      spawnedKeys.push(cell.key);
+      spawnedSet.add(cell.key);
+      kept.push(cell);
+    }
+    for (let i = 0; i < ROWS; i++) {
+      const cell = kept[i];
+      const newRow = ROWS - 1 - i;
+      next[col + newRow * COLS] = cell;
+
+      if (spawnedSet.has(cell.key) && fallDistance[cell.key] == null) {
+        fallDistance[cell.key] = newRow + 1;
+      } else if (!spawnedSet.has(cell.key)) {
+        const oldRow = oldRowByKey.get(cell.key) ?? newRow;
+        const dist = newRow - oldRow;
+        if (dist > 0) {
+          fallenKeys.push(cell.key);
+          fallDistance[cell.key] = dist;
+        }
+      }
+    }
+  }
+
+  return { next, spawnedKeys, fallenKeys, fallDistance, afterPop };
 }

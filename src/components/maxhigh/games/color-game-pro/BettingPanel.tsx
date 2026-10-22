@@ -12,16 +12,29 @@ type Props = {
   bets: Record<ColorSpotId, number>;
   disabled?: boolean;
   activeSpot: ColorSpotId;
+  /** Color that just won — its pad pulses. */
+  winning?: ColorSpotId | null;
+  canRebet?: boolean;
   onActiveSpot: (s: ColorSpotId) => void;
   onBet: (spot: ColorSpotId, n: number) => void;
   onChipPlaced?: (ev: ChipPlaceEvent) => void;
   onClearAll?: () => void;
+  onRebet?: () => void;
+  onDouble?: () => void;
   onDeal?: () => void;
   dealBusy?: boolean;
 };
 
-function clampBet(n: number, min: number, max: number) {
-  if (!Number.isFinite(n)) return min;
+const CHIP_HUES = [190, 265, 320, 38, 150, 10, 215, 290, 60];
+const CHIP_STEPS = [1, 2, 5, 10, 20, 50, 100, 200, 500];
+
+function chipHue(v: number) {
+  const i = CHIP_STEPS.indexOf(v);
+  return CHIP_HUES[(i >= 0 ? i : Math.round(v)) % CHIP_HUES.length]!;
+}
+
+function clampBet(n: number, max: number) {
+  if (!Number.isFinite(n)) return 0;
   return Math.min(max, Math.max(0, +n.toFixed(2)));
 }
 
@@ -30,10 +43,14 @@ export function BettingPanel({
   bets,
   disabled,
   activeSpot,
+  winning,
+  canRebet,
   onActiveSpot,
   onBet,
   onChipPlaced,
   onClearAll,
+  onRebet,
+  onDouble,
   onDeal,
   dealBusy,
 }: Props) {
@@ -46,8 +63,7 @@ export function BettingPanel({
   function addChip(v: number) {
     if (disabled) return;
     setSelectedChip(v);
-    const next = clampBet((bets[activeSpot] ?? 0) + v, 0, cfg.maxSpotBet);
-    onBet(activeSpot, next);
+    onBet(activeSpot, clampBet((bets[activeSpot] ?? 0) + v, cfg.maxSpotBet));
     setLastAdd({ spot: activeSpot, value: v });
     onChipPlaced?.({ spot: activeSpot, value: v });
   }
@@ -55,7 +71,7 @@ export function BettingPanel({
   function undoLast() {
     if (disabled || !lastAdd) return;
     const { spot, value } = lastAdd;
-    onBet(spot, clampBet((bets[spot] ?? 0) - value, 0, cfg.maxSpotBet));
+    onBet(spot, clampBet((bets[spot] ?? 0) - value, cfg.maxSpotBet));
     setLastAdd(null);
   }
 
@@ -63,8 +79,10 @@ export function BettingPanel({
   const canDeal = totalWager >= cfg.minBet && !dealBusy && !disabled;
 
   return (
-    <div className="space-y-2.5 px-2 pb-[max(0.6rem,env(safe-area-inset-bottom))] pt-1">
-      <div className="grid grid-cols-3 gap-1.5 sm:grid-cols-6">
+    <div className="space-y-2.5 px-2 pb-[max(0.6rem,env(safe-area-inset-bottom))] pt-2">
+      <style>{PANEL_CSS}</style>
+
+      <div className="grid grid-cols-3 gap-2 sm:grid-cols-6">
         {cfg.spots.map((sp) => {
           const amt = bets[sp.id] ?? 0;
           const active = activeSpot === sp.id;
@@ -75,50 +93,64 @@ export function BettingPanel({
               disabled={disabled}
               onClick={() => onActiveSpot(sp.id)}
               className={cn(
-                "relative flex min-h-[3.4rem] flex-col items-center justify-center rounded-xl border-2 px-1 py-1.5 transition",
-                active ? "scale-[1.03] shadow-lg" : "opacity-90",
-                disabled && "pointer-events-none opacity-50",
+                "pro-pad relative flex min-h-[3.7rem] flex-col items-center justify-center overflow-hidden rounded-2xl px-1 py-1.5",
+                active && "pro-pad-active",
+                winning === sp.id && "pro-pad-win",
+                disabled && "pointer-events-none opacity-55",
               )}
-              style={{
-                background: `linear-gradient(160deg, ${sp.hex}cc, ${sp.hex}66)`,
-                borderColor: active ? "#fff" : `${sp.hex}`,
-                color: sp.id === "white" || sp.id === "yellow" ? "#0f172a" : "#fff",
-              }}
+              style={{ ["--pad" as string]: sp.hex }}
             >
-              <span className="text-[10px] font-black tracking-wide uppercase">{sp.label}</span>
-              <span className="text-sm font-bold tabular-nums">
+              <span
+                className="pointer-events-none absolute inset-0 opacity-90"
+                style={{
+                  background: `radial-gradient(ellipse 90% 80% at 50% 0%, ${sp.hex}, transparent 75%), linear-gradient(180deg, ${sp.hex}55, ${sp.hex}18)`,
+                }}
+              />
+              <span
+                className="relative text-[10px] font-black tracking-[0.14em] uppercase"
+                style={{ textShadow: "0 1px 4px rgba(0,0,0,.7)" }}
+              >
+                {sp.label}
+              </span>
+              <span
+                className="relative text-sm font-bold tabular-nums"
+                style={{ textShadow: "0 1px 4px rgba(0,0,0,.7)" }}
+              >
                 {amt > 0 ? `₱${amt}` : `${sp.payoutMult}×`}
               </span>
+              {amt > 0 && <span className="pro-pad-bet" />}
             </button>
           );
         })}
       </div>
 
-      <div className="flex flex-wrap items-center justify-center gap-1.5">
+      <div className="flex flex-wrap items-center justify-center gap-2">
         {chipValues.map((v) => (
           <button
             key={v}
             type="button"
             disabled={disabled}
             onClick={() => addChip(v)}
+            aria-label={`Chip ${v}`}
             className={cn(
-              "h-11 w-11 rounded-full border-2 text-xs font-black tabular-nums shadow-md transition",
-              selectedChip === v
-                ? "border-white bg-amber-400 text-slate-900"
-                : "border-white/40 bg-slate-800/80 text-white",
+              "pro-chip relative grid size-12 place-items-center rounded-full",
+              selectedChip === v && "pro-chip-on",
             )}
+            style={{ ["--h" as string]: chipHue(v) }}
           >
-            {v}
+            <span className="pro-chip-face grid place-items-center text-[11px] font-black tabular-nums">
+              {v}
+            </span>
           </button>
         ))}
       </div>
 
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-1.5">
         <button
           type="button"
           disabled={disabled || totalWager <= 0}
           onClick={undoLast}
-          className="rounded-lg border border-white/20 bg-black/35 px-3 py-2 text-xs font-semibold text-white/80 disabled:opacity-40"
+          className="pro-mini"
         >
           Undo
         </button>
@@ -126,11 +158,30 @@ export function BettingPanel({
           type="button"
           disabled={disabled || totalWager <= 0}
           onClick={onClearAll}
-          className="rounded-lg border border-white/20 bg-black/35 px-3 py-2 text-xs font-semibold text-white/80 disabled:opacity-40"
+          className="pro-mini"
         >
           Clear
         </button>
-        <div className="ml-auto text-xs font-semibold tabular-nums text-white/70">
+        {canRebet ? (
+          <button
+            type="button"
+            disabled={disabled}
+            onClick={onRebet}
+            className="pro-mini pro-mini-hot"
+          >
+            Rebet
+          </button>
+        ) : (
+          <button
+            type="button"
+            disabled={disabled || totalWager <= 0}
+            onClick={onDouble}
+            className="pro-mini pro-mini-hot"
+          >
+            ×2
+          </button>
+        )}
+        <div className="ml-auto pr-1 text-xs font-semibold tabular-nums text-cyan-100/80">
           Bet ₱{totalWager.toFixed(0)}
         </div>
         <button
@@ -138,10 +189,8 @@ export function BettingPanel({
           disabled={!canDeal}
           onClick={onDeal}
           className={cn(
-            "min-w-[7.5rem] rounded-xl px-4 py-2.5 text-sm font-black tracking-wide uppercase shadow-lg transition",
-            canDeal
-              ? "bg-gradient-to-b from-amber-300 to-amber-500 text-slate-900"
-              : "bg-slate-700 text-white/40",
+            "pro-spin min-w-[7.5rem] rounded-2xl px-5 py-2.5 text-sm font-black tracking-[0.22em] uppercase",
+            canDeal && "pro-spin-on",
           )}
         >
           {dealBusy ? "…" : "SPIN"}
@@ -150,3 +199,44 @@ export function BettingPanel({
     </div>
   );
 }
+
+const PANEL_CSS = `
+.pro-pad {
+  color: #fff; border: 1.5px solid color-mix(in srgb, var(--pad) 75%, transparent);
+  background: rgba(6,8,30,.7); transition: transform .15s, box-shadow .15s;
+  box-shadow: 0 0 10px color-mix(in srgb, var(--pad) 28%, transparent), inset 0 0 12px rgba(0,0,0,.4);
+}
+.pro-pad-active { transform: translateY(-3px) scale(1.04); border-color: #fff; box-shadow: 0 0 24px var(--pad), inset 0 0 14px rgba(255,255,255,.18); }
+.pro-pad-win { animation: pro-padw .5s ease-in-out infinite alternate; border-color: #fff; }
+@keyframes pro-padw { from { box-shadow: 0 0 8px var(--pad); } to { box-shadow: 0 0 30px 6px var(--pad); transform: scale(1.07); } }
+.pro-pad-bet { position: absolute; right: 5px; top: 5px; width: 7px; height: 7px; border-radius: 9999px; background: #fde047; box-shadow: 0 0 8px #fde047; }
+.pro-chip {
+  background: repeating-conic-gradient(hsl(var(--h) 90% 62%) 0 22deg, #fff 22deg 45deg);
+  box-shadow: 0 0 12px hsl(var(--h) 90% 60% / .55), 0 3px 6px rgba(0,0,0,.6);
+  transition: transform .15s; border: 2px solid rgba(255,255,255,.9);
+}
+.pro-chip:active { transform: scale(.88); }
+.pro-chip-on { transform: translateY(-4px) scale(1.12); box-shadow: 0 0 0 2px #fff, 0 0 22px hsl(var(--h) 95% 62%); }
+.pro-chip-face {
+  width: 72%; height: 72%; border-radius: 9999px; color: #fff; text-shadow: 0 1px 3px rgba(0,0,0,.7);
+  background: radial-gradient(circle at 35% 28%, hsl(var(--h) 90% 66%), hsl(var(--h) 80% 32%) 85%);
+  border: 1.5px dashed rgba(255,255,255,.8);
+}
+.pro-mini {
+  border-radius: 10px; padding: 7px 11px; font-size: 11px; font-weight: 800; color: #cffafe;
+  background: rgba(8,12,40,.65); border: 1px solid rgba(125,211,252,.35); transition: opacity .15s, transform .1s;
+}
+.pro-mini:disabled { opacity: .35; }
+.pro-mini:active:not(:disabled) { transform: scale(.94); }
+.pro-mini-hot { color: #1e1b4b; background: linear-gradient(180deg, #a5f3fc, #67e8f9); border-color: #a5f3fc; }
+.pro-spin { color: rgba(255,255,255,.4); background: rgba(30,27,75,.8); border: 1.5px solid rgba(255,255,255,.12); }
+.pro-spin-on {
+  color: #0b0630; border-color: #fff;
+  background: linear-gradient(180deg, #f0abfc 0%, #c084fc 40%, #22d3ee 100%);
+  box-shadow: 0 0 26px rgba(192,132,252,.75), 0 0 52px rgba(34,211,238,.35);
+  animation: pro-sp 1.5s ease-in-out infinite;
+}
+.pro-spin-on:active { transform: scale(.95); }
+@keyframes pro-sp { 50% { box-shadow: 0 0 38px rgba(240,171,252,.95), 0 0 70px rgba(34,211,238,.6); } }
+@media (prefers-reduced-motion: reduce) { .pro-pad-win, .pro-spin-on { animation: none; } }
+`;

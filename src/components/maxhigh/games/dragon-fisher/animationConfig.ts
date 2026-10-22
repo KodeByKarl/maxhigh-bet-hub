@@ -4,7 +4,7 @@
 
 export const DRAGON_FISHER_ASSET = {
   symbolDir: "/images/symbols/dragon-fisher",
-  soundDir: "/sounds/dragon-fisher",
+  soundDir: "/sounds/gentle-v1/dragon-fisher",
   thumb: "/games/dragon-fisher.webp",
   seabed: "/images/symbols/dragon-fisher/seabed.webp",
 } as const;

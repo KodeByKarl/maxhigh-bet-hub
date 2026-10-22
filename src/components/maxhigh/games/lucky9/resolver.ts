@@ -83,7 +83,7 @@ export function resolveLucky9Deal(opts: {
 
   const seed = opts.seed ?? newDealSeed("l9-deal");
   const rng = createRng(seed);
-  let shoe = ensureShoe(opts.shoe ?? null, cfg, rng);
+  const shoe = ensureShoe(opts.shoe ?? null, cfg, rng);
 
   // Standard deal: P1, D1, P2, D2
   const p1 = drawCard(shoe);

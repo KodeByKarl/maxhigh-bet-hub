@@ -143,8 +143,7 @@ export function normalizeAceHighConfig(raw: unknown): AceHighConfig {
   };
   const d = DEFAULT_ACE_HIGH_CONFIG;
   const bonus = (o.aceBonus ?? d.aceBonus) as Partial<AceBonusTable>;
-  const basePayout =
-    o.basePayoutMult ?? o.basePayout ?? o.mainWinPayoutMult ?? d.basePayoutMult;
+  const basePayout = o.basePayoutMult ?? o.basePayout ?? o.mainWinPayoutMult ?? d.basePayoutMult;
   const tiePayout = o.tieSideBetMult ?? o.tiePayout ?? d.tieSideBetMult;
   const minBet = clamp(num(o.minBet, d.minBet), 0.01, 10_000);
   const maxBet = clamp(num(o.maxBet, d.maxBet), minBet, 100_000);

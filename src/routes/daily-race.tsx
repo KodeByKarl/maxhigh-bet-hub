@@ -13,7 +13,12 @@ export const Route = createFileRoute("/daily-race")({
   }),
   component: () => (
     <>
-      <PageHeader title="Daily Race" description="Prize pool · Resets at midnight UTC · Coming soon." icon={Timer} accent="#C6FF3D" />
+      <PageHeader
+        title="Daily Race"
+        description="Prize pool · Resets at midnight UTC · Coming soon."
+        icon={Timer}
+        accent="#C6FF3D"
+      />
       <ComingSoonPanel label="Daily race standings" />
     </>
   ),

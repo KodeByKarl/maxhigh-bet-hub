@@ -1,6 +1,6 @@
 import { memo } from "react";
 import { motion } from "framer-motion";
-import { MayaGoldIcon } from "./MayaGoldIcon";
+import { PantherIcon } from "./PantherIcon";
 import type { SymKind } from "./types";
 
 export type LedgerRow = { id: string; kind: SymKind; count: number; pay: number };
@@ -50,7 +50,7 @@ export const WinLedger = memo(function WinLedger({ rows }: WinLedgerProps) {
           <span className="w-5 shrink-0 text-center text-[11px] font-black text-amber-300">
             {row.count}
           </span>
-          <MayaGoldIcon kind={row.kind} className="size-6 shrink-0" />
+          <PantherIcon kind={row.kind} className="size-6 shrink-0" />
           <span className="ml-auto truncate text-right text-[11px] font-black tabular-nums text-yellow-300">
             ₱{row.pay.toFixed(2)}
           </span>

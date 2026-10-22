@@ -44,7 +44,12 @@ export function pickBombMult(): number {
   return clampBombMult(table[0]?.mult ?? 2);
 }
 
-export function makeCell(sym: CellSym, freeSpins: boolean, forceBomb = false, opts?: { allowScatter?: boolean }): BoardCell {
+export function makeCell(
+  sym: CellSym,
+  freeSpins: boolean,
+  forceBomb = false,
+  opts?: { allowScatter?: boolean },
+): BoardCell {
   const cfg = getSolarSerpentConfig();
   const { bomb, pay } = pools();
   let use = sym;

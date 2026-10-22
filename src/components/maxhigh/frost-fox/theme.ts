@@ -1,7 +1,4 @@
-﻿import {
-  type PantherTheme,
-  type PantherSymKind,
-} from "@/components/maxhigh/panther-shared/theme";
+﻿import { type PantherTheme, type PantherSymKind } from "@/components/maxhigh/panther-shared/theme";
 import { FROST_FOX_COLORS } from "@/components/maxhigh/panther-shared/palettes";
 
 function frostIconPack(version = "12"): Record<PantherSymKind, string> {

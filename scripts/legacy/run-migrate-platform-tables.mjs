@@ -75,13 +75,19 @@ for (const table of ["platform_settings", "promotions", "risk_controls"]) {
 
 const [userCols] = await conn.query("SHOW COLUMNS FROM users LIKE 'public_user_id'");
 console.log(
-  Array.isArray(userCols) && userCols.length ? "OK: users.public_user_id" : "MISSING: users.public_user_id",
+  Array.isArray(userCols) && userCols.length
+    ? "OK: users.public_user_id"
+    : "MISSING: users.public_user_id",
 );
 const [jpCols] = await conn.query("SHOW COLUMNS FROM jackpot LIKE 'enabled'");
-console.log(Array.isArray(jpCols) && jpCols.length ? "OK: jackpot.enabled" : "MISSING: jackpot.enabled");
+console.log(
+  Array.isArray(jpCols) && jpCols.length ? "OK: jackpot.enabled" : "MISSING: jackpot.enabled",
+);
 const [dispCols] = await conn.query("SHOW COLUMNS FROM jackpot LIKE 'display_amount'");
 console.log(
-  Array.isArray(dispCols) && dispCols.length ? "OK: jackpot.display_amount" : "MISSING: jackpot.display_amount",
+  Array.isArray(dispCols) && dispCols.length
+    ? "OK: jackpot.display_amount"
+    : "MISSING: jackpot.display_amount",
 );
 
 await conn.end();

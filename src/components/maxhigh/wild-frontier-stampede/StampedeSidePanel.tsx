@@ -10,14 +10,7 @@ type Props = {
 };
 
 /** Left rail — Buy Free Spins + Ante (Mahjong Ways chrome). */
-export function StampedeSidePanel({
-  buyCost,
-  totalBet,
-  ante,
-  busy,
-  onBuy,
-  onAnteChange,
-}: Props) {
+export function StampedeSidePanel({ buyCost, totalBet, ante, busy, onBuy, onAnteChange }: Props) {
   return (
     <div className="flex w-full flex-col items-stretch gap-2">
       <button

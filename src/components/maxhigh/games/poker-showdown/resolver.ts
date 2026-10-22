@@ -29,12 +29,7 @@ import {
 import { createRng, newDealSeed } from "./rng";
 import { getPokerShowdownConfig } from "./runtimeConfig";
 
-export type MainOutcome =
-  | "player"
-  | "dealer"
-  | "tie"
-  | "dealer-not-qualify"
-  | "fold";
+export type MainOutcome = "player" | "dealer" | "tie" | "dealer-not-qualify" | "fold";
 
 export type DealPhaseResult = {
   seed: string;
@@ -172,8 +167,7 @@ export function resolvePlay(opts: {
 
   const bonusOdds = anteBonusOdds(playerHand.category, cfg);
   // Profit-only on top of Ante (stake already handled by anteWin / push / loss).
-  const anteBonusProfit =
-    bonusOdds > 0 ? +Number(ante * bonusOdds).toFixed(2) : 0;
+  const anteBonusProfit = bonusOdds > 0 ? +Number(ante * bonusOdds).toFixed(2) : 0;
 
   const pairPlusWin = +Number(opts.pairPlusWinAlreadyPaid ?? 0).toFixed(2);
   const immediateCredit = +(anteWin + playWin + anteBonusProfit).toFixed(2);

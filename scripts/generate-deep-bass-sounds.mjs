@@ -177,10 +177,7 @@ function coinPayout(rand) {
       const t = i / SAMPLE_RATE;
       const j = start + i;
       if (j >= len) break;
-      out[j] +=
-        Math.sin(2 * Math.PI * notes[n] * t) *
-        Math.exp(-t * 18) *
-        (0.45 + rand() * 0.1);
+      out[j] += Math.sin(2 * Math.PI * notes[n] * t) * Math.exp(-t * 18) * (0.45 + rand() * 0.1);
     }
   }
   fadeEdges(out);

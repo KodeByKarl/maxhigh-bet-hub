@@ -34,9 +34,7 @@ export function CreateUserForm({ onCreated }: { onCreated: () => void }) {
         },
       });
       toast.success(
-        created.agentPromoted
-          ? "User created — you earned Master Agent"
-          : "User created",
+        created.agentPromoted ? "User created — you earned Master Agent" : "User created",
       );
       setEmail("");
       setUsername("");
@@ -60,8 +58,12 @@ export function CreateUserForm({ onCreated }: { onCreated: () => void }) {
       </p>
 
       <div className="mt-3 rounded-xl border border-violet-400/30 bg-violet-500/10 px-3 py-2.5">
-        <div className="text-[10px] font-bold uppercase tracking-wider text-violet-300">Agent account</div>
-        <div className="mt-0.5 truncate text-sm font-black text-foreground">@{user?.username ?? "—"}</div>
+        <div className="text-[10px] font-bold uppercase tracking-wider text-violet-300">
+          Agent account
+        </div>
+        <div className="mt-0.5 truncate text-sm font-black text-foreground">
+          @{user?.username ?? "—"}
+        </div>
       </div>
 
       <div className="mt-4 grid gap-3 sm:grid-cols-2">

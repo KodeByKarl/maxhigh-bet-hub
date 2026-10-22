@@ -20,8 +20,7 @@ export type ReelCellProps = {
 };
 
 /** Soft lotus petal silhouette — not hex / circle / square card. */
-const PETAL_CLIP =
-  "polygon(50% 2%, 78% 18%, 96% 45%, 82% 78%, 50% 98%, 18% 78%, 4% 45%, 22% 18%)";
+const PETAL_CLIP = "polygon(50% 2%, 78% 18%, 96% 45%, 82% 78%, 50% 98%, 18% 78%, 4% 45%, 22% 18%)";
 
 function cellPhaseRelevant(props: ReelCellProps, phase: ReelPhase): boolean {
   if (!props.cell) return phase === "dropping" || phase === "falling";
@@ -56,8 +55,7 @@ export const ReelCell = memo(function ReelCell({
   const row = Math.floor(index / COLS);
   const popping = phase === "popping" && win;
   const isInitialDrop = phase === "dropping" && !!cell;
-  const isGravityDrop =
-    phase === "falling" && !!cell && (isSpawn || isFallen) && fallDist > 0;
+  const isGravityDrop = phase === "falling" && !!cell && (isSpawn || isFallen) && fallDist > 0;
   const dropRows = isInitialDrop ? row + 1.35 : fallDist;
 
   const isScatter = cell?.sym.kind === "lollipop";

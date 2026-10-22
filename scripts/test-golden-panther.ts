@@ -13,8 +13,14 @@ import {
 } from "../src/lib/golden-panther-config";
 import { ANIM } from "../src/components/maxhigh/golden-panther/animationConfig";
 import { payForCount } from "../src/components/maxhigh/golden-panther/paytable";
-import { finalizeFreeSpinTotal, resolveSpin } from "../src/components/maxhigh/golden-panther/spinResolver";
-import { setGoldenPantherConfig, getRuntimeSymbols } from "../src/components/maxhigh/golden-panther/runtimeConfig";
+import {
+  finalizeFreeSpinTotal,
+  resolveSpin,
+} from "../src/components/maxhigh/golden-panther/spinResolver";
+import {
+  setGoldenPantherConfig,
+  getRuntimeSymbols,
+} from "../src/components/maxhigh/golden-panther/runtimeConfig";
 import { enforcePoolCap } from "../src/server/settlement/enforcePoolCap";
 
 setGoldenPantherConfig(DEFAULT_GOLDEN_PANTHER_CONFIG);
@@ -244,7 +250,9 @@ function runRtp(roundsPerStake: number) {
         `  ₱${bet.toFixed(0).padStart(3)}  RTP ${rtp.toFixed(2)}%  hit ${(
           (wins / roundsPerStake) *
           100
-        ).toFixed(1)}%  max ₱${maxPay.toFixed(2)} (${(maxPay / bet).toFixed(1)}×)  clamp ${clampPct.toFixed(2)}%`,
+        ).toFixed(
+          1,
+        )}%  max ₱${maxPay.toFixed(2)} (${(maxPay / bet).toFixed(1)}×)  clamp ${clampPct.toFixed(2)}%`,
       );
       if (fsFeatures > 0) {
         console.log(
@@ -256,7 +264,9 @@ function runRtp(roundsPerStake: number) {
       const fsRate = (fsFeatures / roundsPerStake) * 100;
       assert(fsRate < 15, `FS trigger should be uncommon, got ${fsRate.toFixed(1)}%`);
       if (bet === 1) {
-        console.log(`       ₱1 cluster cent-wins: ${[...peso1Wins].sort().join(", ") || "(none this sample)"}`);
+        console.log(
+          `       ₱1 cluster cent-wins: ${[...peso1Wins].sort().join(", ") || "(none this sample)"}`,
+        );
         assert(
           peso1Wins.size >= 3,
           `₱1 clusters should show ≥3 distinct cent wins, got ${[...peso1Wins]}`,
@@ -269,8 +279,13 @@ function runRtp(roundsPerStake: number) {
 
   const spread = Math.max(...rtps) - Math.min(...rtps);
   const relative = (spread / Math.min(...rtps)) * 100;
-  console.log(`  RTP spread across stakes: ${spread.toFixed(2)} pp (${relative.toFixed(2)}% relative)`);
-  assert(relative < 25, `RTP should stay consistent across bet sizes (relative ${relative.toFixed(2)}%)`);
+  console.log(
+    `  RTP spread across stakes: ${spread.toFixed(2)} pp (${relative.toFixed(2)}% relative)`,
+  );
+  assert(
+    relative < 25,
+    `RTP should stay consistent across bet sizes (relative ${relative.toFixed(2)}%)`,
+  );
   console.log("✓ RTP consistent across ₱1 / ₱5 / ₱20 / ₱100; no payout exceeded pool cap");
 }
 

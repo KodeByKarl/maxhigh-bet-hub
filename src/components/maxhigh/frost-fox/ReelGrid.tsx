@@ -24,8 +24,7 @@ type ReelGridProps = {
  * Still distinct from diamond circles & 5×5 squares.
  */
 export const ReelGrid = memo(function ReelGrid({ visuals }: ReelGridProps) {
-  const { slots, phase, winningKeys, payoutByKey, spawnedKeys, fallenKeys, fallDistance } =
-    visuals;
+  const { slots, phase, winningKeys, payoutByKey, spawnedKeys, fallenKeys, fallDistance } = visuals;
 
   return (
     <div className="flex w-full max-w-6xl items-end justify-center gap-1 overflow-hidden sm:gap-1.5 md:gap-2">

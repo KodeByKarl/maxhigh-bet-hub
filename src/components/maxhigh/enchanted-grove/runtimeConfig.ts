@@ -1,5 +1,5 @@
 /**
- * Active Enchanted Grove config for the client/server engine.
+ * Active Enchanted Grove config for the client engine.
  * Superadmin values are loaded at play time; defaults until then.
  */
 import {

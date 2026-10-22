@@ -1,9 +1,5 @@
 import { betPerLine } from "@/lib/coin-volcano-config";
-import {
-  countWildScatter,
-  evaluateGrandJackpot,
-  evaluateInstantMix,
-} from "./instantPrize";
+import { countWildScatter, evaluateGrandJackpot, evaluateInstantMix } from "./instantPrize";
 import { evaluatePaylines } from "./paylineEngine";
 import { generateGrid } from "./reelGenerator";
 import { createRng, newSpinSeed } from "./rng";
@@ -53,11 +49,7 @@ export function resolveCoinVolcanoSpin(opts: {
     instantMix = evaluateInstantMix(wildScatter.mix, totalBet, cfg);
   }
 
-  const rawTotalWin = +(
-    paylineWinRaw +
-    (instantMix?.payout ?? 0) +
-    grandJackpotWin
-  ).toFixed(2);
+  const rawTotalWin = +(paylineWinRaw + (instantMix?.payout ?? 0) + grandJackpotWin).toFixed(2);
 
   let totalWin = rawTotalWin;
   let hitCap = false;

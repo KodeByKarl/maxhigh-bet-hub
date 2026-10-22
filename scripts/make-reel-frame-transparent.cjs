@@ -1,14 +1,6 @@
 const sharp = require("sharp");
 const path = require("path");
-const file = path.join(
-  __dirname,
-  "..",
-  "public",
-  "images",
-  "symbols",
-  "sweet",
-  "reel-frame.png",
-);
+const file = path.join(__dirname, "..", "public", "images", "symbols", "sweet", "reel-frame.png");
 
 (async () => {
   const meta = await sharp(file).metadata();

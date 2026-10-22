@@ -18,10 +18,7 @@ import {
   normalizeLucky9Config,
   type Lucky9Config,
 } from "@/lib/lucky9-config";
-import {
-  getLucky9EngineConfigFn,
-  saveLucky9EngineConfigFn,
-} from "@/functions/superadmin";
+import { getLucky9EngineConfigFn, saveLucky9EngineConfigFn } from "@/functions/superadmin";
 import type { SuperGameRow } from "@/lib/superadmin-types";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
@@ -70,15 +67,7 @@ function Num({
   );
 }
 
-function Field({
-  label,
-  hint,
-  children,
-}: {
-  label: string;
-  hint?: string;
-  children: ReactNode;
-}) {
+function Field({ label, hint, children }: { label: string; hint?: string; children: ReactNode }) {
   return (
     <label className="block space-y-1.5">
       <span className="text-xs font-medium text-muted-foreground">{label}</span>
@@ -90,9 +79,7 @@ function Field({
 
 export function Lucky9ConfigModal({ game, open, onOpenChange, onPatchLobby }: Props) {
   const [section, setSection] = useState<Section>("lobby");
-  const [cfg, setCfg] = useState<Lucky9Config>(() =>
-    structuredClone(DEFAULT_LUCKY9_CONFIG),
-  );
+  const [cfg, setCfg] = useState<Lucky9Config>(() => structuredClone(DEFAULT_LUCKY9_CONFIG));
   const [saving, setSaving] = useState(false);
   const [lobbyBusy, setLobbyBusy] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -109,17 +96,13 @@ export function Lucky9ConfigModal({ game, open, onOpenChange, onPatchLobby }: Pr
   );
   const [notes, setNotes] = useState(game.notes ?? "");
   const [sortOrder, setSortOrder] = useState(game.sortOrder ?? 0);
-  const [betStepsText, setBetStepsText] = useState(
-    DEFAULT_LUCKY9_CONFIG.betSteps.join(", "),
-  );
+  const [betStepsText, setBetStepsText] = useState(DEFAULT_LUCKY9_CONFIG.betSteps.join(", "));
 
   useEffect(() => {
     if (!open) return;
     setSection("lobby");
     setTag(game.tag ?? "");
-    setLobbyRtp(
-      Number.parseFloat(String(game.rtp ?? "").replace("%", "")) || RTP_REFERENCE.dealer,
-    );
+    setLobbyRtp(Number.parseFloat(String(game.rtp ?? "").replace("%", "")) || RTP_REFERENCE.dealer);
     setVolatility(game.volatility ?? "Low");
     setLobbyMinBet(Number(String(game.minBet ?? "").replace(/[^\d.]/g, "")) || 1);
     setLobbyMaxBet(Number(String(game.maxBet ?? "").replace(/[^\d.]/g, "")) || 500);
@@ -432,19 +415,39 @@ export function Lucky9ConfigModal({ game, open, onOpenChange, onPatchLobby }: Pr
               </Field>
               <Field label="Player min / max">
                 <div className="flex gap-2">
-                  <Num value={cfg.minPlayerBet} onChange={(n) => patch({ minPlayerBet: n })} step={0.01} />
-                  <Num value={cfg.maxPlayerBet} onChange={(n) => patch({ maxPlayerBet: n })} step={1} />
+                  <Num
+                    value={cfg.minPlayerBet}
+                    onChange={(n) => patch({ minPlayerBet: n })}
+                    step={0.01}
+                  />
+                  <Num
+                    value={cfg.maxPlayerBet}
+                    onChange={(n) => patch({ maxPlayerBet: n })}
+                    step={1}
+                  />
                 </div>
               </Field>
               <Field label="Dealer min / max">
                 <div className="flex gap-2">
-                  <Num value={cfg.minDealerBet} onChange={(n) => patch({ minDealerBet: n })} step={0.01} />
-                  <Num value={cfg.maxDealerBet} onChange={(n) => patch({ maxDealerBet: n })} step={1} />
+                  <Num
+                    value={cfg.minDealerBet}
+                    onChange={(n) => patch({ minDealerBet: n })}
+                    step={0.01}
+                  />
+                  <Num
+                    value={cfg.maxDealerBet}
+                    onChange={(n) => patch({ maxDealerBet: n })}
+                    step={1}
+                  />
                 </div>
               </Field>
               <Field label="Tie min / max">
                 <div className="flex gap-2">
-                  <Num value={cfg.minTieBet} onChange={(n) => patch({ minTieBet: n })} step={0.01} />
+                  <Num
+                    value={cfg.minTieBet}
+                    onChange={(n) => patch({ minTieBet: n })}
+                    step={0.01}
+                  />
                   <Num value={cfg.maxTieBet} onChange={(n) => patch({ maxTieBet: n })} step={1} />
                 </div>
               </Field>

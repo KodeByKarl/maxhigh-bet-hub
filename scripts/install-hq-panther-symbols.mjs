@@ -100,10 +100,7 @@ async function main() {
   for (const id of GAMES) {
     const theme = path.join(ROOT, "src/components/maxhigh", id, "theme.ts");
     let t = fs.readFileSync(theme, "utf8");
-    t = t.replace(
-      /themedIconPack\("([^"]+)",\s*"[^"]+"\)/,
-      'themedIconPack("$1", "5")',
-    );
+    t = t.replace(/themedIconPack\("([^"]+)",\s*"[^"]+"\)/, 'themedIconPack("$1", "5")');
     fs.writeFileSync(theme, t);
   }
   console.log("\nbumped icon cache to v=5");

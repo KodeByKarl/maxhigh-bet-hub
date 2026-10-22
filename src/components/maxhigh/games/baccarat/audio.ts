@@ -3,14 +3,7 @@
  */
 import { BC_ASSET } from "./animationConfig";
 
-export type BaccaratSoundKey =
-  | "chip"
-  | "deal"
-  | "flip"
-  | "win"
-  | "tie"
-  | "commission"
-  | "bigWin";
+export type BaccaratSoundKey = "chip" | "deal" | "flip" | "win" | "tie" | "commission" | "bigWin";
 
 const FILES: Record<BaccaratSoundKey, string> = {
   chip: "chip.wav",

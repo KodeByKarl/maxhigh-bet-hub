@@ -1,18 +1,17 @@
 /**
- * Fortune Rabbit — server-authoritative spin settlement (base game only).
- * No free spins, scatters, cascade, or bonus sessions.
+ * Fortune Rabbit — server-authoritative spin settle.
+ * Client only receives scripts + balances; it cannot choose win amounts.
  */
-
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import {
   FORTUNE_RABBIT_GAME_ID,
   normalizeFortuneRabbitConfig,
-  spinStake,
-  type FortuneRabbitConfig,
+  remainingFreeSpinsAfterSpin,
 } from "@/lib/fortune-rabbit-config";
 import { getDb } from "../db/client";
-import { gameControls, users } from "../db/schema";
-import { newId, requireUser } from "../session";
+import { gameControls, playSessions, users } from "../db/schema";
+import { money, newId, requireUser } from "../session";
+import { applyCapToScriptTotalWin, enforcePoolCap } from "../settlement/enforcePoolCap";
 import {
   assertNotInMaintenanceForBets,
   availableFrom,
@@ -20,22 +19,22 @@ import {
   sumPendingWithdrawals,
   writeLedgerDelta,
 } from "../wallet.server";
-import { recordGameEngineAuditLog } from "./game-audit.server";
-import { setFortuneRabbitConfig } from "@/components/maxhigh/fortune-rabbit/runtimeConfig";
-import { resolveFortuneRabbitSpin } from "@/components/maxhigh/fortune-rabbit/spinResolver";
-import type { SpinScript } from "@/components/maxhigh/fortune-rabbit/types";
+import { pantherBuyPricePerSpin } from "@/components/maxhigh/panther-shared/buyPricing";
 
 const GAME_NAME = "Fortune Rabbit";
 
-let cachedConfig: { cfg: FortuneRabbitConfig; time: number } | null = null;
-
-export function clearFortuneRabbitEngineCache() {
-  cachedConfig = null;
+/** Serialize engine config mutation — module-level runtimeConfig is process-global. */
+let engineChain: Promise<unknown> = Promise.resolve();
+function withEngineExclusive<T>(fn: () => T | Promise<T>): Promise<T> {
+  const run = engineChain.then(fn, fn);
+  engineChain = run.then(
+    () => undefined,
+    () => undefined,
+  );
+  return run;
 }
 
-async function loadEngineConfig(): Promise<FortuneRabbitConfig> {
-  const now = Date.now();
-  if (cachedConfig && now - cachedConfig.time < 30_000) return cachedConfig.cfg;
+async function loadEngineConfig() {
   const db = getDb();
   try {
     const rows = await db
@@ -44,54 +43,174 @@ async function loadEngineConfig(): Promise<FortuneRabbitConfig> {
       .where(eq(gameControls.gameId, FORTUNE_RABBIT_GAME_ID))
       .limit(1);
     const raw = rows[0]?.engineConfig;
-    const cfg = normalizeFortuneRabbitConfig(raw ? (JSON.parse(raw) as unknown) : null);
-    cachedConfig = { cfg, time: now };
-    return cfg;
+    if (!raw) return normalizeFortuneRabbitConfig(null);
+    return normalizeFortuneRabbitConfig(JSON.parse(raw) as unknown);
   } catch {
-    const cfg = normalizeFortuneRabbitConfig(null);
-    cachedConfig = { cfg, time: now };
-    return cfg;
+    return normalizeFortuneRabbitConfig(null);
   }
 }
 
+async function resolveOnServer(opts: {
+  bet: number;
+  ante: boolean;
+  isFreeSpins: boolean;
+  initialBombAccumulator?: number;
+}) {
+  const cfg = await loadEngineConfig();
+  return withEngineExclusive(async () => {
+    const { setFortuneRabbitConfig } =
+      await import("@/components/maxhigh/fortune-rabbit/runtimeConfig");
+    const { resolveSpin, finalizeFreeSpinTotal } =
+      await import("@/components/maxhigh/fortune-rabbit/spinResolver");
+    setFortuneRabbitConfig(cfg);
+    const script = resolveSpin({
+      bet: opts.bet,
+      ante: opts.ante && !opts.isFreeSpins,
+      isFreeSpins: opts.isFreeSpins,
+      collectBombsInFreeSpins: true,
+      initialBombAccumulator: opts.initialBombAccumulator,
+    });
+    return { script, finalizeFreeSpinTotal, cfg };
+  });
+}
+
+export type FortuneRabbitSessionState = {
+  sessionId: string | null;
+  freeSpinsLeft: number;
+  fsSessionWin: number;
+  fsBombAcc: number;
+  fsSpinsPlayed: number;
+  inFree: boolean;
+  bet: number;
+  ante: boolean;
+};
+
 export type FortuneRabbitSpinResult = {
   balance: number;
-  script: SpinScript;
+  script: Awaited<
+    ReturnType<typeof import("@/components/maxhigh/fortune-rabbit/spinResolver").resolveSpin>
+  >;
+  session: FortuneRabbitSessionState;
+  /** Set when a free-spin feature just finished and win was paid. */
+  fsPayout?: {
+    amount: number;
+    baseEarn: number;
+    multiplier: number;
+    spinsPlayed: number;
+  };
 };
+
+function sessionState(row: typeof playSessions.$inferSelect | null): FortuneRabbitSessionState {
+  if (!row || row.status !== "open") {
+    return {
+      sessionId: null,
+      freeSpinsLeft: 0,
+      fsSessionWin: 0,
+      fsBombAcc: 0,
+      fsSpinsPlayed: 0,
+      inFree: false,
+      bet: 0,
+      ante: false,
+    };
+  }
+  return {
+    sessionId: row.id,
+    freeSpinsLeft: Number(row.freeSpinsLeft),
+    fsSessionWin: Number(row.fsSessionWin),
+    fsBombAcc: Number(row.fsBombAcc),
+    fsSpinsPlayed: Number(row.fsSpinsPlayed),
+    inFree: Number(row.freeSpinsLeft) > 0,
+    bet: Number(row.bet),
+    ante: row.ante === "yes",
+  };
+}
+
+async function closeOtherOpenSessions(userId: string, keepId?: string) {
+  const db = getDb();
+  const open = await db
+    .select()
+    .from(playSessions)
+    .where(
+      and(
+        eq(playSessions.userId, userId),
+        eq(playSessions.gameId, FORTUNE_RABBIT_GAME_ID),
+        eq(playSessions.status, "open"),
+      ),
+    );
+  for (const row of open) {
+    if (keepId && row.id === keepId) continue;
+    await db
+      .update(playSessions)
+      .set({ status: "closed", freeSpinsLeft: 0 })
+      .where(eq(playSessions.id, row.id));
+  }
+}
+
+export async function getFortuneRabbitOpenSession(): Promise<FortuneRabbitSessionState> {
+  const user = await requireUser();
+  const db = getDb();
+  const rows = await db
+    .select()
+    .from(playSessions)
+    .where(
+      and(
+        eq(playSessions.userId, user.id),
+        eq(playSessions.gameId, FORTUNE_RABBIT_GAME_ID),
+        eq(playSessions.status, "open"),
+      ),
+    )
+    .limit(1);
+  return sessionState(rows[0] ?? null);
+}
 
 export async function fortuneRabbitPaidSpin(data: {
   bet: number;
-  exMode?: boolean;
+  ante: boolean;
 }): Promise<FortuneRabbitSpinResult> {
   const user = await requireUser();
-  if (!Number.isFinite(data.bet) || data.bet <= 0) throw new Error("Invalid bet amount");
+  if (!Number.isFinite(data.bet) || data.bet <= 0) throw new Error("Invalid bet");
 
   const cfg = await loadEngineConfig();
-  setFortuneRabbitConfig(cfg);
-
-  const baseBet = +data.bet.toFixed(2);
-  const exMode = !!data.exMode;
-  const cost = spinStake(baseBet, exMode, cfg);
-
-  if (baseBet < cfg.minBet) throw new Error(`Min bet is ₱${cfg.minBet.toFixed(2)}`);
-  if (baseBet > cfg.maxBet) throw new Error(`Max bet is ₱${cfg.maxBet.toFixed(2)}`);
+  const anteMult = data.ante ? cfg.anteBetMult : 1;
+  const cost = +(data.bet * anteMult).toFixed(2);
   const maxBet = await getMaxSingleBet();
-  if (cost > maxBet) throw new Error(`Max single bet limit is ₱${maxBet.toFixed(2)}`);
+  if (cost > maxBet) throw new Error(`Max bet is ₱${maxBet.toFixed(2)}`);
 
   await assertNotInMaintenanceForBets();
 
-  const script = resolveFortuneRabbitSpin({
-    totalBet: cost,
-    baseBet,
-    exMode,
-  });
-  const roundId = newId();
-
   const db = getDb();
+  const existing = await db
+    .select()
+    .from(playSessions)
+    .where(
+      and(
+        eq(playSessions.userId, user.id),
+        eq(playSessions.gameId, FORTUNE_RABBIT_GAME_ID),
+        eq(playSessions.status, "open"),
+      ),
+    )
+    .limit(1);
+  if (existing[0] && Number(existing[0].freeSpinsLeft) > 0) {
+    throw new Error("Finish free spins before placing a new bet");
+  }
+
+  const { script } = await resolveOnServer({
+    bet: data.bet,
+    ante: data.ante,
+    isFreeSpins: false,
+  });
+  applyCapToScriptTotalWin(script, {
+    gameId: FORTUNE_RABBIT_GAME_ID,
+    gameName: GAME_NAME,
+    bet: data.bet,
+    maxWinMult: cfg.maxWinMult,
+    context: "paid-spin",
+  });
+
   const result = await db.transaction(async (tx) => {
     const userRows = await tx.select().from(users).where(eq(users.id, user.id)).limit(1);
     const row = userRows[0];
-    if (!row) throw new Error("User account not found");
+    if (!row) throw new Error("User not found");
 
     const balance = Number(row.balance);
     const pending = await sumPendingWithdrawals(tx, user.id);
@@ -110,7 +229,7 @@ export async function fortuneRabbitPaidSpin(data: {
       delta: -cost,
       type: "bet",
       game: GAME_NAME,
-      note: `${FORTUNE_RABBIT_GAME_ID} · ${GAME_NAME} · wager ₱${cost.toFixed(2)}${exMode ? " · EX" : ""}`,
+      note: `${FORTUNE_RABBIT_GAME_ID} · ${GAME_NAME} · wager ₱${cost.toFixed(2)}`,
     });
 
     if (script.totalWin > 0) {
@@ -124,37 +243,312 @@ export async function fortuneRabbitPaidSpin(data: {
       });
     }
 
-    return { balance: ledger.balance, username: row.username };
+    const balanceAfterBet = ledger.balance;
+
+    let sessionRow: typeof playSessions.$inferSelect | null = null;
+    if (script.freeSpinsAwarded > 0) {
+      // Close any stale sessions then open FS feature
+      const stale = await tx
+        .select()
+        .from(playSessions)
+        .where(
+          and(
+            eq(playSessions.userId, user.id),
+            eq(playSessions.gameId, FORTUNE_RABBIT_GAME_ID),
+            eq(playSessions.status, "open"),
+          ),
+        );
+      for (const s of stale) {
+        await tx
+          .update(playSessions)
+          .set({ status: "closed", freeSpinsLeft: 0 })
+          .where(eq(playSessions.id, s.id));
+      }
+
+      const id = newId();
+      await tx.insert(playSessions).values({
+        id,
+        userId: user.id,
+        gameId: FORTUNE_RABBIT_GAME_ID,
+        status: "open",
+        bet: money(data.bet),
+        ante: data.ante ? "yes" : "no",
+        freeSpinsLeft: script.freeSpinsAwarded,
+        fsSessionWin: "0.00",
+        fsBombAcc: "0.00",
+        fsSpinsPlayed: 0,
+      });
+      const created = await tx.select().from(playSessions).where(eq(playSessions.id, id)).limit(1);
+      sessionRow = created[0] ?? null;
+    }
+
+    return { balance: balanceAfterBet, sessionRow };
   });
 
-  void recordGameEngineAuditLog({
-    gameId: FORTUNE_RABBIT_GAME_ID,
-    roundId,
-    userId: user.id,
-    username: result.username,
-    betAmount: cost,
-    payoutAmount: script.totalWin,
-    multiplier: cost > 0 ? +(script.totalWin / cost).toFixed(4) : 0,
-    resultMeta: {
-      seed: script.seed,
-      baseBet: script.baseBet,
-      totalBet: script.totalBet,
-      exMode: script.exMode,
-      grid: script.grid,
-      paylineWins: script.paylineWins,
-      paylineWin: script.paylineWin,
-      multiplierReel: script.multiplierReel,
-      multipliedWin: script.multipliedWin,
-      rawTotalWin: script.rawTotalWin,
-      totalWin: script.totalWin,
-      hitCap: script.hitCap,
-      rtpProfile: cfg.activeRtpProfile,
-    },
-  });
-
-  return { balance: result.balance, script };
+  return {
+    balance: result.balance,
+    script,
+    session: sessionState(result.sessionRow),
+  };
 }
 
-export async function getFortuneRabbitEngineConfigPublic(): Promise<FortuneRabbitConfig> {
-  return loadEngineConfig();
+export async function fortuneRabbitFreeSpin(data: {
+  sessionId: string;
+}): Promise<FortuneRabbitSpinResult> {
+  const user = await requireUser();
+  const db = getDb();
+
+  const sessions = await db
+    .select()
+    .from(playSessions)
+    .where(
+      and(
+        eq(playSessions.id, data.sessionId),
+        eq(playSessions.userId, user.id),
+        eq(playSessions.gameId, FORTUNE_RABBIT_GAME_ID),
+        eq(playSessions.status, "open"),
+      ),
+    )
+    .limit(1);
+  const session = sessions[0];
+  if (!session) throw new Error("Free spin session not found");
+  if (Number(session.freeSpinsLeft) <= 0) throw new Error("No free spins remaining");
+
+  const bet = Number(session.bet);
+  const { script, finalizeFreeSpinTotal, cfg } = await resolveOnServer({
+    bet,
+    ante: session.ante === "yes",
+    isFreeSpins: true,
+    initialBombAccumulator: Number(session.fsBombAcc) || 0,
+  });
+  applyCapToScriptTotalWin(script, {
+    gameId: FORTUNE_RABBIT_GAME_ID,
+    gameName: GAME_NAME,
+    bet,
+    maxWinMult: cfg.maxWinMult,
+    context: "free-spin",
+  });
+
+  const result = await db.transaction(async (tx) => {
+    const locked = await tx
+      .select()
+      .from(playSessions)
+      .where(and(eq(playSessions.id, data.sessionId), eq(playSessions.status, "open")))
+      .for("update")
+      .limit(1);
+    const row = locked[0];
+    if (!row) throw new Error("Free spin session not found");
+    const left = Number(row.freeSpinsLeft);
+    if (left <= 0) throw new Error("No free spins remaining");
+
+    const userRows = await tx.select().from(users).where(eq(users.id, user.id)).limit(1);
+    const u = userRows[0];
+    if (!u) throw new Error("User not found");
+
+    const nextWin = +(Number(row.fsSessionWin) + script.totalWin).toFixed(2);
+    const bombCeiling = cfg.maxFsBombMult > 0 ? cfg.maxFsBombMult : Number.POSITIVE_INFINITY;
+    // Paytable rule: free spins keep the strongest bomb. The engine already started
+    // from the banked value (initialBombAccumulator), so don't add it again.
+    const nextBomb = Math.min(bombCeiling, script.bombAccumulator);
+    const nextPlayed = Number(row.fsSpinsPlayed) + 1;
+    const nextLeft = remainingFreeSpinsAfterSpin({
+      leftBefore: left,
+      retrigger: script.retriggerSpins,
+      playedAfter: nextPlayed,
+      maxSessionSpins: cfg.maxFsSessionSpins,
+    });
+
+    let balance = Number(u.balance);
+    let fsPayout: FortuneRabbitSpinResult["fsPayout"];
+
+    if (nextLeft === 0) {
+      const final = enforcePoolCap({
+        gameId: FORTUNE_RABBIT_GAME_ID,
+        gameName: GAME_NAME,
+        bet,
+        maxWinMult: cfg.maxWinMult,
+        computedWin: finalizeFreeSpinTotal(nextWin, nextBomb),
+        context: "free-spins-final",
+      }).payout;
+      if (final > 0) {
+        const winRes = await writeLedgerDelta(tx, {
+          userId: user.id,
+          username: u.username,
+          delta: final,
+          type: "win",
+          game: GAME_NAME,
+          note: `${FORTUNE_RABBIT_GAME_ID} · ${GAME_NAME} · free spins win ₱${final.toFixed(2)}`,
+        });
+        balance = winRes.balance;
+      }
+      fsPayout = {
+        amount: final,
+        baseEarn: nextWin,
+        multiplier: nextBomb,
+        spinsPlayed: Math.max(nextPlayed, 1),
+      };
+      await tx
+        .update(playSessions)
+        .set({
+          status: "closed",
+          freeSpinsLeft: 0,
+          fsSessionWin: money(nextWin),
+          fsBombAcc: money(nextBomb),
+          fsSpinsPlayed: nextPlayed,
+        })
+        .where(eq(playSessions.id, row.id));
+      return {
+        balance,
+        sessionRow: null as typeof playSessions.$inferSelect | null,
+        fsPayout,
+        closed: true as const,
+        nextWin,
+        nextBomb,
+        nextPlayed,
+      };
+    }
+
+    await tx
+      .update(playSessions)
+      .set({
+        freeSpinsLeft: nextLeft,
+        fsSessionWin: money(nextWin),
+        fsBombAcc: money(nextBomb),
+        fsSpinsPlayed: nextPlayed,
+      })
+      .where(eq(playSessions.id, row.id));
+
+    const updated = await tx
+      .select()
+      .from(playSessions)
+      .where(eq(playSessions.id, row.id))
+      .limit(1);
+    return {
+      balance,
+      sessionRow: updated[0] ?? null,
+      fsPayout: undefined,
+      closed: false as const,
+      nextWin,
+      nextBomb,
+      nextPlayed,
+    };
+  });
+
+  return {
+    balance: result.balance,
+    script,
+    session: result.closed
+      ? {
+          sessionId: null,
+          freeSpinsLeft: 0,
+          fsSessionWin: result.nextWin,
+          fsBombAcc: result.nextBomb,
+          fsSpinsPlayed: result.nextPlayed,
+          inFree: false,
+          bet,
+          ante: session.ante === "yes",
+        }
+      : sessionState(result.sessionRow),
+    fsPayout: result.fsPayout,
+  };
+}
+
+export async function fortuneRabbitBuyFeature(data: {
+  bet: number;
+  mode: "normal" | "super";
+  /** Bonus units to purchase. Price = bet × unitMult; Total = Price × quantity. */
+  quantity: number;
+}): Promise<{ balance: number; session: FortuneRabbitSessionState }> {
+  const user = await requireUser();
+  if (!Number.isFinite(data.bet) || data.bet <= 0) throw new Error("Invalid bet");
+  const quantity = Math.round(data.quantity);
+  if (!Number.isFinite(quantity) || quantity < 1 || quantity > 50) {
+    throw new Error("Invalid quantity");
+  }
+
+  const cfg = await loadEngineConfig();
+  if (data.mode === "super") throw new Error("Super Buy is no longer available");
+  // Never sell more spins than one feature can play (maxFsSessionSpins).
+  if (cfg.maxFsSessionSpins > 0 && quantity > cfg.maxFsSessionSpins) {
+    throw new Error(`Max ${cfg.maxFsSessionSpins} free spins per purchase`);
+  }
+  const mult = pantherBuyPricePerSpin(
+    FORTUNE_RABBIT_GAME_ID,
+    cfg.buyFeatureMult,
+    cfg.freeSpinsBase,
+    quantity,
+  );
+  const cost = +(data.bet * mult * quantity).toFixed(2);
+  if (data.bet > 100_000) {
+    throw new Error("Buy feature bet too large");
+  }
+
+  await assertNotInMaintenanceForBets();
+  await closeOtherOpenSessions(user.id);
+
+  const db = getDb();
+  const result = await db.transaction(async (tx) => {
+    const userRows = await tx.select().from(users).where(eq(users.id, user.id)).limit(1);
+    const row = userRows[0];
+    if (!row) throw new Error("User not found");
+
+    const balance = Number(row.balance);
+    const pending = await sumPendingWithdrawals(tx, user.id);
+    const available = availableFrom(balance, pending);
+    if (cost > available) {
+      throw new Error(
+        pending > 0
+          ? `Insufficient available balance (₱${pending.toFixed(2)} held for pending withdrawal)`
+          : "Insufficient balance",
+      );
+    }
+
+    const stale = await tx
+      .select()
+      .from(playSessions)
+      .where(
+        and(
+          eq(playSessions.userId, user.id),
+          eq(playSessions.gameId, FORTUNE_RABBIT_GAME_ID),
+          eq(playSessions.status, "open"),
+        ),
+      );
+    for (const s of stale) {
+      await tx
+        .update(playSessions)
+        .set({ status: "closed", freeSpinsLeft: 0 })
+        .where(eq(playSessions.id, s.id));
+    }
+
+    const betRes = await writeLedgerDelta(tx, {
+      userId: user.id,
+      username: row.username,
+      delta: -cost,
+      type: "bet",
+      game: GAME_NAME,
+      note:
+        data.mode === "super"
+          ? `${FORTUNE_RABBIT_GAME_ID} · ${GAME_NAME} · buy super feature ×${quantity} ₱${cost.toFixed(2)}`
+          : `${FORTUNE_RABBIT_GAME_ID} · ${GAME_NAME} · buy feature ×${quantity} ₱${cost.toFixed(2)}`,
+    });
+
+    const id = newId();
+    const ante = data.mode === "super" ? ("yes" as const) : ("no" as const);
+    await tx.insert(playSessions).values({
+      id,
+      userId: user.id,
+      gameId: FORTUNE_RABBIT_GAME_ID,
+      status: "open",
+      bet: money(data.bet),
+      ante,
+      freeSpinsLeft: quantity,
+      fsSessionWin: "0.00",
+      fsBombAcc: "0.00",
+      fsSpinsPlayed: 0,
+    });
+    const created = await tx.select().from(playSessions).where(eq(playSessions.id, id)).limit(1);
+    return { balance: betRes.balance, sessionRow: created[0]! };
+  });
+
+  return { balance: result.balance, session: sessionState(result.sessionRow) };
 }

@@ -370,10 +370,7 @@ export function TongitsArenaTable({
       pairPlus: script.pairPlusWin,
       anteBonus: script.anteBonusWin,
     });
-    const credit =
-      script.decision === "play"
-        ? script.immediateCredit
-        : script.pairPlusWin;
+    const credit = script.decision === "play" ? script.immediateCredit : script.pairPlusWin;
     setLastCredit(credit);
 
     if (script.outcome === "dealer-not-qualify") {
@@ -383,9 +380,7 @@ export function TongitsArenaTable({
     } else if (script.outcome === "tie") {
       playThreeCardPokerSound("tie");
     } else if (script.immediateCredit > 0 || script.pairPlusWin > 0) {
-      playThreeCardPokerSound(
-        script.immediateCredit >= script.ante * 4 ? "bigWin" : "win",
-      );
+      playThreeCardPokerSound(script.immediateCredit >= script.ante * 4 ? "bigWin" : "win");
     }
 
     setBanner(outcomeBanner(script.outcome, credit));
@@ -469,11 +464,7 @@ export function TongitsArenaTable({
 
   const anteBadge = spotBadge(spotResults.ante, anteOnFelt, showResults);
   const playBadge = spotBadge(spotResults.play, playOnFelt, showResults && decision === "play");
-  const pairPlusBadge = spotBadge(
-    spotResults.pairPlus,
-    pairPlusOnFelt,
-    inDecision || showResults,
-  );
+  const pairPlusBadge = spotBadge(spotResults.pairPlus, pairPlusOnFelt, inDecision || showResults);
 
   return (
     <div className="relative flex h-full min-h-0 w-full flex-col overflow-hidden overscroll-none touch-manipulation text-[#f7f3e8] select-none">
@@ -677,7 +668,9 @@ export function TongitsArenaTable({
               <div className="flex items-end justify-center gap-2.5 pt-1 sm:gap-3.5 short-h:gap-2 short-h:pt-0.5">
                 <BetSpot
                   label="Pair+"
-                  sublabel={betting ? `${cfg.pairPlus.pair}-${cfg.pairPlus.straightFlush}:1` : undefined}
+                  sublabel={
+                    betting ? `${cfg.pairPlus.pair}-${cfg.pairPlus.straightFlush}:1` : undefined
+                  }
                   amount={pairPlusOnFelt}
                   tone="pairplus"
                   armed={betting && activeSpot === "pairPlus"}

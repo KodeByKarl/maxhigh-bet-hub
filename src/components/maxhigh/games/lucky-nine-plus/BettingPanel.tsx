@@ -51,8 +51,7 @@ export function BettingPanel({
   onDeal,
   dealBusy,
 }: Props) {
-  const chipValues =
-    cfg.betSteps.length > 0 ? cfg.betSteps : [...L9_CHIP_VALUES];
+  const chipValues = cfg.betSteps.length > 0 ? cfg.betSteps : [...L9_CHIP_VALUES];
   const [selectedChip, setSelectedChip] = useState<number>(
     () => chipValues.find((v) => v >= 5) ?? chipValues[0] ?? 5,
   );
@@ -205,9 +204,7 @@ export function BettingPanel({
           <span className="grid size-9 place-items-center rounded-full bg-black/25 text-base font-black text-[#f5e6c8] short-h:size-7 short-h:text-sm">
             9
           </span>
-          <span className="text-base font-black tracking-[0.18em] short-h:text-sm">
-            GO FOR 9
-          </span>
+          <span className="text-base font-black tracking-[0.18em] short-h:text-sm">GO FOR 9</span>
           {totalWager > 0 ? (
             <span className="rounded-full bg-black/35 px-2.5 py-1 text-xs font-bold tabular-nums text-[#f5e6c8] short-h:px-2 short-h:py-0.5 short-h:text-[11px]">
               ₱{totalWager.toFixed(0)}

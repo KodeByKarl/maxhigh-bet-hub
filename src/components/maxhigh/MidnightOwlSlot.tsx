@@ -32,12 +32,7 @@ import {
 } from "./midnight-owl/playbackHelpers";
 import { BetSelectModal } from "./midnight-owl/BetSelectModal";
 import { buildBuyScatterIntroBoard, initialBoard } from "./midnight-owl/gridState";
-import {
-  BET_STEPS,
-  BUY_FS_START_BET,
-  getAnteMult,
-  getBuyUnitPrice,
-} from "./midnight-owl/paytable";
+import { BET_STEPS, BUY_FS_START_BET, getAnteMult, getBuyUnitPrice } from "./midnight-owl/paytable";
 import { setMidnightOwlConfig } from "./midnight-owl/runtimeConfig";
 import type { BoardCell, SpinScript } from "./midnight-owl/types";
 import { CELLS } from "./midnight-owl/types";
@@ -145,8 +140,7 @@ export function MidnightOwlSlot({
 
   const busy = phase !== "idle";
   const totalBet = +(bet * (ante ? getAnteMult() : 1)).toFixed(2);
-  const buyCost = getBuyUnitPrice(BUY_FS_START_BET, "normal");
-  const superBuyCost = getBuyUnitPrice(BUY_FS_START_BET, "super");
+  const buyCost = getBuyUnitPrice(BUY_FS_START_BET, 1);
 
   const busyRef = useRef(false);
   const skipRef = useRef(false);
@@ -189,68 +183,61 @@ export function MidnightOwlSlot({
   }, []);
 
   /** Overlay toast — never inserts into HUD (avoids layout jump). */
-  const notifyCashflow = useCallback(
-    (delta: number, label: "bet" | "win" | "scatter" | "cap") => {
-      const abs = formatMoney(Math.abs(delta));
-      if (label === "bet") {
-        toast.custom(
-          () => (
-            <div
-              className="rounded-2xl border px-4 py-2.5 text-center shadow-[0_10px_28px_rgba(0,0,0,0.45)]"
-              style={{
-                borderColor: "rgba(165,180,252,0.55)",
-                background:
-                  "linear-gradient(135deg, rgba(8,8,20,0.96), rgba(49,46,129,0.96))",
-                color: "#C7D2FE",
-              }}
-            >
-              <div className="text-[10px] font-black uppercase tracking-[0.18em] text-indigo-200/80">
-                Bet
-              </div>
-              <div className="text-sm font-black tabular-nums">−{abs}</div>
-            </div>
-          ),
-          { duration: 1800 },
-        );
-        return;
-      }
-      const isWin = label === "win" || label === "scatter";
-      const title =
-        label === "scatter" ? "Scatter" : label === "cap" ? "Cap" : "Win";
-      const prefix = delta < 0 ? "−" : "+";
+  const notifyCashflow = useCallback((delta: number, label: "bet" | "win" | "scatter" | "cap") => {
+    const abs = formatMoney(Math.abs(delta));
+    if (label === "bet") {
       toast.custom(
         () => (
           <div
             className="rounded-2xl border px-4 py-2.5 text-center shadow-[0_10px_28px_rgba(0,0,0,0.45)]"
             style={{
-              borderColor: isWin
-                ? "rgba(196,181,253,0.65)"
-                : "rgba(129,140,248,0.55)",
-              background: isWin
-                ? "linear-gradient(135deg, #6366F1 0%, #4C1D95 55%, #080814 100%)"
-                : "linear-gradient(135deg, rgba(8,8,20,0.96), rgba(49,46,129,0.96))",
-              color: isWin ? "#EEF2FF" : "#C7D2FE",
+              borderColor: "rgba(165,180,252,0.55)",
+              background: "linear-gradient(135deg, rgba(8,8,20,0.96), rgba(49,46,129,0.96))",
+              color: "#C7D2FE",
             }}
           >
-            <div
-              className="text-[10px] font-black uppercase tracking-[0.18em]"
-              style={{
-                color: isWin ? "rgba(224,231,255,0.85)" : "rgba(199,210,254,0.85)",
-              }}
-            >
-              {title}
+            <div className="text-[10px] font-black uppercase tracking-[0.18em] text-indigo-200/80">
+              Bet
             </div>
-            <div className="text-sm font-black tabular-nums">
-              {prefix}
-              {abs}
-            </div>
+            <div className="text-sm font-black tabular-nums">−{abs}</div>
           </div>
         ),
         { duration: 1800 },
       );
-    },
-    [],
-  );
+      return;
+    }
+    const isWin = label === "win" || label === "scatter";
+    const title = label === "scatter" ? "Scatter" : label === "cap" ? "Cap" : "Win";
+    const prefix = delta < 0 ? "−" : "+";
+    toast.custom(
+      () => (
+        <div
+          className="rounded-2xl border px-4 py-2.5 text-center shadow-[0_10px_28px_rgba(0,0,0,0.45)]"
+          style={{
+            borderColor: isWin ? "rgba(196,181,253,0.65)" : "rgba(129,140,248,0.55)",
+            background: isWin
+              ? "linear-gradient(135deg, #6366F1 0%, #4C1D95 55%, #080814 100%)"
+              : "linear-gradient(135deg, rgba(8,8,20,0.96), rgba(49,46,129,0.96))",
+            color: isWin ? "#EEF2FF" : "#C7D2FE",
+          }}
+        >
+          <div
+            className="text-[10px] font-black uppercase tracking-[0.18em]"
+            style={{
+              color: isWin ? "rgba(224,231,255,0.85)" : "rgba(199,210,254,0.85)",
+            }}
+          >
+            {title}
+          </div>
+          <div className="text-sm font-black tabular-nums">
+            {prefix}
+            {abs}
+          </div>
+        </div>
+      ),
+      { duration: 1800 },
+    );
+  }, []);
 
   /** Abortable wait — respects turbo + skipRef + playback generation / unmount. */
   const wait = useCallback((ms: number, gen: number) => {
@@ -487,9 +474,7 @@ export function MidnightOwlSlot({
         midnightOwlAudio.playCascadeTick();
         await wait(getPopWaitMs(step.winningKeys.length), gen);
 
-        setSlots(
-          step.afterPop.length === CELLS ? step.afterPop : asSlots(step.board),
-        );
+        setSlots(step.afterPop.length === CELLS ? step.afterPop : asSlots(step.board));
         setWinningKeys(EMPTY_SET);
         setPayoutByKey(EMPTY_PAY);
         setTumbleStepWin(0);
@@ -557,7 +542,10 @@ export function MidnightOwlSlot({
   }, [muted, setMutedState]);
 
   const finishBase = useCallback(
-    (script: SpinScript, session: { sessionId: string | null; freeSpinsLeft: number; inFree: boolean }) => {
+    (
+      script: SpinScript,
+      session: { sessionId: string | null; freeSpinsLeft: number; inFree: boolean },
+    ) => {
       if (script.totalWin > 0) {
         setLastWin(script.totalWin);
         midnightOwlAudio.playWin(script.totalWin, totalBet);
@@ -650,6 +638,8 @@ export function MidnightOwlSlot({
       let recoveredToFree = false;
 
       try {
+        midnightOwlAudio.startSpinLoop();
+
         if (!isFree) {
           setBalanceLocal(balance - cost);
           notifyCashflow(-cost, "bet");
@@ -674,7 +664,12 @@ export function MidnightOwlSlot({
         void refreshJackpot();
         applySession(settled.session);
 
-        const script = await playScript(settled.script, isFree, gen, isFree ? balance : balance - cost);
+        const script = await playScript(
+          settled.script,
+          isFree,
+          gen,
+          isFree ? balance : balance - cost,
+        );
         if (gen !== playbackGen.current || !mountedRef.current) return;
 
         if (isFree) {
@@ -795,7 +790,7 @@ export function MidnightOwlSlot({
   const buyFeature = useCallback(
     async (buyBet: number, quantity: number) => {
       if (busyRef.current || phase !== "idle") return;
-      const unit = getBuyUnitPrice(buyBet, buyMode);
+      const unit = getBuyUnitPrice(buyBet, quantity);
       const cost = +(unit * quantity).toFixed(2);
       if (balance < cost) {
         toast.error("Insufficient balance");
@@ -860,7 +855,16 @@ export function MidnightOwlSlot({
   // Auto / free-spin chain — always invoke latest spin via ref (no stale closures).
   useEffect(() => {
     if (busyRef.current || busy) return;
-    if (winPopup || fsSummary || buyOpen || infoOpen || autoSpinModalOpen || betModalOpen || triggerModalCount != null) return;
+    if (
+      winPopup ||
+      fsSummary ||
+      buyOpen ||
+      infoOpen ||
+      autoSpinModalOpen ||
+      betModalOpen ||
+      triggerModalCount != null
+    )
+      return;
 
     const spinGap = getAutoSpinGapMs(turbo, autoSpinConfig?.spinWithoutReels);
 
@@ -899,7 +903,7 @@ export function MidnightOwlSlot({
         setAutoSpin(false);
         setAutoSpinConfig(null);
         toast.info(
-          `Auto Spin stopped: Balance increased by ₱${autoSpinConfig.balanceIncreaseBy.toFixed(2)}`
+          `Auto Spin stopped: Balance increased by ₱${autoSpinConfig.balanceIncreaseBy.toFixed(2)}`,
         );
         return;
       }
@@ -911,7 +915,7 @@ export function MidnightOwlSlot({
         setAutoSpin(false);
         setAutoSpinConfig(null);
         toast.info(
-          `Auto Spin stopped: Balance decreased by ₱${autoSpinConfig.balanceDecreaseBy.toFixed(2)}`
+          `Auto Spin stopped: Balance decreased by ₱${autoSpinConfig.balanceDecreaseBy.toFixed(2)}`,
         );
         return;
       }
@@ -920,12 +924,9 @@ export function MidnightOwlSlot({
         setRemainingAutoSpins((prev) => (typeof prev === "number" ? prev - 1 : prev));
       }
 
-      const t = setTimeout(
-        () => {
-          void spinRef.current(false);
-        },
-        spinGap,
-      );
+      const t = setTimeout(() => {
+        void spinRef.current(false);
+      }, spinGap);
       return () => clearTimeout(t);
     }
   }, [
@@ -946,10 +947,8 @@ export function MidnightOwlSlot({
     turbo,
   ]);
 
-  const displayWin = dropTotal > 0 ? dropTotal : (inFree ? fsSessionWin : lastWin);
-  const showTumbleBadge =
-    tumbleStepWin > 0 &&
-    (phase === "glow" || phase === "popping");
+  const displayWin = dropTotal > 0 ? dropTotal : inFree ? fsSessionWin : lastWin;
+  const showTumbleBadge = tumbleStepWin > 0 && (phase === "glow" || phase === "popping");
   const theme = midnightOwlTheme;
   const themeVars = themeToCssVars(theme);
 
@@ -1053,18 +1052,6 @@ export function MidnightOwlSlot({
               >
                 Buy FS {formatMoneyCompact(buyCost)}
               </button>
-              <button
-                type="button"
-                disabled={busy}
-                onClick={() => openBuyFeature("super")}
-                className="min-h-9 rounded-xl border-2 bg-black/70 px-3 py-1.5 text-[10px] font-black uppercase tracking-wide disabled:opacity-40 sm:min-h-10 sm:px-4 sm:py-2 sm:text-[11px]"
-                style={{
-                  borderColor: "var(--p-accent)",
-                  color: "var(--p-accent-soft)",
-                }}
-              >
-                Super {formatMoneyCompact(superBuyCost)}
-              </button>
             </div>
           )}
 
@@ -1092,8 +1079,7 @@ export function MidnightOwlSlot({
                 className="min-w-0 rounded-xl border px-1 py-1.5 text-center sm:px-2 sm:py-2.5"
                 style={{
                   borderColor: "var(--p-win-border)",
-                  background:
-                    "linear-gradient(180deg, var(--p-win-from) 0%, var(--p-win-to) 100%)",
+                  background: "linear-gradient(180deg, var(--p-win-from) 0%, var(--p-win-to) 100%)",
                 }}
               >
                 <div
@@ -1165,7 +1151,10 @@ export function MidnightOwlSlot({
                   <div className="text-[9px] font-bold uppercase tracking-wider text-white/55 sm:text-[10px]">
                     Bet
                   </div>
-                  <div className="truncate text-xs font-black tabular-nums sm:text-base" style={{ color: "var(--p-win-value)" }}>
+                  <div
+                    className="truncate text-xs font-black tabular-nums sm:text-base"
+                    style={{ color: "var(--p-win-value)" }}
+                  >
                     {formatMoney(totalBet)}
                   </div>
                 </button>
@@ -1213,8 +1202,10 @@ export function MidnightOwlSlot({
                     setAutoSpinConfig(null);
                   } else if (inFree || freeSpins > 0) {
                     setFsPaused(false);
+                    midnightOwlAudio.playUiClick();
                     void spin(true);
                   } else {
+                    midnightOwlAudio.playUiClick();
                     void spin(false);
                   }
                 }}
@@ -1260,9 +1251,17 @@ export function MidnightOwlSlot({
                       </span>
                     </div>
                   ) : busy ? (
-                    <RotateCw size={24} className="animate-spin sm:size-7" style={{ color: "var(--p-win-value)" }} />
+                    <RotateCw
+                      size={24}
+                      className="animate-spin sm:size-7"
+                      style={{ color: "var(--p-win-value)" }}
+                    />
                   ) : (
-                    <RotateCw size={24} className="sm:size-7" style={{ color: "var(--p-win-value)" }} />
+                    <RotateCw
+                      size={24}
+                      className="sm:size-7"
+                      style={{ color: "var(--p-win-value)" }}
+                    />
                   )}
                 </div>
               </button>
@@ -1329,9 +1328,7 @@ export function MidnightOwlSlot({
       </AnimatePresence>
 
       <AnimatePresence>
-        {infoOpen && (
-          <PaytableModal bet={totalBet} onClose={() => setInfoOpen(false)} />
-        )}
+        {infoOpen && <PaytableModal bet={totalBet} onClose={() => setInfoOpen(false)} />}
       </AnimatePresence>
 
       <AnimatePresence>
@@ -1383,10 +1380,7 @@ export function MidnightOwlSlot({
 
       <AnimatePresence>
         {triggerModalCount != null && (
-          <FreeSpinsTriggerModal
-            count={triggerModalCount}
-            onClose={dismissTriggerModal}
-          />
+          <FreeSpinsTriggerModal count={triggerModalCount} onClose={dismissTriggerModal} />
         )}
       </AnimatePresence>
 

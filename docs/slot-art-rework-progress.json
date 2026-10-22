@@ -1,0 +1,882 @@
+{
+  "safari-gold/10": {
+    "file": "public/images/symbols/safari-gold/10-v20261012.png",
+    "source": "C:\\Users\\Karld\\.codex\\generated_images\\01a12e90-8423-7460-8e9b-77f6306524ee\\exec-1cfba26b-cce0-4038-aa54-28f6e0751ae3.png",
+    "complete": true
+  },
+  "safari-gold/J": {
+    "file": "public/images/symbols/safari-gold/J-v20261012.png",
+    "source": "C:\\Users\\Karld\\.codex\\generated_images\\01a12e90-8423-7460-8e9b-77f6306524ee\\exec-8dccf188-58dc-4cf0-b85a-f0bcdc87050d.png",
+    "complete": true
+  },
+  "safari-gold/premium-b": {
+    "file": "public/images/symbols/safari-gold/premium-b-v20261012.png",
+    "source": "C:\\Users\\Karld\\.codex\\generated_images\\01a12e90-8423-7460-8e9b-77f6306524ee\\exec-084a8bc4-e7d9-48b6-83cb-ca635b2c4c6c.png",
+    "complete": true
+  },
+  "safari-gold/premium-c": {
+    "file": "public/images/symbols/safari-gold/premium-c-v20261012.png",
+    "source": "C:\\Users\\Karld\\.codex\\generated_images\\01a12e90-8423-7460-8e9b-77f6306524ee\\exec-35b2d1e0-8c99-4f67-8e77-0fd23205f2a9.png",
+    "complete": true
+  },
+  "safari-gold/Q": {
+    "file": "public/images/symbols/safari-gold/Q-v20261012.png",
+    "source": "C:\\Users\\Karld\\.codex\\generated_images\\01a12e90-8423-7460-8e9b-77f6306524ee\\exec-3a4dbe7a-18a4-4ff6-8092-d445c3c49c14.png",
+    "complete": true
+  },
+  "safari-gold/scatter": {
+    "file": "public/images/symbols/safari-gold/scatter-v20261012.png",
+    "source": "C:\\Users\\Karld\\.codex\\generated_images\\01a12e90-8423-7460-8e9b-77f6306524ee\\exec-c884e1b4-c9a3-4171-98ff-90d87866f2ad.png",
+    "complete": true
+  },
+  "safari-gold/wild": {
+    "file": "public/images/symbols/safari-gold/wild-v20261012.png",
+    "source": "C:\\Users\\Karld\\.codex\\generated_images\\01a12e90-8423-7460-8e9b-77f6306524ee\\exec-ba3f174d-bfed-4b85-9f36-7695bdf8cf6b.png",
+    "complete": true
+  },
+  "safari-gold/K": {
+    "file": "public/images/symbols/safari-gold/K-v20261012.png",
+    "source": "C:\\Users\\Karld\\.codex\\generated_images\\01a12e90-8423-7460-8e9b-77f6306524ee\\exec-9df356e0-dded-410f-894a-f895773b7f69.png",
+    "complete": true
+  },
+  "safari-gold/backdrop": {
+    "file": "public/images/symbols/safari-gold/backdrop-v20261012.webp",
+    "source": "C:\\Users\\Karld\\.codex\\generated_images\\01a12e90-8423-7460-8e9b-77f6306524ee\\exec-b8a533cf-afaf-4c2a-b853-d475ce823a6a.png",
+    "complete": true
+  },
+  "buffalo-reign/10": {
+    "file": "public/images/symbols/buffalo-reign/10-v20261012.png",
+    "source": "C:\\Users\\Karld\\.codex\\generated_images\\01a12e90-8423-7460-8e9b-77f6306524ee\\exec-ea1893c5-f814-4dd5-b61f-301a66168aa4.png",
+    "complete": true
+  },
+  "safari-gold/A": {
+    "file": "public/images/symbols/safari-gold/A-v20261012.png",
+    "source": "C:\\Users\\Karld\\.codex\\generated_images\\01a12e90-8423-7460-8e9b-77f6306524ee\\exec-a3aa1f85-01c9-48ae-a99e-9421f188ccf8.png",
+    "complete": true
+  },
+  "safari-gold/premium-a": {
+    "file": "public/images/symbols/safari-gold/premium-a-v20261012.png",
+    "source": "C:\\Users\\Karld\\.codex\\generated_images\\01a12e90-8423-7460-8e9b-77f6306524ee\\exec-d0cde7c4-7232-4e67-b5ce-a8817c3385fd.png",
+    "complete": true
+  },
+  "buffalo-reign/J": {
+    "file": "public/images/symbols/buffalo-reign/J-v20261012.png",
+    "source": "C:\\Users\\Karld\\.codex\\generated_images\\01a12e90-8423-7460-8e9b-77f6306524ee\\exec-d9a66470-cc37-4440-a9b5-b5851e0ed29d.png",
+    "complete": true
+  },
+  "buffalo-reign/Q": {
+    "file": "public/images/symbols/buffalo-reign/Q-v20261012.png",
+    "source": "C:\\Users\\Karld\\.codex\\generated_images\\01a12e90-8423-7460-8e9b-77f6306524ee\\exec-e5ae1c52-eba6-414b-981b-3d4ce478bb67.png",
+    "complete": true
+  },
+  "buffalo-reign/K": {
+    "file": "public/images/symbols/buffalo-reign/K-v20261012.png",
+    "source": "C:\\Users\\Karld\\.codex\\generated_images\\01a12e90-8423-7460-8e9b-77f6306524ee\\exec-4022e247-3122-4215-a7b3-91c3ffc7d535.png",
+    "complete": true
+  },
+  "buffalo-reign/A": {
+    "file": "public/images/symbols/buffalo-reign/A-v20261012.png",
+    "source": "C:\\Users\\Karld\\.codex\\generated_images\\01a12e90-8423-7460-8e9b-77f6306524ee\\exec-155d8dc3-651c-43d8-bda4-55aeb3958e47.png",
+    "complete": true
+  },
+  "buffalo-reign/premium-a": {
+    "file": "public/images/symbols/buffalo-reign/premium-a-v20261012.png",
+    "source": "C:\\Users\\Karld\\.codex\\generated_images\\01a12e90-8423-7460-8e9b-77f6306524ee\\exec-7bf93f04-b1aa-4776-b4d7-aee725aba19e.png",
+    "complete": true
+  },
+  "buffalo-reign/premium-b": {
+    "file": "public/images/symbols/buffalo-reign/premium-b-v20261012.png",
+    "source": "C:\\Users\\Karld\\.codex\\generated_images\\01a12e90-8423-7460-8e9b-77f6306524ee\\exec-800001e1-5c94-462a-bc3e-adb83d1c3f85.png",
+    "complete": true
+  },
+  "buffalo-reign/premium-c": {
+    "file": "public/images/symbols/buffalo-reign/premium-c-v20261012.png",
+    "source": "C:\\Users\\Karld\\.codex\\generated_images\\01a12e90-8423-7460-8e9b-77f6306524ee\\exec-04085790-76ce-4267-b9e0-5af1ae594c25.png",
+    "complete": true
+  },
+  "buffalo-reign/scatter": {
+    "file": "public/images/symbols/buffalo-reign/scatter-v20261012.png",
+    "source": "C:\\Users\\Karld\\.codex\\generated_images\\01a12e90-8423-7460-8e9b-77f6306524ee\\exec-746f8159-246c-4bda-8781-6c90079f2a7b.png",
+    "complete": true
+  },
+  "buffalo-reign/wild": {
+    "file": "public/images/symbols/buffalo-reign/wild-v20261012.png",
+    "source": "C:\\Users\\Karld\\.codex\\generated_images\\01a12e90-8423-7460-8e9b-77f6306524ee\\exec-853a360f-a13a-47f0-8f16-74e472c61a03.png",
+    "complete": true
+  },
+  "buffalo-reign/backdrop": {
+    "file": "public/images/symbols/buffalo-reign/backdrop-v20261012.webp",
+    "source": "C:\\Users\\Karld\\.codex\\generated_images\\01a12e90-8423-7460-8e9b-77f6306524ee\\exec-67654933-2959-46ae-b211-d4ae32faab64.png",
+    "complete": true
+  },
+  "prosperity-lion/10": {
+    "file": "public/images/symbols/prosperity-lion/10-v20261012.png",
+    "source": "C:\\Users\\Karld\\.codex\\generated_images\\01a12e90-8423-7460-8e9b-77f6306524ee\\exec-7a38308e-71fb-42ae-a5c0-70eea41449cf.png",
+    "complete": true
+  },
+  "prosperity-lion/J": {
+    "file": "public/images/symbols/prosperity-lion/J-v20261012.png",
+    "source": "C:\\Users\\Karld\\.codex\\generated_images\\01a12e90-8423-7460-8e9b-77f6306524ee\\exec-af6898c0-1116-4fe2-9deb-7e9ad8e980ce.png",
+    "complete": true
+  },
+  "prosperity-lion/Q": {
+    "file": "public/images/symbols/prosperity-lion/Q-v20261012.png",
+    "source": "C:\\Users\\Karld\\.codex\\generated_images\\01a12e90-8423-7460-8e9b-77f6306524ee\\exec-96b568f3-e025-40cb-81a6-d382c99f3caf.png",
+    "complete": true
+  },
+  "prosperity-lion/K": {
+    "file": "public/images/symbols/prosperity-lion/K-v20261012.png",
+    "source": "C:\\Users\\Karld\\.codex\\generated_images\\01a12e90-8423-7460-8e9b-77f6306524ee\\exec-7f6d66aa-c236-494d-a4b9-8809d55b2964.png",
+    "complete": true
+  },
+  "prosperity-lion/A": {
+    "file": "public/images/symbols/prosperity-lion/A-v20261012.png",
+    "source": "C:\\Users\\Karld\\.codex\\generated_images\\01a12e90-8423-7460-8e9b-77f6306524ee\\exec-e41f6754-ddb4-4fe8-bd9b-8602871b077b.png",
+    "complete": true
+  },
+  "prosperity-lion/premium-a": {
+    "file": "public/images/symbols/prosperity-lion/premium-a-v20261012.png",
+    "source": "C:\\Users\\Karld\\.codex\\generated_images\\01a12e90-8423-7460-8e9b-77f6306524ee\\exec-445392a6-1999-4869-9b7b-2cc73df85828.png",
+    "complete": true
+  },
+  "prosperity-lion/premium-b": {
+    "file": "public/images/symbols/prosperity-lion/premium-b-v20261012.png",
+    "source": "C:\\Users\\Karld\\.codex\\generated_images\\01a12e90-8423-7460-8e9b-77f6306524ee\\exec-84afa961-8a78-4679-a6bf-021ddcb3abd3.png",
+    "complete": true
+  },
+  "prosperity-lion/premium-c": {
+    "file": "public/images/symbols/prosperity-lion/premium-c-v20261012.png",
+    "source": "C:\\Users\\Karld\\.codex\\generated_images\\01a12e90-8423-7460-8e9b-77f6306524ee\\exec-6269526e-9b0a-4a29-8a72-e5c9e72b3860.png",
+    "complete": true
+  },
+  "prosperity-lion/scatter": {
+    "file": "public/images/symbols/prosperity-lion/scatter-v20261012.png",
+    "source": "C:\\Users\\Karld\\.codex\\generated_images\\01a12e90-8423-7460-8e9b-77f6306524ee\\exec-6d2b6af2-efb2-4419-a17b-a42e3d7c0d91.png",
+    "complete": true
+  },
+  "prosperity-lion/wild": {
+    "file": "public/images/symbols/prosperity-lion/wild-v20261012.png",
+    "source": "C:\\Users\\Karld\\.codex\\generated_images\\01a12e90-8423-7460-8e9b-77f6306524ee\\exec-39ed1efa-7551-427b-91df-64b652f8a35f.png",
+    "complete": true
+  },
+  "prosperity-lion/backdrop": {
+    "file": "public/images/symbols/prosperity-lion/backdrop-v20261012.webp",
+    "source": "C:\\Users\\Karld\\.codex\\generated_images\\01a12e90-8423-7460-8e9b-77f6306524ee\\exec-81247325-70f5-45e5-ada0-ca659030cbcd.png",
+    "complete": true
+  },
+  "fortune-mouse/10": {
+    "file": "public/images/symbols/fortune-mouse/10-v20261012.png",
+    "source": "C:\\Users\\Karld\\.codex\\generated_images\\01a12e90-8423-7460-8e9b-77f6306524ee\\exec-ad86d18a-ca42-4069-a1b5-8683da3b4e5f.png",
+    "complete": true
+  },
+  "fortune-mouse/J": {
+    "file": "public/images/symbols/fortune-mouse/J-v20261012.png",
+    "source": "C:\\Users\\Karld\\.codex\\generated_images\\01a12e90-8423-7460-8e9b-77f6306524ee\\exec-308a3f48-e8da-41c4-b80b-b82e5948a8d9.png",
+    "complete": true
+  },
+  "fortune-mouse/Q": {
+    "file": "public/images/symbols/fortune-mouse/Q-v20261012.png",
+    "source": "C:\\Users\\Karld\\.codex\\generated_images\\01a12e90-8423-7460-8e9b-77f6306524ee\\exec-9242b799-cf22-4a31-b243-6b5ad9d093a6.png",
+    "complete": true
+  },
+  "fortune-mouse/K": {
+    "file": "public/images/symbols/fortune-mouse/K-v20261012.png",
+    "source": "C:\\Users\\Karld\\.codex\\generated_images\\01a12e90-8423-7460-8e9b-77f6306524ee\\exec-313b4480-e8d0-42dd-8ad8-ede5f225bec9.png",
+    "complete": true
+  },
+  "fortune-mouse/A": {
+    "file": "public/images/symbols/fortune-mouse/A-v20261012.png",
+    "source": "C:\\Users\\Karld\\.codex\\generated_images\\01a12e90-8423-7460-8e9b-77f6306524ee\\exec-ae5aba9f-7f9d-4427-b5b8-3a9b7fe6f450.png",
+    "complete": true
+  },
+  "fortune-mouse/premium-a": {
+    "file": "public/images/symbols/fortune-mouse/premium-a-v20261012.png",
+    "source": "C:\\Users\\Karld\\.codex\\generated_images\\01a12e90-8423-7460-8e9b-77f6306524ee\\exec-464ce055-ca66-4faa-8b14-a0c0e473cb16.png",
+    "complete": true
+  },
+  "fortune-mouse/premium-b": {
+    "file": "public/images/symbols/fortune-mouse/premium-b-v20261012.png",
+    "source": "C:\\Users\\Karld\\.codex\\generated_images\\01a12e90-8423-7460-8e9b-77f6306524ee\\exec-f721c487-b2b8-43af-869e-35c882e9e6da.png",
+    "complete": true
+  },
+  "fortune-mouse/premium-c": {
+    "file": "public/images/symbols/fortune-mouse/premium-c-v20261012.png",
+    "source": "C:\\Users\\Karld\\.codex\\generated_images\\01a12e90-8423-7460-8e9b-77f6306524ee\\exec-b6a9156f-b8a9-42dc-93ef-a0529117cdf9.png",
+    "complete": true
+  },
+  "fortune-mouse/scatter": {
+    "file": "public/images/symbols/fortune-mouse/scatter-v20261012.png",
+    "source": "C:\\Users\\Karld\\.codex\\generated_images\\01a12e90-8423-7460-8e9b-77f6306524ee\\exec-6cae96e2-74d5-4dc1-96eb-a8b9a51a04df.png",
+    "complete": true
+  },
+  "fortune-mouse/wild": {
+    "file": "public/images/symbols/fortune-mouse/wild-v20261012.png",
+    "source": "C:\\Users\\Karld\\.codex\\generated_images\\01a12e90-8423-7460-8e9b-77f6306524ee\\exec-5b8f9b11-d22e-421a-a582-3ba877321809.png",
+    "complete": true
+  },
+  "fortune-mouse/backdrop": {
+    "file": "public/images/symbols/fortune-mouse/backdrop-v20261012.webp",
+    "source": "C:\\Users\\Karld\\.codex\\generated_images\\01a12e90-8423-7460-8e9b-77f6306524ee\\exec-8c6f647f-4a36-4d6e-ab8e-351f08c5591e.png",
+    "complete": true
+  },
+  "fortune-ox/10": {
+    "file": "public/images/symbols/fortune-ox/10-v20261012.png",
+    "source": "C:\\Users\\Karld\\.codex\\generated_images\\01a12e90-8423-7460-8e9b-77f6306524ee\\exec-b1bb84a7-c379-4ec4-8a1b-a54800b1f0e4.png",
+    "complete": true
+  },
+  "fortune-rabbit/J": {
+    "file": "public/images/symbols/fortune-rabbit/J-v20261012.png",
+    "source": "C:\\Users\\Karld\\.codex\\generated_images\\01a12e90-8423-7460-8e9b-77f6306524ee\\exec-e3ac4462-435a-451f-9564-8cc4b2df7286.png",
+    "complete": true
+  },
+  "fortune-ox/J": {
+    "file": "public/images/symbols/fortune-ox/J-v20261012.png",
+    "source": "C:\\Users\\Karld\\.codex\\generated_images\\01a12e90-8423-7460-8e9b-77f6306524ee\\exec-c63af1e5-f0b3-4b8c-a6ae-e985c7cc9500.png",
+    "complete": true
+  },
+  "fortune-rabbit/Q": {
+    "file": "public/images/symbols/fortune-rabbit/Q-v20261012.png",
+    "source": "C:\\Users\\Karld\\.codex\\generated_images\\01a12e90-8423-7460-8e9b-77f6306524ee\\exec-41991c7d-1775-48c5-972b-0ff1c5cf0572.png",
+    "complete": true
+  },
+  "fortune-ox/Q": {
+    "file": "public/images/symbols/fortune-ox/Q-v20261012.png",
+    "source": "C:\\Users\\Karld\\.codex\\generated_images\\01a12e90-8423-7460-8e9b-77f6306524ee\\exec-75496f57-876a-4a3d-acea-d4f0db443a26.png",
+    "complete": true
+  },
+  "fortune-rabbit/K": {
+    "file": "public/images/symbols/fortune-rabbit/K-v20261012.png",
+    "source": "C:\\Users\\Karld\\.codex\\generated_images\\01a12e90-8423-7460-8e9b-77f6306524ee\\exec-d742b65f-13ad-448c-8424-65caf43b95e4.png",
+    "complete": true
+  },
+  "fortune-ox/K": {
+    "file": "public/images/symbols/fortune-ox/K-v20261012.png",
+    "source": "C:\\Users\\Karld\\.codex\\generated_images\\01a12e90-8423-7460-8e9b-77f6306524ee\\exec-06199d79-afa2-47b2-9b60-e90c4224de92.png",
+    "complete": true
+  },
+  "fortune-rabbit/A": {
+    "file": "public/images/symbols/fortune-rabbit/A-v20261012.png",
+    "source": "C:\\Users\\Karld\\.codex\\generated_images\\01a12e90-8423-7460-8e9b-77f6306524ee\\exec-fc950305-65d1-4afd-8373-5922cf5b0703.png",
+    "complete": true
+  },
+  "fortune-ox/A": {
+    "file": "public/images/symbols/fortune-ox/A-v20261012.png",
+    "source": "C:\\Users\\Karld\\.codex\\generated_images\\01a12e90-8423-7460-8e9b-77f6306524ee\\exec-3b51d95f-4f5a-4da2-96b1-0e705a716bd0.png",
+    "complete": true
+  },
+  "fortune-rabbit/premium-a": {
+    "file": "public/images/symbols/fortune-rabbit/premium-a-v20261012.png",
+    "source": "C:\\Users\\Karld\\.codex\\generated_images\\01a12e90-8423-7460-8e9b-77f6306524ee\\exec-85685730-93f1-4223-9cc6-bdff7d4e58a5.png",
+    "complete": true
+  },
+  "fortune-ox/premium-b": {
+    "file": "public/images/symbols/fortune-ox/premium-b-v20261012.png",
+    "source": "C:\\Users\\Karld\\.codex\\generated_images\\01a12e90-8423-7460-8e9b-77f6306524ee\\exec-c2817b27-a75f-4668-82ff-493578c47de7.png",
+    "complete": true
+  },
+  "fortune-rabbit/premium-b": {
+    "file": "public/images/symbols/fortune-rabbit/premium-b-v20261012.png",
+    "source": "C:\\Users\\Karld\\.codex\\generated_images\\01a12e90-8423-7460-8e9b-77f6306524ee\\exec-23bc6074-0283-4af6-bfaa-ad9006b70605.png",
+    "complete": true
+  },
+  "fortune-ox/premium-a": {
+    "file": "public/images/symbols/fortune-ox/premium-a-v20261012.png",
+    "source": "C:\\Users\\Karld\\.codex\\generated_images\\01a12e90-8423-7460-8e9b-77f6306524ee\\exec-cb20cb36-bbc7-485f-be97-89fb5c7a1f7c.png",
+    "complete": true
+  },
+  "fortune-rabbit/premium-c": {
+    "file": "public/images/symbols/fortune-rabbit/premium-c-v20261012.png",
+    "source": "C:\\Users\\Karld\\.codex\\generated_images\\01a12e90-8423-7460-8e9b-77f6306524ee\\exec-f193359f-8571-4fda-9724-6b0d44d1a53e.png",
+    "complete": true
+  },
+  "fortune-ox/premium-c": {
+    "file": "public/images/symbols/fortune-ox/premium-c-v20261012.png",
+    "source": "C:\\Users\\Karld\\.codex\\generated_images\\01a12e90-8423-7460-8e9b-77f6306524ee\\exec-ed7bdf6c-ce76-47f3-bcc1-74b130477dca.png",
+    "complete": true
+  },
+  "fortune-rabbit/scatter": {
+    "file": "public/images/symbols/fortune-rabbit/scatter-v20261012.png",
+    "source": "C:\\Users\\Karld\\.codex\\generated_images\\01a12e90-8423-7460-8e9b-77f6306524ee\\exec-c63b1527-40a0-4308-b6fb-1a33f5fb8ecb.png",
+    "complete": true
+  },
+  "fortune-ox/scatter": {
+    "file": "public/images/symbols/fortune-ox/scatter-v20261012.png",
+    "source": "C:\\Users\\Karld\\.codex\\generated_images\\01a12e90-8423-7460-8e9b-77f6306524ee\\exec-4515a78a-3baf-4318-b21a-3ff7eee77c11.png",
+    "complete": true
+  },
+  "fortune-rabbit/wild": {
+    "file": "public/images/symbols/fortune-rabbit/wild-v20261012.png",
+    "source": "C:\\Users\\Karld\\.codex\\generated_images\\01a12e90-8423-7460-8e9b-77f6306524ee\\exec-6c493f59-f89b-4649-ab5c-86c602751072.png",
+    "complete": true
+  },
+  "fortune-ox/backdrop": {
+    "file": "public/images/symbols/fortune-ox/backdrop-v20261012.webp",
+    "source": "C:\\Users\\Karld\\.codex\\generated_images\\01a12e90-8423-7460-8e9b-77f6306524ee\\exec-df970936-49e2-415a-a095-9f6c318b5e59.png",
+    "complete": true
+  },
+  "fortune-rabbit/backdrop": {
+    "file": "public/images/symbols/fortune-rabbit/backdrop-v20261012.webp",
+    "source": "C:\\Users\\Karld\\.codex\\generated_images\\01a12e90-8423-7460-8e9b-77f6306524ee\\exec-682de868-99d1-49ed-930f-771e45aea2f8.png",
+    "complete": true
+  },
+  "fortune-ox/wild": {
+    "file": "public/images/symbols/fortune-ox/wild-v20261012.png",
+    "source": "C:\\Users\\Karld\\.codex\\generated_images\\01a12e90-8423-7460-8e9b-77f6306524ee\\exec-15028b3f-32b2-4213-b938-43eef0a60ff6.png",
+    "complete": true
+  },
+  "fortune-tiger/10": {
+    "file": "public/images/symbols/fortune-tiger/10-v20261012.png",
+    "source": "C:\\Users\\Karld\\.codex\\generated_images\\01a12e90-8423-7460-8e9b-77f6306524ee\\exec-e71058e6-b60f-47e5-9f96-60120efeb519.png",
+    "complete": true
+  },
+  "fortune-rabbit/10": {
+    "file": "public/images/symbols/fortune-rabbit/10-v20261012.png",
+    "source": "C:\\Users\\Karld\\.codex\\generated_images\\01a12e90-8423-7460-8e9b-77f6306524ee\\exec-780d5fc4-cae4-4cfd-9b1d-355dfb4792f4.png",
+    "complete": true
+  },
+  "fortune-tiger/J": {
+    "file": "public/images/symbols/fortune-tiger/J-v20261012.png",
+    "source": "C:\\Users\\Karld\\.codex\\generated_images\\01a12e90-8423-7460-8e9b-77f6306524ee\\exec-e9c8725b-3c3e-4149-8cbe-3d341ee3359f.png",
+    "complete": true
+  },
+  "fortune-tiger/Q": {
+    "file": "public/images/symbols/fortune-tiger/Q-v20261012.png",
+    "source": "C:\\Users\\Karld\\.codex\\generated_images\\01a12e90-8423-7460-8e9b-77f6306524ee\\exec-bd98c7cd-9e34-4e42-8155-4c23e9bcef92.png",
+    "complete": true
+  },
+  "fortune-tiger/K": {
+    "file": "public/images/symbols/fortune-tiger/K-v20261012.png",
+    "source": "C:\\Users\\Karld\\.codex\\generated_images\\01a12e90-8423-7460-8e9b-77f6306524ee\\exec-7450fad4-17ca-404f-8106-86d9f2bd9e0d.png",
+    "complete": true
+  },
+  "fortune-tiger/A": {
+    "file": "public/images/symbols/fortune-tiger/A-v20261012.png",
+    "source": "C:\\Users\\Karld\\.codex\\generated_images\\01a12e90-8423-7460-8e9b-77f6306524ee\\exec-1d8df098-d358-4918-a995-877965fcdb28.png",
+    "complete": true
+  },
+  "fortune-tiger/premium-a": {
+    "file": "public/images/symbols/fortune-tiger/premium-a-v20261012.png",
+    "source": "C:\\Users\\Karld\\.codex\\generated_images\\01a12e90-8423-7460-8e9b-77f6306524ee\\exec-e94a2a8a-2aca-4320-b4d2-145e2a35ae2b.png",
+    "complete": true
+  },
+  "fortune-tiger/premium-b": {
+    "file": "public/images/symbols/fortune-tiger/premium-b-v20261012.png",
+    "source": "C:\\Users\\Karld\\.codex\\generated_images\\01a12e90-8423-7460-8e9b-77f6306524ee\\exec-80747009-dfe6-4470-8eae-750086620cc2.png",
+    "complete": true
+  },
+  "fortune-tiger/premium-c": {
+    "file": "public/images/symbols/fortune-tiger/premium-c-v20261012.png",
+    "source": "C:\\Users\\Karld\\.codex\\generated_images\\01a12e90-8423-7460-8e9b-77f6306524ee\\exec-dd8eb0fd-5162-4035-8167-710d00ba9e13.png",
+    "complete": true
+  },
+  "fortune-tiger/scatter": {
+    "file": "public/images/symbols/fortune-tiger/scatter-v20261012.png",
+    "source": "C:\\Users\\Karld\\.codex\\generated_images\\01a12e90-8423-7460-8e9b-77f6306524ee\\exec-d3ffd7ab-9f72-4bc6-9eb1-f7c546aeac9f.png",
+    "complete": true
+  },
+  "fortune-tiger/wild": {
+    "file": "public/images/symbols/fortune-tiger/wild-v20261012.png",
+    "source": "C:\\Users\\Karld\\.codex\\generated_images\\01a12e90-8423-7460-8e9b-77f6306524ee\\exec-f252dfdc-01eb-4762-a68c-795809665f77.png",
+    "complete": true
+  },
+  "fortune-tiger/backdrop": {
+    "file": "public/images/symbols/fortune-tiger/backdrop-v20261012.webp",
+    "source": "C:\\Users\\Karld\\.codex\\generated_images\\01a12e90-8423-7460-8e9b-77f6306524ee\\exec-cb9719c9-6cf2-48ed-9691-a08122e0ecf9.png",
+    "complete": true
+  },
+  "lucky-neko/10": {
+    "file": "public/images/symbols/lucky-neko/10-v20261012.png",
+    "source": "C:\\Users\\Karld\\.codex\\generated_images\\01a12e90-8423-7460-8e9b-77f6306524ee\\exec-a785b392-02ae-4896-b9fe-9853f7510f11.png",
+    "complete": true
+  },
+  "lucky-neko/J": {
+    "file": "public/images/symbols/lucky-neko/J-v20261012.png",
+    "source": "C:\\Users\\Karld\\.codex\\generated_images\\01a12e90-8423-7460-8e9b-77f6306524ee\\exec-a3961600-d8c2-4fef-a4f4-11b9a8a3be18.png",
+    "complete": true
+  },
+  "lucky-neko/Q": {
+    "file": "public/images/symbols/lucky-neko/Q-v20261012.png",
+    "source": "C:\\Users\\Karld\\.codex\\generated_images\\01a12e90-8423-7460-8e9b-77f6306524ee\\exec-6759ea0c-fb3d-4d91-abef-c06f6e33af3e.png",
+    "complete": true
+  },
+  "lucky-neko/K": {
+    "file": "public/images/symbols/lucky-neko/K-v20261012.png",
+    "source": "C:\\Users\\Karld\\.codex\\generated_images\\01a12e90-8423-7460-8e9b-77f6306524ee\\exec-746d0793-1bf4-4fd6-81c4-f37fa7486d3f.png",
+    "complete": true
+  },
+  "lucky-neko/A": {
+    "file": "public/images/symbols/lucky-neko/A-v20261012.png",
+    "source": "C:\\Users\\Karld\\.codex\\generated_images\\01a12e90-8423-7460-8e9b-77f6306524ee\\exec-391665cf-fa0f-4c9e-9e45-1ee192c6307b.png",
+    "complete": true
+  },
+  "lucky-neko/premium-a": {
+    "file": "public/images/symbols/lucky-neko/premium-a-v20261012.png",
+    "source": "C:\\Users\\Karld\\.codex\\generated_images\\01a12e90-8423-7460-8e9b-77f6306524ee\\exec-649aec56-5034-44e0-a27d-39eae9eda4a9.png",
+    "complete": true
+  },
+  "lucky-neko/premium-b": {
+    "file": "public/images/symbols/lucky-neko/premium-b-v20261012.png",
+    "source": "C:\\Users\\Karld\\.codex\\generated_images\\01a12e90-8423-7460-8e9b-77f6306524ee\\exec-9ad08ad6-30a1-42e5-bd32-59aaa2902323.png",
+    "complete": true
+  },
+  "lucky-neko/premium-c": {
+    "file": "public/images/symbols/lucky-neko/premium-c-v20261012.png",
+    "source": "C:\\Users\\Karld\\.codex\\generated_images\\01a12e90-8423-7460-8e9b-77f6306524ee\\exec-88a97291-8f55-49c3-8f7f-f26324535a62.png",
+    "complete": true
+  },
+  "lucky-neko/scatter": {
+    "file": "public/images/symbols/lucky-neko/scatter-v20261012.png",
+    "source": "C:\\Users\\Karld\\.codex\\generated_images\\01a12e90-8423-7460-8e9b-77f6306524ee\\exec-1be8562d-43a6-4fa1-9824-790e296e9225.png",
+    "complete": true
+  },
+  "lucky-neko/wild": {
+    "file": "public/images/symbols/lucky-neko/wild-v20261012.png",
+    "source": "C:\\Users\\Karld\\.codex\\generated_images\\01a12e90-8423-7460-8e9b-77f6306524ee\\exec-a89fefb5-429b-45c7-9696-f415caf6659a.png",
+    "complete": true
+  },
+  "lucky-neko/backdrop": {
+    "file": "public/images/symbols/lucky-neko/backdrop-v20261012.webp",
+    "source": "C:\\Users\\Karld\\.codex\\generated_images\\01a12e90-8423-7460-8e9b-77f6306524ee\\exec-5f99e36c-f8a6-45b7-9cff-1f5268e538a7.png",
+    "complete": true
+  },
+  "cleopatra-gold/10": {
+    "file": "public/images/symbols/cleopatra-gold/10-v20261012.png",
+    "source": "C:\\Users\\Karld\\.codex\\generated_images\\01a12e90-8423-7460-8e9b-77f6306524ee\\exec-fa2c3f3e-928b-41d7-b736-ee8fa2eac0b8.png",
+    "complete": true
+  },
+  "cleopatra-gold/J": {
+    "file": "public/images/symbols/cleopatra-gold/J-v20261012.png",
+    "source": "C:\\Users\\Karld\\.codex\\generated_images\\01a12e90-8423-7460-8e9b-77f6306524ee\\exec-47009f08-966f-4636-8401-e993f49ece72.png",
+    "complete": true
+  },
+  "cleopatra-gold/Q": {
+    "file": "public/images/symbols/cleopatra-gold/Q-v20261012.png",
+    "source": "C:\\Users\\Karld\\.codex\\generated_images\\01a12e90-8423-7460-8e9b-77f6306524ee\\exec-1e1dcc86-c2b8-49ad-b1bf-7b2ddc7bea0c.png",
+    "complete": true
+  },
+  "cleopatra-gold/K": {
+    "file": "public/images/symbols/cleopatra-gold/K-v20261012.png",
+    "source": "C:\\Users\\Karld\\.codex\\generated_images\\01a12e90-8423-7460-8e9b-77f6306524ee\\exec-d8389b53-8b79-407f-9a00-17b6f057bb35.png",
+    "complete": true
+  },
+  "cleopatra-gold/A": {
+    "file": "public/images/symbols/cleopatra-gold/A-v20261012.png",
+    "source": "C:\\Users\\Karld\\.codex\\generated_images\\01a12e90-8423-7460-8e9b-77f6306524ee\\exec-12e02e3b-2363-4754-a5d8-aeac1e370f7e.png",
+    "complete": true
+  },
+  "cleopatra-gold/premium-a": {
+    "file": "public/images/symbols/cleopatra-gold/premium-a-v20261012.png",
+    "source": "C:\\Users\\Karld\\.codex\\generated_images\\01a12e90-8423-7460-8e9b-77f6306524ee\\exec-57223498-c4b0-4f54-aa2c-5cc3122fafe2.png",
+    "complete": true
+  },
+  "cleopatra-gold/premium-b": {
+    "file": "public/images/symbols/cleopatra-gold/premium-b-v20261012.png",
+    "source": "C:\\Users\\Karld\\.codex\\generated_images\\01a12e90-8423-7460-8e9b-77f6306524ee\\exec-d3c1dec1-fadf-48bb-a529-cf76c7fb31a9.png",
+    "complete": true
+  },
+  "cleopatra-gold/premium-c": {
+    "file": "public/images/symbols/cleopatra-gold/premium-c-v20261012.png",
+    "source": "C:\\Users\\Karld\\.codex\\generated_images\\01a12e90-8423-7460-8e9b-77f6306524ee\\exec-59b9783b-3e41-422f-8efc-62afb5fdb76a.png",
+    "complete": true
+  },
+  "cleopatra-gold/scatter": {
+    "file": "public/images/symbols/cleopatra-gold/scatter-v20261012.png",
+    "source": "C:\\Users\\Karld\\.codex\\generated_images\\01a12e90-8423-7460-8e9b-77f6306524ee\\exec-53041b33-0563-4851-ae28-2b42427e2ea7.png",
+    "complete": true
+  },
+  "cleopatra-gold/wild": {
+    "file": "public/images/symbols/cleopatra-gold/wild-v20261012.png",
+    "source": "C:\\Users\\Karld\\.codex\\generated_images\\01a12e90-8423-7460-8e9b-77f6306524ee\\exec-cea7fa5a-214f-4267-af73-26dcbdfbc143.png",
+    "complete": true
+  },
+  "cleopatra-gold/backdrop": {
+    "file": "public/images/symbols/cleopatra-gold/backdrop-v20261012.webp",
+    "source": "C:\\Users\\Karld\\.codex\\generated_images\\01a12e90-8423-7460-8e9b-77f6306524ee\\exec-c4a40290-e36a-4250-8f9a-30f7b3996cc2.png",
+    "complete": true
+  },
+  "desert-riches/10": {
+    "file": "public/images/symbols/desert-riches/10-v20261012.png",
+    "source": "C:\\Users\\Karld\\.codex\\generated_images\\01a12e90-8423-7460-8e9b-77f6306524ee\\exec-627d68ba-af06-45c0-a204-0230efb95007.png",
+    "complete": true
+  },
+  "desert-riches/J": {
+    "file": "public/images/symbols/desert-riches/J-v20261012.png",
+    "source": "C:\\Users\\Karld\\.codex\\generated_images\\01a12e90-8423-7460-8e9b-77f6306524ee\\exec-9c5b6bf4-e635-44a7-b5ac-82e1beecd7d4.png",
+    "complete": true
+  },
+  "desert-riches/Q": {
+    "file": "public/images/symbols/desert-riches/Q-v20261012.png",
+    "source": "C:\\Users\\Karld\\.codex\\generated_images\\01a12e90-8423-7460-8e9b-77f6306524ee\\exec-f41ee466-2d6f-4787-ac55-0b02a8e3ad5f.png",
+    "complete": true
+  },
+  "desert-riches/K": {
+    "file": "public/images/symbols/desert-riches/K-v20261012.png",
+    "source": "C:\\Users\\Karld\\.codex\\generated_images\\01a12e90-8423-7460-8e9b-77f6306524ee\\exec-1e9e60ae-c922-4789-bc05-141cd2468f18.png",
+    "complete": true
+  },
+  "desert-riches/A": {
+    "file": "public/images/symbols/desert-riches/A-v20261012.png",
+    "source": "C:\\Users\\Karld\\.codex\\generated_images\\01a12e90-8423-7460-8e9b-77f6306524ee\\exec-4856bcd8-99b9-4c89-98c7-15292446fb87.png",
+    "complete": true
+  },
+  "desert-riches/premium-a": {
+    "file": "public/images/symbols/desert-riches/premium-a-v20261012.png",
+    "source": "C:\\Users\\Karld\\.codex\\generated_images\\01a12e90-8423-7460-8e9b-77f6306524ee\\exec-d55585a7-236d-40b7-880e-4b53c982b6da.png",
+    "complete": true
+  },
+  "desert-riches/premium-b": {
+    "file": "public/images/symbols/desert-riches/premium-b-v20261012.png",
+    "source": "C:\\Users\\Karld\\.codex\\generated_images\\01a12e90-8423-7460-8e9b-77f6306524ee\\exec-3c4dd23b-5338-4767-a2bd-5cff6c2fb6a7.png",
+    "complete": true
+  },
+  "desert-riches/scatter": {
+    "file": "public/images/symbols/desert-riches/scatter-v20261012.png",
+    "source": "C:\\Users\\Karld\\.codex\\generated_images\\01a12e90-8423-7460-8e9b-77f6306524ee\\exec-9ed9a685-b391-402b-a6d9-b5b489b0a035.png",
+    "complete": true
+  },
+  "desert-riches/premium-c": {
+    "file": "public/images/symbols/desert-riches/premium-c-v20261012.png",
+    "source": "C:\\Users\\Karld\\.codex\\generated_images\\01a12e90-8423-7460-8e9b-77f6306524ee\\exec-ee83ce92-c7f0-4a06-8053-3d24be326c7d.png",
+    "complete": true
+  },
+  "desert-riches/wild": {
+    "file": "public/images/symbols/desert-riches/wild-v20261012.png",
+    "source": "C:\\Users\\Karld\\.codex\\generated_images\\01a12e90-8423-7460-8e9b-77f6306524ee\\exec-5d08bc4a-fef1-421a-9234-e3c53b3c099c.png",
+    "complete": true
+  },
+  "desert-riches/backdrop": {
+    "file": "public/images/symbols/desert-riches/backdrop-v20261012.webp",
+    "source": "C:\\Users\\Karld\\.codex\\generated_images\\01a12e90-8423-7460-8e9b-77f6306524ee\\exec-32474de5-890e-4671-8073-7a85f5883060.png",
+    "complete": true
+  },
+  "gate-of-ra/10": {
+    "file": "public/images/symbols/gate-of-ra/10-v20261012.png",
+    "source": "C:\\Users\\Karld\\.codex\\generated_images\\01a12e90-8423-7460-8e9b-77f6306524ee\\exec-bf890177-490d-4bc5-a055-7702b15e72ab.png",
+    "complete": true
+  },
+  "gate-of-ra/J": {
+    "file": "public/images/symbols/gate-of-ra/J-v20261012.png",
+    "source": "C:\\Users\\Karld\\.codex\\generated_images\\01a12e90-8423-7460-8e9b-77f6306524ee\\exec-5c088495-4410-48c1-9543-bbf58382cb30.png",
+    "complete": true
+  },
+  "gate-of-ra/Q": {
+    "file": "public/images/symbols/gate-of-ra/Q-v20261012.png",
+    "source": "C:\\Users\\Karld\\.codex\\generated_images\\01a12e90-8423-7460-8e9b-77f6306524ee\\exec-55447d06-e40d-46d4-8633-8f7253894467.png",
+    "complete": true
+  },
+  "gate-of-ra/K": {
+    "file": "public/images/symbols/gate-of-ra/K-v20261012.png",
+    "source": "C:\\Users\\Karld\\.codex\\generated_images\\01a12e90-8423-7460-8e9b-77f6306524ee\\exec-59cf1b6e-2f60-410f-bad1-ebdeff1af7cf.png",
+    "complete": true
+  },
+  "gate-of-ra/A": {
+    "file": "public/images/symbols/gate-of-ra/A-v20261012.png",
+    "source": "C:\\Users\\Karld\\.codex\\generated_images\\01a12e90-8423-7460-8e9b-77f6306524ee\\exec-117e23e1-29eb-4cd2-a7d9-26c70015505e.png",
+    "complete": true
+  },
+  "gate-of-ra/premium-a": {
+    "file": "public/images/symbols/gate-of-ra/premium-a-v20261012.png",
+    "source": "C:\\Users\\Karld\\.codex\\generated_images\\01a12e90-8423-7460-8e9b-77f6306524ee\\exec-d4ea84bc-1c12-4b5d-8196-d2958ccc3dd4.png",
+    "complete": true
+  },
+  "gate-of-ra/premium-b": {
+    "file": "public/images/symbols/gate-of-ra/premium-b-v20261012.png",
+    "source": "C:\\Users\\Karld\\.codex\\generated_images\\01a12e90-8423-7460-8e9b-77f6306524ee\\exec-92f3c198-d2d2-4a83-99bf-5c783f6aaa07.png",
+    "complete": true
+  },
+  "gate-of-ra/premium-c": {
+    "file": "public/images/symbols/gate-of-ra/premium-c-v20261012.png",
+    "source": "C:\\Users\\Karld\\.codex\\generated_images\\01a12e90-8423-7460-8e9b-77f6306524ee\\exec-ecb79427-4689-4918-9583-1496b2e6888f.png",
+    "complete": true
+  },
+  "gate-of-ra/scatter": {
+    "file": "public/images/symbols/gate-of-ra/scatter-v20261012.png",
+    "source": "C:\\Users\\Karld\\.codex\\generated_images\\01a12e90-8423-7460-8e9b-77f6306524ee\\exec-751fa9be-6eec-4011-a333-27cfae49ce08.png",
+    "complete": true
+  },
+  "gate-of-ra/wild": {
+    "file": "public/images/symbols/gate-of-ra/wild-v20261012.png",
+    "source": "C:\\Users\\Karld\\.codex\\generated_images\\01a12e90-8423-7460-8e9b-77f6306524ee\\exec-9e5199b9-f78f-4f9e-adf8-972d8da2964a.png",
+    "complete": true
+  },
+  "gate-of-ra/backdrop": {
+    "file": "public/images/symbols/gate-of-ra/backdrop-v20261012.webp",
+    "source": "C:\\Users\\Karld\\.codex\\generated_images\\01a12e90-8423-7460-8e9b-77f6306524ee\\exec-21e6cf20-229c-411e-9174-6f9f84a509c2.png",
+    "complete": true
+  },
+  "maya-gold/10": {
+    "file": "public/images/symbols/maya-gold/10-v20261012.png",
+    "source": "C:\\Users\\Karld\\.codex\\generated_images\\01a12e90-8423-7460-8e9b-77f6306524ee\\exec-e1b8b9d1-03c9-423c-b2c3-178493cda34d.png",
+    "complete": true
+  },
+  "maya-gold/J": {
+    "file": "public/images/symbols/maya-gold/J-v20261012.png",
+    "source": "C:\\Users\\Karld\\.codex\\generated_images\\01a12e90-8423-7460-8e9b-77f6306524ee\\exec-5a03eee0-9e9f-44c6-a9cd-0047ed87a430.png",
+    "complete": true
+  },
+  "maya-gold/Q": {
+    "file": "public/images/symbols/maya-gold/Q-v20261012.png",
+    "source": "C:\\Users\\Karld\\.codex\\generated_images\\01a12e90-8423-7460-8e9b-77f6306524ee\\exec-3b16c8a5-9387-469d-8e66-9abe43d0b6ff.png",
+    "complete": true
+  },
+  "maya-gold/K": {
+    "file": "public/images/symbols/maya-gold/K-v20261012.png",
+    "source": "C:\\Users\\Karld\\.codex\\generated_images\\01a12e90-8423-7460-8e9b-77f6306524ee\\exec-f02e670c-7645-4353-9f40-ac189be07ee2.png",
+    "complete": true
+  },
+  "maya-gold/A": {
+    "file": "public/images/symbols/maya-gold/A-v20261012.png",
+    "source": "C:\\Users\\Karld\\.codex\\generated_images\\01a12e90-8423-7460-8e9b-77f6306524ee\\exec-27d4eba3-b894-4432-9ef0-d74503b827a8.png",
+    "complete": true
+  },
+  "maya-gold/premium-a": {
+    "file": "public/images/symbols/maya-gold/premium-a-v20261012.png",
+    "source": "C:\\Users\\Karld\\.codex\\generated_images\\01a12e90-8423-7460-8e9b-77f6306524ee\\exec-7d11fff5-43ab-4e78-98f2-06f09a73d56b.png",
+    "complete": true
+  },
+  "maya-gold/premium-b": {
+    "file": "public/images/symbols/maya-gold/premium-b-v20261012.png",
+    "source": "C:\\Users\\Karld\\.codex\\generated_images\\01a12e90-8423-7460-8e9b-77f6306524ee\\exec-15425510-5aaf-4a8e-bb0e-033f42457db8.png",
+    "complete": true
+  },
+  "maya-gold/premium-c": {
+    "file": "public/images/symbols/maya-gold/premium-c-v20261012.png",
+    "source": "C:\\Users\\Karld\\.codex\\generated_images\\01a12e90-8423-7460-8e9b-77f6306524ee\\exec-81045350-e30c-4c57-895f-e17cc753fb5e.png",
+    "complete": true
+  },
+  "maya-gold/scatter": {
+    "file": "public/images/symbols/maya-gold/scatter-v20261012.png",
+    "source": "C:\\Users\\Karld\\.codex\\generated_images\\01a12e90-8423-7460-8e9b-77f6306524ee\\exec-a9f9540b-5583-4f80-9e0f-6f09608d9876.png",
+    "complete": true
+  },
+  "maya-gold/wild": {
+    "file": "public/images/symbols/maya-gold/wild-v20261012.png",
+    "source": "C:\\Users\\Karld\\.codex\\generated_images\\01a12e90-8423-7460-8e9b-77f6306524ee\\exec-a4e400fb-0842-42e1-9f58-64486467c691.png",
+    "complete": true
+  },
+  "maya-gold/backdrop": {
+    "file": "public/images/symbols/maya-gold/backdrop-v20261012.webp",
+    "source": "C:\\Users\\Karld\\.codex\\generated_images\\01a12e90-8423-7460-8e9b-77f6306524ee\\exec-27d0ff35-37b9-4571-92d7-4971ea08d41a.png",
+    "complete": true
+  },
+  "pharaoh-fire/10": {
+    "file": "public/images/symbols/pharaoh-fire/10-v20261012.png",
+    "source": "C:\\Users\\Karld\\.codex\\generated_images\\01a12e90-8423-7460-8e9b-77f6306524ee\\exec-98197ad4-e3a8-44fe-95c8-d97e6efba954.png",
+    "complete": true
+  },
+  "pharaoh-fire/J": {
+    "file": "public/images/symbols/pharaoh-fire/J-v20261012.png",
+    "source": "C:\\Users\\Karld\\.codex\\generated_images\\01a12e90-8423-7460-8e9b-77f6306524ee\\exec-4e71ef7e-3fa6-43e0-8e0d-ff6e433320f2.png",
+    "complete": true
+  },
+  "pharaoh-fire/Q": {
+    "file": "public/images/symbols/pharaoh-fire/Q-v20261012.png",
+    "source": "C:\\Users\\Karld\\.codex\\generated_images\\01a12e90-8423-7460-8e9b-77f6306524ee\\exec-d5bd123d-0621-40a0-977f-18b6b372e576.png",
+    "complete": true
+  },
+  "pharaoh-fire/K": {
+    "file": "public/images/symbols/pharaoh-fire/K-v20261012.png",
+    "source": "C:\\Users\\Karld\\.codex\\generated_images\\01a12e90-8423-7460-8e9b-77f6306524ee\\exec-107c71f0-6306-425d-a474-ba7a90e3082c.png",
+    "complete": true
+  },
+  "pharaoh-fire/A": {
+    "file": "public/images/symbols/pharaoh-fire/A-v20261012.png",
+    "source": "C:\\Users\\Karld\\.codex\\generated_images\\01a12e90-8423-7460-8e9b-77f6306524ee\\exec-4cc0f3a5-65d3-4a95-b8e2-3c438d8640a5.png",
+    "complete": true
+  },
+  "pharaoh-fire/premium-a": {
+    "file": "public/images/symbols/pharaoh-fire/premium-a-v20261012.png",
+    "source": "C:\\Users\\Karld\\.codex\\generated_images\\01a12e90-8423-7460-8e9b-77f6306524ee\\exec-fc95acdf-9bd8-43f1-b937-4266f9bee10f.png",
+    "complete": true
+  },
+  "pharaoh-fire/premium-b": {
+    "file": "public/images/symbols/pharaoh-fire/premium-b-v20261012.png",
+    "source": "C:\\Users\\Karld\\.codex\\generated_images\\01a12e90-8423-7460-8e9b-77f6306524ee\\exec-11892a3c-c840-4be3-9567-69b508cbd651.png",
+    "complete": true
+  },
+  "pharaoh-fire/premium-c": {
+    "file": "public/images/symbols/pharaoh-fire/premium-c-v20261012.png",
+    "source": "C:\\Users\\Karld\\.codex\\generated_images\\01a12e90-8423-7460-8e9b-77f6306524ee\\exec-794ebfac-a1e8-40f3-9067-68bf49aad684.png",
+    "complete": true
+  },
+  "pharaoh-fire/scatter": {
+    "file": "public/images/symbols/pharaoh-fire/scatter-v20261012.png",
+    "source": "C:\\Users\\Karld\\.codex\\generated_images\\01a12e90-8423-7460-8e9b-77f6306524ee\\exec-1de55de5-1fb5-4e1e-beba-3d6ac6006008.png",
+    "complete": true
+  },
+  "pharaoh-fire/wild": {
+    "file": "public/images/symbols/pharaoh-fire/wild-v20261012.png",
+    "source": "C:\\Users\\Karld\\.codex\\generated_images\\01a12e90-8423-7460-8e9b-77f6306524ee\\exec-27d25c4c-29db-4608-a712-5e4b1da75ddf.png",
+    "complete": true
+  },
+  "pharaoh-fire/backdrop": {
+    "file": "public/images/symbols/pharaoh-fire/backdrop-v20261012.webp",
+    "source": "C:\\Users\\Karld\\.codex\\generated_images\\01a12e90-8423-7460-8e9b-77f6306524ee\\exec-ebc8ddab-1ef3-4550-8fad-792745be2532.png",
+    "complete": true
+  },
+  "enchanted-grove/10": {
+    "file": "public/images/symbols/enchanted-grove/10-v20261012.png",
+    "source": "C:\\Users\\Karld\\.codex\\generated_images\\01a12e90-8423-7460-8e9b-77f6306524ee\\exec-3e7b80d9-b870-490f-babb-622d64e8a4c4.png",
+    "complete": true
+  },
+  "enchanted-grove/J": {
+    "file": "public/images/symbols/enchanted-grove/J-v20261012.png",
+    "source": "C:\\Users\\Karld\\.codex\\generated_images\\01a12e90-8423-7460-8e9b-77f6306524ee\\exec-47383d8b-e46f-46be-a023-13aa6b1f0258.png",
+    "complete": true
+  },
+  "enchanted-grove/Q": {
+    "file": "public/images/symbols/enchanted-grove/Q-v20261012.png",
+    "source": "C:\\Users\\Karld\\.codex\\generated_images\\01a12e90-8423-7460-8e9b-77f6306524ee\\exec-c475139b-7a2f-4674-8347-86d3efab99fd.png",
+    "complete": true
+  },
+  "enchanted-grove/K": {
+    "file": "public/images/symbols/enchanted-grove/K-v20261012.png",
+    "source": "C:\\Users\\Karld\\.codex\\generated_images\\01a12e90-8423-7460-8e9b-77f6306524ee\\exec-ba06218c-bdfb-4bec-b3e8-14195ed72094.png",
+    "complete": true
+  },
+  "enchanted-grove/A": {
+    "file": "public/images/symbols/enchanted-grove/A-v20261012.png",
+    "source": "C:\\Users\\Karld\\.codex\\generated_images\\01a12e90-8423-7460-8e9b-77f6306524ee\\exec-eef884bb-3b55-4cae-a931-da51fb974cb4.png",
+    "complete": true
+  },
+  "enchanted-grove/premium-a": {
+    "file": "public/images/symbols/enchanted-grove/premium-a-v20261012.png",
+    "source": "C:\\Users\\Karld\\.codex\\generated_images\\01a12e90-8423-7460-8e9b-77f6306524ee\\exec-d9c067d8-48ef-4285-bba2-cc0aae30aebe.png",
+    "complete": true
+  },
+  "enchanted-grove/premium-b": {
+    "file": "public/images/symbols/enchanted-grove/premium-b-v20261012.png",
+    "source": "C:\\Users\\Karld\\.codex\\generated_images\\01a12e90-8423-7460-8e9b-77f6306524ee\\exec-18d6ff6e-8db1-4c3d-91c6-e775c1e3fa98.png",
+    "complete": true
+  },
+  "enchanted-grove/premium-c": {
+    "file": "public/images/symbols/enchanted-grove/premium-c-v20261012.png",
+    "source": "C:\\Users\\Karld\\.codex\\generated_images\\01a12e90-8423-7460-8e9b-77f6306524ee\\exec-506a2a55-e47e-460c-95d0-322e5b92d81b.png",
+    "complete": true
+  },
+  "enchanted-grove/scatter": {
+    "file": "public/images/symbols/enchanted-grove/scatter-v20261012.png",
+    "source": "C:\\Users\\Karld\\.codex\\generated_images\\01a12e90-8423-7460-8e9b-77f6306524ee\\exec-2628aae9-a80b-4ca9-abe9-bd83fbfe3d3f.png",
+    "complete": true
+  },
+  "enchanted-grove/wild": {
+    "file": "public/images/symbols/enchanted-grove/wild-v20261012.png",
+    "source": "C:\\Users\\Karld\\.codex\\generated_images\\01a12e90-8423-7460-8e9b-77f6306524ee\\exec-ec3d7743-093f-4da7-b1bc-bf7bdc5b6744.png",
+    "complete": true
+  },
+  "enchanted-grove/backdrop": {
+    "file": "public/images/symbols/enchanted-grove/backdrop-v20261012.webp",
+    "source": "C:\\Users\\Karld\\.codex\\generated_images\\01a12e90-8423-7460-8e9b-77f6306524ee\\exec-255d9ce3-5a22-4722-a047-17167cf68d8a.png",
+    "complete": true
+  },
+  "godly-gates/10": {
+    "file": "public/images/symbols/godly-gates/10-v20261012.png",
+    "source": "C:\\Users\\Karld\\.codex\\generated_images\\01a12e90-8423-7460-8e9b-77f6306524ee\\exec-f7f7263b-6d5a-4469-9954-22c08ed880ef.png",
+    "complete": true
+  },
+  "godly-gates/J": {
+    "file": "public/images/symbols/godly-gates/J-v20261012.png",
+    "source": "C:\\Users\\Karld\\.codex\\generated_images\\01a12e90-8423-7460-8e9b-77f6306524ee\\exec-96f321c6-5f52-46f3-a29a-2ed8ae6aa916.png",
+    "complete": true
+  },
+  "godly-gates/Q": {
+    "file": "public/images/symbols/godly-gates/Q-v20261012.png",
+    "source": "C:\\Users\\Karld\\.codex\\generated_images\\01a12e90-8423-7460-8e9b-77f6306524ee\\exec-7912eadb-41fd-4e3b-9179-4f5ccf36adc0.png",
+    "complete": true
+  },
+  "godly-gates/K": {
+    "file": "public/images/symbols/godly-gates/K-v20261012.png",
+    "source": "C:\\Users\\Karld\\.codex\\generated_images\\01a12e90-8423-7460-8e9b-77f6306524ee\\exec-ddb8b8ff-5b9e-4820-bfc1-a91cfb8c4379.png",
+    "complete": true
+  },
+  "godly-gates/A": {
+    "file": "public/images/symbols/godly-gates/A-v20261012.png",
+    "source": "C:\\Users\\Karld\\.codex\\generated_images\\01a12e90-8423-7460-8e9b-77f6306524ee\\exec-5cd2ef4c-bc16-472b-b414-b83311e4a409.png",
+    "complete": true
+  },
+  "godly-gates/premium-a": {
+    "file": "public/images/symbols/godly-gates/premium-a-v20261012.png",
+    "source": "C:\\Users\\Karld\\.codex\\generated_images\\01a12e90-8423-7460-8e9b-77f6306524ee\\exec-57bdd075-1b0c-4877-8548-d38698e6469e.png",
+    "complete": true
+  },
+  "godly-gates/premium-b": {
+    "file": "public/images/symbols/godly-gates/premium-b-v20261012.png",
+    "source": "C:\\Users\\Karld\\.codex\\generated_images\\01a12e90-8423-7460-8e9b-77f6306524ee\\exec-683cd44f-014e-4247-83e3-bc10312ca2ae.png",
+    "complete": true
+  },
+  "godly-gates/premium-c": {
+    "file": "public/images/symbols/godly-gates/premium-c-v20261012.png",
+    "source": "C:\\Users\\Karld\\.codex\\generated_images\\01a12e90-8423-7460-8e9b-77f6306524ee\\exec-bf716dfc-5ab2-41bb-a2db-baec1e75b93e.png",
+    "complete": true
+  },
+  "godly-gates/scatter": {
+    "file": "public/images/symbols/godly-gates/scatter-v20261012.png",
+    "source": "C:\\Users\\Karld\\.codex\\generated_images\\01a12e90-8423-7460-8e9b-77f6306524ee\\exec-80c9c83e-c813-4c2d-b449-360d64725a02.png",
+    "complete": true
+  },
+  "godly-gates/wild": {
+    "file": "public/images/symbols/godly-gates/wild-v20261012.png",
+    "source": "C:\\Users\\Karld\\.codex\\generated_images\\01a12e90-8423-7460-8e9b-77f6306524ee\\exec-6dc360ca-9cd2-4bac-b2f1-49f928e95ff7.png",
+    "complete": true
+  },
+  "godly-gates/backdrop": {
+    "file": "public/images/symbols/godly-gates/backdrop-v20261012.webp",
+    "source": "C:\\Users\\Karld\\.codex\\generated_images\\01a12e90-8423-7460-8e9b-77f6306524ee\\exec-ac167587-5871-4e9e-af54-0576dcbd30fa.png",
+    "complete": true
+  },
+  "olympus-wrath/10": {
+    "file": "public/images/symbols/olympus-wrath/10-v20261012.png",
+    "source": "C:\\Users\\Karld\\.codex\\generated_images\\01a12e90-8423-7460-8e9b-77f6306524ee\\exec-d1b422ba-0c8d-4996-8804-64ec4522d49d.png",
+    "complete": true
+  },
+  "olympus-wrath/J": {
+    "file": "public/images/symbols/olympus-wrath/J-v20261012.png",
+    "source": "C:\\Users\\Karld\\.codex\\generated_images\\01a12e90-8423-7460-8e9b-77f6306524ee\\exec-4fca7613-00b0-4383-9b67-1b0826f5dbda.png",
+    "complete": true
+  },
+  "olympus-wrath/Q": {
+    "file": "public/images/symbols/olympus-wrath/Q-v20261012.png",
+    "source": "C:\\Users\\Karld\\.codex\\generated_images\\01a12e90-8423-7460-8e9b-77f6306524ee\\exec-dbd83947-59bd-4266-a520-7cda37222926.png",
+    "complete": true
+  },
+  "olympus-wrath/K": {
+    "file": "public/images/symbols/olympus-wrath/K-v20261012.png",
+    "source": "C:\\Users\\Karld\\.codex\\generated_images\\01a12e90-8423-7460-8e9b-77f6306524ee\\exec-09d8d390-6fc3-4934-a56b-a94abe8a5d9a.png",
+    "complete": true
+  },
+  "olympus-wrath/A": {
+    "file": "public/images/symbols/olympus-wrath/A-v20261012.png",
+    "source": "C:\\Users\\Karld\\.codex\\generated_images\\01a12e90-8423-7460-8e9b-77f6306524ee\\exec-fdd632be-daff-49e3-8360-cb01f0befcb1.png",
+    "complete": true
+  },
+  "olympus-wrath/premium-a": {
+    "file": "public/images/symbols/olympus-wrath/premium-a-v20261012.png",
+    "source": "C:\\Users\\Karld\\.codex\\generated_images\\01a12e90-8423-7460-8e9b-77f6306524ee\\exec-17f2c7ca-2d93-4c02-8a85-4b9d6e0a0ddc.png",
+    "complete": true
+  },
+  "olympus-wrath/premium-b": {
+    "file": "public/images/symbols/olympus-wrath/premium-b-v20261012.png",
+    "source": "C:\\Users\\Karld\\.codex\\generated_images\\01a12e90-8423-7460-8e9b-77f6306524ee\\exec-68548bd2-6a7e-4c99-9ac6-4c6c1f84a694.png",
+    "complete": true
+  },
+  "olympus-wrath/premium-c": {
+    "file": "public/images/symbols/olympus-wrath/premium-c-v20261012.png",
+    "source": "C:\\Users\\Karld\\.codex\\generated_images\\01a12e90-8423-7460-8e9b-77f6306524ee\\exec-9f76a651-7308-4322-a942-9d759798e7e0.png",
+    "complete": true
+  },
+  "olympus-wrath/scatter": {
+    "file": "public/images/symbols/olympus-wrath/scatter-v20261012.png",
+    "source": "C:\\Users\\Karld\\.codex\\generated_images\\01a12e90-8423-7460-8e9b-77f6306524ee\\exec-a7602be9-306b-437d-8be4-9ac39970c7ee.png",
+    "complete": true
+  },
+  "olympus-wrath/wild": {
+    "file": "public/images/symbols/olympus-wrath/wild-v20261012.png",
+    "source": "C:\\Users\\Karld\\.codex\\generated_images\\01a12e90-8423-7460-8e9b-77f6306524ee\\exec-5ea9e828-0307-4f35-a776-1e16de03f793.png",
+    "complete": true
+  },
+  "olympus-wrath/backdrop": {
+    "file": "public/images/symbols/olympus-wrath/backdrop-v20261012.webp",
+    "source": "C:\\Users\\Karld\\.codex\\generated_images\\01a12e90-8423-7460-8e9b-77f6306524ee\\exec-289163bf-b86e-446d-9d57-9adf4f46bfc2.png",
+    "complete": true
+  }
+}

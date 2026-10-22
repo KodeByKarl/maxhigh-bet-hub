@@ -50,9 +50,8 @@ export const getThreeCardPokerSessionFn = createServerFn({ method: "GET" }).hand
 /** Public engine config for the live table UI (reads game_controls.engineConfig). */
 export const getThreeCardPokerEngineConfigFn = createServerFn({ method: "GET" }).handler(
   async () => {
-    const { getThreeCardPokerEngineConfigPublic } = await import(
-      "../server/games/threecardpoker.server"
-    );
+    const { getThreeCardPokerEngineConfigPublic } =
+      await import("../server/games/threecardpoker.server");
     return getThreeCardPokerEngineConfigPublic();
   },
 );

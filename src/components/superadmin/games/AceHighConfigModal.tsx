@@ -16,10 +16,7 @@ import {
   normalizeAceHighConfig,
   type AceHighConfig,
 } from "@/lib/ace-high-config";
-import {
-  getAceHighEngineConfigFn,
-  saveAceHighEngineConfigFn,
-} from "@/functions/superadmin";
+import { getAceHighEngineConfigFn, saveAceHighEngineConfigFn } from "@/functions/superadmin";
 import type { SuperGameRow } from "@/lib/superadmin-types";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
@@ -68,15 +65,7 @@ function Num({
   );
 }
 
-function Field({
-  label,
-  hint,
-  children,
-}: {
-  label: string;
-  hint?: string;
-  children: ReactNode;
-}) {
+function Field({ label, hint, children }: { label: string; hint?: string; children: ReactNode }) {
   return (
     <label className="block space-y-1.5">
       <span className="text-xs font-medium text-muted-foreground">{label}</span>
@@ -88,9 +77,7 @@ function Field({
 
 export function AceHighConfigModal({ game, open, onOpenChange, onPatchLobby }: Props) {
   const [section, setSection] = useState<Section>("lobby");
-  const [cfg, setCfg] = useState<AceHighConfig>(() =>
-    structuredClone(DEFAULT_ACE_HIGH_CONFIG),
-  );
+  const [cfg, setCfg] = useState<AceHighConfig>(() => structuredClone(DEFAULT_ACE_HIGH_CONFIG));
   const [saving, setSaving] = useState(false);
   const [loading, setLoading] = useState(true);
   const [tag, setTag] = useState(game.tag ?? "");
@@ -100,9 +87,7 @@ export function AceHighConfigModal({ game, open, onOpenChange, onPatchLobby }: P
   const [lobbyMaxBet, setLobbyMaxBet] = useState(Number(game.maxBet) || 500);
   const [notes, setNotes] = useState(game.notes ?? "");
   const [sortOrder, setSortOrder] = useState(game.sortOrder ?? 0);
-  const [betStepsText, setBetStepsText] = useState(
-    DEFAULT_ACE_HIGH_CONFIG.betSteps.join(", "),
-  );
+  const [betStepsText, setBetStepsText] = useState(DEFAULT_ACE_HIGH_CONFIG.betSteps.join(", "));
   const [lobbyBusy, setLobbyBusy] = useState(false);
 
   useEffect(() => {
@@ -346,18 +331,14 @@ export function AceHighConfigModal({ game, open, onOpenChange, onPatchLobby }: P
               <Field label="Ace Bonus — Ace vs Ace">
                 <Num
                   value={cfg.aceBonus.aceVsAce}
-                  onChange={(n) =>
-                    patch({ aceBonus: { ...cfg.aceBonus, aceVsAce: n } })
-                  }
+                  onChange={(n) => patch({ aceBonus: { ...cfg.aceBonus, aceVsAce: n } })}
                   step={1}
                 />
               </Field>
               <Field label="Ace Bonus — either Ace">
                 <Num
                   value={cfg.aceBonus.eitherAce}
-                  onChange={(n) =>
-                    patch({ aceBonus: { ...cfg.aceBonus, eitherAce: n } })
-                  }
+                  onChange={(n) => patch({ aceBonus: { ...cfg.aceBonus, eitherAce: n } })}
                   step={1}
                 />
               </Field>
@@ -375,14 +356,8 @@ export function AceHighConfigModal({ game, open, onOpenChange, onPatchLobby }: P
               </Field>
               <Field label="Min / Max Ace Bonus bet">
                 <div className="flex gap-2">
-                  <Num
-                    value={cfg.minAceBonusBet}
-                    onChange={(n) => patch({ minAceBonusBet: n })}
-                  />
-                  <Num
-                    value={cfg.maxAceBonusBet}
-                    onChange={(n) => patch({ maxAceBonusBet: n })}
-                  />
+                  <Num value={cfg.minAceBonusBet} onChange={(n) => patch({ minAceBonusBet: n })} />
+                  <Num value={cfg.maxAceBonusBet} onChange={(n) => patch({ maxAceBonusBet: n })} />
                 </div>
               </Field>
               <div className="sm:col-span-2">
@@ -441,11 +416,7 @@ export function AceHighConfigModal({ game, open, onOpenChange, onPatchLobby }: P
                 label="Max win mult (× base)"
                 hint="Caps total credited win for the round as baseBet × this value."
               >
-                <Num
-                  value={cfg.maxWinMult}
-                  onChange={(n) => patch({ maxWinMult: n })}
-                  step={10}
-                />
+                <Num value={cfg.maxWinMult} onChange={(n) => patch({ maxWinMult: n })} step={10} />
               </Field>
               <Field
                 label="Target RTP %"

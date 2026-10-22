@@ -76,8 +76,7 @@ export function FreeSpinsTriggerModal({ count = 10, onClose }: Props) {
             <div
               className="pointer-events-none absolute inset-[-18%] rounded-full"
               style={{
-                background:
-                  "radial-gradient(circle, rgba(245,158,11,0.55) 0%, transparent 68%)",
+                background: "radial-gradient(circle, rgba(245,158,11,0.55) 0%, transparent 68%)",
               }}
               aria-hidden
             />
@@ -92,8 +91,7 @@ export function FreeSpinsTriggerModal({ count = 10, onClose }: Props) {
           <div
             className="relative mx-auto mt-1 h-px w-24"
             style={{
-              background:
-                "linear-gradient(90deg, transparent, #F5D76E, transparent)",
+              background: "linear-gradient(90deg, transparent, #F5D76E, transparent)",
             }}
           />
 
@@ -101,8 +99,7 @@ export function FreeSpinsTriggerModal({ count = 10, onClose }: Props) {
             className="relative mt-4 font-black uppercase leading-none tracking-wide text-transparent"
             style={{
               fontSize: "clamp(1.85rem, 7vw, 2.6rem)",
-              backgroundImage:
-                "linear-gradient(180deg, #FFF6C8 0%, #F5D76E 45%, #D97706 100%)",
+              backgroundImage: "linear-gradient(180deg, #FFF6C8 0%, #F5D76E 45%, #D97706 100%)",
               WebkitBackgroundClip: "text",
               backgroundClip: "text",
               filter: "drop-shadow(0 3px 0 #451A03)",
@@ -120,10 +117,8 @@ export function FreeSpinsTriggerModal({ count = 10, onClose }: Props) {
             <div
               className="rounded-xl border border-amber-300/50 px-4 py-3.5"
               style={{
-                background:
-                  "linear-gradient(180deg, #92400E 0%, #78350F 55%, #451A03 100%)",
-                boxShadow:
-                  "inset 0 1px 0 rgba(255,236,179,0.35), 0 10px 28px rgba(0,0,0,0.45)",
+                background: "linear-gradient(180deg, #92400E 0%, #78350F 55%, #451A03 100%)",
+                boxShadow: "inset 0 1px 0 rgba(255,236,179,0.35), 0 10px 28px rgba(0,0,0,0.45)",
               }}
             >
               <div className="text-[10px] font-bold uppercase tracking-[0.28em] text-amber-200/80">

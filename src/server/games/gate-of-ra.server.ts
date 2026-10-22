@@ -1,15 +1,17 @@
 /**
  * Gate of Ra — server-authoritative spin settle.
+ * Client only receives scripts + balances; it cannot choose win amounts.
  */
 import { and, eq } from "drizzle-orm";
 import {
   GATE_OF_RA_GAME_ID,
-  freeSpinsAwardForCount,
   normalizeGateOfRaConfig,
+  remainingFreeSpinsAfterSpin,
 } from "@/lib/gate-of-ra-config";
 import { getDb } from "../db/client";
 import { gameControls, playSessions, users } from "../db/schema";
 import { money, newId, requireUser } from "../session";
+import { applyCapToScriptTotalWin, enforcePoolCap } from "../settlement/enforcePoolCap";
 import {
   assertNotInMaintenanceForBets,
   availableFrom,
@@ -17,8 +19,8 @@ import {
   sumPendingWithdrawals,
   writeLedgerDelta,
 } from "../wallet.server";
+import { pantherBuyPricePerSpin } from "@/components/maxhigh/panther-shared/buyPricing";
 
-export { GATE_OF_RA_GAME_ID };
 const GAME_NAME = "Gate of Ra";
 
 /** Serialize engine config mutation — module-level runtimeConfig is process-global. */
@@ -50,22 +52,22 @@ async function loadEngineConfig() {
 
 async function resolveOnServer(opts: {
   bet: number;
+  ante: boolean;
   isFreeSpins: boolean;
-  startMultiplier?: number;
+  initialBombAccumulator?: number;
 }) {
   const cfg = await loadEngineConfig();
   return withEngineExclusive(async () => {
-    const { setGateOfRaConfig } = await import(
-      "@/components/maxhigh/gate-of-ra/runtimeConfig"
-    );
-    const { resolveSpin, finalizeFreeSpinTotal } = await import(
-      "@/components/maxhigh/gate-of-ra/spinResolver"
-    );
+    const { setGateOfRaConfig } = await import("@/components/maxhigh/gate-of-ra/runtimeConfig");
+    const { resolveSpin, finalizeFreeSpinTotal } =
+      await import("@/components/maxhigh/gate-of-ra/spinResolver");
     setGateOfRaConfig(cfg);
     const script = resolveSpin({
       bet: opts.bet,
+      ante: opts.ante && !opts.isFreeSpins,
       isFreeSpins: opts.isFreeSpins,
-      startMultiplier: opts.startMultiplier,
+      collectBombsInFreeSpins: true,
+      initialBombAccumulator: opts.initialBombAccumulator,
     });
     return { script, finalizeFreeSpinTotal, cfg };
   });
@@ -75,16 +77,20 @@ export type GateOfRaSessionState = {
   sessionId: string | null;
   freeSpinsLeft: number;
   fsSessionWin: number;
-  fsMult: number;
+  fsBombAcc: number;
   fsSpinsPlayed: number;
   inFree: boolean;
   bet: number;
+  ante: boolean;
 };
 
 export type GateOfRaSpinResult = {
   balance: number;
-  script: Awaited<ReturnType<typeof import("@/components/maxhigh/gate-of-ra/spinResolver").resolveSpin>>;
+  script: Awaited<
+    ReturnType<typeof import("@/components/maxhigh/gate-of-ra/spinResolver").resolveSpin>
+  >;
   session: GateOfRaSessionState;
+  /** Set when a free-spin feature just finished and win was paid. */
   fsPayout?: {
     amount: number;
     baseEarn: number;
@@ -99,21 +105,44 @@ function sessionState(row: typeof playSessions.$inferSelect | null): GateOfRaSes
       sessionId: null,
       freeSpinsLeft: 0,
       fsSessionWin: 0,
-      fsMult: 1,
+      fsBombAcc: 0,
       fsSpinsPlayed: 0,
       inFree: false,
       bet: 0,
+      ante: false,
     };
   }
   return {
     sessionId: row.id,
     freeSpinsLeft: Number(row.freeSpinsLeft),
     fsSessionWin: Number(row.fsSessionWin),
-    fsMult: Math.max(1, Number(row.fsBombAcc) || 1),
+    fsBombAcc: Number(row.fsBombAcc),
     fsSpinsPlayed: Number(row.fsSpinsPlayed),
     inFree: Number(row.freeSpinsLeft) > 0,
     bet: Number(row.bet),
+    ante: row.ante === "yes",
   };
+}
+
+async function closeOtherOpenSessions(userId: string, keepId?: string) {
+  const db = getDb();
+  const open = await db
+    .select()
+    .from(playSessions)
+    .where(
+      and(
+        eq(playSessions.userId, userId),
+        eq(playSessions.gameId, GATE_OF_RA_GAME_ID),
+        eq(playSessions.status, "open"),
+      ),
+    );
+  for (const row of open) {
+    if (keepId && row.id === keepId) continue;
+    await db
+      .update(playSessions)
+      .set({ status: "closed", freeSpinsLeft: 0 })
+      .where(eq(playSessions.id, row.id));
+  }
 }
 
 export async function getGateOfRaOpenSession(): Promise<GateOfRaSessionState> {
@@ -133,13 +162,19 @@ export async function getGateOfRaOpenSession(): Promise<GateOfRaSessionState> {
   return sessionState(rows[0] ?? null);
 }
 
-export async function gateOfRaPaidSpin(data: { bet: number }): Promise<GateOfRaSpinResult> {
+export async function gateOfRaPaidSpin(data: {
+  bet: number;
+  ante: boolean;
+}): Promise<GateOfRaSpinResult> {
   const user = await requireUser();
   if (!Number.isFinite(data.bet) || data.bet <= 0) throw new Error("Invalid bet");
 
-  const cost = +data.bet.toFixed(2);
+  const cfg = await loadEngineConfig();
+  const anteMult = data.ante ? cfg.anteBetMult : 1;
+  const cost = +(data.bet * anteMult).toFixed(2);
   const maxBet = await getMaxSingleBet();
   if (cost > maxBet) throw new Error(`Max bet is ₱${maxBet.toFixed(2)}`);
+
   await assertNotInMaintenanceForBets();
 
   const db = getDb();
@@ -158,7 +193,18 @@ export async function gateOfRaPaidSpin(data: { bet: number }): Promise<GateOfRaS
     throw new Error("Finish free spins before placing a new bet");
   }
 
-  const { script } = await resolveOnServer({ bet: data.bet, isFreeSpins: false });
+  const { script } = await resolveOnServer({
+    bet: data.bet,
+    ante: data.ante,
+    isFreeSpins: false,
+  });
+  applyCapToScriptTotalWin(script, {
+    gameId: GATE_OF_RA_GAME_ID,
+    gameName: GAME_NAME,
+    bet: data.bet,
+    maxWinMult: cfg.maxWinMult,
+    context: "paid-spin",
+  });
 
   const result = await db.transaction(async (tx) => {
     const userRows = await tx.select().from(users).where(eq(users.id, user.id)).limit(1);
@@ -196,8 +242,11 @@ export async function gateOfRaPaidSpin(data: { bet: number }): Promise<GateOfRaS
       });
     }
 
+    const balanceAfterBet = ledger.balance;
+
     let sessionRow: typeof playSessions.$inferSelect | null = null;
     if (script.freeSpinsAwarded > 0) {
+      // Close any stale sessions then open FS feature
       const stale = await tx
         .select()
         .from(playSessions)
@@ -209,7 +258,10 @@ export async function gateOfRaPaidSpin(data: { bet: number }): Promise<GateOfRaS
           ),
         );
       for (const s of stale) {
-        await tx.update(playSessions).set({ status: "closed", freeSpinsLeft: 0 }).where(eq(playSessions.id, s.id));
+        await tx
+          .update(playSessions)
+          .set({ status: "closed", freeSpinsLeft: 0 })
+          .where(eq(playSessions.id, s.id));
       }
 
       const id = newId();
@@ -219,18 +271,17 @@ export async function gateOfRaPaidSpin(data: { bet: number }): Promise<GateOfRaS
         gameId: GATE_OF_RA_GAME_ID,
         status: "open",
         bet: money(data.bet),
-        ante: "no",
+        ante: data.ante ? "yes" : "no",
         freeSpinsLeft: script.freeSpinsAwarded,
         fsSessionWin: "0.00",
-        fsBombAcc: "1.00",
+        fsBombAcc: "0.00",
         fsSpinsPlayed: 0,
-        featureState: null,
       });
       const created = await tx.select().from(playSessions).where(eq(playSessions.id, id)).limit(1);
       sessionRow = created[0] ?? null;
     }
 
-    return { balance: ledger.balance, sessionRow };
+    return { balance: balanceAfterBet, sessionRow };
   });
 
   return {
@@ -240,9 +291,7 @@ export async function gateOfRaPaidSpin(data: { bet: number }): Promise<GateOfRaS
   };
 }
 
-export async function gateOfRaFreeSpin(data: {
-  sessionId: string;
-}): Promise<GateOfRaSpinResult> {
+export async function gateOfRaFreeSpin(data: { sessionId: string }): Promise<GateOfRaSpinResult> {
   const user = await requireUser();
   const db = getDb();
 
@@ -263,12 +312,18 @@ export async function gateOfRaFreeSpin(data: {
   if (Number(session.freeSpinsLeft) <= 0) throw new Error("No free spins remaining");
 
   const bet = Number(session.bet);
-  const startMult = Math.max(1, Number(session.fsBombAcc) || 1);
-
-  const { script, finalizeFreeSpinTotal } = await resolveOnServer({
+  const { script, finalizeFreeSpinTotal, cfg } = await resolveOnServer({
     bet,
+    ante: session.ante === "yes",
     isFreeSpins: true,
-    startMultiplier: startMult,
+    initialBombAccumulator: Number(session.fsBombAcc) || 0,
+  });
+  applyCapToScriptTotalWin(script, {
+    gameId: GATE_OF_RA_GAME_ID,
+    gameName: GAME_NAME,
+    bet,
+    maxWinMult: cfg.maxWinMult,
+    context: "free-spin",
   });
 
   const result = await db.transaction(async (tx) => {
@@ -287,18 +342,31 @@ export async function gateOfRaFreeSpin(data: {
     const u = userRows[0];
     if (!u) throw new Error("User not found");
 
-    let nextWin = +(Number(row.fsSessionWin) + script.totalWin).toFixed(2);
-    let nextMult = Math.max(1, script.endMultiplier);
-    let nextPlayed = Number(row.fsSpinsPlayed) + 1;
-    let nextLeft = left - 1;
-    if (script.retriggerSpins > 0) nextLeft += script.retriggerSpins;
-    nextLeft = Math.max(0, nextLeft);
+    const nextWin = +(Number(row.fsSessionWin) + script.totalWin).toFixed(2);
+    const bombCeiling = cfg.maxFsBombMult > 0 ? cfg.maxFsBombMult : Number.POSITIVE_INFINITY;
+    // Paytable rule: free spins keep the strongest bomb. The engine already started
+    // from the banked value (initialBombAccumulator), so don't add it again.
+    const nextBomb = Math.min(bombCeiling, script.bombAccumulator);
+    const nextPlayed = Number(row.fsSpinsPlayed) + 1;
+    const nextLeft = remainingFreeSpinsAfterSpin({
+      leftBefore: left,
+      retrigger: script.retriggerSpins,
+      playedAfter: nextPlayed,
+      maxSessionSpins: cfg.maxFsSessionSpins,
+    });
 
     let balance = Number(u.balance);
     let fsPayout: GateOfRaSpinResult["fsPayout"];
 
     if (nextLeft === 0) {
-      const final = finalizeFreeSpinTotal(nextWin, nextMult);
+      const final = enforcePoolCap({
+        gameId: GATE_OF_RA_GAME_ID,
+        gameName: GAME_NAME,
+        bet,
+        maxWinMult: cfg.maxWinMult,
+        computedWin: finalizeFreeSpinTotal(nextWin, nextBomb),
+        context: "free-spins-final",
+      }).payout;
       if (final > 0) {
         const winRes = await writeLedgerDelta(tx, {
           userId: user.id,
@@ -313,7 +381,7 @@ export async function gateOfRaFreeSpin(data: {
       fsPayout = {
         amount: final,
         baseEarn: nextWin,
-        multiplier: nextMult,
+        multiplier: nextBomb,
         spinsPlayed: Math.max(nextPlayed, 1),
       };
       await tx
@@ -322,9 +390,8 @@ export async function gateOfRaFreeSpin(data: {
           status: "closed",
           freeSpinsLeft: 0,
           fsSessionWin: money(nextWin),
-          fsBombAcc: money(nextMult),
+          fsBombAcc: money(nextBomb),
           fsSpinsPlayed: nextPlayed,
-          featureState: null,
         })
         .where(eq(playSessions.id, row.id));
       return {
@@ -333,7 +400,7 @@ export async function gateOfRaFreeSpin(data: {
         fsPayout,
         closed: true as const,
         nextWin,
-        nextMult,
+        nextBomb,
         nextPlayed,
       };
     }
@@ -343,20 +410,23 @@ export async function gateOfRaFreeSpin(data: {
       .set({
         freeSpinsLeft: nextLeft,
         fsSessionWin: money(nextWin),
-        fsBombAcc: money(nextMult),
+        fsBombAcc: money(nextBomb),
         fsSpinsPlayed: nextPlayed,
-        featureState: null,
       })
       .where(eq(playSessions.id, row.id));
 
-    const updated = await tx.select().from(playSessions).where(eq(playSessions.id, row.id)).limit(1);
+    const updated = await tx
+      .select()
+      .from(playSessions)
+      .where(eq(playSessions.id, row.id))
+      .limit(1);
     return {
       balance,
       sessionRow: updated[0] ?? null,
       fsPayout: undefined,
       closed: false as const,
       nextWin,
-      nextMult,
+      nextBomb,
       nextPlayed,
     };
   });
@@ -369,10 +439,11 @@ export async function gateOfRaFreeSpin(data: {
           sessionId: null,
           freeSpinsLeft: 0,
           fsSessionWin: result.nextWin,
-          fsMult: result.nextMult,
+          fsBombAcc: result.nextBomb,
           fsSpinsPlayed: result.nextPlayed,
           inFree: false,
           bet,
+          ante: session.ante === "yes",
         }
       : sessionState(result.sessionRow),
     fsPayout: result.fsPayout,
@@ -381,17 +452,36 @@ export async function gateOfRaFreeSpin(data: {
 
 export async function gateOfRaBuyFeature(data: {
   bet: number;
-}): Promise<{ balance: number; session: GateOfRaSessionState; awarded: number }> {
+  mode: "normal" | "super";
+  /** Bonus units to purchase. Price = bet × unitMult; Total = Price × quantity. */
+  quantity: number;
+}): Promise<{ balance: number; session: GateOfRaSessionState }> {
   const user = await requireUser();
   if (!Number.isFinite(data.bet) || data.bet <= 0) throw new Error("Invalid bet");
+  const quantity = Math.round(data.quantity);
+  if (!Number.isFinite(quantity) || quantity < 1 || quantity > 50) {
+    throw new Error("Invalid quantity");
+  }
 
   const cfg = await loadEngineConfig();
-  const cost = +(data.bet * cfg.buyFeatureMult).toFixed(2);
-  const awarded =
-    freeSpinsAwardForCount(cfg, cfg.freeSpinsTriggerCount) ||
-    cfg.freeSpinsAwards[0]?.spins ||
-    10;
+  if (data.mode === "super") throw new Error("Super Buy is no longer available");
+  // Never sell more spins than one feature can play (maxFsSessionSpins).
+  if (cfg.maxFsSessionSpins > 0 && quantity > cfg.maxFsSessionSpins) {
+    throw new Error(`Max ${cfg.maxFsSessionSpins} free spins per purchase`);
+  }
+  const mult = pantherBuyPricePerSpin(
+    GATE_OF_RA_GAME_ID,
+    cfg.buyFeatureMult,
+    cfg.freeSpinsBase,
+    quantity,
+  );
+  const cost = +(data.bet * mult * quantity).toFixed(2);
+  if (data.bet > 100_000) {
+    throw new Error("Buy feature bet too large");
+  }
+
   await assertNotInMaintenanceForBets();
+  await closeOtherOpenSessions(user.id);
 
   const db = getDb();
   const result = await db.transaction(async (tx) => {
@@ -421,7 +511,10 @@ export async function gateOfRaBuyFeature(data: {
         ),
       );
     for (const s of stale) {
-      await tx.update(playSessions).set({ status: "closed", freeSpinsLeft: 0 }).where(eq(playSessions.id, s.id));
+      await tx
+        .update(playSessions)
+        .set({ status: "closed", freeSpinsLeft: 0 })
+        .where(eq(playSessions.id, s.id));
     }
 
     const betRes = await writeLedgerDelta(tx, {
@@ -430,26 +523,29 @@ export async function gateOfRaBuyFeature(data: {
       delta: -cost,
       type: "bet",
       game: GAME_NAME,
-      note: `${GATE_OF_RA_GAME_ID} · ${GAME_NAME} · buy feature ₱${cost.toFixed(2)}`,
+      note:
+        data.mode === "super"
+          ? `${GATE_OF_RA_GAME_ID} · ${GAME_NAME} · buy super feature ×${quantity} ₱${cost.toFixed(2)}`
+          : `${GATE_OF_RA_GAME_ID} · ${GAME_NAME} · buy feature ×${quantity} ₱${cost.toFixed(2)}`,
     });
 
     const id = newId();
+    const ante = data.mode === "super" ? ("yes" as const) : ("no" as const);
     await tx.insert(playSessions).values({
       id,
       userId: user.id,
       gameId: GATE_OF_RA_GAME_ID,
       status: "open",
       bet: money(data.bet),
-      ante: "no",
-      freeSpinsLeft: awarded,
+      ante,
+      freeSpinsLeft: quantity,
       fsSessionWin: "0.00",
-      fsBombAcc: "1.00",
+      fsBombAcc: "0.00",
       fsSpinsPlayed: 0,
-      featureState: null,
     });
     const created = await tx.select().from(playSessions).where(eq(playSessions.id, id)).limit(1);
     return { balance: betRes.balance, sessionRow: created[0]! };
   });
 
-  return { balance: result.balance, session: sessionState(result.sessionRow), awarded };
+  return { balance: result.balance, session: sessionState(result.sessionRow) };
 }

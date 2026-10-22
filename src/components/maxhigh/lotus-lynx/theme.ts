@@ -1,7 +1,4 @@
-﻿import {
-  type PantherTheme,
-  type PantherSymKind,
-} from "@/components/maxhigh/panther-shared/theme";
+﻿import { type PantherTheme, type PantherSymKind } from "@/components/maxhigh/panther-shared/theme";
 import { LOTUS_LYNX_COLORS } from "@/components/maxhigh/panther-shared/palettes";
 
 function lotusIconPack(version = "2"): Record<PantherSymKind, string> {

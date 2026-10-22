@@ -1,12 +1,4 @@
-import {
-  Suspense,
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-  type ReactNode,
-} from "react";
+import { Suspense, useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 import { X } from "lucide-react";
 import type { SlotGame } from "@/lib/games";
@@ -14,6 +6,9 @@ import { useAuth } from "@/lib/auth";
 import { recordGameSessionFn } from "@/functions/api";
 import { cn } from "@/lib/utils";
 import { resolveLazyGame } from "./gamePlayRegistry";
+import { FAMILY_NAME, findRealmsGame, isRealmsGameId } from "@/lib/realms";
+import { REALMS_WORLDS } from "@/lib/realms/worlds";
+import { realmsAssets } from "./realms/theme";
 
 type Props = {
   game: SlotGame | null;
@@ -56,10 +51,7 @@ function pantherBoot(
     barGradient,
     borderGlow,
     badgeGradient,
-    imageParticles: [
-      `/images/symbols/${base}/wild.png`,
-      `/images/symbols/${base}/scatter.png`,
-    ],
+    imageParticles: [`/images/symbols/${base}/wild.png`, `/images/symbols/${base}/scatter.png`],
   };
 }
 
@@ -175,131 +167,243 @@ const PANTHER_FAMILY_BOOT: Record<string, PantherBoot> = {
     "shadow-[0_0_60px_rgba(244,63,94,0.8)] border-rose-400",
     "from-[#F43F5E] via-[#E11D48] to-[#881337]",
   ),
+  "lucky-neko": pantherBoot(
+    "lucky-neko",
+    "Lucky Neko",
+    "LUCKY NEKO ARCADE",
+    "POWER ACTIVE",
+    "#F472B6",
+    "from-[#111827]/80 via-[#0A0912]/80 to-[#020617]/95",
+    "from-[#F472B6] via-[#F472B6] to-[#111827]",
+    "shadow-[0_0_60px_rgba(0,0,0,0.6)] border-white/30",
+    "from-[#F472B6] via-[#F472B6] to-[#111827]",
+  ),
+  "fortune-tiger": pantherBoot(
+    "fortune-tiger",
+    "Fortune Tiger",
+    "FORTUNE TIGER ARCADE",
+    "POWER ACTIVE",
+    "#F97316",
+    "from-[#111827]/80 via-[#0A0912]/80 to-[#020617]/95",
+    "from-[#F97316] via-[#F97316] to-[#111827]",
+    "shadow-[0_0_60px_rgba(0,0,0,0.6)] border-white/30",
+    "from-[#F97316] via-[#F97316] to-[#111827]",
+  ),
+  "fortune-ox": pantherBoot(
+    "fortune-ox",
+    "Fortune Ox",
+    "FORTUNE OX ARCADE",
+    "POWER ACTIVE",
+    "#EAB308",
+    "from-[#111827]/80 via-[#0A0912]/80 to-[#020617]/95",
+    "from-[#EAB308] via-[#EAB308] to-[#111827]",
+    "shadow-[0_0_60px_rgba(0,0,0,0.6)] border-white/30",
+    "from-[#EAB308] via-[#EAB308] to-[#111827]",
+  ),
+  "fortune-rabbit": pantherBoot(
+    "fortune-rabbit",
+    "Fortune Rabbit",
+    "FORTUNE RABBIT ARCADE",
+    "POWER ACTIVE",
+    "#A78BFA",
+    "from-[#111827]/80 via-[#0A0912]/80 to-[#020617]/95",
+    "from-[#A78BFA] via-[#A78BFA] to-[#111827]",
+    "shadow-[0_0_60px_rgba(0,0,0,0.6)] border-white/30",
+    "from-[#A78BFA] via-[#A78BFA] to-[#111827]",
+  ),
+  "fortune-mouse": pantherBoot(
+    "fortune-mouse",
+    "Fortune Mouse",
+    "FORTUNE MOUSE ARCADE",
+    "POWER ACTIVE",
+    "#94A3B8",
+    "from-[#111827]/80 via-[#0A0912]/80 to-[#020617]/95",
+    "from-[#94A3B8] via-[#94A3B8] to-[#111827]",
+    "shadow-[0_0_60px_rgba(0,0,0,0.6)] border-white/30",
+    "from-[#94A3B8] via-[#94A3B8] to-[#111827]",
+  ),
+  "prosperity-lion": pantherBoot(
+    "prosperity-lion",
+    "Prosperity Lion",
+    "PROSPERITY LION ARCADE",
+    "POWER ACTIVE",
+    "#F59E0B",
+    "from-[#111827]/80 via-[#0A0912]/80 to-[#020617]/95",
+    "from-[#F59E0B] via-[#F59E0B] to-[#111827]",
+    "shadow-[0_0_60px_rgba(0,0,0,0.6)] border-white/30",
+    "from-[#F59E0B] via-[#F59E0B] to-[#111827]",
+  ),
+  "buffalo-reign": pantherBoot(
+    "buffalo-reign",
+    "Buffalo Reign",
+    "BUFFALO REIGN ARCADE",
+    "POWER ACTIVE",
+    "#D97706",
+    "from-[#111827]/80 via-[#0A0912]/80 to-[#020617]/95",
+    "from-[#D97706] via-[#D97706] to-[#111827]",
+    "shadow-[0_0_60px_rgba(0,0,0,0.6)] border-white/30",
+    "from-[#D97706] via-[#D97706] to-[#111827]",
+  ),
+  "safari-gold": pantherBoot(
+    "safari-gold",
+    "Safari Gold",
+    "SAFARI GOLD ARCADE",
+    "POWER ACTIVE",
+    "#CA8A04",
+    "from-[#111827]/80 via-[#0A0912]/80 to-[#020617]/95",
+    "from-[#CA8A04] via-[#CA8A04] to-[#111827]",
+    "shadow-[0_0_60px_rgba(0,0,0,0.6)] border-white/30",
+    "from-[#CA8A04] via-[#CA8A04] to-[#111827]",
+  ),
+  "cleopatra-gold": pantherBoot(
+    "cleopatra-gold",
+    "Cleopatra Gold",
+    "CLEOPATRA GOLD ARCADE",
+    "POWER ACTIVE",
+    "#EAB308",
+    "from-[#111827]/80 via-[#0A0912]/80 to-[#020617]/95",
+    "from-[#EAB308] via-[#EAB308] to-[#111827]",
+    "shadow-[0_0_60px_rgba(0,0,0,0.6)] border-white/30",
+    "from-[#EAB308] via-[#EAB308] to-[#111827]",
+  ),
+  "maya-gold": pantherBoot(
+    "maya-gold",
+    "Maya Gold",
+    "MAYA GOLD ARCADE",
+    "POWER ACTIVE",
+    "#F59E0B",
+    "from-[#111827]/80 via-[#0A0912]/80 to-[#020617]/95",
+    "from-[#F59E0B] via-[#F59E0B] to-[#111827]",
+    "shadow-[0_0_60px_rgba(0,0,0,0.6)] border-white/30",
+    "from-[#F59E0B] via-[#F59E0B] to-[#111827]",
+  ),
+  "temple-rush": pantherBoot(
+    "temple-rush",
+    "Temple Rush",
+    "TEMPLE RUSH ARCADE",
+    "POWER ACTIVE",
+    "#FB923C",
+    "from-[#111827]/80 via-[#0A0912]/80 to-[#020617]/95",
+    "from-[#FB923C] via-[#FB923C] to-[#111827]",
+    "shadow-[0_0_60px_rgba(0,0,0,0.6)] border-white/30",
+    "from-[#FB923C] via-[#FB923C] to-[#111827]",
+  ),
+  "pharaoh-fire": pantherBoot(
+    "pharaoh-fire",
+    "Pharaoh Fire",
+    "PHARAOH FIRE ARCADE",
+    "POWER ACTIVE",
+    "#EF4444",
+    "from-[#111827]/80 via-[#0A0912]/80 to-[#020617]/95",
+    "from-[#EF4444] via-[#EF4444] to-[#111827]",
+    "shadow-[0_0_60px_rgba(0,0,0,0.6)] border-white/30",
+    "from-[#EF4444] via-[#EF4444] to-[#111827]",
+  ),
+  "desert-riches": pantherBoot(
+    "desert-riches",
+    "Desert Riches",
+    "DESERT RICHES ARCADE",
+    "POWER ACTIVE",
+    "#F59E0B",
+    "from-[#111827]/80 via-[#0A0912]/80 to-[#020617]/95",
+    "from-[#F59E0B] via-[#F59E0B] to-[#111827]",
+    "shadow-[0_0_60px_rgba(0,0,0,0.6)] border-white/30",
+    "from-[#F59E0B] via-[#F59E0B] to-[#111827]",
+  ),
+  "gate-of-ra": pantherBoot(
+    "gate-of-ra",
+    "Gate of Ra",
+    "GATE OF RA ARCADE",
+    "POWER ACTIVE",
+    "#FBBF24",
+    "from-[#111827]/80 via-[#0A0912]/80 to-[#020617]/95",
+    "from-[#FBBF24] via-[#FBBF24] to-[#111827]",
+    "shadow-[0_0_60px_rgba(0,0,0,0.6)] border-white/30",
+    "from-[#FBBF24] via-[#FBBF24] to-[#111827]",
+  ),
+  "zeus-strike": pantherBoot(
+    "zeus-strike",
+    "Zeus Strike",
+    "ZEUS STRIKE ARCADE",
+    "POWER ACTIVE",
+    "#38BDF8",
+    "from-[#111827]/80 via-[#0A0912]/80 to-[#020617]/95",
+    "from-[#38BDF8] via-[#38BDF8] to-[#111827]",
+    "shadow-[0_0_60px_rgba(0,0,0,0.6)] border-white/30",
+    "from-[#38BDF8] via-[#38BDF8] to-[#111827]",
+  ),
+  "thor-thunder": pantherBoot(
+    "thor-thunder",
+    "Thor Thunder",
+    "THOR THUNDER ARCADE",
+    "POWER ACTIVE",
+    "#60A5FA",
+    "from-[#111827]/80 via-[#0A0912]/80 to-[#020617]/95",
+    "from-[#60A5FA] via-[#60A5FA] to-[#111827]",
+    "shadow-[0_0_60px_rgba(0,0,0,0.6)] border-white/30",
+    "from-[#60A5FA] via-[#60A5FA] to-[#111827]",
+  ),
+  "godly-gates": pantherBoot(
+    "godly-gates",
+    "Godly Gates",
+    "GODLY GATES ARCADE",
+    "POWER ACTIVE",
+    "#818CF8",
+    "from-[#111827]/80 via-[#0A0912]/80 to-[#020617]/95",
+    "from-[#818CF8] via-[#818CF8] to-[#111827]",
+    "shadow-[0_0_60px_rgba(0,0,0,0.6)] border-white/30",
+    "from-[#818CF8] via-[#818CF8] to-[#111827]",
+  ),
+  "olympus-wrath": pantherBoot(
+    "olympus-wrath",
+    "Olympus Wrath",
+    "OLYMPUS WRATH ARCADE",
+    "POWER ACTIVE",
+    "#A78BFA",
+    "from-[#111827]/80 via-[#0A0912]/80 to-[#020617]/95",
+    "from-[#A78BFA] via-[#A78BFA] to-[#111827]",
+    "shadow-[0_0_60px_rgba(0,0,0,0.6)] border-white/30",
+    "from-[#A78BFA] via-[#A78BFA] to-[#111827]",
+  ),
+  "enchanted-grove": pantherBoot(
+    "enchanted-grove",
+    "Enchanted Grove",
+    "ENCHANTED GROVE ARCADE",
+    "POWER ACTIVE",
+    "#34D399",
+    "from-[#111827]/80 via-[#0A0912]/80 to-[#020617]/95",
+    "from-[#34D399] via-[#34D399] to-[#111827]",
+    "shadow-[0_0_60px_rgba(0,0,0,0.6)] border-white/30",
+    "from-[#34D399] via-[#34D399] to-[#111827]",
+  ),
 };
 
 function getGameThemeConfig(gameId: string, category: string, thumb: string) {
-  if (gameId === "mahjong-ways") {
+  const realm = findRealmsGame(gameId);
+  if (realm) {
+    const assets = realmsAssets(realm.id);
     return {
-      bgImage: thumb,
-      bgGradient: "from-[#0B3D2E]/55 via-[#061210]/75 to-[#020806]/95",
-      titleClass: "mahjong-title",
-      barGradient: "from-[#F5D76E] via-[#C9A227] to-[#8B1A1A]",
-      borderGlow: "border-[#C9A227]/70",
-      badgeGradient: "from-[#C9A227] via-[#8B1A1A] to-[#0B3D2E]",
+      bgImage: assets.loadingBg,
+      bgGradient: "from-black/40 via-black/70 to-black/95",
+      titleClass: "realms-title",
+      barGradient: "from-white/90 via-white/60 to-white/30",
+      borderGlow: "border-white/30",
+      badgeGradient: "from-white/70 via-white/40 to-transparent",
       renderType: "standard" as const,
-      imageParticles: [
-        "/images/symbols/mahjong/bamboo.png?v=2",
-        "/images/symbols/mahjong/red_dragon.png?v=2",
-        "/images/symbols/mahjong/dot.webp?v=2",
-      ],
-      badgeText: "WAYS TO WIN",
-      chargeText: "TILES READY",
-      accent: "#C9A227",
+      imageParticles: [assets.icons.scatter, assets.icons.bomb, assets.icons.p3],
+      badgeText: `${FAMILY_NAME} · ${REALMS_WORLDS[realm.world].label}`.toUpperCase(),
+      chargeText: "TUMBLE READY",
+      accent: realm.palette[0],
       lines: [
-        "Laying the jade felt…",
-        "Arranging bamboo & dragon tiles…",
-        "Goldifying wilds across the grid…",
-        "Charging cascade multipliers…",
-        "Mahjong Ways is ready!",
+        REALMS_WORLDS[realm.world].bootLine.replace("{name}", realm.name),
+        `Summoning ${realm.premiums[2].name} and ${realm.scatter.name}…`,
+        `Charging ${realm.bomb.name} multipliers…`,
+        "Preparing the Buy Bonus…",
+        `${realm.name} is ready!`,
       ],
     };
   }
-  if (gameId === "mahjong-ways-2") {
-    return {
-      bgImage: thumb,
-      bgGradient: "from-[#0B3D2E]/55 via-[#061210]/75 to-[#020806]/95",
-      titleClass: "mahjong-title",
-      barGradient: "from-[#F5D76E] via-[#C9A227] to-[#8B1A1A]",
-      borderGlow: "border-[#C9A227]/70",
-      badgeGradient: "from-[#C9A227] via-[#8B1A1A] to-[#0B3D2E]",
-      renderType: "standard" as const,
-      imageParticles: [
-        "/images/symbols/mahjong-ways-2/bamboo.png",
-        "/images/symbols/mahjong-ways-2/red_dragon.png",
-        "/images/symbols/mahjong-ways-2/dot.webp",
-      ],
-      badgeText: "WAYS TO WIN",
-      chargeText: "TILES READY",
-      accent: "#C9A227",
-      lines: [
-        "Laying the jade felt…",
-        "Arranging bamboo & dragon tiles…",
-        "Goldifying wilds across the grid…",
-        "Charging cascade multipliers…",
-        "Mahjong Ways 2 is ready!",
-      ],
-    };
-  }
-  if (gameId === "dragon-phoenix") {
-    return {
-      bgImage: thumb,
-      bgGradient: "from-[#0B3D2E]/55 via-[#061210]/75 to-[#020806]/95",
-      titleClass: "mahjong-title",
-      barGradient: "from-[#F5D76E] via-[#C9A227] to-[#8B1A1A]",
-      borderGlow: "border-[#C9A227]/70",
-      badgeGradient: "from-[#C9A227] via-[#8B1A1A] to-[#0B3D2E]",
-      renderType: "standard" as const,
-      imageParticles: [
-        "/images/symbols/dragon-phoenix/bamboo.png",
-        "/images/symbols/dragon-phoenix/red_dragon.png",
-        "/images/symbols/dragon-phoenix/dot.webp",
-      ],
-      badgeText: "MYTHIC WAYS",
-      chargeText: "TILES READY",
-      accent: "#C9A227",
-      lines: [
-        "Summoning dragon & phoenix…",
-        "Arranging bamboo & dragon tiles…",
-        "Goldifying wilds across the grid…",
-        "Charging cascade multipliers…",
-        "Dragon & Phoenix is ready!",
-      ],
-    };
-  }
-  if (gameId === "chinese-new-year") {
-    return {
-      bgImage: thumb,
-      bgGradient: "from-[#7F1D1D]/80 via-[#450A0A]/80 to-[#0A0912]/95",
-      titleClass: "godly-title",
-      barGradient: "from-[#FACC15] via-[#EF4444] to-[#B91C1C]",
-      borderGlow: "shadow-[0_0_60px_rgba(239,68,68,0.8)] border-yellow-400",
-      badgeGradient: "from-[#EF4444] via-[#F59E0B] to-[#7F1D1D]",
-      renderType: "standard" as const,
-      imageParticles: [],
-      badgeText: "FESTIVE DRAGON ARCADE",
-      chargeText: "GONG XI FA CAI ACTIVE",
-      accent: "#FACC15",
-      lines: [
-        "Preparing traditional Chinese pagoda temple…",
-        "Awakening the Golden Tiger & Dragon blessings…",
-        "Gathering red envelope scatter bonuses…",
-        "Igniting festive firecracker multipliers…",
-        "Chinese New Year is ready!",
-      ],
-    };
-  }
-  if (gameId === "fiesta-fireworks") {
-    return {
-      bgImage: thumb,
-      bgGradient: "from-[#7F1D1D]/80 via-[#450A0A]/80 to-[#0A0912]/95",
-      titleClass: "godly-title",
-      barGradient: "from-[#FACC15] via-[#EF4444] to-[#B91C1C]",
-      borderGlow: "shadow-[0_0_60px_rgba(239,68,68,0.8)] border-yellow-400",
-      badgeGradient: "from-[#EF4444] via-[#F59E0B] to-[#7F1D1D]",
-      renderType: "standard" as const,
-      imageParticles: [],
-      badgeText: "FIESTA FIREWORKS",
-      chargeText: "FIESTA CHARGE ACTIVE",
-      accent: "#FACC15",
-      lines: [
-        "Lighting the barrio fireworks…",
-        "Awakening dragon & monkey bonuses…",
-        "Gathering fiesta scatter prizes…",
-        "Igniting festive multipliers…",
-        "Fiesta Fireworks is ready!",
-      ],
-    };
-  }
+
   const pantherFamily = PANTHER_FAMILY_BOOT[gameId];
   if (pantherFamily) {
     return {
@@ -320,48 +424,6 @@ function getGameThemeConfig(gameId: string, category: string, thumb: string) {
         "Charging cluster bombs and tumble wins…",
         "Preparing the Buy Bonus…",
         `${pantherFamily.name} is ready!`,
-      ],
-    };
-  }
-  if (gameId === "aztec-treasure") {
-    return {
-      bgImage: "/images/symbols/panther/loading-bg.webp",
-      bgGradient: "from-[#3F2A08]/80 via-[#0A0912]/80 to-[#120800]/95",
-      titleClass: "panther-title",
-      barGradient: "from-[#F59E0B] via-[#FACC15] to-[#D97706]",
-      borderGlow: "shadow-[0_0_60px_rgba(245,158,11,0.8)] border-amber-400",
-      badgeGradient: "from-[#F59E0B] via-[#FACC15] to-[#78350F]",
-      renderType: "standard" as const,
-      imageParticles: ["/images/symbols/panther/wild.png", "/images/symbols/panther/scatter.png"],
-      badgeText: "AZTEC TREASURE ARCADE",
-      chargeText: "TEMPLE POWER ACTIVE",
-      lines: [
-        "Entering the ancient Aztec temple…",
-        "Awakening temple guardians…",
-        "Forging bomb multiplier crystals…",
-        "Charging cascading treasure clusters…",
-        "Aztec Treasure awaits!",
-      ],
-    };
-  }
-  if (gameId === "pirate-plunder") {
-    return {
-      bgImage: "/images/symbols/panther/loading-bg.webp",
-      bgGradient: "from-[#3F2A08]/80 via-[#0A0912]/80 to-[#120800]/95",
-      titleClass: "panther-title",
-      barGradient: "from-[#F59E0B] via-[#FACC15] to-[#D97706]",
-      borderGlow: "shadow-[0_0_60px_rgba(245,158,11,0.8)] border-amber-400",
-      badgeGradient: "from-[#F59E0B] via-[#FACC15] to-[#78350F]",
-      renderType: "standard" as const,
-      imageParticles: ["/images/symbols/panther/wild.png", "/images/symbols/panther/scatter.png"],
-      badgeText: "PIRATE PLUNDER ARCADE",
-      chargeText: "TREASURE POWER ACTIVE",
-      lines: [
-        "Hoisting the pirate sails…",
-        "Charting the plunder map…",
-        "Forging bomb multiplier crystals…",
-        "Charging cascading treasure clusters…",
-        "Pirate Plunder awaits!",
       ],
     };
   }
@@ -443,91 +505,7 @@ function getGameThemeConfig(gameId: string, category: string, thumb: string) {
       ],
     };
   }
-  if (gameId === "starlight-ace") {
-    return {
-      bgImage: thumb,
-      bgGradient: "from-[#31103F]/80 via-[#0A0912]/80 to-[#1E1B4B]/95",
-      titleClass: "celestial-title",
-      barGradient: "from-[#F472B6] via-[#C084FC] to-[#38BDF8]",
-      borderGlow: "shadow-[0_0_60px_rgba(244,114,182,0.8)] border-pink-400",
-      badgeGradient: "from-[#F472B6] via-[#A855F7] to-[#38BDF8]",
-      renderType: "standard" as const,
-      imageParticles: ["/images/godly-loading/gem.png"],
-      badgeText: "STARLIGHT ARCADE",
-      chargeText: "STARLIGHT CHARGE ACTIVE",
-      lines: [
-        "Consulting the Star Princess…",
-        "Gathering starlight scatter dust…",
-        "Unlocking winged multiplier wilds…",
-        "Aligning celestial constellations…",
-        "Starlight Ace is ready!",
-      ],
-    };
-  }
-  if (gameId === "manila-nights") {
-    return {
-      bgImage: thumb,
-      bgGradient: "from-[#31103F]/80 via-[#0A0912]/80 to-[#1E1B4B]/95",
-      titleClass: "celestial-title",
-      barGradient: "from-[#F472B6] via-[#C084FC] to-[#38BDF8]",
-      borderGlow: "shadow-[0_0_60px_rgba(244,114,182,0.8)] border-pink-400",
-      badgeGradient: "from-[#F472B6] via-[#A855F7] to-[#38BDF8]",
-      renderType: "standard" as const,
-      imageParticles: ["/images/godly-loading/gem.png"],
-      badgeText: "MANILA NIGHTS",
-      chargeText: "NEON CHARGE ACTIVE",
-      lines: [
-        "Lighting up the Manila skyline…",
-        "Gathering neon scatter dust…",
-        "Unlocking golden wild transforms…",
-        "Aligning cascade multipliers…",
-        "Manila Nights is ready!",
-      ],
-    };
-  }
-  if (gameId === "super-ace") {
-    return {
-      bgImage: thumb,
-      bgGradient: "from-[#7F1D1D]/80 via-[#1C1917]/85 to-[#450A0A]/95",
-      titleClass: "celestial-title",
-      barGradient: "from-[#F59E0B] via-[#EF4444] to-[#B91C1C]",
-      borderGlow: "shadow-[0_0_60px_rgba(239,68,68,0.75)] border-amber-400",
-      badgeGradient: "from-[#F59E0B] via-[#EF4444] to-[#991B1B]",
-      renderType: "standard" as const,
-      imageParticles: ["/images/symbols/fire-spike/diamond.webp"],
-      badgeText: "LUCKY POKER",
-      chargeText: "GOLDEN CARD CHARGE",
-      lines: [
-        "Shuffling the Lucky Poker deck…",
-        "Charging Golden Card transformations…",
-        "Calling Little & Big Jokers…",
-        "Stacking combo multipliers…",
-        "Super Ace is ready!",
-      ],
-    };
-  }
-  if (gameId === "mega-ace") {
-    return {
-      bgImage: thumb,
-      bgGradient: "from-[#7F1D1D]/80 via-[#1C1917]/85 to-[#450A0A]/95",
-      titleClass: "celestial-title",
-      barGradient: "from-[#F59E0B] via-[#EF4444] to-[#B91C1C]",
-      borderGlow: "shadow-[0_0_60px_rgba(239,68,68,0.75)] border-amber-400",
-      badgeGradient: "from-[#F59E0B] via-[#EF4444] to-[#991B1B]",
-      renderType: "standard" as const,
-      imageParticles: ["/images/symbols/mega-ace/diamond.png"],
-      badgeText: "MEGA POKER",
-      chargeText: "GOLDEN CARD CHARGE",
-      lines: [
-        "Shuffling the Mega Ace deck…",
-        "Charging Golden Card transformations…",
-        "Calling Little & Big Jokers…",
-        "Stacking combo multipliers…",
-        "Mega Ace is ready!",
-      ],
-    };
-  }
-  if (category === "fishing" || gameId === "deep-bass") {
+  if (category === "fishing") {
     return {
       bgImage: thumb,
       bgGradient: "from-[#042F2E]/80 via-[#0A0912]/80 to-[#0369A1]/95",
@@ -548,19 +526,7 @@ function getGameThemeConfig(gameId: string, category: string, thumb: string) {
       ],
     };
   }
-  if (
-    gameId === "frontier-gold" ||
-    gameId === "buffalo-reign" ||
-    gameId === "dust-dollars" ||
-    gameId === "gold-mine" ||
-    gameId === "jeepney-jackpot" ||
-    gameId === "desert-riches" ||
-    gameId === "outlaw-coins" ||
-    gameId === "crystal-cave" ||
-    gameId === "diamond-dig" ||
-    gameId === "palengke-pays" ||
-    gameId === "tricycle-treasure"
-  ) {
+  if (gameId === "buffalo-reign" || gameId === "desert-riches") {
     return {
       bgImage: thumb,
       bgGradient: "from-[#451A03]/80 via-[#0A0912]/80 to-[#78350F]/95",
@@ -602,24 +568,272 @@ function getGameThemeConfig(gameId: string, category: string, thumb: string) {
       ],
     };
   }
-  if (gameId === "carabao-charge") {
+  if (gameId === "fire-spike") {
     return {
-      bgImage: thumb,
-      bgGradient: "from-[#14532D]/70 via-[#0A0912]/80 to-[#422006]/95",
-      titleClass: "western-title",
-      barGradient: "from-[#FBBF24] via-[#84CC16] to-[#B45309]",
-      borderGlow: "shadow-[0_0_60px_rgba(132,204,22,0.55)] border-lime-400",
-      badgeGradient: "from-[#FBBF24] via-[#65A30D] to-[#14532D]",
+      bgImage: "/images/fire-spike-bg.webp",
+      bgGradient: "from-[#450A0A]/55 via-[#0A0912]/70 to-[#7F1D1D]/85",
+      titleClass: "fire-title",
+      barGradient: "from-[#F97316] via-[#EF4444] to-[#FACC15]",
+      borderGlow: "shadow-[0_0_60px_rgba(249,115,22,0.8)] border-orange-500",
+      badgeGradient: "from-[#F97316] via-[#DC2626] to-[#991B1B]",
       renderType: "standard" as const,
-      imageParticles: ["/images/godly-loading/gem.png"],
-      badgeText: "CARABAO CHARGE",
-      chargeText: "CAMPFIRE ACTIVE",
+      imageParticles: [
+        "/images/symbols/fire-spike/scatter.webp",
+        "/images/symbols/fire-spike/wild.webp",
+      ],
+      badgeText: "MOLTEN ARCADE",
+      chargeText: "HEAT SURGE ACTIVE",
       lines: [
-        "Waking the carabao stampede…",
-        "Aligning 1,024 ways across the fields…",
-        "Lighting the Golden Campfire…",
-        "Opening Treasure Chest Hold & Collect…",
-        "Carabao Charge is ready!",
+        "Igniting molten lava reels…",
+        "Heating Wild + Scatter mix prizes…",
+        "Charging the 25,000× Grand Jackpot…",
+        "Blazing 10-line fire strike…",
+        "Fire Spike is roaring!",
+      ],
+    };
+  }
+  if (gameId === "fortune-ox") {
+    return {
+      bgImage: "/images/fortune-ox-bg.webp",
+      bgGradient: "from-[#7F1D1D]/55 via-[#0C0814]/70 to-[#B45309]/85",
+      titleClass: "fortune-title",
+      barGradient: "from-[#FBBF24] via-[#EF4444] to-[#B45309]",
+      borderGlow: "shadow-[0_0_60px_rgba(251,191,36,0.75)] border-amber-400",
+      badgeGradient: "from-[#FBBF24] via-[#EF4444] to-[#7F1D1D]",
+      renderType: "standard" as const,
+      imageParticles: [],
+      badgeText: "YEAR OF THE OX",
+      chargeText: "MULTIPLIER REEL ACTIVE",
+      lines: [
+        "Awakening the golden ox…",
+        "Spinning the fortune grid…",
+        "Charging the multiplier reel…",
+        "Aligning five lucky lines…",
+        "Fortune Ox is ready!",
+      ],
+    };
+  }
+  if (gameId === "fortune-tiger") {
+    return {
+      bgImage: "/images/fortune-tiger-bg.webp",
+      bgGradient: "from-[#7F1D1D]/55 via-[#0C0814]/70 to-[#B45309]/85",
+      titleClass: "fortune-title",
+      barGradient: "from-[#FBBF24] via-[#EF4444] to-[#B45309]",
+      borderGlow: "shadow-[0_0_60px_rgba(251,191,36,0.75)] border-amber-400",
+      badgeGradient: "from-[#FBBF24] via-[#EF4444] to-[#7F1D1D]",
+      renderType: "standard" as const,
+      imageParticles: [],
+      badgeText: "YEAR OF THE TIGER",
+      chargeText: "MULTIPLIER REEL ACTIVE",
+      lines: [
+        "Awakening the golden tiger…",
+        "Spinning the fortune grid…",
+        "Charging the multiplier reel…",
+        "Aligning five lucky lines…",
+        "Fortune Tiger is ready!",
+      ],
+    };
+  }
+  if (gameId === "fortune-rabbit") {
+    return {
+      bgImage: "/images/fortune-rabbit-bg.webp",
+      bgGradient: "from-[#7F1D1D]/55 via-[#0C0814]/70 to-[#B45309]/85",
+      titleClass: "fortune-title",
+      barGradient: "from-[#FBBF24] via-[#EF4444] to-[#B45309]",
+      borderGlow: "shadow-[0_0_60px_rgba(251,191,36,0.75)] border-amber-400",
+      badgeGradient: "from-[#FBBF24] via-[#EF4444] to-[#7F1D1D]",
+      renderType: "standard" as const,
+      imageParticles: [],
+      badgeText: "YEAR OF THE RABBIT",
+      chargeText: "MULTIPLIER REEL ACTIVE",
+      lines: [
+        "Awakening the golden rabbit…",
+        "Spinning the fortune grid…",
+        "Charging the multiplier reel…",
+        "Aligning five lucky lines…",
+        "Fortune Rabbit is ready!",
+      ],
+    };
+  }
+
+  if (gameId === "lucky-neko") {
+    return {
+      bgImage: "/images/lucky-neko-bg.webp",
+      bgGradient: "from-[#7F1D1D]/55 via-[#0C0814]/70 to-[#B45309]/85",
+      titleClass: "fortune-title",
+      barGradient: "from-[#FBBF24] via-[#EF4444] to-[#B45309]",
+      borderGlow: "shadow-[0_0_60px_rgba(251,191,36,0.75)] border-amber-400",
+      badgeGradient: "from-[#FBBF24] via-[#EF4444] to-[#7F1D1D]",
+      renderType: "standard" as const,
+      imageParticles: [],
+      badgeText: "LUCKY NEKO",
+      chargeText: "MULTIPLIER REEL ACTIVE",
+      lines: [
+        "Awakening the lucky neko…",
+        "Spinning the fortune grid…",
+        "Charging the multiplier reel…",
+        "Aligning five lucky lines…",
+        "Lucky Neko is ready!",
+      ],
+    };
+  }
+  if (gameId === "fortune-mouse") {
+    return {
+      bgImage: "/images/fortune-mouse-bg.webp",
+      bgGradient: "from-[#7F1D1D]/55 via-[#0C0814]/70 to-[#B45309]/85",
+      titleClass: "fortune-title",
+      barGradient: "from-[#FBBF24] via-[#EF4444] to-[#B45309]",
+      borderGlow: "shadow-[0_0_60px_rgba(251,191,36,0.75)] border-amber-400",
+      badgeGradient: "from-[#FBBF24] via-[#EF4444] to-[#7F1D1D]",
+      renderType: "standard" as const,
+      imageParticles: [],
+      badgeText: "YEAR OF THE MOUSE",
+      chargeText: "MULTIPLIER REEL ACTIVE",
+      lines: [
+        "Awakening the fortune mouse…",
+        "Spinning the fortune grid…",
+        "Charging the multiplier reel…",
+        "Aligning five lucky lines…",
+        "Fortune Mouse is ready!",
+      ],
+    };
+  }
+  if (gameId === "prosperity-lion") {
+    return {
+      bgImage: "/images/prosperity-lion-bg.webp",
+      bgGradient: "from-[#7F1D1D]/55 via-[#0C0814]/70 to-[#B45309]/85",
+      titleClass: "fortune-title",
+      barGradient: "from-[#FBBF24] via-[#EF4444] to-[#B45309]",
+      borderGlow: "shadow-[0_0_60px_rgba(251,191,36,0.75)] border-amber-400",
+      badgeGradient: "from-[#FBBF24] via-[#EF4444] to-[#7F1D1D]",
+      renderType: "standard" as const,
+      imageParticles: [],
+      badgeText: "PROSPERITY LION",
+      chargeText: "MULTIPLIER REEL ACTIVE",
+      lines: [
+        "Awakening the guardian lion…",
+        "Spinning the fortune grid…",
+        "Charging the multiplier reel…",
+        "Aligning five lucky lines…",
+        "Prosperity Lion is ready!",
+      ],
+    };
+  }
+  if (gameId === "coin-volcano") {
+    return {
+      bgImage: "/images/coin-volcano-bg.webp",
+      bgGradient: "from-[#14532D]/60 via-[#052e16]/80 to-[#422006]/90",
+      titleClass: "fortune-title",
+      barGradient: "from-[#FDE047] via-[#22C55E] to-[#A16207]",
+      borderGlow: "shadow-[0_0_60px_rgba(253,224,71,0.7)] border-yellow-400",
+      badgeGradient: "from-[#FDE047] via-[#22C55E] to-[#854D0E]",
+      renderType: "standard" as const,
+      imageParticles: [
+        "/images/symbols/coin-volcano/scatter.webp",
+        "/images/symbols/coin-volcano/wild.webp",
+      ],
+      badgeText: "COIN ERUPTION",
+      chargeText: "LAVA CASH ACTIVE",
+      lines: [
+        "Heating the magma vault…",
+        "Spinning the coin reels…",
+        "Charging Coin Volcano symbols…",
+        "Priming the jackpot grid…",
+        "Coin Volcano is ready!",
+      ],
+    };
+  }
+  if (gameId === "zeus-strike") {
+    return {
+      bgImage: "/images/zeus-strike-loading/bg.png",
+      bgGradient: "from-[#1E1B4B]/80 via-[#0A0912]/80 to-[#0F172A]/95",
+      titleClass: "godly-title",
+      barGradient: "from-[#FACC15] via-[#F97316] to-[#EF4444]",
+      borderGlow: "shadow-[0_0_60px_rgba(250,204,21,0.8)] border-amber-300",
+      badgeGradient: "from-[#FACC15] via-[#F97316] to-[#991B1B]",
+      renderType: "godly-3d" as const,
+      imageParticles: [
+        "/images/zeus-strike-loading/lightning_orb.png",
+        "/images/zeus-strike-loading/gem.png",
+        "/images/zeus-strike-loading/lightning_orb.png",
+        "/images/zeus-strike-loading/gem.png",
+      ],
+      badgeText: "ZEUS STRIKE",
+      chargeText: "THUNDER MULT ACTIVE",
+      lines: [
+        "Calling down Zeus strike…",
+        "Opening the thunder gates…",
+        "Charging cascade multipliers…",
+        "Awakening divine free spins…",
+        "Zeus Strike is ready!",
+      ],
+    };
+  }
+  if (gameId === "thor-thunder") {
+    return {
+      bgImage: "/images/thor-thunder-loading/bg.png",
+      bgGradient: "from-[#1E1B4B]/80 via-[#0A0912]/80 to-[#0F172A]/95",
+      titleClass: "godly-title",
+      barGradient: "from-[#FACC15] via-[#F97316] to-[#EF4444]",
+      borderGlow: "shadow-[0_0_60px_rgba(250,204,21,0.8)] border-amber-300",
+      badgeGradient: "from-[#FACC15] via-[#F97316] to-[#991B1B]",
+      renderType: "godly-3d" as const,
+      imageParticles: [
+        "/images/thor-thunder-loading/lightning_orb.png",
+        "/images/thor-thunder-loading/gem.png",
+        "/images/thor-thunder-loading/lightning_orb.png",
+        "/images/thor-thunder-loading/gem.png",
+      ],
+      badgeText: "THOR THUNDER",
+      chargeText: "HAMMER MULT ACTIVE",
+      lines: [
+        "Calling down Thor's hammer…",
+        "Opening the thunder gates…",
+        "Charging cascade multipliers…",
+        "Awakening divine free spins…",
+        "Thor Thunder is ready!",
+      ],
+    };
+  }
+  if (gameId === "maya-gold") {
+    return {
+      bgImage: "/images/symbols/panther/loading-bg.webp",
+      bgGradient: "from-[#3F2A08]/80 via-[#0A0912]/80 to-[#120800]/95",
+      titleClass: "panther-title",
+      barGradient: "from-[#F59E0B] via-[#FACC15] to-[#D97706]",
+      borderGlow: "shadow-[0_0_60px_rgba(245,158,11,0.8)] border-amber-400",
+      badgeGradient: "from-[#F59E0B] via-[#FACC15] to-[#78350F]",
+      renderType: "standard" as const,
+      imageParticles: ["/images/symbols/panther/wild.png", "/images/symbols/panther/scatter.png"],
+      badgeText: "MAYA GOLD ARCADE",
+      chargeText: "TEMPLE POWER ACTIVE",
+      lines: [
+        "Entering the Maya temple…",
+        "Awakening temple guardians…",
+        "Forging bomb multiplier crystals…",
+        "Charging cascading treasure clusters…",
+        "Maya Gold awaits!",
+      ],
+    };
+  }
+  if (gameId === "temple-rush") {
+    return {
+      bgImage: "/images/symbols/panther/loading-bg.webp",
+      bgGradient: "from-[#3F2A08]/80 via-[#0A0912]/80 to-[#120800]/95",
+      titleClass: "panther-title",
+      barGradient: "from-[#F59E0B] via-[#FACC15] to-[#D97706]",
+      borderGlow: "shadow-[0_0_60px_rgba(245,158,11,0.8)] border-amber-400",
+      badgeGradient: "from-[#F59E0B] via-[#FACC15] to-[#78350F]",
+      renderType: "standard" as const,
+      imageParticles: ["/images/symbols/panther/wild.png", "/images/symbols/panther/scatter.png"],
+      badgeText: "TEMPLE RUSH ARCADE",
+      chargeText: "TREASURE POWER ACTIVE",
+      lines: [
+        "Racing into the temple…",
+        "Charting the relic map…",
+        "Forging bomb multiplier crystals…",
+        "Charging cascading treasure clusters…",
+        "Temple Rush awaits!",
       ],
     };
   }
@@ -759,592 +973,14 @@ function getGameThemeConfig(gameId: string, category: string, thumb: string) {
       badgeGradient: "from-[#A5F3FC] via-[#22D3EE] to-[#0E7490]",
       renderType: "standard" as const,
       imageParticles: ["/images/godly-loading/gem.png"],
-      badgeText: "LUCKY DROP",
-      chargeText: "LANES READY",
+      badgeText: "ROYAL CLIMB",
+      chargeText: "DECK SHUFFLED",
       lines: [
-        "Numbering lanes 1–10…",
-        "Loading the drop ball…",
-        "Calibrating 9× pays…",
-        "Chip rails locked…",
-        "Lucky Drop — pick your lanes!",
-      ],
-    };
-  }
-  if (gameId === "fire-spike") {
-    return {
-      bgImage: "/images/fire-spike-bg.webp",
-      bgGradient: "from-[#450A0A]/55 via-[#0A0912]/70 to-[#7F1D1D]/85",
-      titleClass: "fire-title",
-      barGradient: "from-[#F97316] via-[#EF4444] to-[#FACC15]",
-      borderGlow: "shadow-[0_0_60px_rgba(249,115,22,0.8)] border-orange-500",
-      badgeGradient: "from-[#F97316] via-[#DC2626] to-[#991B1B]",
-      renderType: "standard" as const,
-      imageParticles: ["/images/symbols/fire-spike/scatter.webp", "/images/symbols/fire-spike/wild.webp"],
-      badgeText: "MOLTEN ARCADE",
-      chargeText: "HEAT SURGE ACTIVE",
-      lines: [
-        "Igniting molten lava reels…",
-        "Heating Wild + Scatter mix prizes…",
-        "Charging the 25,000× Grand Jackpot…",
-        "Blazing 10-line fire strike…",
-        "Fire Spike is roaring!",
-      ],
-    };
-  }
-  if (gameId === "boxing-king") {
-    return {
-      bgImage: thumb,
-      bgGradient: "from-[#1e3a5f]/55 via-[#0A0912]/70 to-[#7c2d12]/85",
-      titleClass: "fire-title",
-      barGradient: "from-[#F97316] via-[#EF4444] to-[#FACC15]",
-      borderGlow: "shadow-[0_0_60px_rgba(249,115,22,0.8)] border-orange-500",
-      badgeGradient: "from-[#F97316] via-[#DC2626] to-[#991B1B]",
-      renderType: "standard" as const,
-      imageParticles: [
-        "/images/symbols/boxing-king/scatter.webp",
-        "/images/symbols/boxing-king/wild.webp",
-      ],
-      badgeText: "RING READY",
-      chargeText: "CHAMPION CHARGE",
-      lines: [
-        "Stepping into the Boxing King arena…",
-        "Warming Wild + Scatter mix prizes…",
-        "Charging the Grand Jackpot…",
-        "Locking 10-line paylines…",
-        "Boxing King is ready!",
-      ],
-    };
-  }
-  if (gameId === "goal-rush") {
-    return {
-      bgImage: thumb,
-      bgGradient: "from-[#14532d]/55 via-[#0A0912]/70 to-[#1e3a5f]/85",
-      titleClass: "fire-title",
-      barGradient: "from-[#22C55E] via-[#FACC15] to-[#F97316]",
-      borderGlow: "shadow-[0_0_60px_rgba(34,197,94,0.8)] border-green-500",
-      badgeGradient: "from-[#22C55E] via-[#15803D] to-[#14532d]",
-      renderType: "standard" as const,
-      imageParticles: [
-        "/images/symbols/goal-rush/scatter.webp",
-        "/images/symbols/goal-rush/wild.webp",
-      ],
-      badgeText: "KICKOFF READY",
-      chargeText: "GOAL SURGE",
-      lines: [
-        "Stepping onto the Goal Rush pitch…",
-        "Warming Wild + Scatter mix prizes…",
-        "Charging the Grand Jackpot…",
-        "Locking 10-line paylines…",
-        "Goal Rush is ready!",
-      ],
-    };
-  }
-  if (gameId === "money-coming") {
-    return {
-      bgImage: "/images/money-coming-bg.webp",
-      bgGradient: "from-[#14532D]/60 via-[#052e16]/80 to-[#422006]/90",
-      titleClass: "fortune-title",
-      barGradient: "from-[#FDE047] via-[#22C55E] to-[#A16207]",
-      borderGlow: "shadow-[0_0_60px_rgba(253,224,71,0.7)] border-yellow-400",
-      badgeGradient: "from-[#FDE047] via-[#22C55E] to-[#854D0E]",
-      renderType: "standard" as const,
-      imageParticles: [
-        "/images/symbols/money-coming/scatter.webp",
-        "/images/symbols/money-coming/wild.webp",
-      ],
-      badgeText: "MONEY RAIN",
-      chargeText: "CASH FLOW ACTIVE",
-      lines: [
-        "Stacking the gold bars…",
-        "Spinning the cash reels…",
-        "Charging Money Coming symbols…",
-        "Priming the jackpot grid…",
-        "Money Coming is ready!",
-      ],
-    };
-  }
-  if (gameId === "fortune-gems") {
-    return {
-      bgImage: "/images/fortune-gems-bg.webp",
-      bgGradient: "from-[#4A1D0A]/55 via-[#0C0814]/70 to-[#7C2D12]/85",
-      titleClass: "fortune-title",
-      barGradient: "from-[#FBBF24] via-[#F43F5E] to-[#A16207]",
-      borderGlow: "shadow-[0_0_60px_rgba(251,191,36,0.75)] border-amber-500",
-      badgeGradient: "from-[#FBBF24] via-[#F43F5E] to-[#7C2D12]",
-      renderType: "standard" as const,
-      imageParticles: [],
-      badgeText: "TEMPLE GEMS",
-      chargeText: "MULTIPLIER REEL ACTIVE",
-      lines: [
-        "Opening the temple vault…",
-        "Spinning the gemstone grid…",
-        "Charging the multiplier reel…",
-        "Aligning five fortune lines…",
-        "Fortune Gems is ready!",
-      ],
-    };
-  }
-  if (gameId === "fortune-ox") {
-    return {
-      bgImage: "/images/fortune-ox-bg.webp",
-      bgGradient: "from-[#7F1D1D]/55 via-[#0C0814]/70 to-[#B45309]/85",
-      titleClass: "fortune-title",
-      barGradient: "from-[#FBBF24] via-[#EF4444] to-[#B45309]",
-      borderGlow: "shadow-[0_0_60px_rgba(251,191,36,0.75)] border-amber-400",
-      badgeGradient: "from-[#FBBF24] via-[#EF4444] to-[#7F1D1D]",
-      renderType: "standard" as const,
-      imageParticles: [],
-      badgeText: "YEAR OF THE OX",
-      chargeText: "MULTIPLIER REEL ACTIVE",
-      lines: [
-        "Awakening the golden ox…",
-        "Spinning the fortune grid…",
-        "Charging the multiplier reel…",
-        "Aligning five lucky lines…",
-        "Fortune Ox is ready!",
-      ],
-    };
-  }
-  if (gameId === "sari-sari-spin") {
-    return {
-      bgImage: "/images/sari-sari-spin-bg.webp",
-      bgGradient: "from-[#7F1D1D]/55 via-[#0C0814]/70 to-[#B45309]/85",
-      titleClass: "fortune-title",
-      barGradient: "from-[#FBBF24] via-[#EF4444] to-[#B45309]",
-      borderGlow: "shadow-[0_0_60px_rgba(251,191,36,0.75)] border-amber-400",
-      badgeGradient: "from-[#FBBF24] via-[#EF4444] to-[#7F1D1D]",
-      renderType: "standard" as const,
-      imageParticles: [],
-      badgeText: "SARI-SARI LUCK",
-      chargeText: "MULTIPLIER REEL ACTIVE",
-      lines: [
-        "Opening the sari-sari store…",
-        "Spinning the fortune grid…",
-        "Charging the multiplier reel…",
-        "Aligning five lucky lines…",
-        "Sari-Sari Spin is ready!",
-      ],
-    };
-  }
-  if (gameId === "fortune-tiger") {
-    return {
-      bgImage: "/images/fortune-tiger-bg.webp",
-      bgGradient: "from-[#7F1D1D]/55 via-[#0C0814]/70 to-[#B45309]/85",
-      titleClass: "fortune-title",
-      barGradient: "from-[#FBBF24] via-[#EF4444] to-[#B45309]",
-      borderGlow: "shadow-[0_0_60px_rgba(251,191,36,0.75)] border-amber-400",
-      badgeGradient: "from-[#FBBF24] via-[#EF4444] to-[#7F1D1D]",
-      renderType: "standard" as const,
-      imageParticles: [],
-      badgeText: "YEAR OF THE TIGER",
-      chargeText: "MULTIPLIER REEL ACTIVE",
-      lines: [
-        "Awakening the golden tiger…",
-        "Spinning the fortune grid…",
-        "Charging the multiplier reel…",
-        "Aligning five lucky lines…",
-        "Fortune Tiger is ready!",
-      ],
-    };
-  }
-  if (gameId === "fortune-rabbit") {
-    return {
-      bgImage: "/images/fortune-rabbit-bg.webp",
-      bgGradient: "from-[#7F1D1D]/55 via-[#0C0814]/70 to-[#B45309]/85",
-      titleClass: "fortune-title",
-      barGradient: "from-[#FBBF24] via-[#EF4444] to-[#B45309]",
-      borderGlow: "shadow-[0_0_60px_rgba(251,191,36,0.75)] border-amber-400",
-      badgeGradient: "from-[#FBBF24] via-[#EF4444] to-[#7F1D1D]",
-      renderType: "standard" as const,
-      imageParticles: [],
-      badgeText: "YEAR OF THE RABBIT",
-      chargeText: "MULTIPLIER REEL ACTIVE",
-      lines: [
-        "Awakening the golden rabbit…",
-        "Spinning the fortune grid…",
-        "Charging the multiplier reel…",
-        "Aligning five lucky lines…",
-        "Fortune Rabbit is ready!",
-      ],
-    };
-  }
-  if (gameId === "pug-den" || gameId === "pup-den") {
-    return {
-      bgImage: thumb,
-      bgGradient: "from-[#431407]/60 via-[#1c1917]/75 to-[#78350f]/85",
-      titleClass: "godly-title",
-      barGradient: "from-[#F59E0B] via-[#F97316] to-[#FB7185]",
-      borderGlow: "shadow-[0_0_60px_rgba(245,158,11,0.7)] border-amber-500",
-      badgeGradient: "from-[#D97706] via-[#EA580C] to-[#BE123C]",
-      renderType: "standard" as const,
-      imageParticles: [] as string[],
-      badgeText: "THE PUG DEN",
-      chargeText: "TREAT ENERGY HIGH",
-      lines: [
-        "Walking the pug reels…",
-        "Stacking Treat Wild multipliers…",
-        "Warming the Dawg's Den toaster…",
-        "Sticky Treats locking in…",
-        "Welcome to the Pug Den!",
-      ],
-    };
-  }
-  if (gameId === "fruit-riot") {
-    return {
-      bgImage: thumb,
-      bgGradient: "from-[#7c3aed]/70 via-[#db2777]/65 to-[#ea580c]/75",
-      titleClass: "godly-title",
-      barGradient: "from-[#ffe566] via-[#ff4d9e] to-[#a78bfa]",
-      borderGlow: "shadow-[0_0_50px_rgba(244,114,182,0.55)] border-pink-300",
-      badgeGradient: "from-[#ff4d9e] via-[#c026d3] to-[#f59e0b]",
-      renderType: "standard" as const,
-      imageParticles: [] as string[],
-      badgeText: "FRUIT RIOT",
-      chargeText: "PARTY MODE",
-      lines: [
-        "Cranking up the fruit party…",
-        "Loading glossy icons…",
-        "Igniting the jackpot glow…",
-        "Warming Hold switches…",
-        "Fruit Riot is ready!",
-      ],
-    };
-  }
-
-  if (gameId === "lucky-neko") {
-    return {
-      bgImage: "/images/lucky-neko-bg.webp",
-      bgGradient: "from-[#7F1D1D]/55 via-[#0C0814]/70 to-[#B45309]/85",
-      titleClass: "fortune-title",
-      barGradient: "from-[#FBBF24] via-[#EF4444] to-[#B45309]",
-      borderGlow: "shadow-[0_0_60px_rgba(251,191,36,0.75)] border-amber-400",
-      badgeGradient: "from-[#FBBF24] via-[#EF4444] to-[#7F1D1D]",
-      renderType: "standard" as const,
-      imageParticles: [],
-      badgeText: "LUCKY NEKO",
-      chargeText: "MULTIPLIER REEL ACTIVE",
-      lines: [
-        "Awakening the lucky neko…",
-        "Spinning the fortune grid…",
-        "Charging the multiplier reel…",
-        "Aligning five lucky lines…",
-        "Lucky Neko is ready!",
-      ],
-    };
-  }
-  if (gameId === "fortune-mouse") {
-    return {
-      bgImage: "/images/fortune-mouse-bg.webp",
-      bgGradient: "from-[#7F1D1D]/55 via-[#0C0814]/70 to-[#B45309]/85",
-      titleClass: "fortune-title",
-      barGradient: "from-[#FBBF24] via-[#EF4444] to-[#B45309]",
-      borderGlow: "shadow-[0_0_60px_rgba(251,191,36,0.75)] border-amber-400",
-      badgeGradient: "from-[#FBBF24] via-[#EF4444] to-[#7F1D1D]",
-      renderType: "standard" as const,
-      imageParticles: [],
-      badgeText: "YEAR OF THE MOUSE",
-      chargeText: "MULTIPLIER REEL ACTIVE",
-      lines: [
-        "Awakening the fortune mouse…",
-        "Spinning the fortune grid…",
-        "Charging the multiplier reel…",
-        "Aligning five lucky lines…",
-        "Fortune Mouse is ready!",
-      ],
-    };
-  }
-  if (gameId === "prosperity-lion") {
-    return {
-      bgImage: "/images/prosperity-lion-bg.webp",
-      bgGradient: "from-[#7F1D1D]/55 via-[#0C0814]/70 to-[#B45309]/85",
-      titleClass: "fortune-title",
-      barGradient: "from-[#FBBF24] via-[#EF4444] to-[#B45309]",
-      borderGlow: "shadow-[0_0_60px_rgba(251,191,36,0.75)] border-amber-400",
-      badgeGradient: "from-[#FBBF24] via-[#EF4444] to-[#7F1D1D]",
-      renderType: "standard" as const,
-      imageParticles: [],
-      badgeText: "PROSPERITY LION",
-      chargeText: "MULTIPLIER REEL ACTIVE",
-      lines: [
-        "Awakening the guardian lion…",
-        "Spinning the fortune grid…",
-        "Charging the multiplier reel…",
-        "Aligning five lucky lines…",
-        "Prosperity Lion is ready!",
-      ],
-    };
-  }
-  if (gameId === "coin-volcano") {
-    return {
-      bgImage: "/images/coin-volcano-bg.webp",
-      bgGradient: "from-[#14532D]/60 via-[#052e16]/80 to-[#422006]/90",
-      titleClass: "fortune-title",
-      barGradient: "from-[#FDE047] via-[#22C55E] to-[#A16207]",
-      borderGlow: "shadow-[0_0_60px_rgba(253,224,71,0.7)] border-yellow-400",
-      badgeGradient: "from-[#FDE047] via-[#22C55E] to-[#854D0E]",
-      renderType: "standard" as const,
-      imageParticles: [
-        "/images/symbols/coin-volcano/scatter.webp",
-        "/images/symbols/coin-volcano/wild.webp",
-      ],
-      badgeText: "COIN ERUPTION",
-      chargeText: "LAVA CASH ACTIVE",
-      lines: [
-        "Heating the magma vault…",
-        "Spinning the coin reels…",
-        "Charging Coin Volcano symbols…",
-        "Priming the jackpot grid…",
-        "Coin Volcano is ready!",
-      ],
-    };
-  }
-  if (gameId === "cash-mania") {
-    return {
-      bgImage: "/images/cash-mania-bg.webp",
-      bgGradient: "from-[#14532D]/60 via-[#052e16]/80 to-[#422006]/90",
-      titleClass: "fortune-title",
-      barGradient: "from-[#FDE047] via-[#22C55E] to-[#A16207]",
-      borderGlow: "shadow-[0_0_60px_rgba(253,224,71,0.7)] border-yellow-400",
-      badgeGradient: "from-[#FDE047] via-[#22C55E] to-[#854D0E]",
-      renderType: "standard" as const,
-      imageParticles: [
-        "/images/symbols/cash-mania/scatter.webp",
-        "/images/symbols/cash-mania/wild.webp",
-      ],
-      badgeText: "CASH MANIA",
-      chargeText: "CASH FLOW ACTIVE",
-      lines: [
-        "Stacking the mania bills…",
-        "Spinning the cash reels…",
-        "Charging Cash Mania symbols…",
-        "Priming the jackpot grid…",
-        "Cash Mania is ready!",
-      ],
-    };
-  }
-  if (gameId === "zeus-strike") {
-    return {
-      bgImage: "/images/zeus-strike-loading/bg.png",
-      bgGradient: "from-[#1E1B4B]/80 via-[#0A0912]/80 to-[#0F172A]/95",
-      titleClass: "godly-title",
-      barGradient: "from-[#FACC15] via-[#F97316] to-[#EF4444]",
-      borderGlow: "shadow-[0_0_60px_rgba(250,204,21,0.8)] border-amber-300",
-      badgeGradient: "from-[#FACC15] via-[#F97316] to-[#991B1B]",
-      renderType: "godly-3d" as const,
-      imageParticles: [
-        "/images/zeus-strike-loading/lightning_orb.png",
-        "/images/zeus-strike-loading/gem.png",
-        "/images/zeus-strike-loading/lightning_orb.png",
-        "/images/zeus-strike-loading/gem.png",
-      ],
-      badgeText: "ZEUS STRIKE",
-      chargeText: "THUNDER MULT ACTIVE",
-      lines: [
-        "Calling down Zeus strike…",
-        "Opening the thunder gates…",
-        "Charging cascade multipliers…",
-        "Awakening divine free spins…",
-        "Zeus Strike is ready!",
-      ],
-    };
-  }
-  if (gameId === "thor-thunder") {
-    return {
-      bgImage: "/images/thor-thunder-loading/bg.png",
-      bgGradient: "from-[#1E1B4B]/80 via-[#0A0912]/80 to-[#0F172A]/95",
-      titleClass: "godly-title",
-      barGradient: "from-[#FACC15] via-[#F97316] to-[#EF4444]",
-      borderGlow: "shadow-[0_0_60px_rgba(250,204,21,0.8)] border-amber-300",
-      badgeGradient: "from-[#FACC15] via-[#F97316] to-[#991B1B]",
-      renderType: "godly-3d" as const,
-      imageParticles: [
-        "/images/thor-thunder-loading/lightning_orb.png",
-        "/images/thor-thunder-loading/gem.png",
-        "/images/thor-thunder-loading/lightning_orb.png",
-        "/images/thor-thunder-loading/gem.png",
-      ],
-      badgeText: "THOR THUNDER",
-      chargeText: "HAMMER MULT ACTIVE",
-      lines: [
-        "Calling down Thor's hammer…",
-        "Opening the thunder gates…",
-        "Charging cascade multipliers…",
-        "Awakening divine free spins…",
-        "Thor Thunder is ready!",
-      ],
-    };
-  }
-  if (gameId === "maya-gold") {
-    return {
-      bgImage: "/images/symbols/panther/loading-bg.webp",
-      bgGradient: "from-[#3F2A08]/80 via-[#0A0912]/80 to-[#120800]/95",
-      titleClass: "panther-title",
-      barGradient: "from-[#F59E0B] via-[#FACC15] to-[#D97706]",
-      borderGlow: "shadow-[0_0_60px_rgba(245,158,11,0.8)] border-amber-400",
-      badgeGradient: "from-[#F59E0B] via-[#FACC15] to-[#78350F]",
-      renderType: "standard" as const,
-      imageParticles: ["/images/symbols/panther/wild.png", "/images/symbols/panther/scatter.png"],
-      badgeText: "MAYA GOLD ARCADE",
-      chargeText: "TEMPLE POWER ACTIVE",
-      lines: [
-        "Entering the Maya temple…",
-        "Awakening temple guardians…",
-        "Forging bomb multiplier crystals…",
-        "Charging cascading treasure clusters…",
-        "Maya Gold awaits!",
-      ],
-    };
-  }
-  if (gameId === "temple-rush") {
-    return {
-      bgImage: "/images/symbols/panther/loading-bg.webp",
-      bgGradient: "from-[#3F2A08]/80 via-[#0A0912]/80 to-[#120800]/95",
-      titleClass: "panther-title",
-      barGradient: "from-[#F59E0B] via-[#FACC15] to-[#D97706]",
-      borderGlow: "shadow-[0_0_60px_rgba(245,158,11,0.8)] border-amber-400",
-      badgeGradient: "from-[#F59E0B] via-[#FACC15] to-[#78350F]",
-      renderType: "standard" as const,
-      imageParticles: ["/images/symbols/panther/wild.png", "/images/symbols/panther/scatter.png"],
-      badgeText: "TEMPLE RUSH ARCADE",
-      chargeText: "TREASURE POWER ACTIVE",
-      lines: [
-        "Racing into the temple…",
-        "Charting the relic map…",
-        "Forging bomb multiplier crystals…",
-        "Charging cascading treasure clusters…",
-        "Temple Rush awaits!",
-      ],
-    };
-  }
-  if (gameId === "mahjong-ways-3") {
-    return {
-      bgImage: thumb,
-      bgGradient: "from-[#0B3D2E]/55 via-[#061210]/75 to-[#020806]/95",
-      titleClass: "mahjong-title",
-      barGradient: "from-[#F5D76E] via-[#C9A227] to-[#8B1A1A]",
-      borderGlow: "border-[#C9A227]/70",
-      badgeGradient: "from-[#C9A227] via-[#8B1A1A] to-[#0B3D2E]",
-      renderType: "standard" as const,
-      imageParticles: [
-        "/images/symbols/mahjong-ways-3/bamboo.png",
-        "/images/symbols/mahjong-ways-3/red_dragon.png",
-        "/images/symbols/mahjong-ways-3/dot.webp",
-      ],
-      badgeText: "WAYS TO WIN",
-      chargeText: "TILES READY",
-      accent: "#C9A227",
-      lines: [
-        "Laying the jade felt…",
-        "Arranging bamboo & dragon tiles…",
-        "Goldifying wilds across the grid…",
-        "Charging cascade multipliers…",
-        "Mahjong Ways 3 is ready!",
-      ],
-    };
-  }
-  if (gameId === "wild-ace") {
-    return {
-      bgImage: thumb,
-      bgGradient: "from-[#7F1D1D]/80 via-[#1C1917]/85 to-[#450A0A]/95",
-      titleClass: "celestial-title",
-      barGradient: "from-[#F59E0B] via-[#EF4444] to-[#B91C1C]",
-      borderGlow: "shadow-[0_0_60px_rgba(239,68,68,0.75)] border-amber-400",
-      badgeGradient: "from-[#F59E0B] via-[#EF4444] to-[#991B1B]",
-      renderType: "standard" as const,
-      imageParticles: ["/images/symbols/wild-ace/diamond.png"],
-      badgeText: "WILD POKER",
-      chargeText: "GOLDEN CARD CHARGE",
-      lines: [
-        "Shuffling the Wild Ace deck…",
-        "Charging Golden Card transformations…",
-        "Calling Little & Big Jokers…",
-        "Stacking combo multipliers…",
-        "Wild Ace is ready!",
-      ],
-    };
-  }
-  if (gameId === "royal-ace") {
-    return {
-      bgImage: thumb,
-      bgGradient: "from-[#7F1D1D]/80 via-[#1C1917]/85 to-[#450A0A]/95",
-      titleClass: "celestial-title",
-      barGradient: "from-[#F59E0B] via-[#EF4444] to-[#B91C1C]",
-      borderGlow: "shadow-[0_0_60px_rgba(239,68,68,0.75)] border-amber-400",
-      badgeGradient: "from-[#F59E0B] via-[#EF4444] to-[#991B1B]",
-      renderType: "standard" as const,
-      imageParticles: ["/images/symbols/fire-spike/diamond.webp"],
-      badgeText: "ROYAL POKER",
-      chargeText: "GOLDEN CARD CHARGE",
-      lines: [
-        "Shuffling the Royal Ace deck…",
-        "Charging Golden Card transformations…",
-        "Calling Little & Big Jokers…",
-        "Stacking combo multipliers…",
-        "Royal Ace is ready!",
-      ],
-    };
-  }
-  if (gameId === "neon-fruits") {
-    return {
-      bgImage: thumb,
-      bgGradient: "from-[#7f1d1d]/70 via-[#831843]/65 to-[#a16207]/75",
-      titleClass: "godly-title",
-      barGradient: "from-[#fde047] via-[#f97316] to-[#ef4444]",
-      borderGlow: "shadow-[0_0_50px_rgba(253,224,71,0.55)] border-yellow-300",
-      badgeGradient: "from-[#facc15] via-[#f97316] to-[#b91c1c]",
-      renderType: "standard" as const,
-      imageParticles: [] as string[],
-      badgeText: "NEON FRUITS",
-      chargeText: "NEON HOLD MODE",
-      lines: [
-        "Lighting up the neon fruits…",
-        "Loading classic reels…",
-        "Charging Double Wild jackpots…",
-        "Warming Hold switches…",
-        "Neon Fruits is ready!",
-      ],
-    };
-  }
-  if (gameId === "lucky-bars") {
-    return {
-      bgImage: thumb,
-      bgGradient: "from-[#7f1d1d]/70 via-[#831843]/65 to-[#a16207]/75",
-      titleClass: "godly-title",
-      barGradient: "from-[#fde047] via-[#f97316] to-[#ef4444]",
-      borderGlow: "shadow-[0_0_50px_rgba(253,224,71,0.55)] border-yellow-300",
-      badgeGradient: "from-[#facc15] via-[#f97316] to-[#b91c1c]",
-      renderType: "standard" as const,
-      imageParticles: [] as string[],
-      badgeText: "LUCKY BARS",
-      chargeText: "NEON HOLD MODE",
-      lines: [
-        "Lighting up the lucky bars…",
-        "Loading classic reels…",
-        "Charging Double Wild jackpots…",
-        "Warming Hold switches…",
-        "Lucky Bars is ready!",
-      ],
-    };
-  }
-
-  if (gameId === "crazy-sevens") {
-    return {
-      bgImage: thumb,
-      bgGradient: "from-[#7f1d1d]/70 via-[#831843]/65 to-[#a16207]/75",
-      titleClass: "godly-title",
-      barGradient: "from-[#fde047] via-[#f97316] to-[#ef4444]",
-      borderGlow: "shadow-[0_0_50px_rgba(253,224,71,0.55)] border-yellow-300",
-      badgeGradient: "from-[#facc15] via-[#f97316] to-[#b91c1c]",
-      renderType: "standard" as const,
-      imageParticles: [] as string[],
-      badgeText: "CRAZY 7s",
-      chargeText: "NEON HOLD MODE",
-      lines: [
-        "Lighting up the neon 7s…",
-        "Loading classic reels…",
-        "Charging Double Wild jackpots…",
-        "Warming Hold switches…",
-        "Crazy Sevens is ready!",
+        "Shuffling the deck…",
+        "Counting the aces…",
+        "Stacking the ladder…",
+        "Skips loaded…",
+        "Royal Climb — higher or lower?",
       ],
     };
   }
@@ -1372,57 +1008,6 @@ function getGameThemeConfig(gameId: string, category: string, thumb: string) {
         "Unlocking royal flush multipliers…",
         "Preparing the VIP high table…",
         "Place your bets!",
-      ],
-    };
-  }
-
-
-  if (gameId === "knockout-king") {
-    return {
-      bgImage: thumb,
-      bgGradient: "from-[#1e3a5f]/55 via-[#0A0912]/70 to-[#7c2d12]/85",
-      titleClass: "fire-title",
-      barGradient: "from-[#F97316] via-[#EF4444] to-[#FACC15]",
-      borderGlow: "shadow-[0_0_60px_rgba(249,115,22,0.8)] border-orange-500",
-      badgeGradient: "from-[#F97316] via-[#DC2626] to-[#991B1B]",
-      renderType: "standard" as const,
-      imageParticles: [
-        "/images/symbols/knockout-king/scatter.webp",
-        "/images/symbols/knockout-king/wild.webp",
-      ],
-      badgeText: "RING READY",
-      chargeText: "CHAMPION CHARGE",
-      lines: [
-        "Stepping into the Knockout King arena…",
-        "Warming Wild + Scatter mix prizes…",
-        "Charging the Grand Jackpot…",
-        "Locking 10-line paylines…",
-        "Knockout King is ready!",
-      ],
-    };
-  }
-
-  if (gameId === "arena-champ") {
-    return {
-      bgImage: thumb,
-      bgGradient: "from-[#14532d]/55 via-[#0A0912]/70 to-[#1e3a5f]/85",
-      titleClass: "fire-title",
-      barGradient: "from-[#22C55E] via-[#FACC15] to-[#F97316]",
-      borderGlow: "shadow-[0_0_60px_rgba(34,197,94,0.8)] border-green-500",
-      badgeGradient: "from-[#22C55E] via-[#15803D] to-[#14532d]",
-      renderType: "standard" as const,
-      imageParticles: [
-        "/images/symbols/arena-champ/scatter.webp",
-        "/images/symbols/arena-champ/wild.webp",
-      ],
-      badgeText: "KICKOFF READY",
-      chargeText: "GOAL SURGE",
-      lines: [
-        "Stepping onto the Arena Champ pitch…",
-        "Warming Wild + Scatter mix prizes…",
-        "Charging the Grand Jackpot…",
-        "Locking 10-line paylines…",
-        "Arena Champ is ready!",
       ],
     };
   }
@@ -1471,50 +1056,6 @@ function getGameThemeConfig(gameId: string, category: string, thumb: string) {
     };
   }
 
-  if (gameId === "starlight-ways") {
-    return {
-      bgImage: thumb,
-      bgGradient: "from-[#31103F]/80 via-[#0A0912]/80 to-[#1E1B4B]/95",
-      titleClass: "celestial-title",
-      barGradient: "from-[#F472B6] via-[#C084FC] to-[#38BDF8]",
-      borderGlow: "shadow-[0_0_60px_rgba(244,114,182,0.8)] border-pink-400",
-      badgeGradient: "from-[#F472B6] via-[#A855F7] to-[#38BDF8]",
-      renderType: "standard" as const,
-      imageParticles: ["/images/godly-loading/gem.png"],
-      badgeText: "STARLIGHT WAYS",
-      chargeText: "STARLIGHT CHARGE ACTIVE",
-      lines: [
-        "Consulting the Star Princess…",
-        "Gathering starlight scatter dust…",
-        "Unlocking winged multiplier wilds…",
-        "Aligning celestial constellations…",
-        "Starlight Ways is ready!",
-      ],
-    };
-  }
-
-  if (gameId === "galaxy-ace") {
-    return {
-      bgImage: thumb,
-      bgGradient: "from-[#31103F]/80 via-[#0A0912]/80 to-[#1E1B4B]/95",
-      titleClass: "celestial-title",
-      barGradient: "from-[#F472B6] via-[#C084FC] to-[#38BDF8]",
-      borderGlow: "shadow-[0_0_60px_rgba(244,114,182,0.8)] border-pink-400",
-      badgeGradient: "from-[#F472B6] via-[#A855F7] to-[#38BDF8]",
-      renderType: "standard" as const,
-      imageParticles: ["/images/godly-loading/gem.png"],
-      badgeText: "GALAXY ACE",
-      chargeText: "STARLIGHT CHARGE ACTIVE",
-      lines: [
-        "Consulting the Star Princess…",
-        "Gathering starlight scatter dust…",
-        "Unlocking winged multiplier wilds…",
-        "Aligning celestial constellations…",
-        "Galaxy Ace is ready!",
-      ],
-    };
-  }
-
   if (gameId === "gate-of-ra") {
     return {
       bgImage: thumb,
@@ -1542,217 +1083,6 @@ function getGameThemeConfig(gameId: string, category: string, thumb: string) {
     };
   }
 
-
-  if (gameId === "halo-halo-hits") {
-    return {
-      bgImage: "/images/halo-halo-hits-bg.webp",
-      bgGradient: "from-[#7F1D1D]/55 via-[#0C0814]/70 to-[#B45309]/85",
-      titleClass: "fortune-title",
-      barGradient: "from-[#FBBF24] via-[#EF4444] to-[#B45309]",
-      borderGlow: "shadow-[0_0_60px_rgba(251,191,36,0.75)] border-amber-400",
-      badgeGradient: "from-[#FBBF24] via-[#EF4444] to-[#7F1D1D]",
-      renderType: "standard" as const,
-      imageParticles: [],
-      badgeText: "HALO-HALO HITS",
-      chargeText: "MULTIPLIER REEL ACTIVE",
-      lines: [
-        "Scooping the halo-halo…",
-        "Spinning the fortune grid…",
-        "Charging the multiplier reel…",
-        "Aligning five lucky lines…",
-        "Halo-Halo Hits is ready!",
-      ],
-    };
-  }
-
-
-  if (gameId === "balut-bonus") {
-    return {
-      bgImage: thumb,
-      bgGradient: "from-[#7F1D1D]/55 via-[#0C0814]/70 to-[#B45309]/85",
-      titleClass: "fortune-title",
-      barGradient: "from-[#FBBF24] via-[#EF4444] to-[#B45309]",
-      borderGlow: "shadow-[0_0_60px_rgba(251,191,36,0.75)] border-amber-400",
-      badgeGradient: "from-[#FBBF24] via-[#EF4444] to-[#7F1D1D]",
-      renderType: "standard" as const,
-      imageParticles: [],
-      badgeText: "BALUT BONUS",
-      chargeText: "MULTIPLIER REEL ACTIVE",
-      lines: [
-        "Cracking the balut bonus…",
-        "Spinning the fortune grid…",
-        "Charging the multiplier reel…",
-        "Aligning five lucky lines…",
-        "Balut Bonus is ready!",
-      ],
-    };
-  }
-
-
-  if (gameId === "sinigang-spin") {
-    return {
-      bgImage: thumb,
-      bgGradient: "from-[#7F1D1D]/80 via-[#450A0A]/80 to-[#0A0912]/95",
-      titleClass: "godly-title",
-      barGradient: "from-[#FACC15] via-[#EF4444] to-[#B91C1C]",
-      borderGlow: "shadow-[0_0_60px_rgba(239,68,68,0.8)] border-yellow-400",
-      badgeGradient: "from-[#EF4444] via-[#F59E0B] to-[#7F1D1D]",
-      renderType: "standard" as const,
-      imageParticles: [],
-      badgeText: "SINIGANG SPIN",
-      chargeText: "FIESTA CHARGE ACTIVE",
-      accent: "#FACC15",
-      lines: [
-        "Simmering the sinigang pot…",
-        "Awakening dragon & monkey bonuses…",
-        "Gathering fiesta scatter prizes…",
-        "Igniting festive multipliers…",
-        "Sinigang Spin is ready!",
-      ],
-    };
-  }
-
-
-  if (gameId === "lechon-luck") {
-    return {
-      bgImage: thumb,
-      bgGradient: "from-[#7F1D1D]/80 via-[#450A0A]/80 to-[#0A0912]/95",
-      titleClass: "godly-title",
-      barGradient: "from-[#FACC15] via-[#EF4444] to-[#B91C1C]",
-      borderGlow: "shadow-[0_0_60px_rgba(239,68,68,0.8)] border-yellow-400",
-      badgeGradient: "from-[#EF4444] via-[#F59E0B] to-[#7F1D1D]",
-      renderType: "standard" as const,
-      imageParticles: [],
-      badgeText: "LECHON LUCK",
-      chargeText: "FIESTA CHARGE ACTIVE",
-      accent: "#FACC15",
-      lines: [
-        "Carving the lechon feast…",
-        "Awakening dragon & monkey bonuses…",
-        "Gathering fiesta scatter prizes…",
-        "Igniting festive multipliers…",
-        "Lechon Luck is ready!",
-      ],
-    };
-  }
-
-
-  if (gameId === "lantern-luck") {
-    return {
-      bgImage: thumb,
-      bgGradient: "from-[#7F1D1D]/80 via-[#450A0A]/80 to-[#0A0912]/95",
-      titleClass: "godly-title",
-      barGradient: "from-[#FACC15] via-[#EF4444] to-[#B91C1C]",
-      borderGlow: "shadow-[0_0_60px_rgba(239,68,68,0.8)] border-yellow-400",
-      badgeGradient: "from-[#EF4444] via-[#F59E0B] to-[#7F1D1D]",
-      renderType: "standard" as const,
-      imageParticles: [],
-      badgeText: "LANTERN LUCK",
-      chargeText: "FIESTA CHARGE ACTIVE",
-      accent: "#FACC15",
-      lines: [
-        "Lighting the lantern parade…",
-        "Awakening dragon & monkey bonuses…",
-        "Gathering fiesta scatter prizes…",
-        "Igniting festive multipliers…",
-        "Lantern Luck is ready!",
-      ],
-    };
-  }
-
-
-  if (gameId === "neon-makati") {
-    return {
-      bgImage: thumb,
-      bgGradient: "from-[#31103F]/80 via-[#0A0912]/80 to-[#1E1B4B]/95",
-      titleClass: "celestial-title",
-      barGradient: "from-[#F472B6] via-[#C084FC] to-[#38BDF8]",
-      borderGlow: "shadow-[0_0_60px_rgba(244,114,182,0.8)] border-pink-400",
-      badgeGradient: "from-[#F472B6] via-[#A855F7] to-[#38BDF8]",
-      renderType: "standard" as const,
-      imageParticles: ["/images/godly-loading/gem.png"],
-      badgeText: "NEON MAKATI",
-      chargeText: "NEON CHARGE ACTIVE",
-      lines: [
-        "Lighting up the Makati skyline…",
-        "Gathering neon scatter dust…",
-        "Unlocking golden wild transforms…",
-        "Aligning cascade multipliers…",
-        "Neon Makati is ready!",
-      ],
-    };
-  }
-
-
-  if (gameId === "quezon-quest") {
-    return {
-      bgImage: thumb,
-      bgGradient: "from-[#31103F]/80 via-[#0A0912]/80 to-[#1E1B4B]/95",
-      titleClass: "celestial-title",
-      barGradient: "from-[#F472B6] via-[#C084FC] to-[#38BDF8]",
-      borderGlow: "shadow-[0_0_60px_rgba(244,114,182,0.8)] border-pink-400",
-      badgeGradient: "from-[#F472B6] via-[#A855F7] to-[#38BDF8]",
-      renderType: "standard" as const,
-      imageParticles: ["/images/godly-loading/gem.png"],
-      badgeText: "QUEZON QUEST",
-      chargeText: "NEON CHARGE ACTIVE",
-      lines: [
-        "Lighting up Quezon City…",
-        "Gathering neon scatter dust…",
-        "Unlocking golden wild transforms…",
-        "Aligning cascade multipliers…",
-        "Quezon Quest is ready!",
-      ],
-    };
-  }
-
-
-  if (gameId === "carabao-cash") {
-    return {
-      bgImage: thumb,
-      bgGradient: "from-[#14532D]/70 via-[#0A0912]/80 to-[#422006]/95",
-      titleClass: "western-title",
-      barGradient: "from-[#FBBF24] via-[#84CC16] to-[#B45309]",
-      borderGlow: "shadow-[0_0_60px_rgba(132,204,22,0.55)] border-lime-400",
-      badgeGradient: "from-[#FBBF24] via-[#65A30D] to-[#14532D]",
-      renderType: "standard" as const,
-      imageParticles: ["/images/godly-loading/gem.png"],
-      badgeText: "CARABAO CASH",
-      chargeText: "CAMPFIRE ACTIVE",
-      lines: [
-        "Waking the carabao stampede…",
-        "Aligning 1,024 ways across the fields…",
-        "Lighting the Golden Campfire…",
-        "Opening Treasure Chest Hold & Collect…",
-        "Carabao Cash is ready!",
-      ],
-    };
-  }
-
-
-  if (gameId === "rice-field-riches") {
-    return {
-      bgImage: thumb,
-      bgGradient: "from-[#14532D]/70 via-[#0A0912]/80 to-[#422006]/95",
-      titleClass: "western-title",
-      barGradient: "from-[#FBBF24] via-[#84CC16] to-[#B45309]",
-      borderGlow: "shadow-[0_0_60px_rgba(132,204,22,0.55)] border-lime-400",
-      badgeGradient: "from-[#FBBF24] via-[#65A30D] to-[#14532D]",
-      renderType: "standard" as const,
-      imageParticles: ["/images/godly-loading/gem.png"],
-      badgeText: "RICE FIELD RICHES",
-      chargeText: "CAMPFIRE ACTIVE",
-      lines: [
-        "Wading into the rice paddies…",
-        "Aligning 1,024 ways across the fields…",
-        "Lighting the Golden Campfire…",
-        "Opening Treasure Chest Hold & Collect…",
-        "Rice Field Riches is ready!",
-      ],
-    };
-  }
-
-
   if (gameId === "wild-panther") {
     return {
       bgImage: "/images/symbols/panther/loading-bg.webp",
@@ -1771,69 +1101,6 @@ function getGameThemeConfig(gameId: string, category: string, thumb: string) {
         "Forging bomb multiplier crystals…",
         "Charging cascading treasure clusters…",
         "Wild Panther awaits!",
-      ],
-    };
-  }
-
-  if (gameId === "mystic-runes") {
-    return {
-      bgImage: thumb,
-      bgGradient: "from-[#14532D]/80 via-[#0A0912]/80 to-[#052e16]/95",
-      titleClass: "godly-title",
-      barGradient: "from-[#86EFAC] via-[#34D399] to-[#059669]",
-      borderGlow: "shadow-[0_0_60px_rgba(52,211,153,0.8)] border-emerald-300",
-      badgeGradient: "from-[#86EFAC] via-[#34D399] to-[#065F46]",
-      renderType: "godly-3d" as const,
-      imageParticles: [
-        "/images/godly-loading/lightning_orb.png",
-        "/images/godly-loading/gem.png",
-        "/images/godly-loading/lightning_orb.png",
-        "/images/godly-loading/gem.png",
-      ],
-      badgeText: "MYSTIC RUNES",
-      chargeText: "GROVE MULT ACTIVE",
-      lines: [
-        "Awakening the mystic gates…",
-        "Opening cascade ways…",
-        "Charging nature multipliers…",
-        "Summoning free-spin spirits…",
-        "Mystic Runes is ready!",
-      ],
-    };
-  }
-
-  // Candy Peak / Sugar Surge / Boracay Bounce / Mermaid Riches — never use as a generic fallback
-  if (
-    gameId === "candy-peak" ||
-    gameId === "sugar-surge" ||
-    gameId === "boracay-bounce" ||
-    gameId === "mermaid-riches" ||
-    gameId === "candy-blast" ||
-    gameId === "sweet-rush" ||
-    gameId === "beach-bonanza" ||
-    gameId === "island-fever"
-  ) {
-    return {
-      bgImage: "/images/candy-loading/bg.png",
-      bgGradient: "from-[#2A0A3D]/80 via-[#0A0912]/80 to-[#0A0912]/95",
-      titleClass: "candy-title",
-      barGradient: "from-[#FF4D6A] via-[#FACC15] via-[#A3E635] to-[#C084FC]",
-      borderGlow: "border-amber-300/80",
-      badgeGradient: "from-[#FF4D6A] via-[#FACC15] to-[#A78BFA]",
-      renderType: "candy-3d" as const,
-      imageParticles: [
-        "/images/candy-loading/badge.png",
-        "/images/godly-loading/gem.png",
-      ],
-      badgeText: "SWEET ARCADE",
-      chargeText: "SUGAR CHARGE",
-      accent: "#FF4D6A",
-      lines: [
-        "Unwrapping the secret sweets…",
-        "Stacking frosting mountains…",
-        "Charging the sugar boosters…",
-        "Lighting the candy neon…",
-        "Almost ready to crush the Peak!",
       ],
     };
   }
@@ -1896,26 +1163,13 @@ function LoadProgress({
   );
 }
 
-function CreativeLoader({
-  game,
-  progress,
-}: {
-  game: SlotGame;
-  progress: number;
-}) {
+function CreativeLoader({ game, progress }: { game: SlotGame; progress: number }) {
   const config = useMemo(
     () => getGameThemeConfig(game.id, game.category, game.thumb),
     [game.id, game.category, game.thumb],
   );
   const line = config.lines[Math.min(config.lines.length - 1, Math.floor(progress / 20))];
-  const showTiles =
-    Boolean(PANTHER_FAMILY_BOOT[game.id]) ||
-    game.id === "mahjong-ways" ||
-    game.id === "candy-peak" ||
-    game.id === "sugar-surge" ||
-    game.id === "boracay-bounce" ||
-    game.id === "candy-blast" ||
-    game.id === "sweet-rush";
+  const showTiles = Boolean(PANTHER_FAMILY_BOOT[game.id]) || isRealmsGameId(game.id);
   const tiles = showTiles ? config.imageParticles.slice(0, 3) : [];
 
   return (
@@ -1990,20 +1244,15 @@ function ComingSoonPlay({ game }: { game: SlotGame }) {
       <img src={game.thumb} alt="" className="h-40 w-40 rounded-3xl object-cover shadow-xl" />
       <h2 className="text-2xl font-black uppercase text-white">{game.name}</h2>
       <p className="max-w-md text-sm text-white/80">
-        Full arcade mode for this title is cooking. The Golden Panther family is live now — more games soon.
+        Full arcade mode for this title is cooking. The Golden Panther family is live now — more
+        games soon.
       </p>
     </div>
   );
 }
 
 /** Full-bleed play surface — fill the shell, never nest another 100dvh. */
-function PlaySurface({
-  children,
-  className,
-}: {
-  children: ReactNode;
-  className?: string;
-}) {
+function PlaySurface({ children, className }: { children: ReactNode; className?: string }) {
   return (
     <div className={cn("absolute inset-0 h-full w-full overflow-hidden bg-[#0A0912]", className)}>
       {children}

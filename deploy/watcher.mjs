@@ -49,7 +49,11 @@ async function maybeDeploy(reason) {
     }
     log(`Behind remote — deploying ${status.local.slice(0, 7)} → ${status.remote.slice(0, 7)}`);
     const result = await runAutoUpdate();
-    log(result.ok ? `Deploy finished: ${JSON.stringify(result)}` : `Deploy failed: ${JSON.stringify(result)}`);
+    log(
+      result.ok
+        ? `Deploy finished: ${JSON.stringify(result)}`
+        : `Deploy failed: ${JSON.stringify(result)}`,
+    );
   } catch (err) {
     log(`Error: ${err instanceof Error ? err.message : err}`);
   } finally {

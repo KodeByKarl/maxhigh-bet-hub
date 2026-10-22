@@ -10,9 +10,15 @@ export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
       { title: "MaxHigh — Casino Dashboard" },
-      { name: "description", content: "MaxHigh casino dashboard — play featured slots with daily and weekly races." },
+      {
+        name: "description",
+        content: "MaxHigh casino dashboard — play featured slots with daily and weekly races.",
+      },
       { property: "og:title", content: "MaxHigh — Casino Dashboard" },
-      { property: "og:description", content: "Play featured MaxHigh slots. Join daily and weekly races." },
+      {
+        property: "og:description",
+        content: "Play featured MaxHigh slots. Join daily and weekly races.",
+      },
     ],
   }),
   component: Index,

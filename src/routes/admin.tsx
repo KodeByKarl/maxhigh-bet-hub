@@ -6,7 +6,10 @@ export const Route = createFileRoute("/admin")({
   head: () => ({
     meta: [
       { title: "MaxHigh Admin" },
-      { name: "description", content: "MaxHigh admin dashboard — manage users and platform stats." },
+      {
+        name: "description",
+        content: "MaxHigh admin dashboard — manage users and platform stats.",
+      },
       { name: "robots", content: "noindex, nofollow" },
     ],
   }),

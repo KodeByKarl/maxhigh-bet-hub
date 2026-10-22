@@ -77,31 +77,33 @@ export function WinCelebration({
     >
       {/* Golden Particle Rain / Burst Effect */}
       <div className="pointer-events-none absolute inset-0 overflow-hidden">
-        {Array.from({ length: tier === "sensational" ? 12 : tier === "mega" ? 10 : 8 }).map((_, i) => (
-          <motion.div
-            key={`gold-particle-${i}`}
-            initial={{
-              x: `${(i * 17) % 100}vw`,
-              y: "-10vh",
-              opacity: 0,
-              scale: 0.5 + (i % 3) * 0.3,
-            }}
-            animate={{
-              y: "110vh",
-              opacity: [0, 1, 1, 0],
-              rotate: 360 * (i % 2 === 0 ? 1 : -1),
-            }}
-            transition={{
-              duration: 1.8 + (i % 4) * 0.3,
-              repeat: 1,
-              delay: (i * 0.12) % 1.5,
-              ease: "linear",
-            }}
-            className="absolute text-yellow-300 text-lg sm:text-2xl drop-shadow-[0_0_12px_rgba(250,204,21,0.9)]"
-          >
-            {i % 3 === 0 ? "🪙" : i % 3 === 1 ? "✨" : "💎"}
-          </motion.div>
-        ))}
+        {Array.from({ length: tier === "sensational" ? 12 : tier === "mega" ? 10 : 8 }).map(
+          (_, i) => (
+            <motion.div
+              key={`gold-particle-${i}`}
+              initial={{
+                x: `${(i * 17) % 100}vw`,
+                y: "-10vh",
+                opacity: 0,
+                scale: 0.5 + (i % 3) * 0.3,
+              }}
+              animate={{
+                y: "110vh",
+                opacity: [0, 1, 1, 0],
+                rotate: 360 * (i % 2 === 0 ? 1 : -1),
+              }}
+              transition={{
+                duration: 1.8 + (i % 4) * 0.3,
+                repeat: 1,
+                delay: (i * 0.12) % 1.5,
+                ease: "linear",
+              }}
+              className="absolute text-yellow-300 text-lg sm:text-2xl drop-shadow-[0_0_12px_rgba(250,204,21,0.9)]"
+            >
+              {i % 3 === 0 ? "🪙" : i % 3 === 1 ? "✨" : "💎"}
+            </motion.div>
+          ),
+        )}
       </div>
 
       <motion.div
@@ -157,8 +159,7 @@ export function WinCelebration({
                   color: LETTER_COLORS[i % LETTER_COLORS.length],
                   WebkitTextStroke: "0.12em #dc2626",
                   paintOrder: "stroke fill",
-                  textShadow:
-                    "0 0.08em 0 #9f1239, 0 0.18em 0.2em rgba(0,0,0,0.4)",
+                  textShadow: "0 0.08em 0 #9f1239, 0 0.18em 0.2em rgba(0,0,0,0.4)",
                 }}
               >
                 {ch}
@@ -175,16 +176,14 @@ export function WinCelebration({
             transition={{ delay: 0.08, type: "spring", stiffness: 380 }}
             className="relative z-[3] mb-3 w-full max-w-[260px] rounded-[1.25rem] p-[5px]"
             style={{
-              background:
-                "linear-gradient(135deg, #FDE68A 0%, #D97706 50%, #064E3B 100%)",
+              background: "linear-gradient(135deg, #FDE68A 0%, #D97706 50%, #064E3B 100%)",
               boxShadow: "0 12px 32px rgba(0,0,0,0.65)",
             }}
           >
             <div
               className="rounded-[1rem] border-2 border-amber-300/80 px-4 py-3 text-center"
               style={{
-                background:
-                  "linear-gradient(180deg, #064E3B 0%, #022014 100%)",
+                background: "linear-gradient(180deg, #064E3B 0%, #022014 100%)",
               }}
             >
               <div
@@ -223,8 +222,7 @@ export function WinCelebration({
             transition={{ delay: 0.14 }}
             className="relative z-[2] mb-3 w-full max-w-[380px] rounded-2xl border-[3px] border-white/50 px-3 py-3"
             style={{
-              background:
-                "linear-gradient(180deg, rgba(88,28,135,0.95), rgba(49,16,89,0.96))",
+              background: "linear-gradient(180deg, rgba(88,28,135,0.95), rgba(49,16,89,0.96))",
               boxShadow: "0 10px 28px rgba(0,0,0,0.4)",
             }}
           >
@@ -282,8 +280,7 @@ export function WinCelebration({
               className="relative text-center font-black tabular-nums leading-none text-white"
               style={{
                 fontSize: "clamp(2.25rem, 11vw, 3.75rem)",
-                textShadow:
-                  "0 3px 0 #7e22ce, 0 7px 16px rgba(88,28,135,0.5)",
+                textShadow: "0 3px 0 #7e22ce, 0 7px 16px rgba(88,28,135,0.5)",
                 WebkitTextStroke: "1.5px rgba(126,34,206,0.4)",
               }}
             >

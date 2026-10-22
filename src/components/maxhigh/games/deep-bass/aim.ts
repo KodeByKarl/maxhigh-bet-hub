@@ -34,10 +34,7 @@ export function estimateFishAim(f: ArenaFish, leadMs = 0): AimPoint {
   const x = frozen ? mid : start + (end - start) * t;
   const yMid = clamp(f.y + pathAmp, 10, 86);
   const yEnd = clamp(f.y + pathAmp * 0.35, 10, 86);
-  const y =
-    t < 0.5
-      ? f.y + (yMid - f.y) * (t * 2)
-      : yMid + (yEnd - yMid) * ((t - 0.5) * 2);
+  const y = t < 0.5 ? f.y + (yMid - f.y) * (t * 2) : yMid + (yEnd - yMid) * ((t - 0.5) * 2);
 
   return { x: clamp(x, 2, 98), y: clamp(y, 8, 82) };
 }

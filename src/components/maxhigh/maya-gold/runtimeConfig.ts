@@ -1,5 +1,5 @@
 /**
- * Active Panther Peak config for the client engine.
+ * Active Maya Gold config for the client engine.
  * Superadmin values are loaded at play time; defaults until then.
  */
 import {

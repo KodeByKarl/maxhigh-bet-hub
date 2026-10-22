@@ -45,7 +45,7 @@ export const PERMISSION_MAP: Record<PermissionName, UserRole[]> = {
   AUDIT_LOG_VIEW: ["admin", "superadmin", "agent", "master_agent"],
   TRANSACTION_LIST: ["admin", "superadmin", "agent", "master_agent"],
   REPORTS_VIEW: ["admin", "superadmin", "agent", "master_agent"],
-  
+
   // Superadmin-Only Operations
   ROLE_UPDATE: ["superadmin"],
   GAME_CONTROL_UPDATE: ["superadmin"],

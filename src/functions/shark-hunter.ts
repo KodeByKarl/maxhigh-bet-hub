@@ -9,12 +9,12 @@ const targetSchema = z.object({
 });
 
 const fireSchema = z.object({
-  weaponId: z.enum(["bamboo", "spinning", "trolling", "harpoon", "master"]),
+  weaponId: z.enum(["mini", "half", "bamboo", "spinning", "trolling", "harpoon", "master"]),
   target: targetSchema,
 });
 
 const weaponSchema = z.object({
-  weaponId: z.enum(["bamboo", "spinning", "trolling", "harpoon", "master"]),
+  weaponId: z.enum(["mini", "half", "bamboo", "spinning", "trolling", "harpoon", "master"]),
 });
 
 const powerSchema = z.object({
@@ -22,7 +22,7 @@ const powerSchema = z.object({
 });
 
 const netBombSchema = z.object({
-  weaponId: z.enum(["bamboo", "spinning", "trolling", "harpoon", "master"]),
+  weaponId: z.enum(["mini", "half", "bamboo", "spinning", "trolling", "harpoon", "master"]),
   targets: z.array(targetSchema).max(12),
 });
 
@@ -79,7 +79,6 @@ export const sharkHunterUseFreezeLureFn = createServerFn({ method: "POST" }).han
   const { sharkHunterUseFreezeLure } = await import("../server/games/shark-hunter.server");
   return sharkHunterUseFreezeLure();
 });
-
 
 export const sharkHunterSyncSpawnsFn = createServerFn({ method: "POST" }).handler(async () => {
   const { sharkHunterSyncSpawns } = await import("../server/games/shark-hunter.server");

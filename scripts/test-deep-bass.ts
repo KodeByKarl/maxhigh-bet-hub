@@ -33,11 +33,7 @@ import {
 
 const SHOTS = Number(process.env.DB_SIM_SHOTS ?? 200_000);
 const WEAPON_ID = (process.env.DB_SIM_WEAPON ?? "trolling") as
-  | "bamboo"
-  | "spinning"
-  | "trolling"
-  | "harpoon"
-  | "master";
+  "bamboo" | "spinning" | "trolling" | "harpoon" | "master";
 
 function assert(cond: boolean, msg: string) {
   if (!cond) throw new Error(msg);
@@ -216,7 +212,9 @@ function runRtpSimulation() {
   console.log(`  shots=${shots} weapon=${weapon.id} bet=${weapon.betCost}`);
   console.log(`  wagered=₱${wagered.toFixed(2)} paid=₱${paid.toFixed(2)}`);
   console.log(`  kills=${kills} byTier=`, killByTier);
-  console.log(`  RTP=${rtp.toFixed(3)}%  target=${cfg.rtpTarget}%  band=${RTP_REFERENCE.min}–${RTP_REFERENCE.max}%`);
+  console.log(
+    `  RTP=${rtp.toFixed(3)}%  target=${cfg.rtpTarget}%  band=${RTP_REFERENCE.min}–${RTP_REFERENCE.max}%`,
+  );
 
   // Allow slight monte-carlo noise; hard fail outside 90–102
   assert(rtp >= 90 && rtp <= 102, `RTP out of sanity range: ${rtp}`);

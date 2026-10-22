@@ -47,10 +47,10 @@ export function AdminSparkline({
   const resolvedPositive = positive ?? true;
   const colorMap = {
     violet: { stroke: "#A855F7", gradId: "sgV" },
-    green:  { stroke: "#34D399", gradId: "sgG" },
-    cyan:   { stroke: "#22D3EE", gradId: "sgC" },
-    amber:  { stroke: "#FBBF24", gradId: "sgA" },
-    rose:   { stroke: "#FB7185", gradId: "sgR" },
+    green: { stroke: "#34D399", gradId: "sgG" },
+    cyan: { stroke: "#22D3EE", gradId: "sgC" },
+    amber: { stroke: "#FBBF24", gradId: "sgA" },
+    rose: { stroke: "#FB7185", gradId: "sgR" },
   } as const;
 
   const autoTone: typeof tone = resolvedPositive ? "green" : "rose";
@@ -58,13 +58,7 @@ export function AdminSparkline({
   const { stroke, gradId } = colorMap[activeTone];
 
   return (
-    <svg
-      width={w}
-      height={h}
-      viewBox={`0 0 ${w} ${h}`}
-      className="overflow-visible"
-      aria-hidden
-    >
+    <svg width={w} height={h} viewBox={`0 0 ${w} ${h}`} className="overflow-visible" aria-hidden>
       <defs>
         <linearGradient id={gradId} x1="0" y1="0" x2="0" y2="1">
           <stop offset="0%" stopColor={stroke} stopOpacity="0.4" />

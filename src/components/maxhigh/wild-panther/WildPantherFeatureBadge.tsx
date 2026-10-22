@@ -3,10 +3,7 @@ import { cn } from "@/lib/utils";
 
 type Variant = "multiplier" | "freespins";
 
-const VARIANT: Record<
-  Variant,
-  { stripe: string; fill: string; label: string }
-> = {
+const VARIANT: Record<Variant, { stripe: string; fill: string; label: string }> = {
   multiplier: {
     stripe:
       "repeating-linear-gradient(135deg,#7dd3fc 0 8px,#fff 8px 16px,#38bdf8 16px 24px,#fff 24px 32px)",
@@ -50,8 +47,7 @@ export function WildPantherFeatureBadge({
           <div
             className="pointer-events-none absolute inset-x-2 top-1 h-5 rounded-full opacity-50"
             style={{
-              background:
-                "linear-gradient(180deg, rgba(255,255,255,0.75), transparent)",
+              background: "linear-gradient(180deg, rgba(255,255,255,0.75), transparent)",
             }}
           />
           <div
@@ -68,8 +64,7 @@ export function WildPantherFeatureBadge({
             className="relative mt-1.5 font-black text-[2.35rem] leading-none tabular-nums"
             style={{
               color: "#fde047",
-              textShadow:
-                "0 3px 0 #78350f, 0 5px 8px rgba(0,0,0,0.45), 0 0 1px #78350f",
+              textShadow: "0 3px 0 #78350f, 0 5px 8px rgba(0,0,0,0.45), 0 0 1px #78350f",
               WebkitTextStroke: "1px #92400e",
             }}
           >

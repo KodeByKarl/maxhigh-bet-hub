@@ -34,12 +34,7 @@ type Props = {
 
 const SHOT_SEC = TIMING.shotTravelMs / 1000;
 
-export function aimAngleDeg(
-  fromX: number,
-  fromY: number,
-  toX: number,
-  toY: number,
-): number {
+export function aimAngleDeg(fromX: number, fromY: number, toX: number, toY: number): number {
   return (Math.atan2(toX - fromX, fromY - toY) * 180) / Math.PI;
 }
 
@@ -111,9 +106,7 @@ export function BoatCannon({
             <span
               className={cn(
                 "absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 font-black drop-shadow",
-                imp.hit
-                  ? "text-xs text-amber-200"
-                  : "text-[10px] text-sky-200/90",
+                imp.hit ? "text-xs text-amber-200" : "text-[10px] text-sky-200/90",
               )}
             >
               {imp.hit ? "HIT!" : "splash"}

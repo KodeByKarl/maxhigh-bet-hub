@@ -6,20 +6,18 @@
  * A single runId cancels stale timers. Highlights clear on every step change + on done.
  */
 import { useCallback, useEffect, useRef, useState } from "react";
+import { Volume2, VolumeX } from "lucide-react";
 import { toast } from "sonner";
 import { fireSpikeSpinFn, getFireSpikeEngineConfigFn } from "@/functions/api";
 import { useAuth } from "@/lib/auth";
-import {
-  FIRE_SPIKE_GAME_ID,
-  type FireSpikeConfig,
-  type FsSymKind,
-} from "@/lib/fire-spike-config";
+import { FIRE_SPIKE_GAME_ID, type FireSpikeConfig, type FsSymKind } from "@/lib/fire-spike-config";
 import { cn } from "@/lib/utils";
 import { BET_STEPS, ANIM } from "./fire-spike/animationConfig";
 import { FireBorder } from "./fire-spike/FireBorder";
 import { ReelCell, type ReelPhase } from "./fire-spike/ReelCell";
 import { getFireSpikeConfig, setFireSpikeConfig } from "./fire-spike/runtimeConfig";
 import { planFireSpikePlayback, type FsPlaybackStep } from "./fire-spike/spinPlayback";
+import { fireSpikeAudio } from "./fire-spike/audio";
 import { cellKey, type FsGrid } from "./fire-spike/types";
 
 function idleGrid(): FsGrid {
@@ -63,6 +61,8 @@ const INITIAL_UI = (): UiSnap => ({
   locked: false,
 });
 
+const getCfgReels = () => getFireSpikeConfig().reelsCount;
+
 export function FireSpikeSlot({
   gameId = FIRE_SPIKE_GAME_ID,
 }: {
@@ -75,6 +75,7 @@ export function FireSpikeSlot({
   const [bet, setBet] = useState(1);
   const [autoSpin, setAutoSpin] = useState(false);
   const [turbo, setTurbo] = useState(false);
+  const [muted, setMuted] = useState(() => fireSpikeAudio.isMuted);
   const [cfgSnap, setCfgSnap] = useState<FireSpikeConfig>(() => getFireSpikeConfig());
   const [ui, setUi] = useState<UiSnap>(INITIAL_UI);
 
@@ -127,12 +128,15 @@ export function FireSpikeSlot({
     if (!mountedRef.current) return;
     // Auto mode: always chain. Manual: only after a win (another paid chance).
     if (reason === "auto" && !autoRef.current) return;
-    autoTimerRef.current = setTimeout(() => {
-      autoTimerRef.current = null;
-      if (!mountedRef.current || lockedRef.current) return;
-      if (reason === "auto" && !autoRef.current) return;
-      startSpinRef.current();
-    }, turboRef.current ? 150 : 500);
+    autoTimerRef.current = setTimeout(
+      () => {
+        autoTimerRef.current = null;
+        if (!mountedRef.current || lockedRef.current) return;
+        if (reason === "auto" && !autoRef.current) return;
+        startSpinRef.current();
+      },
+      turboRef.current ? 150 : 500,
+    );
   }, []);
 
   const fadeOutWin = useCallback((runId: number, then: () => void) => {
@@ -250,22 +254,53 @@ export function FireSpikeSlot({
         return;
       }
 
+      switch (step.type) {
+        case "spinning":
+          fireSpikeAudio.startAmbient();
+          fireSpikeAudio.startSpinLoop();
+          break;
+        case "stopping": {
+          fireSpikeAudio.stopSpinLoop();
+          const reels = getCfgReels();
+          for (let r = 0; r < reels; r++) {
+            setTimeout(() => {
+              if (mountedRef.current && runId === runIdRef.current) fireSpikeAudio.playReelStop(r);
+            }, r * 90);
+          }
+          break;
+        }
+        case "highlight_lines":
+        case "highlight_mix":
+        case "tally":
+          fireSpikeAudio.playWin(step.amount, betRef.current);
+          break;
+        case "highlight_jackpot":
+          fireSpikeAudio.playScatterTrigger();
+          fireSpikeAudio.playWin(step.amount, betRef.current);
+          break;
+        default:
+          break;
+      }
+
       const ms = "ms" in step ? step.ms : 0;
       clearTimer();
-      timerRef.current = setTimeout(() => {
-        timerRef.current = null;
-        if (runId !== runIdRef.current) return;
-        const isCelebrate =
-          step.type === "highlight_lines" ||
-          step.type === "highlight_mix" ||
-          step.type === "highlight_jackpot" ||
-          step.type === "tally";
-        if (isCelebrate) {
-          fadeOutWin(runId, () => runStep(runId, steps, index + 1));
-          return;
-        }
-        runStep(runId, steps, index + 1);
-      }, Math.max(16, ms));
+      timerRef.current = setTimeout(
+        () => {
+          timerRef.current = null;
+          if (runId !== runIdRef.current) return;
+          const isCelebrate =
+            step.type === "highlight_lines" ||
+            step.type === "highlight_mix" ||
+            step.type === "highlight_jackpot" ||
+            step.type === "tally";
+          if (isCelebrate) {
+            fadeOutWin(runId, () => runStep(runId, steps, index + 1));
+            return;
+          }
+          runStep(runId, steps, index + 1);
+        },
+        Math.max(16, ms),
+      );
     },
     [applyIdle, fadeOutWin, scheduleContinue],
   );
@@ -304,6 +339,7 @@ export function FireSpikeSlot({
         if (runId !== runIdRef.current) return;
         const msg = e instanceof Error ? e.message : "Spin failed";
         toast.error(msg);
+        fireSpikeAudio.stopSpinLoop();
         setAutoSpin(false);
         applyIdle();
       }
@@ -314,21 +350,20 @@ export function FireSpikeSlot({
 
   useEffect(() => {
     mountedRef.current = true;
+    fireSpikeAudio.preload();
     void getFireSpikeEngineConfigFn()
       .then((cfg) => {
         if (!mountedRef.current) return;
         const next = setFireSpikeConfig(cfg);
         setCfgSnap(next);
-        setUi((prev) =>
-          prev.locked
-            ? prev
-            : { ...prev, grid: idleGrid() },
-        );
+        setUi((prev) => (prev.locked ? prev : { ...prev, grid: idleGrid() }));
         setBet((b) => Math.max(next.minBet, Math.min(next.maxBet, b)));
       })
       .catch(() => undefined);
     return () => {
       mountedRef.current = false;
+      fireSpikeAudio.stopSpinLoop();
+      fireSpikeAudio.stopAmbient();
       runIdRef.current += 1;
       clearTimer();
       clearAutoTimer();
@@ -341,6 +376,7 @@ export function FireSpikeSlot({
     const id = setTimeout(() => {
       console.warn("[FireSpike] watchdog unlock — spin exceeded 12s");
       runIdRef.current += 1;
+      fireSpikeAudio.stopSpinLoop();
       clearTimer();
       lockedRef.current = false;
       applyIdle();
@@ -388,7 +424,9 @@ export function FireSpikeSlot({
       `}</style>
       <div
         className="pointer-events-none absolute inset-0 bg-cover bg-center bg-no-repeat"
-        style={{ backgroundImage: "url(/images/fire-spike-bg.webp)" }}
+        style={{
+          backgroundImage: "url(/images/symbols/fire-spike/backdrop-v20261012-unique.webp)",
+        }}
       />
       <div
         className="pointer-events-none absolute inset-0"
@@ -441,80 +479,78 @@ export function FireSpikeSlot({
             className="relative w-full shrink-0"
             style={{ aspectRatio: `${cfg.reelsCount} / ${cfg.rowsCount}` }}
           >
+            <div
+              className="relative size-full rounded-[0.85rem] p-[5px] shadow-[0_18px_50px_rgba(234,88,12,0.55)] sm:rounded-[1.15rem] sm:p-[8px]"
+              style={{
+                background:
+                  "linear-gradient(145deg,#fdba74 0%,#f97316 28%,#c2410c 62%,#7c2d12 100%)",
+              }}
+            >
               <div
-                className="relative size-full rounded-[0.85rem] p-[5px] shadow-[0_18px_50px_rgba(234,88,12,0.55)] sm:rounded-[1.15rem] sm:p-[8px]"
+                className="relative grid size-full gap-[2px] overflow-hidden rounded-[0.55rem] p-[2px] sm:gap-1 sm:rounded-[0.8rem] sm:p-1"
                 style={{
-                  background:
-                    "linear-gradient(145deg,#fdba74 0%,#f97316 28%,#c2410c 62%,#7c2d12 100%)",
+                  background: "linear-gradient(180deg,#2a1008 0%,#120806 100%)",
+                  gridTemplateColumns: `repeat(${cfg.reelsCount}, minmax(0, 1fr))`,
+                  gridTemplateRows: `repeat(${cfg.rowsCount}, minmax(0, 1fr))`,
+                  boxShadow: "inset 0 0 28px rgba(0,0,0,0.45)",
                 }}
               >
+                {Array.from({ length: cfg.rowsCount }, (_, row) =>
+                  Array.from({ length: cfg.reelsCount }, (_, reel) => {
+                    const kind = ui.grid[reel]?.[row] ?? "bar";
+                    const key = cellKey(reel, row);
+                    return (
+                      <div
+                        key={`${reel}-${row}`}
+                        className="relative min-h-0 min-w-0 overflow-hidden"
+                        style={{ gridColumn: reel + 1, gridRow: row + 1 }}
+                      >
+                        <ReelCell
+                          kind={kind}
+                          phase={ui.phase}
+                          reel={reel}
+                          row={row}
+                          spinId={ui.spinId}
+                          winning={winKeySet.has(key)}
+                          mixHighlight={mixKeySet.has(key)}
+                          fading={ui.fading && (winKeySet.has(key) || mixKeySet.has(key))}
+                          dimmed={
+                            (winKeySet.size > 0 || mixKeySet.size > 0) &&
+                            !winKeySet.has(key) &&
+                            !mixKeySet.has(key) &&
+                            !ui.fading
+                          }
+                          className="!aspect-auto h-full w-full"
+                        />
+                      </div>
+                    );
+                  }),
+                ).flat()}
+              </div>
+            </div>
+
+            {(ui.banner || ui.popup != null) && (
+              <div className="pointer-events-none absolute inset-x-0 top-2 z-30 flex justify-center sm:top-3">
                 <div
-                  className="relative grid size-full gap-[2px] overflow-hidden rounded-[0.55rem] p-[2px] sm:gap-1 sm:rounded-[0.8rem] sm:p-1"
-                  style={{
-                    background: "linear-gradient(180deg,#2a1008 0%,#120806 100%)",
-                    gridTemplateColumns: `repeat(${cfg.reelsCount}, minmax(0, 1fr))`,
-                    gridTemplateRows: `repeat(${cfg.rowsCount}, minmax(0, 1fr))`,
-                    boxShadow: "inset 0 0 28px rgba(0,0,0,0.45)",
-                  }}
+                  className={cn(
+                    "rounded-full border px-4 py-1.5 text-center text-sm font-black uppercase shadow-lg transition-opacity duration-350 ease-out",
+                    ui.fading ? "opacity-0" : "opacity-100",
+                    ui.jackpot
+                      ? "animate-pulse border-yellow-200 bg-gradient-to-r from-yellow-400 via-orange-500 to-red-600 text-black"
+                      : "border-orange-400/70 bg-gradient-to-b from-red-800 to-[#1a0804] text-amber-100",
+                  )}
                 >
-                  {Array.from({ length: cfg.rowsCount }, (_, row) =>
-                    Array.from({ length: cfg.reelsCount }, (_, reel) => {
-                      const kind = ui.grid[reel]?.[row] ?? "bar";
-                      const key = cellKey(reel, row);
-                      return (
-                        <div
-                          key={`${reel}-${row}`}
-                          className="relative min-h-0 min-w-0 overflow-hidden"
-                          style={{ gridColumn: reel + 1, gridRow: row + 1 }}
-                        >
-                          <ReelCell
-                            kind={kind}
-                            phase={ui.phase}
-                            reel={reel}
-                            row={row}
-                            spinId={ui.spinId}
-                            winning={winKeySet.has(key)}
-                            mixHighlight={mixKeySet.has(key)}
-                            fading={
-                              ui.fading && (winKeySet.has(key) || mixKeySet.has(key))
-                            }
-                            dimmed={
-                              (winKeySet.size > 0 || mixKeySet.size > 0) &&
-                              !winKeySet.has(key) &&
-                              !mixKeySet.has(key) &&
-                              !ui.fading
-                            }
-                            className="!aspect-auto h-full w-full"
-                          />
-                        </div>
-                      );
-                    }),
-                  ).flat()}
+                  {ui.banner}
+                  {ui.popup != null && (
+                    <span className="ml-2 tabular-nums text-white">{formatMoney(ui.popup)}</span>
+                  )}
                 </div>
               </div>
+            )}
 
-              {(ui.banner || ui.popup != null) && (
-                <div className="pointer-events-none absolute inset-x-0 top-2 z-30 flex justify-center sm:top-3">
-                  <div
-                    className={cn(
-                      "rounded-full border px-4 py-1.5 text-center text-sm font-black uppercase shadow-lg transition-opacity duration-350 ease-out",
-                      ui.fading ? "opacity-0" : "opacity-100",
-                      ui.jackpot
-                        ? "animate-pulse border-yellow-200 bg-gradient-to-r from-yellow-400 via-orange-500 to-red-600 text-black"
-                        : "border-orange-400/70 bg-gradient-to-b from-red-800 to-[#1a0804] text-amber-100",
-                    )}
-                  >
-                    {ui.banner}
-                    {ui.popup != null && (
-                      <span className="ml-2 tabular-nums text-white">{formatMoney(ui.popup)}</span>
-                    )}
-                  </div>
-                </div>
-              )}
-
-              {ui.jackpot && (
-                <div className="pointer-events-none absolute inset-0 z-20 animate-pulse rounded-[0.85rem] bg-gradient-to-b from-yellow-400/30 via-orange-500/20 to-transparent sm:rounded-[1.15rem]" />
-              )}
+            {ui.jackpot && (
+              <div className="pointer-events-none absolute inset-0 z-20 animate-pulse rounded-[0.85rem] bg-gradient-to-b from-yellow-400/30 via-orange-500/20 to-transparent sm:rounded-[1.15rem]" />
+            )}
           </div>
 
           <p className="mt-1.5 shrink-0 text-center text-[10px] font-semibold uppercase tracking-wider text-orange-200/55 sm:text-[11px]">
@@ -538,8 +574,12 @@ export function FireSpikeSlot({
               </button>
 
               <div className="min-w-[6rem] rounded-xl border border-amber-500/45 bg-gradient-to-b from-[#3a1608] to-[#0c0402] px-3 py-1.5 text-center">
-                <p className="text-[8px] font-black uppercase tracking-[0.2em] text-orange-400/75">Bet</p>
-                <p className="text-base font-black tabular-nums text-amber-100">{formatMoney(bet)}</p>
+                <p className="text-[8px] font-black uppercase tracking-[0.2em] text-orange-400/75">
+                  Bet
+                </p>
+                <p className="text-base font-black tabular-nums text-amber-100">
+                  {formatMoney(bet)}
+                </p>
               </div>
 
               <button
@@ -553,6 +593,15 @@ export function FireSpikeSlot({
             </div>
 
             <div className="flex flex-wrap items-center justify-center gap-2">
+              <button
+                type="button"
+                aria-label={muted ? "Unmute" : "Mute"}
+                onClick={() => setMuted(fireSpikeAudio.toggleMute())}
+                className="grid size-9 place-items-center rounded-xl border border-orange-600/55 bg-[#1a0a06] text-orange-200/85"
+              >
+                {muted ? <VolumeX size={16} /> : <Volume2 size={16} />}
+              </button>
+
               <button
                 type="button"
                 onClick={() => setTurbo((t) => !t)}

@@ -33,7 +33,9 @@ function parseJsonObject(raw: string | null | undefined): Record<string, unknown
   if (!raw) return {};
   try {
     const v = JSON.parse(raw) as unknown;
-    return v && typeof v === "object" && !Array.isArray(v) ? { ...(v as Record<string, unknown>) } : {};
+    return v && typeof v === "object" && !Array.isArray(v)
+      ? { ...(v as Record<string, unknown>) }
+      : {};
   } catch {
     return {};
   }
@@ -174,9 +176,7 @@ export async function getCurrentBulkOutcomeSettings(): Promise<BulkOutcomeSnapsh
   };
 }
 
-function catalogCategoryForScope(
-  scope: BulkGameControlsInput["scope"],
-): GameCategory | null {
+function catalogCategoryForScope(scope: BulkGameControlsInput["scope"]): GameCategory | null {
   if (scope === "all") return null;
   if (scope === "slots") return "slot";
   if (scope === "cards" || scope === "table" || scope === "live") return "cards";
@@ -304,7 +304,9 @@ export async function superBulkUpdateGameControls(input: BulkGameControlsInput):
   };
 }
 
-export async function listGameSettingsLogs(opts?: { limit?: number }): Promise<GameSettingsLogRowType[]> {
+export async function listGameSettingsLogs(opts?: {
+  limit?: number;
+}): Promise<GameSettingsLogRowType[]> {
   await requirePermission("AUDIT_LOG_VIEW");
   const db = getDb();
   const limit = Math.min(Math.max(opts?.limit ?? 50, 1), 200);

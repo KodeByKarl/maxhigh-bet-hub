@@ -1,23 +1,25 @@
 /**
  * Gate of Ra math config — shared by engine (client) and Superadmin (server).
- * Defaults match the original hardcoded Egyptian ways values.
+ * Defaults match the original hardcoded Sweet Bonanza-style values.
  */
 
 export const GATE_OF_RA_GAME_ID = "gate-of-ra";
 
 export type GateOfRaSymKind =
-  | "ten"
-  | "jack"
-  | "queen"
-  | "king"
-  | "ace"
-  | "scarab"
-  | "ankh"
-  | "horus"
-  | "anubis"
-  | "pharaoh"
-  | "wild"
-  | "scatter";
+  | "grape"
+  | "plum"
+  | "melon"
+  | "apple"
+  | "blue"
+  | "green"
+  | "purple"
+  | "heart"
+  | "lollipop"
+  | "bomb";
+
+export type GateOfRaBombEntry = { mult: 2 | 3 | 4 | 5; weight: number };
+
+export const GATE_OF_RA_BOMB_MULTS = [2, 3, 4, 5] as const;
 
 export type GateOfRaScatterCashTier = {
   count: number;
@@ -25,98 +27,131 @@ export type GateOfRaScatterCashTier = {
   mult: number;
 };
 
-export type GateOfRaFreeSpinsAward = {
-  count: number;
-  spins: number;
-};
-
 export type GateOfRaSymbolConfig = {
   id: string;
   kind: GateOfRaSymKind;
   label: string;
-  /** Relative spawn weight */
+  /** Relative spawn weight (0 = never from pool; bombs use separate chance) */
   weight: number;
-  /** Way pays × bet for [3, 4, 5, 6] of a kind */
-  pay: [number, number, number, number];
-  wild?: boolean;
+  /** Fixed payout multiplier × bet for [min, min+2, min+4] matching symbols */
+  pay: [number, number, number];
   scatter?: boolean;
+  bomb?: boolean;
 };
 
 export type GateOfRaConfig = {
   schemaVersion: 1;
-  /** Chance (0–100) the opening board is NOT force-seeded with a ways hit */
+  /** Chance (0–100) the initial board is NOT force-seeded with a winning cluster */
   deadSpinChancePercent: number;
-  seedWinLengthMin: number;
-  seedWinLengthMax: number;
-  /** When seeding a ways hit, chance a reel cell is wild instead of the pay symbol */
-  seedWildChancePercent: number;
-  /** Extra wild chance when building a free-spin board */
-  freeSpinsWildChancePercent: number;
-  /** Wild chance when spawning cascade refill cells in free spins */
-  cascadeWildChancePercent: number;
+  /** When seeding a win, bias toward melon (0–100) */
+  seedMelonBiasPercent: number;
+  /** 8×3 board has 24 cells — never require more matches than CELLS. */
+  seedClusterMin: number;
+  seedClusterMax: number;
+  /** Per-cell chance to become a bomb instead of the picked symbol */
+  bombChanceBasePercent: number;
+  bombChanceFreeSpinsPercent: number;
+  bombTable: GateOfRaBombEntry[];
+  /** Panther cane (lollipop) free-spins */
   freeSpinsTriggerCount: number;
   freeSpinsRetriggerCount: number;
+  freeSpinsBase: number;
   freeSpinsRetrigger: number;
-  freeSpinsAwards: GateOfRaFreeSpinsAward[];
+  /** Ante multiplies scatter weight by this factor */
+  anteScatterWeightMult: number;
   scatterCashTiers: GateOfRaScatterCashTier[];
   buyFeatureMult: number;
-  fsMultStart: number;
-  fsMultStep: number;
+  superBuyFeatureMult: number;
+  anteBetMult: number;
+  minCluster: number;
+  /** Max win as × bet for the round (paid spin + FS feature). 0 = uncapped. */
+  maxWinMult: number;
+  /**
+   * Ceiling on collected FS bomb multiplier (applied once at feature end).
+   * Separate from and well below maxWinMult. 0 = uncapped.
+   */
+  maxFsBombMult: number;
+  /** Hard stop on FS + retriggers so sticky-scatter cascades cannot run away. 0 = uncapped. */
+  maxFsSessionSpins: number;
+  /** Base-game: strongest bomb on the winning tumble, capped here. 0 = uncapped. */
+  maxBaseBombSum: number;
   symbols: GateOfRaSymbolConfig[];
+};
+
+export const SYMBOL_LABELS: Record<GateOfRaSymKind, string> = {
+  grape: "10",
+  plum: "J",
+  melon: "Q",
+  apple: "K",
+  blue: "A",
+  green: "Solar Ankh",
+  purple: "Sun Barque",
+  heart: "Ra",
+  lollipop: "Scatter",
+  bomb: "Wild",
 };
 
 export const DEFAULT_GATE_OF_RA_CONFIG: GateOfRaConfig = {
   schemaVersion: 1,
-  deadSpinChancePercent: 30,
-  seedWinLengthMin: 3,
-  seedWinLengthMax: 5,
-  seedWildChancePercent: 15,
-  freeSpinsWildChancePercent: 8,
-  cascadeWildChancePercent: 10,
-  freeSpinsTriggerCount: 3,
-  freeSpinsRetriggerCount: 3,
-  freeSpinsRetrigger: 5,
-  freeSpinsAwards: [
-    { count: 3, spins: 10 },
-    { count: 4, spins: 12 },
-    { count: 5, spins: 15 },
-    { count: 6, spins: 20 },
+  deadSpinChancePercent: 82,
+  seedMelonBiasPercent: 35,
+  seedClusterMin: 7,
+  seedClusterMax: 9,
+  bombChanceBasePercent: 1.5,
+  bombChanceFreeSpinsPercent: 3,
+  bombTable: [
+    { mult: 2, weight: 34 },
+    { mult: 3, weight: 28 },
+    { mult: 4, weight: 22 },
+    { mult: 5, weight: 16 },
   ],
+  freeSpinsTriggerCount: 4,
+  freeSpinsRetriggerCount: 4,
+  freeSpinsBase: 10,
+  freeSpinsRetrigger: 3,
+  anteScatterWeightMult: 2,
   scatterCashTiers: [
-    { count: 3, mult: 2 },
-    { count: 4, mult: 8 },
-    { count: 5, mult: 25 },
+    { count: 3, mult: 1 },
+    { count: 4, mult: 3 },
+    { count: 5, mult: 5 },
     { count: 6, mult: 100 },
   ],
-  buyFeatureMult: 80,
-  fsMultStart: 1,
-  fsMultStep: 1,
+  /** Per-quantity Buy Bonus price: Price = bet × this. */
+  buyFeatureMult: 42.5,
+  /** Super buy unit price (5× normal). */
+  superBuyFeatureMult: 212.5,
+  anteBetMult: 1.25,
+  minCluster: 6,
+  /** ₱5 × 10,000× = ₱50,000 round cap (the incident that lacked this clamp). */
+  maxWinMult: 10_000,
+  /** Bombs only resolve to 2x/3x/4x/5x, including feature-end multiplier. */
+  maxFsBombMult: 5,
+  maxFsSessionSpins: 25,
+  maxBaseBombSum: 5,
   symbols: [
-    { id: "ten", kind: "ten", label: "10", weight: 22, pay: [0.6, 1.5, 4, 8] },
-    { id: "jack", kind: "jack", label: "J", weight: 20, pay: [0.8, 2, 5, 10] },
-    { id: "queen", kind: "queen", label: "Q", weight: 18, pay: [1, 2.5, 6, 12] },
-    { id: "king", kind: "king", label: "K", weight: 16, pay: [1.2, 3, 8, 16] },
-    { id: "ace", kind: "ace", label: "A", weight: 14, pay: [1.5, 4, 10, 20] },
-    { id: "scarab", kind: "scarab", label: "Scarab", weight: 10, pay: [2, 6, 15, 35] },
-    { id: "ankh", kind: "ankh", label: "Ankh", weight: 8, pay: [2.5, 8, 18, 40] },
-    { id: "horus", kind: "horus", label: "Horus", weight: 6, pay: [3, 10, 22, 50] },
-    { id: "anubis", kind: "anubis", label: "Anubis", weight: 5, pay: [4, 12, 28, 70] },
-    { id: "pharaoh", kind: "pharaoh", label: "Pharaoh", weight: 4, pay: [5, 15, 35, 100] },
+    { id: "grape", kind: "grape", label: "10", weight: 18, pay: [0.2, 0.35, 0.8] },
+    { id: "plum", kind: "plum", label: "J", weight: 16, pay: [0.35, 0.5, 1.2] },
+    { id: "melon", kind: "melon", label: "Q", weight: 14, pay: [0.5, 0.65, 2] },
+    { id: "apple", kind: "apple", label: "K", weight: 12, pay: [0.65, 0.8, 4] },
+    { id: "blue", kind: "blue", label: "A", weight: 10, pay: [0.8, 2.5, 8] },
+    { id: "green", kind: "green", label: "Solar Ankh", weight: 8, pay: [2, 10, 50] },
+    { id: "purple", kind: "purple", label: "Sun Barque", weight: 6, pay: [6, 25, 150] },
+    { id: "heart", kind: "heart", label: "Ra", weight: 5, pay: [12, 80, 500] },
     {
-      id: "wild",
-      kind: "wild",
-      label: "WILD",
-      weight: 3.5,
-      pay: [0, 0, 0, 0],
-      wild: true,
+      id: "lollipop",
+      kind: "lollipop",
+      label: "Scatter",
+      weight: 1.5,
+      pay: [0, 0, 0],
+      scatter: true,
     },
     {
-      id: "scatter",
-      kind: "scatter",
-      label: "SCATTER",
-      weight: 2.5,
-      pay: [0, 0, 0, 0],
-      scatter: true,
+      id: "bomb",
+      kind: "bomb",
+      label: "Wild",
+      weight: 0,
+      pay: [0, 0, 0],
+      bomb: true,
     },
   ],
 };
@@ -126,28 +161,78 @@ function clamp(n: number, min: number, max: number) {
   return Math.min(max, Math.max(min, n));
 }
 
+/** Map any bomb value onto the only allowed set: 2x / 3x / 4x / 5x. */
+export function clampBombMult(v: unknown): GateOfRaBombEntry["mult"] {
+  const n = Math.round(num(v, 2));
+  if (n <= 2) return 2;
+  if (n === 3) return 3;
+  if (n === 4) return 4;
+  return 5;
+}
+
 function num(v: unknown, fallback: number) {
   return typeof v === "number" && Number.isFinite(v) ? v : fallback;
 }
 
-/** Original ways ×bet pays — too small vs ₱20–₱100 PH stakes. */
-const LEGACY_DEFAULT_PAYS: Record<string, number[]> = {
-  ten: [0.15, 0.4, 1, 2],
-  jack: [0.2, 0.5, 1.2, 2.5],
-  queen: [0.25, 0.6, 1.4, 3],
-  king: [0.3, 0.75, 1.8, 4],
-  ace: [0.4, 1, 2.2, 5],
-  scarab: [0.6, 1.5, 4, 10],
-  ankh: [0.8, 2, 5, 12],
-  horus: [1, 2.5, 6, 15],
-  anubis: [1.2, 3, 8, 20],
-  pharaoh: [1.5, 4, 10, 30],
+/** Old package buy was 100x / 500x for 10 spins. Unit price is now 42.5x / 212.5x per quantity. */
+function migrateBuyUnitMult(v: unknown, fallback: number, superBuy = false) {
+  if (typeof v === "number" && Number.isFinite(v)) {
+    if (!superBuy && v === 100) return 42.5;
+    if (superBuy && v === 500) return 212.5;
+    return v;
+  }
+  return fallback;
+}
+
+/** Prior default tables — migrate stored engine JSON onto the current multipliers. */
+const LEGACY_PAY_TABLES: Record<string, [number, number, number][]> = {
+  grape: [
+    [0.25, 0.75, 2],
+    [1, 3, 8],
+  ],
+  plum: [
+    [0.4, 0.9, 4],
+    [1.2, 3.5, 10],
+  ],
+  melon: [
+    [0.5, 1, 5],
+    [1.5, 4, 12],
+  ],
+  apple: [
+    [1, 1.5, 10],
+    [2, 5, 20],
+  ],
+  blue: [
+    [1.5, 2, 12],
+    [2.5, 6, 25],
+  ],
+  green: [
+    [2, 5, 15],
+    [4, 10, 35],
+  ],
+  purple: [
+    [2.5, 10, 25],
+    [6, 18, 50],
+  ],
+  heart: [
+    [10, 25, 50],
+    [12, 30, 80],
+  ],
 };
 
+function paysMatch(pay: unknown, expected: [number, number, number]): boolean {
+  if (!Array.isArray(pay) || pay.length < 3) return false;
+  return (
+    num(pay[0], NaN) === expected[0] &&
+    num(pay[1], NaN) === expected[1] &&
+    num(pay[2], NaN) === expected[2]
+  );
+}
+
 function isLegacyDefaultPay(id: string, pay: unknown): boolean {
-  const legacy = LEGACY_DEFAULT_PAYS[id];
-  if (!legacy || !Array.isArray(pay) || pay.length < legacy.length) return false;
-  return legacy.every((n, i) => num(pay[i], NaN) === n);
+  const tables = LEGACY_PAY_TABLES[id];
+  if (!tables) return false;
+  return tables.some((legacy) => paysMatch(pay, legacy));
 }
 
 /** Merge partial / stored JSON onto defaults (safe for DB blobs). */
@@ -161,7 +246,7 @@ export function normalizeGateOfRaConfig(raw: unknown): GateOfRaConfig {
     const found = symbolsIn?.find(
       (s) => s && typeof s === "object" && (s as { id?: string }).id === def.id,
     ) as Partial<GateOfRaSymbolConfig> | undefined;
-    if (!found) return { ...def, pay: [...def.pay] as [number, number, number, number] };
+    if (!found) return { ...def, pay: [...def.pay] as [number, number, number] };
     const paySrc = isLegacyDefaultPay(def.id, found.pay)
       ? def.pay
       : Array.isArray(found.pay)
@@ -175,12 +260,30 @@ export function normalizeGateOfRaConfig(raw: unknown): GateOfRaConfig {
         clamp(num(paySrc[0], def.pay[0]), 0, 1_000_000),
         clamp(num(paySrc[1], def.pay[1]), 0, 1_000_000),
         clamp(num(paySrc[2], def.pay[2]), 0, 1_000_000),
-        clamp(num(paySrc[3], def.pay[3]), 0, 1_000_000),
       ],
-      wild: def.wild,
       scatter: def.scatter,
+      bomb: def.bomb,
     };
   });
+
+  const bombIn = Array.isArray(o.bombTable) ? o.bombTable : null;
+  const bombWeights = new Map<GateOfRaBombEntry["mult"], number>();
+  for (const mult of GATE_OF_RA_BOMB_MULTS) {
+    bombWeights.set(mult, d.bombTable.find((b) => b.mult === mult)?.weight ?? 1);
+  }
+  if (bombIn && bombIn.length > 0) {
+    for (const b of bombIn) {
+      const row = b as Partial<GateOfRaBombEntry>;
+      const n = Math.round(num(row.mult, 0));
+      if (!(GATE_OF_RA_BOMB_MULTS as readonly number[]).includes(n)) continue;
+      const weight = clamp(num(row.weight, 1), 0, 10_000);
+      bombWeights.set(n as GateOfRaBombEntry["mult"], weight);
+    }
+  }
+  const bombTable: GateOfRaBombEntry[] = GATE_OF_RA_BOMB_MULTS.map((mult) => ({
+    mult,
+    weight: bombWeights.get(mult) ?? 0,
+  }));
 
   const tiersIn = Array.isArray(o.scatterCashTiers) ? o.scatterCashTiers : null;
   const scatterCashTiers: GateOfRaScatterCashTier[] =
@@ -196,71 +299,82 @@ export function normalizeGateOfRaConfig(raw: unknown): GateOfRaConfig {
           .sort((a, b) => a.count - b.count)
       : d.scatterCashTiers.map((t) => ({ ...t }));
 
-  const awardsIn = Array.isArray(o.freeSpinsAwards) ? o.freeSpinsAwards : null;
-  const freeSpinsAwards: GateOfRaFreeSpinsAward[] =
-    awardsIn && awardsIn.length > 0
-      ? awardsIn
-          .map((t) => {
-            const row = t as Partial<GateOfRaFreeSpinsAward>;
-            return {
-              count: clamp(Math.round(num(row.count, 3)), 1, 30),
-              spins: clamp(Math.round(num(row.spins, 10)), 1, 100),
-            };
-          })
-          .sort((a, b) => a.count - b.count)
-      : d.freeSpinsAwards.map((t) => ({ ...t }));
-
-  const seedMin = clamp(Math.round(num(o.seedWinLengthMin, d.seedWinLengthMin)), 3, 6);
-  const seedMax = clamp(Math.round(num(o.seedWinLengthMax, d.seedWinLengthMax)), 3, 6);
-
   return {
     schemaVersion: 1,
     deadSpinChancePercent: clamp(num(o.deadSpinChancePercent, d.deadSpinChancePercent), 0, 100),
-    seedWinLengthMin: Math.min(seedMin, seedMax),
-    seedWinLengthMax: Math.max(seedMin, seedMax),
-    seedWildChancePercent: clamp(num(o.seedWildChancePercent, d.seedWildChancePercent), 0, 100),
-    freeSpinsWildChancePercent: clamp(
-      num(o.freeSpinsWildChancePercent, d.freeSpinsWildChancePercent),
+    seedMelonBiasPercent: clamp(num(o.seedMelonBiasPercent, d.seedMelonBiasPercent), 0, 100),
+    seedClusterMin: clamp(Math.round(num(o.seedClusterMin, d.seedClusterMin)), 3, 24),
+    seedClusterMax: clamp(Math.round(num(o.seedClusterMax, d.seedClusterMax)), 3, 24),
+    bombChanceBasePercent: clamp(num(o.bombChanceBasePercent, d.bombChanceBasePercent), 0, 100),
+    bombChanceFreeSpinsPercent: clamp(
+      num(o.bombChanceFreeSpinsPercent, d.bombChanceFreeSpinsPercent),
       0,
       100,
     ),
-    cascadeWildChancePercent: clamp(
-      num(o.cascadeWildChancePercent, d.cascadeWildChancePercent),
-      0,
-      100,
-    ),
+    bombTable: bombTable.length ? bombTable : d.bombTable.map((b) => ({ ...b })),
     freeSpinsTriggerCount: clamp(
       Math.round(num(o.freeSpinsTriggerCount, d.freeSpinsTriggerCount)),
       1,
-      30,
+      24,
     ),
     freeSpinsRetriggerCount: clamp(
       Math.round(num(o.freeSpinsRetriggerCount, d.freeSpinsRetriggerCount)),
       1,
-      30,
+      24,
     ),
+    freeSpinsBase: clamp(Math.round(num(o.freeSpinsBase, d.freeSpinsBase)), 1, 100),
     freeSpinsRetrigger: clamp(Math.round(num(o.freeSpinsRetrigger, d.freeSpinsRetrigger)), 0, 100),
-    freeSpinsAwards,
+    anteScatterWeightMult: clamp(num(o.anteScatterWeightMult, d.anteScatterWeightMult), 1, 10),
     scatterCashTiers,
-    buyFeatureMult: clamp(num(o.buyFeatureMult, d.buyFeatureMult), 1, 10_000),
-    fsMultStart: clamp(num(o.fsMultStart, d.fsMultStart), 1, 100),
-    fsMultStep: clamp(num(o.fsMultStep, d.fsMultStep), 0, 100),
+    buyFeatureMult: clamp(migrateBuyUnitMult(o.buyFeatureMult, d.buyFeatureMult), 1, 10_000),
+    superBuyFeatureMult: clamp(
+      migrateBuyUnitMult(o.superBuyFeatureMult, d.superBuyFeatureMult, true),
+      1,
+      10_000,
+    ),
+    anteBetMult: clamp(num(o.anteBetMult, d.anteBetMult), 1, 5),
+    minCluster: clamp(Math.round(num(o.minCluster, d.minCluster)), 3, 24),
+    maxWinMult: clamp(num(o.maxWinMult, d.maxWinMult), 0, 100_000),
+    maxFsBombMult: clamp(num(o.maxFsBombMult, d.maxFsBombMult), 0, 5),
+    maxFsSessionSpins: clamp(Math.round(num(o.maxFsSessionSpins, d.maxFsSessionSpins)), 0, 200),
+    maxBaseBombSum: clamp(num(o.maxBaseBombSum, d.maxBaseBombSum), 0, 5),
     symbols,
   };
 }
 
-export function configToCellSyms(cfg: GateOfRaConfig) {
+/** Remaining FS after this spin, honoring maxFsSessionSpins. */
+export function remainingFreeSpinsAfterSpin(opts: {
+  leftBefore: number;
+  retrigger: number;
+  playedAfter: number;
+  maxSessionSpins: number;
+}): number {
+  let left = Math.max(0, opts.leftBefore - 1 + Math.max(0, opts.retrigger));
+  if (opts.maxSessionSpins > 0) {
+    left = Math.min(left, Math.max(0, opts.maxSessionSpins - opts.playedAfter));
+  }
+  return left;
+}
+
+export function configToCellSyms(cfg: GateOfRaConfig): {
+  id: string;
+  kind: GateOfRaSymKind;
+  weight: number;
+  pay: [number, number, number];
+  scatter?: boolean;
+  bomb?: boolean;
+}[] {
   return cfg.symbols.map((s) => ({
     id: s.id,
     kind: s.kind,
     weight: s.weight,
-    pay: [...s.pay] as [number, number, number, number],
-    wild: s.wild,
+    pay: [...s.pay] as [number, number, number],
     scatter: s.scatter,
+    bomb: s.bomb,
   }));
 }
 
-/** Per-cell spawn % from relative weights. */
+/** Per-cell spawn % from relative weights (excludes bombs with weight 0). */
 export function weightPercents(weights: { id: string; weight: number }[]): Record<string, number> {
   const total = weights.reduce((a, w) => a + Math.max(0, w.weight), 0);
   const out: Record<string, number> = {};
@@ -270,10 +384,11 @@ export function weightPercents(weights: { id: string; weight: number }[]): Recor
   return out;
 }
 
-export function freeSpinsAwardForCount(cfg: GateOfRaConfig, count: number): number {
-  const tiers = [...cfg.freeSpinsAwards].sort((a, b) => b.count - a.count);
-  for (const t of tiers) {
-    if (count >= t.count) return t.spins;
+export function bombTablePercents(table: GateOfRaBombEntry[]): Record<number, number> {
+  const total = table.reduce((a, b) => a + Math.max(0, b.weight), 0);
+  const out: Record<number, number> = {};
+  for (const b of table) {
+    out[b.mult] = total > 0 ? +((Math.max(0, b.weight) / total) * 100).toFixed(2) : 0;
   }
-  return 0;
+  return out;
 }

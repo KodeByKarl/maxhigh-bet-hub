@@ -48,8 +48,7 @@ export function BuyFeatureModal({
         transition={{ type: "spring", stiffness: 320, damping: 20 }}
         className="relative w-full max-w-[400px] rounded-[1.6rem] p-[10px]"
         style={{
-          background:
-            "linear-gradient(135deg, #FDE68A 0%, #D97706 50%, #064E3B 100%)",
+          background: "linear-gradient(135deg, #FDE68A 0%, #D97706 50%, #064E3B 100%)",
           boxShadow: "0 22px 50px rgba(0,0,0,0.85)",
         }}
         onClick={(e) => e.stopPropagation()}
@@ -67,8 +66,7 @@ export function BuyFeatureModal({
         <div
           className="relative overflow-hidden rounded-[1.25rem] px-4 pb-5 pt-4"
           style={{
-            background:
-              "linear-gradient(180deg, #064E3B 0%, #022014 100%)",
+            background: "linear-gradient(180deg, #064E3B 0%, #022014 100%)",
           }}
         >
           <div
@@ -157,9 +155,7 @@ export function BuyFeatureModal({
               </button>
             </div>
             {!canAfford && (
-              <div className="mt-2 text-[11px] font-bold text-yellow-200">
-                Insufficient balance
-              </div>
+              <div className="mt-2 text-[11px] font-bold text-yellow-200">Insufficient balance</div>
             )}
           </div>
 

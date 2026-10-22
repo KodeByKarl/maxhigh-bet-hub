@@ -22,7 +22,11 @@ type Props = {
 export function CategoryTabs({ value, onChange }: Props) {
   const { t } = useTranslation();
   return (
-    <div className="flex gap-2 overflow-x-auto no-scrollbar" role="tablist" aria-label="Game categories">
+    <div
+      className="flex gap-2 overflow-x-auto no-scrollbar"
+      role="tablist"
+      aria-label="Game categories"
+    >
       {tabs.map((tabItem) => {
         const active = tabItem.id === value;
         return (

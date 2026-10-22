@@ -1,71 +1,72 @@
-import type { FgSymKind } from "@/lib/desert-riches-config";
+/** Desert Riches — 7×4 cluster tumble (panther rectangle board). */
 
-/** grid[reel][row] — each reel column length = reelHeights[reel]. */
-export type FgGrid = FgSymKind[][];
+export type SymKind =
+  | "grape"
+  | "plum"
+  | "melon"
+  | "apple"
+  | "blue"
+  | "green"
+  | "purple"
+  | "heart"
+  | "lollipop"
+  | "bomb";
 
-export type PaylineWin = {
-  lineIndex: number;
-  symbol: FgSymKind;
-  /** Consecutive reels matched (left→right). */
+export type CellSym = {
+  id: string;
+  kind: SymKind;
+  weight: number;
+  pay: [number, number, number];
+  scatter?: boolean;
+  bomb?: boolean;
+};
+
+export type BoardCell = {
+  key: string;
+  sym: CellSym;
+  mult?: number;
+};
+
+export type ClusterWin = {
+  id: string;
+  kind: SymKind;
   count: number;
-  positions: Array<[number, number]>;
-  /** Product of matching cells per consecutive reel. */
-  waysCount?: number;
-  payout: number;
+  pay: number;
+  perSymbol: number;
+  keys: string[];
 };
 
-export type CascadeStep = {
-  stepIndex: number;
-  grid: FgGrid;
-  paylineWins: PaylineWin[];
-  paylineWin: number;
-  /** Cells removed after this win (empty on terminal step) */
-  removed: Array<[number, number]>;
-};
-
-export type HoldCoin = {
-  reel: number;
-  row: number;
-  mult: number;
-  jackpotId?: "mini" | "minor" | "major" | "grand";
-  label: string;
-};
-
-export type HoldWinStep = {
-  stepIndex: number;
-  respinsLeft: number;
-  coins: HoldCoin[];
-  newCoins: HoldCoin[];
-};
-
-export type HoldWinScript = {
-  triggerCoins: HoldCoin[];
-  steps: HoldWinStep[];
-  totalMult: number;
-  totalWin: number;
-  filledGrid: boolean;
-  grandAwarded: boolean;
+export type TumbleStep = {
+  board: BoardCell[];
+  winningKeys: string[];
+  clusters: ClusterWin[];
+  tumbleWin: number;
+  bombSum: number;
+  afterPop: (BoardCell | null)[];
+  afterFall: BoardCell[];
+  spawnedKeys: string[];
+  fallenKeys: string[];
+  fallDistance: Record<string, number>;
 };
 
 export type SpinScript = {
-  seed: string;
-  /** Cascade sequence (payline tumble). Always ≥1 step. */
-  steps: CascadeStep[];
-  /** Final board after cascades (compat / Hold & Win source) */
-  grid: FgGrid;
-  /** First-step wins (compat) */
-  paylineWins: PaylineWin[];
-  /** Sum of all cascade line wins */
-  paylineWin: number;
-  scatterCount: number;
+  initialBoard: BoardCell[];
+  steps: TumbleStep[];
+  totalWin: number;
+  rawWin: number;
+  displayMult: number;
+  scatters: number;
   scatterPay: number;
   freeSpinsAwarded: number;
-  bonusCoinCount: number;
-  holdWin: HoldWinScript | null;
-  totalWin: number;
-  hitCap?: boolean;
+  retriggerSpins: number;
+  isFreeSpins: boolean;
+  bombAccumulator: number;
 };
 
-export function cellKey(reel: number, row: number): string {
-  return `${reel}:${row}`;
-}
+/** 7×4 board — unique rectangle for Desert Riches. */
+export const COLS = 7;
+export const ROWS = 4;
+export const TOP_COLS = 0;
+export const MAIN_CELLS = COLS * ROWS; // 28
+export const CELLS = MAIN_CELLS;
+export const MIN_CLUSTER = 7;

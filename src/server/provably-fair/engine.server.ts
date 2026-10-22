@@ -148,7 +148,10 @@ export async function incrementProvablyFairNonce(userId: string): Promise<{
 /**
  * Updates the client seed for the active seed pair.
  */
-export async function updateClientSeed(userId: string, newClientSeed: string): Promise<{ ok: boolean; clientSeed: string }> {
+export async function updateClientSeed(
+  userId: string,
+  newClientSeed: string,
+): Promise<{ ok: boolean; clientSeed: string }> {
   const db = getDb();
   const trimmed = newClientSeed.trim();
   if (!trimmed || trimmed.length > 64) {

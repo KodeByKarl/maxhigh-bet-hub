@@ -1,112 +1,123 @@
-import type { BuffaloSymbolConfig } from "@/lib/safari-gold-config";
+import { payForCount } from "./paytable";
+import { makeCell, pickSym } from "./gridState";
 import { getSafariGoldConfig } from "./runtimeConfig";
-import type { BoardCell } from "./types";
+import type { BoardCell, ClusterWin } from "./types";
+import { CELLS, COLS, ROWS } from "./types";
 
-let keyCounter = 1;
+export type EvalResult = {
+  clusters: ClusterWin[];
+  winningKeys: Set<string>;
+  payoutByKey: Map<string, number>;
+  win: number;
+  scatters: number;
+  bombs: BoardCell[];
+};
 
-export function nextCellKey(): string {
-  return `carabao_${Date.now()}_${keyCounter++}_${Math.random().toString(36).slice(2, 7)}`;
-}
+export function evaluateBoard(board: BoardCell[], bet: number): EvalResult {
+  const minCluster = getSafariGoldConfig().minCluster;
+  const counts = new Map<string, BoardCell[]>();
+  let scatters = 0;
+  const bombs: BoardCell[] = [];
 
-/** Weighted pick (ante boosts scatter; free spins suppress bonus chests). */
-export function pickRandomSymbol(ante: boolean, isFreeSpins: boolean): BuffaloSymbolConfig {
-  const config = getSafariGoldConfig();
-  let total = 0;
-  const weights: number[] = [];
-
-  for (const sym of config.symbols) {
-    let weight = isFreeSpins ? sym.weightFreeSpins : sym.weight;
-    if (sym.scatter && ante) {
-      weight = Math.round(weight * config.anteScatterWeightMult);
+  for (const cell of board) {
+    if (!cell) continue;
+    if (cell.sym.scatter) {
+      scatters++;
+      continue;
     }
-    weights.push(weight);
-    total += weight;
+    if (cell.sym.bomb) {
+      bombs.push(cell);
+      continue;
+    }
+    const list = counts.get(cell.sym.id) ?? [];
+    list.push(cell);
+    counts.set(cell.sym.id, list);
   }
 
-  if (total <= 0) return config.symbols[0]!;
-  let roll = Math.random() * total;
-  for (let i = 0; i < config.symbols.length; i++) {
-    roll -= weights[i]!;
-    if (roll <= 0) return config.symbols[i]!;
-  }
-  return config.symbols[config.symbols.length - 1]!;
-}
+  const winningKeys = new Set<string>();
+  const payoutByKey = new Map<string, number>();
+  const clusters: ClusterWin[] = [];
+  let win = 0;
 
-export function makeCell(sym: BuffaloSymbolConfig, reelIndex: number, rowIndex: number): BoardCell {
-  return {
-    key: nextCellKey(),
-    reelIndex,
-    rowIndex,
-    sym,
-  };
-}
-
-export function generateInitialBoard(
-  reelHeights: number[],
-  ante: boolean,
-  isFreeSpins: boolean,
-): BoardCell[] {
-  const board: BoardCell[] = [];
-  for (let r = 0; r < reelHeights.length; r++) {
-    const height = reelHeights[r]!;
-    for (let row = 0; row < height; row++) {
-      board.push(makeCell(pickRandomSymbol(ante, isFreeSpins), r, row));
+  for (const [, cells] of counts) {
+    if (cells.length < minCluster) continue;
+    const sym = cells[0].sym;
+    const mult = payForCount(sym, cells.length);
+    const pay = +(bet * mult).toFixed(2);
+    const perSymbol = +(pay / cells.length).toFixed(2);
+    win += pay;
+    clusters.push({
+      id: sym.id,
+      kind: sym.kind,
+      count: cells.length,
+      pay,
+      perSymbol,
+      keys: cells.map((c) => c.key),
+    });
+    for (const c of cells) {
+      winningKeys.add(c.key);
+      payoutByKey.set(c.key, perSymbol);
     }
   }
-  return board;
+
+  return { clusters, winningKeys, payoutByKey, win, scatters, bombs };
 }
 
-/**
- * Cascade: remove winning keys, drop remaining, refill tops.
- * Bonus / scatter never tumble unless they were in winningKeys (they shouldn't be).
- */
+/** Gravity per column on the 7×3 board. */
 export function applyGravity(
   board: BoardCell[],
-  removeKeys: Set<string>,
-  reelHeights: number[],
+  remove: Set<string>,
   ante: boolean,
-  isFreeSpins: boolean,
+  freeSpins: boolean,
 ): {
-  nextBoard: BoardCell[];
+  next: BoardCell[];
   spawnedKeys: string[];
   fallenKeys: string[];
+  fallDistance: Record<string, number>;
+  afterPop: (BoardCell | null)[];
 } {
-  const config = getSafariGoldConfig();
-  const reelsCount = config.reelsCount;
-  const nextBoard: BoardCell[] = [];
+  const afterPop: (BoardCell | null)[] = board.map((c) => (c && remove.has(c.key) ? null : c));
+  const next: BoardCell[] = Array(CELLS);
   const spawnedKeys: string[] = [];
   const fallenKeys: string[] = [];
+  const fallDistance: Record<string, number> = {};
+  const spawnedSet = new Set<string>();
 
-  for (let r = 0; r < reelsCount; r++) {
-    const targetHeight = reelHeights[r]!;
-    const columnCells = board
-      .filter((c) => c.reelIndex === r)
-      .sort((a, b) => a.rowIndex - b.rowIndex);
-    const keptCells: BoardCell[] = [];
-
-    for (const cell of columnCells) {
-      if (!removeKeys.has(cell.key)) keptCells.push(cell);
-    }
-
-    const missingCount = Math.max(0, targetHeight - keptCells.length);
-    const newCells: BoardCell[] = [];
-    for (let i = 0; i < missingCount; i++) {
-      const cell = makeCell(pickRandomSymbol(ante, isFreeSpins), r, i);
-      newCells.push(cell);
-      spawnedKeys.push(cell.key);
-    }
-
-    const finalColumn = [...newCells, ...keptCells];
-    finalColumn.forEach((cell, idx) => {
-      const original = columnCells.find((c) => c.key === cell.key);
-      const prevRow = original?.rowIndex ?? -1;
-      cell.rowIndex = idx;
-      if (!spawnedKeys.includes(cell.key) && prevRow !== idx) {
-        fallenKeys.push(cell.key);
-      }
-      nextBoard.push(cell);
-    });
+  const oldRowByKey = new Map<string, number>();
+  for (let i = 0; i < CELLS; i++) {
+    const c = board[i];
+    if (c && !remove.has(c.key)) oldRowByKey.set(c.key, Math.floor(i / COLS));
   }
 
-  return { nextBoard, spawnedKeys, fallenKeys };
+  for (let col = 0; col < COLS; col++) {
+    const kept: BoardCell[] = [];
+    for (let row = ROWS - 1; row >= 0; row--) {
+      const cell = board[col + row * COLS];
+      if (cell && !remove.has(cell.key)) kept.push(cell);
+    }
+    while (kept.length < ROWS) {
+      const cell = makeCell(pickSym(ante), freeSpins, false, { allowScatter: false });
+      spawnedKeys.push(cell.key);
+      spawnedSet.add(cell.key);
+      kept.push(cell);
+    }
+    for (let i = 0; i < ROWS; i++) {
+      const cell = kept[i];
+      const newRow = ROWS - 1 - i;
+      next[col + newRow * COLS] = cell;
+
+      if (spawnedSet.has(cell.key) && fallDistance[cell.key] == null) {
+        fallDistance[cell.key] = newRow + 1;
+      } else if (!spawnedSet.has(cell.key)) {
+        const oldRow = oldRowByKey.get(cell.key) ?? newRow;
+        const dist = newRow - oldRow;
+        if (dist > 0) {
+          fallenKeys.push(cell.key);
+          fallDistance[cell.key] = dist;
+        }
+      }
+    }
+  }
+
+  return { next, spawnedKeys, fallenKeys, fallDistance, afterPop };
 }

@@ -112,9 +112,7 @@ export type AceHighDealResult = {
   session: AceHighSessionState;
 };
 
-function toPublicScript(
-  script: ReturnType<typeof resolveAceHighDeal>,
-): PublicDealScript {
+function toPublicScript(script: ReturnType<typeof resolveAceHighDeal>): PublicDealScript {
   const last = script.warSteps[script.warSteps.length - 1];
   return {
     playerCards: script.playerCards,
@@ -169,8 +167,7 @@ export async function aceHighPaidDeal(input: {
   }
   if (
     aceBonusBet < 0 ||
-    (aceBonusBet > 0 &&
-      (aceBonusBet < cfg.minAceBonusBet || aceBonusBet > cfg.maxAceBonusBet))
+    (aceBonusBet > 0 && (aceBonusBet < cfg.minAceBonusBet || aceBonusBet > cfg.maxAceBonusBet))
   ) {
     throw new Error(
       `Ace Bonus bet must be 0 or between ₱${cfg.minAceBonusBet} and ₱${cfg.maxAceBonusBet}`,

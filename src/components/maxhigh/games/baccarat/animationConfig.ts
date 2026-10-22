@@ -44,7 +44,7 @@ export const BC_ASSET = {
   symbolDir: "/images/symbols/baccarat",
   cardsDir: "/images/symbols/baccarat/cards",
   chipsDir: "/images/symbols/baccarat/chips",
-  soundDir: "/sounds/baccarat",
+  soundDir: "/sounds/gentle-v1/baccarat",
 } as const;
 
 /** Theme tokens — Macau night (distinct from Ace High amber/western). */

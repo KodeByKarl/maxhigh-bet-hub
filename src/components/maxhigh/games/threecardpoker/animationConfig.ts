@@ -53,7 +53,7 @@ export const TCP_ASSET = {
   symbolDir: "/images/symbols/baccarat",
   cardsDir: "/images/symbols/baccarat/cards",
   chipsDir: "/images/symbols/baccarat/chips",
-  soundDir: "/sounds/threecardpoker",
+  soundDir: "/sounds/gentle-v1/threecardpoker",
 } as const;
 
 /** Theme tokens — Vegas high-roller: dark emerald felt, mahogany rail, gold leaf. */

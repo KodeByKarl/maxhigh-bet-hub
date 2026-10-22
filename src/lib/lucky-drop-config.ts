@@ -1,55 +1,52 @@
 /**
- * MaxHigh Lucky Drop — instant number drop (1–10).
+ * MaxHigh Royal Climb — Hi-Lo card ladder (game id kept as `lucky-drop`).
  * Pure functions only: no React, no I/O.
  *
- * Fair single-pick of 10 → 10× total return. Default payoutMult 9× ≈ 90% RTP
- * when betting one lane. Multi-pick: each lane settles independently at the
- * same payoutMult (EV scales with how many lanes are covered).
- *
- * `payoutMult` is TOTAL return multiplier (incl. stake).
+ * One 52-card deck, Ace high. Each step the player calls HIGHER or LOWER than
+ * the current card; equal rank loses. Step multiplier = (1 − houseEdge) / p,
+ * where p is the exact probability from the cards still in the deck — so RTP is
+ * (1 − houseEdge) whatever the player does. Skill = counting the deck, picking
+ * the right moment to cash out, and spending the limited skips wisely.
  */
-
-import { winCredit } from "@/lib/baccarat-config";
-
-export { winCredit };
 
 export const LUCKY_DROP_GAME_ID = "lucky-drop";
 export const GAME_ID = LUCKY_DROP_GAME_ID;
-export const LUCKY_DROP_TITLE = "Lucky Drop";
+export const LUCKY_DROP_TITLE = "Royal Climb";
 
-export const LUCKY_DROP_SPOTS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10] as const;
-export type LuckyDropSpot = (typeof LUCKY_DROP_SPOTS)[number];
+export const RANKS = [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14] as const;
+export const SUITS = ["S", "H", "D", "C"] as const;
+export type Suit = (typeof SUITS)[number];
+export type Pick = "higher" | "lower";
 
-/**
- * Reference RTP (fair 1–10 die, default 9× single pick).
- * Approximate — not enforced at runtime.
- */
-export const RTP_REFERENCE = {
-  singlePick: 90.0,
-  overall: 90.0,
-} as const;
+export type PublicCard = { rank: number; suit: Suit };
+
+export const RTP_REFERENCE = { overall: 96 } as const;
 
 export type LuckyDropConfig = {
-  schemaVersion: 1;
-  /** Total-return multiplier on a hitting lane (default 9× → ~90% RTP). */
-  payoutMult: number;
-  /** Max number of lanes a player may stake in one round. */
-  maxPicks: number;
+  schemaVersion: 2;
+  /** House edge % applied to every step (RTP = 100 − edge). */
+  houseEdge: number;
+  /** Correct calls needed to auto-cash the ladder. */
+  maxSteps: number;
+  /** Free card swaps per run (no risk, card leaves the deck). */
+  skips: number;
+  /** Hard cap on the total multiplier of a run. */
+  maxMult: number;
   rtpTarget: number;
   minBet: number;
   maxBet: number;
-  maxSpotBet: number;
   betSteps: number[];
 };
 
 export const DEFAULT_LUCKY_DROP_CONFIG: LuckyDropConfig = {
-  schemaVersion: 1,
-  payoutMult: 9,
-  maxPicks: 3,
+  schemaVersion: 2,
+  houseEdge: 4,
+  maxSteps: 10,
+  skips: 2,
+  maxMult: 500,
   rtpTarget: RTP_REFERENCE.overall,
   minBet: 1,
   maxBet: 500,
-  maxSpotBet: 500,
   betSteps: [1, 2, 5, 10, 20, 50, 100, 200, 500],
 };
 
@@ -84,24 +81,53 @@ export function normalizeLuckyDropConfig(raw: unknown): LuckyDropConfig {
 
   const minBet = clamp(num(o.minBet, d.minBet), 0.01, 10_000);
   const maxBet = clamp(num(o.maxBet, d.maxBet), minBet, 100_000);
-  const maxSpotBet = clamp(num(o.maxSpotBet, d.maxSpotBet), minBet, 100_000);
+  const houseEdge = clamp(num(o.houseEdge, d.houseEdge), 0.5, 20);
+  const steps = normalizeBetSteps(o.betSteps, d.betSteps).filter((s) => s <= maxBet);
 
   return {
-    schemaVersion: 1,
-    payoutMult: clamp(num(o.payoutMult, d.payoutMult), 1.01, 100),
-    maxPicks: clamp(Math.round(num(o.maxPicks, d.maxPicks)), 1, 10),
-    rtpTarget: clamp(num(o.rtpTarget, d.rtpTarget), 80, 99.5),
+    schemaVersion: 2,
+    houseEdge,
+    maxSteps: clamp(Math.round(num(o.maxSteps, d.maxSteps)), 2, 20),
+    skips: clamp(Math.round(num(o.skips, d.skips)), 0, 5),
+    maxMult: clamp(num(o.maxMult, d.maxMult), 5, 10_000),
+    rtpTarget: +(100 - houseEdge).toFixed(2),
     minBet,
     maxBet,
-    maxSpotBet,
-    betSteps: normalizeBetSteps(o.betSteps, d.betSteps).filter((s) => s <= maxBet),
+    betSteps: steps.length > 0 ? steps : [minBet],
   };
 }
 
-export function profitOddsFromMult(payoutMult: number): number {
-  return Math.max(0, payoutMult - 1);
+/** Card id 0–51 → rank 2–14 + suit. */
+export function cardFromId(id: number): PublicCard {
+  return { rank: 2 + (id % 13), suit: SUITS[Math.floor(id / 13)] };
 }
 
-export function creditForLaneWin(stake: number, payoutMult: number): number {
-  return winCredit(stake, profitOddsFromMult(payoutMult));
+/** Count of remaining cards per rank (index = rank − 2). */
+export function rankCountsFromDeck(deck: number[]): number[] {
+  const counts = new Array<number>(13).fill(0);
+  for (const id of deck) counts[id % 13] += 1;
+  return counts;
+}
+
+export type PickOdds = { p: number; mult: number } | null;
+
+/** Exact odds for calling `pick` against `rank`, given what is left in the deck. */
+export function oddsFor(
+  pick: Pick,
+  rank: number,
+  rankCounts: number[],
+  houseEdge: number,
+): PickOdds {
+  let hit = 0;
+  let total = 0;
+  for (let i = 0; i < 13; i++) {
+    const c = rankCounts[i] ?? 0;
+    total += c;
+    const r = i + 2;
+    if (pick === "higher" ? r > rank : r < rank) hit += c;
+  }
+  if (hit <= 0 || total <= 0) return null;
+  const p = hit / total;
+  const mult = Math.max(1.01, +((1 - houseEdge / 100) / p).toFixed(4));
+  return { p, mult };
 }

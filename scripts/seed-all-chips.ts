@@ -41,16 +41,20 @@ async function main() {
   for (const user of rows) {
     const current = Number(user.balance);
     const target = targetForRole(user.role);
-    let delta = +(target - current).toFixed(2);
+    const delta = +(target - current).toFixed(2);
 
     if (!force && delta <= 0) {
-      console.log(`  skip @${user.username} (${user.role}) — already ₱${current.toLocaleString("en-PH")}`);
+      console.log(
+        `  skip @${user.username} (${user.role}) — already ₱${current.toLocaleString("en-PH")}`,
+      );
       skipped++;
       continue;
     }
 
     if (force && delta === 0) {
-      console.log(`  ok   @${user.username} (${user.role}) — already at ₱${target.toLocaleString("en-PH")}`);
+      console.log(
+        `  ok   @${user.username} (${user.role}) — already at ₱${target.toLocaleString("en-PH")}`,
+      );
       skipped++;
       continue;
     }

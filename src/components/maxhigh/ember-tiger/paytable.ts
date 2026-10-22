@@ -1,6 +1,7 @@
 import type { CellSym, SymKind } from "./types";
 import { getEmberTigerConfig, getRuntimeSymbols } from "./runtimeConfig";
 import { emberTigerTheme } from "./theme";
+import { pantherBuyPricePerSpin } from "@/components/maxhigh/panther-shared/buyPricing";
 
 /** Default symbol table (also used before config hydrate). Prefer getRuntimeSymbols() in engine. */
 export const SYMBOLS: CellSym[] = getRuntimeSymbols().map((s) => ({
@@ -30,6 +31,12 @@ export function scatterCashPay(count: number, bet: number): number {
 export function getBuyFeatureMult() {
   return getEmberTigerConfig().buyFeatureMult;
 }
+/** Most free spins one Buy Bonus can purchase (never above the FS session cap). */
+export function getBuyMaxQuantity() {
+  const cap = getEmberTigerConfig().maxFsSessionSpins;
+  return cap > 0 ? Math.min(50, cap) : 50;
+}
+
 export function getSuperBuyFeatureMult() {
   return getEmberTigerConfig().superBuyFeatureMult;
 }
@@ -39,9 +46,12 @@ export const BUY_FS_START_BET = 1;
 export const BUY_FS_BET_MIN = 1;
 export const BUY_FS_BET_MAX = 100_000;
 
-export function getBuyUnitPrice(bet: number, mode: "normal" | "super" = "normal") {
-  const mult = mode === "super" ? getSuperBuyFeatureMult() : getBuyFeatureMult();
-  return +(bet * mult).toFixed(2);
+/** Price of one free spin at `bet` when buying `quantity` spins (fair per-quantity curve). */
+export function getBuyUnitPrice(bet: number, quantity = 1) {
+  const cfg = getEmberTigerConfig();
+  return +(
+    bet * pantherBuyPricePerSpin("ember-tiger", cfg.buyFeatureMult, cfg.freeSpinsBase, quantity)
+  ).toFixed(2);
 }
 export function getAnteMult() {
   return getEmberTigerConfig().anteBetMult;

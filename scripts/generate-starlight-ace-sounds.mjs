@@ -119,7 +119,12 @@ fs.mkdirSync(OUT_DIR, { recursive: true });
   mixInto(out, pentatonicShimmer(dur, rand), 0, 1);
   let t = 0;
   while (t < dur) {
-    mixInto(out, tileClack(rand, 0.85 + rand() * 0.4), Math.floor(t * SAMPLE_RATE), 0.7 + rand() * 0.35);
+    mixInto(
+      out,
+      tileClack(rand, 0.85 + rand() * 0.4),
+      Math.floor(t * SAMPLE_RATE),
+      0.7 + rand() * 0.35,
+    );
     t += 0.045 + rand() * 0.055;
   }
   for (let i = 0; i < n; i++) {
@@ -146,7 +151,12 @@ fs.mkdirSync(OUT_DIR, { recursive: true });
   const n = Math.floor(SAMPLE_RATE * 0.35);
   const out = new Float32Array(n);
   for (let k = 0; k < 5; k++) {
-    mixInto(out, tileClack(rand, 0.9 + k * 0.05), Math.floor(SAMPLE_RATE * (0.02 + k * 0.035)), 0.55 + k * 0.08);
+    mixInto(
+      out,
+      tileClack(rand, 0.9 + k * 0.05),
+      Math.floor(SAMPLE_RATE * (0.02 + k * 0.035)),
+      0.55 + k * 0.08,
+    );
   }
   for (let i = 0; i < n; i++) {
     const t = i / SAMPLE_RATE;

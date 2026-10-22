@@ -20,10 +20,15 @@ export const WildPantherIcon = memo(function WildPantherIcon({
 }: WildPantherIconProps) {
   const isScatter = kind === "lollipop";
   const isBomb = kind === "bomb";
-  const src = ICON_SRC[kind] || "/images/symbols/wild-panther/10.png?v=1";
+  const src = ICON_SRC[kind] || "/images/symbols/wild-panther/10-v20261012-unique.png";
 
   return (
-    <div className={cn("relative grid place-items-center bg-transparent overflow-visible size-full select-none", className)}>
+    <div
+      className={cn(
+        "relative grid place-items-center bg-transparent overflow-visible size-full select-none",
+        className,
+      )}
+    >
       <img
         src={src}
         alt={kind}

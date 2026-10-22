@@ -35,8 +35,7 @@ const CLONES = [
     pascal: "EmberTiger",
     const: "EMBER_TIGER",
     camel: "emberTiger",
-    blurb:
-      "Hunt volcanic gold with cascading wins, fire bombs, and an adjustable Buy Bonus.",
+    blurb: "Hunt volcanic gold with cascading wins, fire bombs, and an adjustable Buy Bonus.",
   },
   {
     id: "lotus-lynx",
@@ -44,8 +43,7 @@ const CLONES = [
     pascal: "LotusLynx",
     const: "LOTUS_LYNX",
     camel: "lotusLynx",
-    blurb:
-      "Stalk the night garden for cluster tumbles, lotus bombs, and an adjustable Buy Bonus.",
+    blurb: "Stalk the night garden for cluster tumbles, lotus bombs, and an adjustable Buy Bonus.",
   },
   {
     id: "coral-cobra",
@@ -53,8 +51,7 @@ const CLONES = [
     pascal: "CoralCobra",
     const: "CORAL_COBRA",
     camel: "coralCobra",
-    blurb:
-      "Dive the reef for cascading clusters, pearl bombs, and an adjustable Buy Bonus.",
+    blurb: "Dive the reef for cascading clusters, pearl bombs, and an adjustable Buy Bonus.",
   },
   {
     id: "frost-fox",
@@ -62,8 +59,7 @@ const CLONES = [
     pascal: "FrostFox",
     const: "FROST_FOX",
     camel: "frostFox",
-    blurb:
-      "Race the tundra for ice-cluster wins, frost bombs, and an adjustable Buy Bonus.",
+    blurb: "Race the tundra for ice-cluster wins, frost bombs, and an adjustable Buy Bonus.",
   },
   {
     id: "solar-serpent",
@@ -71,8 +67,7 @@ const CLONES = [
     pascal: "SolarSerpent",
     const: "SOLAR_SERPENT",
     camel: "solarSerpent",
-    blurb:
-      "Chase the desert sun for cascading wins, solar bombs, and an adjustable Buy Bonus.",
+    blurb: "Chase the desert sun for cascading wins, solar bombs, and an adjustable Buy Bonus.",
   },
   {
     id: "honey-hive",
@@ -80,8 +75,7 @@ const CLONES = [
     pascal: "HoneyHive",
     const: "HONEY_HIVE",
     camel: "honeyHive",
-    blurb:
-      "Raid the hive for sweet cluster tumbles, honeycomb bombs, and an adjustable Buy Bonus.",
+    blurb: "Raid the hive for sweet cluster tumbles, honeycomb bombs, and an adjustable Buy Bonus.",
   },
   {
     id: "midnight-owl",
@@ -89,8 +83,7 @@ const CLONES = [
     pascal: "MidnightOwl",
     const: "MIDNIGHT_OWL",
     camel: "midnightOwl",
-    blurb:
-      "Hunt after dark for cascading clusters, moon bombs, and an adjustable Buy Bonus.",
+    blurb: "Hunt after dark for cascading clusters, moon bombs, and an adjustable Buy Bonus.",
   },
   {
     id: "ruby-raven",
@@ -98,8 +91,7 @@ const CLONES = [
     pascal: "RubyRaven",
     const: "RUBY_RAVEN",
     camel: "rubyRaven",
-    blurb:
-      "Loot gothic vaults for cluster wins, ruby bombs, and an adjustable Buy Bonus.",
+    blurb: "Loot gothic vaults for cluster wins, ruby bombs, and an adjustable Buy Bonus.",
   },
 ];
 
@@ -180,7 +172,11 @@ function cloneFiles(g) {
   fs.writeFileSync(srvDest, rewrite(fs.readFileSync(srvSrc, "utf8"), g), "utf8");
 
   const modalSrc = path.join(ROOT, "src/components/superadmin/games/GoldenPantherConfigModal.tsx");
-  const modalDest = path.join(ROOT, "src/components/superadmin/games", `${g.pascal}ConfigModal.tsx`);
+  const modalDest = path.join(
+    ROOT,
+    "src/components/superadmin/games",
+    `${g.pascal}ConfigModal.tsx`,
+  );
   fs.writeFileSync(modalDest, rewrite(fs.readFileSync(modalSrc, "utf8"), g), "utf8");
 
   console.log("  config, folder, Slot, server, SA modal");

@@ -167,9 +167,15 @@ async function restartApp() {
   const signal = join(LOG_DIR, "restart.required");
   writeFileSync(
     signal,
-    JSON.stringify({ at: stamp(), reason: "auto-update", sha: await localSha().catch(() => null) }, null, 2),
+    JSON.stringify(
+      { at: stamp(), reason: "auto-update", sha: await localSha().catch(() => null) },
+      null,
+      2,
+    ),
   );
-  log(`Wrote restart signal ${signal} (no PM2 — restart the Node process manually or via supervisor)`);
+  log(
+    `Wrote restart signal ${signal} (no PM2 — restart the Node process manually or via supervisor)`,
+  );
   return "signal";
 }
 

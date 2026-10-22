@@ -5,7 +5,18 @@
 import { eq, desc, sql, like, or, and, asc, inArray } from "drizzle-orm";
 import { compare, hash } from "bcryptjs";
 import { getDb } from "../db/client";
-import { auditLogs, gameControls, jackpot, platformSettings, promotions, riskControls, sessions, transactions, users, walletRequests } from "../db/schema";
+import {
+  auditLogs,
+  gameControls,
+  jackpot,
+  platformSettings,
+  promotions,
+  riskControls,
+  sessions,
+  transactions,
+  users,
+  walletRequests,
+} from "../db/schema";
 import type { PublicUser, UserRole } from "@/lib/user";
 import type {
   PlatformSettingsData,
@@ -16,9 +27,21 @@ import type {
   SuperUserRow,
   SuperWalletRequestRow,
 } from "@/lib/superadmin-types";
-import { destroyUserSessions, money, newId, requireAdmin, requireSuperadmin, toPublicUser } from "../session";
+import {
+  destroyUserSessions,
+  money,
+  newId,
+  requireAdmin,
+  requireSuperadmin,
+  toPublicUser,
+} from "../session";
 import { writeAuditLog } from "../admin/audit.server";
-import { isLobbyVisibleGame, isThumbnailOnlyGame, THUMBNAIL_ONLY_GAME_IDS } from "@/lib/playable-games";
+import {
+  isAdminListedGame,
+  isLobbyVisibleGame,
+  isThumbnailOnlyGame,
+  THUMBNAIL_ONLY_GAME_IDS,
+} from "@/lib/playable-games";
 import { requirePermission } from "../auth/rbac.server";
 import { assertCanManageChips, scopeToDownline } from "../auth/network-scope.server";
 import { slotGames } from "@/lib/games";
@@ -176,24 +199,38 @@ export async function listSuperUsers(opts?: {
   if (role) filters.push(eq(users.role, role));
   if (q) {
     filters.push(
-      or(like(users.email, `%${q}%`), like(users.username, `%${q}%`), like(users.displayName, `%${q}%`)),
+      or(
+        like(users.email, `%${q}%`),
+        like(users.username, `%${q}%`),
+        like(users.displayName, `%${q}%`),
+      ),
     );
   }
 
   const base = db.select().from(users);
   const rows =
     filters.length > 0
-      ? await base.where(and(...filters)).orderBy(desc(users.createdAt)).limit(limit)
+      ? await base
+          .where(and(...filters))
+          .orderBy(desc(users.createdAt))
+          .limit(limit)
       : await base.orderBy(desc(users.createdAt)).limit(limit);
 
-  const uplineIds = Array.from(new Set(rows.map((u) => u.parentAgentId).filter(Boolean))) as string[];
+  const uplineIds = Array.from(
+    new Set(rows.map((u) => u.parentAgentId).filter(Boolean)),
+  ) as string[];
   const agentMap = new Map<string, string>();
 
   if (uplineIds.length > 0) {
     const agents = await db
       .select({ id: users.id, username: users.username, displayName: users.displayName })
       .from(users)
-      .where(sql`${users.id} in (${sql.join(uplineIds.map((id) => sql`${id}`), sql`, `)})`);
+      .where(
+        sql`${users.id} in (${sql.join(
+          uplineIds.map((id) => sql`${id}`),
+          sql`, `,
+        )})`,
+      );
     for (const a of agents) {
       agentMap.set(a.id, a.username);
     }
@@ -207,10 +244,17 @@ export async function listSuperUsers(opts?: {
     balance: Number(u.balance),
     role: u.role as UserRole,
     displayName: u.displayName,
-    isLocked: (u.isLocked === "yes" || (u.failedAttempts ?? 0) >= 3 || Boolean(u.lockedUntil && new Date() < new Date(u.lockedUntil))) ? "yes" : "no",
+    isLocked:
+      u.isLocked === "yes" ||
+      (u.failedAttempts ?? 0) >= 3 ||
+      Boolean(u.lockedUntil && new Date() < new Date(u.lockedUntil))
+        ? "yes"
+        : "no",
     failedAttempts: u.failedAttempts ?? 0,
     parentAgentId: u.parentAgentId ?? null,
-    parentAgentUsername: u.parentAgentId ? (agentMap.get(u.parentAgentId) ?? "System / Direct") : "System / Direct",
+    parentAgentUsername: u.parentAgentId
+      ? (agentMap.get(u.parentAgentId) ?? "System / Direct")
+      : "System / Direct",
     createdAt: u.createdAt?.toISOString?.() ?? String(u.createdAt),
   }));
 }
@@ -219,7 +263,10 @@ export async function superSetUserRole(data: {
   userId: string;
   role: UserRole;
 }): Promise<PublicUser> {
-  const actor = await requirePermission("ROLE_UPDATE", { targetType: "user", targetId: data.userId });
+  const actor = await requirePermission("ROLE_UPDATE", {
+    targetType: "user",
+    targetId: data.userId,
+  });
   if (data.userId === actor.id && data.role !== "superadmin") {
     throw new Error("Cannot demote your own superadmin account");
   }
@@ -276,7 +323,11 @@ export async function superCreateUser(data: {
     parentAgentId = upline.id;
   }
 
-  const [existingUsername] = await db.select({ id: users.id }).from(users).where(eq(users.username, username)).limit(1);
+  const [existingUsername] = await db
+    .select({ id: users.id })
+    .from(users)
+    .where(eq(users.username, username))
+    .limit(1);
   if (existingUsername) throw new Error("Username already exists");
   const [existingPublicId] = await db
     .select({ id: users.id })
@@ -346,7 +397,8 @@ export async function superUpdateUser(data: {
   }
 
   if (data.email !== undefined) {
-    const email = data.email === null || data.email.trim() === "" ? null : data.email.trim().toLowerCase();
+    const email =
+      data.email === null || data.email.trim() === "" ? null : data.email.trim().toLowerCase();
     if (email !== target.email) {
       patch.email = email;
       changes.push(email ? `email → ${email}` : "email cleared");
@@ -354,7 +406,8 @@ export async function superUpdateUser(data: {
   }
 
   if (data.displayName !== undefined) {
-    const displayName = data.displayName === null || data.displayName.trim() === "" ? null : data.displayName.trim();
+    const displayName =
+      data.displayName === null || data.displayName.trim() === "" ? null : data.displayName.trim();
     if (displayName !== target.displayName) {
       patch.displayName = displayName;
       changes.push("display name updated");
@@ -423,7 +476,10 @@ export async function superAdjustBalance(data: {
     const current = Number(user.balance);
     const next = +(current + data.delta).toFixed(2);
     if (next < 0) throw new Error("Balance cannot go negative");
-    await tx.update(users).set({ balance: money(next) }).where(eq(users.id, user.id));
+    await tx
+      .update(users)
+      .set({ balance: money(next) })
+      .where(eq(users.id, user.id));
     await tx.insert(transactions).values({
       id: newId(),
       userId: user.id,
@@ -512,11 +568,12 @@ export async function listSuperGames(): Promise<SuperGameRow[]> {
 
   // Catalog is the source of truth — dropped titles leave the list even if
   // stale game_controls rows remain in MySQL.
-  // Soft-launch: hide thumbnail-only (Coming Soon) titles from the admin grid.
+  // Soft-launch: hide thumbnail-only (Coming Soon) titles from the admin grid;
+  // families still hidden from players stay listed so they can be configured.
   const rows: SuperGameRow[] = [];
   for (const catalog of slotGames) {
     const id = catalog.id;
-    if (!isLobbyVisibleGame(id) || isThumbnailOnlyGame(id)) continue;
+    if (!isAdminListedGame(id) || isThumbnailOnlyGame(id)) continue;
     const c = byId.get(id);
     rows.push({
       gameId: id,
@@ -560,17 +617,21 @@ export async function superUpdateGame(data: {
     throw new Error("This title is thumbnail-only for now — enable after the engine is mounted");
   }
   const forceDisabled = isThumbnailOnlyGame(data.gameId);
-  const existing = await db.select().from(gameControls).where(eq(gameControls.gameId, data.gameId)).limit(1);
+  const existing = await db
+    .select()
+    .from(gameControls)
+    .where(eq(gameControls.gameId, data.gameId))
+    .limit(1);
   const patch = {
-    enabled:
-      forceDisabled
-        ? ("no" as const)
-        : data.enabled === undefined
-          ? undefined
-          : data.enabled
-            ? ("yes" as const)
-            : ("no" as const),
-    featured: data.featured === undefined ? undefined : data.featured ? ("yes" as const) : ("no" as const),
+    enabled: forceDisabled
+      ? ("no" as const)
+      : data.enabled === undefined
+        ? undefined
+        : data.enabled
+          ? ("yes" as const)
+          : ("no" as const),
+    featured:
+      data.featured === undefined ? undefined : data.featured ? ("yes" as const) : ("no" as const),
     tag: data.tag === undefined ? undefined : data.tag,
     rtp: data.rtp === undefined ? undefined : data.rtp,
     volatility: data.volatility === undefined ? undefined : data.volatility,
@@ -593,7 +654,9 @@ export async function superUpdateGame(data: {
       volatility: data.volatility ?? catalog.volatility,
       minBet: data.minBet ?? catalog.minBet,
       maxBet: data.maxBet ?? catalog.maxBet,
-      notes: data.notes ?? (forceDisabled ? "Soft-launch: thumbnail only — engine not mounted yet" : null),
+      notes:
+        data.notes ??
+        (forceDisabled ? "Soft-launch: thumbnail only — engine not mounted yet" : null),
     });
   } else if (Object.keys(clean).length > 0) {
     await db.update(gameControls).set(clean).where(eq(gameControls.gameId, data.gameId));
@@ -618,7 +681,10 @@ export async function superSetJackpot(amount: number): Promise<{ amount: number 
   const db = getDb();
   const rows = await db.select().from(jackpot).where(eq(jackpot.id, "mega")).limit(1);
   if (rows[0]) {
-    await db.update(jackpot).set({ amount: money(amount) }).where(eq(jackpot.id, "mega"));
+    await db
+      .update(jackpot)
+      .set({ amount: money(amount) })
+      .where(eq(jackpot.id, "mega"));
   } else {
     await db.insert(jackpot).values({
       id: "mega",
@@ -643,7 +709,10 @@ export async function superSetJackpotEnabled(enabled: boolean): Promise<{ enable
   const db = getDb();
   const rows = await db.select().from(jackpot).where(eq(jackpot.id, "mega")).limit(1);
   if (rows[0]) {
-    await db.update(jackpot).set({ enabled: enabled ? "yes" : "no" }).where(eq(jackpot.id, "mega"));
+    await db
+      .update(jackpot)
+      .set({ enabled: enabled ? "yes" : "no" })
+      .where(eq(jackpot.id, "mega"));
   } else {
     await db.insert(jackpot).values({
       id: "mega",
@@ -669,7 +738,10 @@ export async function superSetUltraMegaJackpot(amount: number): Promise<{ amount
   const db = getDb();
   const rows = await db.select().from(jackpot).where(eq(jackpot.id, "mega")).limit(1);
   if (rows[0]) {
-    await db.update(jackpot).set({ displayAmount: money(amount) }).where(eq(jackpot.id, "mega"));
+    await db
+      .update(jackpot)
+      .set({ displayAmount: money(amount) })
+      .where(eq(jackpot.id, "mega"));
   } else {
     await db.insert(jackpot).values({
       id: "mega",
@@ -725,7 +797,10 @@ export async function assignJackpotToPlayer(data: {
     if (amountAwarded <= 0) throw new Error("Mega Jackpot pool is empty");
 
     const nextBal = +(Number(player.balance) + amountAwarded).toFixed(2);
-    await tx.update(users).set({ balance: money(nextBal) }).where(eq(users.id, player.id));
+    await tx
+      .update(users)
+      .set({ balance: money(nextBal) })
+      .where(eq(users.id, player.id));
     await tx.insert(transactions).values({
       id: newId(),
       userId: player.id,
@@ -737,7 +812,10 @@ export async function assignJackpotToPlayer(data: {
     });
 
     const reset = data.resetAmount ?? 10000;
-    await tx.update(jackpot).set({ amount: money(reset) }).where(eq(jackpot.id, "mega"));
+    await tx
+      .update(jackpot)
+      .set({ amount: money(reset) })
+      .where(eq(jackpot.id, "mega"));
 
     return { amountAwarded, playerUsername: player.username };
   });
@@ -812,321 +890,10 @@ function parseEngineConfigJson(raw: string | null | undefined): unknown {
   }
 }
 
-/** Public — Candy Peak engine math (defaults if unset). */
-export async function getCandyPeakEngineConfig() {
-  const {
-    CANDY_PEAK_GAME_ID,
-    DEFAULT_CANDY_PEAK_CONFIG,
-    normalizeCandyPeakConfig,
-  } = await import("@/lib/candy-peak-config");
-  const db = getDb();
-  try {
-    const rows = await db
-      .select()
-      .from(gameControls)
-      .where(eq(gameControls.gameId, CANDY_PEAK_GAME_ID))
-      .limit(1);
-    return normalizeCandyPeakConfig(parseEngineConfigJson(rows[0]?.engineConfig));
-  } catch {
-    return structuredClone(DEFAULT_CANDY_PEAK_CONFIG);
-  }
-}
-
-/** Superadmin — save full Candy Peak math config. */
-export async function saveCandyPeakEngineConfig(raw: unknown) {
-  const actor = await requireSuperadmin();
-  const {
-    CANDY_PEAK_GAME_ID,
-    normalizeCandyPeakConfig,
-  } = await import("@/lib/candy-peak-config");
-  const catalog = slotGames.find((g) => g.id === CANDY_PEAK_GAME_ID);
-  if (!catalog) throw new Error("Candy Peak not in catalog");
-
-  const cfg = normalizeCandyPeakConfig(raw);
-  const db = getDb();
-  const existing = await db
-    .select()
-    .from(gameControls)
-    .where(eq(gameControls.gameId, CANDY_PEAK_GAME_ID))
-    .limit(1);
-
-  const payload = JSON.stringify(cfg);
-
-  if (!existing[0]) {
-    await db.insert(gameControls).values({
-      gameId: CANDY_PEAK_GAME_ID,
-      enabled: "yes",
-      featured: "no",
-      sortOrder: 0,
-      tag: catalog.tag ?? null,
-      rtp: catalog.rtp,
-      volatility: catalog.volatility,
-      minBet: catalog.minBet,
-      maxBet: catalog.maxBet,
-      engineConfig: payload,
-    });
-  } else {
-    await db
-      .update(gameControls)
-      .set({ engineConfig: payload })
-      .where(eq(gameControls.gameId, CANDY_PEAK_GAME_ID));
-  }
-
-  await writeAuditLog({
-    actor,
-    action: "super.candy_peak_config",
-    summary: `Updated Candy Peak engine config (dead spin ${cfg.deadSpinChancePercent}%, FS ${cfg.freeSpinsBase})`,
-    targetType: "game",
-    targetId: CANDY_PEAK_GAME_ID,
-    meta: {
-      deadSpinChancePercent: cfg.deadSpinChancePercent,
-      bombChanceBasePercent: cfg.bombChanceBasePercent,
-      freeSpinsTriggerCount: cfg.freeSpinsTriggerCount,
-      freeSpinsBase: cfg.freeSpinsBase,
-    },
-  });
-
-  return cfg;
-}
-
-/** Public — Mermaid Riches engine math (defaults if unset). */
-export async function getMermaidRichesEngineConfig() {
-  const {
-    MERMAID_RICHES_GAME_ID,
-    DEFAULT_MERMAID_RICHES_CONFIG,
-    normalizeMermaidRichesConfig,
-  } = await import("@/lib/mermaid-riches-config");
-  const db = getDb();
-  try {
-    const rows = await db
-      .select()
-      .from(gameControls)
-      .where(eq(gameControls.gameId, MERMAID_RICHES_GAME_ID))
-      .limit(1);
-    return normalizeMermaidRichesConfig(parseEngineConfigJson(rows[0]?.engineConfig));
-  } catch {
-    return structuredClone(DEFAULT_MERMAID_RICHES_CONFIG);
-  }
-}
-
-/** Superadmin — save full Mermaid Riches math config. */
-export async function saveMermaidRichesEngineConfig(raw: unknown) {
-  const actor = await requireSuperadmin();
-  const {
-    MERMAID_RICHES_GAME_ID,
-    normalizeMermaidRichesConfig,
-  } = await import("@/lib/mermaid-riches-config");
-  const catalog = slotGames.find((g) => g.id === MERMAID_RICHES_GAME_ID);
-  if (!catalog) throw new Error("Mermaid Riches not in catalog");
-
-  const cfg = normalizeMermaidRichesConfig(raw);
-  const db = getDb();
-  const existing = await db
-    .select()
-    .from(gameControls)
-    .where(eq(gameControls.gameId, MERMAID_RICHES_GAME_ID))
-    .limit(1);
-
-  const payload = JSON.stringify(cfg);
-
-  if (!existing[0]) {
-    await db.insert(gameControls).values({
-      gameId: MERMAID_RICHES_GAME_ID,
-      enabled: "yes",
-      featured: "no",
-      sortOrder: 0,
-      tag: catalog.tag ?? null,
-      rtp: catalog.rtp,
-      volatility: catalog.volatility,
-      minBet: catalog.minBet,
-      maxBet: catalog.maxBet,
-      engineConfig: payload,
-    });
-  } else {
-    await db
-      .update(gameControls)
-      .set({ engineConfig: payload })
-      .where(eq(gameControls.gameId, MERMAID_RICHES_GAME_ID));
-  }
-
-  await writeAuditLog({
-    actor,
-    action: "super.mermaid_riches_config",
-    summary: `Updated Mermaid Riches engine config (dead spin ${cfg.deadSpinChancePercent}%, FS ${cfg.freeSpinsBase})`,
-    targetType: "game",
-    targetId: MERMAID_RICHES_GAME_ID,
-    meta: {
-      deadSpinChancePercent: cfg.deadSpinChancePercent,
-      bombChanceBasePercent: cfg.bombChanceBasePercent,
-      freeSpinsTriggerCount: cfg.freeSpinsTriggerCount,
-      freeSpinsBase: cfg.freeSpinsBase,
-    },
-  });
-
-  return cfg;
-}
-
-/** Public — Sugar Surge engine math (defaults if unset). */
-export async function getSugarSurgeEngineConfig() {
-  const {
-    SUGAR_SURGE_GAME_ID,
-    DEFAULT_SUGAR_SURGE_CONFIG,
-    normalizeSugarSurgeConfig,
-  } = await import("@/lib/sugar-surge-config");
-  const db = getDb();
-  try {
-    const rows = await db
-      .select()
-      .from(gameControls)
-      .where(eq(gameControls.gameId, SUGAR_SURGE_GAME_ID))
-      .limit(1);
-    return normalizeSugarSurgeConfig(parseEngineConfigJson(rows[0]?.engineConfig));
-  } catch {
-    return structuredClone(DEFAULT_SUGAR_SURGE_CONFIG);
-  }
-}
-
-/** Superadmin — save full Sugar Surge math config. */
-export async function saveSugarSurgeEngineConfig(raw: unknown) {
-  const actor = await requireSuperadmin();
-  const {
-    SUGAR_SURGE_GAME_ID,
-    normalizeSugarSurgeConfig,
-  } = await import("@/lib/sugar-surge-config");
-  const catalog = slotGames.find((g) => g.id === SUGAR_SURGE_GAME_ID);
-  if (!catalog) throw new Error("Sugar Surge not in catalog");
-
-  const cfg = normalizeSugarSurgeConfig(raw);
-  const db = getDb();
-  const existing = await db
-    .select()
-    .from(gameControls)
-    .where(eq(gameControls.gameId, SUGAR_SURGE_GAME_ID))
-    .limit(1);
-
-  const payload = JSON.stringify(cfg);
-
-  if (!existing[0]) {
-    await db.insert(gameControls).values({
-      gameId: SUGAR_SURGE_GAME_ID,
-      enabled: "yes",
-      featured: "no",
-      sortOrder: 0,
-      tag: catalog.tag ?? null,
-      rtp: catalog.rtp,
-      volatility: catalog.volatility,
-      minBet: catalog.minBet,
-      maxBet: catalog.maxBet,
-      engineConfig: payload,
-    });
-  } else {
-    await db
-      .update(gameControls)
-      .set({ engineConfig: payload })
-      .where(eq(gameControls.gameId, SUGAR_SURGE_GAME_ID));
-  }
-
-  await writeAuditLog({
-    actor,
-    action: "super.sugar_surge_config",
-    summary: `Updated Sugar Surge engine config (dead spin ${cfg.deadSpinChancePercent}%, FS ${cfg.freeSpinsBase})`,
-    targetType: "game",
-    targetId: SUGAR_SURGE_GAME_ID,
-    meta: {
-      deadSpinChancePercent: cfg.deadSpinChancePercent,
-      bombChanceBasePercent: cfg.bombChanceBasePercent,
-      freeSpinsTriggerCount: cfg.freeSpinsTriggerCount,
-      freeSpinsBase: cfg.freeSpinsBase,
-    },
-  });
-
-  return cfg;
-}
-
-/** Public — Boracay Bounce engine math (defaults if unset). */
-export async function getBoracayBounceEngineConfig() {
-  const {
-    BORACAY_BOUNCE_GAME_ID,
-    DEFAULT_BORACAY_BOUNCE_CONFIG,
-    normalizeBoracayBounceConfig,
-  } = await import("@/lib/boracay-bounce-config");
-  const db = getDb();
-  try {
-    const rows = await db
-      .select()
-      .from(gameControls)
-      .where(eq(gameControls.gameId, BORACAY_BOUNCE_GAME_ID))
-      .limit(1);
-    return normalizeBoracayBounceConfig(parseEngineConfigJson(rows[0]?.engineConfig));
-  } catch {
-    return structuredClone(DEFAULT_BORACAY_BOUNCE_CONFIG);
-  }
-}
-
-/** Superadmin — save full Boracay Bounce math config. */
-export async function saveBoracayBounceEngineConfig(raw: unknown) {
-  const actor = await requireSuperadmin();
-  const {
-    BORACAY_BOUNCE_GAME_ID,
-    normalizeBoracayBounceConfig,
-  } = await import("@/lib/boracay-bounce-config");
-  const catalog = slotGames.find((g) => g.id === BORACAY_BOUNCE_GAME_ID);
-  if (!catalog) throw new Error("Boracay Bounce not in catalog");
-
-  const cfg = normalizeBoracayBounceConfig(raw);
-  const db = getDb();
-  const existing = await db
-    .select()
-    .from(gameControls)
-    .where(eq(gameControls.gameId, BORACAY_BOUNCE_GAME_ID))
-    .limit(1);
-
-  const payload = JSON.stringify(cfg);
-
-  if (!existing[0]) {
-    await db.insert(gameControls).values({
-      gameId: BORACAY_BOUNCE_GAME_ID,
-      enabled: "yes",
-      featured: "no",
-      sortOrder: 0,
-      tag: catalog.tag ?? null,
-      rtp: catalog.rtp,
-      volatility: catalog.volatility,
-      minBet: catalog.minBet,
-      maxBet: catalog.maxBet,
-      engineConfig: payload,
-    });
-  } else {
-    await db
-      .update(gameControls)
-      .set({ engineConfig: payload })
-      .where(eq(gameControls.gameId, BORACAY_BOUNCE_GAME_ID));
-  }
-
-  await writeAuditLog({
-    actor,
-    action: "super.boracay_bounce_config",
-    summary: `Updated Boracay Bounce engine config (dead spin ${cfg.deadSpinChancePercent}%, FS ${cfg.freeSpinsBase})`,
-    targetType: "game",
-    targetId: BORACAY_BOUNCE_GAME_ID,
-    meta: {
-      deadSpinChancePercent: cfg.deadSpinChancePercent,
-      bombChanceBasePercent: cfg.bombChanceBasePercent,
-      freeSpinsTriggerCount: cfg.freeSpinsTriggerCount,
-      freeSpinsBase: cfg.freeSpinsBase,
-    },
-  });
-
-  return cfg;
-}
-
 /** Public — Godly Gates engine math (defaults if unset). */
 export async function getGodlyGatesEngineConfig() {
-  const {
-    GODLY_GATES_GAME_ID,
-    DEFAULT_GODLY_GATES_CONFIG,
-    normalizeGodlyGatesConfig,
-  } = await import("@/lib/godly-gates-config");
+  const { GODLY_GATES_GAME_ID, DEFAULT_GODLY_GATES_CONFIG, normalizeGodlyGatesConfig } =
+    await import("@/lib/godly-gates-config");
   const db = getDb();
   try {
     const rows = await db
@@ -1143,10 +910,8 @@ export async function getGodlyGatesEngineConfig() {
 /** Superadmin — save full Godly Gates math config. */
 export async function saveGodlyGatesEngineConfig(raw: unknown) {
   const actor = await requireSuperadmin();
-  const {
-    GODLY_GATES_GAME_ID,
-    normalizeGodlyGatesConfig,
-  } = await import("@/lib/godly-gates-config");
+  const { GODLY_GATES_GAME_ID, normalizeGodlyGatesConfig } =
+    await import("@/lib/godly-gates-config");
   const catalog = slotGames.find((g) => g.id === GODLY_GATES_GAME_ID);
   if (!catalog) throw new Error("Godly Gates not in catalog");
 
@@ -1198,11 +963,8 @@ export async function saveGodlyGatesEngineConfig(raw: unknown) {
 
 /** Public — Olympus Wrath engine math (defaults if unset). */
 export async function getOlympusWrathEngineConfig() {
-  const {
-    OLYMPUS_WRATH_GAME_ID,
-    DEFAULT_OLYMPUS_WRATH_CONFIG,
-    normalizeOlympusWrathConfig,
-  } = await import("@/lib/olympus-wrath-config");
+  const { OLYMPUS_WRATH_GAME_ID, DEFAULT_OLYMPUS_WRATH_CONFIG, normalizeOlympusWrathConfig } =
+    await import("@/lib/olympus-wrath-config");
   const db = getDb();
   try {
     const rows = await db
@@ -1219,9 +981,8 @@ export async function getOlympusWrathEngineConfig() {
 /** Superadmin — save full Olympus Wrath math config. */
 export async function saveOlympusWrathEngineConfig(raw: unknown) {
   const actor = await requireSuperadmin();
-  const { OLYMPUS_WRATH_GAME_ID, normalizeOlympusWrathConfig } = await import(
-    "@/lib/olympus-wrath-config"
-  );
+  const { OLYMPUS_WRATH_GAME_ID, normalizeOlympusWrathConfig } =
+    await import("@/lib/olympus-wrath-config");
   const catalog = slotGames.find((g) => g.id === OLYMPUS_WRATH_GAME_ID);
   if (!catalog) throw new Error("Olympus Wrath not in catalog");
 
@@ -1273,11 +1034,8 @@ export async function saveOlympusWrathEngineConfig(raw: unknown) {
 
 /** Public — Enchanted Grove engine math (defaults if unset). */
 export async function getEnchantedGroveEngineConfig() {
-  const {
-    ENCHANTED_GROVE_GAME_ID,
-    DEFAULT_ENCHANTED_GROVE_CONFIG,
-    normalizeEnchantedGroveConfig,
-  } = await import("@/lib/enchanted-grove-config");
+  const { ENCHANTED_GROVE_GAME_ID, DEFAULT_ENCHANTED_GROVE_CONFIG, normalizeEnchantedGroveConfig } =
+    await import("@/lib/enchanted-grove-config");
   const db = getDb();
   try {
     const rows = await db
@@ -1294,9 +1052,8 @@ export async function getEnchantedGroveEngineConfig() {
 /** Superadmin — save full Enchanted Grove math config. */
 export async function saveEnchantedGroveEngineConfig(raw: unknown) {
   const actor = await requireSuperadmin();
-  const { ENCHANTED_GROVE_GAME_ID, normalizeEnchantedGroveConfig } = await import(
-    "@/lib/enchanted-grove-config"
-  );
+  const { ENCHANTED_GROVE_GAME_ID, normalizeEnchantedGroveConfig } =
+    await import("@/lib/enchanted-grove-config");
   const catalog = slotGames.find((g) => g.id === ENCHANTED_GROVE_GAME_ID);
   if (!catalog) throw new Error("Enchanted Grove not in catalog");
 
@@ -1346,717 +1103,10 @@ export async function saveEnchantedGroveEngineConfig(raw: unknown) {
   return cfg;
 }
 
-/** Public — Mahjong Ways engine math (defaults if unset). */
-export async function getMahjongWaysEngineConfig() {
-  const {
-    MAHJONG_WAYS_GAME_ID,
-    DEFAULT_MAHJONG_WAYS_CONFIG,
-    normalizeMahjongWaysConfig,
-  } = await import("@/lib/mahjong-ways-config");
-  const db = getDb();
-  try {
-    const rows = await db
-      .select()
-      .from(gameControls)
-      .where(eq(gameControls.gameId, MAHJONG_WAYS_GAME_ID))
-      .limit(1);
-    return normalizeMahjongWaysConfig(parseEngineConfigJson(rows[0]?.engineConfig));
-  } catch {
-    return structuredClone(DEFAULT_MAHJONG_WAYS_CONFIG);
-  }
-}
-
-/** Superadmin — save full Mahjong Ways math config. */
-export async function saveMahjongWaysEngineConfig(raw: unknown) {
-  const actor = await requireSuperadmin();
-  const {
-    MAHJONG_WAYS_GAME_ID,
-    normalizeMahjongWaysConfig,
-  } = await import("@/lib/mahjong-ways-config");
-  const catalog = slotGames.find((g) => g.id === MAHJONG_WAYS_GAME_ID);
-  if (!catalog) throw new Error("Mahjong Ways not in catalog");
-
-  const cfg = normalizeMahjongWaysConfig(raw);
-  const db = getDb();
-  const existing = await db
-    .select()
-    .from(gameControls)
-    .where(eq(gameControls.gameId, MAHJONG_WAYS_GAME_ID))
-    .limit(1);
-
-  const payload = JSON.stringify(cfg);
-
-  if (!existing[0]) {
-    await db.insert(gameControls).values({
-      gameId: MAHJONG_WAYS_GAME_ID,
-      enabled: "yes",
-      featured: "no",
-      sortOrder: 0,
-      tag: catalog.tag ?? null,
-      rtp: catalog.rtp,
-      volatility: catalog.volatility,
-      minBet: catalog.minBet,
-      maxBet: catalog.maxBet,
-      engineConfig: payload,
-    });
-  } else {
-    await db
-      .update(gameControls)
-      .set({ engineConfig: payload })
-      .where(eq(gameControls.gameId, MAHJONG_WAYS_GAME_ID));
-  }
-
-  try {
-    const { clearMahjongWaysEngineCache } = await import("../games/mahjong-ways.server");
-    clearMahjongWaysEngineCache();
-  } catch {
-    /* ignore */
-  }
-
-  await writeAuditLog({
-    actor,
-    action: "super.mahjong_ways_config",
-    summary: `Updated Mahjong Ways engine (FS ${cfg.freeSpinsBaseCount}, maxWin ${cfg.maxWinMult}x, target RTP ${cfg.targetRtp}%)`,
-    targetType: "game",
-    targetId: MAHJONG_WAYS_GAME_ID,
-    meta: {
-      freeSpinsBaseCount: cfg.freeSpinsBaseCount,
-      freeSpinsTriggerCount: cfg.freeSpinsTriggerCount,
-      buyFeatureMult: cfg.buyFeatureMult,
-      maxWinMult: cfg.maxWinMult,
-      targetRtp: cfg.targetRtp,
-      goldChanceInitial: cfg.goldChanceInitial,
-    },
-  });
-
-  return cfg;
-}
-
-/** Public — Mahjong Ways 2 engine math (defaults if unset). */
-export async function getMahjongWays2EngineConfig() {
-  const {
-    MAHJONG_WAYS_2_GAME_ID,
-    DEFAULT_MAHJONG_WAYS_2_CONFIG,
-    normalizeMahjongWays2Config,
-  } = await import("@/lib/mahjong-ways-2-config");
-  const db = getDb();
-  try {
-    const rows = await db
-      .select()
-      .from(gameControls)
-      .where(eq(gameControls.gameId, MAHJONG_WAYS_2_GAME_ID))
-      .limit(1);
-    return normalizeMahjongWays2Config(parseEngineConfigJson(rows[0]?.engineConfig));
-  } catch {
-    return structuredClone(DEFAULT_MAHJONG_WAYS_2_CONFIG);
-  }
-}
-
-/** Superadmin — save full Mahjong Ways 2 math config. */
-export async function saveMahjongWays2EngineConfig(raw: unknown) {
-  const actor = await requireSuperadmin();
-  const {
-    MAHJONG_WAYS_2_GAME_ID,
-    normalizeMahjongWays2Config,
-  } = await import("@/lib/mahjong-ways-2-config");
-  const catalog = slotGames.find((g) => g.id === MAHJONG_WAYS_2_GAME_ID);
-  if (!catalog) throw new Error("Mahjong Ways 2 not in catalog");
-
-  const cfg = normalizeMahjongWays2Config(raw);
-  const db = getDb();
-  const existing = await db
-    .select()
-    .from(gameControls)
-    .where(eq(gameControls.gameId, MAHJONG_WAYS_2_GAME_ID))
-    .limit(1);
-
-  const payload = JSON.stringify(cfg);
-
-  if (!existing[0]) {
-    await db.insert(gameControls).values({
-      gameId: MAHJONG_WAYS_2_GAME_ID,
-      enabled: "yes",
-      featured: "no",
-      sortOrder: 0,
-      tag: catalog.tag ?? null,
-      rtp: catalog.rtp,
-      volatility: catalog.volatility,
-      minBet: catalog.minBet,
-      maxBet: catalog.maxBet,
-      engineConfig: payload,
-    });
-  } else {
-    await db
-      .update(gameControls)
-      .set({ engineConfig: payload })
-      .where(eq(gameControls.gameId, MAHJONG_WAYS_2_GAME_ID));
-  }
-
-  try {
-    const { clearMahjongWays2EngineCache } = await import("../games/mahjong-ways-2.server");
-    clearMahjongWays2EngineCache();
-  } catch {
-    /* ignore */
-  }
-
-  await writeAuditLog({
-    actor,
-    action: "super.mahjong_ways_2_config",
-    summary: `Updated Mahjong Ways 2 engine (FS ${cfg.freeSpinsBaseCount}, maxWin ${cfg.maxWinMult}x, target RTP ${cfg.targetRtp}%)`,
-    targetType: "game",
-    targetId: MAHJONG_WAYS_2_GAME_ID,
-    meta: {
-      freeSpinsBaseCount: cfg.freeSpinsBaseCount,
-      freeSpinsTriggerCount: cfg.freeSpinsTriggerCount,
-      buyFeatureMult: cfg.buyFeatureMult,
-      maxWinMult: cfg.maxWinMult,
-      targetRtp: cfg.targetRtp,
-      goldChanceInitial: cfg.goldChanceInitial,
-    },
-  });
-
-  return cfg;
-}
-
-/** Public — Dragon & Phoenix engine math (defaults if unset). */
-export async function getDragonPhoenixEngineConfig() {
-  const {
-    DRAGON_PHOENIX_GAME_ID,
-    DEFAULT_DRAGON_PHOENIX_CONFIG,
-    normalizeDragonPhoenixConfig,
-  } = await import("@/lib/dragon-phoenix-config");
-  const db = getDb();
-  try {
-    const rows = await db
-      .select()
-      .from(gameControls)
-      .where(eq(gameControls.gameId, DRAGON_PHOENIX_GAME_ID))
-      .limit(1);
-    return normalizeDragonPhoenixConfig(parseEngineConfigJson(rows[0]?.engineConfig));
-  } catch {
-    return structuredClone(DEFAULT_DRAGON_PHOENIX_CONFIG);
-  }
-}
-
-/** Superadmin — save full Dragon & Phoenix math config. */
-export async function saveDragonPhoenixEngineConfig(raw: unknown) {
-  const actor = await requireSuperadmin();
-  const {
-    DRAGON_PHOENIX_GAME_ID,
-    normalizeDragonPhoenixConfig,
-  } = await import("@/lib/dragon-phoenix-config");
-  const catalog = slotGames.find((g) => g.id === DRAGON_PHOENIX_GAME_ID);
-  if (!catalog) throw new Error("Dragon & Phoenix not in catalog");
-
-  const cfg = normalizeDragonPhoenixConfig(raw);
-  const db = getDb();
-  const existing = await db
-    .select()
-    .from(gameControls)
-    .where(eq(gameControls.gameId, DRAGON_PHOENIX_GAME_ID))
-    .limit(1);
-
-  const payload = JSON.stringify(cfg);
-
-  if (!existing[0]) {
-    await db.insert(gameControls).values({
-      gameId: DRAGON_PHOENIX_GAME_ID,
-      enabled: "yes",
-      featured: "no",
-      sortOrder: 0,
-      tag: catalog.tag ?? null,
-      rtp: catalog.rtp,
-      volatility: catalog.volatility,
-      minBet: catalog.minBet,
-      maxBet: catalog.maxBet,
-      engineConfig: payload,
-    });
-  } else {
-    await db
-      .update(gameControls)
-      .set({ engineConfig: payload })
-      .where(eq(gameControls.gameId, DRAGON_PHOENIX_GAME_ID));
-  }
-
-  try {
-    const { clearDragonPhoenixEngineCache } = await import("../games/dragon-phoenix.server");
-    clearDragonPhoenixEngineCache();
-  } catch {
-    /* ignore */
-  }
-
-  await writeAuditLog({
-    actor,
-    action: "super.dragon_phoenix_config",
-    summary: `Updated Dragon & Phoenix engine (FS ${cfg.freeSpinsBaseCount}, maxWin ${cfg.maxWinMult}x, target RTP ${cfg.targetRtp}%)`,
-    targetType: "game",
-    targetId: DRAGON_PHOENIX_GAME_ID,
-    meta: {
-      freeSpinsBaseCount: cfg.freeSpinsBaseCount,
-      freeSpinsTriggerCount: cfg.freeSpinsTriggerCount,
-      buyFeatureMult: cfg.buyFeatureMult,
-      maxWinMult: cfg.maxWinMult,
-      targetRtp: cfg.targetRtp,
-      goldChanceInitial: cfg.goldChanceInitial,
-    },
-  });
-
-  return cfg;
-}
-
-/** Public — Starlight Ace engine math (defaults if unset). */
-export async function getStarlightAceEngineConfig() {
-  const {
-    STARLIGHT_ACE_GAME_ID,
-    DEFAULT_STARLIGHT_ACE_CONFIG,
-    normalizeStarlightAceConfig,
-  } = await import("@/lib/starlight-ace-config");
-  const db = getDb();
-  try {
-    const rows = await db
-      .select()
-      .from(gameControls)
-      .where(eq(gameControls.gameId, STARLIGHT_ACE_GAME_ID))
-      .limit(1);
-    return normalizeStarlightAceConfig(parseEngineConfigJson(rows[0]?.engineConfig));
-  } catch {
-    return structuredClone(DEFAULT_STARLIGHT_ACE_CONFIG);
-  }
-}
-
-/** Superadmin — save full Starlight Ace math config. */
-export async function saveStarlightAceEngineConfig(raw: unknown) {
-  const actor = await requireSuperadmin();
-  const {
-    STARLIGHT_ACE_GAME_ID,
-    normalizeStarlightAceConfig,
-  } = await import("@/lib/starlight-ace-config");
-  const catalog = slotGames.find((g) => g.id === STARLIGHT_ACE_GAME_ID);
-  if (!catalog) throw new Error("Starlight Ace not in catalog");
-
-  const cfg = normalizeStarlightAceConfig(raw);
-  const db = getDb();
-  const existing = await db
-    .select()
-    .from(gameControls)
-    .where(eq(gameControls.gameId, STARLIGHT_ACE_GAME_ID))
-    .limit(1);
-
-  const payload = JSON.stringify(cfg);
-
-  if (!existing[0]) {
-    await db.insert(gameControls).values({
-      gameId: STARLIGHT_ACE_GAME_ID,
-      enabled: "yes",
-      featured: "no",
-      sortOrder: 0,
-      tag: catalog.tag ?? null,
-      rtp: String(cfg.targetRtp),
-      volatility: catalog.volatility,
-      minBet: catalog.minBet,
-      maxBet: catalog.maxBet,
-      engineConfig: payload,
-    });
-  } else {
-    await db
-      .update(gameControls)
-      .set({
-        engineConfig: payload,
-        rtp: String(cfg.targetRtp),
-      })
-      .where(eq(gameControls.gameId, STARLIGHT_ACE_GAME_ID));
-  }
-
-  try {
-    const { clearStarlightAceEngineCache } = await import("../games/starlight-ace.server");
-    clearStarlightAceEngineCache();
-  } catch {
-    /* ignore */
-  }
-
-  await writeAuditLog({
-    actor,
-    action: "super.starlight_ace_config",
-    summary: `Updated Starlight Ace engine (FS ${cfg.freeSpinsBaseCount}, maxWin ${cfg.maxWinMult}x, target RTP ${cfg.targetRtp}%)`,
-    targetType: "game",
-    targetId: STARLIGHT_ACE_GAME_ID,
-    meta: {
-      freeSpinsBaseCount: cfg.freeSpinsBaseCount,
-      freeSpinsTriggerCount: cfg.freeSpinsTriggerCount,
-      buyFeatureMult: cfg.buyFeatureMult,
-      maxWinMult: cfg.maxWinMult,
-      targetRtp: cfg.targetRtp,
-      goldChanceInitial: cfg.goldChanceInitial,
-      guaranteedGoldenReelIndex: cfg.guaranteedGoldenReelIndex,
-    },
-  });
-
-  return cfg;
-}
-
-/** Public — Manila Nights engine math (defaults if unset). */
-export async function getManilaNightsEngineConfig() {
-  const {
-    MANILA_NIGHTS_GAME_ID,
-    DEFAULT_MANILA_NIGHTS_CONFIG,
-    normalizeManilaNightsConfig,
-  } = await import("@/lib/manila-nights-config");
-  const db = getDb();
-  try {
-    const rows = await db
-      .select()
-      .from(gameControls)
-      .where(eq(gameControls.gameId, MANILA_NIGHTS_GAME_ID))
-      .limit(1);
-    return normalizeManilaNightsConfig(parseEngineConfigJson(rows[0]?.engineConfig));
-  } catch {
-    return structuredClone(DEFAULT_MANILA_NIGHTS_CONFIG);
-  }
-}
-
-/** Superadmin — save full Manila Nights math config. */
-export async function saveManilaNightsEngineConfig(raw: unknown) {
-  const actor = await requireSuperadmin();
-  const {
-    MANILA_NIGHTS_GAME_ID,
-    normalizeManilaNightsConfig,
-  } = await import("@/lib/manila-nights-config");
-  const catalog = slotGames.find((g) => g.id === MANILA_NIGHTS_GAME_ID);
-  if (!catalog) throw new Error("Manila Nights not in catalog");
-
-  const cfg = normalizeManilaNightsConfig(raw);
-  const db = getDb();
-  const existing = await db
-    .select()
-    .from(gameControls)
-    .where(eq(gameControls.gameId, MANILA_NIGHTS_GAME_ID))
-    .limit(1);
-
-  const payload = JSON.stringify(cfg);
-
-  if (!existing[0]) {
-    await db.insert(gameControls).values({
-      gameId: MANILA_NIGHTS_GAME_ID,
-      enabled: "yes",
-      featured: "no",
-      sortOrder: 0,
-      tag: catalog.tag ?? null,
-      rtp: String(cfg.targetRtp),
-      volatility: catalog.volatility,
-      minBet: catalog.minBet,
-      maxBet: catalog.maxBet,
-      engineConfig: payload,
-    });
-  } else {
-    await db
-      .update(gameControls)
-      .set({
-        engineConfig: payload,
-        rtp: String(cfg.targetRtp),
-      })
-      .where(eq(gameControls.gameId, MANILA_NIGHTS_GAME_ID));
-  }
-
-  try {
-    const { clearManilaNightsEngineCache } = await import("../games/manila-nights.server");
-    clearManilaNightsEngineCache();
-  } catch {
-    /* ignore */
-  }
-
-  await writeAuditLog({
-    actor,
-    action: "super.manila_nights_config",
-    summary: `Updated Manila Nights engine (FS ${cfg.freeSpinsBaseCount}, maxWin ${cfg.maxWinMult}x, target RTP ${cfg.targetRtp}%)`,
-    targetType: "game",
-    targetId: MANILA_NIGHTS_GAME_ID,
-    meta: {
-      freeSpinsBaseCount: cfg.freeSpinsBaseCount,
-      freeSpinsTriggerCount: cfg.freeSpinsTriggerCount,
-      buyFeatureMult: cfg.buyFeatureMult,
-      maxWinMult: cfg.maxWinMult,
-      targetRtp: cfg.targetRtp,
-      goldChanceInitial: cfg.goldChanceInitial,
-      guaranteedGoldenReelIndex: cfg.guaranteedGoldenReelIndex,
-    },
-  });
-
-  return cfg;
-}
-
-/** Public — Super Ace engine math (defaults if unset). */
-export async function getSuperAceEngineConfig() {
-  const {
-    SUPER_ACE_GAME_ID,
-    DEFAULT_SUPER_ACE_CONFIG,
-    normalizeSuperAceConfig,
-  } = await import("@/lib/super-ace-config");
-  const db = getDb();
-  try {
-    const rows = await db
-      .select()
-      .from(gameControls)
-      .where(eq(gameControls.gameId, SUPER_ACE_GAME_ID))
-      .limit(1);
-    return normalizeSuperAceConfig(parseEngineConfigJson(rows[0]?.engineConfig));
-  } catch {
-    return structuredClone(DEFAULT_SUPER_ACE_CONFIG);
-  }
-}
-
-/** Superadmin — save full Super Ace math config. */
-export async function saveSuperAceEngineConfig(raw: unknown) {
-  const actor = await requireSuperadmin();
-  const {
-    SUPER_ACE_GAME_ID,
-    normalizeSuperAceConfig,
-  } = await import("@/lib/super-ace-config");
-  const catalog = slotGames.find((g) => g.id === SUPER_ACE_GAME_ID);
-  if (!catalog) throw new Error("Super Ace not in catalog");
-
-  const cfg = normalizeSuperAceConfig(raw);
-  const db = getDb();
-  const existing = await db
-    .select()
-    .from(gameControls)
-    .where(eq(gameControls.gameId, SUPER_ACE_GAME_ID))
-    .limit(1);
-
-  const payload = JSON.stringify(cfg);
-
-  if (!existing[0]) {
-    await db.insert(gameControls).values({
-      gameId: SUPER_ACE_GAME_ID,
-      enabled: "yes",
-      featured: "no",
-      sortOrder: 0,
-      tag: catalog.tag ?? null,
-      rtp: String(cfg.targetRtp),
-      volatility: cfg.volatility || catalog.volatility,
-      minBet: catalog.minBet,
-      maxBet: catalog.maxBet,
-      engineConfig: payload,
-    });
-  } else {
-    await db
-      .update(gameControls)
-      .set({
-        engineConfig: payload,
-        rtp: String(cfg.targetRtp),
-        volatility: cfg.volatility || existing[0].volatility || catalog.volatility,
-      })
-      .where(eq(gameControls.gameId, SUPER_ACE_GAME_ID));
-  }
-
-  try {
-    const { clearSuperAceEngineCache } = await import("../games/super-ace.server");
-    clearSuperAceEngineCache();
-  } catch {
-    /* ignore */
-  }
-
-  await writeAuditLog({
-    actor,
-    action: "super.super_ace_config",
-    summary: `Updated Super Ace engine (FS ${cfg.freeSpinsBaseCount}/+${cfg.freeSpinsRetriggerCount}, maxWin ${cfg.maxWinMult}x, RTP ${cfg.activeRtpProfile} ${cfg.targetRtp}%)`,
-    targetType: "game",
-    targetId: SUPER_ACE_GAME_ID,
-    meta: {
-      freeSpinsBaseCount: cfg.freeSpinsBaseCount,
-      freeSpinsRetriggerCount: cfg.freeSpinsRetriggerCount,
-      freeSpinsTriggerCount: cfg.freeSpinsTriggerCount,
-      buyFeatureMult: cfg.buyFeatureMult,
-      maxWinMult: cfg.maxWinMult,
-      targetRtp: cfg.targetRtp,
-      activeRtpProfile: cfg.activeRtpProfile,
-      goldChanceInitial: cfg.goldChanceInitial,
-      jokerTransformWeights: cfg.jokerTransformWeights,
-    },
-  });
-
-  return cfg;
-}
-
-/** Public — Mega Ace engine math (defaults if unset). */
-export async function getMegaAceEngineConfig() {
-  const {
-    MEGA_ACE_GAME_ID,
-    DEFAULT_MEGA_ACE_CONFIG,
-    normalizeMegaAceConfig,
-  } = await import("@/lib/mega-ace-config");
-  const db = getDb();
-  try {
-    const rows = await db
-      .select()
-      .from(gameControls)
-      .where(eq(gameControls.gameId, MEGA_ACE_GAME_ID))
-      .limit(1);
-    return normalizeMegaAceConfig(parseEngineConfigJson(rows[0]?.engineConfig));
-  } catch {
-    return structuredClone(DEFAULT_MEGA_ACE_CONFIG);
-  }
-}
-
-/** Superadmin — save full Mega Ace math config. */
-export async function saveMegaAceEngineConfig(raw: unknown) {
-  const actor = await requireSuperadmin();
-  const {
-    MEGA_ACE_GAME_ID,
-    normalizeMegaAceConfig,
-  } = await import("@/lib/mega-ace-config");
-  const catalog = slotGames.find((g) => g.id === MEGA_ACE_GAME_ID);
-  if (!catalog) throw new Error("Mega Ace not in catalog");
-
-  const cfg = normalizeMegaAceConfig(raw);
-  const db = getDb();
-  const existing = await db
-    .select()
-    .from(gameControls)
-    .where(eq(gameControls.gameId, MEGA_ACE_GAME_ID))
-    .limit(1);
-
-  const payload = JSON.stringify(cfg);
-
-  if (!existing[0]) {
-    await db.insert(gameControls).values({
-      gameId: MEGA_ACE_GAME_ID,
-      enabled: "yes",
-      featured: "no",
-      sortOrder: 0,
-      tag: catalog.tag ?? null,
-      rtp: String(cfg.targetRtp),
-      volatility: cfg.volatility || catalog.volatility,
-      minBet: catalog.minBet,
-      maxBet: catalog.maxBet,
-      engineConfig: payload,
-    });
-  } else {
-    await db
-      .update(gameControls)
-      .set({
-        engineConfig: payload,
-        rtp: String(cfg.targetRtp),
-        volatility: cfg.volatility || existing[0].volatility || catalog.volatility,
-      })
-      .where(eq(gameControls.gameId, MEGA_ACE_GAME_ID));
-  }
-
-  try {
-    const { clearMegaAceEngineCache } = await import("../games/mega-ace.server");
-    clearMegaAceEngineCache();
-  } catch {
-    /* ignore */
-  }
-
-  await writeAuditLog({
-    actor,
-    action: "super.mega_ace_config",
-    summary: `Updated Mega Ace engine (FS ${cfg.freeSpinsBaseCount}/+${cfg.freeSpinsRetriggerCount}, maxWin ${cfg.maxWinMult}x, RTP ${cfg.activeRtpProfile} ${cfg.targetRtp}%)`,
-    targetType: "game",
-    targetId: MEGA_ACE_GAME_ID,
-    meta: {
-      freeSpinsBaseCount: cfg.freeSpinsBaseCount,
-      freeSpinsRetriggerCount: cfg.freeSpinsRetriggerCount,
-      maxWinMult: cfg.maxWinMult,
-      activeRtpProfile: cfg.activeRtpProfile,
-      targetRtp: cfg.targetRtp,
-    },
-  });
-
-  return cfg;
-}
-
-/** Public — Frontier Gold engine math (defaults if unset). */
-export async function getFrontierGoldEngineConfig() {
-  const {
-    FRONTIER_GOLD_GAME_ID,
-    DEFAULT_FRONTIER_GOLD_CONFIG,
-    normalizeFrontierGoldConfig,
-  } = await import("@/lib/frontier-gold-config");
-  const db = getDb();
-  try {
-    const rows = await db
-      .select()
-      .from(gameControls)
-      .where(eq(gameControls.gameId, FRONTIER_GOLD_GAME_ID))
-      .limit(1);
-    return normalizeFrontierGoldConfig(parseEngineConfigJson(rows[0]?.engineConfig));
-  } catch {
-    return structuredClone(DEFAULT_FRONTIER_GOLD_CONFIG);
-  }
-}
-
-/** Superadmin — save full Frontier Gold math config. */
-export async function saveFrontierGoldEngineConfig(raw: unknown) {
-  const actor = await requireSuperadmin();
-  const {
-    FRONTIER_GOLD_GAME_ID,
-    normalizeFrontierGoldConfig,
-  } = await import("@/lib/frontier-gold-config");
-  const catalog = slotGames.find((g) => g.id === FRONTIER_GOLD_GAME_ID);
-  if (!catalog) throw new Error("Frontier Gold not in catalog");
-
-  const cfg = normalizeFrontierGoldConfig(raw);
-  const db = getDb();
-  const existing = await db
-    .select()
-    .from(gameControls)
-    .where(eq(gameControls.gameId, FRONTIER_GOLD_GAME_ID))
-    .limit(1);
-
-  const payload = JSON.stringify(cfg);
-
-  if (!existing[0]) {
-    await db.insert(gameControls).values({
-      gameId: FRONTIER_GOLD_GAME_ID,
-      enabled: "yes",
-      featured: "no",
-      sortOrder: 0,
-      tag: catalog.tag ?? null,
-      rtp: String(cfg.targetRtp),
-      volatility: catalog.volatility,
-      minBet: catalog.minBet,
-      maxBet: catalog.maxBet,
-      engineConfig: payload,
-    });
-  } else {
-    await db
-      .update(gameControls)
-      .set({ engineConfig: payload, rtp: String(cfg.targetRtp) })
-      .where(eq(gameControls.gameId, FRONTIER_GOLD_GAME_ID));
-  }
-
-  try {
-    const { clearFrontierGoldEngineCache } = await import("../games/frontier-gold.server");
-    clearFrontierGoldEngineCache();
-  } catch {
-    /* ignore */
-  }
-
-  await writeAuditLog({
-    actor,
-    action: "super.frontier_gold_config",
-    summary: `Updated Frontier Gold engine (FS ${cfg.freeSpinsBaseCount}, H&W ${cfg.holdWinTriggerCount}+ coins, maxWin ${cfg.maxWinMult}x, RTP ${cfg.targetRtp}%)`,
-    targetType: "game",
-    targetId: FRONTIER_GOLD_GAME_ID,
-    meta: {
-      freeSpinsBaseCount: cfg.freeSpinsBaseCount,
-      holdWinTriggerCount: cfg.holdWinTriggerCount,
-      maxWinMult: cfg.maxWinMult,
-      targetRtp: cfg.targetRtp,
-    },
-  });
-
-  return cfg;
-}
-
 /** Public — Buffalo Reign engine math. */
 export async function getBuffaloReignEngineConfig() {
-  const {
-    BUFFALO_REIGN_GAME_ID,
-    DEFAULT_BUFFALO_REIGN_CONFIG,
-    normalizeBuffaloReignConfig,
-  } = await import("@/lib/buffalo-reign-config");
+  const { BUFFALO_REIGN_GAME_ID, DEFAULT_BUFFALO_REIGN_CONFIG, normalizeBuffaloReignConfig } =
+    await import("@/lib/buffalo-reign-config");
   const db = getDb();
   try {
     const rows = await db
@@ -2073,10 +1123,8 @@ export async function getBuffaloReignEngineConfig() {
 /** Superadmin — save Buffalo Reign math config. */
 export async function saveBuffaloReignEngineConfig(raw: unknown) {
   const actor = await requireSuperadmin();
-  const {
-    BUFFALO_REIGN_GAME_ID,
-    normalizeBuffaloReignConfig,
-  } = await import("@/lib/buffalo-reign-config");
+  const { BUFFALO_REIGN_GAME_ID, normalizeBuffaloReignConfig } =
+    await import("@/lib/buffalo-reign-config");
   const catalog = slotGames.find((g) => g.id === BUFFALO_REIGN_GAME_ID);
   if (!catalog) throw new Error("Buffalo Reign not in catalog");
 
@@ -2097,8 +1145,8 @@ export async function saveBuffaloReignEngineConfig(raw: unknown) {
       featured: "no",
       sortOrder: 0,
       tag: catalog.tag ?? null,
-      rtp: String(cfg.targetRtp),
-      volatility: cfg.volatility,
+      rtp: catalog.rtp,
+      volatility: catalog.volatility,
       minBet: catalog.minBet,
       maxBet: catalog.maxBet,
       engineConfig: payload,
@@ -2106,200 +1154,21 @@ export async function saveBuffaloReignEngineConfig(raw: unknown) {
   } else {
     await db
       .update(gameControls)
-      .set({ engineConfig: payload, rtp: String(cfg.targetRtp), volatility: cfg.volatility })
+      .set({ engineConfig: payload })
       .where(eq(gameControls.gameId, BUFFALO_REIGN_GAME_ID));
-  }
-
-  try {
-    const { clearBuffaloReignEngineCache } = await import("../games/buffalo-reign.server");
-    clearBuffaloReignEngineCache();
-  } catch {
-    /* ignore */
   }
 
   await writeAuditLog({
     actor,
     action: "super.buffalo_reign_config",
-    summary: `Updated Buffalo Reign (FS ${cfg.freeSpinsBaseCount}, chests ${cfg.chestTriggerCount}+, maxWin ${cfg.maxWinMult}x, RTP ${cfg.targetRtp}%)`,
+    summary: `Updated Buffalo Reign engine config (dead spin ${cfg.deadSpinChancePercent}%, FS ${cfg.freeSpinsBase})`,
     targetType: "game",
     targetId: BUFFALO_REIGN_GAME_ID,
     meta: {
-      freeSpinsBaseCount: cfg.freeSpinsBaseCount,
-      chestTriggerCount: cfg.chestTriggerCount,
-      maxWinMult: cfg.maxWinMult,
-      targetRtp: cfg.targetRtp,
-    },
-  });
-
-  return cfg;
-}
-
-/** Public — Chinese New Year engine math (defaults if unset). */
-export async function getChineseNewYearEngineConfig() {
-  const {
-    CHINESE_NEW_YEAR_GAME_ID,
-    DEFAULT_CHINESE_NEW_YEAR_CONFIG,
-    normalizeChineseNewYearConfig,
-  } = await import("@/lib/chinese-new-year-config");
-  const db = getDb();
-  try {
-    const rows = await db
-      .select()
-      .from(gameControls)
-      .where(eq(gameControls.gameId, CHINESE_NEW_YEAR_GAME_ID))
-      .limit(1);
-    return normalizeChineseNewYearConfig(parseEngineConfigJson(rows[0]?.engineConfig));
-  } catch {
-    return structuredClone(DEFAULT_CHINESE_NEW_YEAR_CONFIG);
-  }
-}
-
-/** Superadmin — save full Chinese New Year math config. */
-export async function saveChineseNewYearEngineConfig(raw: unknown) {
-  const actor = await requireSuperadmin();
-  const {
-    CHINESE_NEW_YEAR_GAME_ID,
-    normalizeChineseNewYearConfig,
-  } = await import("@/lib/chinese-new-year-config");
-  const catalog = slotGames.find((g) => g.id === CHINESE_NEW_YEAR_GAME_ID);
-  if (!catalog) throw new Error("Chinese New Year not in catalog");
-
-  const cfg = normalizeChineseNewYearConfig(raw);
-  const db = getDb();
-  const existing = await db
-    .select()
-    .from(gameControls)
-    .where(eq(gameControls.gameId, CHINESE_NEW_YEAR_GAME_ID))
-    .limit(1);
-
-  const payload = JSON.stringify(cfg);
-
-  if (!existing[0]) {
-    await db.insert(gameControls).values({
-      gameId: CHINESE_NEW_YEAR_GAME_ID,
-      enabled: "yes",
-      featured: "no",
-      sortOrder: 0,
-      tag: catalog.tag ?? null,
-      rtp: catalog.rtp,
-      volatility: catalog.volatility,
-      minBet: catalog.minBet,
-      maxBet: catalog.maxBet,
-      engineConfig: payload,
-    });
-  } else {
-    await db
-      .update(gameControls)
-      .set({ engineConfig: payload })
-      .where(eq(gameControls.gameId, CHINESE_NEW_YEAR_GAME_ID));
-  }
-
-  try {
-    const { clearChineseNewYearEngineCache } = await import("../games/chinese-new-year.server");
-    clearChineseNewYearEngineCache();
-  } catch {
-    /* ignore */
-  }
-
-  await writeAuditLog({
-    actor,
-    action: "super.chinese_new_year_config",
-    summary: `Updated Chinese New Year engine (FS ${cfg.freeSpinsAward}, maxWin ${cfg.maxWinMult}x, target RTP ${cfg.targetRtp}%)`,
-    targetType: "game",
-    targetId: CHINESE_NEW_YEAR_GAME_ID,
-    meta: {
-      freeSpinsAward: cfg.freeSpinsAward,
-      monkeyTriggerMult: cfg.monkeyTriggerMult,
-      dragonSuccessChancePercent: cfg.dragonSuccessChancePercent,
-      maxWinMult: cfg.maxWinMult,
-      targetRtp: cfg.targetRtp,
-      paylineCount: cfg.paylineCount,
-    },
-  });
-
-  return cfg;
-}
-
-/** Public — Fiesta Fireworks engine math (defaults if unset). */
-export async function getFiestaFireworksEngineConfig() {
-  const {
-    FIESTA_FIREWORKS_GAME_ID,
-    DEFAULT_FIESTA_FIREWORKS_CONFIG,
-    normalizeFiestaFireworksConfig,
-  } = await import("@/lib/fiesta-fireworks-config");
-  const db = getDb();
-  try {
-    const rows = await db
-      .select()
-      .from(gameControls)
-      .where(eq(gameControls.gameId, FIESTA_FIREWORKS_GAME_ID))
-      .limit(1);
-    return normalizeFiestaFireworksConfig(parseEngineConfigJson(rows[0]?.engineConfig));
-  } catch {
-    return structuredClone(DEFAULT_FIESTA_FIREWORKS_CONFIG);
-  }
-}
-
-/** Superadmin — save full Fiesta Fireworks math config. */
-export async function saveFiestaFireworksEngineConfig(raw: unknown) {
-  const actor = await requireSuperadmin();
-  const {
-    FIESTA_FIREWORKS_GAME_ID,
-    normalizeFiestaFireworksConfig,
-  } = await import("@/lib/fiesta-fireworks-config");
-  const catalog = slotGames.find((g) => g.id === FIESTA_FIREWORKS_GAME_ID);
-  if (!catalog) throw new Error("Fiesta Fireworks not in catalog");
-
-  const cfg = normalizeFiestaFireworksConfig(raw);
-  const db = getDb();
-  const existing = await db
-    .select()
-    .from(gameControls)
-    .where(eq(gameControls.gameId, FIESTA_FIREWORKS_GAME_ID))
-    .limit(1);
-
-  const payload = JSON.stringify(cfg);
-
-  if (!existing[0]) {
-    await db.insert(gameControls).values({
-      gameId: FIESTA_FIREWORKS_GAME_ID,
-      enabled: "yes",
-      featured: "no",
-      sortOrder: 0,
-      tag: catalog.tag ?? null,
-      rtp: catalog.rtp,
-      volatility: catalog.volatility,
-      minBet: catalog.minBet,
-      maxBet: catalog.maxBet,
-      engineConfig: payload,
-    });
-  } else {
-    await db
-      .update(gameControls)
-      .set({ engineConfig: payload })
-      .where(eq(gameControls.gameId, FIESTA_FIREWORKS_GAME_ID));
-  }
-
-  try {
-    const { clearFiestaFireworksEngineCache } = await import("../games/fiesta-fireworks.server");
-    clearFiestaFireworksEngineCache();
-  } catch {
-    /* ignore */
-  }
-
-  await writeAuditLog({
-    actor,
-    action: "super.fiesta_fireworks_config",
-    summary: `Updated Fiesta Fireworks engine (FS ${cfg.freeSpinsAward}, maxWin ${cfg.maxWinMult}x, target RTP ${cfg.targetRtp}%)`,
-    targetType: "game",
-    targetId: FIESTA_FIREWORKS_GAME_ID,
-    meta: {
-      freeSpinsAward: cfg.freeSpinsAward,
-      monkeyTriggerMult: cfg.monkeyTriggerMult,
-      dragonSuccessChancePercent: cfg.dragonSuccessChancePercent,
-      maxWinMult: cfg.maxWinMult,
-      targetRtp: cfg.targetRtp,
-      paylineCount: cfg.paylineCount,
+      deadSpinChancePercent: cfg.deadSpinChancePercent,
+      bombChanceBasePercent: cfg.bombChanceBasePercent,
+      freeSpinsTriggerCount: cfg.freeSpinsTriggerCount,
+      freeSpinsBase: cfg.freeSpinsBase,
     },
   });
 
@@ -2308,11 +1177,8 @@ export async function saveFiestaFireworksEngineConfig(raw: unknown) {
 
 /** Public — Fire Spike engine math (defaults if unset). */
 export async function getFireSpikeEngineConfig() {
-  const {
-    FIRE_SPIKE_GAME_ID,
-    DEFAULT_FIRE_SPIKE_CONFIG,
-    normalizeFireSpikeConfig,
-  } = await import("@/lib/fire-spike-config");
+  const { FIRE_SPIKE_GAME_ID, DEFAULT_FIRE_SPIKE_CONFIG, normalizeFireSpikeConfig } =
+    await import("@/lib/fire-spike-config");
   const db = getDb();
   try {
     const rows = await db
@@ -2390,363 +1256,10 @@ export async function saveFireSpikeEngineConfig(raw: unknown) {
   return cfg;
 }
 
-/** Public — Boxing King engine math (defaults if unset). */
-export async function getBoxingKingEngineConfig() {
-  const {
-    BOXING_KING_GAME_ID,
-    DEFAULT_BOXING_KING_CONFIG,
-    normalizeBoxingKingConfig,
-  } = await import("@/lib/boxing-king-config");
-  const db = getDb();
-  try {
-    const rows = await db
-      .select()
-      .from(gameControls)
-      .where(eq(gameControls.gameId, BOXING_KING_GAME_ID))
-      .limit(1);
-    return normalizeBoxingKingConfig(parseEngineConfigJson(rows[0]?.engineConfig));
-  } catch {
-    return structuredClone(DEFAULT_BOXING_KING_CONFIG);
-  }
-}
-
-/** Superadmin — save full Boxing King math config. */
-export async function saveBoxingKingEngineConfig(raw: unknown) {
-  const actor = await requireSuperadmin();
-  const { BOXING_KING_GAME_ID, normalizeBoxingKingConfig } = await import("@/lib/boxing-king-config");
-  const catalog = slotGames.find((g) => g.id === BOXING_KING_GAME_ID);
-  if (!catalog) throw new Error("Boxing King not in catalog");
-
-  const cfg = normalizeBoxingKingConfig(raw);
-  const db = getDb();
-  const existing = await db
-    .select()
-    .from(gameControls)
-    .where(eq(gameControls.gameId, BOXING_KING_GAME_ID))
-    .limit(1);
-
-  const payload = JSON.stringify(cfg);
-
-  if (!existing[0]) {
-    await db.insert(gameControls).values({
-      gameId: BOXING_KING_GAME_ID,
-      enabled: "yes",
-      featured: "no",
-      sortOrder: 0,
-      tag: catalog.tag ?? null,
-      rtp: String(cfg.targetRtp),
-      volatility: catalog.volatility,
-      minBet: catalog.minBet,
-      maxBet: catalog.maxBet,
-      engineConfig: payload,
-    });
-  } else {
-    await db
-      .update(gameControls)
-      .set({ engineConfig: payload, rtp: String(cfg.targetRtp) })
-      .where(eq(gameControls.gameId, BOXING_KING_GAME_ID));
-  }
-
-  try {
-    const { clearBoxingKingEngineCache } = await import("../games/boxing-king.server");
-    clearBoxingKingEngineCache();
-  } catch {
-    /* ignore */
-  }
-
-  await writeAuditLog({
-    actor,
-    action: "super.boxing_king_config",
-    summary: `Updated Boxing King engine (profile ${cfg.activeRtpProfile}, maxWin ${cfg.maxWinMult}x, JP ${cfg.grandJackpotMult}x, RTP ${cfg.targetRtp}%)`,
-    targetType: "game",
-    targetId: BOXING_KING_GAME_ID,
-    meta: {
-      activeRtpProfile: cfg.activeRtpProfile,
-      maxWinMult: cfg.maxWinMult,
-      grandJackpotMult: cfg.grandJackpotMult,
-      targetRtp: cfg.targetRtp,
-      paylineCount: cfg.paylineCount,
-      minBet: cfg.minBet,
-      maxBet: cfg.maxBet,
-    },
-  });
-
-  return cfg;
-}
-
-/** Public — Goal Rush engine math (defaults if unset). */
-export async function getGoalRushEngineConfig() {
-  const {
-    GOAL_RUSH_GAME_ID,
-    DEFAULT_GOAL_RUSH_CONFIG,
-    normalizeGoalRushConfig,
-  } = await import("@/lib/goal-rush-config");
-  const db = getDb();
-  try {
-    const rows = await db
-      .select()
-      .from(gameControls)
-      .where(eq(gameControls.gameId, GOAL_RUSH_GAME_ID))
-      .limit(1);
-    return normalizeGoalRushConfig(parseEngineConfigJson(rows[0]?.engineConfig));
-  } catch {
-    return structuredClone(DEFAULT_GOAL_RUSH_CONFIG);
-  }
-}
-
-/** Superadmin — save full Goal Rush math config. */
-export async function saveGoalRushEngineConfig(raw: unknown) {
-  const actor = await requireSuperadmin();
-  const { GOAL_RUSH_GAME_ID, normalizeGoalRushConfig } = await import("@/lib/goal-rush-config");
-  const catalog = slotGames.find((g) => g.id === GOAL_RUSH_GAME_ID);
-  if (!catalog) throw new Error("Goal Rush not in catalog");
-
-  const cfg = normalizeGoalRushConfig(raw);
-  const db = getDb();
-  const existing = await db
-    .select()
-    .from(gameControls)
-    .where(eq(gameControls.gameId, GOAL_RUSH_GAME_ID))
-    .limit(1);
-
-  const payload = JSON.stringify(cfg);
-
-  if (!existing[0]) {
-    await db.insert(gameControls).values({
-      gameId: GOAL_RUSH_GAME_ID,
-      enabled: "yes",
-      featured: "no",
-      sortOrder: 0,
-      tag: catalog.tag ?? null,
-      rtp: String(cfg.targetRtp),
-      volatility: catalog.volatility,
-      minBet: catalog.minBet,
-      maxBet: catalog.maxBet,
-      engineConfig: payload,
-    });
-  } else {
-    await db
-      .update(gameControls)
-      .set({ engineConfig: payload, rtp: String(cfg.targetRtp) })
-      .where(eq(gameControls.gameId, GOAL_RUSH_GAME_ID));
-  }
-
-  try {
-    const { clearGoalRushEngineCache } = await import("../games/goal-rush.server");
-    clearGoalRushEngineCache();
-  } catch {
-    /* ignore */
-  }
-
-  await writeAuditLog({
-    actor,
-    action: "super.goal_rush_config",
-    summary: `Updated Goal Rush engine (profile ${cfg.activeRtpProfile}, maxWin ${cfg.maxWinMult}x, JP ${cfg.grandJackpotMult}x, RTP ${cfg.targetRtp}%)`,
-    targetType: "game",
-    targetId: GOAL_RUSH_GAME_ID,
-    meta: {
-      activeRtpProfile: cfg.activeRtpProfile,
-      maxWinMult: cfg.maxWinMult,
-      grandJackpotMult: cfg.grandJackpotMult,
-      targetRtp: cfg.targetRtp,
-      paylineCount: cfg.paylineCount,
-      minBet: cfg.minBet,
-      maxBet: cfg.maxBet,
-    },
-  });
-
-  return cfg;
-}
-
-/** Public — Money Coming engine math (defaults if unset). */
-export async function getMoneyComingEngineConfig() {
-  const {
-    MONEY_COMING_GAME_ID,
-    DEFAULT_MONEY_COMING_CONFIG,
-    normalizeMoneyComingConfig,
-  } = await import("@/lib/money-coming-config");
-  const db = getDb();
-  try {
-    const rows = await db
-      .select()
-      .from(gameControls)
-      .where(eq(gameControls.gameId, MONEY_COMING_GAME_ID))
-      .limit(1);
-    return normalizeMoneyComingConfig(parseEngineConfigJson(rows[0]?.engineConfig));
-  } catch {
-    return structuredClone(DEFAULT_MONEY_COMING_CONFIG);
-  }
-}
-
-/** Superadmin — save full Money Coming math config. */
-export async function saveMoneyComingEngineConfig(raw: unknown) {
-  const actor = await requireSuperadmin();
-  const { MONEY_COMING_GAME_ID, normalizeMoneyComingConfig } = await import(
-    "@/lib/money-coming-config"
-  );
-  const catalog = slotGames.find((g) => g.id === MONEY_COMING_GAME_ID);
-  if (!catalog) throw new Error("Money Coming not in catalog");
-
-  const cfg = normalizeMoneyComingConfig(raw);
-  const db = getDb();
-  const existing = await db
-    .select()
-    .from(gameControls)
-    .where(eq(gameControls.gameId, MONEY_COMING_GAME_ID))
-    .limit(1);
-
-  const payload = JSON.stringify(cfg);
-
-  if (!existing[0]) {
-    await db.insert(gameControls).values({
-      gameId: MONEY_COMING_GAME_ID,
-      enabled: "yes",
-      featured: "no",
-      sortOrder: 0,
-      tag: catalog.tag ?? null,
-      rtp: String(cfg.targetRtp),
-      volatility: catalog.volatility,
-      minBet: `₱${cfg.minBet.toFixed(2)}`,
-      maxBet: `₱${cfg.maxBet.toFixed(2)}`,
-      engineConfig: payload,
-    });
-  } else {
-    await db
-      .update(gameControls)
-      .set({
-        engineConfig: payload,
-        rtp: String(cfg.targetRtp),
-        minBet: `₱${cfg.minBet.toFixed(2)}`,
-        maxBet: `₱${cfg.maxBet.toFixed(2)}`,
-      })
-      .where(eq(gameControls.gameId, MONEY_COMING_GAME_ID));
-  }
-
-  try {
-    const { clearMoneyComingEngineCache } = await import("../games/money-coming.server");
-    clearMoneyComingEngineCache();
-  } catch {
-    /* ignore */
-  }
-
-  await writeAuditLog({
-    actor,
-    action: "super.money_coming_config",
-    summary: `Updated Money Coming engine (profile ${cfg.activeRtpProfile}, maxWin ${cfg.maxWinMult}x, JP ${cfg.grandJackpotMult}x, RTP ${cfg.targetRtp}%)`,
-    targetType: "game",
-    targetId: MONEY_COMING_GAME_ID,
-    meta: {
-      activeRtpProfile: cfg.activeRtpProfile,
-      maxWinMult: cfg.maxWinMult,
-      grandJackpotMult: cfg.grandJackpotMult,
-      targetRtp: cfg.targetRtp,
-      paylineCount: cfg.paylineCount,
-      minBet: cfg.minBet,
-      maxBet: cfg.maxBet,
-    },
-  });
-
-  return cfg;
-}
-
-/** Public — Fortune Gems engine math (defaults if unset). */
-export async function getFortuneGemsEngineConfig() {
-  const {
-    FORTUNE_GEMS_GAME_ID,
-    DEFAULT_FORTUNE_GEMS_CONFIG,
-    normalizeFortuneGemsConfig,
-  } = await import("@/lib/fortune-gems-config");
-  const db = getDb();
-  try {
-    const rows = await db
-      .select()
-      .from(gameControls)
-      .where(eq(gameControls.gameId, FORTUNE_GEMS_GAME_ID))
-      .limit(1);
-    return normalizeFortuneGemsConfig(parseEngineConfigJson(rows[0]?.engineConfig));
-  } catch {
-    return structuredClone(DEFAULT_FORTUNE_GEMS_CONFIG);
-  }
-}
-
-/** Superadmin — save full Fortune Gems math config. */
-export async function saveFortuneGemsEngineConfig(raw: unknown) {
-  const actor = await requireSuperadmin();
-  const { FORTUNE_GEMS_GAME_ID, normalizeFortuneGemsConfig } = await import(
-    "@/lib/fortune-gems-config"
-  );
-  const catalog = slotGames.find((g) => g.id === FORTUNE_GEMS_GAME_ID);
-  if (!catalog) throw new Error("Fortune Gems not in catalog");
-
-  const cfg = normalizeFortuneGemsConfig(raw);
-  const db = getDb();
-  const existing = await db
-    .select()
-    .from(gameControls)
-    .where(eq(gameControls.gameId, FORTUNE_GEMS_GAME_ID))
-    .limit(1);
-
-  const payload = JSON.stringify(cfg);
-
-  if (!existing[0]) {
-    await db.insert(gameControls).values({
-      gameId: FORTUNE_GEMS_GAME_ID,
-      enabled: "yes",
-      featured: "no",
-      sortOrder: 0,
-      tag: catalog.tag ?? null,
-      rtp: String(cfg.targetRtp),
-      volatility: catalog.volatility,
-      minBet: `₱${cfg.minBet.toFixed(2)}`,
-      maxBet: `₱${cfg.maxBet.toFixed(2)}`,
-      engineConfig: payload,
-    });
-  } else {
-    await db
-      .update(gameControls)
-      .set({
-        engineConfig: payload,
-        rtp: String(cfg.targetRtp),
-        minBet: `₱${cfg.minBet.toFixed(2)}`,
-        maxBet: `₱${cfg.maxBet.toFixed(2)}`,
-      })
-      .where(eq(gameControls.gameId, FORTUNE_GEMS_GAME_ID));
-  }
-
-  try {
-    const { clearFortuneGemsEngineCache } = await import("../games/fortune-gems.server");
-    clearFortuneGemsEngineCache();
-  } catch {
-    /* ignore */
-  }
-
-  await writeAuditLog({
-    actor,
-    action: "super.fortune_gems_config",
-    summary: `Updated Fortune Gems engine (profile ${cfg.activeRtpProfile}, maxWin ${cfg.maxWinMult}x, EX ${cfg.exBetMult}x, RTP ${cfg.targetRtp}%)`,
-    targetType: "game",
-    targetId: FORTUNE_GEMS_GAME_ID,
-    meta: {
-      activeRtpProfile: cfg.activeRtpProfile,
-      maxWinMult: cfg.maxWinMult,
-      exBetMult: cfg.exBetMult,
-      targetRtp: cfg.targetRtp,
-      paylineCount: cfg.paylineCount,
-      minBet: cfg.minBet,
-      maxBet: cfg.maxBet,
-    },
-  });
-
-  return cfg;
-}
-
 /** Public — Fortune Ox engine math (defaults if unset). */
 export async function getFortuneOxEngineConfig() {
-  const {
-    FORTUNE_OX_GAME_ID,
-    DEFAULT_FORTUNE_OX_CONFIG,
-    normalizeFortuneOxConfig,
-  } = await import("@/lib/fortune-ox-config");
+  const { FORTUNE_OX_GAME_ID, DEFAULT_FORTUNE_OX_CONFIG, normalizeFortuneOxConfig } =
+    await import("@/lib/fortune-ox-config");
   const db = getDb();
   try {
     const rows = await db
@@ -2763,9 +1276,7 @@ export async function getFortuneOxEngineConfig() {
 /** Superadmin — save full Fortune Ox math config. */
 export async function saveFortuneOxEngineConfig(raw: unknown) {
   const actor = await requireSuperadmin();
-  const { FORTUNE_OX_GAME_ID, normalizeFortuneOxConfig } = await import(
-    "@/lib/fortune-ox-config"
-  );
+  const { FORTUNE_OX_GAME_ID, normalizeFortuneOxConfig } = await import("@/lib/fortune-ox-config");
   const catalog = slotGames.find((g) => g.id === FORTUNE_OX_GAME_ID);
   if (!catalog) throw new Error("Fortune Ox not in catalog");
 
@@ -2786,45 +1297,30 @@ export async function saveFortuneOxEngineConfig(raw: unknown) {
       featured: "no",
       sortOrder: 0,
       tag: catalog.tag ?? null,
-      rtp: String(cfg.targetRtp),
+      rtp: catalog.rtp,
       volatility: catalog.volatility,
-      minBet: `₱${cfg.minBet.toFixed(2)}`,
-      maxBet: `₱${cfg.maxBet.toFixed(2)}`,
+      minBet: catalog.minBet,
+      maxBet: catalog.maxBet,
       engineConfig: payload,
     });
   } else {
     await db
       .update(gameControls)
-      .set({
-        engineConfig: payload,
-        rtp: String(cfg.targetRtp),
-        minBet: `₱${cfg.minBet.toFixed(2)}`,
-        maxBet: `₱${cfg.maxBet.toFixed(2)}`,
-      })
+      .set({ engineConfig: payload })
       .where(eq(gameControls.gameId, FORTUNE_OX_GAME_ID));
-  }
-
-  try {
-    const { clearFortuneOxEngineCache } = await import("../games/fortune-ox.server");
-    clearFortuneOxEngineCache();
-  } catch {
-    /* ignore */
   }
 
   await writeAuditLog({
     actor,
     action: "super.fortune_ox_config",
-    summary: `Updated Fortune Ox engine (profile ${cfg.activeRtpProfile}, maxWin ${cfg.maxWinMult}x, EX ${cfg.exBetMult}x, RTP ${cfg.targetRtp}%)`,
+    summary: `Updated Fortune Ox engine config (dead spin ${cfg.deadSpinChancePercent}%, FS ${cfg.freeSpinsBase})`,
     targetType: "game",
     targetId: FORTUNE_OX_GAME_ID,
     meta: {
-      activeRtpProfile: cfg.activeRtpProfile,
-      maxWinMult: cfg.maxWinMult,
-      exBetMult: cfg.exBetMult,
-      targetRtp: cfg.targetRtp,
-      paylineCount: cfg.paylineCount,
-      minBet: cfg.minBet,
-      maxBet: cfg.maxBet,
+      deadSpinChancePercent: cfg.deadSpinChancePercent,
+      bombChanceBasePercent: cfg.bombChanceBasePercent,
+      freeSpinsTriggerCount: cfg.freeSpinsTriggerCount,
+      freeSpinsBase: cfg.freeSpinsBase,
     },
   });
 
@@ -2833,11 +1329,8 @@ export async function saveFortuneOxEngineConfig(raw: unknown) {
 
 /** Public — Fortune Tiger engine math (defaults if unset). */
 export async function getFortuneTigerEngineConfig() {
-  const {
-    FORTUNE_TIGER_GAME_ID,
-    DEFAULT_FORTUNE_TIGER_CONFIG,
-    normalizeFortuneTigerConfig,
-  } = await import("@/lib/fortune-tiger-config");
+  const { FORTUNE_TIGER_GAME_ID, DEFAULT_FORTUNE_TIGER_CONFIG, normalizeFortuneTigerConfig } =
+    await import("@/lib/fortune-tiger-config");
   const db = getDb();
   try {
     const rows = await db
@@ -2854,9 +1347,8 @@ export async function getFortuneTigerEngineConfig() {
 /** Superadmin — save full Fortune Tiger math config. */
 export async function saveFortuneTigerEngineConfig(raw: unknown) {
   const actor = await requireSuperadmin();
-  const { FORTUNE_TIGER_GAME_ID, normalizeFortuneTigerConfig } = await import(
-    "@/lib/fortune-tiger-config"
-  );
+  const { FORTUNE_TIGER_GAME_ID, normalizeFortuneTigerConfig } =
+    await import("@/lib/fortune-tiger-config");
   const catalog = slotGames.find((g) => g.id === FORTUNE_TIGER_GAME_ID);
   if (!catalog) throw new Error("Fortune Tiger not in catalog");
 
@@ -2877,45 +1369,30 @@ export async function saveFortuneTigerEngineConfig(raw: unknown) {
       featured: "no",
       sortOrder: 0,
       tag: catalog.tag ?? null,
-      rtp: String(cfg.targetRtp),
+      rtp: catalog.rtp,
       volatility: catalog.volatility,
-      minBet: `₱${cfg.minBet.toFixed(2)}`,
-      maxBet: `₱${cfg.maxBet.toFixed(2)}`,
+      minBet: catalog.minBet,
+      maxBet: catalog.maxBet,
       engineConfig: payload,
     });
   } else {
     await db
       .update(gameControls)
-      .set({
-        engineConfig: payload,
-        rtp: String(cfg.targetRtp),
-        minBet: `₱${cfg.minBet.toFixed(2)}`,
-        maxBet: `₱${cfg.maxBet.toFixed(2)}`,
-      })
+      .set({ engineConfig: payload })
       .where(eq(gameControls.gameId, FORTUNE_TIGER_GAME_ID));
-  }
-
-  try {
-    const { clearFortuneTigerEngineCache } = await import("../games/fortune-tiger.server");
-    clearFortuneTigerEngineCache();
-  } catch {
-    /* ignore */
   }
 
   await writeAuditLog({
     actor,
     action: "super.fortune_tiger_config",
-    summary: `Updated Fortune Tiger engine (profile ${cfg.activeRtpProfile}, maxWin ${cfg.maxWinMult}x, EX ${cfg.exBetMult}x, RTP ${cfg.targetRtp}%)`,
+    summary: `Updated Fortune Tiger engine config (dead spin ${cfg.deadSpinChancePercent}%, FS ${cfg.freeSpinsBase})`,
     targetType: "game",
     targetId: FORTUNE_TIGER_GAME_ID,
     meta: {
-      activeRtpProfile: cfg.activeRtpProfile,
-      maxWinMult: cfg.maxWinMult,
-      exBetMult: cfg.exBetMult,
-      targetRtp: cfg.targetRtp,
-      paylineCount: cfg.paylineCount,
-      minBet: cfg.minBet,
-      maxBet: cfg.maxBet,
+      deadSpinChancePercent: cfg.deadSpinChancePercent,
+      bombChanceBasePercent: cfg.bombChanceBasePercent,
+      freeSpinsTriggerCount: cfg.freeSpinsTriggerCount,
+      freeSpinsBase: cfg.freeSpinsBase,
     },
   });
 
@@ -2924,11 +1401,8 @@ export async function saveFortuneTigerEngineConfig(raw: unknown) {
 
 /** Public — Fortune Rabbit engine math (defaults if unset). */
 export async function getFortuneRabbitEngineConfig() {
-  const {
-    FORTUNE_RABBIT_GAME_ID,
-    DEFAULT_FORTUNE_RABBIT_CONFIG,
-    normalizeFortuneRabbitConfig,
-  } = await import("@/lib/fortune-rabbit-config");
+  const { FORTUNE_RABBIT_GAME_ID, DEFAULT_FORTUNE_RABBIT_CONFIG, normalizeFortuneRabbitConfig } =
+    await import("@/lib/fortune-rabbit-config");
   const db = getDb();
   try {
     const rows = await db
@@ -2945,9 +1419,8 @@ export async function getFortuneRabbitEngineConfig() {
 /** Superadmin — save full Fortune Rabbit math config. */
 export async function saveFortuneRabbitEngineConfig(raw: unknown) {
   const actor = await requireSuperadmin();
-  const { FORTUNE_RABBIT_GAME_ID, normalizeFortuneRabbitConfig } = await import(
-    "@/lib/fortune-rabbit-config"
-  );
+  const { FORTUNE_RABBIT_GAME_ID, normalizeFortuneRabbitConfig } =
+    await import("@/lib/fortune-rabbit-config");
   const catalog = slotGames.find((g) => g.id === FORTUNE_RABBIT_GAME_ID);
   if (!catalog) throw new Error("Fortune Rabbit not in catalog");
 
@@ -2968,99 +1441,7 @@ export async function saveFortuneRabbitEngineConfig(raw: unknown) {
       featured: "no",
       sortOrder: 0,
       tag: catalog.tag ?? null,
-      rtp: String(cfg.targetRtp),
-      volatility: catalog.volatility,
-      minBet: `₱${cfg.minBet.toFixed(2)}`,
-      maxBet: `₱${cfg.maxBet.toFixed(2)}`,
-      engineConfig: payload,
-    });
-  } else {
-    await db
-      .update(gameControls)
-      .set({
-        engineConfig: payload,
-        rtp: String(cfg.targetRtp),
-        minBet: `₱${cfg.minBet.toFixed(2)}`,
-        maxBet: `₱${cfg.maxBet.toFixed(2)}`,
-      })
-      .where(eq(gameControls.gameId, FORTUNE_RABBIT_GAME_ID));
-  }
-
-  try {
-    const { clearFortuneRabbitEngineCache } = await import("../games/fortune-rabbit.server");
-    clearFortuneRabbitEngineCache();
-  } catch {
-    /* ignore */
-  }
-
-  await writeAuditLog({
-    actor,
-    action: "super.fortune_rabbit_config",
-    summary: `Updated Fortune Rabbit engine (profile ${cfg.activeRtpProfile}, maxWin ${cfg.maxWinMult}x, EX ${cfg.exBetMult}x, RTP ${cfg.targetRtp}%)`,
-    targetType: "game",
-    targetId: FORTUNE_RABBIT_GAME_ID,
-    meta: {
-      activeRtpProfile: cfg.activeRtpProfile,
-      maxWinMult: cfg.maxWinMult,
-      exBetMult: cfg.exBetMult,
-      targetRtp: cfg.targetRtp,
-      paylineCount: cfg.paylineCount,
-      minBet: cfg.minBet,
-      maxBet: cfg.maxBet,
-    },
-  });
-
-  return cfg;
-}
-
-/** Public — Dust & Dollars engine math. */
-export async function getDustDollarsEngineConfig() {
-  const {
-    DUST_DOLLARS_GAME_ID,
-    DEFAULT_DUST_DOLLARS_CONFIG,
-    normalizeDustDollarsConfig,
-  } = await import("@/lib/dust-dollars-config");
-  const db = getDb();
-  try {
-    const rows = await db
-      .select()
-      .from(gameControls)
-      .where(eq(gameControls.gameId, DUST_DOLLARS_GAME_ID))
-      .limit(1);
-    return normalizeDustDollarsConfig(parseEngineConfigJson(rows[0]?.engineConfig));
-  } catch {
-    return structuredClone(DEFAULT_DUST_DOLLARS_CONFIG);
-  }
-}
-
-/** Superadmin — save full Dust & Dollars math config. */
-export async function saveDustDollarsEngineConfig(raw: unknown) {
-  const actor = await requireSuperadmin();
-  const {
-    DUST_DOLLARS_GAME_ID,
-    normalizeDustDollarsConfig,
-  } = await import("@/lib/dust-dollars-config");
-  const catalog = slotGames.find((g) => g.id === DUST_DOLLARS_GAME_ID);
-  if (!catalog) throw new Error("Dust & Dollars not in catalog");
-
-  const cfg = normalizeDustDollarsConfig(raw);
-  const db = getDb();
-  const existing = await db
-    .select()
-    .from(gameControls)
-    .where(eq(gameControls.gameId, DUST_DOLLARS_GAME_ID))
-    .limit(1);
-
-  const payload = JSON.stringify(cfg);
-
-  if (!existing[0]) {
-    await db.insert(gameControls).values({
-      gameId: DUST_DOLLARS_GAME_ID,
-      enabled: "yes",
-      featured: "no",
-      sortOrder: 0,
-      tag: catalog.tag ?? null,
-      rtp: String(cfg.targetRtp),
+      rtp: catalog.rtp,
       volatility: catalog.volatility,
       minBet: catalog.minBet,
       maxBet: catalog.maxBet,
@@ -3069,28 +1450,21 @@ export async function saveDustDollarsEngineConfig(raw: unknown) {
   } else {
     await db
       .update(gameControls)
-      .set({ engineConfig: payload, rtp: String(cfg.targetRtp) })
-      .where(eq(gameControls.gameId, DUST_DOLLARS_GAME_ID));
-  }
-
-  try {
-    const { clearDustDollarsEngineCache } = await import("../games/dust-dollars.server");
-    clearDustDollarsEngineCache();
-  } catch {
-    /* ignore */
+      .set({ engineConfig: payload })
+      .where(eq(gameControls.gameId, FORTUNE_RABBIT_GAME_ID));
   }
 
   await writeAuditLog({
     actor,
-    action: "super.dust_dollars_config",
-    summary: `Updated Dust & Dollars engine (FS ${cfg.freeSpinsBaseCount}, H&W ${cfg.holdWinTriggerCount}+ coins, maxWin ${cfg.maxWinMult}x, RTP ${cfg.targetRtp}%)`,
+    action: "super.fortune_rabbit_config",
+    summary: `Updated Fortune Rabbit engine config (dead spin ${cfg.deadSpinChancePercent}%, FS ${cfg.freeSpinsBase})`,
     targetType: "game",
-    targetId: DUST_DOLLARS_GAME_ID,
+    targetId: FORTUNE_RABBIT_GAME_ID,
     meta: {
-      freeSpinsBaseCount: cfg.freeSpinsBaseCount,
-      holdWinTriggerCount: cfg.holdWinTriggerCount,
-      maxWinMult: cfg.maxWinMult,
-      targetRtp: cfg.targetRtp,
+      deadSpinChancePercent: cfg.deadSpinChancePercent,
+      bombChanceBasePercent: cfg.bombChanceBasePercent,
+      freeSpinsTriggerCount: cfg.freeSpinsTriggerCount,
+      freeSpinsBase: cfg.freeSpinsBase,
     },
   });
 
@@ -3099,11 +1473,8 @@ export async function saveDustDollarsEngineConfig(raw: unknown) {
 
 /** Public — Cleopatra Gold engine math. */
 export async function getCleopatraGoldEngineConfig() {
-  const {
-    CLEOPATRA_GOLD_GAME_ID,
-    DEFAULT_CLEOPATRA_GOLD_CONFIG,
-    normalizeCleopatraGoldConfig,
-  } = await import("@/lib/cleopatra-gold-config");
+  const { CLEOPATRA_GOLD_GAME_ID, DEFAULT_CLEOPATRA_GOLD_CONFIG, normalizeCleopatraGoldConfig } =
+    await import("@/lib/cleopatra-gold-config");
   const db = getDb();
   try {
     const rows = await db
@@ -3120,10 +1491,8 @@ export async function getCleopatraGoldEngineConfig() {
 /** Superadmin — save Cleopatra Gold math config. */
 export async function saveCleopatraGoldEngineConfig(raw: unknown) {
   const actor = await requireSuperadmin();
-  const {
-    CLEOPATRA_GOLD_GAME_ID,
-    normalizeCleopatraGoldConfig,
-  } = await import("@/lib/cleopatra-gold-config");
+  const { CLEOPATRA_GOLD_GAME_ID, normalizeCleopatraGoldConfig } =
+    await import("@/lib/cleopatra-gold-config");
   const catalog = slotGames.find((g) => g.id === CLEOPATRA_GOLD_GAME_ID);
   if (!catalog) throw new Error("Cleopatra Gold not in catalog");
 
@@ -3144,8 +1513,8 @@ export async function saveCleopatraGoldEngineConfig(raw: unknown) {
       featured: "no",
       sortOrder: 0,
       tag: catalog.tag ?? null,
-      rtp: String(cfg.targetRtp),
-      volatility: cfg.volatility,
+      rtp: catalog.rtp,
+      volatility: catalog.volatility,
       minBet: catalog.minBet,
       maxBet: catalog.maxBet,
       engineConfig: payload,
@@ -3153,714 +1522,21 @@ export async function saveCleopatraGoldEngineConfig(raw: unknown) {
   } else {
     await db
       .update(gameControls)
-      .set({ engineConfig: payload, rtp: String(cfg.targetRtp), volatility: cfg.volatility })
+      .set({ engineConfig: payload })
       .where(eq(gameControls.gameId, CLEOPATRA_GOLD_GAME_ID));
-  }
-
-  try {
-    const { clearCleopatraGoldEngineCache } = await import("../games/cleopatra-gold.server");
-    clearCleopatraGoldEngineCache();
-  } catch {
-    /* ignore */
   }
 
   await writeAuditLog({
     actor,
     action: "super.cleopatra_gold_config",
-    summary: `Updated Cleopatra Gold (FS ${cfg.freeSpinsBaseCount}, chests ${cfg.chestTriggerCount}+, maxWin ${cfg.maxWinMult}x, RTP ${cfg.targetRtp}%)`,
+    summary: `Updated Cleopatra Gold engine config (dead spin ${cfg.deadSpinChancePercent}%, FS ${cfg.freeSpinsBase})`,
     targetType: "game",
     targetId: CLEOPATRA_GOLD_GAME_ID,
     meta: {
-      freeSpinsBaseCount: cfg.freeSpinsBaseCount,
-      chestTriggerCount: cfg.chestTriggerCount,
-      maxWinMult: cfg.maxWinMult,
-      targetRtp: cfg.targetRtp,
-    },
-  });
-
-  return cfg;
-}
-
-/** Public — Gold Mine Dig engine math. */
-export async function getGoldMineEngineConfig() {
-  const {
-    GOLD_MINE_GAME_ID,
-    DEFAULT_GOLD_MINE_CONFIG,
-    normalizeGoldMineConfig,
-  } = await import("@/lib/gold-mine-config");
-  const db = getDb();
-  try {
-    const rows = await db
-      .select()
-      .from(gameControls)
-      .where(eq(gameControls.gameId, GOLD_MINE_GAME_ID))
-      .limit(1);
-    return normalizeGoldMineConfig(parseEngineConfigJson(rows[0]?.engineConfig));
-  } catch {
-    return structuredClone(DEFAULT_GOLD_MINE_CONFIG);
-  }
-}
-
-/** Superadmin — save full Gold Mine Dig math config. */
-export async function saveGoldMineEngineConfig(raw: unknown) {
-  const actor = await requireSuperadmin();
-  const {
-    GOLD_MINE_GAME_ID,
-    normalizeGoldMineConfig,
-  } = await import("@/lib/gold-mine-config");
-  const catalog = slotGames.find((g) => g.id === GOLD_MINE_GAME_ID);
-  if (!catalog) throw new Error("Gold Mine Dig not in catalog");
-
-  const cfg = normalizeGoldMineConfig(raw);
-  const db = getDb();
-  const existing = await db
-    .select()
-    .from(gameControls)
-    .where(eq(gameControls.gameId, GOLD_MINE_GAME_ID))
-    .limit(1);
-
-  const payload = JSON.stringify(cfg);
-
-  if (!existing[0]) {
-    await db.insert(gameControls).values({
-      gameId: GOLD_MINE_GAME_ID,
-      enabled: "yes",
-      featured: "no",
-      sortOrder: 0,
-      tag: catalog.tag ?? null,
-      rtp: String(cfg.targetRtp),
-      volatility: catalog.volatility,
-      minBet: catalog.minBet,
-      maxBet: catalog.maxBet,
-      engineConfig: payload,
-    });
-  } else {
-    await db
-      .update(gameControls)
-      .set({ engineConfig: payload, rtp: String(cfg.targetRtp) })
-      .where(eq(gameControls.gameId, GOLD_MINE_GAME_ID));
-  }
-
-  try {
-    const { clearGoldMineEngineCache } = await import("../games/gold-mine.server");
-    clearGoldMineEngineCache();
-  } catch {
-    /* ignore */
-  }
-
-  await writeAuditLog({
-    actor,
-    action: "super.gold_mine_config",
-    summary: `Updated Gold Mine Dig engine (FS ${cfg.freeSpinsBaseCount}, H&W ${cfg.holdWinTriggerCount}+ coins, maxWin ${cfg.maxWinMult}x, RTP ${cfg.targetRtp}%)`,
-    targetType: "game",
-    targetId: GOLD_MINE_GAME_ID,
-    meta: {
-      freeSpinsBaseCount: cfg.freeSpinsBaseCount,
-      holdWinTriggerCount: cfg.holdWinTriggerCount,
-      maxWinMult: cfg.maxWinMult,
-      targetRtp: cfg.targetRtp,
-    },
-  });
-
-  return cfg;
-}
-
-/** Public — Jeepney Jackpot engine math. */
-export async function getJeepneyJackpotEngineConfig() {
-  const {
-    JEEPNEY_JACKPOT_GAME_ID,
-    DEFAULT_JEEPNEY_JACKPOT_CONFIG,
-    normalizeJeepneyJackpotConfig,
-  } = await import("@/lib/jeepney-jackpot-config");
-  const db = getDb();
-  try {
-    const rows = await db
-      .select()
-      .from(gameControls)
-      .where(eq(gameControls.gameId, JEEPNEY_JACKPOT_GAME_ID))
-      .limit(1);
-    return normalizeJeepneyJackpotConfig(parseEngineConfigJson(rows[0]?.engineConfig));
-  } catch {
-    return structuredClone(DEFAULT_JEEPNEY_JACKPOT_CONFIG);
-  }
-}
-
-/** Superadmin — save full Jeepney Jackpot math config. */
-export async function saveJeepneyJackpotEngineConfig(raw: unknown) {
-  const actor = await requireSuperadmin();
-  const {
-    JEEPNEY_JACKPOT_GAME_ID,
-    normalizeJeepneyJackpotConfig,
-  } = await import("@/lib/jeepney-jackpot-config");
-  const catalog = slotGames.find((g) => g.id === JEEPNEY_JACKPOT_GAME_ID);
-  if (!catalog) throw new Error("Jeepney Jackpot not in catalog");
-
-  const cfg = normalizeJeepneyJackpotConfig(raw);
-  const db = getDb();
-  const existing = await db
-    .select()
-    .from(gameControls)
-    .where(eq(gameControls.gameId, JEEPNEY_JACKPOT_GAME_ID))
-    .limit(1);
-
-  const payload = JSON.stringify(cfg);
-
-  if (!existing[0]) {
-    await db.insert(gameControls).values({
-      gameId: JEEPNEY_JACKPOT_GAME_ID,
-      enabled: "yes",
-      featured: "no",
-      sortOrder: 0,
-      tag: catalog.tag ?? null,
-      rtp: String(cfg.targetRtp),
-      volatility: catalog.volatility,
-      minBet: catalog.minBet,
-      maxBet: catalog.maxBet,
-      engineConfig: payload,
-    });
-  } else {
-    await db
-      .update(gameControls)
-      .set({ engineConfig: payload, rtp: String(cfg.targetRtp) })
-      .where(eq(gameControls.gameId, JEEPNEY_JACKPOT_GAME_ID));
-  }
-
-  try {
-    const { clearJeepneyJackpotEngineCache } = await import("../games/jeepney-jackpot.server");
-    clearJeepneyJackpotEngineCache();
-  } catch {
-    /* ignore */
-  }
-
-  await writeAuditLog({
-    actor,
-    action: "super.jeepney_jackpot_config",
-    summary: `Updated Jeepney Jackpot engine (FS ${cfg.freeSpinsBaseCount}, H&W ${cfg.holdWinTriggerCount}+ coins, maxWin ${cfg.maxWinMult}x, RTP ${cfg.targetRtp}%)`,
-    targetType: "game",
-    targetId: JEEPNEY_JACKPOT_GAME_ID,
-    meta: {
-      freeSpinsBaseCount: cfg.freeSpinsBaseCount,
-      holdWinTriggerCount: cfg.holdWinTriggerCount,
-      maxWinMult: cfg.maxWinMult,
-      targetRtp: cfg.targetRtp,
-    },
-  });
-
-  return cfg;
-}
-
-/** Public — Sari-Sari Spin engine math (defaults if unset). */
-export async function getSariSariSpinEngineConfig() {
-  const {
-    SARI_SARI_SPIN_GAME_ID,
-    DEFAULT_SARI_SARI_SPIN_CONFIG,
-    normalizeSariSariSpinConfig,
-  } = await import("@/lib/sari-sari-spin-config");
-  const db = getDb();
-  try {
-    const rows = await db
-      .select()
-      .from(gameControls)
-      .where(eq(gameControls.gameId, SARI_SARI_SPIN_GAME_ID))
-      .limit(1);
-    return normalizeSariSariSpinConfig(parseEngineConfigJson(rows[0]?.engineConfig));
-  } catch {
-    return structuredClone(DEFAULT_SARI_SARI_SPIN_CONFIG);
-  }
-}
-
-/** Superadmin — save full Sari-Sari Spin math config. */
-export async function saveSariSariSpinEngineConfig(raw: unknown) {
-  const actor = await requireSuperadmin();
-  const { SARI_SARI_SPIN_GAME_ID, normalizeSariSariSpinConfig } = await import(
-    "@/lib/sari-sari-spin-config"
-  );
-  const catalog = slotGames.find((g) => g.id === SARI_SARI_SPIN_GAME_ID);
-  if (!catalog) throw new Error("Sari-Sari Spin not in catalog");
-
-  const cfg = normalizeSariSariSpinConfig(raw);
-  const db = getDb();
-  const existing = await db
-    .select()
-    .from(gameControls)
-    .where(eq(gameControls.gameId, SARI_SARI_SPIN_GAME_ID))
-    .limit(1);
-
-  const payload = JSON.stringify(cfg);
-
-  if (!existing[0]) {
-    await db.insert(gameControls).values({
-      gameId: SARI_SARI_SPIN_GAME_ID,
-      enabled: "yes",
-      featured: "no",
-      sortOrder: 0,
-      tag: catalog.tag ?? null,
-      rtp: String(cfg.targetRtp),
-      volatility: catalog.volatility,
-      minBet: `₱${cfg.minBet.toFixed(2)}`,
-      maxBet: `₱${cfg.maxBet.toFixed(2)}`,
-      engineConfig: payload,
-    });
-  } else {
-    await db
-      .update(gameControls)
-      .set({
-        engineConfig: payload,
-        rtp: String(cfg.targetRtp),
-        minBet: `₱${cfg.minBet.toFixed(2)}`,
-        maxBet: `₱${cfg.maxBet.toFixed(2)}`,
-      })
-      .where(eq(gameControls.gameId, SARI_SARI_SPIN_GAME_ID));
-  }
-
-  try {
-    const { clearSariSariSpinEngineCache } = await import("../games/sari-sari-spin.server");
-    clearSariSariSpinEngineCache();
-  } catch {
-    /* ignore */
-  }
-
-  await writeAuditLog({
-    actor,
-    action: "super.sari_sari_spin_config",
-    summary: `Updated Sari-Sari Spin engine (profile ${cfg.activeRtpProfile}, maxWin ${cfg.maxWinMult}x, EX ${cfg.exBetMult}x, RTP ${cfg.targetRtp}%)`,
-    targetType: "game",
-    targetId: SARI_SARI_SPIN_GAME_ID,
-    meta: {
-      activeRtpProfile: cfg.activeRtpProfile,
-      maxWinMult: cfg.maxWinMult,
-      exBetMult: cfg.exBetMult,
-      targetRtp: cfg.targetRtp,
-      paylineCount: cfg.paylineCount,
-      minBet: cfg.minBet,
-      maxBet: cfg.maxBet,
-    },
-  });
-
-  return cfg;
-}
-
-/** Public — Carabao Charge engine math. */
-export async function getCarabaoChargeEngineConfig() {
-  const {
-    CARABAO_CHARGE_GAME_ID,
-    DEFAULT_CARABAO_CHARGE_CONFIG,
-    normalizeCarabaoChargeConfig,
-  } = await import("@/lib/carabao-charge-config");
-  const db = getDb();
-  try {
-    const rows = await db
-      .select()
-      .from(gameControls)
-      .where(eq(gameControls.gameId, CARABAO_CHARGE_GAME_ID))
-      .limit(1);
-    return normalizeCarabaoChargeConfig(parseEngineConfigJson(rows[0]?.engineConfig));
-  } catch {
-    return structuredClone(DEFAULT_CARABAO_CHARGE_CONFIG);
-  }
-}
-
-/** Superadmin — save Carabao Charge math config. */
-export async function saveCarabaoChargeEngineConfig(raw: unknown) {
-  const actor = await requireSuperadmin();
-  const {
-    CARABAO_CHARGE_GAME_ID,
-    normalizeCarabaoChargeConfig,
-  } = await import("@/lib/carabao-charge-config");
-  const catalog = slotGames.find((g) => g.id === CARABAO_CHARGE_GAME_ID);
-  if (!catalog) throw new Error("Carabao Charge not in catalog");
-
-  const cfg = normalizeCarabaoChargeConfig(raw);
-  const db = getDb();
-  const existing = await db
-    .select()
-    .from(gameControls)
-    .where(eq(gameControls.gameId, CARABAO_CHARGE_GAME_ID))
-    .limit(1);
-
-  const payload = JSON.stringify(cfg);
-
-  if (!existing[0]) {
-    await db.insert(gameControls).values({
-      gameId: CARABAO_CHARGE_GAME_ID,
-      enabled: "yes",
-      featured: "no",
-      sortOrder: 0,
-      tag: catalog.tag ?? null,
-      rtp: String(cfg.targetRtp),
-      volatility: cfg.volatility,
-      minBet: catalog.minBet,
-      maxBet: catalog.maxBet,
-      engineConfig: payload,
-    });
-  } else {
-    await db
-      .update(gameControls)
-      .set({ engineConfig: payload, rtp: String(cfg.targetRtp), volatility: cfg.volatility })
-      .where(eq(gameControls.gameId, CARABAO_CHARGE_GAME_ID));
-  }
-
-  try {
-    const { clearCarabaoChargeEngineCache } = await import("../games/carabao-charge.server");
-    clearCarabaoChargeEngineCache();
-  } catch {
-    /* ignore */
-  }
-
-  await writeAuditLog({
-    actor,
-    action: "super.carabao_charge_config",
-    summary: `Updated Carabao Charge (FS ${cfg.freeSpinsBaseCount}, chests ${cfg.chestTriggerCount}+, maxWin ${cfg.maxWinMult}x, RTP ${cfg.targetRtp}%)`,
-    targetType: "game",
-    targetId: CARABAO_CHARGE_GAME_ID,
-    meta: {
-      freeSpinsBaseCount: cfg.freeSpinsBaseCount,
-      chestTriggerCount: cfg.chestTriggerCount,
-      maxWinMult: cfg.maxWinMult,
-      targetRtp: cfg.targetRtp,
-    },
-  });
-
-  return cfg;
-}
-
-/** Public — Pug Den engine math (defaults if unset). */
-export async function getPugLifeEngineConfig() {
-  const {
-    PUG_LIFE_GAME_ID,
-    DEFAULT_PUG_LIFE_CONFIG,
-    normalizePugLifeConfig,
-  } = await import("@/lib/pug-life-config");
-  const db = getDb();
-  try {
-    const rows = await db
-      .select()
-      .from(gameControls)
-      .where(eq(gameControls.gameId, PUG_LIFE_GAME_ID))
-      .limit(1);
-    return normalizePugLifeConfig(parseEngineConfigJson(rows[0]?.engineConfig));
-  } catch {
-    return structuredClone(DEFAULT_PUG_LIFE_CONFIG);
-  }
-}
-
-/** Superadmin — save full Pug Den math config. */
-export async function savePugLifeEngineConfig(raw: unknown) {
-  const actor = await requireSuperadmin();
-  const { PUG_LIFE_GAME_ID, normalizePugLifeConfig } = await import("@/lib/pug-life-config");
-  const catalog = slotGames.find((g) => g.id === PUG_LIFE_GAME_ID);
-  if (!catalog) throw new Error("Pug Den not in catalog");
-
-  const cfg = normalizePugLifeConfig(raw);
-  const db = getDb();
-  const existing = await db
-    .select()
-    .from(gameControls)
-    .where(eq(gameControls.gameId, PUG_LIFE_GAME_ID))
-    .limit(1);
-
-  const payload = JSON.stringify(cfg);
-
-  if (!existing[0]) {
-    await db.insert(gameControls).values({
-      gameId: PUG_LIFE_GAME_ID,
-      enabled: "yes",
-      featured: "no",
-      sortOrder: 0,
-      tag: catalog.tag ?? null,
-      rtp: String(cfg.targetRtp),
-      volatility: catalog.volatility,
-      minBet: catalog.minBet,
-      maxBet: catalog.maxBet,
-      engineConfig: payload,
-    });
-  } else {
-    await db
-      .update(gameControls)
-      .set({ engineConfig: payload, rtp: String(cfg.targetRtp) })
-      .where(eq(gameControls.gameId, PUG_LIFE_GAME_ID));
-  }
-
-  try {
-    const { clearPugLifeEngineCache } = await import("../games/pug-life.server");
-    clearPugLifeEngineCache();
-  } catch {
-    /* ignore */
-  }
-
-  await writeAuditLog({
-    actor,
-    action: "super.pug_life_config",
-    summary: `Updated Pug Den engine (profile ${cfg.activeRtpProfile}, maxWin ${cfg.maxWinMult}x, RTP ${cfg.targetRtp}%)`,
-    targetType: "game",
-    targetId: PUG_LIFE_GAME_ID,
-    meta: {
-      activeRtpProfile: cfg.activeRtpProfile,
-      maxWinMult: cfg.maxWinMult,
-      targetRtp: cfg.targetRtp,
-      paylineCount: cfg.paylineCount,
-      buyOptions: cfg.buyOptions.map((b) => ({
-        id: b.id,
-        costMult: b.costMult,
-        configStatus: b.configStatus,
-      })),
-    },
-  });
-
-  return cfg;
-}
-
-/** Public — Reel Riot engine math (defaults if unset). */
-export async function getReelRiotEngineConfig() {
-  const {
-    REEL_RIOT_GAME_ID,
-    DEFAULT_REEL_RIOT_CONFIG,
-    normalizeReelRiotConfig,
-  } = await import("@/lib/reel-riot-config");
-  const db = getDb();
-  try {
-    const rows = await db
-      .select()
-      .from(gameControls)
-      .where(eq(gameControls.gameId, REEL_RIOT_GAME_ID))
-      .limit(1);
-    return normalizeReelRiotConfig(parseEngineConfigJson(rows[0]?.engineConfig));
-  } catch {
-    return structuredClone(DEFAULT_REEL_RIOT_CONFIG);
-  }
-}
-
-/** Superadmin — save full Reel Riot math config. */
-export async function saveReelRiotEngineConfig(raw: unknown) {
-  const actor = await requireSuperadmin();
-  const { REEL_RIOT_GAME_ID, normalizeReelRiotConfig } = await import("@/lib/reel-riot-config");
-  const catalog = slotGames.find((g) => g.id === REEL_RIOT_GAME_ID);
-  if (!catalog) throw new Error("Reel Riot not in catalog");
-
-  const cfg = normalizeReelRiotConfig(raw);
-  const db = getDb();
-  const existing = await db
-    .select()
-    .from(gameControls)
-    .where(eq(gameControls.gameId, REEL_RIOT_GAME_ID))
-    .limit(1);
-
-  const payload = JSON.stringify(cfg);
-
-  if (!existing[0]) {
-    await db.insert(gameControls).values({
-      gameId: REEL_RIOT_GAME_ID,
-      enabled: "yes",
-      featured: "no",
-      sortOrder: 0,
-      tag: catalog.tag ?? null,
-      rtp: String(cfg.targetRtp),
-      volatility: catalog.volatility,
-      minBet: catalog.minBet,
-      maxBet: catalog.maxBet,
-      engineConfig: payload,
-    });
-  } else {
-    await db
-      .update(gameControls)
-      .set({ engineConfig: payload, rtp: String(cfg.targetRtp) })
-      .where(eq(gameControls.gameId, REEL_RIOT_GAME_ID));
-  }
-
-  try {
-    const { clearReelRiotEngineCache } = await import("../games/reel-riot.server");
-    clearReelRiotEngineCache();
-  } catch {
-    /* ignore */
-  }
-
-  await writeAuditLog({
-    actor,
-    action: "super.reel_riot_config",
-    summary: `Updated Reel Riot engine (maxBet ${cfg.maxBet}, twoWild ${cfg.twoWildPayMult}x, RTP placeholder ${cfg.targetRtp}%)`,
-    targetType: "game",
-    targetId: REEL_RIOT_GAME_ID,
-    meta: {
-      maxBet: cfg.maxBet,
-      twoWildPayMult: cfg.twoWildPayMult,
-      targetRtp: cfg.targetRtp,
-      jackpotFloor: cfg.jackpot.floorAmount,
-      rtpConfigStatus: cfg.rtpConfigStatus,
-    },
-  });
-
-  return cfg;
-}
-
-/** Public — Crazy Sevens engine math (defaults if unset). */
-export async function getCrazySevensEngineConfig() {
-  const {
-    CRAZY_SEVENS_GAME_ID,
-    DEFAULT_CRAZY_SEVENS_CONFIG,
-    normalizeCrazySevensConfig,
-  } = await import("@/lib/crazy-sevens-config");
-  const db = getDb();
-  try {
-    const rows = await db
-      .select()
-      .from(gameControls)
-      .where(eq(gameControls.gameId, CRAZY_SEVENS_GAME_ID))
-      .limit(1);
-    return normalizeCrazySevensConfig(parseEngineConfigJson(rows[0]?.engineConfig));
-  } catch {
-    return structuredClone(DEFAULT_CRAZY_SEVENS_CONFIG);
-  }
-}
-
-/** Superadmin — save full Crazy Sevens math config. */
-export async function saveCrazySevensEngineConfig(raw: unknown) {
-  const actor = await requireSuperadmin();
-  const { CRAZY_SEVENS_GAME_ID, normalizeCrazySevensConfig } = await import(
-    "@/lib/crazy-sevens-config"
-  );
-  const catalog = slotGames.find((g) => g.id === CRAZY_SEVENS_GAME_ID);
-  if (!catalog) throw new Error("Crazy Sevens not in catalog");
-
-  const cfg = normalizeCrazySevensConfig(raw);
-  const db = getDb();
-  const existing = await db
-    .select()
-    .from(gameControls)
-    .where(eq(gameControls.gameId, CRAZY_SEVENS_GAME_ID))
-    .limit(1);
-
-  const payload = JSON.stringify(cfg);
-
-  if (!existing[0]) {
-    await db.insert(gameControls).values({
-      gameId: CRAZY_SEVENS_GAME_ID,
-      enabled: "yes",
-      featured: "no",
-      sortOrder: 0,
-      tag: catalog.tag ?? null,
-      rtp: String(cfg.targetRtp),
-      volatility: catalog.volatility,
-      minBet: catalog.minBet,
-      maxBet: catalog.maxBet,
-      engineConfig: payload,
-    });
-  } else {
-    await db
-      .update(gameControls)
-      .set({ engineConfig: payload, rtp: String(cfg.targetRtp) })
-      .where(eq(gameControls.gameId, CRAZY_SEVENS_GAME_ID));
-  }
-
-  try {
-    const { clearCrazySevensEngineCache } = await import("../games/crazy-sevens.server");
-    clearCrazySevensEngineCache();
-  } catch {
-    /* ignore */
-  }
-
-  await writeAuditLog({
-    actor,
-    action: "super.crazy_sevens_config",
-    summary: `Updated Crazy Sevens engine (maxBet ${cfg.maxBet}, twoWild ${cfg.twoWildPayMult}x, RTP placeholder ${cfg.targetRtp}%)`,
-    targetType: "game",
-    targetId: CRAZY_SEVENS_GAME_ID,
-    meta: {
-      maxBet: cfg.maxBet,
-      twoWildPayMult: cfg.twoWildPayMult,
-      targetRtp: cfg.targetRtp,
-      jackpotFloor: cfg.jackpot.floorAmount,
-      rtpConfigStatus: cfg.rtpConfigStatus,
-    },
-  });
-
-  return cfg;
-}
-
-/** Public — Piñata Wins engine math (defaults if unset). */
-export async function getPinataWinsEngineConfig() {
-  const {
-    PINATA_WINS_GAME_ID,
-    DEFAULT_PINATA_WINS_CONFIG,
-    normalizePinataWinsConfig,
-  } = await import("@/lib/pinata-wins-config");
-  const db = getDb();
-  try {
-    const rows = await db
-      .select()
-      .from(gameControls)
-      .where(eq(gameControls.gameId, PINATA_WINS_GAME_ID))
-      .limit(1);
-    return normalizePinataWinsConfig(parseEngineConfigJson(rows[0]?.engineConfig));
-  } catch {
-    return structuredClone(DEFAULT_PINATA_WINS_CONFIG);
-  }
-}
-
-/** Superadmin — save full Piñata Wins math config. */
-export async function savePinataWinsEngineConfig(raw: unknown) {
-  const actor = await requireSuperadmin();
-  const { PINATA_WINS_GAME_ID, normalizePinataWinsConfig } = await import(
-    "@/lib/pinata-wins-config"
-  );
-  const catalog = slotGames.find((g) => g.id === PINATA_WINS_GAME_ID);
-  if (!catalog) throw new Error("Piñata Wins not in catalog");
-
-  const cfg = normalizePinataWinsConfig(raw);
-  const db = getDb();
-  const existing = await db
-    .select()
-    .from(gameControls)
-    .where(eq(gameControls.gameId, PINATA_WINS_GAME_ID))
-    .limit(1);
-
-  const payload = JSON.stringify(cfg);
-
-  if (!existing[0]) {
-    await db.insert(gameControls).values({
-      gameId: PINATA_WINS_GAME_ID,
-      enabled: "yes",
-      featured: "no",
-      sortOrder: 0,
-      tag: catalog.tag ?? null,
-      rtp: String(cfg.targetRtp),
-      volatility: catalog.volatility,
-      minBet: `₱${cfg.minBet.toFixed(2)}`,
-      maxBet: `₱${cfg.maxBet.toFixed(2)}`,
-      engineConfig: payload,
-    });
-  } else {
-    await db
-      .update(gameControls)
-      .set({
-        engineConfig: payload,
-        rtp: String(cfg.targetRtp),
-        minBet: `₱${cfg.minBet.toFixed(2)}`,
-        maxBet: `₱${cfg.maxBet.toFixed(2)}`,
-      })
-      .where(eq(gameControls.gameId, PINATA_WINS_GAME_ID));
-  }
-
-  try {
-    const { clearPinataWinsEngineCache } = await import("../games/pinata-wins.server");
-    clearPinataWinsEngineCache();
-  } catch {
-    /* ignore */
-  }
-
-  await writeAuditLog({
-    actor,
-    action: "super.pinata_wins_config",
-    summary: `Updated Piñata Wins engine (buy ${cfg.buyFeatureMult}x, maxWin ${cfg.maxWinMult}x, RTP ${cfg.targetRtp}%)`,
-    targetType: "game",
-    targetId: PINATA_WINS_GAME_ID,
-    meta: {
-      buyFeatureMult: cfg.buyFeatureMult,
-      maxWinMult: cfg.maxWinMult,
-      targetRtp: cfg.targetRtp,
-      paylineCount: cfg.paylineCount,
-      goldFrameChanceInitial: cfg.goldFrameChanceInitial,
-      minBet: cfg.minBet,
-      maxBet: cfg.maxBet,
+      deadSpinChancePercent: cfg.deadSpinChancePercent,
+      bombChanceBasePercent: cfg.bombChanceBasePercent,
+      freeSpinsTriggerCount: cfg.freeSpinsTriggerCount,
+      freeSpinsBase: cfg.freeSpinsBase,
     },
   });
 
@@ -3869,11 +1545,8 @@ export async function savePinataWinsEngineConfig(raw: unknown) {
 
 /** Public — Baccarat engine math (defaults if unset). */
 export async function getBaccaratEngineConfig() {
-  const {
-    BACCARAT_GAME_ID,
-    DEFAULT_BACCARAT_CONFIG,
-    normalizeBaccaratConfig,
-  } = await import("@/lib/baccarat-config");
+  const { BACCARAT_GAME_ID, DEFAULT_BACCARAT_CONFIG, normalizeBaccaratConfig } =
+    await import("@/lib/baccarat-config");
   const db = getDb();
   try {
     const rows = await db
@@ -3961,11 +1634,8 @@ export async function saveBaccaratEngineConfig(raw: unknown) {
 
 /** Public — Deep Bass engine math (defaults if unset). */
 export async function getDeepBassEngineConfig() {
-  const {
-    DEEP_BASS_GAME_ID,
-    DEFAULT_DEEP_BASS_CONFIG,
-    normalizeDeepBassConfig,
-  } = await import("@/lib/deep-bass-config");
+  const { DEEP_BASS_GAME_ID, DEFAULT_DEEP_BASS_CONFIG, normalizeDeepBassConfig } =
+    await import("@/lib/deep-bass-config");
   const db = getDb();
   try {
     const rows = await db
@@ -3982,9 +1652,7 @@ export async function getDeepBassEngineConfig() {
 /** Superadmin — save full Deep Bass math config. */
 export async function saveDeepBassEngineConfig(raw: unknown) {
   const actor = await requireSuperadmin();
-  const { DEEP_BASS_GAME_ID, normalizeDeepBassConfig } = await import(
-    "@/lib/deep-bass-config"
-  );
+  const { DEEP_BASS_GAME_ID, normalizeDeepBassConfig } = await import("@/lib/deep-bass-config");
   const catalog = slotGames.find((g) => g.id === DEEP_BASS_GAME_ID);
   if (!catalog) throw new Error("Deep Bass not in catalog");
 
@@ -4053,11 +1721,8 @@ export async function saveDeepBassEngineConfig(raw: unknown) {
 
 /** Public — Dragon Fisher engine math (defaults if unset). */
 export async function getDragonFisherEngineConfig() {
-  const {
-    DRAGON_FISHER_GAME_ID,
-    DEFAULT_DRAGON_FISHER_CONFIG,
-    normalizeDragonFisherConfig,
-  } = await import("@/lib/dragon-fisher-config");
+  const { DRAGON_FISHER_GAME_ID, DEFAULT_DRAGON_FISHER_CONFIG, normalizeDragonFisherConfig } =
+    await import("@/lib/dragon-fisher-config");
   const db = getDb();
   try {
     const rows = await db
@@ -4074,9 +1739,8 @@ export async function getDragonFisherEngineConfig() {
 /** Superadmin — save full Dragon Fisher math config. */
 export async function saveDragonFisherEngineConfig(raw: unknown) {
   const actor = await requireSuperadmin();
-  const { DRAGON_FISHER_GAME_ID, normalizeDragonFisherConfig } = await import(
-    "@/lib/dragon-fisher-config"
-  );
+  const { DRAGON_FISHER_GAME_ID, normalizeDragonFisherConfig } =
+    await import("@/lib/dragon-fisher-config");
   const catalog = slotGames.find((g) => g.id === DRAGON_FISHER_GAME_ID);
   if (!catalog) throw new Error("Dragon Fisher not in catalog");
 
@@ -4145,11 +1809,8 @@ export async function saveDragonFisherEngineConfig(raw: unknown) {
 
 /** Public — Crab Cannon engine math (defaults if unset). */
 export async function getCrabCannonEngineConfig() {
-  const {
-    CRAB_CANNON_GAME_ID,
-    DEFAULT_CRAB_CANNON_CONFIG,
-    normalizeCrabCannonConfig,
-  } = await import("@/lib/crab-cannon-config");
+  const { CRAB_CANNON_GAME_ID, DEFAULT_CRAB_CANNON_CONFIG, normalizeCrabCannonConfig } =
+    await import("@/lib/crab-cannon-config");
   const db = getDb();
   try {
     const rows = await db
@@ -4166,9 +1827,8 @@ export async function getCrabCannonEngineConfig() {
 /** Superadmin — save full Crab Cannon math config. */
 export async function saveCrabCannonEngineConfig(raw: unknown) {
   const actor = await requireSuperadmin();
-  const { CRAB_CANNON_GAME_ID, normalizeCrabCannonConfig } = await import(
-    "@/lib/crab-cannon-config"
-  );
+  const { CRAB_CANNON_GAME_ID, normalizeCrabCannonConfig } =
+    await import("@/lib/crab-cannon-config");
   const catalog = slotGames.find((g) => g.id === CRAB_CANNON_GAME_ID);
   if (!catalog) throw new Error("Crab Cannon not in catalog");
 
@@ -4235,105 +1895,10 @@ export async function saveCrabCannonEngineConfig(raw: unknown) {
   return cfg;
 }
 
-/** Public — Phoenix Fisher engine math (defaults if unset). */
-export async function getPhoenixFisherEngineConfig() {
-  const {
-    PHOENIX_FISHER_GAME_ID,
-    DEFAULT_PHOENIX_FISHER_CONFIG,
-    normalizePhoenixFisherConfig,
-  } = await import("@/lib/phoenix-fisher-config");
-  const db = getDb();
-  try {
-    const rows = await db
-      .select()
-      .from(gameControls)
-      .where(eq(gameControls.gameId, PHOENIX_FISHER_GAME_ID))
-      .limit(1);
-    return normalizePhoenixFisherConfig(parseEngineConfigJson(rows[0]?.engineConfig));
-  } catch {
-    return structuredClone(DEFAULT_PHOENIX_FISHER_CONFIG);
-  }
-}
-
-/** Superadmin — save full Phoenix Fisher math config. */
-export async function savePhoenixFisherEngineConfig(raw: unknown) {
-  const actor = await requireSuperadmin();
-  const { PHOENIX_FISHER_GAME_ID, normalizePhoenixFisherConfig } = await import(
-    "@/lib/phoenix-fisher-config"
-  );
-  const catalog = slotGames.find((g) => g.id === PHOENIX_FISHER_GAME_ID);
-  if (!catalog) throw new Error("Phoenix Fisher not in catalog");
-
-  const cfg = normalizePhoenixFisherConfig(raw);
-  const db = getDb();
-  const existing = await db
-    .select()
-    .from(gameControls)
-    .where(eq(gameControls.gameId, PHOENIX_FISHER_GAME_ID))
-    .limit(1);
-
-  const payload = JSON.stringify(cfg);
-  const minMain = cfg.minBet;
-  const maxMain = cfg.maxBet;
-
-  if (!existing[0]) {
-    await db.insert(gameControls).values({
-      gameId: PHOENIX_FISHER_GAME_ID,
-      enabled: "yes",
-      featured: "no",
-      sortOrder: 0,
-      tag: catalog.tag ?? null,
-      rtp: String(cfg.rtpTarget),
-      volatility: catalog.volatility,
-      minBet: `₱${minMain.toFixed(2)}`,
-      maxBet: `₱${maxMain.toFixed(2)}`,
-      engineConfig: payload,
-    });
-  } else {
-    await db
-      .update(gameControls)
-      .set({
-        engineConfig: payload,
-        rtp: String(cfg.rtpTarget),
-        minBet: `₱${minMain.toFixed(2)}`,
-        maxBet: `₱${maxMain.toFixed(2)}`,
-      })
-      .where(eq(gameControls.gameId, PHOENIX_FISHER_GAME_ID));
-  }
-
-  try {
-    const { clearPhoenixFisherEngineCache } = await import("../games/phoenix-fisher.server");
-    clearPhoenixFisherEngineCache();
-  } catch {
-    /* ignore */
-  }
-
-  await writeAuditLog({
-    actor,
-    action: "super.phoenix_fisher_config",
-    summary: `Updated Phoenix Fisher engine (RTP ${cfg.rtpTarget}%, boss finisher ${(cfg.boss.finisherShare * 100).toFixed(0)}%)`,
-    targetType: "game",
-    targetId: PHOENIX_FISHER_GAME_ID,
-    meta: {
-      rtpTarget: cfg.rtpTarget,
-      maxHitChance: cfg.maxHitChance,
-      bossSpawnChance: cfg.boss.spawnChance,
-      finisherShare: cfg.boss.finisherShare,
-      weaponCount: cfg.weapons.length,
-      fishCount: cfg.fishTiers.length,
-    },
-  });
-
-  return cfg;
-}
-
 /** Public — Shark Hunter engine math (defaults if unset). */
 export async function getSharkHunterEngineConfig() {
-  const {
-    SHARK_HUNTER_GAME_ID,
-    DEFAULT_SHARK_HUNTER_CONFIG,
-    normalizeSharkHunterConfig,
-  } = await import("@/lib/shark-hunter-config");
+  const { SHARK_HUNTER_GAME_ID, DEFAULT_SHARK_HUNTER_CONFIG, normalizeSharkHunterConfig } =
+    await import("@/lib/shark-hunter-config");
   const db = getDb();
   try {
     const rows = await db
@@ -4350,9 +1915,8 @@ export async function getSharkHunterEngineConfig() {
 /** Superadmin — save full Shark Hunter math config. */
 export async function saveSharkHunterEngineConfig(raw: unknown) {
   const actor = await requireSuperadmin();
-  const { SHARK_HUNTER_GAME_ID, normalizeSharkHunterConfig } = await import(
-    "@/lib/shark-hunter-config"
-  );
+  const { SHARK_HUNTER_GAME_ID, normalizeSharkHunterConfig } =
+    await import("@/lib/shark-hunter-config");
   const catalog = slotGames.find((g) => g.id === SHARK_HUNTER_GAME_ID);
   if (!catalog) throw new Error("Shark Hunter not in catalog");
 
@@ -4421,11 +1985,8 @@ export async function saveSharkHunterEngineConfig(raw: unknown) {
 
 /** Public — Octopus Armada engine math (defaults if unset). */
 export async function getOctopusArmadaEngineConfig() {
-  const {
-    OCTOPUS_ARMADA_GAME_ID,
-    DEFAULT_OCTOPUS_ARMADA_CONFIG,
-    normalizeOctopusArmadaConfig,
-  } = await import("@/lib/octopus-armada-config");
+  const { OCTOPUS_ARMADA_GAME_ID, DEFAULT_OCTOPUS_ARMADA_CONFIG, normalizeOctopusArmadaConfig } =
+    await import("@/lib/octopus-armada-config");
   const db = getDb();
   try {
     const rows = await db
@@ -4442,9 +2003,8 @@ export async function getOctopusArmadaEngineConfig() {
 /** Superadmin — save full Octopus Armada math config. */
 export async function saveOctopusArmadaEngineConfig(raw: unknown) {
   const actor = await requireSuperadmin();
-  const { OCTOPUS_ARMADA_GAME_ID, normalizeOctopusArmadaConfig } = await import(
-    "@/lib/octopus-armada-config"
-  );
+  const { OCTOPUS_ARMADA_GAME_ID, normalizeOctopusArmadaConfig } =
+    await import("@/lib/octopus-armada-config");
   const catalog = slotGames.find((g) => g.id === OCTOPUS_ARMADA_GAME_ID);
   if (!catalog) throw new Error("Octopus Armada not in catalog");
 
@@ -4513,11 +2073,8 @@ export async function saveOctopusArmadaEngineConfig(raw: unknown) {
 
 /** Public — Turtle Tide engine math (defaults if unset). */
 export async function getTurtleTideEngineConfig() {
-  const {
-    TURTLE_TIDE_GAME_ID,
-    DEFAULT_TURTLE_TIDE_CONFIG,
-    normalizeTurtleTideConfig,
-  } = await import("@/lib/turtle-tide-config");
+  const { TURTLE_TIDE_GAME_ID, DEFAULT_TURTLE_TIDE_CONFIG, normalizeTurtleTideConfig } =
+    await import("@/lib/turtle-tide-config");
   const db = getDb();
   try {
     const rows = await db
@@ -4534,9 +2091,8 @@ export async function getTurtleTideEngineConfig() {
 /** Superadmin — save full Turtle Tide math config. */
 export async function saveTurtleTideEngineConfig(raw: unknown) {
   const actor = await requireSuperadmin();
-  const { TURTLE_TIDE_GAME_ID, normalizeTurtleTideConfig } = await import(
-    "@/lib/turtle-tide-config"
-  );
+  const { TURTLE_TIDE_GAME_ID, normalizeTurtleTideConfig } =
+    await import("@/lib/turtle-tide-config");
   const catalog = slotGames.find((g) => g.id === TURTLE_TIDE_GAME_ID);
   if (!catalog) throw new Error("Turtle Tide not in catalog");
 
@@ -4605,11 +2161,8 @@ export async function saveTurtleTideEngineConfig(raw: unknown) {
 
 /** Public — Whale War engine math (defaults if unset). */
 export async function getWhaleWarEngineConfig() {
-  const {
-    WHALE_WAR_GAME_ID,
-    DEFAULT_WHALE_WAR_CONFIG,
-    normalizeWhaleWarConfig,
-  } = await import("@/lib/whale-war-config");
+  const { WHALE_WAR_GAME_ID, DEFAULT_WHALE_WAR_CONFIG, normalizeWhaleWarConfig } =
+    await import("@/lib/whale-war-config");
   const db = getDb();
   try {
     const rows = await db
@@ -4626,9 +2179,7 @@ export async function getWhaleWarEngineConfig() {
 /** Superadmin — save full Whale War math config. */
 export async function saveWhaleWarEngineConfig(raw: unknown) {
   const actor = await requireSuperadmin();
-  const { WHALE_WAR_GAME_ID, normalizeWhaleWarConfig } = await import(
-    "@/lib/whale-war-config"
-  );
+  const { WHALE_WAR_GAME_ID, normalizeWhaleWarConfig } = await import("@/lib/whale-war-config");
   const catalog = slotGames.find((g) => g.id === WHALE_WAR_GAME_ID);
   if (!catalog) throw new Error("Whale War not in catalog");
 
@@ -4697,11 +2248,8 @@ export async function saveWhaleWarEngineConfig(raw: unknown) {
 
 /** Public — Lucky 9 engine math (defaults if unset). */
 export async function getLucky9EngineConfig() {
-  const {
-    LUCKY9_GAME_ID,
-    DEFAULT_LUCKY9_CONFIG,
-    normalizeLucky9Config,
-  } = await import("@/lib/lucky9-config");
+  const { LUCKY9_GAME_ID, DEFAULT_LUCKY9_CONFIG, normalizeLucky9Config } =
+    await import("@/lib/lucky9-config");
   const db = getDb();
   try {
     const rows = await db
@@ -4810,9 +2358,8 @@ export async function getThreeCardPokerEngineConfig() {
 /** Superadmin — save full Three Card Poker math config. */
 export async function saveThreeCardPokerEngineConfig(raw: unknown) {
   const actor = await requireSuperadmin();
-  const { THREE_CARD_POKER_GAME_ID, normalizeThreeCardPokerConfig } = await import(
-    "@/lib/threecardpoker-config"
-  );
+  const { THREE_CARD_POKER_GAME_ID, normalizeThreeCardPokerConfig } =
+    await import("@/lib/threecardpoker-config");
   const catalog = slotGames.find((g) => g.id === THREE_CARD_POKER_GAME_ID);
   if (!catalog) throw new Error("Three Card Poker not in catalog");
 
@@ -4881,11 +2428,8 @@ export async function saveThreeCardPokerEngineConfig(raw: unknown) {
 
 /** Public — Color Game engine math (defaults if unset). */
 export async function getColorGameEngineConfig() {
-  const {
-    COLOR_GAME_GAME_ID,
-    DEFAULT_COLOR_GAME_CONFIG,
-    normalizeColorGameConfig,
-  } = await import("@/lib/color-game-config");
+  const { COLOR_GAME_GAME_ID, DEFAULT_COLOR_GAME_CONFIG, normalizeColorGameConfig } =
+    await import("@/lib/color-game-config");
   const db = getDb();
   try {
     const rows = await db
@@ -4902,9 +2446,7 @@ export async function getColorGameEngineConfig() {
 /** Superadmin — save full Color Game math config. */
 export async function saveColorGameEngineConfig(raw: unknown) {
   const actor = await requireSuperadmin();
-  const { COLOR_GAME_GAME_ID, normalizeColorGameConfig } = await import(
-    "@/lib/color-game-config"
-  );
+  const { COLOR_GAME_GAME_ID, normalizeColorGameConfig } = await import("@/lib/color-game-config");
   const catalog = slotGames.find((g) => g.id === COLOR_GAME_GAME_ID);
   if (!catalog) throw new Error("Color Game not in catalog");
 
@@ -4964,11 +2506,8 @@ export async function saveColorGameEngineConfig(raw: unknown) {
 
 /** Public — Tongits Arena engine math (defaults if unset). */
 export async function getTongitsArenaEngineConfig() {
-  const {
-    TONGITS_ARENA_GAME_ID,
-    DEFAULT_TONGITS_ARENA_CONFIG,
-    normalizeTongitsArenaConfig,
-  } = await import("@/lib/tongits-arena-config");
+  const { TONGITS_ARENA_GAME_ID, DEFAULT_TONGITS_ARENA_CONFIG, normalizeTongitsArenaConfig } =
+    await import("@/lib/tongits-arena-config");
   const db = getDb();
   try {
     const rows = await db
@@ -4985,9 +2524,8 @@ export async function getTongitsArenaEngineConfig() {
 /** Superadmin — save full Tongits Arena math config. */
 export async function saveTongitsArenaEngineConfig(raw: unknown) {
   const actor = await requireSuperadmin();
-  const { TONGITS_ARENA_GAME_ID, normalizeTongitsArenaConfig } = await import(
-    "@/lib/tongits-arena-config"
-  );
+  const { TONGITS_ARENA_GAME_ID, normalizeTongitsArenaConfig } =
+    await import("@/lib/tongits-arena-config");
   const catalog = slotGames.find((g) => g.id === TONGITS_ARENA_GAME_ID);
   if (!catalog) throw new Error("Tongits Arena not in catalog");
 
@@ -5056,11 +2594,8 @@ export async function saveTongitsArenaEngineConfig(raw: unknown) {
 
 /** Public — Lucky Drop engine math (defaults if unset). */
 export async function getLuckyDropEngineConfig() {
-  const {
-    LUCKY_DROP_GAME_ID,
-    DEFAULT_LUCKY_DROP_CONFIG,
-    normalizeLuckyDropConfig,
-  } = await import("@/lib/lucky-drop-config");
+  const { LUCKY_DROP_GAME_ID, DEFAULT_LUCKY_DROP_CONFIG, normalizeLuckyDropConfig } =
+    await import("@/lib/lucky-drop-config");
   const db = getDb();
   try {
     const rows = await db
@@ -5077,9 +2612,7 @@ export async function getLuckyDropEngineConfig() {
 /** Superadmin — save full Lucky Drop math config. */
 export async function saveLuckyDropEngineConfig(raw: unknown) {
   const actor = await requireSuperadmin();
-  const { LUCKY_DROP_GAME_ID, normalizeLuckyDropConfig } = await import(
-    "@/lib/lucky-drop-config"
-  );
+  const { LUCKY_DROP_GAME_ID, normalizeLuckyDropConfig } = await import("@/lib/lucky-drop-config");
   const catalog = slotGames.find((g) => g.id === LUCKY_DROP_GAME_ID);
   if (!catalog) throw new Error("Lucky Drop not in catalog");
 
@@ -5128,12 +2661,13 @@ export async function saveLuckyDropEngineConfig(raw: unknown) {
   await writeAuditLog({
     actor,
     action: "super.lucky_drop_config",
-    summary: `Updated Lucky Drop engine (${cfg.payoutMult}×, maxPicks ${cfg.maxPicks}, RTP ${cfg.rtpTarget}%)`,
+    summary: `Updated Royal Climb engine (edge ${cfg.houseEdge}%, ${cfg.maxSteps} rungs, ${cfg.skips} skips, RTP ${cfg.rtpTarget}%)`,
     targetType: "game",
     targetId: LUCKY_DROP_GAME_ID,
     meta: {
-      payoutMult: cfg.payoutMult,
-      maxPicks: cfg.maxPicks,
+      houseEdge: cfg.houseEdge,
+      maxSteps: cfg.maxSteps,
+      skips: cfg.skips,
       rtpTarget: cfg.rtpTarget,
     },
   });
@@ -5143,11 +2677,8 @@ export async function saveLuckyDropEngineConfig(raw: unknown) {
 
 /** Public — Color Game Pro engine math (defaults if unset). */
 export async function getColorGameProEngineConfig() {
-  const {
-    COLOR_GAME_PRO_GAME_ID,
-    DEFAULT_COLOR_GAME_PRO_CONFIG,
-    normalizeColorGameProConfig,
-  } = await import("@/lib/color-game-pro-config");
+  const { COLOR_GAME_PRO_GAME_ID, DEFAULT_COLOR_GAME_PRO_CONFIG, normalizeColorGameProConfig } =
+    await import("@/lib/color-game-pro-config");
   const db = getDb();
   try {
     const rows = await db
@@ -5164,9 +2695,8 @@ export async function getColorGameProEngineConfig() {
 /** Superadmin — save full Color Game Pro math config. */
 export async function saveColorGameProEngineConfig(raw: unknown) {
   const actor = await requireSuperadmin();
-  const { COLOR_GAME_PRO_GAME_ID, normalizeColorGameProConfig } = await import(
-    "@/lib/color-game-pro-config"
-  );
+  const { COLOR_GAME_PRO_GAME_ID, normalizeColorGameProConfig } =
+    await import("@/lib/color-game-pro-config");
   const catalog = slotGames.find((g) => g.id === COLOR_GAME_PRO_GAME_ID);
   if (!catalog) throw new Error("Color Game Pro not in catalog");
 
@@ -5226,11 +2756,8 @@ export async function saveColorGameProEngineConfig(raw: unknown) {
 
 /** Public — Lucky Nine Plus engine math (defaults if unset). */
 export async function getLuckyNinePlusEngineConfig() {
-  const {
-    LUCKY_NINE_PLUS_GAME_ID,
-    DEFAULT_LUCKY_NINE_PLUS_CONFIG,
-    normalizeLuckyNinePlusConfig,
-  } = await import("@/lib/lucky-nine-plus-config");
+  const { LUCKY_NINE_PLUS_GAME_ID, DEFAULT_LUCKY_NINE_PLUS_CONFIG, normalizeLuckyNinePlusConfig } =
+    await import("@/lib/lucky-nine-plus-config");
   const db = getDb();
   try {
     const rows = await db
@@ -5247,9 +2774,8 @@ export async function getLuckyNinePlusEngineConfig() {
 /** Superadmin — save full Lucky Nine Plus math config. */
 export async function saveLuckyNinePlusEngineConfig(raw: unknown) {
   const actor = await requireSuperadmin();
-  const { LUCKY_NINE_PLUS_GAME_ID, normalizeLuckyNinePlusConfig } = await import(
-    "@/lib/lucky-nine-plus-config"
-  );
+  const { LUCKY_NINE_PLUS_GAME_ID, normalizeLuckyNinePlusConfig } =
+    await import("@/lib/lucky-nine-plus-config");
   const catalog = slotGames.find((g) => g.id === LUCKY_NINE_PLUS_GAME_ID);
   if (!catalog) throw new Error("Lucky Nine Plus not in catalog");
 
@@ -5320,11 +2846,8 @@ export async function saveLuckyNinePlusEngineConfig(raw: unknown) {
 
 /** Public — Drop Deluxe engine math (defaults if unset). */
 export async function getDropDeluxeEngineConfig() {
-  const {
-    DROP_DELUXE_GAME_ID,
-    DEFAULT_DROP_DELUXE_CONFIG,
-    normalizeDropDeluxeConfig,
-  } = await import("@/lib/drop-deluxe-config");
+  const { DROP_DELUXE_GAME_ID, DEFAULT_DROP_DELUXE_CONFIG, normalizeDropDeluxeConfig } =
+    await import("@/lib/drop-deluxe-config");
   const db = getDb();
   try {
     const rows = await db
@@ -5341,9 +2864,8 @@ export async function getDropDeluxeEngineConfig() {
 /** Superadmin — save full Drop Deluxe math config. */
 export async function saveDropDeluxeEngineConfig(raw: unknown) {
   const actor = await requireSuperadmin();
-  const { DROP_DELUXE_GAME_ID, normalizeDropDeluxeConfig } = await import(
-    "@/lib/drop-deluxe-config"
-  );
+  const { DROP_DELUXE_GAME_ID, normalizeDropDeluxeConfig } =
+    await import("@/lib/drop-deluxe-config");
   const catalog = slotGames.find((g) => g.id === DROP_DELUXE_GAME_ID);
   if (!catalog) throw new Error("Drop Deluxe not in catalog");
 
@@ -5392,12 +2914,11 @@ export async function saveDropDeluxeEngineConfig(raw: unknown) {
   await writeAuditLog({
     actor,
     action: "super.drop_deluxe_config",
-    summary: `Updated Drop Deluxe engine (${cfg.payoutMult}×, maxPicks ${cfg.maxPicks}, RTP ${cfg.rtpTarget}%)`,
+    summary: `Updated Deluxe Draw engine (royal ${cfg.paytable.royal}×, RTP ${cfg.rtpTarget}%)`,
     targetType: "game",
     targetId: DROP_DELUXE_GAME_ID,
     meta: {
-      payoutMult: cfg.payoutMult,
-      maxPicks: cfg.maxPicks,
+      paytable: cfg.paytable,
       rtpTarget: cfg.rtpTarget,
     },
   });
@@ -5407,11 +2928,8 @@ export async function saveDropDeluxeEngineConfig(raw: unknown) {
 
 /** Public — Poker Showdown engine math (defaults if unset). */
 export async function getPokerShowdownEngineConfig() {
-  const {
-    POKER_SHOWDOWN_GAME_ID,
-    DEFAULT_POKER_SHOWDOWN_CONFIG,
-    normalizePokerShowdownConfig,
-  } = await import("@/lib/poker-showdown-config");
+  const { POKER_SHOWDOWN_GAME_ID, DEFAULT_POKER_SHOWDOWN_CONFIG, normalizePokerShowdownConfig } =
+    await import("@/lib/poker-showdown-config");
   const db = getDb();
   try {
     const rows = await db
@@ -5428,9 +2946,8 @@ export async function getPokerShowdownEngineConfig() {
 /** Superadmin — save full Poker Showdown math config. */
 export async function savePokerShowdownEngineConfig(raw: unknown) {
   const actor = await requireSuperadmin();
-  const { POKER_SHOWDOWN_GAME_ID, normalizePokerShowdownConfig } = await import(
-    "@/lib/poker-showdown-config"
-  );
+  const { POKER_SHOWDOWN_GAME_ID, normalizePokerShowdownConfig } =
+    await import("@/lib/poker-showdown-config");
   const catalog = slotGames.find((g) => g.id === POKER_SHOWDOWN_GAME_ID);
   if (!catalog) throw new Error("Poker Showdown not in catalog");
 
@@ -5499,11 +3016,8 @@ export async function savePokerShowdownEngineConfig(raw: unknown) {
 
 /** Public — Ace High engine math (defaults if unset). */
 export async function getAceHighEngineConfig() {
-  const {
-    ACE_HIGH_GAME_ID,
-    DEFAULT_ACE_HIGH_CONFIG,
-    normalizeAceHighConfig,
-  } = await import("@/lib/ace-high-config");
+  const { ACE_HIGH_GAME_ID, DEFAULT_ACE_HIGH_CONFIG, normalizeAceHighConfig } =
+    await import("@/lib/ace-high-config");
   const db = getDb();
   try {
     const rows = await db
@@ -5591,11 +3105,8 @@ export async function saveAceHighEngineConfig(raw: unknown) {
 
 /** Public — Golden Panther engine math (defaults if unset). */
 export async function getGoldenPantherEngineConfig() {
-  const {
-    GOLDEN_PANTHER_GAME_ID,
-    DEFAULT_GOLDEN_PANTHER_CONFIG,
-    normalizeGoldenPantherConfig,
-  } = await import("@/lib/golden-panther-config");
+  const { GOLDEN_PANTHER_GAME_ID, DEFAULT_GOLDEN_PANTHER_CONFIG, normalizeGoldenPantherConfig } =
+    await import("@/lib/golden-panther-config");
   const db = getDb();
   try {
     const rows = await db
@@ -5612,10 +3123,8 @@ export async function getGoldenPantherEngineConfig() {
 /** Superadmin — save full Golden Panther math config. */
 export async function saveGoldenPantherEngineConfig(raw: unknown) {
   const actor = await requireSuperadmin();
-  const {
-    GOLDEN_PANTHER_GAME_ID,
-    normalizeGoldenPantherConfig,
-  } = await import("@/lib/golden-panther-config");
+  const { GOLDEN_PANTHER_GAME_ID, normalizeGoldenPantherConfig } =
+    await import("@/lib/golden-panther-config");
   const catalog = slotGames.find((g) => g.id === GOLDEN_PANTHER_GAME_ID);
   if (!catalog) throw new Error("Golden Panther not in catalog");
 
@@ -5655,160 +3164,6 @@ export async function saveGoldenPantherEngineConfig(raw: unknown) {
     summary: `Updated Golden Panther engine config (dead spin ${cfg.deadSpinChancePercent}%, FS ${cfg.freeSpinsBase})`,
     targetType: "game",
     targetId: GOLDEN_PANTHER_GAME_ID,
-    meta: {
-      deadSpinChancePercent: cfg.deadSpinChancePercent,
-      bombChanceBasePercent: cfg.bombChanceBasePercent,
-      freeSpinsTriggerCount: cfg.freeSpinsTriggerCount,
-      freeSpinsBase: cfg.freeSpinsBase,
-    },
-  });
-
-  return cfg;
-}
-
-/** Public — Aztec Treasure engine math (defaults if unset). */
-export async function getAztecTreasureEngineConfig() {
-  const {
-    AZTEC_TREASURE_GAME_ID,
-    DEFAULT_AZTEC_TREASURE_CONFIG,
-    normalizeAztecTreasureConfig,
-  } = await import("@/lib/aztec-treasure-config");
-  const db = getDb();
-  try {
-    const rows = await db
-      .select()
-      .from(gameControls)
-      .where(eq(gameControls.gameId, AZTEC_TREASURE_GAME_ID))
-      .limit(1);
-    return normalizeAztecTreasureConfig(parseEngineConfigJson(rows[0]?.engineConfig));
-  } catch {
-    return structuredClone(DEFAULT_AZTEC_TREASURE_CONFIG);
-  }
-}
-
-/** Superadmin — save full Aztec Treasure math config. */
-export async function saveAztecTreasureEngineConfig(raw: unknown) {
-  const actor = await requireSuperadmin();
-  const {
-    AZTEC_TREASURE_GAME_ID,
-    normalizeAztecTreasureConfig,
-  } = await import("@/lib/aztec-treasure-config");
-  const catalog = slotGames.find((g) => g.id === AZTEC_TREASURE_GAME_ID);
-  if (!catalog) throw new Error("Aztec Treasure not in catalog");
-
-  const cfg = normalizeAztecTreasureConfig(raw);
-  const db = getDb();
-  const existing = await db
-    .select()
-    .from(gameControls)
-    .where(eq(gameControls.gameId, AZTEC_TREASURE_GAME_ID))
-    .limit(1);
-
-  const payload = JSON.stringify(cfg);
-
-  if (!existing[0]) {
-    await db.insert(gameControls).values({
-      gameId: AZTEC_TREASURE_GAME_ID,
-      enabled: "yes",
-      featured: "no",
-      sortOrder: 0,
-      tag: catalog.tag ?? null,
-      rtp: catalog.rtp,
-      volatility: catalog.volatility,
-      minBet: catalog.minBet,
-      maxBet: catalog.maxBet,
-      engineConfig: payload,
-    });
-  } else {
-    await db
-      .update(gameControls)
-      .set({ engineConfig: payload })
-      .where(eq(gameControls.gameId, AZTEC_TREASURE_GAME_ID));
-  }
-
-  await writeAuditLog({
-    actor,
-    action: "super.aztec_treasure_config",
-    summary: `Updated Aztec Treasure engine config (dead spin ${cfg.deadSpinChancePercent}%, FS ${cfg.freeSpinsBase})`,
-    targetType: "game",
-    targetId: AZTEC_TREASURE_GAME_ID,
-    meta: {
-      deadSpinChancePercent: cfg.deadSpinChancePercent,
-      bombChanceBasePercent: cfg.bombChanceBasePercent,
-      freeSpinsTriggerCount: cfg.freeSpinsTriggerCount,
-      freeSpinsBase: cfg.freeSpinsBase,
-    },
-  });
-
-  return cfg;
-}
-
-/** Public — Pirate Plunder engine math (defaults if unset). */
-export async function getPiratePlunderEngineConfig() {
-  const {
-    PIRATE_PLUNDER_GAME_ID,
-    DEFAULT_PIRATE_PLUNDER_CONFIG,
-    normalizePiratePlunderConfig,
-  } = await import("@/lib/pirate-plunder-config");
-  const db = getDb();
-  try {
-    const rows = await db
-      .select()
-      .from(gameControls)
-      .where(eq(gameControls.gameId, PIRATE_PLUNDER_GAME_ID))
-      .limit(1);
-    return normalizePiratePlunderConfig(parseEngineConfigJson(rows[0]?.engineConfig));
-  } catch {
-    return structuredClone(DEFAULT_PIRATE_PLUNDER_CONFIG);
-  }
-}
-
-/** Superadmin — save full Pirate Plunder math config. */
-export async function savePiratePlunderEngineConfig(raw: unknown) {
-  const actor = await requireSuperadmin();
-  const {
-    PIRATE_PLUNDER_GAME_ID,
-    normalizePiratePlunderConfig,
-  } = await import("@/lib/pirate-plunder-config");
-  const catalog = slotGames.find((g) => g.id === PIRATE_PLUNDER_GAME_ID);
-  if (!catalog) throw new Error("Pirate Plunder not in catalog");
-
-  const cfg = normalizePiratePlunderConfig(raw);
-  const db = getDb();
-  const existing = await db
-    .select()
-    .from(gameControls)
-    .where(eq(gameControls.gameId, PIRATE_PLUNDER_GAME_ID))
-    .limit(1);
-
-  const payload = JSON.stringify(cfg);
-
-  if (!existing[0]) {
-    await db.insert(gameControls).values({
-      gameId: PIRATE_PLUNDER_GAME_ID,
-      enabled: "yes",
-      featured: "no",
-      sortOrder: 0,
-      tag: catalog.tag ?? null,
-      rtp: catalog.rtp,
-      volatility: catalog.volatility,
-      minBet: catalog.minBet,
-      maxBet: catalog.maxBet,
-      engineConfig: payload,
-    });
-  } else {
-    await db
-      .update(gameControls)
-      .set({ engineConfig: payload })
-      .where(eq(gameControls.gameId, PIRATE_PLUNDER_GAME_ID));
-  }
-
-  await writeAuditLog({
-    actor,
-    action: "super.pirate_plunder_config",
-    summary: `Updated Pirate Plunder engine config (dead spin ${cfg.deadSpinChancePercent}%, FS ${cfg.freeSpinsBase})`,
-    targetType: "game",
-    targetId: PIRATE_PLUNDER_GAME_ID,
     meta: {
       deadSpinChancePercent: cfg.deadSpinChancePercent,
       bombChanceBasePercent: cfg.bombChanceBasePercent,
@@ -5893,7 +3248,12 @@ export async function reviewWalletRequest(data: {
     if (!req) throw new Error("Request not found");
     if (req.status !== "pending") throw new Error("Request already reviewed");
 
-    const userRows = await tx.select().from(users).where(eq(users.id, req.userId)).for("update").limit(1);
+    const userRows = await tx
+      .select()
+      .from(users)
+      .where(eq(users.id, req.userId))
+      .for("update")
+      .limit(1);
     const user = userRows[0];
     if (!user) throw new Error("User not found");
 
@@ -5954,7 +3314,10 @@ export async function reviewWalletRequest(data: {
       throw new Error("Request already reviewed");
     }
 
-    await tx.update(users).set({ balance: money(next) }).where(eq(users.id, user.id));
+    await tx
+      .update(users)
+      .set({ balance: money(next) })
+      .where(eq(users.id, user.id));
     await tx.insert(transactions).values({
       id: newId(),
       userId: user.id,
@@ -6015,12 +3378,17 @@ export async function getPlatformSettings(): Promise<PlatformSettingsData> {
   await requireSuperadmin();
   const db = getDb();
   try {
-    const rows = await db.select().from(platformSettings).where(eq(platformSettings.id, "default")).limit(1);
+    const rows = await db
+      .select()
+      .from(platformSettings)
+      .where(eq(platformSettings.id, "default"))
+      .limit(1);
     const r = rows[0];
     if (!r) {
       return {
         maintenanceMode: false,
-        announcementBanner: "Welcome to MaxHigh Casino! Instant payouts and 24/7 support available.",
+        announcementBanner:
+          "Welcome to MaxHigh Casino! Instant payouts and 24/7 support available.",
         minDeposit: 100,
         maxDeposit: 50000,
         minWithdraw: 200,
@@ -6047,10 +3415,16 @@ export async function getPlatformSettings(): Promise<PlatformSettingsData> {
   }
 }
 
-export async function savePlatformSettings(data: PlatformSettingsData): Promise<PlatformSettingsData> {
+export async function savePlatformSettings(
+  data: PlatformSettingsData,
+): Promise<PlatformSettingsData> {
   const actor = await requireSuperadmin();
   const db = getDb();
-  const rows = await db.select().from(platformSettings).where(eq(platformSettings.id, "default")).limit(1);
+  const rows = await db
+    .select()
+    .from(platformSettings)
+    .where(eq(platformSettings.id, "default"))
+    .limit(1);
   const payload = {
     maintenanceMode: data.maintenanceMode ? ("yes" as const) : ("no" as const),
     announcementBanner: data.announcementBanner,
@@ -6168,7 +3542,10 @@ export async function createPromotion(data: {
 export async function togglePromotion(id: string, enabled: boolean): Promise<boolean> {
   const actor = await requireSuperadmin();
   const db = getDb();
-  await db.update(promotions).set({ enabled: enabled ? "yes" : "no" }).where(eq(promotions.id, id));
+  await db
+    .update(promotions)
+    .set({ enabled: enabled ? "yes" : "no" })
+    .where(eq(promotions.id, id));
   await writeAuditLog({
     actor,
     action: "super.promo_toggle",
@@ -6184,12 +3561,17 @@ export async function getRiskControls(): Promise<RiskControlData> {
   await requireSuperadmin();
   const db = getDb();
   try {
-    const rows = await db.select().from(riskControls).where(eq(riskControls.id, "default")).limit(1);
+    const rows = await db
+      .select()
+      .from(riskControls)
+      .where(eq(riskControls.id, "default"))
+      .limit(1);
     const r = rows[0];
     if (!r) {
       return {
         maxSingleBet: 10000,
         maxDailyPayout: 500000,
+        maxWeeklyLimit: 20000,
         autoFlagLargeWins: true,
         largeWinThreshold: 50000,
       };
@@ -6271,7 +3653,8 @@ export async function superGetUserSecurityDetails(userId: string) {
   }
 
   const netPnL = totalWins - totalBets;
-  const isSuspicious = largeWinCount > 2 || (user.failedAttempts ?? 0) >= 3 || user.isLocked === "yes";
+  const isSuspicious =
+    largeWinCount > 2 || (user.failedAttempts ?? 0) >= 3 || user.isLocked === "yes";
 
   const userAudit = await db
     .select()
@@ -6366,13 +3749,21 @@ export async function fetchPlatformEarningsGraph(opts?: {
     .from(transactions)
     .where(baseWhere);
 
-  const todayNet = +(Number(summaryRow?.todayBets ?? 0) - Number(summaryRow?.todayWins ?? 0)).toFixed(2);
-  const thisWeekNet = +(Number(summaryRow?.weekBets ?? 0) - Number(summaryRow?.weekWins ?? 0)).toFixed(2);
-  const thisMonthNet = +(Number(summaryRow?.monthBets ?? 0) - Number(summaryRow?.monthWins ?? 0)).toFixed(2);
-  const allTimeNet = +(Number(summaryRow?.allBets ?? 0) - Number(summaryRow?.allWins ?? 0)).toFixed(2);
+  const todayNet = +(
+    Number(summaryRow?.todayBets ?? 0) - Number(summaryRow?.todayWins ?? 0)
+  ).toFixed(2);
+  const thisWeekNet = +(
+    Number(summaryRow?.weekBets ?? 0) - Number(summaryRow?.weekWins ?? 0)
+  ).toFixed(2);
+  const thisMonthNet = +(
+    Number(summaryRow?.monthBets ?? 0) - Number(summaryRow?.monthWins ?? 0)
+  ).toFixed(2);
+  const allTimeNet = +(Number(summaryRow?.allBets ?? 0) - Number(summaryRow?.allWins ?? 0)).toFixed(
+    2,
+  );
 
   // 2. Generate Time Bucket Points based on period
-  let points: EarningsPoint[] = [];
+  const points: EarningsPoint[] = [];
 
   if (period === "day") {
     // 24 Hourly Buckets for Today
@@ -6432,7 +3823,20 @@ export async function fetchPlatformEarningsGraph(opts?: {
     }
   } else {
     // 12 Monthly Buckets for past year
-    const monthLabels = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+    const monthLabels = [
+      "Jan",
+      "Feb",
+      "Mar",
+      "Apr",
+      "May",
+      "Jun",
+      "Jul",
+      "Aug",
+      "Sep",
+      "Oct",
+      "Nov",
+      "Dec",
+    ];
     const currentYear = now.getFullYear();
     for (let m = 0; m < 12; m++) {
       const mStart = new Date(currentYear, m, 1);
@@ -6469,14 +3873,10 @@ export async function fetchPlatformEarningsGraph(opts?: {
   };
 }
 
-
 /** Public — Lucky Neko engine math (defaults if unset). */
 export async function getLuckyNekoEngineConfig() {
-  const {
-    LUCKY_NEKO_GAME_ID,
-    DEFAULT_LUCKY_NEKO_CONFIG,
-    normalizeLuckyNekoConfig,
-  } = await import("@/lib/lucky-neko-config");
+  const { LUCKY_NEKO_GAME_ID, DEFAULT_LUCKY_NEKO_CONFIG, normalizeLuckyNekoConfig } =
+    await import("@/lib/lucky-neko-config");
   const db = getDb();
   try {
     const rows = await db
@@ -6493,9 +3893,7 @@ export async function getLuckyNekoEngineConfig() {
 /** Superadmin — save full Lucky Neko math config. */
 export async function saveLuckyNekoEngineConfig(raw: unknown) {
   const actor = await requireSuperadmin();
-  const { LUCKY_NEKO_GAME_ID, normalizeLuckyNekoConfig } = await import(
-    "@/lib/lucky-neko-config"
-  );
+  const { LUCKY_NEKO_GAME_ID, normalizeLuckyNekoConfig } = await import("@/lib/lucky-neko-config");
   const catalog = slotGames.find((g) => g.id === LUCKY_NEKO_GAME_ID);
   if (!catalog) throw new Error("Lucky Neko not in catalog");
 
@@ -6516,59 +3914,40 @@ export async function saveLuckyNekoEngineConfig(raw: unknown) {
       featured: "no",
       sortOrder: 0,
       tag: catalog.tag ?? null,
-      rtp: String(cfg.targetRtp),
+      rtp: catalog.rtp,
       volatility: catalog.volatility,
-      minBet: `₱${cfg.minBet.toFixed(2)}`,
-      maxBet: `₱${cfg.maxBet.toFixed(2)}`,
+      minBet: catalog.minBet,
+      maxBet: catalog.maxBet,
       engineConfig: payload,
     });
   } else {
     await db
       .update(gameControls)
-      .set({
-        engineConfig: payload,
-        rtp: String(cfg.targetRtp),
-        minBet: `₱${cfg.minBet.toFixed(2)}`,
-        maxBet: `₱${cfg.maxBet.toFixed(2)}`,
-      })
+      .set({ engineConfig: payload })
       .where(eq(gameControls.gameId, LUCKY_NEKO_GAME_ID));
-  }
-
-  try {
-    const { clearLuckyNekoEngineCache } = await import("../games/lucky-neko.server");
-    clearLuckyNekoEngineCache();
-  } catch {
-    /* ignore */
   }
 
   await writeAuditLog({
     actor,
     action: "super.lucky_neko_config",
-    summary: `Updated Lucky Neko engine (profile ${cfg.activeRtpProfile}, maxWin ${cfg.maxWinMult}x, EX ${cfg.exBetMult}x, RTP ${cfg.targetRtp}%)`,
+    summary: `Updated Lucky Neko engine config (dead spin ${cfg.deadSpinChancePercent}%, FS ${cfg.freeSpinsBase})`,
     targetType: "game",
     targetId: LUCKY_NEKO_GAME_ID,
     meta: {
-      activeRtpProfile: cfg.activeRtpProfile,
-      maxWinMult: cfg.maxWinMult,
-      exBetMult: cfg.exBetMult,
-      targetRtp: cfg.targetRtp,
-      paylineCount: cfg.paylineCount,
-      minBet: cfg.minBet,
-      maxBet: cfg.maxBet,
+      deadSpinChancePercent: cfg.deadSpinChancePercent,
+      bombChanceBasePercent: cfg.bombChanceBasePercent,
+      freeSpinsTriggerCount: cfg.freeSpinsTriggerCount,
+      freeSpinsBase: cfg.freeSpinsBase,
     },
   });
 
   return cfg;
 }
 
-
 /** Public — Fortune Mouse engine math (defaults if unset). */
 export async function getFortuneMouseEngineConfig() {
-  const {
-    FORTUNE_MOUSE_GAME_ID,
-    DEFAULT_FORTUNE_MOUSE_CONFIG,
-    normalizeFortuneMouseConfig,
-  } = await import("@/lib/fortune-mouse-config");
+  const { FORTUNE_MOUSE_GAME_ID, DEFAULT_FORTUNE_MOUSE_CONFIG, normalizeFortuneMouseConfig } =
+    await import("@/lib/fortune-mouse-config");
   const db = getDb();
   try {
     const rows = await db
@@ -6585,9 +3964,8 @@ export async function getFortuneMouseEngineConfig() {
 /** Superadmin — save full Fortune Mouse math config. */
 export async function saveFortuneMouseEngineConfig(raw: unknown) {
   const actor = await requireSuperadmin();
-  const { FORTUNE_MOUSE_GAME_ID, normalizeFortuneMouseConfig } = await import(
-    "@/lib/fortune-mouse-config"
-  );
+  const { FORTUNE_MOUSE_GAME_ID, normalizeFortuneMouseConfig } =
+    await import("@/lib/fortune-mouse-config");
   const catalog = slotGames.find((g) => g.id === FORTUNE_MOUSE_GAME_ID);
   if (!catalog) throw new Error("Fortune Mouse not in catalog");
 
@@ -6608,59 +3986,40 @@ export async function saveFortuneMouseEngineConfig(raw: unknown) {
       featured: "no",
       sortOrder: 0,
       tag: catalog.tag ?? null,
-      rtp: String(cfg.targetRtp),
+      rtp: catalog.rtp,
       volatility: catalog.volatility,
-      minBet: `₱${cfg.minBet.toFixed(2)}`,
-      maxBet: `₱${cfg.maxBet.toFixed(2)}`,
+      minBet: catalog.minBet,
+      maxBet: catalog.maxBet,
       engineConfig: payload,
     });
   } else {
     await db
       .update(gameControls)
-      .set({
-        engineConfig: payload,
-        rtp: String(cfg.targetRtp),
-        minBet: `₱${cfg.minBet.toFixed(2)}`,
-        maxBet: `₱${cfg.maxBet.toFixed(2)}`,
-      })
+      .set({ engineConfig: payload })
       .where(eq(gameControls.gameId, FORTUNE_MOUSE_GAME_ID));
-  }
-
-  try {
-    const { clearFortuneMouseEngineCache } = await import("../games/fortune-mouse.server");
-    clearFortuneMouseEngineCache();
-  } catch {
-    /* ignore */
   }
 
   await writeAuditLog({
     actor,
     action: "super.fortune_mouse_config",
-    summary: `Updated Fortune Mouse engine (profile ${cfg.activeRtpProfile}, maxWin ${cfg.maxWinMult}x, EX ${cfg.exBetMult}x, RTP ${cfg.targetRtp}%)`,
+    summary: `Updated Fortune Mouse engine config (dead spin ${cfg.deadSpinChancePercent}%, FS ${cfg.freeSpinsBase})`,
     targetType: "game",
     targetId: FORTUNE_MOUSE_GAME_ID,
     meta: {
-      activeRtpProfile: cfg.activeRtpProfile,
-      maxWinMult: cfg.maxWinMult,
-      exBetMult: cfg.exBetMult,
-      targetRtp: cfg.targetRtp,
-      paylineCount: cfg.paylineCount,
-      minBet: cfg.minBet,
-      maxBet: cfg.maxBet,
+      deadSpinChancePercent: cfg.deadSpinChancePercent,
+      bombChanceBasePercent: cfg.bombChanceBasePercent,
+      freeSpinsTriggerCount: cfg.freeSpinsTriggerCount,
+      freeSpinsBase: cfg.freeSpinsBase,
     },
   });
 
   return cfg;
 }
 
-
 /** Public — Prosperity Lion engine math (defaults if unset). */
 export async function getProsperityLionEngineConfig() {
-  const {
-    PROSPERITY_LION_GAME_ID,
-    DEFAULT_PROSPERITY_LION_CONFIG,
-    normalizeProsperityLionConfig,
-  } = await import("@/lib/prosperity-lion-config");
+  const { PROSPERITY_LION_GAME_ID, DEFAULT_PROSPERITY_LION_CONFIG, normalizeProsperityLionConfig } =
+    await import("@/lib/prosperity-lion-config");
   const db = getDb();
   try {
     const rows = await db
@@ -6677,9 +4036,8 @@ export async function getProsperityLionEngineConfig() {
 /** Superadmin — save full Prosperity Lion math config. */
 export async function saveProsperityLionEngineConfig(raw: unknown) {
   const actor = await requireSuperadmin();
-  const { PROSPERITY_LION_GAME_ID, normalizeProsperityLionConfig } = await import(
-    "@/lib/prosperity-lion-config"
-  );
+  const { PROSPERITY_LION_GAME_ID, normalizeProsperityLionConfig } =
+    await import("@/lib/prosperity-lion-config");
   const catalog = slotGames.find((g) => g.id === PROSPERITY_LION_GAME_ID);
   if (!catalog) throw new Error("Prosperity Lion not in catalog");
 
@@ -6700,59 +4058,40 @@ export async function saveProsperityLionEngineConfig(raw: unknown) {
       featured: "no",
       sortOrder: 0,
       tag: catalog.tag ?? null,
-      rtp: String(cfg.targetRtp),
+      rtp: catalog.rtp,
       volatility: catalog.volatility,
-      minBet: `₱${cfg.minBet.toFixed(2)}`,
-      maxBet: `₱${cfg.maxBet.toFixed(2)}`,
+      minBet: catalog.minBet,
+      maxBet: catalog.maxBet,
       engineConfig: payload,
     });
   } else {
     await db
       .update(gameControls)
-      .set({
-        engineConfig: payload,
-        rtp: String(cfg.targetRtp),
-        minBet: `₱${cfg.minBet.toFixed(2)}`,
-        maxBet: `₱${cfg.maxBet.toFixed(2)}`,
-      })
+      .set({ engineConfig: payload })
       .where(eq(gameControls.gameId, PROSPERITY_LION_GAME_ID));
-  }
-
-  try {
-    const { clearProsperityLionEngineCache } = await import("../games/prosperity-lion.server");
-    clearProsperityLionEngineCache();
-  } catch {
-    /* ignore */
   }
 
   await writeAuditLog({
     actor,
     action: "super.prosperity_lion_config",
-    summary: `Updated Prosperity Lion engine (profile ${cfg.activeRtpProfile}, maxWin ${cfg.maxWinMult}x, EX ${cfg.exBetMult}x, RTP ${cfg.targetRtp}%)`,
+    summary: `Updated Prosperity Lion engine config (dead spin ${cfg.deadSpinChancePercent}%, FS ${cfg.freeSpinsBase})`,
     targetType: "game",
     targetId: PROSPERITY_LION_GAME_ID,
     meta: {
-      activeRtpProfile: cfg.activeRtpProfile,
-      maxWinMult: cfg.maxWinMult,
-      exBetMult: cfg.exBetMult,
-      targetRtp: cfg.targetRtp,
-      paylineCount: cfg.paylineCount,
-      minBet: cfg.minBet,
-      maxBet: cfg.maxBet,
+      deadSpinChancePercent: cfg.deadSpinChancePercent,
+      bombChanceBasePercent: cfg.bombChanceBasePercent,
+      freeSpinsTriggerCount: cfg.freeSpinsTriggerCount,
+      freeSpinsBase: cfg.freeSpinsBase,
     },
   });
 
   return cfg;
 }
 
-
 /** Public — Coin Volcano engine math (defaults if unset). */
 export async function getCoinVolcanoEngineConfig() {
-  const {
-    COIN_VOLCANO_GAME_ID,
-    DEFAULT_COIN_VOLCANO_CONFIG,
-    normalizeCoinVolcanoConfig,
-  } = await import("@/lib/coin-volcano-config");
+  const { COIN_VOLCANO_GAME_ID, DEFAULT_COIN_VOLCANO_CONFIG, normalizeCoinVolcanoConfig } =
+    await import("@/lib/coin-volcano-config");
   const db = getDb();
   try {
     const rows = await db
@@ -6769,9 +4108,8 @@ export async function getCoinVolcanoEngineConfig() {
 /** Superadmin — save full Coin Volcano math config. */
 export async function saveCoinVolcanoEngineConfig(raw: unknown) {
   const actor = await requireSuperadmin();
-  const { COIN_VOLCANO_GAME_ID, normalizeCoinVolcanoConfig } = await import(
-    "@/lib/coin-volcano-config"
-  );
+  const { COIN_VOLCANO_GAME_ID, normalizeCoinVolcanoConfig } =
+    await import("@/lib/coin-volcano-config");
   const catalog = slotGames.find((g) => g.id === COIN_VOLCANO_GAME_ID);
   if (!catalog) throw new Error("Coin Volcano not in catalog");
 
@@ -6837,106 +4175,10 @@ export async function saveCoinVolcanoEngineConfig(raw: unknown) {
   return cfg;
 }
 
-
-/** Public — Cash Mania engine math (defaults if unset). */
-export async function getCashManiaEngineConfig() {
-  const {
-    CASH_MANIA_GAME_ID,
-    DEFAULT_CASH_MANIA_CONFIG,
-    normalizeCashManiaConfig,
-  } = await import("@/lib/cash-mania-config");
-  const db = getDb();
-  try {
-    const rows = await db
-      .select()
-      .from(gameControls)
-      .where(eq(gameControls.gameId, CASH_MANIA_GAME_ID))
-      .limit(1);
-    return normalizeCashManiaConfig(parseEngineConfigJson(rows[0]?.engineConfig));
-  } catch {
-    return structuredClone(DEFAULT_CASH_MANIA_CONFIG);
-  }
-}
-
-/** Superadmin — save full Cash Mania math config. */
-export async function saveCashManiaEngineConfig(raw: unknown) {
-  const actor = await requireSuperadmin();
-  const { CASH_MANIA_GAME_ID, normalizeCashManiaConfig } = await import(
-    "@/lib/cash-mania-config"
-  );
-  const catalog = slotGames.find((g) => g.id === CASH_MANIA_GAME_ID);
-  if (!catalog) throw new Error("Cash Mania not in catalog");
-
-  const cfg = normalizeCashManiaConfig(raw);
-  const db = getDb();
-  const existing = await db
-    .select()
-    .from(gameControls)
-    .where(eq(gameControls.gameId, CASH_MANIA_GAME_ID))
-    .limit(1);
-
-  const payload = JSON.stringify(cfg);
-
-  if (!existing[0]) {
-    await db.insert(gameControls).values({
-      gameId: CASH_MANIA_GAME_ID,
-      enabled: "yes",
-      featured: "no",
-      sortOrder: 0,
-      tag: catalog.tag ?? null,
-      rtp: String(cfg.targetRtp),
-      volatility: catalog.volatility,
-      minBet: `₱${cfg.minBet.toFixed(2)}`,
-      maxBet: `₱${cfg.maxBet.toFixed(2)}`,
-      engineConfig: payload,
-    });
-  } else {
-    await db
-      .update(gameControls)
-      .set({
-        engineConfig: payload,
-        rtp: String(cfg.targetRtp),
-        minBet: `₱${cfg.minBet.toFixed(2)}`,
-        maxBet: `₱${cfg.maxBet.toFixed(2)}`,
-      })
-      .where(eq(gameControls.gameId, CASH_MANIA_GAME_ID));
-  }
-
-  try {
-    const { clearCashManiaEngineCache } = await import("../games/cash-mania.server");
-    clearCashManiaEngineCache();
-  } catch {
-    /* ignore */
-  }
-
-  await writeAuditLog({
-    actor,
-    action: "super.cash_mania_config",
-    summary: `Updated Cash Mania engine (profile ${cfg.activeRtpProfile}, maxWin ${cfg.maxWinMult}x, JP ${cfg.grandJackpotMult}x, RTP ${cfg.targetRtp}%)`,
-    targetType: "game",
-    targetId: CASH_MANIA_GAME_ID,
-    meta: {
-      activeRtpProfile: cfg.activeRtpProfile,
-      maxWinMult: cfg.maxWinMult,
-      grandJackpotMult: cfg.grandJackpotMult,
-      targetRtp: cfg.targetRtp,
-      paylineCount: cfg.paylineCount,
-      minBet: cfg.minBet,
-      maxBet: cfg.maxBet,
-    },
-  });
-
-  return cfg;
-}
-
-
 /** Public — Zeus Strike engine math (defaults if unset). */
 export async function getZeusStrikeEngineConfig() {
-  const {
-    ZEUS_STRIKE_GAME_ID,
-    DEFAULT_ZEUS_STRIKE_CONFIG,
-    normalizeZeusStrikeConfig,
-  } = await import("@/lib/zeus-strike-config");
+  const { ZEUS_STRIKE_GAME_ID, DEFAULT_ZEUS_STRIKE_CONFIG, normalizeZeusStrikeConfig } =
+    await import("@/lib/zeus-strike-config");
   const db = getDb();
   try {
     const rows = await db
@@ -6953,9 +4195,8 @@ export async function getZeusStrikeEngineConfig() {
 /** Superadmin — save full Zeus Strike math config. */
 export async function saveZeusStrikeEngineConfig(raw: unknown) {
   const actor = await requireSuperadmin();
-  const { ZEUS_STRIKE_GAME_ID, normalizeZeusStrikeConfig } = await import(
-    "@/lib/zeus-strike-config"
-  );
+  const { ZEUS_STRIKE_GAME_ID, normalizeZeusStrikeConfig } =
+    await import("@/lib/zeus-strike-config");
   const catalog = slotGames.find((g) => g.id === ZEUS_STRIKE_GAME_ID);
   if (!catalog) throw new Error("Zeus Strike not in catalog");
 
@@ -7005,14 +4246,10 @@ export async function saveZeusStrikeEngineConfig(raw: unknown) {
   return cfg;
 }
 
-
 /** Public — Thor Thunder engine math (defaults if unset). */
 export async function getThorThunderEngineConfig() {
-  const {
-    THOR_THUNDER_GAME_ID,
-    DEFAULT_THOR_THUNDER_CONFIG,
-    normalizeThorThunderConfig,
-  } = await import("@/lib/thor-thunder-config");
+  const { THOR_THUNDER_GAME_ID, DEFAULT_THOR_THUNDER_CONFIG, normalizeThorThunderConfig } =
+    await import("@/lib/thor-thunder-config");
   const db = getDb();
   try {
     const rows = await db
@@ -7029,9 +4266,8 @@ export async function getThorThunderEngineConfig() {
 /** Superadmin — save full Thor Thunder math config. */
 export async function saveThorThunderEngineConfig(raw: unknown) {
   const actor = await requireSuperadmin();
-  const { THOR_THUNDER_GAME_ID, normalizeThorThunderConfig } = await import(
-    "@/lib/thor-thunder-config"
-  );
+  const { THOR_THUNDER_GAME_ID, normalizeThorThunderConfig } =
+    await import("@/lib/thor-thunder-config");
   const catalog = slotGames.find((g) => g.id === THOR_THUNDER_GAME_ID);
   if (!catalog) throw new Error("Thor Thunder not in catalog");
 
@@ -7081,14 +4317,10 @@ export async function saveThorThunderEngineConfig(raw: unknown) {
   return cfg;
 }
 
-
 /** Public — Maya Gold engine math (defaults if unset). */
 export async function getMayaGoldEngineConfig() {
-  const {
-    MAYA_GOLD_GAME_ID,
-    DEFAULT_MAYA_GOLD_CONFIG,
-    normalizeMayaGoldConfig,
-  } = await import("@/lib/maya-gold-config");
+  const { MAYA_GOLD_GAME_ID, DEFAULT_MAYA_GOLD_CONFIG, normalizeMayaGoldConfig } =
+    await import("@/lib/maya-gold-config");
   const db = getDb();
   try {
     const rows = await db
@@ -7105,10 +4337,7 @@ export async function getMayaGoldEngineConfig() {
 /** Superadmin — save full Maya Gold math config. */
 export async function saveMayaGoldEngineConfig(raw: unknown) {
   const actor = await requireSuperadmin();
-  const {
-    MAYA_GOLD_GAME_ID,
-    normalizeMayaGoldConfig,
-  } = await import("@/lib/maya-gold-config");
+  const { MAYA_GOLD_GAME_ID, normalizeMayaGoldConfig } = await import("@/lib/maya-gold-config");
   const catalog = slotGames.find((g) => g.id === MAYA_GOLD_GAME_ID);
   if (!catalog) throw new Error("Maya Gold not in catalog");
 
@@ -7159,14 +4388,10 @@ export async function saveMayaGoldEngineConfig(raw: unknown) {
   return cfg;
 }
 
-
 /** Public — Temple Rush engine math (defaults if unset). */
 export async function getTempleRushEngineConfig() {
-  const {
-    TEMPLE_RUSH_GAME_ID,
-    DEFAULT_TEMPLE_RUSH_CONFIG,
-    normalizeTempleRushConfig,
-  } = await import("@/lib/temple-rush-config");
+  const { TEMPLE_RUSH_GAME_ID, DEFAULT_TEMPLE_RUSH_CONFIG, normalizeTempleRushConfig } =
+    await import("@/lib/temple-rush-config");
   const db = getDb();
   try {
     const rows = await db
@@ -7183,10 +4408,8 @@ export async function getTempleRushEngineConfig() {
 /** Superadmin — save full Temple Rush math config. */
 export async function saveTempleRushEngineConfig(raw: unknown) {
   const actor = await requireSuperadmin();
-  const {
-    TEMPLE_RUSH_GAME_ID,
-    normalizeTempleRushConfig,
-  } = await import("@/lib/temple-rush-config");
+  const { TEMPLE_RUSH_GAME_ID, normalizeTempleRushConfig } =
+    await import("@/lib/temple-rush-config");
   const catalog = slotGames.find((g) => g.id === TEMPLE_RUSH_GAME_ID);
   if (!catalog) throw new Error("Temple Rush not in catalog");
 
@@ -7237,609 +4460,10 @@ export async function saveTempleRushEngineConfig(raw: unknown) {
   return cfg;
 }
 
-/** Public — Mahjong Ways 3 engine math (defaults if unset). */
-export async function getMahjongWays3EngineConfig() {
-  const {
-    MAHJONG_WAYS_3_GAME_ID,
-    DEFAULT_MAHJONG_WAYS_3_CONFIG,
-    normalizeMahjongWays3Config,
-  } = await import("@/lib/mahjong-ways-3-config");
-  const db = getDb();
-  try {
-    const rows = await db
-      .select()
-      .from(gameControls)
-      .where(eq(gameControls.gameId, MAHJONG_WAYS_3_GAME_ID))
-      .limit(1);
-    return normalizeMahjongWays3Config(parseEngineConfigJson(rows[0]?.engineConfig));
-  } catch {
-    return structuredClone(DEFAULT_MAHJONG_WAYS_3_CONFIG);
-  }
-}
-
-/** Superadmin — save full Mahjong Ways 3 math config. */
-export async function saveMahjongWays3EngineConfig(raw: unknown) {
-  const actor = await requireSuperadmin();
-  const {
-    MAHJONG_WAYS_3_GAME_ID,
-    normalizeMahjongWays3Config,
-  } = await import("@/lib/mahjong-ways-3-config");
-  const catalog = slotGames.find((g) => g.id === MAHJONG_WAYS_3_GAME_ID);
-  if (!catalog) throw new Error("Mahjong Ways 3 not in catalog");
-
-  const cfg = normalizeMahjongWays3Config(raw);
-  const db = getDb();
-  const existing = await db
-    .select()
-    .from(gameControls)
-    .where(eq(gameControls.gameId, MAHJONG_WAYS_3_GAME_ID))
-    .limit(1);
-
-  const payload = JSON.stringify(cfg);
-
-  if (!existing[0]) {
-    await db.insert(gameControls).values({
-      gameId: MAHJONG_WAYS_3_GAME_ID,
-      enabled: "yes",
-      featured: "no",
-      sortOrder: 0,
-      tag: catalog.tag ?? null,
-      rtp: catalog.rtp,
-      volatility: catalog.volatility,
-      minBet: catalog.minBet,
-      maxBet: catalog.maxBet,
-      engineConfig: payload,
-    });
-  } else {
-    await db
-      .update(gameControls)
-      .set({ engineConfig: payload })
-      .where(eq(gameControls.gameId, MAHJONG_WAYS_3_GAME_ID));
-  }
-
-  try {
-    const { clearMahjongWays3EngineCache } = await import("../games/mahjong-ways-3.server");
-    clearMahjongWays3EngineCache();
-  } catch {
-    /* ignore */
-  }
-
-  await writeAuditLog({
-    actor,
-    action: "super.mahjong_ways_3_config",
-    summary: `Updated Mahjong Ways 3 engine (FS ${cfg.freeSpinsBaseCount}, maxWin ${cfg.maxWinMult}x, target RTP ${cfg.targetRtp}%)`,
-    targetType: "game",
-    targetId: MAHJONG_WAYS_3_GAME_ID,
-    meta: {
-      freeSpinsBaseCount: cfg.freeSpinsBaseCount,
-      freeSpinsTriggerCount: cfg.freeSpinsTriggerCount,
-      buyFeatureMult: cfg.buyFeatureMult,
-      maxWinMult: cfg.maxWinMult,
-      targetRtp: cfg.targetRtp,
-      goldChanceInitial: cfg.goldChanceInitial,
-    },
-  });
-
-  return cfg;
-}
-
-
-/** Public — Wild Ace engine math (defaults if unset). */
-export async function getWildAceEngineConfig() {
-  const {
-    WILD_ACE_GAME_ID,
-    DEFAULT_WILD_ACE_CONFIG,
-    normalizeWildAceConfig,
-  } = await import("@/lib/wild-ace-config");
-  const db = getDb();
-  try {
-    const rows = await db
-      .select()
-      .from(gameControls)
-      .where(eq(gameControls.gameId, WILD_ACE_GAME_ID))
-      .limit(1);
-    return normalizeWildAceConfig(parseEngineConfigJson(rows[0]?.engineConfig));
-  } catch {
-    return structuredClone(DEFAULT_WILD_ACE_CONFIG);
-  }
-}
-
-/** Superadmin — save full Wild Ace math config. */
-export async function saveWildAceEngineConfig(raw: unknown) {
-  const actor = await requireSuperadmin();
-  const {
-    WILD_ACE_GAME_ID,
-    normalizeWildAceConfig,
-  } = await import("@/lib/wild-ace-config");
-  const catalog = slotGames.find((g) => g.id === WILD_ACE_GAME_ID);
-  if (!catalog) throw new Error("Wild Ace not in catalog");
-
-  const cfg = normalizeWildAceConfig(raw);
-  const db = getDb();
-  const existing = await db
-    .select()
-    .from(gameControls)
-    .where(eq(gameControls.gameId, WILD_ACE_GAME_ID))
-    .limit(1);
-
-  const payload = JSON.stringify(cfg);
-
-  if (!existing[0]) {
-    await db.insert(gameControls).values({
-      gameId: WILD_ACE_GAME_ID,
-      enabled: "yes",
-      featured: "no",
-      sortOrder: 0,
-      tag: catalog.tag ?? null,
-      rtp: String(cfg.targetRtp),
-      volatility: cfg.volatility || catalog.volatility,
-      minBet: catalog.minBet,
-      maxBet: catalog.maxBet,
-      engineConfig: payload,
-    });
-  } else {
-    await db
-      .update(gameControls)
-      .set({
-        engineConfig: payload,
-        rtp: String(cfg.targetRtp),
-        volatility: cfg.volatility || existing[0].volatility || catalog.volatility,
-      })
-      .where(eq(gameControls.gameId, WILD_ACE_GAME_ID));
-  }
-
-  try {
-    const { clearWildAceEngineCache } = await import("../games/wild-ace.server");
-    clearWildAceEngineCache();
-  } catch {
-    /* ignore */
-  }
-
-  await writeAuditLog({
-    actor,
-    action: "super.wild_ace_config",
-    summary: `Updated Wild Ace engine (FS ${cfg.freeSpinsBaseCount}/+${cfg.freeSpinsRetriggerCount}, maxWin ${cfg.maxWinMult}x, RTP ${cfg.activeRtpProfile} ${cfg.targetRtp}%)`,
-    targetType: "game",
-    targetId: WILD_ACE_GAME_ID,
-    meta: {
-      freeSpinsBaseCount: cfg.freeSpinsBaseCount,
-      freeSpinsRetriggerCount: cfg.freeSpinsRetriggerCount,
-      maxWinMult: cfg.maxWinMult,
-      activeRtpProfile: cfg.activeRtpProfile,
-      targetRtp: cfg.targetRtp,
-    },
-  });
-
-  return cfg;
-}
-
-
-/** Public — Royal Ace engine math (defaults if unset). */
-export async function getRoyalAceEngineConfig() {
-  const {
-    ROYAL_ACE_GAME_ID,
-    DEFAULT_ROYAL_ACE_CONFIG,
-    normalizeRoyalAceConfig,
-  } = await import("@/lib/royal-ace-config");
-  const db = getDb();
-  try {
-    const rows = await db
-      .select()
-      .from(gameControls)
-      .where(eq(gameControls.gameId, ROYAL_ACE_GAME_ID))
-      .limit(1);
-    return normalizeRoyalAceConfig(parseEngineConfigJson(rows[0]?.engineConfig));
-  } catch {
-    return structuredClone(DEFAULT_ROYAL_ACE_CONFIG);
-  }
-}
-
-/** Superadmin — save full Royal Ace math config. */
-export async function saveRoyalAceEngineConfig(raw: unknown) {
-  const actor = await requireSuperadmin();
-  const {
-    ROYAL_ACE_GAME_ID,
-    normalizeRoyalAceConfig,
-  } = await import("@/lib/royal-ace-config");
-  const catalog = slotGames.find((g) => g.id === ROYAL_ACE_GAME_ID);
-  if (!catalog) throw new Error("Royal Ace not in catalog");
-
-  const cfg = normalizeRoyalAceConfig(raw);
-  const db = getDb();
-  const existing = await db
-    .select()
-    .from(gameControls)
-    .where(eq(gameControls.gameId, ROYAL_ACE_GAME_ID))
-    .limit(1);
-
-  const payload = JSON.stringify(cfg);
-
-  if (!existing[0]) {
-    await db.insert(gameControls).values({
-      gameId: ROYAL_ACE_GAME_ID,
-      enabled: "yes",
-      featured: "no",
-      sortOrder: 0,
-      tag: catalog.tag ?? null,
-      rtp: String(cfg.targetRtp),
-      volatility: cfg.volatility || catalog.volatility,
-      minBet: catalog.minBet,
-      maxBet: catalog.maxBet,
-      engineConfig: payload,
-    });
-  } else {
-    await db
-      .update(gameControls)
-      .set({
-        engineConfig: payload,
-        rtp: String(cfg.targetRtp),
-        volatility: cfg.volatility || existing[0].volatility || catalog.volatility,
-      })
-      .where(eq(gameControls.gameId, ROYAL_ACE_GAME_ID));
-  }
-
-  try {
-    const { clearRoyalAceEngineCache } = await import("../games/royal-ace.server");
-    clearRoyalAceEngineCache();
-  } catch {
-    /* ignore */
-  }
-
-  await writeAuditLog({
-    actor,
-    action: "super.royal_ace_config",
-    summary: `Updated Royal Ace engine (FS ${cfg.freeSpinsBaseCount}/+${cfg.freeSpinsRetriggerCount}, maxWin ${cfg.maxWinMult}x, RTP ${cfg.activeRtpProfile} ${cfg.targetRtp}%)`,
-    targetType: "game",
-    targetId: ROYAL_ACE_GAME_ID,
-    meta: {
-      freeSpinsBaseCount: cfg.freeSpinsBaseCount,
-      freeSpinsRetriggerCount: cfg.freeSpinsRetriggerCount,
-      freeSpinsTriggerCount: cfg.freeSpinsTriggerCount,
-      buyFeatureMult: cfg.buyFeatureMult,
-      maxWinMult: cfg.maxWinMult,
-      targetRtp: cfg.targetRtp,
-      activeRtpProfile: cfg.activeRtpProfile,
-      goldChanceInitial: cfg.goldChanceInitial,
-      jokerTransformWeights: cfg.jokerTransformWeights,
-    },
-  });
-
-  return cfg;
-}
-
-
-/** Public — Neon Fruits engine math (defaults if unset). */
-export async function getNeonFruitsEngineConfig() {
-  const {
-    NEON_FRUITS_GAME_ID,
-    DEFAULT_NEON_FRUITS_CONFIG,
-    normalizeNeonFruitsConfig,
-  } = await import("@/lib/neon-fruits-config");
-  const db = getDb();
-  try {
-    const rows = await db
-      .select()
-      .from(gameControls)
-      .where(eq(gameControls.gameId, NEON_FRUITS_GAME_ID))
-      .limit(1);
-    return normalizeNeonFruitsConfig(parseEngineConfigJson(rows[0]?.engineConfig));
-  } catch {
-    return structuredClone(DEFAULT_NEON_FRUITS_CONFIG);
-  }
-}
-
-/** Superadmin — save full Neon Fruits math config. */
-export async function saveNeonFruitsEngineConfig(raw: unknown) {
-  const actor = await requireSuperadmin();
-  const { NEON_FRUITS_GAME_ID, normalizeNeonFruitsConfig } = await import(
-    "@/lib/neon-fruits-config"
-  );
-  const catalog = slotGames.find((g) => g.id === NEON_FRUITS_GAME_ID);
-  if (!catalog) throw new Error("Neon Fruits not in catalog");
-
-  const cfg = normalizeNeonFruitsConfig(raw);
-  const db = getDb();
-  const existing = await db
-    .select()
-    .from(gameControls)
-    .where(eq(gameControls.gameId, NEON_FRUITS_GAME_ID))
-    .limit(1);
-
-  const payload = JSON.stringify(cfg);
-
-  if (!existing[0]) {
-    await db.insert(gameControls).values({
-      gameId: NEON_FRUITS_GAME_ID,
-      enabled: "yes",
-      featured: "no",
-      sortOrder: 0,
-      tag: catalog.tag ?? null,
-      rtp: String(cfg.targetRtp),
-      volatility: catalog.volatility,
-      minBet: catalog.minBet,
-      maxBet: catalog.maxBet,
-      engineConfig: payload,
-    });
-  } else {
-    await db
-      .update(gameControls)
-      .set({ engineConfig: payload, rtp: String(cfg.targetRtp) })
-      .where(eq(gameControls.gameId, NEON_FRUITS_GAME_ID));
-  }
-
-  try {
-    const { clearNeonFruitsEngineCache } = await import("../games/neon-fruits.server");
-    clearNeonFruitsEngineCache();
-  } catch {
-    /* ignore */
-  }
-
-  await writeAuditLog({
-    actor,
-    action: "super.neon_fruits_config",
-    summary: `Updated Neon Fruits engine (maxBet ${cfg.maxBet}, twoWild ${cfg.twoWildPayMult}x, RTP placeholder ${cfg.targetRtp}%)`,
-    targetType: "game",
-    targetId: NEON_FRUITS_GAME_ID,
-    meta: {
-      maxBet: cfg.maxBet,
-      twoWildPayMult: cfg.twoWildPayMult,
-      targetRtp: cfg.targetRtp,
-      jackpotFloor: cfg.jackpot.floorAmount,
-      rtpConfigStatus: cfg.rtpConfigStatus,
-    },
-  });
-
-  return cfg;
-}
-
-
-/** Public — Lucky Bars engine math (defaults if unset). */
-export async function getLuckyBarsEngineConfig() {
-  const {
-    LUCKY_BARS_GAME_ID,
-    DEFAULT_LUCKY_BARS_CONFIG,
-    normalizeLuckyBarsConfig,
-  } = await import("@/lib/lucky-bars-config");
-  const db = getDb();
-  try {
-    const rows = await db
-      .select()
-      .from(gameControls)
-      .where(eq(gameControls.gameId, LUCKY_BARS_GAME_ID))
-      .limit(1);
-    return normalizeLuckyBarsConfig(parseEngineConfigJson(rows[0]?.engineConfig));
-  } catch {
-    return structuredClone(DEFAULT_LUCKY_BARS_CONFIG);
-  }
-}
-
-/** Superadmin — save full Lucky Bars math config. */
-export async function saveLuckyBarsEngineConfig(raw: unknown) {
-  const actor = await requireSuperadmin();
-  const { LUCKY_BARS_GAME_ID, normalizeLuckyBarsConfig } = await import(
-    "@/lib/lucky-bars-config"
-  );
-  const catalog = slotGames.find((g) => g.id === LUCKY_BARS_GAME_ID);
-  if (!catalog) throw new Error("Lucky Bars not in catalog");
-
-  const cfg = normalizeLuckyBarsConfig(raw);
-  const db = getDb();
-  const existing = await db
-    .select()
-    .from(gameControls)
-    .where(eq(gameControls.gameId, LUCKY_BARS_GAME_ID))
-    .limit(1);
-
-  const payload = JSON.stringify(cfg);
-
-  if (!existing[0]) {
-    await db.insert(gameControls).values({
-      gameId: LUCKY_BARS_GAME_ID,
-      enabled: "yes",
-      featured: "no",
-      sortOrder: 0,
-      tag: catalog.tag ?? null,
-      rtp: String(cfg.targetRtp),
-      volatility: catalog.volatility,
-      minBet: catalog.minBet,
-      maxBet: catalog.maxBet,
-      engineConfig: payload,
-    });
-  } else {
-    await db
-      .update(gameControls)
-      .set({ engineConfig: payload, rtp: String(cfg.targetRtp) })
-      .where(eq(gameControls.gameId, LUCKY_BARS_GAME_ID));
-  }
-
-  try {
-    const { clearLuckyBarsEngineCache } = await import("../games/lucky-bars.server");
-    clearLuckyBarsEngineCache();
-  } catch {
-    /* ignore */
-  }
-
-  await writeAuditLog({
-    actor,
-    action: "super.lucky_bars_config",
-    summary: `Updated Lucky Bars engine (maxBet ${cfg.maxBet}, twoWild ${cfg.twoWildPayMult}x, RTP placeholder ${cfg.targetRtp}%)`,
-    targetType: "game",
-    targetId: LUCKY_BARS_GAME_ID,
-    meta: {
-      maxBet: cfg.maxBet,
-      twoWildPayMult: cfg.twoWildPayMult,
-      targetRtp: cfg.targetRtp,
-      jackpotFloor: cfg.jackpot.floorAmount,
-      rtpConfigStatus: cfg.rtpConfigStatus,
-    },
-  });
-
-  return cfg;
-}
-
-/* WAVE_B_SLOT_SERVICES */
-
-/** Public — Knockout King engine math (defaults if unset). */
-export async function getKnockoutKingEngineConfig() {
-  const {
-    KNOCKOUT_KING_GAME_ID,
-    DEFAULT_KNOCKOUT_KING_CONFIG,
-    normalizeKnockoutKingConfig,
-  } = await import("@/lib/knockout-king-config");
-  const db = getDb();
-  try {
-    const rows = await db
-      .select()
-      .from(gameControls)
-      .where(eq(gameControls.gameId, KNOCKOUT_KING_GAME_ID))
-      .limit(1);
-    return normalizeKnockoutKingConfig(parseEngineConfigJson(rows[0]?.engineConfig));
-  } catch {
-    return structuredClone(DEFAULT_KNOCKOUT_KING_CONFIG);
-  }
-}
-
-/** Superadmin — save full Knockout King math config. */
-export async function saveKnockoutKingEngineConfig(raw: unknown) {
-  const actor = await requireSuperadmin();
-  const { KNOCKOUT_KING_GAME_ID, normalizeKnockoutKingConfig } = await import("@/lib/knockout-king-config");
-  const catalog = slotGames.find((g) => g.id === KNOCKOUT_KING_GAME_ID);
-  if (!catalog) throw new Error("Knockout King not in catalog");
-
-  const cfg = normalizeKnockoutKingConfig(raw);
-  const db = getDb();
-  const existing = await db
-    .select()
-    .from(gameControls)
-    .where(eq(gameControls.gameId, KNOCKOUT_KING_GAME_ID))
-    .limit(1);
-
-  const payload = JSON.stringify(cfg);
-
-  if (!existing[0]) {
-    await db.insert(gameControls).values({
-      gameId: KNOCKOUT_KING_GAME_ID,
-      enabled: "yes",
-      featured: "no",
-      sortOrder: 0,
-      tag: catalog.tag ?? null,
-      rtp: String(cfg.targetRtp),
-      volatility: catalog.volatility,
-      minBet: catalog.minBet,
-      maxBet: catalog.maxBet,
-      engineConfig: payload,
-    });
-  } else {
-    await db
-      .update(gameControls)
-      .set({ engineConfig: payload, rtp: String(cfg.targetRtp) })
-      .where(eq(gameControls.gameId, KNOCKOUT_KING_GAME_ID));
-  }
-
-  try {
-    const { clearKnockoutKingEngineCache } = await import("../games/knockout-king.server");
-    clearKnockoutKingEngineCache();
-  } catch {
-    /* ignore */
-  }
-
-  await writeAuditLog({
-    actor,
-    action: "super.knockout_king_config",
-    summary: `Updated Knockout King engine (RTP ${cfg.targetRtp}%)`,
-    targetType: "game",
-    targetId: KNOCKOUT_KING_GAME_ID,
-    meta: {},
-  });
-
-  return cfg;
-}
-
-
-/** Public — Arena Champ engine math (defaults if unset). */
-export async function getArenaChampEngineConfig() {
-  const {
-    ARENA_CHAMP_GAME_ID,
-    DEFAULT_ARENA_CHAMP_CONFIG,
-    normalizeArenaChampConfig,
-  } = await import("@/lib/arena-champ-config");
-  const db = getDb();
-  try {
-    const rows = await db
-      .select()
-      .from(gameControls)
-      .where(eq(gameControls.gameId, ARENA_CHAMP_GAME_ID))
-      .limit(1);
-    return normalizeArenaChampConfig(parseEngineConfigJson(rows[0]?.engineConfig));
-  } catch {
-    return structuredClone(DEFAULT_ARENA_CHAMP_CONFIG);
-  }
-}
-
-/** Superadmin — save full Arena Champ math config. */
-export async function saveArenaChampEngineConfig(raw: unknown) {
-  const actor = await requireSuperadmin();
-  const { ARENA_CHAMP_GAME_ID, normalizeArenaChampConfig } = await import("@/lib/arena-champ-config");
-  const catalog = slotGames.find((g) => g.id === ARENA_CHAMP_GAME_ID);
-  if (!catalog) throw new Error("Arena Champ not in catalog");
-
-  const cfg = normalizeArenaChampConfig(raw);
-  const db = getDb();
-  const existing = await db
-    .select()
-    .from(gameControls)
-    .where(eq(gameControls.gameId, ARENA_CHAMP_GAME_ID))
-    .limit(1);
-
-  const payload = JSON.stringify(cfg);
-
-  if (!existing[0]) {
-    await db.insert(gameControls).values({
-      gameId: ARENA_CHAMP_GAME_ID,
-      enabled: "yes",
-      featured: "no",
-      sortOrder: 0,
-      tag: catalog.tag ?? null,
-      rtp: String(cfg.targetRtp),
-      volatility: catalog.volatility,
-      minBet: catalog.minBet,
-      maxBet: catalog.maxBet,
-      engineConfig: payload,
-    });
-  } else {
-    await db
-      .update(gameControls)
-      .set({ engineConfig: payload, rtp: String(cfg.targetRtp) })
-      .where(eq(gameControls.gameId, ARENA_CHAMP_GAME_ID));
-  }
-
-  try {
-    const { clearArenaChampEngineCache } = await import("../games/arena-champ.server");
-    clearArenaChampEngineCache();
-  } catch {
-    /* ignore */
-  }
-
-  await writeAuditLog({
-    actor,
-    action: "super.arena_champ_config",
-    summary: `Updated Arena Champ engine (RTP ${cfg.targetRtp}%)`,
-    targetType: "game",
-    targetId: ARENA_CHAMP_GAME_ID,
-    meta: {},
-  });
-
-  return cfg;
-}
-
-
 /** Public — Safari Gold engine math (defaults if unset). */
 export async function getSafariGoldEngineConfig() {
-  const {
-    SAFARI_GOLD_GAME_ID,
-    DEFAULT_SAFARI_GOLD_CONFIG,
-    normalizeSafariGoldConfig,
-  } = await import("@/lib/safari-gold-config");
+  const { SAFARI_GOLD_GAME_ID, DEFAULT_SAFARI_GOLD_CONFIG, normalizeSafariGoldConfig } =
+    await import("@/lib/safari-gold-config");
   const db = getDb();
   try {
     const rows = await db
@@ -7856,7 +4480,8 @@ export async function getSafariGoldEngineConfig() {
 /** Superadmin — save full Safari Gold math config. */
 export async function saveSafariGoldEngineConfig(raw: unknown) {
   const actor = await requireSuperadmin();
-  const { SAFARI_GOLD_GAME_ID, normalizeSafariGoldConfig } = await import("@/lib/safari-gold-config");
+  const { SAFARI_GOLD_GAME_ID, normalizeSafariGoldConfig } =
+    await import("@/lib/safari-gold-config");
   const catalog = slotGames.find((g) => g.id === SAFARI_GOLD_GAME_ID);
   if (!catalog) throw new Error("Safari Gold not in catalog");
 
@@ -7877,8 +4502,8 @@ export async function saveSafariGoldEngineConfig(raw: unknown) {
       featured: "no",
       sortOrder: 0,
       tag: catalog.tag ?? null,
-      rtp: String(cfg.targetRtp),
-      volatility: cfg.volatility,
+      rtp: catalog.rtp,
+      volatility: catalog.volatility,
       minBet: catalog.minBet,
       maxBet: catalog.maxBet,
       engineConfig: payload,
@@ -7886,37 +4511,31 @@ export async function saveSafariGoldEngineConfig(raw: unknown) {
   } else {
     await db
       .update(gameControls)
-      .set({ engineConfig: payload, rtp: String(cfg.targetRtp), volatility: cfg.volatility })
+      .set({ engineConfig: payload })
       .where(eq(gameControls.gameId, SAFARI_GOLD_GAME_ID));
-  }
-
-  try {
-    const { clearSafariGoldEngineCache } = await import("../games/safari-gold.server");
-    clearSafariGoldEngineCache();
-  } catch {
-    /* ignore */
   }
 
   await writeAuditLog({
     actor,
     action: "super.safari_gold_config",
-    summary: `Updated Safari Gold engine (RTP ${cfg.targetRtp}%)`,
+    summary: `Updated Safari Gold engine config (dead spin ${cfg.deadSpinChancePercent}%, FS ${cfg.freeSpinsBase})`,
     targetType: "game",
     targetId: SAFARI_GOLD_GAME_ID,
-    meta: {},
+    meta: {
+      deadSpinChancePercent: cfg.deadSpinChancePercent,
+      bombChanceBasePercent: cfg.bombChanceBasePercent,
+      freeSpinsTriggerCount: cfg.freeSpinsTriggerCount,
+      freeSpinsBase: cfg.freeSpinsBase,
+    },
   });
 
   return cfg;
 }
 
-
 /** Public — Pharaoh Fire engine math (defaults if unset). */
 export async function getPharaohFireEngineConfig() {
-  const {
-    PHARAOH_FIRE_GAME_ID,
-    DEFAULT_PHARAOH_FIRE_CONFIG,
-    normalizePharaohFireConfig,
-  } = await import("@/lib/pharaoh-fire-config");
+  const { PHARAOH_FIRE_GAME_ID, DEFAULT_PHARAOH_FIRE_CONFIG, normalizePharaohFireConfig } =
+    await import("@/lib/pharaoh-fire-config");
   const db = getDb();
   try {
     const rows = await db
@@ -7933,7 +4552,8 @@ export async function getPharaohFireEngineConfig() {
 /** Superadmin — save full Pharaoh Fire math config. */
 export async function savePharaohFireEngineConfig(raw: unknown) {
   const actor = await requireSuperadmin();
-  const { PHARAOH_FIRE_GAME_ID, normalizePharaohFireConfig } = await import("@/lib/pharaoh-fire-config");
+  const { PHARAOH_FIRE_GAME_ID, normalizePharaohFireConfig } =
+    await import("@/lib/pharaoh-fire-config");
   const catalog = slotGames.find((g) => g.id === PHARAOH_FIRE_GAME_ID);
   if (!catalog) throw new Error("Pharaoh Fire not in catalog");
 
@@ -7954,8 +4574,8 @@ export async function savePharaohFireEngineConfig(raw: unknown) {
       featured: "no",
       sortOrder: 0,
       tag: catalog.tag ?? null,
-      rtp: String(cfg.targetRtp),
-      volatility: cfg.volatility,
+      rtp: catalog.rtp,
+      volatility: catalog.volatility,
       minBet: catalog.minBet,
       maxBet: catalog.maxBet,
       engineConfig: payload,
@@ -7963,37 +4583,31 @@ export async function savePharaohFireEngineConfig(raw: unknown) {
   } else {
     await db
       .update(gameControls)
-      .set({ engineConfig: payload, rtp: String(cfg.targetRtp), volatility: cfg.volatility })
+      .set({ engineConfig: payload })
       .where(eq(gameControls.gameId, PHARAOH_FIRE_GAME_ID));
-  }
-
-  try {
-    const { clearPharaohFireEngineCache } = await import("../games/pharaoh-fire.server");
-    clearPharaohFireEngineCache();
-  } catch {
-    /* ignore */
   }
 
   await writeAuditLog({
     actor,
     action: "super.pharaoh_fire_config",
-    summary: `Updated Pharaoh Fire engine (RTP ${cfg.targetRtp}%)`,
+    summary: `Updated Pharaoh Fire engine config (dead spin ${cfg.deadSpinChancePercent}%, FS ${cfg.freeSpinsBase})`,
     targetType: "game",
     targetId: PHARAOH_FIRE_GAME_ID,
-    meta: {},
+    meta: {
+      deadSpinChancePercent: cfg.deadSpinChancePercent,
+      bombChanceBasePercent: cfg.bombChanceBasePercent,
+      freeSpinsTriggerCount: cfg.freeSpinsTriggerCount,
+      freeSpinsBase: cfg.freeSpinsBase,
+    },
   });
 
   return cfg;
 }
 
-
 /** Public — Desert Riches engine math (defaults if unset). */
 export async function getDesertRichesEngineConfig() {
-  const {
-    DESERT_RICHES_GAME_ID,
-    DEFAULT_DESERT_RICHES_CONFIG,
-    normalizeDesertRichesConfig,
-  } = await import("@/lib/desert-riches-config");
+  const { DESERT_RICHES_GAME_ID, DEFAULT_DESERT_RICHES_CONFIG, normalizeDesertRichesConfig } =
+    await import("@/lib/desert-riches-config");
   const db = getDb();
   try {
     const rows = await db
@@ -8010,7 +4624,8 @@ export async function getDesertRichesEngineConfig() {
 /** Superadmin — save full Desert Riches math config. */
 export async function saveDesertRichesEngineConfig(raw: unknown) {
   const actor = await requireSuperadmin();
-  const { DESERT_RICHES_GAME_ID, normalizeDesertRichesConfig } = await import("@/lib/desert-riches-config");
+  const { DESERT_RICHES_GAME_ID, normalizeDesertRichesConfig } =
+    await import("@/lib/desert-riches-config");
   const catalog = slotGames.find((g) => g.id === DESERT_RICHES_GAME_ID);
   if (!catalog) throw new Error("Desert Riches not in catalog");
 
@@ -8031,7 +4646,7 @@ export async function saveDesertRichesEngineConfig(raw: unknown) {
       featured: "no",
       sortOrder: 0,
       tag: catalog.tag ?? null,
-      rtp: String(cfg.targetRtp),
+      rtp: catalog.rtp,
       volatility: catalog.volatility,
       minBet: catalog.minBet,
       maxBet: catalog.maxBet,
@@ -8040,562 +4655,31 @@ export async function saveDesertRichesEngineConfig(raw: unknown) {
   } else {
     await db
       .update(gameControls)
-      .set({ engineConfig: payload, rtp: String(cfg.targetRtp) })
+      .set({ engineConfig: payload })
       .where(eq(gameControls.gameId, DESERT_RICHES_GAME_ID));
-  }
-
-  try {
-    const { clearDesertRichesEngineCache } = await import("../games/desert-riches.server");
-    clearDesertRichesEngineCache();
-  } catch {
-    /* ignore */
   }
 
   await writeAuditLog({
     actor,
     action: "super.desert_riches_config",
-    summary: `Updated Desert Riches engine (RTP ${cfg.targetRtp}%)`,
+    summary: `Updated Desert Riches engine config (dead spin ${cfg.deadSpinChancePercent}%, FS ${cfg.freeSpinsBase})`,
     targetType: "game",
     targetId: DESERT_RICHES_GAME_ID,
-    meta: {},
+    meta: {
+      deadSpinChancePercent: cfg.deadSpinChancePercent,
+      bombChanceBasePercent: cfg.bombChanceBasePercent,
+      freeSpinsTriggerCount: cfg.freeSpinsTriggerCount,
+      freeSpinsBase: cfg.freeSpinsBase,
+    },
   });
 
   return cfg;
 }
-
-
-/** Public — Outlaw Coins engine math (defaults if unset). */
-export async function getOutlawCoinsEngineConfig() {
-  const {
-    OUTLAW_COINS_GAME_ID,
-    DEFAULT_OUTLAW_COINS_CONFIG,
-    normalizeOutlawCoinsConfig,
-  } = await import("@/lib/outlaw-coins-config");
-  const db = getDb();
-  try {
-    const rows = await db
-      .select()
-      .from(gameControls)
-      .where(eq(gameControls.gameId, OUTLAW_COINS_GAME_ID))
-      .limit(1);
-    return normalizeOutlawCoinsConfig(parseEngineConfigJson(rows[0]?.engineConfig));
-  } catch {
-    return structuredClone(DEFAULT_OUTLAW_COINS_CONFIG);
-  }
-}
-
-/** Superadmin — save full Outlaw Coins math config. */
-export async function saveOutlawCoinsEngineConfig(raw: unknown) {
-  const actor = await requireSuperadmin();
-  const { OUTLAW_COINS_GAME_ID, normalizeOutlawCoinsConfig } = await import("@/lib/outlaw-coins-config");
-  const catalog = slotGames.find((g) => g.id === OUTLAW_COINS_GAME_ID);
-  if (!catalog) throw new Error("Outlaw Coins not in catalog");
-
-  const cfg = normalizeOutlawCoinsConfig(raw);
-  const db = getDb();
-  const existing = await db
-    .select()
-    .from(gameControls)
-    .where(eq(gameControls.gameId, OUTLAW_COINS_GAME_ID))
-    .limit(1);
-
-  const payload = JSON.stringify(cfg);
-
-  if (!existing[0]) {
-    await db.insert(gameControls).values({
-      gameId: OUTLAW_COINS_GAME_ID,
-      enabled: "yes",
-      featured: "no",
-      sortOrder: 0,
-      tag: catalog.tag ?? null,
-      rtp: String(cfg.targetRtp),
-      volatility: catalog.volatility,
-      minBet: catalog.minBet,
-      maxBet: catalog.maxBet,
-      engineConfig: payload,
-    });
-  } else {
-    await db
-      .update(gameControls)
-      .set({ engineConfig: payload, rtp: String(cfg.targetRtp) })
-      .where(eq(gameControls.gameId, OUTLAW_COINS_GAME_ID));
-  }
-
-  try {
-    const { clearOutlawCoinsEngineCache } = await import("../games/outlaw-coins.server");
-    clearOutlawCoinsEngineCache();
-  } catch {
-    /* ignore */
-  }
-
-  await writeAuditLog({
-    actor,
-    action: "super.outlaw_coins_config",
-    summary: `Updated Outlaw Coins engine (RTP ${cfg.targetRtp}%)`,
-    targetType: "game",
-    targetId: OUTLAW_COINS_GAME_ID,
-    meta: {},
-  });
-
-  return cfg;
-}
-
-
-/** Public — Crystal Cave engine math (defaults if unset). */
-export async function getCrystalCaveEngineConfig() {
-  const {
-    CRYSTAL_CAVE_GAME_ID,
-    DEFAULT_CRYSTAL_CAVE_CONFIG,
-    normalizeCrystalCaveConfig,
-  } = await import("@/lib/crystal-cave-config");
-  const db = getDb();
-  try {
-    const rows = await db
-      .select()
-      .from(gameControls)
-      .where(eq(gameControls.gameId, CRYSTAL_CAVE_GAME_ID))
-      .limit(1);
-    return normalizeCrystalCaveConfig(parseEngineConfigJson(rows[0]?.engineConfig));
-  } catch {
-    return structuredClone(DEFAULT_CRYSTAL_CAVE_CONFIG);
-  }
-}
-
-/** Superadmin — save full Crystal Cave math config. */
-export async function saveCrystalCaveEngineConfig(raw: unknown) {
-  const actor = await requireSuperadmin();
-  const { CRYSTAL_CAVE_GAME_ID, normalizeCrystalCaveConfig } = await import("@/lib/crystal-cave-config");
-  const catalog = slotGames.find((g) => g.id === CRYSTAL_CAVE_GAME_ID);
-  if (!catalog) throw new Error("Crystal Cave not in catalog");
-
-  const cfg = normalizeCrystalCaveConfig(raw);
-  const db = getDb();
-  const existing = await db
-    .select()
-    .from(gameControls)
-    .where(eq(gameControls.gameId, CRYSTAL_CAVE_GAME_ID))
-    .limit(1);
-
-  const payload = JSON.stringify(cfg);
-
-  if (!existing[0]) {
-    await db.insert(gameControls).values({
-      gameId: CRYSTAL_CAVE_GAME_ID,
-      enabled: "yes",
-      featured: "no",
-      sortOrder: 0,
-      tag: catalog.tag ?? null,
-      rtp: String(cfg.targetRtp),
-      volatility: catalog.volatility,
-      minBet: catalog.minBet,
-      maxBet: catalog.maxBet,
-      engineConfig: payload,
-    });
-  } else {
-    await db
-      .update(gameControls)
-      .set({ engineConfig: payload, rtp: String(cfg.targetRtp) })
-      .where(eq(gameControls.gameId, CRYSTAL_CAVE_GAME_ID));
-  }
-
-  try {
-    const { clearCrystalCaveEngineCache } = await import("../games/crystal-cave.server");
-    clearCrystalCaveEngineCache();
-  } catch {
-    /* ignore */
-  }
-
-  await writeAuditLog({
-    actor,
-    action: "super.crystal_cave_config",
-    summary: `Updated Crystal Cave engine (RTP ${cfg.targetRtp}%)`,
-    targetType: "game",
-    targetId: CRYSTAL_CAVE_GAME_ID,
-    meta: {},
-  });
-
-  return cfg;
-}
-
-
-/** Public — Diamond Dig engine math (defaults if unset). */
-export async function getDiamondDigEngineConfig() {
-  const {
-    DIAMOND_DIG_GAME_ID,
-    DEFAULT_DIAMOND_DIG_CONFIG,
-    normalizeDiamondDigConfig,
-  } = await import("@/lib/diamond-dig-config");
-  const db = getDb();
-  try {
-    const rows = await db
-      .select()
-      .from(gameControls)
-      .where(eq(gameControls.gameId, DIAMOND_DIG_GAME_ID))
-      .limit(1);
-    return normalizeDiamondDigConfig(parseEngineConfigJson(rows[0]?.engineConfig));
-  } catch {
-    return structuredClone(DEFAULT_DIAMOND_DIG_CONFIG);
-  }
-}
-
-/** Superadmin — save full Diamond Dig math config. */
-export async function saveDiamondDigEngineConfig(raw: unknown) {
-  const actor = await requireSuperadmin();
-  const { DIAMOND_DIG_GAME_ID, normalizeDiamondDigConfig } = await import("@/lib/diamond-dig-config");
-  const catalog = slotGames.find((g) => g.id === DIAMOND_DIG_GAME_ID);
-  if (!catalog) throw new Error("Diamond Dig not in catalog");
-
-  const cfg = normalizeDiamondDigConfig(raw);
-  const db = getDb();
-  const existing = await db
-    .select()
-    .from(gameControls)
-    .where(eq(gameControls.gameId, DIAMOND_DIG_GAME_ID))
-    .limit(1);
-
-  const payload = JSON.stringify(cfg);
-
-  if (!existing[0]) {
-    await db.insert(gameControls).values({
-      gameId: DIAMOND_DIG_GAME_ID,
-      enabled: "yes",
-      featured: "no",
-      sortOrder: 0,
-      tag: catalog.tag ?? null,
-      rtp: String(cfg.targetRtp),
-      volatility: catalog.volatility,
-      minBet: catalog.minBet,
-      maxBet: catalog.maxBet,
-      engineConfig: payload,
-    });
-  } else {
-    await db
-      .update(gameControls)
-      .set({ engineConfig: payload, rtp: String(cfg.targetRtp) })
-      .where(eq(gameControls.gameId, DIAMOND_DIG_GAME_ID));
-  }
-
-  try {
-    const { clearDiamondDigEngineCache } = await import("../games/diamond-dig.server");
-    clearDiamondDigEngineCache();
-  } catch {
-    /* ignore */
-  }
-
-  await writeAuditLog({
-    actor,
-    action: "super.diamond_dig_config",
-    summary: `Updated Diamond Dig engine (RTP ${cfg.targetRtp}%)`,
-    targetType: "game",
-    targetId: DIAMOND_DIG_GAME_ID,
-    meta: {},
-  });
-
-  return cfg;
-}
-
-
-/** Public — Candy Blast engine math (defaults if unset). */
-export async function getCandyBlastEngineConfig() {
-  const {
-    CANDY_BLAST_GAME_ID,
-    DEFAULT_CANDY_BLAST_CONFIG,
-    normalizeCandyBlastConfig,
-  } = await import("@/lib/candy-blast-config");
-  const db = getDb();
-  try {
-    const rows = await db
-      .select()
-      .from(gameControls)
-      .where(eq(gameControls.gameId, CANDY_BLAST_GAME_ID))
-      .limit(1);
-    return normalizeCandyBlastConfig(parseEngineConfigJson(rows[0]?.engineConfig));
-  } catch {
-    return structuredClone(DEFAULT_CANDY_BLAST_CONFIG);
-  }
-}
-
-/** Superadmin — save full Candy Blast math config. */
-export async function saveCandyBlastEngineConfig(raw: unknown) {
-  const actor = await requireSuperadmin();
-  const { CANDY_BLAST_GAME_ID, normalizeCandyBlastConfig } = await import("@/lib/candy-blast-config");
-  const catalog = slotGames.find((g) => g.id === CANDY_BLAST_GAME_ID);
-  if (!catalog) throw new Error("Candy Blast not in catalog");
-
-  const cfg = normalizeCandyBlastConfig(raw);
-  const db = getDb();
-  const existing = await db
-    .select()
-    .from(gameControls)
-    .where(eq(gameControls.gameId, CANDY_BLAST_GAME_ID))
-    .limit(1);
-
-  const payload = JSON.stringify(cfg);
-
-  if (!existing[0]) {
-    await db.insert(gameControls).values({
-      gameId: CANDY_BLAST_GAME_ID,
-      enabled: "yes",
-      featured: "no",
-      sortOrder: 0,
-      tag: catalog.tag ?? null,
-      rtp: catalog.rtp,
-      volatility: catalog.volatility,
-      minBet: catalog.minBet,
-      maxBet: catalog.maxBet,
-      engineConfig: payload,
-    });
-  } else {
-    await db
-      .update(gameControls)
-      .set({ engineConfig: payload })
-      .where(eq(gameControls.gameId, CANDY_BLAST_GAME_ID));
-  }
-
-  await writeAuditLog({
-    actor,
-    action: "super.candy_blast_config",
-    summary: `Updated Candy Blast engine config`,
-    targetType: "game",
-    targetId: CANDY_BLAST_GAME_ID,
-    meta: {},
-  });
-
-  return cfg;
-}
-
-
-/** Public — Sweet Rush engine math (defaults if unset). */
-export async function getSweetRushEngineConfig() {
-  const {
-    SWEET_RUSH_GAME_ID,
-    DEFAULT_SWEET_RUSH_CONFIG,
-    normalizeSweetRushConfig,
-  } = await import("@/lib/sweet-rush-config");
-  const db = getDb();
-  try {
-    const rows = await db
-      .select()
-      .from(gameControls)
-      .where(eq(gameControls.gameId, SWEET_RUSH_GAME_ID))
-      .limit(1);
-    return normalizeSweetRushConfig(parseEngineConfigJson(rows[0]?.engineConfig));
-  } catch {
-    return structuredClone(DEFAULT_SWEET_RUSH_CONFIG);
-  }
-}
-
-/** Superadmin — save full Sweet Rush math config. */
-export async function saveSweetRushEngineConfig(raw: unknown) {
-  const actor = await requireSuperadmin();
-  const { SWEET_RUSH_GAME_ID, normalizeSweetRushConfig } = await import("@/lib/sweet-rush-config");
-  const catalog = slotGames.find((g) => g.id === SWEET_RUSH_GAME_ID);
-  if (!catalog) throw new Error("Sweet Rush not in catalog");
-
-  const cfg = normalizeSweetRushConfig(raw);
-  const db = getDb();
-  const existing = await db
-    .select()
-    .from(gameControls)
-    .where(eq(gameControls.gameId, SWEET_RUSH_GAME_ID))
-    .limit(1);
-
-  const payload = JSON.stringify(cfg);
-
-  if (!existing[0]) {
-    await db.insert(gameControls).values({
-      gameId: SWEET_RUSH_GAME_ID,
-      enabled: "yes",
-      featured: "no",
-      sortOrder: 0,
-      tag: catalog.tag ?? null,
-      rtp: catalog.rtp,
-      volatility: catalog.volatility,
-      minBet: catalog.minBet,
-      maxBet: catalog.maxBet,
-      engineConfig: payload,
-    });
-  } else {
-    await db
-      .update(gameControls)
-      .set({ engineConfig: payload })
-      .where(eq(gameControls.gameId, SWEET_RUSH_GAME_ID));
-  }
-
-  await writeAuditLog({
-    actor,
-    action: "super.sweet_rush_config",
-    summary: `Updated Sweet Rush engine config`,
-    targetType: "game",
-    targetId: SWEET_RUSH_GAME_ID,
-    meta: {},
-  });
-
-  return cfg;
-}
-
-
-/** Public — Starlight Ways engine math (defaults if unset). */
-export async function getStarlightWaysEngineConfig() {
-  const {
-    STARLIGHT_WAYS_GAME_ID,
-    DEFAULT_STARLIGHT_WAYS_CONFIG,
-    normalizeStarlightWaysConfig,
-  } = await import("@/lib/starlight-ways-config");
-  const db = getDb();
-  try {
-    const rows = await db
-      .select()
-      .from(gameControls)
-      .where(eq(gameControls.gameId, STARLIGHT_WAYS_GAME_ID))
-      .limit(1);
-    return normalizeStarlightWaysConfig(parseEngineConfigJson(rows[0]?.engineConfig));
-  } catch {
-    return structuredClone(DEFAULT_STARLIGHT_WAYS_CONFIG);
-  }
-}
-
-/** Superadmin — save full Starlight Ways math config. */
-export async function saveStarlightWaysEngineConfig(raw: unknown) {
-  const actor = await requireSuperadmin();
-  const { STARLIGHT_WAYS_GAME_ID, normalizeStarlightWaysConfig } = await import("@/lib/starlight-ways-config");
-  const catalog = slotGames.find((g) => g.id === STARLIGHT_WAYS_GAME_ID);
-  if (!catalog) throw new Error("Starlight Ways not in catalog");
-
-  const cfg = normalizeStarlightWaysConfig(raw);
-  const db = getDb();
-  const existing = await db
-    .select()
-    .from(gameControls)
-    .where(eq(gameControls.gameId, STARLIGHT_WAYS_GAME_ID))
-    .limit(1);
-
-  const payload = JSON.stringify(cfg);
-
-  if (!existing[0]) {
-    await db.insert(gameControls).values({
-      gameId: STARLIGHT_WAYS_GAME_ID,
-      enabled: "yes",
-      featured: "no",
-      sortOrder: 0,
-      tag: catalog.tag ?? null,
-      rtp: String(cfg.targetRtp),
-      volatility: catalog.volatility,
-      minBet: catalog.minBet,
-      maxBet: catalog.maxBet,
-      engineConfig: payload,
-    });
-  } else {
-    await db
-      .update(gameControls)
-      .set({ engineConfig: payload, rtp: String(cfg.targetRtp) })
-      .where(eq(gameControls.gameId, STARLIGHT_WAYS_GAME_ID));
-  }
-
-  try {
-    const { clearStarlightWaysEngineCache } = await import("../games/starlight-ways.server");
-    clearStarlightWaysEngineCache();
-  } catch {
-    /* ignore */
-  }
-
-  await writeAuditLog({
-    actor,
-    action: "super.starlight_ways_config",
-    summary: `Updated Starlight Ways engine (RTP ${cfg.targetRtp}%)`,
-    targetType: "game",
-    targetId: STARLIGHT_WAYS_GAME_ID,
-    meta: {},
-  });
-
-  return cfg;
-}
-
-
-/** Public — Galaxy Ace engine math (defaults if unset). */
-export async function getGalaxyAceEngineConfig() {
-  const {
-    GALAXY_ACE_GAME_ID,
-    DEFAULT_GALAXY_ACE_CONFIG,
-    normalizeGalaxyAceConfig,
-  } = await import("@/lib/galaxy-ace-config");
-  const db = getDb();
-  try {
-    const rows = await db
-      .select()
-      .from(gameControls)
-      .where(eq(gameControls.gameId, GALAXY_ACE_GAME_ID))
-      .limit(1);
-    return normalizeGalaxyAceConfig(parseEngineConfigJson(rows[0]?.engineConfig));
-  } catch {
-    return structuredClone(DEFAULT_GALAXY_ACE_CONFIG);
-  }
-}
-
-/** Superadmin — save full Galaxy Ace math config. */
-export async function saveGalaxyAceEngineConfig(raw: unknown) {
-  const actor = await requireSuperadmin();
-  const { GALAXY_ACE_GAME_ID, normalizeGalaxyAceConfig } = await import("@/lib/galaxy-ace-config");
-  const catalog = slotGames.find((g) => g.id === GALAXY_ACE_GAME_ID);
-  if (!catalog) throw new Error("Galaxy Ace not in catalog");
-
-  const cfg = normalizeGalaxyAceConfig(raw);
-  const db = getDb();
-  const existing = await db
-    .select()
-    .from(gameControls)
-    .where(eq(gameControls.gameId, GALAXY_ACE_GAME_ID))
-    .limit(1);
-
-  const payload = JSON.stringify(cfg);
-
-  if (!existing[0]) {
-    await db.insert(gameControls).values({
-      gameId: GALAXY_ACE_GAME_ID,
-      enabled: "yes",
-      featured: "no",
-      sortOrder: 0,
-      tag: catalog.tag ?? null,
-      rtp: String(cfg.targetRtp),
-      volatility: catalog.volatility,
-      minBet: catalog.minBet,
-      maxBet: catalog.maxBet,
-      engineConfig: payload,
-    });
-  } else {
-    await db
-      .update(gameControls)
-      .set({ engineConfig: payload, rtp: String(cfg.targetRtp) })
-      .where(eq(gameControls.gameId, GALAXY_ACE_GAME_ID));
-  }
-
-  try {
-    const { clearGalaxyAceEngineCache } = await import("../games/galaxy-ace.server");
-    clearGalaxyAceEngineCache();
-  } catch {
-    /* ignore */
-  }
-
-  await writeAuditLog({
-    actor,
-    action: "super.galaxy_ace_config",
-    summary: `Updated Galaxy Ace engine (RTP ${cfg.targetRtp}%)`,
-    targetType: "game",
-    targetId: GALAXY_ACE_GAME_ID,
-    meta: {},
-  });
-
-  return cfg;
-}
-
 
 /** Public — Gate of Ra engine math (defaults if unset). */
 export async function getGateOfRaEngineConfig() {
-  const {
-    GATE_OF_RA_GAME_ID,
-    DEFAULT_GATE_OF_RA_CONFIG,
-    normalizeGateOfRaConfig,
-  } = await import("@/lib/gate-of-ra-config");
+  const { GATE_OF_RA_GAME_ID, DEFAULT_GATE_OF_RA_CONFIG, normalizeGateOfRaConfig } =
+    await import("@/lib/gate-of-ra-config");
   const db = getDb();
   try {
     const rows = await db
@@ -8658,1190 +4742,10 @@ export async function saveGateOfRaEngineConfig(raw: unknown) {
   return cfg;
 }
 
-
-/** Public — Mystic Runes engine math (defaults if unset). */
-export async function getMysticRunesEngineConfig() {
-  const {
-    MYSTIC_RUNES_GAME_ID,
-    DEFAULT_MYSTIC_RUNES_CONFIG,
-    normalizeMysticRunesConfig,
-  } = await import("@/lib/mystic-runes-config");
-  const db = getDb();
-  try {
-    const rows = await db
-      .select()
-      .from(gameControls)
-      .where(eq(gameControls.gameId, MYSTIC_RUNES_GAME_ID))
-      .limit(1);
-    return normalizeMysticRunesConfig(parseEngineConfigJson(rows[0]?.engineConfig));
-  } catch {
-    return structuredClone(DEFAULT_MYSTIC_RUNES_CONFIG);
-  }
-}
-
-/** Superadmin — save full Mystic Runes math config. */
-export async function saveMysticRunesEngineConfig(raw: unknown) {
-  const actor = await requireSuperadmin();
-  const { MYSTIC_RUNES_GAME_ID, normalizeMysticRunesConfig } = await import("@/lib/mystic-runes-config");
-  const catalog = slotGames.find((g) => g.id === MYSTIC_RUNES_GAME_ID);
-  if (!catalog) throw new Error("Mystic Runes not in catalog");
-
-  const cfg = normalizeMysticRunesConfig(raw);
-  const db = getDb();
-  const existing = await db
-    .select()
-    .from(gameControls)
-    .where(eq(gameControls.gameId, MYSTIC_RUNES_GAME_ID))
-    .limit(1);
-
-  const payload = JSON.stringify(cfg);
-
-  if (!existing[0]) {
-    await db.insert(gameControls).values({
-      gameId: MYSTIC_RUNES_GAME_ID,
-      enabled: "yes",
-      featured: "no",
-      sortOrder: 0,
-      tag: catalog.tag ?? null,
-      rtp: catalog.rtp,
-      volatility: catalog.volatility,
-      minBet: catalog.minBet,
-      maxBet: catalog.maxBet,
-      engineConfig: payload,
-    });
-  } else {
-    await db
-      .update(gameControls)
-      .set({ engineConfig: payload })
-      .where(eq(gameControls.gameId, MYSTIC_RUNES_GAME_ID));
-  }
-
-  await writeAuditLog({
-    actor,
-    action: "super.mystic_runes_config",
-    summary: `Updated Mystic Runes engine config`,
-    targetType: "game",
-    targetId: MYSTIC_RUNES_GAME_ID,
-    meta: {},
-  });
-
-  return cfg;
-}
-
-// Wave C clones
-
-/** Public — Halo-Halo Hits engine math (defaults if unset). */
-export async function getHaloHaloHitsEngineConfig() {
-  const {
-    HALO_HALO_HITS_GAME_ID,
-    DEFAULT_HALO_HALO_HITS_CONFIG,
-    normalizeHaloHaloHitsConfig,
-  } = await import("@/lib/halo-halo-hits-config");
-  const db = getDb();
-  try {
-    const rows = await db
-      .select()
-      .from(gameControls)
-      .where(eq(gameControls.gameId, HALO_HALO_HITS_GAME_ID))
-      .limit(1);
-    return normalizeHaloHaloHitsConfig(parseEngineConfigJson(rows[0]?.engineConfig));
-  } catch {
-    return structuredClone(DEFAULT_HALO_HALO_HITS_CONFIG);
-  }
-}
-
-/** Superadmin — save full Halo-Halo Hits math config. */
-export async function saveHaloHaloHitsEngineConfig(raw: unknown) {
-  const actor = await requireSuperadmin();
-  const { HALO_HALO_HITS_GAME_ID, normalizeHaloHaloHitsConfig } = await import("@/lib/halo-halo-hits-config");
-  const catalog = slotGames.find((g) => g.id === HALO_HALO_HITS_GAME_ID);
-  if (!catalog) throw new Error("Halo-Halo Hits not in catalog");
-
-  const cfg = normalizeHaloHaloHitsConfig(raw);
-  const db = getDb();
-  const existing = await db
-    .select()
-    .from(gameControls)
-    .where(eq(gameControls.gameId, HALO_HALO_HITS_GAME_ID))
-    .limit(1);
-
-  const payload = JSON.stringify(cfg);
-
-  if (!existing[0]) {
-    await db.insert(gameControls).values({
-      gameId: HALO_HALO_HITS_GAME_ID,
-      enabled: "yes",
-      featured: "no",
-      sortOrder: 0,
-      tag: catalog.tag ?? null,
-      rtp: String(cfg.targetRtp),
-      volatility: catalog.volatility,
-      minBet: `₱${cfg.minBet.toFixed(2)}`,
-      maxBet: `₱${cfg.maxBet.toFixed(2)}`,
-      engineConfig: payload,
-    });
-  } else {
-    await db
-      .update(gameControls)
-      .set({
-        engineConfig: payload,
-        rtp: String(cfg.targetRtp),
-        minBet: `₱${cfg.minBet.toFixed(2)}`,
-        maxBet: `₱${cfg.maxBet.toFixed(2)}`,
-      })
-      .where(eq(gameControls.gameId, HALO_HALO_HITS_GAME_ID));
-  }
-
-  try {
-    const { clearHaloHaloHitsEngineCache } = await import("../games/halo-halo-hits.server");
-    clearHaloHaloHitsEngineCache();
-  } catch {
-    /* ignore */
-  }
-
-  await writeAuditLog({
-    actor,
-    action: "super.halo_halo_hits_config",
-    summary: `Updated Halo-Halo Hits engine (profile ${cfg.activeRtpProfile}, maxWin ${cfg.maxWinMult}x, EX ${cfg.exBetMult}x, RTP ${cfg.targetRtp}%)`,
-    targetType: "game",
-    targetId: HALO_HALO_HITS_GAME_ID,
-    meta: {
-      activeRtpProfile: cfg.activeRtpProfile,
-      maxWinMult: cfg.maxWinMult,
-      exBetMult: cfg.exBetMult,
-      targetRtp: cfg.targetRtp,
-      paylineCount: cfg.paylineCount,
-      minBet: cfg.minBet,
-      maxBet: cfg.maxBet,
-    },
-  });
-
-  return cfg;
-}
-
-
-/** Public — Balut Bonus engine math (defaults if unset). */
-export async function getBalutBonusEngineConfig() {
-  const {
-    BALUT_BONUS_GAME_ID,
-    DEFAULT_BALUT_BONUS_CONFIG,
-    normalizeBalutBonusConfig,
-  } = await import("@/lib/balut-bonus-config");
-  const db = getDb();
-  try {
-    const rows = await db
-      .select()
-      .from(gameControls)
-      .where(eq(gameControls.gameId, BALUT_BONUS_GAME_ID))
-      .limit(1);
-    return normalizeBalutBonusConfig(parseEngineConfigJson(rows[0]?.engineConfig));
-  } catch {
-    return structuredClone(DEFAULT_BALUT_BONUS_CONFIG);
-  }
-}
-
-/** Superadmin — save full Balut Bonus math config. */
-export async function saveBalutBonusEngineConfig(raw: unknown) {
-  const actor = await requireSuperadmin();
-  const { BALUT_BONUS_GAME_ID, normalizeBalutBonusConfig } = await import("@/lib/balut-bonus-config");
-  const catalog = slotGames.find((g) => g.id === BALUT_BONUS_GAME_ID);
-  if (!catalog) throw new Error("Balut Bonus not in catalog");
-
-  const cfg = normalizeBalutBonusConfig(raw);
-  const db = getDb();
-  const existing = await db
-    .select()
-    .from(gameControls)
-    .where(eq(gameControls.gameId, BALUT_BONUS_GAME_ID))
-    .limit(1);
-
-  const payload = JSON.stringify(cfg);
-
-  if (!existing[0]) {
-    await db.insert(gameControls).values({
-      gameId: BALUT_BONUS_GAME_ID,
-      enabled: "yes",
-      featured: "no",
-      sortOrder: 0,
-      tag: catalog.tag ?? null,
-      rtp: String(cfg.targetRtp),
-      volatility: catalog.volatility,
-      minBet: `₱${cfg.minBet.toFixed(2)}`,
-      maxBet: `₱${cfg.maxBet.toFixed(2)}`,
-      engineConfig: payload,
-    });
-  } else {
-    await db
-      .update(gameControls)
-      .set({
-        engineConfig: payload,
-        rtp: String(cfg.targetRtp),
-        minBet: `₱${cfg.minBet.toFixed(2)}`,
-        maxBet: `₱${cfg.maxBet.toFixed(2)}`,
-      })
-      .where(eq(gameControls.gameId, BALUT_BONUS_GAME_ID));
-  }
-
-  try {
-    const { clearBalutBonusEngineCache } = await import("../games/balut-bonus.server");
-    clearBalutBonusEngineCache();
-  } catch {
-    /* ignore */
-  }
-
-  await writeAuditLog({
-    actor,
-    action: "super.balut_bonus_config",
-    summary: `Updated Balut Bonus engine (profile ${cfg.activeRtpProfile}, maxWin ${cfg.maxWinMult}x, EX ${cfg.exBetMult}x, RTP ${cfg.targetRtp}%)`,
-    targetType: "game",
-    targetId: BALUT_BONUS_GAME_ID,
-    meta: {
-      activeRtpProfile: cfg.activeRtpProfile,
-      maxWinMult: cfg.maxWinMult,
-      exBetMult: cfg.exBetMult,
-      targetRtp: cfg.targetRtp,
-      paylineCount: cfg.paylineCount,
-      minBet: cfg.minBet,
-      maxBet: cfg.maxBet,
-    },
-  });
-
-  return cfg;
-}
-
-
-/** Public — Sinigang Spin engine math (defaults if unset). */
-export async function getSinigangSpinEngineConfig() {
-  const {
-    SINIGANG_SPIN_GAME_ID,
-    DEFAULT_SINIGANG_SPIN_CONFIG,
-    normalizeSinigangSpinConfig,
-  } = await import("@/lib/sinigang-spin-config");
-  const db = getDb();
-  try {
-    const rows = await db
-      .select()
-      .from(gameControls)
-      .where(eq(gameControls.gameId, SINIGANG_SPIN_GAME_ID))
-      .limit(1);
-    return normalizeSinigangSpinConfig(parseEngineConfigJson(rows[0]?.engineConfig));
-  } catch {
-    return structuredClone(DEFAULT_SINIGANG_SPIN_CONFIG);
-  }
-}
-
-/** Superadmin — save full Sinigang Spin math config. */
-export async function saveSinigangSpinEngineConfig(raw: unknown) {
-  const actor = await requireSuperadmin();
-  const {
-    SINIGANG_SPIN_GAME_ID,
-    normalizeSinigangSpinConfig,
-  } = await import("@/lib/sinigang-spin-config");
-  const catalog = slotGames.find((g) => g.id === SINIGANG_SPIN_GAME_ID);
-  if (!catalog) throw new Error("Sinigang Spin not in catalog");
-
-  const cfg = normalizeSinigangSpinConfig(raw);
-  const db = getDb();
-  const existing = await db
-    .select()
-    .from(gameControls)
-    .where(eq(gameControls.gameId, SINIGANG_SPIN_GAME_ID))
-    .limit(1);
-
-  const payload = JSON.stringify(cfg);
-
-  if (!existing[0]) {
-    await db.insert(gameControls).values({
-      gameId: SINIGANG_SPIN_GAME_ID,
-      enabled: "yes",
-      featured: "no",
-      sortOrder: 0,
-      tag: catalog.tag ?? null,
-      rtp: catalog.rtp,
-      volatility: catalog.volatility,
-      minBet: catalog.minBet,
-      maxBet: catalog.maxBet,
-      engineConfig: payload,
-    });
-  } else {
-    await db
-      .update(gameControls)
-      .set({ engineConfig: payload })
-      .where(eq(gameControls.gameId, SINIGANG_SPIN_GAME_ID));
-  }
-
-  try {
-    const { clearSinigangSpinEngineCache } = await import("../games/sinigang-spin.server");
-    clearSinigangSpinEngineCache();
-  } catch {
-    /* ignore */
-  }
-
-  await writeAuditLog({
-    actor,
-    action: "super.sinigang_spin_config",
-    summary: `Updated Sinigang Spin engine (FS ${cfg.freeSpinsAward}, maxWin ${cfg.maxWinMult}x, target RTP ${cfg.targetRtp}%)`,
-    targetType: "game",
-    targetId: SINIGANG_SPIN_GAME_ID,
-    meta: {
-      freeSpinsAward: cfg.freeSpinsAward,
-      monkeyTriggerMult: cfg.monkeyTriggerMult,
-      dragonSuccessChancePercent: cfg.dragonSuccessChancePercent,
-      maxWinMult: cfg.maxWinMult,
-      targetRtp: cfg.targetRtp,
-      paylineCount: cfg.paylineCount,
-    },
-  });
-
-  return cfg;
-}
-
-
-/** Public — Lechon Luck engine math (defaults if unset). */
-export async function getLechonLuckEngineConfig() {
-  const {
-    LECHON_LUCK_GAME_ID,
-    DEFAULT_LECHON_LUCK_CONFIG,
-    normalizeLechonLuckConfig,
-  } = await import("@/lib/lechon-luck-config");
-  const db = getDb();
-  try {
-    const rows = await db
-      .select()
-      .from(gameControls)
-      .where(eq(gameControls.gameId, LECHON_LUCK_GAME_ID))
-      .limit(1);
-    return normalizeLechonLuckConfig(parseEngineConfigJson(rows[0]?.engineConfig));
-  } catch {
-    return structuredClone(DEFAULT_LECHON_LUCK_CONFIG);
-  }
-}
-
-/** Superadmin — save full Lechon Luck math config. */
-export async function saveLechonLuckEngineConfig(raw: unknown) {
-  const actor = await requireSuperadmin();
-  const {
-    LECHON_LUCK_GAME_ID,
-    normalizeLechonLuckConfig,
-  } = await import("@/lib/lechon-luck-config");
-  const catalog = slotGames.find((g) => g.id === LECHON_LUCK_GAME_ID);
-  if (!catalog) throw new Error("Lechon Luck not in catalog");
-
-  const cfg = normalizeLechonLuckConfig(raw);
-  const db = getDb();
-  const existing = await db
-    .select()
-    .from(gameControls)
-    .where(eq(gameControls.gameId, LECHON_LUCK_GAME_ID))
-    .limit(1);
-
-  const payload = JSON.stringify(cfg);
-
-  if (!existing[0]) {
-    await db.insert(gameControls).values({
-      gameId: LECHON_LUCK_GAME_ID,
-      enabled: "yes",
-      featured: "no",
-      sortOrder: 0,
-      tag: catalog.tag ?? null,
-      rtp: catalog.rtp,
-      volatility: catalog.volatility,
-      minBet: catalog.minBet,
-      maxBet: catalog.maxBet,
-      engineConfig: payload,
-    });
-  } else {
-    await db
-      .update(gameControls)
-      .set({ engineConfig: payload })
-      .where(eq(gameControls.gameId, LECHON_LUCK_GAME_ID));
-  }
-
-  try {
-    const { clearLechonLuckEngineCache } = await import("../games/lechon-luck.server");
-    clearLechonLuckEngineCache();
-  } catch {
-    /* ignore */
-  }
-
-  await writeAuditLog({
-    actor,
-    action: "super.lechon_luck_config",
-    summary: `Updated Lechon Luck engine (FS ${cfg.freeSpinsAward}, maxWin ${cfg.maxWinMult}x, target RTP ${cfg.targetRtp}%)`,
-    targetType: "game",
-    targetId: LECHON_LUCK_GAME_ID,
-    meta: {
-      freeSpinsAward: cfg.freeSpinsAward,
-      monkeyTriggerMult: cfg.monkeyTriggerMult,
-      dragonSuccessChancePercent: cfg.dragonSuccessChancePercent,
-      maxWinMult: cfg.maxWinMult,
-      targetRtp: cfg.targetRtp,
-      paylineCount: cfg.paylineCount,
-    },
-  });
-
-  return cfg;
-}
-
-
-/** Public — Lantern Luck engine math (defaults if unset). */
-export async function getLanternLuckEngineConfig() {
-  const {
-    LANTERN_LUCK_GAME_ID,
-    DEFAULT_LANTERN_LUCK_CONFIG,
-    normalizeLanternLuckConfig,
-  } = await import("@/lib/lantern-luck-config");
-  const db = getDb();
-  try {
-    const rows = await db
-      .select()
-      .from(gameControls)
-      .where(eq(gameControls.gameId, LANTERN_LUCK_GAME_ID))
-      .limit(1);
-    return normalizeLanternLuckConfig(parseEngineConfigJson(rows[0]?.engineConfig));
-  } catch {
-    return structuredClone(DEFAULT_LANTERN_LUCK_CONFIG);
-  }
-}
-
-/** Superadmin — save full Lantern Luck math config. */
-export async function saveLanternLuckEngineConfig(raw: unknown) {
-  const actor = await requireSuperadmin();
-  const {
-    LANTERN_LUCK_GAME_ID,
-    normalizeLanternLuckConfig,
-  } = await import("@/lib/lantern-luck-config");
-  const catalog = slotGames.find((g) => g.id === LANTERN_LUCK_GAME_ID);
-  if (!catalog) throw new Error("Lantern Luck not in catalog");
-
-  const cfg = normalizeLanternLuckConfig(raw);
-  const db = getDb();
-  const existing = await db
-    .select()
-    .from(gameControls)
-    .where(eq(gameControls.gameId, LANTERN_LUCK_GAME_ID))
-    .limit(1);
-
-  const payload = JSON.stringify(cfg);
-
-  if (!existing[0]) {
-    await db.insert(gameControls).values({
-      gameId: LANTERN_LUCK_GAME_ID,
-      enabled: "yes",
-      featured: "no",
-      sortOrder: 0,
-      tag: catalog.tag ?? null,
-      rtp: catalog.rtp,
-      volatility: catalog.volatility,
-      minBet: catalog.minBet,
-      maxBet: catalog.maxBet,
-      engineConfig: payload,
-    });
-  } else {
-    await db
-      .update(gameControls)
-      .set({ engineConfig: payload })
-      .where(eq(gameControls.gameId, LANTERN_LUCK_GAME_ID));
-  }
-
-  try {
-    const { clearLanternLuckEngineCache } = await import("../games/lantern-luck.server");
-    clearLanternLuckEngineCache();
-  } catch {
-    /* ignore */
-  }
-
-  await writeAuditLog({
-    actor,
-    action: "super.lantern_luck_config",
-    summary: `Updated Lantern Luck engine (FS ${cfg.freeSpinsAward}, maxWin ${cfg.maxWinMult}x, target RTP ${cfg.targetRtp}%)`,
-    targetType: "game",
-    targetId: LANTERN_LUCK_GAME_ID,
-    meta: {
-      freeSpinsAward: cfg.freeSpinsAward,
-      monkeyTriggerMult: cfg.monkeyTriggerMult,
-      dragonSuccessChancePercent: cfg.dragonSuccessChancePercent,
-      maxWinMult: cfg.maxWinMult,
-      targetRtp: cfg.targetRtp,
-      paylineCount: cfg.paylineCount,
-    },
-  });
-
-  return cfg;
-}
-
-
-/** Public — Palengke Pays engine math (defaults if unset). */
-export async function getPalengkePaysEngineConfig() {
-  const {
-    PALENGKE_PAYS_GAME_ID,
-    DEFAULT_PALENGKE_PAYS_CONFIG,
-    normalizePalengkePaysConfig,
-  } = await import("@/lib/palengke-pays-config");
-  const db = getDb();
-  try {
-    const rows = await db
-      .select()
-      .from(gameControls)
-      .where(eq(gameControls.gameId, PALENGKE_PAYS_GAME_ID))
-      .limit(1);
-    return normalizePalengkePaysConfig(parseEngineConfigJson(rows[0]?.engineConfig));
-  } catch {
-    return structuredClone(DEFAULT_PALENGKE_PAYS_CONFIG);
-  }
-}
-
-/** Superadmin — save full Palengke Pays math config. */
-export async function savePalengkePaysEngineConfig(raw: unknown) {
-  const actor = await requireSuperadmin();
-  const {
-    PALENGKE_PAYS_GAME_ID,
-    normalizePalengkePaysConfig,
-  } = await import("@/lib/palengke-pays-config");
-  const catalog = slotGames.find((g) => g.id === PALENGKE_PAYS_GAME_ID);
-  if (!catalog) throw new Error("Palengke Pays not in catalog");
-
-  const cfg = normalizePalengkePaysConfig(raw);
-  const db = getDb();
-  const existing = await db
-    .select()
-    .from(gameControls)
-    .where(eq(gameControls.gameId, PALENGKE_PAYS_GAME_ID))
-    .limit(1);
-
-  const payload = JSON.stringify(cfg);
-
-  if (!existing[0]) {
-    await db.insert(gameControls).values({
-      gameId: PALENGKE_PAYS_GAME_ID,
-      enabled: "yes",
-      featured: "no",
-      sortOrder: 0,
-      tag: catalog.tag ?? null,
-      rtp: String(cfg.targetRtp),
-      volatility: catalog.volatility,
-      minBet: catalog.minBet,
-      maxBet: catalog.maxBet,
-      engineConfig: payload,
-    });
-  } else {
-    await db
-      .update(gameControls)
-      .set({ engineConfig: payload, rtp: String(cfg.targetRtp) })
-      .where(eq(gameControls.gameId, PALENGKE_PAYS_GAME_ID));
-  }
-
-  try {
-    const { clearPalengkePaysEngineCache } = await import("../games/palengke-pays.server");
-    clearPalengkePaysEngineCache();
-  } catch {
-    /* ignore */
-  }
-
-  await writeAuditLog({
-    actor,
-    action: "super.palengke_pays_config",
-    summary: `Updated Palengke Pays engine (FS ${cfg.freeSpinsBaseCount}, H&W ${cfg.holdWinTriggerCount}+ coins, maxWin ${cfg.maxWinMult}x, RTP ${cfg.targetRtp}%)`,
-    targetType: "game",
-    targetId: PALENGKE_PAYS_GAME_ID,
-    meta: {
-      freeSpinsBaseCount: cfg.freeSpinsBaseCount,
-      holdWinTriggerCount: cfg.holdWinTriggerCount,
-      maxWinMult: cfg.maxWinMult,
-      targetRtp: cfg.targetRtp,
-    },
-  });
-
-  return cfg;
-}
-
-
-/** Public — Tricycle Treasure engine math (defaults if unset). */
-export async function getTricycleTreasureEngineConfig() {
-  const {
-    TRICYCLE_TREASURE_GAME_ID,
-    DEFAULT_TRICYCLE_TREASURE_CONFIG,
-    normalizeTricycleTreasureConfig,
-  } = await import("@/lib/tricycle-treasure-config");
-  const db = getDb();
-  try {
-    const rows = await db
-      .select()
-      .from(gameControls)
-      .where(eq(gameControls.gameId, TRICYCLE_TREASURE_GAME_ID))
-      .limit(1);
-    return normalizeTricycleTreasureConfig(parseEngineConfigJson(rows[0]?.engineConfig));
-  } catch {
-    return structuredClone(DEFAULT_TRICYCLE_TREASURE_CONFIG);
-  }
-}
-
-/** Superadmin — save full Tricycle Treasure math config. */
-export async function saveTricycleTreasureEngineConfig(raw: unknown) {
-  const actor = await requireSuperadmin();
-  const {
-    TRICYCLE_TREASURE_GAME_ID,
-    normalizeTricycleTreasureConfig,
-  } = await import("@/lib/tricycle-treasure-config");
-  const catalog = slotGames.find((g) => g.id === TRICYCLE_TREASURE_GAME_ID);
-  if (!catalog) throw new Error("Tricycle Treasure not in catalog");
-
-  const cfg = normalizeTricycleTreasureConfig(raw);
-  const db = getDb();
-  const existing = await db
-    .select()
-    .from(gameControls)
-    .where(eq(gameControls.gameId, TRICYCLE_TREASURE_GAME_ID))
-    .limit(1);
-
-  const payload = JSON.stringify(cfg);
-
-  if (!existing[0]) {
-    await db.insert(gameControls).values({
-      gameId: TRICYCLE_TREASURE_GAME_ID,
-      enabled: "yes",
-      featured: "no",
-      sortOrder: 0,
-      tag: catalog.tag ?? null,
-      rtp: String(cfg.targetRtp),
-      volatility: catalog.volatility,
-      minBet: catalog.minBet,
-      maxBet: catalog.maxBet,
-      engineConfig: payload,
-    });
-  } else {
-    await db
-      .update(gameControls)
-      .set({ engineConfig: payload, rtp: String(cfg.targetRtp) })
-      .where(eq(gameControls.gameId, TRICYCLE_TREASURE_GAME_ID));
-  }
-
-  try {
-    const { clearTricycleTreasureEngineCache } = await import("../games/tricycle-treasure.server");
-    clearTricycleTreasureEngineCache();
-  } catch {
-    /* ignore */
-  }
-
-  await writeAuditLog({
-    actor,
-    action: "super.tricycle_treasure_config",
-    summary: `Updated Tricycle Treasure engine (FS ${cfg.freeSpinsBaseCount}, H&W ${cfg.holdWinTriggerCount}+ coins, maxWin ${cfg.maxWinMult}x, RTP ${cfg.targetRtp}%)`,
-    targetType: "game",
-    targetId: TRICYCLE_TREASURE_GAME_ID,
-    meta: {
-      freeSpinsBaseCount: cfg.freeSpinsBaseCount,
-      holdWinTriggerCount: cfg.holdWinTriggerCount,
-      maxWinMult: cfg.maxWinMult,
-      targetRtp: cfg.targetRtp,
-    },
-  });
-
-  return cfg;
-}
-
-
-/** Public — Beach Bonanza engine math (defaults if unset). */
-export async function getBeachBonanzaEngineConfig() {
-  const {
-    BEACH_BONANZA_GAME_ID,
-    DEFAULT_BEACH_BONANZA_CONFIG,
-    normalizeBeachBonanzaConfig,
-  } = await import("@/lib/beach-bonanza-config");
-  const db = getDb();
-  try {
-    const rows = await db
-      .select()
-      .from(gameControls)
-      .where(eq(gameControls.gameId, BEACH_BONANZA_GAME_ID))
-      .limit(1);
-    return normalizeBeachBonanzaConfig(parseEngineConfigJson(rows[0]?.engineConfig));
-  } catch {
-    return structuredClone(DEFAULT_BEACH_BONANZA_CONFIG);
-  }
-}
-
-/** Superadmin — save full Beach Bonanza math config. */
-export async function saveBeachBonanzaEngineConfig(raw: unknown) {
-  const actor = await requireSuperadmin();
-  const {
-    BEACH_BONANZA_GAME_ID,
-    normalizeBeachBonanzaConfig,
-  } = await import("@/lib/beach-bonanza-config");
-  const catalog = slotGames.find((g) => g.id === BEACH_BONANZA_GAME_ID);
-  if (!catalog) throw new Error("Beach Bonanza not in catalog");
-
-  const cfg = normalizeBeachBonanzaConfig(raw);
-  const db = getDb();
-  const existing = await db
-    .select()
-    .from(gameControls)
-    .where(eq(gameControls.gameId, BEACH_BONANZA_GAME_ID))
-    .limit(1);
-
-  const payload = JSON.stringify(cfg);
-
-  if (!existing[0]) {
-    await db.insert(gameControls).values({
-      gameId: BEACH_BONANZA_GAME_ID,
-      enabled: "yes",
-      featured: "no",
-      sortOrder: 0,
-      tag: catalog.tag ?? null,
-      rtp: catalog.rtp,
-      volatility: catalog.volatility,
-      minBet: catalog.minBet,
-      maxBet: catalog.maxBet,
-      engineConfig: payload,
-    });
-  } else {
-    await db
-      .update(gameControls)
-      .set({ engineConfig: payload })
-      .where(eq(gameControls.gameId, BEACH_BONANZA_GAME_ID));
-  }
-
-  await writeAuditLog({
-    actor,
-    action: "super.beach_bonanza_config",
-    summary: `Updated Beach Bonanza engine config (dead spin ${cfg.deadSpinChancePercent}%, FS ${cfg.freeSpinsBase})`,
-    targetType: "game",
-    targetId: BEACH_BONANZA_GAME_ID,
-    meta: {
-      deadSpinChancePercent: cfg.deadSpinChancePercent,
-      bombChanceBasePercent: cfg.bombChanceBasePercent,
-      freeSpinsTriggerCount: cfg.freeSpinsTriggerCount,
-      freeSpinsBase: cfg.freeSpinsBase,
-    },
-  });
-
-  return cfg;
-}
-
-
-/** Public — Island Fever engine math (defaults if unset). */
-export async function getIslandFeverEngineConfig() {
-  const {
-    ISLAND_FEVER_GAME_ID,
-    DEFAULT_ISLAND_FEVER_CONFIG,
-    normalizeIslandFeverConfig,
-  } = await import("@/lib/island-fever-config");
-  const db = getDb();
-  try {
-    const rows = await db
-      .select()
-      .from(gameControls)
-      .where(eq(gameControls.gameId, ISLAND_FEVER_GAME_ID))
-      .limit(1);
-    return normalizeIslandFeverConfig(parseEngineConfigJson(rows[0]?.engineConfig));
-  } catch {
-    return structuredClone(DEFAULT_ISLAND_FEVER_CONFIG);
-  }
-}
-
-/** Superadmin — save full Island Fever math config. */
-export async function saveIslandFeverEngineConfig(raw: unknown) {
-  const actor = await requireSuperadmin();
-  const {
-    ISLAND_FEVER_GAME_ID,
-    normalizeIslandFeverConfig,
-  } = await import("@/lib/island-fever-config");
-  const catalog = slotGames.find((g) => g.id === ISLAND_FEVER_GAME_ID);
-  if (!catalog) throw new Error("Island Fever not in catalog");
-
-  const cfg = normalizeIslandFeverConfig(raw);
-  const db = getDb();
-  const existing = await db
-    .select()
-    .from(gameControls)
-    .where(eq(gameControls.gameId, ISLAND_FEVER_GAME_ID))
-    .limit(1);
-
-  const payload = JSON.stringify(cfg);
-
-  if (!existing[0]) {
-    await db.insert(gameControls).values({
-      gameId: ISLAND_FEVER_GAME_ID,
-      enabled: "yes",
-      featured: "no",
-      sortOrder: 0,
-      tag: catalog.tag ?? null,
-      rtp: catalog.rtp,
-      volatility: catalog.volatility,
-      minBet: catalog.minBet,
-      maxBet: catalog.maxBet,
-      engineConfig: payload,
-    });
-  } else {
-    await db
-      .update(gameControls)
-      .set({ engineConfig: payload })
-      .where(eq(gameControls.gameId, ISLAND_FEVER_GAME_ID));
-  }
-
-  await writeAuditLog({
-    actor,
-    action: "super.island_fever_config",
-    summary: `Updated Island Fever engine config (dead spin ${cfg.deadSpinChancePercent}%, FS ${cfg.freeSpinsBase})`,
-    targetType: "game",
-    targetId: ISLAND_FEVER_GAME_ID,
-    meta: {
-      deadSpinChancePercent: cfg.deadSpinChancePercent,
-      bombChanceBasePercent: cfg.bombChanceBasePercent,
-      freeSpinsTriggerCount: cfg.freeSpinsTriggerCount,
-      freeSpinsBase: cfg.freeSpinsBase,
-    },
-  });
-
-  return cfg;
-}
-
-
-/** Public — Neon Makati engine math (defaults if unset). */
-export async function getNeonMakatiEngineConfig() {
-  const {
-    NEON_MAKATI_GAME_ID,
-    DEFAULT_NEON_MAKATI_CONFIG,
-    normalizeNeonMakatiConfig,
-  } = await import("@/lib/neon-makati-config");
-  const db = getDb();
-  try {
-    const rows = await db
-      .select()
-      .from(gameControls)
-      .where(eq(gameControls.gameId, NEON_MAKATI_GAME_ID))
-      .limit(1);
-    return normalizeNeonMakatiConfig(parseEngineConfigJson(rows[0]?.engineConfig));
-  } catch {
-    return structuredClone(DEFAULT_NEON_MAKATI_CONFIG);
-  }
-}
-
-/** Superadmin — save full Neon Makati math config. */
-export async function saveNeonMakatiEngineConfig(raw: unknown) {
-  const actor = await requireSuperadmin();
-  const {
-    NEON_MAKATI_GAME_ID,
-    normalizeNeonMakatiConfig,
-  } = await import("@/lib/neon-makati-config");
-  const catalog = slotGames.find((g) => g.id === NEON_MAKATI_GAME_ID);
-  if (!catalog) throw new Error("Neon Makati not in catalog");
-
-  const cfg = normalizeNeonMakatiConfig(raw);
-  const db = getDb();
-  const existing = await db
-    .select()
-    .from(gameControls)
-    .where(eq(gameControls.gameId, NEON_MAKATI_GAME_ID))
-    .limit(1);
-
-  const payload = JSON.stringify(cfg);
-
-  if (!existing[0]) {
-    await db.insert(gameControls).values({
-      gameId: NEON_MAKATI_GAME_ID,
-      enabled: "yes",
-      featured: "no",
-      sortOrder: 0,
-      tag: catalog.tag ?? null,
-      rtp: String(cfg.targetRtp),
-      volatility: catalog.volatility,
-      minBet: catalog.minBet,
-      maxBet: catalog.maxBet,
-      engineConfig: payload,
-    });
-  } else {
-    await db
-      .update(gameControls)
-      .set({ engineConfig: payload, rtp: String(cfg.targetRtp) })
-      .where(eq(gameControls.gameId, NEON_MAKATI_GAME_ID));
-  }
-
-  try {
-    const { clearNeonMakatiEngineCache } = await import("../games/neon-makati.server");
-    clearNeonMakatiEngineCache();
-  } catch {
-    /* ignore */
-  }
-
-  await writeAuditLog({
-    actor,
-    action: "super.neon_makati_config",
-    summary: `Updated Neon Makati engine (FS ${cfg.freeSpinsBaseCount}, maxWin ${cfg.maxWinMult}x, target RTP ${cfg.targetRtp}%)`,
-    targetType: "game",
-    targetId: NEON_MAKATI_GAME_ID,
-    meta: {
-      freeSpinsBaseCount: cfg.freeSpinsBaseCount,
-      maxWinMult: cfg.maxWinMult,
-      targetRtp: cfg.targetRtp,
-    },
-  });
-
-  return cfg;
-}
-
-
-/** Public — Quezon Quest engine math (defaults if unset). */
-export async function getQuezonQuestEngineConfig() {
-  const {
-    QUEZON_QUEST_GAME_ID,
-    DEFAULT_QUEZON_QUEST_CONFIG,
-    normalizeQuezonQuestConfig,
-  } = await import("@/lib/quezon-quest-config");
-  const db = getDb();
-  try {
-    const rows = await db
-      .select()
-      .from(gameControls)
-      .where(eq(gameControls.gameId, QUEZON_QUEST_GAME_ID))
-      .limit(1);
-    return normalizeQuezonQuestConfig(parseEngineConfigJson(rows[0]?.engineConfig));
-  } catch {
-    return structuredClone(DEFAULT_QUEZON_QUEST_CONFIG);
-  }
-}
-
-/** Superadmin — save full Quezon Quest math config. */
-export async function saveQuezonQuestEngineConfig(raw: unknown) {
-  const actor = await requireSuperadmin();
-  const {
-    QUEZON_QUEST_GAME_ID,
-    normalizeQuezonQuestConfig,
-  } = await import("@/lib/quezon-quest-config");
-  const catalog = slotGames.find((g) => g.id === QUEZON_QUEST_GAME_ID);
-  if (!catalog) throw new Error("Quezon Quest not in catalog");
-
-  const cfg = normalizeQuezonQuestConfig(raw);
-  const db = getDb();
-  const existing = await db
-    .select()
-    .from(gameControls)
-    .where(eq(gameControls.gameId, QUEZON_QUEST_GAME_ID))
-    .limit(1);
-
-  const payload = JSON.stringify(cfg);
-
-  if (!existing[0]) {
-    await db.insert(gameControls).values({
-      gameId: QUEZON_QUEST_GAME_ID,
-      enabled: "yes",
-      featured: "no",
-      sortOrder: 0,
-      tag: catalog.tag ?? null,
-      rtp: String(cfg.targetRtp),
-      volatility: catalog.volatility,
-      minBet: catalog.minBet,
-      maxBet: catalog.maxBet,
-      engineConfig: payload,
-    });
-  } else {
-    await db
-      .update(gameControls)
-      .set({ engineConfig: payload, rtp: String(cfg.targetRtp) })
-      .where(eq(gameControls.gameId, QUEZON_QUEST_GAME_ID));
-  }
-
-  try {
-    const { clearQuezonQuestEngineCache } = await import("../games/quezon-quest.server");
-    clearQuezonQuestEngineCache();
-  } catch {
-    /* ignore */
-  }
-
-  await writeAuditLog({
-    actor,
-    action: "super.quezon_quest_config",
-    summary: `Updated Quezon Quest engine (FS ${cfg.freeSpinsBaseCount}, maxWin ${cfg.maxWinMult}x, target RTP ${cfg.targetRtp}%)`,
-    targetType: "game",
-    targetId: QUEZON_QUEST_GAME_ID,
-    meta: {
-      freeSpinsBaseCount: cfg.freeSpinsBaseCount,
-      maxWinMult: cfg.maxWinMult,
-      targetRtp: cfg.targetRtp,
-    },
-  });
-
-  return cfg;
-}
-
-
-/** Public — Carabao Cash engine math (defaults if unset). */
-export async function getCarabaoCashEngineConfig() {
-  const {
-    CARABAO_CASH_GAME_ID,
-    DEFAULT_CARABAO_CASH_CONFIG,
-    normalizeCarabaoCashConfig,
-  } = await import("@/lib/carabao-cash-config");
-  const db = getDb();
-  try {
-    const rows = await db
-      .select()
-      .from(gameControls)
-      .where(eq(gameControls.gameId, CARABAO_CASH_GAME_ID))
-      .limit(1);
-    return normalizeCarabaoCashConfig(parseEngineConfigJson(rows[0]?.engineConfig));
-  } catch {
-    return structuredClone(DEFAULT_CARABAO_CASH_CONFIG);
-  }
-}
-
-/** Superadmin — save Carabao Cash math config. */
-export async function saveCarabaoCashEngineConfig(raw: unknown) {
-  const actor = await requireSuperadmin();
-  const {
-    CARABAO_CASH_GAME_ID,
-    normalizeCarabaoCashConfig,
-  } = await import("@/lib/carabao-cash-config");
-  const catalog = slotGames.find((g) => g.id === CARABAO_CASH_GAME_ID);
-  if (!catalog) throw new Error("Carabao Cash not in catalog");
-
-  const cfg = normalizeCarabaoCashConfig(raw);
-  const db = getDb();
-  const existing = await db
-    .select()
-    .from(gameControls)
-    .where(eq(gameControls.gameId, CARABAO_CASH_GAME_ID))
-    .limit(1);
-
-  const payload = JSON.stringify(cfg);
-
-  if (!existing[0]) {
-    await db.insert(gameControls).values({
-      gameId: CARABAO_CASH_GAME_ID,
-      enabled: "yes",
-      featured: "no",
-      sortOrder: 0,
-      tag: catalog.tag ?? null,
-      rtp: String(cfg.targetRtp),
-      volatility: cfg.volatility,
-      minBet: catalog.minBet,
-      maxBet: catalog.maxBet,
-      engineConfig: payload,
-    });
-  } else {
-    await db
-      .update(gameControls)
-      .set({ engineConfig: payload, rtp: String(cfg.targetRtp), volatility: cfg.volatility })
-      .where(eq(gameControls.gameId, CARABAO_CASH_GAME_ID));
-  }
-
-  try {
-    const { clearCarabaoCashEngineCache } = await import("../games/carabao-cash.server");
-    clearCarabaoCashEngineCache();
-  } catch {
-    /* ignore */
-  }
-
-  await writeAuditLog({
-    actor,
-    action: "super.carabao_cash_config",
-    summary: `Updated Carabao Cash (FS ${cfg.freeSpinsBaseCount}, chests ${cfg.chestTriggerCount}+, maxWin ${cfg.maxWinMult}x, RTP ${cfg.targetRtp}%)`,
-    targetType: "game",
-    targetId: CARABAO_CASH_GAME_ID,
-    meta: {
-      freeSpinsBaseCount: cfg.freeSpinsBaseCount,
-      chestTriggerCount: cfg.chestTriggerCount,
-      maxWinMult: cfg.maxWinMult,
-      targetRtp: cfg.targetRtp,
-    },
-  });
-
-  return cfg;
-}
-
-
-/** Public — Rice Field Riches engine math (defaults if unset). */
-export async function getRiceFieldRichesEngineConfig() {
-  const {
-    RICE_FIELD_RICHES_GAME_ID,
-    DEFAULT_RICE_FIELD_RICHES_CONFIG,
-    normalizeRiceFieldRichesConfig,
-  } = await import("@/lib/rice-field-riches-config");
-  const db = getDb();
-  try {
-    const rows = await db
-      .select()
-      .from(gameControls)
-      .where(eq(gameControls.gameId, RICE_FIELD_RICHES_GAME_ID))
-      .limit(1);
-    return normalizeRiceFieldRichesConfig(parseEngineConfigJson(rows[0]?.engineConfig));
-  } catch {
-    return structuredClone(DEFAULT_RICE_FIELD_RICHES_CONFIG);
-  }
-}
-
-/** Superadmin — save Rice Field Riches math config. */
-export async function saveRiceFieldRichesEngineConfig(raw: unknown) {
-  const actor = await requireSuperadmin();
-  const {
-    RICE_FIELD_RICHES_GAME_ID,
-    normalizeRiceFieldRichesConfig,
-  } = await import("@/lib/rice-field-riches-config");
-  const catalog = slotGames.find((g) => g.id === RICE_FIELD_RICHES_GAME_ID);
-  if (!catalog) throw new Error("Rice Field Riches not in catalog");
-
-  const cfg = normalizeRiceFieldRichesConfig(raw);
-  const db = getDb();
-  const existing = await db
-    .select()
-    .from(gameControls)
-    .where(eq(gameControls.gameId, RICE_FIELD_RICHES_GAME_ID))
-    .limit(1);
-
-  const payload = JSON.stringify(cfg);
-
-  if (!existing[0]) {
-    await db.insert(gameControls).values({
-      gameId: RICE_FIELD_RICHES_GAME_ID,
-      enabled: "yes",
-      featured: "no",
-      sortOrder: 0,
-      tag: catalog.tag ?? null,
-      rtp: String(cfg.targetRtp),
-      volatility: cfg.volatility,
-      minBet: catalog.minBet,
-      maxBet: catalog.maxBet,
-      engineConfig: payload,
-    });
-  } else {
-    await db
-      .update(gameControls)
-      .set({ engineConfig: payload, rtp: String(cfg.targetRtp), volatility: cfg.volatility })
-      .where(eq(gameControls.gameId, RICE_FIELD_RICHES_GAME_ID));
-  }
-
-  try {
-    const { clearRiceFieldRichesEngineCache } = await import("../games/rice-field-riches.server");
-    clearRiceFieldRichesEngineCache();
-  } catch {
-    /* ignore */
-  }
-
-  await writeAuditLog({
-    actor,
-    action: "super.rice_field_riches_config",
-    summary: `Updated Rice Field Riches (FS ${cfg.freeSpinsBaseCount}, chests ${cfg.chestTriggerCount}+, maxWin ${cfg.maxWinMult}x, RTP ${cfg.targetRtp}%)`,
-    targetType: "game",
-    targetId: RICE_FIELD_RICHES_GAME_ID,
-    meta: {
-      freeSpinsBaseCount: cfg.freeSpinsBaseCount,
-      chestTriggerCount: cfg.chestTriggerCount,
-      maxWinMult: cfg.maxWinMult,
-      targetRtp: cfg.targetRtp,
-    },
-  });
-
-  return cfg;
-}
-
-
 /** Public — Wild Panther engine math (defaults if unset). */
 export async function getWildPantherEngineConfig() {
-  const {
-    WILD_PANTHER_GAME_ID,
-    DEFAULT_WILD_PANTHER_CONFIG,
-    normalizeWildPantherConfig,
-  } = await import("@/lib/wild-panther-config");
+  const { WILD_PANTHER_GAME_ID, DEFAULT_WILD_PANTHER_CONFIG, normalizeWildPantherConfig } =
+    await import("@/lib/wild-panther-config");
   const db = getDb();
   try {
     const rows = await db
@@ -9858,10 +4762,8 @@ export async function getWildPantherEngineConfig() {
 /** Superadmin — save full Wild Panther math config. */
 export async function saveWildPantherEngineConfig(raw: unknown) {
   const actor = await requireSuperadmin();
-  const {
-    WILD_PANTHER_GAME_ID,
-    normalizeWildPantherConfig,
-  } = await import("@/lib/wild-panther-config");
+  const { WILD_PANTHER_GAME_ID, normalizeWildPantherConfig } =
+    await import("@/lib/wild-panther-config");
   const catalog = slotGames.find((g) => g.id === WILD_PANTHER_GAME_ID);
   if (!catalog) throw new Error("Wild Panther not in catalog");
 
@@ -9912,13 +4814,9 @@ export async function saveWildPantherEngineConfig(raw: unknown) {
   return cfg;
 }
 
-
 export async function getJadeJaguarEngineConfig() {
-  const {
-    JADE_JAGUAR_GAME_ID,
-    DEFAULT_JADE_JAGUAR_CONFIG,
-    normalizeJadeJaguarConfig,
-  } = await import("@/lib/jade-jaguar-config");
+  const { JADE_JAGUAR_GAME_ID, DEFAULT_JADE_JAGUAR_CONFIG, normalizeJadeJaguarConfig } =
+    await import("@/lib/jade-jaguar-config");
   const db = getDb();
   try {
     const rows = await db
@@ -9934,10 +4832,8 @@ export async function getJadeJaguarEngineConfig() {
 
 export async function saveJadeJaguarEngineConfig(raw: unknown) {
   const actor = await requireSuperadmin();
-  const {
-    JADE_JAGUAR_GAME_ID,
-    normalizeJadeJaguarConfig,
-  } = await import("@/lib/jade-jaguar-config");
+  const { JADE_JAGUAR_GAME_ID, normalizeJadeJaguarConfig } =
+    await import("@/lib/jade-jaguar-config");
   const catalog = slotGames.find((row) => row.id === JADE_JAGUAR_GAME_ID);
   if (!catalog) throw new Error("Jade Jaguar not in catalog");
 
@@ -9989,11 +4885,8 @@ export async function saveJadeJaguarEngineConfig(raw: unknown) {
 }
 
 export async function getEmberTigerEngineConfig() {
-  const {
-    EMBER_TIGER_GAME_ID,
-    DEFAULT_EMBER_TIGER_CONFIG,
-    normalizeEmberTigerConfig,
-  } = await import("@/lib/ember-tiger-config");
+  const { EMBER_TIGER_GAME_ID, DEFAULT_EMBER_TIGER_CONFIG, normalizeEmberTigerConfig } =
+    await import("@/lib/ember-tiger-config");
   const db = getDb();
   try {
     const rows = await db
@@ -10009,10 +4902,8 @@ export async function getEmberTigerEngineConfig() {
 
 export async function saveEmberTigerEngineConfig(raw: unknown) {
   const actor = await requireSuperadmin();
-  const {
-    EMBER_TIGER_GAME_ID,
-    normalizeEmberTigerConfig,
-  } = await import("@/lib/ember-tiger-config");
+  const { EMBER_TIGER_GAME_ID, normalizeEmberTigerConfig } =
+    await import("@/lib/ember-tiger-config");
   const catalog = slotGames.find((row) => row.id === EMBER_TIGER_GAME_ID);
   if (!catalog) throw new Error("Ember Tiger not in catalog");
 
@@ -10064,11 +4955,8 @@ export async function saveEmberTigerEngineConfig(raw: unknown) {
 }
 
 export async function getLotusLynxEngineConfig() {
-  const {
-    LOTUS_LYNX_GAME_ID,
-    DEFAULT_LOTUS_LYNX_CONFIG,
-    normalizeLotusLynxConfig,
-  } = await import("@/lib/lotus-lynx-config");
+  const { LOTUS_LYNX_GAME_ID, DEFAULT_LOTUS_LYNX_CONFIG, normalizeLotusLynxConfig } =
+    await import("@/lib/lotus-lynx-config");
   const db = getDb();
   try {
     const rows = await db
@@ -10084,10 +4972,7 @@ export async function getLotusLynxEngineConfig() {
 
 export async function saveLotusLynxEngineConfig(raw: unknown) {
   const actor = await requireSuperadmin();
-  const {
-    LOTUS_LYNX_GAME_ID,
-    normalizeLotusLynxConfig,
-  } = await import("@/lib/lotus-lynx-config");
+  const { LOTUS_LYNX_GAME_ID, normalizeLotusLynxConfig } = await import("@/lib/lotus-lynx-config");
   const catalog = slotGames.find((row) => row.id === LOTUS_LYNX_GAME_ID);
   if (!catalog) throw new Error("Lotus Lynx not in catalog");
 
@@ -10139,11 +5024,8 @@ export async function saveLotusLynxEngineConfig(raw: unknown) {
 }
 
 export async function getCoralCobraEngineConfig() {
-  const {
-    CORAL_COBRA_GAME_ID,
-    DEFAULT_CORAL_COBRA_CONFIG,
-    normalizeCoralCobraConfig,
-  } = await import("@/lib/coral-cobra-config");
+  const { CORAL_COBRA_GAME_ID, DEFAULT_CORAL_COBRA_CONFIG, normalizeCoralCobraConfig } =
+    await import("@/lib/coral-cobra-config");
   const db = getDb();
   try {
     const rows = await db
@@ -10159,10 +5041,8 @@ export async function getCoralCobraEngineConfig() {
 
 export async function saveCoralCobraEngineConfig(raw: unknown) {
   const actor = await requireSuperadmin();
-  const {
-    CORAL_COBRA_GAME_ID,
-    normalizeCoralCobraConfig,
-  } = await import("@/lib/coral-cobra-config");
+  const { CORAL_COBRA_GAME_ID, normalizeCoralCobraConfig } =
+    await import("@/lib/coral-cobra-config");
   const catalog = slotGames.find((row) => row.id === CORAL_COBRA_GAME_ID);
   if (!catalog) throw new Error("Coral Cobra not in catalog");
 
@@ -10214,11 +5094,8 @@ export async function saveCoralCobraEngineConfig(raw: unknown) {
 }
 
 export async function getFrostFoxEngineConfig() {
-  const {
-    FROST_FOX_GAME_ID,
-    DEFAULT_FROST_FOX_CONFIG,
-    normalizeFrostFoxConfig,
-  } = await import("@/lib/frost-fox-config");
+  const { FROST_FOX_GAME_ID, DEFAULT_FROST_FOX_CONFIG, normalizeFrostFoxConfig } =
+    await import("@/lib/frost-fox-config");
   const db = getDb();
   try {
     const rows = await db
@@ -10234,10 +5111,7 @@ export async function getFrostFoxEngineConfig() {
 
 export async function saveFrostFoxEngineConfig(raw: unknown) {
   const actor = await requireSuperadmin();
-  const {
-    FROST_FOX_GAME_ID,
-    normalizeFrostFoxConfig,
-  } = await import("@/lib/frost-fox-config");
+  const { FROST_FOX_GAME_ID, normalizeFrostFoxConfig } = await import("@/lib/frost-fox-config");
   const catalog = slotGames.find((row) => row.id === FROST_FOX_GAME_ID);
   if (!catalog) throw new Error("Frost Fox not in catalog");
 
@@ -10289,11 +5163,8 @@ export async function saveFrostFoxEngineConfig(raw: unknown) {
 }
 
 export async function getSolarSerpentEngineConfig() {
-  const {
-    SOLAR_SERPENT_GAME_ID,
-    DEFAULT_SOLAR_SERPENT_CONFIG,
-    normalizeSolarSerpentConfig,
-  } = await import("@/lib/solar-serpent-config");
+  const { SOLAR_SERPENT_GAME_ID, DEFAULT_SOLAR_SERPENT_CONFIG, normalizeSolarSerpentConfig } =
+    await import("@/lib/solar-serpent-config");
   const db = getDb();
   try {
     const rows = await db
@@ -10309,10 +5180,8 @@ export async function getSolarSerpentEngineConfig() {
 
 export async function saveSolarSerpentEngineConfig(raw: unknown) {
   const actor = await requireSuperadmin();
-  const {
-    SOLAR_SERPENT_GAME_ID,
-    normalizeSolarSerpentConfig,
-  } = await import("@/lib/solar-serpent-config");
+  const { SOLAR_SERPENT_GAME_ID, normalizeSolarSerpentConfig } =
+    await import("@/lib/solar-serpent-config");
   const catalog = slotGames.find((row) => row.id === SOLAR_SERPENT_GAME_ID);
   if (!catalog) throw new Error("Solar Serpent not in catalog");
 
@@ -10364,11 +5233,8 @@ export async function saveSolarSerpentEngineConfig(raw: unknown) {
 }
 
 export async function getHoneyHiveEngineConfig() {
-  const {
-    HONEY_HIVE_GAME_ID,
-    DEFAULT_HONEY_HIVE_CONFIG,
-    normalizeHoneyHiveConfig,
-  } = await import("@/lib/honey-hive-config");
+  const { HONEY_HIVE_GAME_ID, DEFAULT_HONEY_HIVE_CONFIG, normalizeHoneyHiveConfig } =
+    await import("@/lib/honey-hive-config");
   const db = getDb();
   try {
     const rows = await db
@@ -10384,10 +5250,7 @@ export async function getHoneyHiveEngineConfig() {
 
 export async function saveHoneyHiveEngineConfig(raw: unknown) {
   const actor = await requireSuperadmin();
-  const {
-    HONEY_HIVE_GAME_ID,
-    normalizeHoneyHiveConfig,
-  } = await import("@/lib/honey-hive-config");
+  const { HONEY_HIVE_GAME_ID, normalizeHoneyHiveConfig } = await import("@/lib/honey-hive-config");
   const catalog = slotGames.find((row) => row.id === HONEY_HIVE_GAME_ID);
   if (!catalog) throw new Error("Honey Hive not in catalog");
 
@@ -10439,11 +5302,8 @@ export async function saveHoneyHiveEngineConfig(raw: unknown) {
 }
 
 export async function getMidnightOwlEngineConfig() {
-  const {
-    MIDNIGHT_OWL_GAME_ID,
-    DEFAULT_MIDNIGHT_OWL_CONFIG,
-    normalizeMidnightOwlConfig,
-  } = await import("@/lib/midnight-owl-config");
+  const { MIDNIGHT_OWL_GAME_ID, DEFAULT_MIDNIGHT_OWL_CONFIG, normalizeMidnightOwlConfig } =
+    await import("@/lib/midnight-owl-config");
   const db = getDb();
   try {
     const rows = await db
@@ -10459,10 +5319,8 @@ export async function getMidnightOwlEngineConfig() {
 
 export async function saveMidnightOwlEngineConfig(raw: unknown) {
   const actor = await requireSuperadmin();
-  const {
-    MIDNIGHT_OWL_GAME_ID,
-    normalizeMidnightOwlConfig,
-  } = await import("@/lib/midnight-owl-config");
+  const { MIDNIGHT_OWL_GAME_ID, normalizeMidnightOwlConfig } =
+    await import("@/lib/midnight-owl-config");
   const catalog = slotGames.find((row) => row.id === MIDNIGHT_OWL_GAME_ID);
   if (!catalog) throw new Error("Midnight Owl not in catalog");
 
@@ -10514,11 +5372,8 @@ export async function saveMidnightOwlEngineConfig(raw: unknown) {
 }
 
 export async function getRubyRavenEngineConfig() {
-  const {
-    RUBY_RAVEN_GAME_ID,
-    DEFAULT_RUBY_RAVEN_CONFIG,
-    normalizeRubyRavenConfig,
-  } = await import("@/lib/ruby-raven-config");
+  const { RUBY_RAVEN_GAME_ID, DEFAULT_RUBY_RAVEN_CONFIG, normalizeRubyRavenConfig } =
+    await import("@/lib/ruby-raven-config");
   const db = getDb();
   try {
     const rows = await db
@@ -10534,10 +5389,7 @@ export async function getRubyRavenEngineConfig() {
 
 export async function saveRubyRavenEngineConfig(raw: unknown) {
   const actor = await requireSuperadmin();
-  const {
-    RUBY_RAVEN_GAME_ID,
-    normalizeRubyRavenConfig,
-  } = await import("@/lib/ruby-raven-config");
+  const { RUBY_RAVEN_GAME_ID, normalizeRubyRavenConfig } = await import("@/lib/ruby-raven-config");
   const catalog = slotGames.find((row) => row.id === RUBY_RAVEN_GAME_ID);
   if (!catalog) throw new Error("Ruby Raven not in catalog");
 
@@ -10582,6 +5434,65 @@ export async function saveRubyRavenEngineConfig(raw: unknown) {
       bombChanceBasePercent: cfg.bombChanceBasePercent,
       freeSpinsTriggerCount: cfg.freeSpinsTriggerCount,
       freeSpinsBase: cfg.freeSpinsBase,
+    },
+  });
+
+  return cfg;
+}
+
+/** Superadmin — save a Realms family title's math config (one handler for all 50). */
+export async function saveRealmsEngineConfig(gameId: string, raw: unknown) {
+  const actor = await requireSuperadmin();
+  const { FAMILY_KEY, getRealmsGame, isRealmsGameId, normalizeRealmsGameConfig } =
+    await import("@/lib/realms");
+  if (!isRealmsGameId(gameId)) throw new Error("Unknown game");
+  const def = getRealmsGame(gameId);
+  const catalog = slotGames.find((g) => g.id === gameId);
+  if (!catalog) throw new Error(`${def.name} not in catalog`);
+
+  const cfg = normalizeRealmsGameConfig(gameId, raw);
+  const db = getDb();
+  const existing = await db
+    .select()
+    .from(gameControls)
+    .where(eq(gameControls.gameId, gameId))
+    .limit(1);
+
+  const payload = JSON.stringify(cfg);
+
+  if (!existing[0]) {
+    await db.insert(gameControls).values({
+      gameId,
+      enabled: "yes",
+      featured: "no",
+      sortOrder: 0,
+      tag: catalog.tag ?? null,
+      rtp: catalog.rtp,
+      volatility: catalog.volatility,
+      minBet: catalog.minBet,
+      maxBet: catalog.maxBet,
+      engineConfig: payload,
+    });
+  } else {
+    await db
+      .update(gameControls)
+      .set({ engineConfig: payload })
+      .where(eq(gameControls.gameId, gameId));
+  }
+
+  await writeAuditLog({
+    actor,
+    action: `super.${FAMILY_KEY}_config`,
+    summary: `Updated ${def.name} engine config (dead spin ${cfg.deadSpinChancePercent}%, FS ${cfg.freeSpinsBase})`,
+    targetType: "game",
+    targetId: gameId,
+    meta: {
+      deadSpinChancePercent: cfg.deadSpinChancePercent,
+      bombChanceBasePercent: cfg.bombChanceBasePercent,
+      freeSpinsTriggerCount: cfg.freeSpinsTriggerCount,
+      freeSpinsBase: cfg.freeSpinsBase,
+      buyFeatureMult: cfg.buyFeatureMult,
+      minCluster: cfg.minCluster,
     },
   });
 

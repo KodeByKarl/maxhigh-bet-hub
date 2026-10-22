@@ -19,7 +19,10 @@ function isBgBlack(r: number, g: number, b: number): boolean {
 }
 
 async function knockoutFile(file: string) {
-  const { data, info } = await sharp(file).ensureAlpha().raw().toBuffer({ resolveWithObject: true });
+  const { data, info } = await sharp(file)
+    .ensureAlpha()
+    .raw()
+    .toBuffer({ resolveWithObject: true });
   const { width, height } = info;
   const out = Buffer.from(data);
   const n = width * height;
@@ -89,7 +92,9 @@ async function knockoutFile(file: string) {
     }
   }
 
-  await sharp(out, { raw: { width, height, channels: 4 } }).png().toFile(file);
+  await sharp(out, { raw: { width, height, channels: 4 } })
+    .png()
+    .toFile(file);
 }
 
 async function main() {

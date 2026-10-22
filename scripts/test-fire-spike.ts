@@ -122,7 +122,10 @@ function runUnitTests() {
     Math.abs(wildLine!.payout - wild5 * bpl) < 0.01,
     `Wild 5-oak expected ${wild5 * bpl}, got ${wildLine!.payout}`,
   );
-  assert(Math.abs(wildLine!.payout - 200 * BET) < 0.01 || wild5 * bpl === wildLine!.payout, "200x stake ceiling");
+  assert(
+    Math.abs(wildLine!.payout - 200 * BET) < 0.01 || wild5 * bpl === wildLine!.payout,
+    "200x stake ceiling",
+  );
   console.log(`✓ All-Wild 5-oak = ${wildLine!.payout} (${wild5 * bpl} = 200× stake check via bpl)`);
 
   // Scatter breaks payline
@@ -186,7 +189,10 @@ function runUnitTests() {
     Math.abs(jpScript.grandJackpotWin - cfg.grandJackpotMult * BET) < 0.01,
     `Grand Jackpot payout ${jpScript.grandJackpotWin}`,
   );
-  assert(jpScript.totalWin === Math.min(cfg.grandJackpotMult * BET, cfg.maxWinMult * BET), "JP total");
+  assert(
+    jpScript.totalWin === Math.min(cfg.grandJackpotMult * BET, cfg.maxWinMult * BET),
+    "JP total",
+  );
   console.log("✓ Grand Jackpot all-Scatter (Option C, no mix stack)");
 
   // 14 scatter + 1 wild = mix 15, NO grand jackpot
@@ -228,8 +234,9 @@ function runUnitTests() {
     assert(!!comboScript.instantMix, "combo has mix when count≥6");
   }
   assert(
-    Math.abs(comboScript.rawTotalWin - (comboScript.paylineWin + (comboScript.instantMix?.payout ?? 0))) <
-      0.02,
+    Math.abs(
+      comboScript.rawTotalWin - (comboScript.paylineWin + (comboScript.instantMix?.payout ?? 0)),
+    ) < 0.02,
     "rawTotal = payline + mix",
   );
   console.log("✓ Payline + instant mix can both pay");

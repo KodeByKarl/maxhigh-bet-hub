@@ -120,7 +120,9 @@ function main() {
   console.log(
     `Outcomes: player=${playerWins} dealer=${dealerWins} initialTies=${ties} wars=${wars} splits=${splits}`,
   );
-  console.log(`Smoke: ${smoke.initialOutcome} → ${smoke.outcome} warSteps=${smoke.warSteps.length}`);
+  console.log(
+    `Smoke: ${smoke.initialOutcome} → ${smoke.outcome} warSteps=${smoke.warSteps.length}`,
+  );
   console.log(
     `Smoke cards P[${smoke.playerCards.map((c) => c.rank).join(",")}] D[${smoke.dealerCards.map((c) => c.rank).join(",")}]`,
   );

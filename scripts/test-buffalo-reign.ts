@@ -83,7 +83,7 @@ if (rtpN > 0) {
   }
   const rtp = (won / wagered) * 100;
   console.log(
-    `RTP smoke ${rtpN}: ${(rtp).toFixed(2)}%  FS hit ${(fsHits / rtpN * 100).toFixed(2)}%  Chest ${(chestHits / rtpN * 100).toFixed(2)}%`,
+    `RTP smoke ${rtpN}: ${rtp.toFixed(2)}%  FS hit ${((fsHits / rtpN) * 100).toFixed(2)}%  Chest ${((chestHits / rtpN) * 100).toFixed(2)}%`,
   );
 }
 

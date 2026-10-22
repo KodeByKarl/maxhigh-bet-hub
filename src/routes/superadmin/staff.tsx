@@ -48,7 +48,9 @@ function StaffActionsPage() {
     <div className="space-y-5 pb-6">
       <div>
         <h1 className="text-xl font-bold text-foreground sm:text-3xl">Staff actions</h1>
-        <p className="mt-1 text-xs text-muted-foreground sm:text-sm">Admin, Agent, Master Agent, and SuperAdmin audit log records.</p>
+        <p className="mt-1 text-xs text-muted-foreground sm:text-sm">
+          Admin, Agent, Master Agent, and SuperAdmin audit log records.
+        </p>
       </div>
       <div className="flex gap-2">
         <Input

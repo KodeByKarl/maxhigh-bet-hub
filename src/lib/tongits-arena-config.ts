@@ -62,12 +62,7 @@ export const POKER_RANK_VALUE: Record<TcpRank, number> = {
 };
 
 export type HandCategory =
-  | "straight-flush"
-  | "three-of-a-kind"
-  | "straight"
-  | "flush"
-  | "pair"
-  | "high-card";
+  "straight-flush" | "three-of-a-kind" | "straight" | "flush" | "pair" | "high-card";
 
 export const HAND_CATEGORY_RANK: Record<HandCategory, number> = {
   "straight-flush": 5,
@@ -259,11 +254,7 @@ export function normalizeTongitsArenaConfig(raw: unknown): TongitsArenaConfig {
   const minAnteBet = clamp(num(o.minAnteBet ?? o.minBet, d.minAnteBet), 0.01, 10_000);
   const maxAnteBet = clamp(num(o.maxAnteBet ?? o.maxBet, d.maxAnteBet), minAnteBet, 100_000);
   const minPairPlusBet = clamp(num(o.minPairPlusBet, d.minPairPlusBet), 0.01, 10_000);
-  const maxPairPlusBet = clamp(
-    num(o.maxPairPlusBet, d.maxPairPlusBet),
-    minPairPlusBet,
-    100_000,
-  );
+  const maxPairPlusBet = clamp(num(o.maxPairPlusBet, d.maxPairPlusBet), minPairPlusBet, 100_000);
 
   const pp = o.pairPlus ?? o.pairPlusPayouts ?? {};
   const ab = o.anteBonus ?? o.anteBonusPayouts ?? {};

@@ -101,12 +101,25 @@ function WinLosePanel({ enabled }: { enabled: boolean }) {
 
   return (
     <>
-      <Toolbar q={q} setQ={setQ} onRefresh={() => void load()} placeholder="Search player or game…" />
+      <Toolbar
+        q={q}
+        setQ={setQ}
+        onRefresh={() => void load()}
+        placeholder="Search player or game…"
+      />
       {loading && <p className="text-sm text-muted-foreground">Loading…</p>}
       {!loading && summary && (
         <div className="grid gap-3 sm:grid-cols-3">
-          <StatCard label="Bet volume" value={formatMoney(summary.betVolume)} sub={`${summary.betCount} bets`} />
-          <StatCard label="Win volume" value={formatMoney(summary.winVolume)} sub={`${summary.winCount} wins`} />
+          <StatCard
+            label="Bet volume"
+            value={formatMoney(summary.betVolume)}
+            sub={`${summary.betCount} bets`}
+          />
+          <StatCard
+            label="Win volume"
+            value={formatMoney(summary.winVolume)}
+            sub={`${summary.winCount} wins`}
+          />
           <StatCard
             label="Net (win − bet)"
             value={formatMoney(summary.net)}
@@ -173,9 +186,13 @@ function ByLevelPanel({ enabled }: { enabled: boolean }) {
                 <tr key={r.userId} className="border-b border-white/[0.06]">
                   <td className="px-4 py-3 font-semibold text-foreground">@{r.username}</td>
                   <td className="px-4 py-3 tabular-nums text-foreground">{r.betCount}</td>
-                  <td className="px-4 py-3 tabular-nums text-foreground">{formatMoney(r.betVolume)}</td>
+                  <td className="px-4 py-3 tabular-nums text-foreground">
+                    {formatMoney(r.betVolume)}
+                  </td>
                   <td className="px-4 py-3 tabular-nums text-foreground">{r.winCount}</td>
-                  <td className="px-4 py-3 tabular-nums text-foreground">{formatMoney(r.winVolume)}</td>
+                  <td className="px-4 py-3 tabular-nums text-foreground">
+                    {formatMoney(r.winVolume)}
+                  </td>
                   <td
                     className={`px-4 py-3 font-semibold tabular-nums ${
                       r.net >= 0 ? "text-emerald-400" : "text-rose-400"
@@ -226,9 +243,7 @@ function ByProductPanel({ enabled }: { enabled: boolean }) {
         Refresh
       </button>
       {loading && <p className="text-sm text-muted-foreground">Loading…</p>}
-      {!loading && rows.length === 0 && (
-        <Empty>No product win/lose data yet.</Empty>
-      )}
+      {!loading && rows.length === 0 && <Empty>No product win/lose data yet.</Empty>}
       {!loading && rows.length > 0 && (
         <div className={`${saGlass} overflow-x-auto`}>
           <table className="w-full min-w-[640px] text-left text-sm">
@@ -247,9 +262,13 @@ function ByProductPanel({ enabled }: { enabled: boolean }) {
                 <tr key={r.product} className="border-b border-white/[0.06]">
                   <td className="px-4 py-3 font-semibold text-foreground">{r.product}</td>
                   <td className="px-4 py-3 tabular-nums text-foreground">{r.betCount}</td>
-                  <td className="px-4 py-3 tabular-nums text-foreground">{formatMoney(r.betVolume)}</td>
+                  <td className="px-4 py-3 tabular-nums text-foreground">
+                    {formatMoney(r.betVolume)}
+                  </td>
                   <td className="px-4 py-3 tabular-nums text-foreground">{r.winCount}</td>
-                  <td className="px-4 py-3 tabular-nums text-foreground">{formatMoney(r.winVolume)}</td>
+                  <td className="px-4 py-3 tabular-nums text-foreground">
+                    {formatMoney(r.winVolume)}
+                  </td>
                   <td
                     className={`px-4 py-3 font-semibold tabular-nums ${
                       r.net >= 0 ? "text-emerald-400" : "text-rose-400"
@@ -346,15 +365,21 @@ function StatCard({
 }) {
   return (
     <div className={`${saGlass} p-4`}>
-      <div className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">{label}</div>
-      <div className={`mt-1 text-xl font-bold tabular-nums ${tone ?? "text-foreground"}`}>{value}</div>
+      <div className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+        {label}
+      </div>
+      <div className={`mt-1 text-xl font-bold tabular-nums ${tone ?? "text-foreground"}`}>
+        {value}
+      </div>
       <div className="mt-0.5 text-xs text-muted-foreground">{sub}</div>
     </div>
   );
 }
 
 function Empty({ children }: { children: ReactNode }) {
-  return <div className={`${saGlass} p-8 text-center text-sm text-muted-foreground`}>{children}</div>;
+  return (
+    <div className={`${saGlass} p-8 text-center text-sm text-muted-foreground`}>{children}</div>
+  );
 }
 
 function ChipDistributionPanel({ enabled }: { enabled: boolean }) {
@@ -378,7 +403,11 @@ function ChipDistributionPanel({ enabled }: { enabled: boolean }) {
     setLoading(true);
     try {
       const { listChipDistributionLogsFn } = await import("@/functions/admin");
-      setLogs(await listChipDistributionLogsFn({ data: { adminUsername: adminUsername || undefined, limit: 300 } }));
+      setLogs(
+        await listChipDistributionLogsFn({
+          data: { adminUsername: adminUsername || undefined, limit: 300 },
+        }),
+      );
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Failed to load distribution logs");
       setLogs([]);

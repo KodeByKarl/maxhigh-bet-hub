@@ -142,10 +142,30 @@ function SupportPage() {
   }, [searchQuery, selectedCategory, lang]);
 
   const categories = [
-    { id: "funds", label: lang === "tl" ? "Pera at Transaksyon" : "Funds & Banking", icon: Coins, color: "#10B981" },
-    { id: "games", label: lang === "tl" ? "Mga Gabay sa Laro" : "Games & Slots", icon: PlayCircle, color: "#EF4444" },
-    { id: "account", label: lang === "tl" ? "Account at Seguridad" : "Account Settings", icon: Settings, color: "#8B5CF6" },
-    { id: "races", label: lang === "tl" ? "Karera at Paligsahan" : "Races & Promos", icon: Trophy, color: "#F59E0B" },
+    {
+      id: "funds",
+      label: lang === "tl" ? "Pera at Transaksyon" : "Funds & Banking",
+      icon: Coins,
+      color: "#10B981",
+    },
+    {
+      id: "games",
+      label: lang === "tl" ? "Mga Gabay sa Laro" : "Games & Slots",
+      icon: PlayCircle,
+      color: "#EF4444",
+    },
+    {
+      id: "account",
+      label: lang === "tl" ? "Account at Seguridad" : "Account Settings",
+      icon: Settings,
+      color: "#8B5CF6",
+    },
+    {
+      id: "races",
+      label: lang === "tl" ? "Karera at Paligsahan" : "Races & Promos",
+      icon: Trophy,
+      color: "#F59E0B",
+    },
   ];
 
   return (
@@ -171,9 +191,7 @@ function SupportPage() {
               <div className="text-sm font-black uppercase tracking-wide text-foreground">
                 {t("Live Chat")}
               </div>
-              <div className="text-xs text-muted-foreground">
-                {t("Fastest way to reach us")}
-              </div>
+              <div className="text-xs text-muted-foreground">{t("Fastest way to reach us")}</div>
             </div>
           </button>
 
@@ -204,9 +222,7 @@ function SupportPage() {
               <div className="text-sm font-black uppercase tracking-wide text-foreground">
                 {t("Help Center")}
               </div>
-              <div className="text-xs text-muted-foreground">
-                {t("Guides & FAQ")}
-              </div>
+              <div className="text-xs text-muted-foreground">{t("Guides & FAQ")}</div>
             </div>
           </button>
         </div>
@@ -239,8 +255,8 @@ function SupportPage() {
                 {lang === "tl" ? "Gabay at Help Center" : "Help Center & Guides"}
               </h2>
               <p className="text-xs text-muted-foreground">
-                {lang === "tl" 
-                  ? "Suriin ang mga gabay tungkol sa aming mga laro, deposits, at settings." 
+                {lang === "tl"
+                  ? "Suriin ang mga gabay tungkol sa aming mga laro, deposits, at settings."
                   : "Find answers and detailed instructions on how to use MaxHigh."}
               </p>
             </div>
@@ -256,7 +272,11 @@ function SupportPage() {
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder={lang === "tl" ? "Maghanap ng paksa o gabay..." : "Search topics, banking, slots guides..."}
+                placeholder={
+                  lang === "tl"
+                    ? "Maghanap ng paksa o gabay..."
+                    : "Search topics, banking, slots guides..."
+                }
                 className="w-full h-11 pl-10 pr-4 rounded-2xl border border-border bg-panel outline-none focus:border-primary transition-colors text-sm text-foreground placeholder-muted-foreground"
               />
             </div>
@@ -270,7 +290,7 @@ function SupportPage() {
                   "px-4 py-2 rounded-full text-xs font-bold transition-all border",
                   selectedCategory === null
                     ? "bg-primary text-primary-foreground border-primary"
-                    : "bg-panel text-muted-foreground border-border hover:bg-panel-hover hover:text-foreground"
+                    : "bg-panel text-muted-foreground border-border hover:bg-panel-hover hover:text-foreground",
                 )}
               >
                 {lang === "tl" ? "Lahat ng Paksa" : "All Categories"}
@@ -287,7 +307,7 @@ function SupportPage() {
                       "flex items-center gap-1.5 px-4 py-2 rounded-full text-xs font-bold transition-all border",
                       active
                         ? "bg-primary text-primary-foreground border-primary"
-                        : "bg-panel text-muted-foreground border-border hover:bg-panel-hover hover:text-foreground"
+                        : "bg-panel text-muted-foreground border-border hover:bg-panel-hover hover:text-foreground",
                     )}
                   >
                     <Icon size={13} style={{ color: active ? undefined : cat.color }} />
@@ -302,9 +322,15 @@ function SupportPage() {
           <div className="space-y-2">
             {filteredFaqs.length === 0 ? (
               <div className="text-center py-10 text-sm text-muted-foreground space-y-1">
-                <p>{lang === "tl" ? "Walang nahanap na resulta." : "No guides found matching your search."}</p>
+                <p>
+                  {lang === "tl"
+                    ? "Walang nahanap na resulta."
+                    : "No guides found matching your search."}
+                </p>
                 <p className="text-xs text-muted-foreground/60">
-                  {lang === "tl" ? "Subukang gumamit ng ibang keywords." : "Try using different keywords or categories."}
+                  {lang === "tl"
+                    ? "Subukang gumamit ng ibang keywords."
+                    : "Try using different keywords or categories."}
                 </p>
               </div>
             ) : (
@@ -327,7 +353,7 @@ function SupportPage() {
                         size={16}
                         className={cn(
                           "text-muted-foreground shrink-0 transition-transform duration-200",
-                          isExpanded && "rotate-180 text-primary"
+                          isExpanded && "rotate-180 text-primary",
                         )}
                       />
                     </button>

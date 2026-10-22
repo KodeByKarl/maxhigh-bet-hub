@@ -1,60 +1,57 @@
-/** Shared types for Thor Thunder — 6×5 ways + cascade. Egyptian theme. */
+/** Thor Thunder — 7×5 cluster tumble (panther rectangle board). */
 
 export type SymKind =
-  | "ten"
-  | "jack"
-  | "queen"
-  | "king"
-  | "ace"
-  | "scarab"
-  | "ankh"
-  | "horus"
-  | "anubis"
-  | "pharaoh"
-  | "wild"
-  | "scatter";
+  | "grape"
+  | "plum"
+  | "melon"
+  | "apple"
+  | "blue"
+  | "green"
+  | "purple"
+  | "heart"
+  | "lollipop"
+  | "bomb";
 
 export type CellSym = {
   id: string;
   kind: SymKind;
   weight: number;
-  /** Way pays × bet for [3, 4, 5, 6] of a kind */
-  pay: [number, number, number, number];
-  wild?: boolean;
+  pay: [number, number, number];
   scatter?: boolean;
+  bomb?: boolean;
 };
 
 export type BoardCell = {
   key: string;
   sym: CellSym;
+  mult?: number;
 };
 
-export type WayWin = {
+export type ClusterWin = {
   id: string;
   kind: SymKind;
-  length: number;
-  ways: number;
+  count: number;
   pay: number;
+  perSymbol: number;
   keys: string[];
 };
 
-export type CascadeStep = {
+export type TumbleStep = {
   board: BoardCell[];
   winningKeys: string[];
-  ways: WayWin[];
-  cascadeWin: number;
-  multiplier: number;
+  clusters: ClusterWin[];
+  tumbleWin: number;
+  bombSum: number;
   afterPop: (BoardCell | null)[];
   afterFall: BoardCell[];
   spawnedKeys: string[];
   fallenKeys: string[];
-  /** Rows each key travels downward (spawned / fallen enter from above the grid). */
   fallDistance: Record<string, number>;
 };
 
 export type SpinScript = {
   initialBoard: BoardCell[];
-  steps: CascadeStep[];
+  steps: TumbleStep[];
   totalWin: number;
   rawWin: number;
   displayMult: number;
@@ -63,11 +60,13 @@ export type SpinScript = {
   freeSpinsAwarded: number;
   retriggerSpins: number;
   isFreeSpins: boolean;
-  /** Progressive mult at end of this spin (FS) */
-  endMultiplier: number;
+  bombAccumulator: number;
 };
 
-export const COLS = 6;
+/** 7×5 board — unique rectangle for Thor Thunder. */
+export const COLS = 7;
 export const ROWS = 5;
-export const CELLS = COLS * ROWS;
-export const MIN_WAY_LENGTH = 3;
+export const TOP_COLS = 0;
+export const MAIN_CELLS = COLS * ROWS; // 35
+export const CELLS = MAIN_CELLS;
+export const MIN_CLUSTER = 8;

@@ -40,8 +40,7 @@ export const ReelCell = memo(function ReelCell({
   const row = Math.floor(index / cols);
   const popping = phase === "popping" && win;
   const isInitialDrop = phase === "dropping" && !!cell;
-  const isGravityDrop =
-    phase === "falling" && !!cell && (isSpawn || isFallen) && fallDist > 0;
+  const isGravityDrop = phase === "falling" && !!cell && (isSpawn || isFallen) && fallDist > 0;
   const dropRows = isInitialDrop ? row + 1.35 : fallDist;
 
   const isScatter = cell?.sym.kind === "lollipop";
@@ -57,7 +56,7 @@ export const ReelCell = memo(function ReelCell({
           ? "z-[30]"
           : win && (phase === "glow" || phase === "popping")
             ? "z-[2]"
-            : (isInitialDrop || isGravityDrop)
+            : isInitialDrop || isGravityDrop
               ? "z-[1]"
               : "",
       )}
@@ -123,7 +122,10 @@ export const ReelCell = memo(function ReelCell({
                               stiffness: 420,
                               damping: 26,
                               mass: 0.85,
-                              delay: col * ((isInitialDrop ? ANIM.dropStaggerCol : ANIM.fallStaggerCol) / 1000),
+                              delay:
+                                col *
+                                ((isInitialDrop ? ANIM.dropStaggerCol : ANIM.fallStaggerCol) /
+                                  1000),
                             },
                           }
                         : {
@@ -133,18 +135,20 @@ export const ReelCell = memo(function ReelCell({
                               damping: 26,
                               mass: 0.85,
                               delay:
-                                col * ((isInitialDrop ? ANIM.dropStaggerCol : ANIM.fallStaggerCol) / 1000) +
-                                row * ((isInitialDrop ? ANIM.dropStaggerRow : ANIM.fallStaggerRow) / 1000) * 0.45,
+                                col *
+                                  ((isInitialDrop ? ANIM.dropStaggerCol : ANIM.fallStaggerCol) /
+                                    1000) +
+                                row *
+                                  ((isInitialDrop ? ANIM.dropStaggerRow : ANIM.fallStaggerRow) /
+                                    1000) *
+                                  0.45,
                             },
                           }),
                       opacity: {
                         duration: 0.18,
                         delay:
                           col *
-                          ((isInitialDrop
-                            ? ANIM.dropStaggerCol
-                            : ANIM.fallStaggerCol) /
-                            1000),
+                          ((isInitialDrop ? ANIM.dropStaggerCol : ANIM.fallStaggerCol) / 1000),
                       },
                       scale: {
                         type: "spring",
@@ -152,10 +156,7 @@ export const ReelCell = memo(function ReelCell({
                         damping: 20,
                         delay:
                           col *
-                            ((isInitialDrop
-                              ? ANIM.dropStaggerCol
-                              : ANIM.fallStaggerCol) /
-                              1000) +
+                            ((isInitialDrop ? ANIM.dropStaggerCol : ANIM.fallStaggerCol) / 1000) +
                           0.1,
                       },
                     }
@@ -175,18 +176,15 @@ export const ReelCell = memo(function ReelCell({
                 "drop-shadow-[0_0_14px_rgba(250,204,21,0.9)]",
             )}
           />
-          {win &&
-            perPay != null &&
-            perPay > 0 &&
-            (phase === "glow" || phase === "popping") && (
-              <motion.span
-                initial={{ y: 6, opacity: 0, scale: 0.8 }}
-                animate={{ y: 0, opacity: 1, scale: 1 }}
-                className="absolute top-0 left-1/2 z-[2] -translate-x-1/2 rounded-full border border-white bg-gradient-to-b from-yellow-200 to-amber-400 px-1 py-0.5 text-[10px] font-black tabular-nums text-amber-950 shadow"
-              >
-                +₱{Number.isInteger(perPay) ? perPay : perPay.toFixed(2)}
-              </motion.span>
-            )}
+          {win && perPay != null && perPay > 0 && (phase === "glow" || phase === "popping") && (
+            <motion.span
+              initial={{ y: 6, opacity: 0, scale: 0.8 }}
+              animate={{ y: 0, opacity: 1, scale: 1 }}
+              className="absolute top-0 left-1/2 z-[2] -translate-x-1/2 rounded-full border border-white bg-gradient-to-b from-yellow-200 to-amber-400 px-1 py-0.5 text-[10px] font-black tabular-nums text-amber-950 shadow"
+            >
+              +₱{Number.isInteger(perPay) ? perPay : perPay.toFixed(2)}
+            </motion.span>
+          )}
         </motion.div>
       )}
     </div>

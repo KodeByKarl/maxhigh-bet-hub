@@ -91,7 +91,9 @@ export async function colorGameProPaidDeal(input: {
     bets[sp.id] = v;
   }
 
-  const totalWager = +Object.values(bets).reduce((s, n) => s + (n ?? 0), 0).toFixed(2);
+  const totalWager = +Object.values(bets)
+    .reduce((s, n) => s + (n ?? 0), 0)
+    .toFixed(2);
   if (totalWager <= 0) throw new Error("Place at least one color bet");
   if (totalWager < cfg.minBet) throw new Error(`Min total wager is ₱${cfg.minBet}`);
   if (totalWager > cfg.maxBet) {

@@ -1,5 +1,5 @@
 ﻿import { getSymbolPayoutMultiplier } from "./paytable";
-import { getBuffaloReignConfig } from "./runtimeConfig";
+import { getStampedeConfig } from "./runtimeConfig";
 import type { BoardCell, EvalResult, WaysWin } from "./types";
 
 export type EvaluateWaysOpts = {
@@ -20,7 +20,7 @@ export function evaluateWays(
   reelHeights: number[],
   opts: EvaluateWaysOpts = {},
 ): EvalResult {
-  const config = getBuffaloReignConfig();
+  const config = getStampedeConfig();
   const reelsCount = config.reelsCount;
   const minConsecutive = config.minConsecutiveReels;
   const payScatter = opts.payScatter === true;

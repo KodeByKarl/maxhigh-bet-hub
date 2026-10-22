@@ -33,7 +33,9 @@ async function punchFile(filePath) {
     }
   }
 
-  await sharp(data, { raw: { width, height, channels: 4 } }).png().toFile(filePath);
+  await sharp(data, { raw: { width, height, channels: 4 } })
+    .png()
+    .toFile(filePath);
   console.log("punched", path.basename(filePath), `(cleared ${cleared})`);
 }
 

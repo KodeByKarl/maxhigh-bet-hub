@@ -1,5 +1,5 @@
 /**
- * Panther Peak math config — shared by engine (client) and Superadmin (server).
+ * Maya Gold math config — shared by engine (client) and Superadmin (server).
  * Defaults match the original hardcoded Sweet Bonanza-style values.
  */
 
@@ -17,7 +17,9 @@ export type MayaGoldSymKind =
   | "lollipop"
   | "bomb";
 
-export type MayaGoldBombEntry = { mult: number; weight: number };
+export type MayaGoldBombEntry = { mult: 2 | 3 | 4 | 5; weight: number };
+
+export const MAYA_GOLD_BOMB_MULTS = [2, 3, 4, 5] as const;
 
 export type MayaGoldScatterCashTier = {
   count: number;
@@ -31,7 +33,7 @@ export type MayaGoldSymbolConfig = {
   label: string;
   /** Relative spawn weight (0 = never from pool; bombs use separate chance) */
   weight: number;
-  /** Payout × bet for [min, min+2, min+4] matching symbols */
+  /** Fixed payout multiplier × bet for [min, min+2, min+4] matching symbols */
   pay: [number, number, number];
   scatter?: boolean;
   bomb?: boolean;
@@ -43,6 +45,7 @@ export type MayaGoldConfig = {
   deadSpinChancePercent: number;
   /** When seeding a win, bias toward melon (0–100) */
   seedMelonBiasPercent: number;
+  /** 5×6 board has 30 cells — never require more matches than CELLS. */
   seedClusterMin: number;
   seedClusterMax: number;
   /** Per-cell chance to become a bomb instead of the picked symbol */
@@ -61,6 +64,17 @@ export type MayaGoldConfig = {
   superBuyFeatureMult: number;
   anteBetMult: number;
   minCluster: number;
+  /** Max win as × bet for the round (paid spin + FS feature). 0 = uncapped. */
+  maxWinMult: number;
+  /**
+   * Ceiling on collected FS bomb multiplier (applied once at feature end).
+   * Separate from and well below maxWinMult. 0 = uncapped.
+   */
+  maxFsBombMult: number;
+  /** Hard stop on FS + retriggers so sticky-scatter cascades cannot run away. 0 = uncapped. */
+  maxFsSessionSpins: number;
+  /** Base-game: strongest bomb on the winning tumble, capped here. 0 = uncapped. */
+  maxBaseBombSum: number;
   symbols: MayaGoldSymbolConfig[];
 };
 
@@ -70,39 +84,31 @@ export const SYMBOL_LABELS: Record<MayaGoldSymKind, string> = {
   melon: "Q",
   apple: "K",
   blue: "A",
-  green: "Owl",
-  purple: "Wolf",
-  heart: "Ram",
+  green: "Quetzal",
+  purple: "Jade Chalice",
+  heart: "Jaguar Guardian",
   lollipop: "Scatter",
   bomb: "Wild",
 };
 
 export const DEFAULT_MAYA_GOLD_CONFIG: MayaGoldConfig = {
   schemaVersion: 1,
-  deadSpinChancePercent: 38,
+  deadSpinChancePercent: 82,
   seedMelonBiasPercent: 35,
   seedClusterMin: 8,
-  seedClusterMax: 12,
-  bombChanceBasePercent: 4,
-  bombChanceFreeSpinsPercent: 22,
+  seedClusterMax: 10,
+  bombChanceBasePercent: 1.5,
+  bombChanceFreeSpinsPercent: 3,
   bombTable: [
-    { mult: 2, weight: 28 },
-    { mult: 3, weight: 22 },
-    { mult: 4, weight: 16 },
-    { mult: 5, weight: 12 },
-    { mult: 8, weight: 8 },
-    { mult: 10, weight: 6 },
-    { mult: 12, weight: 3 },
-    { mult: 15, weight: 2 },
-    { mult: 20, weight: 1.5 },
-    { mult: 25, weight: 1 },
-    { mult: 50, weight: 0.4 },
-    { mult: 100, weight: 0.1 },
+    { mult: 2, weight: 34 },
+    { mult: 3, weight: 28 },
+    { mult: 4, weight: 22 },
+    { mult: 5, weight: 16 },
   ],
   freeSpinsTriggerCount: 4,
-  freeSpinsRetriggerCount: 3,
+  freeSpinsRetriggerCount: 4,
   freeSpinsBase: 10,
-  freeSpinsRetrigger: 5,
+  freeSpinsRetrigger: 3,
   anteScatterWeightMult: 2,
   scatterCashTiers: [
     { count: 3, mult: 1 },
@@ -110,24 +116,32 @@ export const DEFAULT_MAYA_GOLD_CONFIG: MayaGoldConfig = {
     { count: 5, mult: 5 },
     { count: 6, mult: 100 },
   ],
-  buyFeatureMult: 100,
-  superBuyFeatureMult: 500,
+  /** Per-quantity Buy Bonus price: Price = bet × this. */
+  buyFeatureMult: 42.5,
+  /** Super buy unit price (5× normal). */
+  superBuyFeatureMult: 212.5,
   anteBetMult: 1.25,
-  minCluster: 8,
+  minCluster: 7,
+  /** ₱5 × 10,000× = ₱50,000 round cap (the incident that lacked this clamp). */
+  maxWinMult: 10_000,
+  /** Bombs only resolve to 2x/3x/4x/5x, including feature-end multiplier. */
+  maxFsBombMult: 5,
+  maxFsSessionSpins: 25,
+  maxBaseBombSum: 5,
   symbols: [
-    { id: "grape", kind: "grape", label: "10", weight: 18, pay: [1, 3, 8] },
-    { id: "plum", kind: "plum", label: "J", weight: 16, pay: [1.2, 3.5, 10] },
-    { id: "melon", kind: "melon", label: "Q", weight: 14, pay: [1.5, 4, 12] },
-    { id: "apple", kind: "apple", label: "K", weight: 12, pay: [2, 5, 20] },
-    { id: "blue", kind: "blue", label: "A", weight: 10, pay: [2.5, 6, 25] },
-    { id: "green", kind: "green", label: "Owl", weight: 8, pay: [4, 10, 35] },
-    { id: "purple", kind: "purple", label: "Wolf", weight: 6, pay: [6, 18, 50] },
-    { id: "heart", kind: "heart", label: "Ram", weight: 5, pay: [12, 30, 80] },
+    { id: "grape", kind: "grape", label: "10", weight: 18, pay: [0.2, 0.35, 0.8] },
+    { id: "plum", kind: "plum", label: "J", weight: 16, pay: [0.35, 0.5, 1.2] },
+    { id: "melon", kind: "melon", label: "Q", weight: 14, pay: [0.5, 0.65, 2] },
+    { id: "apple", kind: "apple", label: "K", weight: 12, pay: [0.65, 0.8, 4] },
+    { id: "blue", kind: "blue", label: "A", weight: 10, pay: [0.8, 2.5, 8] },
+    { id: "green", kind: "green", label: "Quetzal", weight: 8, pay: [2, 10, 50] },
+    { id: "purple", kind: "purple", label: "Jade Chalice", weight: 6, pay: [6, 25, 150] },
+    { id: "heart", kind: "heart", label: "Jaguar Guardian", weight: 5, pay: [12, 80, 500] },
     {
       id: "lollipop",
       kind: "lollipop",
       label: "Scatter",
-      weight: 3.2,
+      weight: 1.5,
       pay: [0, 0, 0],
       scatter: true,
     },
@@ -147,26 +161,78 @@ function clamp(n: number, min: number, max: number) {
   return Math.min(max, Math.max(min, n));
 }
 
+/** Map any bomb value onto the only allowed set: 2x / 3x / 4x / 5x. */
+export function clampBombMult(v: unknown): MayaGoldBombEntry["mult"] {
+  const n = Math.round(num(v, 2));
+  if (n <= 2) return 2;
+  if (n === 3) return 3;
+  if (n === 4) return 4;
+  return 5;
+}
+
 function num(v: unknown, fallback: number) {
   return typeof v === "number" && Number.isFinite(v) ? v : fallback;
 }
 
-/** Original Sweet Bonanza-style ×bet pays — too small vs ₱20–₱100 PH stakes. */
-const LEGACY_DEFAULT_PAYS: Record<string, number[]> = {
-  grape: [0.25, 0.75, 2],
-  plum: [0.4, 0.9, 4],
-  melon: [0.5, 1, 5],
-  apple: [1, 1.5, 10],
-  blue: [1.5, 2, 12],
-  green: [2, 5, 15],
-  purple: [2.5, 10, 25],
-  heart: [10, 25, 50],
+/** Old package buy was 100x / 500x for 10 spins. Unit price is now 42.5x / 212.5x per quantity. */
+function migrateBuyUnitMult(v: unknown, fallback: number, superBuy = false) {
+  if (typeof v === "number" && Number.isFinite(v)) {
+    if (!superBuy && v === 100) return 42.5;
+    if (superBuy && v === 500) return 212.5;
+    return v;
+  }
+  return fallback;
+}
+
+/** Prior default tables — migrate stored engine JSON onto the current multipliers. */
+const LEGACY_PAY_TABLES: Record<string, [number, number, number][]> = {
+  grape: [
+    [0.25, 0.75, 2],
+    [1, 3, 8],
+  ],
+  plum: [
+    [0.4, 0.9, 4],
+    [1.2, 3.5, 10],
+  ],
+  melon: [
+    [0.5, 1, 5],
+    [1.5, 4, 12],
+  ],
+  apple: [
+    [1, 1.5, 10],
+    [2, 5, 20],
+  ],
+  blue: [
+    [1.5, 2, 12],
+    [2.5, 6, 25],
+  ],
+  green: [
+    [2, 5, 15],
+    [4, 10, 35],
+  ],
+  purple: [
+    [2.5, 10, 25],
+    [6, 18, 50],
+  ],
+  heart: [
+    [10, 25, 50],
+    [12, 30, 80],
+  ],
 };
 
+function paysMatch(pay: unknown, expected: [number, number, number]): boolean {
+  if (!Array.isArray(pay) || pay.length < 3) return false;
+  return (
+    num(pay[0], NaN) === expected[0] &&
+    num(pay[1], NaN) === expected[1] &&
+    num(pay[2], NaN) === expected[2]
+  );
+}
+
 function isLegacyDefaultPay(id: string, pay: unknown): boolean {
-  const legacy = LEGACY_DEFAULT_PAYS[id];
-  if (!legacy || !Array.isArray(pay) || pay.length < legacy.length) return false;
-  return legacy.every((n, i) => num(pay[i], NaN) === n);
+  const tables = LEGACY_PAY_TABLES[id];
+  if (!tables) return false;
+  return tables.some((legacy) => paysMatch(pay, legacy));
 }
 
 /** Merge partial / stored JSON onto defaults (safe for DB blobs). */
@@ -201,18 +267,23 @@ export function normalizeMayaGoldConfig(raw: unknown): MayaGoldConfig {
   });
 
   const bombIn = Array.isArray(o.bombTable) ? o.bombTable : null;
-  const bombTable: MayaGoldBombEntry[] =
-    bombIn && bombIn.length > 0
-      ? bombIn
-          .map((b) => {
-            const row = b as Partial<MayaGoldBombEntry>;
-            return {
-              mult: clamp(num(row.mult, 2), 1, 10_000),
-              weight: clamp(num(row.weight, 1), 0, 10_000),
-            };
-          })
-          .filter((b) => b.weight > 0 || b.mult > 0)
-      : d.bombTable.map((b) => ({ ...b }));
+  const bombWeights = new Map<MayaGoldBombEntry["mult"], number>();
+  for (const mult of MAYA_GOLD_BOMB_MULTS) {
+    bombWeights.set(mult, d.bombTable.find((b) => b.mult === mult)?.weight ?? 1);
+  }
+  if (bombIn && bombIn.length > 0) {
+    for (const b of bombIn) {
+      const row = b as Partial<MayaGoldBombEntry>;
+      const n = Math.round(num(row.mult, 0));
+      if (!(MAYA_GOLD_BOMB_MULTS as readonly number[]).includes(n)) continue;
+      const weight = clamp(num(row.weight, 1), 0, 10_000);
+      bombWeights.set(n as MayaGoldBombEntry["mult"], weight);
+    }
+  }
+  const bombTable: MayaGoldBombEntry[] = MAYA_GOLD_BOMB_MULTS.map((mult) => ({
+    mult,
+    weight: bombWeights.get(mult) ?? 0,
+  }));
 
   const tiersIn = Array.isArray(o.scatterCashTiers) ? o.scatterCashTiers : null;
   const scatterCashTiers: MayaGoldScatterCashTier[] =
@@ -255,12 +326,34 @@ export function normalizeMayaGoldConfig(raw: unknown): MayaGoldConfig {
     freeSpinsRetrigger: clamp(Math.round(num(o.freeSpinsRetrigger, d.freeSpinsRetrigger)), 0, 100),
     anteScatterWeightMult: clamp(num(o.anteScatterWeightMult, d.anteScatterWeightMult), 1, 10),
     scatterCashTiers,
-    buyFeatureMult: clamp(num(o.buyFeatureMult, d.buyFeatureMult), 1, 10_000),
-    superBuyFeatureMult: clamp(num(o.superBuyFeatureMult, d.superBuyFeatureMult), 1, 10_000),
+    buyFeatureMult: clamp(migrateBuyUnitMult(o.buyFeatureMult, d.buyFeatureMult), 1, 10_000),
+    superBuyFeatureMult: clamp(
+      migrateBuyUnitMult(o.superBuyFeatureMult, d.superBuyFeatureMult, true),
+      1,
+      10_000,
+    ),
     anteBetMult: clamp(num(o.anteBetMult, d.anteBetMult), 1, 5),
     minCluster: clamp(Math.round(num(o.minCluster, d.minCluster)), 3, 30),
+    maxWinMult: clamp(num(o.maxWinMult, d.maxWinMult), 0, 100_000),
+    maxFsBombMult: clamp(num(o.maxFsBombMult, d.maxFsBombMult), 0, 5),
+    maxFsSessionSpins: clamp(Math.round(num(o.maxFsSessionSpins, d.maxFsSessionSpins)), 0, 200),
+    maxBaseBombSum: clamp(num(o.maxBaseBombSum, d.maxBaseBombSum), 0, 5),
     symbols,
   };
+}
+
+/** Remaining FS after this spin, honoring maxFsSessionSpins. */
+export function remainingFreeSpinsAfterSpin(opts: {
+  leftBefore: number;
+  retrigger: number;
+  playedAfter: number;
+  maxSessionSpins: number;
+}): number {
+  let left = Math.max(0, opts.leftBefore - 1 + Math.max(0, opts.retrigger));
+  if (opts.maxSessionSpins > 0) {
+    left = Math.min(left, Math.max(0, opts.maxSessionSpins - opts.playedAfter));
+  }
+  return left;
 }
 
 export function configToCellSyms(cfg: MayaGoldConfig): {

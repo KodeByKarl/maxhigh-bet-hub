@@ -1,615 +1,1409 @@
 /**
- * Prosperity Lion slot UI — owns its own spin state machine.
- * Frontend is non-authoritative: animates resolved SpinScript from the server.
+ * Prosperity Lion — 4×3 cluster-pay tumble slot (panther rectangle board).
+ * Engine resolves spins instantly; this file plays back the animation script.
  *
- * Flow: idle → api → step[0..n] (timers) → idle → (auto?) next
+ * Performance notes:
+ * - Playback is abortable (unmount / overlapping spin) to avoid stale setState.
+ * - Timed overlays (banner / win popup) share a cleared timeout registry.
+ * - Auto / free-spin loops call a stable spinRef to avoid stale closures.
+ * - Reel cells are memoized; engine math stays off the animation thread.
  */
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Info } from "lucide-react";
+import { AnimatePresence, motion } from "framer-motion";
+import { FastForward, Info, RotateCcw, RotateCw, Square, Volume2, VolumeX } from "lucide-react";
 import { toast } from "sonner";
-import { prosperityLionSpinFn, getProsperityLionEngineConfigFn } from "@/functions/api";
-import { useAuth } from "@/lib/auth";
-import {
-  PROSPERITY_LION_GAME_ID,
-  spinStake,
-  type ProsperityLionConfig,
-  type FtSymKind,
-} from "@/lib/prosperity-lion-config";
 import { cn } from "@/lib/utils";
-import { BET_STEPS, ANIM, BG_SRC } from "./prosperity-lion/animationConfig";
-import { MultiplierReelView } from "./prosperity-lion/MultiplierReelView";
+import { useAuth } from "@/lib/auth";
+import { formatMoney, formatMoneyCompact } from "@/lib/currency";
+import { prosperityLionAudio } from "./prosperity-lion/audio";
+import {
+  prosperityLionBuyFeatureFn,
+  prosperityLionFreeSpinFn,
+  prosperityLionSpinFn,
+  getProsperityLionSessionFn,
+} from "@/functions/api";
+import { ANIM } from "./prosperity-lion/animationConfig";
+import {
+  getAutoSpinGapMs,
+  getDropWaitMs,
+  getPopWaitMs,
+  getRefillWaitMs,
+  scaleWaitMs,
+} from "./prosperity-lion/playbackHelpers";
+import { BetSelectModal } from "./prosperity-lion/BetSelectModal";
+import { buildBuyScatterIntroBoard, initialBoard } from "./prosperity-lion/gridState";
+import {
+  BET_STEPS,
+  BUY_FS_START_BET,
+  getAnteMult,
+  getBuyUnitPrice,
+} from "./prosperity-lion/paytable";
+import { setProsperityLionConfig } from "./prosperity-lion/runtimeConfig";
+import type { BoardCell, SpinScript } from "./prosperity-lion/types";
+import { CELLS } from "./prosperity-lion/types";
+import { WinCelebration } from "./prosperity-lion/WinCelebration";
+import { FreeSpinsCongrats } from "./prosperity-lion/FreeSpinsCongrats";
+import { FreeSpinsTriggerModal } from "./prosperity-lion/FreeSpinsTriggerModal";
+import { BuyFeatureModal } from "./prosperity-lion/BuyFeatureModal";
 import { PaytableModal } from "./prosperity-lion/PaytableModal";
-import { ReelCell, type ReelPhase } from "./prosperity-lion/ReelCell";
-import { getProsperityLionConfig, setProsperityLionConfig } from "./prosperity-lion/runtimeConfig";
-import { planProsperityLionPlayback, type FtPlaybackStep } from "./prosperity-lion/spinPlayback";
-import { cellKey, type FtGrid, type MultiplierReelResult } from "./prosperity-lion/types";
+import { AutoSpinModal, type AutoSpinOptions } from "./prosperity-lion/AutoSpinModal";
+import { ReelGrid, type ReelVisuals } from "./prosperity-lion/ReelGrid";
+import { prosperityLionTheme } from "./prosperity-lion/theme";
+import { themeToCssVars } from "./panther-shared/theme";
+import { type ReelPhase } from "./prosperity-lion/ReelCell";
+import { getProsperityLionEngineConfigFn } from "@/functions/superadmin";
+import { PROSPERITY_LION_GAME_ID } from "@/lib/prosperity-lion-config";
 
-function idleGrid(): FtGrid {
-  const cfg = getProsperityLionConfig();
-  const kinds: FtSymKind[] = ["ruby", "emerald", "sapphire", "amethyst", "topaz", "temple"];
-  return Array.from({ length: cfg.reelsCount }, (_, reel) =>
-    Array.from({ length: cfg.rowsCount }, (_, row) => kinds[(reel + row) % kinds.length]!),
-  );
-}
-
-function idleMult(): MultiplierReelResult {
-  return { faces: [2, 1, 3], center: 1 };
-}
-
-function formatMoney(n: number) {
-  return `₱${n.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-}
-
-type UiSnap = {
-  phase: ReelPhase;
-  grid: FtGrid;
-  multiplierReel: MultiplierReelResult;
-  winKeys: string[];
-  multHighlight: boolean;
-  banner: string | null;
-  popup: number | null;
-  fading: boolean;
-  lastWin: number;
-  spinId: number;
-  locked: boolean;
+type Phase = ReelPhase;
+type Slot = BoardCell | null;
+type WinPopup = {
+  amount: number;
+  baseEarn?: number | null;
+  multiplier?: number | null;
+};
+type FsSummary = {
+  amount: number;
+  baseEarn: number;
+  multiplier: number;
+  spinsPlayed: number;
 };
 
-const INITIAL_UI = (): UiSnap => ({
-  phase: "idle",
-  grid: idleGrid(),
-  multiplierReel: idleMult(),
-  winKeys: [],
-  multHighlight: false,
-  banner: null,
-  popup: null,
-  fading: false,
-  lastWin: 0,
-  spinId: 0,
-  locked: false,
-});
+/** Stable empty collections — avoid allocating on every clear. */
+const EMPTY_SET = new Set<string>();
+const EMPTY_PAY = new Map<string, number>();
+const EMPTY_FALL: Record<string, number> = Object.freeze({}) as Record<string, number>;
+/** Always exactly CELLS slots — never shrink the grid. */
+function asSlots(board: BoardCell[]): Slot[] {
+  const slots: Slot[] = Array.from({ length: CELLS }, () => null);
+  const n = Math.min(board.length, slots.length);
+  for (let i = 0; i < n; i++) slots[i] = board[i];
+  return slots;
+}
+
+function betIndex(bet: number) {
+  const i = BET_STEPS.findIndex((v) => v >= bet);
+  if (i === -1) return BET_STEPS.length - 1;
+  return i;
+}
+
+/** Prefetch symbol + backdrop images once (browser cache / decode ahead of spin). */
+function preloadAssets() {
+  prosperityLionAudio.preload();
+  if (typeof Image === "undefined") return;
+  const urls = [
+    prosperityLionTheme.assets.backdrop,
+    prosperityLionTheme.assets.loadingBg,
+    ...Object.values(prosperityLionTheme.assets.icons),
+  ];
+  for (const src of urls) {
+    const img = new Image();
+    img.decoding = "async";
+    img.src = src;
+  }
+}
 
 export function ProsperityLionSlot({
-  gameId = PROSPERITY_LION_GAME_ID,
+  gameId = "prosperity-lion",
 }: {
   gameId?: string;
   gameName?: string;
 } = {}) {
-  const { user, setBalanceLocal } = useAuth();
+  const { user, setBalanceLocal, refreshJackpot } = useAuth();
   const balance = user?.balance ?? 0;
-
-  const [bet, setBet] = useState(1);
-  const [exMode, setExMode] = useState(false);
+  const playSessionIdRef = useRef<string | null>(null);
+  const [bet, setBet] = useState(5);
+  const [ante, setAnte] = useState(false);
+  const [slots, setSlots] = useState<Slot[]>(() => asSlots(initialBoard()));
+  const [phase, setPhase] = useState<Phase>("idle");
+  const [winningKeys, setWinningKeys] = useState<Set<string>>(EMPTY_SET);
+  const [payoutByKey, setPayoutByKey] = useState<Map<string, number>>(EMPTY_PAY);
+  const [spawnedKeys, setSpawnedKeys] = useState<Set<string>>(EMPTY_SET);
+  const [fallenKeys, setFallenKeys] = useState<Set<string>>(EMPTY_SET);
+  const [fallDistance, setFallDistance] = useState<Record<string, number>>(EMPTY_FALL);
   const [autoSpin, setAutoSpin] = useState(false);
+  const [autoSpinModalOpen, setAutoSpinModalOpen] = useState(false);
+  const [autoSpinConfig, setAutoSpinConfig] = useState<AutoSpinOptions | null>(null);
+  const [remainingAutoSpins, setRemainingAutoSpins] = useState<number | "infinity">(0);
+  const startBalance = useRef(balance);
   const [turbo, setTurbo] = useState(false);
+  const [lastWin, setLastWin] = useState(0);
+  const [freeSpins, setFreeSpins] = useState(0);
+  const [inFree, setInFree] = useState(false);
+  const [fsSessionWin, setFsSessionWin] = useState(0);
+  const [dropTotal, setDropTotal] = useState(0);
+  const [tumbleStepWin, setTumbleStepWin] = useState(0);
+  const [banner, setBanner] = useState<string | null>(null);
+  const [winPopup, setWinPopup] = useState<WinPopup | null>(null);
+  const [fsSummary, setFsSummary] = useState<FsSummary | null>(null);
+  const [triggerModalCount, setTriggerModalCount] = useState<number | null>(null);
+  const [buyOpen, setBuyOpen] = useState(false);
+  const [buyMode, setBuyMode] = useState<"normal" | "super">("normal");
   const [infoOpen, setInfoOpen] = useState(false);
-  const [cfgSnap, setCfgSnap] = useState<ProsperityLionConfig>(() => getProsperityLionConfig());
-  const [ui, setUi] = useState<UiSnap>(INITIAL_UI);
+  const [betModalOpen, setBetModalOpen] = useState(false);
+  const [fsPaused, setFsPaused] = useState(false);
+  const [muted, setMuted] = useState(() => prosperityLionAudio.isMuted);
 
-  const runIdRef = useRef(0);
-  const lockedRef = useRef(false);
-  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const autoTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const mountedRef = useRef(true);
-  const autoRef = useRef(autoSpin);
+  const busy = phase !== "idle";
+  const totalBet = +(bet * (ante ? getAnteMult() : 1)).toFixed(2);
+  const buyCost = getBuyUnitPrice(BUY_FS_START_BET, 1);
+
+  const busyRef = useRef(false);
+  const skipRef = useRef(false);
   const turboRef = useRef(turbo);
-  const betRef = useRef(bet);
-  const exRef = useRef(exMode);
-  const startSpinRef = useRef<() => void>(() => undefined);
+  const mountedRef = useRef(true);
+  const playbackGen = useRef(0);
+  const freeSpinsRef = useRef(freeSpins);
+  const fsSessionRef = useRef(fsSessionWin);
+  const fsSpinsPlayedRef = useRef(0);
+  const timersRef = useRef<Set<ReturnType<typeof setTimeout>>>(new Set());
+  const spinRef = useRef<(asFree?: boolean) => Promise<void>>(async () => undefined);
+  const triggerModalResolveRef = useRef<(() => void) | null>(null);
 
-  autoRef.current = autoSpin;
   turboRef.current = turbo;
-  betRef.current = bet;
-  exRef.current = exMode;
+  freeSpinsRef.current = freeSpins;
+  fsSessionRef.current = fsSessionWin;
 
-  const clearTimer = () => {
-    if (timerRef.current) {
-      clearTimeout(timerRef.current);
-      timerRef.current = null;
-    }
+  const reelVisuals: ReelVisuals = {
+    slots,
+    phase,
+    winningKeys,
+    payoutByKey,
+    spawnedKeys,
+    fallenKeys,
+    fallDistance,
   };
 
-  const clearAutoTimer = () => {
-    if (autoTimerRef.current) {
-      clearTimeout(autoTimerRef.current);
-      autoTimerRef.current = null;
+  const clearTrackedTimers = useCallback(() => {
+    for (const id of timersRef.current) clearTimeout(id);
+    timersRef.current.clear();
+  }, []);
+
+  const schedule = useCallback((fn: () => void, ms: number) => {
+    const id = setTimeout(() => {
+      timersRef.current.delete(id);
+      if (mountedRef.current) fn();
+    }, ms);
+    timersRef.current.add(id);
+    return id;
+  }, []);
+
+  /** Overlay toast — never inserts into HUD (avoids layout jump). */
+  const notifyCashflow = useCallback((delta: number, label: "bet" | "win" | "scatter" | "cap") => {
+    const abs = formatMoney(Math.abs(delta));
+    if (label === "bet") {
+      toast.custom(
+        () => (
+          <div
+            className="rounded-2xl border px-4 py-2.5 text-center shadow-[0_10px_28px_rgba(0,0,0,0.45)]"
+            style={{
+              borderColor: "rgba(245,158,11,0.55)",
+              background: "linear-gradient(135deg, rgba(17,24,39,0.96), rgba(86,32,3,0.92))",
+              color: "#fbd391",
+            }}
+          >
+            <div className="text-[10px] font-black uppercase tracking-[0.18em] opacity-80">Bet</div>
+            <div className="text-sm font-black tabular-nums">−{abs}</div>
+          </div>
+        ),
+        { duration: 1800 },
+      );
+      return;
     }
-  };
-
-  const applyIdle = useCallback((lastWin?: number) => {
-    lockedRef.current = false;
-    setUi((prev) => ({
-      ...prev,
-      phase: "idle",
-      winKeys: [],
-      multHighlight: false,
-      banner: null,
-      popup: null,
-      fading: false,
-      locked: false,
-      lastWin: lastWin !== undefined ? lastWin : prev.lastWin,
-    }));
+    const isWin = label === "win" || label === "scatter";
+    const title = label === "scatter" ? "Scatter" : label === "cap" ? "Cap" : "Win";
+    const prefix = delta < 0 ? "−" : "+";
+    toast.custom(
+      () => (
+        <div
+          className="rounded-2xl border px-4 py-2.5 text-center shadow-[0_10px_28px_rgba(0,0,0,0.45)]"
+          style={{
+            borderColor: isWin ? "rgba(245,158,11,0.65)" : "rgba(245,158,11,0.55)",
+            background: isWin
+              ? "linear-gradient(135deg, #F59E0B 0%, rgb(98,40,3) 55%, #111827 100%)"
+              : "linear-gradient(135deg, rgba(17,24,39,0.96), rgba(86,32,3,0.92))",
+            color: isWin ? "#fef0da" : "#fbd391",
+          }}
+        >
+          <div
+            className="text-[10px] font-black uppercase tracking-[0.18em]"
+            style={{
+              color: isWin ? "rgba(253,242,248,0.85)" : "rgba(251,207,232,0.85)",
+            }}
+          >
+            {title}
+          </div>
+          <div className="text-sm font-black tabular-nums">
+            {prefix}
+            {abs}
+          </div>
+        </div>
+      ),
+      { duration: 1800 },
+    );
   }, []);
 
-  const scheduleContinue = useCallback((reason: "auto" | "win") => {
-    clearAutoTimer();
-    if (!mountedRef.current) return;
-    if (reason === "auto" && !autoRef.current) return;
-    autoTimerRef.current = setTimeout(() => {
-      autoTimerRef.current = null;
-      if (!mountedRef.current || lockedRef.current) return;
-      if (reason === "auto" && !autoRef.current) return;
-      startSpinRef.current();
-    }, turboRef.current ? 150 : 500);
-  }, []);
-
-  const fadeOutWin = useCallback((runId: number, then: () => void) => {
-    setUi((prev) => ({ ...prev, fading: true }));
-    const fadeMs = turboRef.current ? 120 : ANIM.winFade;
-    clearTimer();
-    timerRef.current = setTimeout(() => {
-      timerRef.current = null;
-      if (runId !== runIdRef.current) return;
-      setUi((prev) => ({
-        ...prev,
-        winKeys: [],
-        multHighlight: false,
-        banner: null,
-        popup: null,
-        fading: false,
-      }));
-      then();
-    }, fadeMs);
-  }, []);
-
-  const runStep = useCallback(
-    (runId: number, steps: FtPlaybackStep[], index: number) => {
-      if (!mountedRef.current || runId !== runIdRef.current) return;
-
-      const step = steps[index];
-      if (!step) {
-        applyIdle();
-        if (autoRef.current) scheduleContinue("auto");
-        return;
-      }
-
-      if (step.type === "spinning") {
-        setUi((prev) => ({
-          ...prev,
-          phase: "spinning",
-          winKeys: [],
-          multHighlight: false,
-          banner: null,
-          popup: null,
-          fading: false,
-          locked: true,
-        }));
-      } else if (step.type === "stopping") {
-        setUi((prev) => ({
-          ...prev,
-          phase: "stopping",
-          grid: step.grid,
-          multiplierReel: step.multiplierReel,
-          winKeys: [],
-          multHighlight: false,
-          banner: null,
-          popup: null,
-          fading: false,
-          locked: true,
-        }));
-      } else if (step.type === "highlight_lines") {
-        setUi((prev) => ({
-          ...prev,
-          phase: "win",
-          winKeys: step.keys,
-          multHighlight: false,
-          banner: step.label,
-          popup: step.amount,
-          fading: false,
-          locked: true,
-        }));
-      } else if (step.type === "highlight_mult") {
-        setUi((prev) => ({
-          ...prev,
-          phase: "win",
-          multHighlight: true,
-          banner: step.label,
-          popup: step.amount,
-          fading: false,
-          locked: true,
-        }));
-      } else if (step.type === "tally") {
-        setUi((prev) => ({
-          ...prev,
-          phase: "win",
-          winKeys: [],
-          multHighlight: true,
-          banner: step.label,
-          popup: step.amount,
-          fading: false,
-          locked: true,
-        }));
-      } else if (step.type === "done") {
-        const won = step.totalWin > 0;
-        fadeOutWin(runId, () => {
-          applyIdle(step.totalWin);
-          if (autoRef.current) scheduleContinue("auto");
-          else if (won) scheduleContinue("win");
-        });
-        return;
-      }
-
-      const ms = "ms" in step ? step.ms : 0;
-      clearTimer();
-      timerRef.current = setTimeout(() => {
-        timerRef.current = null;
-        if (runId !== runIdRef.current) return;
-        const isCelebrate =
-          step.type === "highlight_lines" ||
-          step.type === "highlight_mult" ||
-          step.type === "tally";
-        if (isCelebrate) {
-          fadeOutWin(runId, () => runStep(runId, steps, index + 1));
+  /** Abortable wait — respects turbo + skipRef + playback generation / unmount. */
+  const wait = useCallback((ms: number, gen: number) => {
+    if (skipRef.current) return Promise.resolve();
+    const scaled = scaleWaitMs(ms, turboRef.current);
+    return new Promise<void>((resolve, reject) => {
+      const id = setTimeout(() => {
+        timersRef.current.delete(id);
+        if (!mountedRef.current || gen !== playbackGen.current) {
+          reject(new DOMException("Aborted", "AbortError"));
           return;
         }
-        runStep(runId, steps, index + 1);
-      }, Math.max(16, ms));
-    },
-    [applyIdle, fadeOutWin, scheduleContinue],
-  );
+        resolve();
+      }, scaled);
+      timersRef.current.add(id);
+    });
+  }, []);
 
-  const startSpin = useCallback(() => {
-    if (lockedRef.current) return;
-    lockedRef.current = true;
+  const dismissTriggerModal = useCallback(() => {
+    setTriggerModalCount(null);
+    triggerModalResolveRef.current?.();
+    triggerModalResolveRef.current = null;
+  }, []);
 
-    clearTimer();
-    clearAutoTimer();
-    const runId = ++runIdRef.current;
-    const stake = betRef.current;
-    const ex = exRef.current;
+  const waitForTriggerModal = useCallback(() => {
+    return new Promise<void>((resolve) => {
+      triggerModalResolveRef.current = resolve;
+    });
+  }, []);
 
-    setUi((prev) => ({
-      ...prev,
-      locked: true,
-      phase: "spinning",
-      winKeys: [],
-      multHighlight: false,
-      banner: null,
-      popup: null,
-      fading: false,
-      spinId: prev.spinId + 1,
-    }));
+  /** Buy feature: drop trigger scatters, glow, then Free Spins modal before spin 1. */
+  const playBuyScatterIntro = useCallback(
+    async (gen: number, fsCount: number, useAnte: boolean) => {
+      setWinningKeys(EMPTY_SET);
+      setPayoutByKey(EMPTY_PAY);
+      setSpawnedKeys(EMPTY_SET);
+      setFallenKeys(EMPTY_SET);
+      setFallDistance(EMPTY_FALL);
+      setDropTotal(0);
+      setTumbleStepWin(0);
+      setLastWin(0);
+      setWinPopup(null);
+      setBanner(null);
 
-    void (async () => {
+      const board = buildBuyScatterIntroBoard(useAnte);
+      const scatterKeys = board.filter((c) => c.sym.scatter).map((c) => c.key);
+
+      setPhase("dropping");
+      setSlots(asSlots(board));
+      prosperityLionAudio.startSpinLoop();
       try {
-        const res = await prosperityLionSpinFn({ data: { bet: stake, exMode: ex } });
-        if (!mountedRef.current || runId !== runIdRef.current) return;
-        setBalanceLocal(res.balance);
-        const steps = planProsperityLionPlayback(res.script, turboRef.current);
-        runStep(runId, steps, 0);
-      } catch (e) {
-        if (runId !== runIdRef.current) return;
-        const msg = e instanceof Error ? e.message : "Spin failed";
-        toast.error(msg);
-        setAutoSpin(false);
-        applyIdle();
+        await wait(getDropWaitMs(), gen);
+      } catch {
+        prosperityLionAudio.stopSpinLoop();
+        return;
       }
-    })();
-  }, [applyIdle, runStep, setBalanceLocal]);
+      prosperityLionAudio.stopSpinLoop();
+      prosperityLionAudio.playReelStop(5);
+      prosperityLionAudio.playScatterTrigger();
 
-  startSpinRef.current = startSpin;
+      setWinningKeys(new Set(scatterKeys));
+      setPhase("glow");
+      try {
+        await wait(ANIM.buyScatterGlow, gen);
+      } catch {
+        setWinningKeys(EMPTY_SET);
+        setPhase("idle");
+        return;
+      }
+
+      setWinningKeys(EMPTY_SET);
+      setPhase("idle");
+      setTriggerModalCount(fsCount);
+      await waitForTriggerModal();
+    },
+    [wait, waitForTriggerModal],
+  );
 
   useEffect(() => {
     mountedRef.current = true;
-    void getProsperityLionEngineConfigFn()
-      .then((cfg) => {
-        if (!mountedRef.current) return;
-        const next = setProsperityLionConfig(cfg);
-        setCfgSnap(next);
-        setUi((prev) => (prev.locked ? prev : { ...prev, grid: idleGrid() }));
-        setBet((b) => Math.max(next.minBet, Math.min(next.maxBet, b)));
-      })
-      .catch(() => undefined);
+    preloadAssets();
+    if (gameId === PROSPERITY_LION_GAME_ID || gameId === "prosperity-lion") {
+      void getProsperityLionEngineConfigFn()
+        .then((cfg) => {
+          if (mountedRef.current) setProsperityLionConfig(cfg);
+        })
+        .catch(() => {
+          /* keep defaults */
+        });
+      void getProsperityLionSessionFn()
+        .then((session) => {
+          if (!mountedRef.current) return;
+          if (!session.sessionId || session.freeSpinsLeft <= 0) {
+            playSessionIdRef.current = null;
+            setInFree(false);
+            setFreeSpins(0);
+            freeSpinsRef.current = 0;
+            return;
+          }
+          playSessionIdRef.current = session.sessionId;
+          setInFree(true);
+          setFreeSpins(session.freeSpinsLeft);
+          setFsSessionWin(session.fsSessionWin);
+          freeSpinsRef.current = session.freeSpinsLeft;
+          fsSessionRef.current = session.fsSessionWin;
+          fsSpinsPlayedRef.current = session.fsSpinsPlayed;
+          if (session.bet > 0) setBet(session.bet);
+          setAnte(session.ante);
+          setFsPaused(false);
+          setFsSummary(null);
+          toast.message(`Resuming ${session.freeSpinsLeft} free spins`);
+        })
+        .catch((err) => {
+          console.error("[ProsperityLion] session load failed", err);
+        });
+    }
     return () => {
       mountedRef.current = false;
-      runIdRef.current += 1;
-      clearTimer();
-      clearAutoTimer();
+      playbackGen.current += 1;
+      clearTrackedTimers();
+      prosperityLionAudio.stopSpinLoop();
+      prosperityLionAudio.stopAmbient();
     };
+  }, [clearTrackedTimers, gameId]);
+
+  /** Pull latest Superadmin math for local UI (server settle uses its own copy). */
+  const refreshEngineConfig = useCallback(async () => {
+    if (gameId !== PROSPERITY_LION_GAME_ID && gameId !== "prosperity-lion") return;
+    try {
+      const cfg = await getProsperityLionEngineConfigFn();
+      if (mountedRef.current) setProsperityLionConfig(cfg);
+    } catch {
+      /* keep last known */
+    }
+  }, [gameId]);
+
+  const applySession = useCallback(
+    (session: {
+      sessionId: string | null;
+      freeSpinsLeft: number;
+      fsSessionWin: number;
+      fsSpinsPlayed: number;
+      inFree: boolean;
+    }) => {
+      playSessionIdRef.current = session.sessionId;
+      setInFree(session.inFree);
+      setFreeSpins(session.freeSpinsLeft);
+      setFsSessionWin(session.fsSessionWin);
+      freeSpinsRef.current = session.freeSpinsLeft;
+      fsSessionRef.current = session.fsSessionWin;
+      fsSpinsPlayedRef.current = session.fsSpinsPlayed;
+    },
+    [],
+  );
+
+  const playScript = useCallback(
+    async (script: SpinScript, isFree: boolean, gen: number, startBalance: number) => {
+      setDropTotal(0);
+      setTumbleStepWin(0);
+      setWinningKeys(EMPTY_SET);
+      setPayoutByKey(EMPTY_PAY);
+      setSpawnedKeys(EMPTY_SET);
+      setFallenKeys(EMPTY_SET);
+      let running = 0;
+
+      const applyRunningToHud = (nextRunning: number, stepWin = 0) => {
+        running = +nextRunning.toFixed(2);
+        setDropTotal(running);
+        setTumbleStepWin(stepWin);
+        if (isFree) {
+          if (running > 0) setLastWin(+(fsSessionRef.current + running).toFixed(2));
+          return;
+        }
+        // Paid spins only: wallet already had the bet deducted. Credit the same
+        // running total the WIN meter shows so balance never drifts from tally.
+        setBalanceLocal(+(startBalance + running).toFixed(2));
+      };
+
+      if (skipRef.current) {
+        const lastStep = script.steps[script.steps.length - 1];
+        const finalBoard = lastStep ? lastStep.afterFall : script.initialBoard;
+        setSlots(asSlots(finalBoard));
+        applyRunningToHud(script.totalWin, script.totalWin);
+      } else {
+        setPhase("dropping");
+        setSlots(asSlots(script.initialBoard));
+        prosperityLionAudio.startSpinLoop();
+        await wait(getDropWaitMs(), gen);
+        prosperityLionAudio.stopSpinLoop();
+        prosperityLionAudio.playReelStop(5);
+      }
+
+      for (const step of script.steps) {
+        if (gen !== playbackGen.current) break;
+
+        if (skipRef.current) {
+          const lastStep = script.steps[script.steps.length - 1];
+          const finalBoard = lastStep ? lastStep.afterFall : script.initialBoard;
+          setSlots(asSlots(finalBoard));
+          setWinningKeys(EMPTY_SET);
+          setPayoutByKey(EMPTY_PAY);
+          setSpawnedKeys(EMPTY_SET);
+          setFallenKeys(EMPTY_SET);
+          setFallDistance(EMPTY_FALL);
+          applyRunningToHud(script.totalWin, script.totalWin);
+          break;
+        }
+
+        setSpawnedKeys(EMPTY_SET);
+        setFallenKeys(EMPTY_SET);
+        setFallDistance(EMPTY_FALL);
+        setSlots(asSlots(step.board));
+        setWinningKeys(new Set(step.winningKeys));
+        const payMap = new Map<string, number>();
+        for (const c of step.clusters) {
+          const badgeKey = c.keys[0];
+          if (badgeKey) payMap.set(badgeKey, c.pay);
+        }
+        setPayoutByKey(payMap);
+
+        // Credit BEFORE glow so WIN / badge / balance all show the amount
+        // during the winning appearance — not after it ends.
+        if (step.tumbleWin > 0) {
+          applyRunningToHud(running + step.tumbleWin, step.tumbleWin);
+          if (!isFree) {
+            notifyCashflow(step.tumbleWin, "win");
+          }
+        }
+
+        setPhase("glow");
+        await wait(ANIM.glowDuration, gen);
+
+        setPhase("popping");
+        prosperityLionAudio.playCascadeTick();
+        await wait(getPopWaitMs(step.winningKeys.length), gen);
+
+        setSlots(step.afterPop.length === CELLS ? step.afterPop : asSlots(step.board));
+        setWinningKeys(EMPTY_SET);
+        setPayoutByKey(EMPTY_PAY);
+        setTumbleStepWin(0);
+        await wait(ANIM.holeHold, gen);
+
+        setFallenKeys(new Set(step.fallenKeys));
+        setSpawnedKeys(new Set(step.spawnedKeys));
+        setFallDistance(step.fallDistance ?? EMPTY_FALL);
+        setSlots(asSlots(step.afterFall));
+        setPhase("falling");
+        await wait(getRefillWaitMs(), gen);
+        await wait(ANIM.betweenTumbles, gen);
+      }
+
+      // Scatter / pool-cap: remaining difference vs tumble sum. Paid only —
+      // FS wallet is credited once at feature end from the server.
+      const leftover = +(script.totalWin - running).toFixed(2);
+      if (Math.abs(leftover) >= 0.01) {
+        applyRunningToHud(script.totalWin, leftover > 0 ? leftover : 0);
+        if (!isFree) {
+          notifyCashflow(leftover, leftover > 0 ? "scatter" : "cap");
+        }
+      } else {
+        applyRunningToHud(script.totalWin, 0);
+      }
+
+      if (gen === playbackGen.current) {
+        setPhase("idle");
+        setSpawnedKeys(EMPTY_SET);
+        setFallenKeys(EMPTY_SET);
+        setFallDistance(EMPTY_FALL);
+        setTumbleStepWin(0);
+      }
+      return script;
+    },
+    [wait, setBalanceLocal, notifyCashflow],
+  );
+
+  const showTotalWin = useCallback(
+    (amount: number, opts?: { baseEarn?: number; multiplier?: number }) => {
+      if (amount <= 0) return;
+      setWinPopup({
+        amount,
+        baseEarn: opts?.baseEarn ?? amount,
+        multiplier: opts?.multiplier ?? 1,
+      });
+      schedule(() => setWinPopup(null), ANIM.winPopupHold);
+    },
+    [schedule],
+  );
+
+  const dismissFsSummary = useCallback(() => {
+    setFsSummary(null);
+    fsSpinsPlayedRef.current = 0;
+    prosperityLionAudio.endFreespins();
   }, []);
 
+  const setMutedState = useCallback((on: boolean) => {
+    prosperityLionAudio.setMuted(on);
+    setMuted(on);
+  }, []);
+
+  const toggleMute = useCallback(() => {
+    setMutedState(!muted);
+  }, [muted, setMutedState]);
+
+  const finishBase = useCallback(
+    (
+      script: SpinScript,
+      session: { sessionId: string | null; freeSpinsLeft: number; inFree: boolean },
+    ) => {
+      if (script.totalWin > 0) {
+        setLastWin(script.totalWin);
+        prosperityLionAudio.playWin(script.totalWin, totalBet);
+      } else {
+        setLastWin(0);
+      }
+
+      if (session.inFree && session.freeSpinsLeft > 0) {
+        prosperityLionAudio.playScatterTrigger();
+        applySession({
+          sessionId: session.sessionId,
+          freeSpinsLeft: session.freeSpinsLeft,
+          fsSessionWin: 0,
+          fsSpinsPlayed: 0,
+          inFree: true,
+        });
+        setLastWin(0);
+        setBanner(`${session.freeSpinsLeft} FREE SPINS!`);
+        setTriggerModalCount(session.freeSpinsLeft);
+        schedule(() => setBanner(null), ANIM.bannerHold);
+      } else if (script.totalWin > 0) {
+        showTotalWin(script.totalWin, {
+          baseEarn: script.rawWin,
+          multiplier: script.displayMult,
+        });
+      }
+    },
+    [applySession, schedule, showTotalWin, totalBet],
+  );
+
+  const spin = useCallback(
+    async (asFree = false) => {
+      if (busyRef.current) return;
+
+      // Prefer free-spin path whenever local OR server still has FS left.
+      // (inFree state can desync after HMR / modal / skip — freeSpinsRef is source of truth.)
+      let preferFree = asFree || freeSpinsRef.current > 0;
+
+      if (!preferFree || (preferFree && !playSessionIdRef.current)) {
+        try {
+          const session = await getProsperityLionSessionFn();
+          if (session.sessionId && session.freeSpinsLeft > 0) {
+            applySession({
+              sessionId: session.sessionId,
+              freeSpinsLeft: session.freeSpinsLeft,
+              fsSessionWin: session.fsSessionWin,
+              fsSpinsPlayed: session.fsSpinsPlayed,
+              inFree: true,
+            });
+            preferFree = true;
+          } else if (!session.sessionId || session.freeSpinsLeft <= 0) {
+            playSessionIdRef.current = null;
+            if (freeSpinsRef.current > 0 || inFree) {
+              setInFree(false);
+              setFreeSpins(0);
+              freeSpinsRef.current = 0;
+            }
+            preferFree = false;
+          }
+        } catch {
+          /* keep local flags */
+        }
+      }
+
+      const isFree = preferFree && freeSpinsRef.current > 0 && !!playSessionIdRef.current;
+      if (preferFree && !isFree) {
+        toast.error("Free spin session expired — refresh and try again");
+        setInFree(false);
+        setFreeSpins(0);
+        freeSpinsRef.current = 0;
+        playSessionIdRef.current = null;
+        setAutoSpin(false);
+        return;
+      }
+
+      const cost = isFree ? 0 : totalBet;
+
+      if (!isFree && balance < cost) {
+        toast.error("Insufficient balance");
+        setAutoSpin(false);
+        return;
+      }
+
+      const gen = ++playbackGen.current;
+      busyRef.current = true;
+      skipRef.current = false;
+      setBanner(null);
+      setWinPopup(null);
+      setLastWin(0);
+      let recoveredToFree = false;
+
+      try {
+        prosperityLionAudio.startSpinLoop();
+
+        if (!isFree) {
+          setBalanceLocal(balance - cost);
+          notifyCashflow(-cost, "bet");
+        }
+
+        await refreshEngineConfig();
+
+        let settled: Awaited<ReturnType<typeof prosperityLionSpinFn>>;
+        if (isFree) {
+          const sessionId = playSessionIdRef.current;
+          if (!sessionId) {
+            toast.error("Free spin session expired — refresh and try again");
+            setAutoSpin(false);
+            return;
+          }
+          settled = await prosperityLionFreeSpinFn({ data: { sessionId } });
+        } else {
+          settled = await prosperityLionSpinFn({ data: { bet, ante } });
+          setDropTotal(0);
+        }
+
+        void refreshJackpot();
+        applySession(settled.session);
+
+        const script = await playScript(
+          settled.script,
+          isFree,
+          gen,
+          isFree ? balance : balance - cost,
+        );
+        if (gen !== playbackGen.current || !mountedRef.current) return;
+
+        if (isFree) {
+          setFsSessionWin(settled.session.fsSessionWin);
+          setLastWin(settled.session.fsSessionWin || settled.fsPayout?.amount || 0);
+          fsSessionRef.current = settled.session.fsSessionWin;
+          fsSpinsPlayedRef.current = settled.session.fsSpinsPlayed;
+
+          if (script.retriggerSpins > 0 && settled.session.inFree) {
+            prosperityLionAudio.playScatterTrigger();
+            setBanner(`+${script.retriggerSpins} FREE SPINS!`);
+            schedule(() => setBanner(null), ANIM.bannerHold);
+          }
+
+          if (settled.fsPayout) {
+            setInFree(false);
+            setFreeSpins(0);
+            freeSpinsRef.current = 0;
+            playSessionIdRef.current = null;
+            setLastWin(settled.fsPayout.amount);
+            setFsSummary({
+              amount: settled.fsPayout.amount,
+              baseEarn: settled.fsPayout.baseEarn,
+              multiplier: settled.fsPayout.multiplier,
+              spinsPlayed: settled.fsPayout.spinsPlayed,
+            });
+            setFsSessionWin(0);
+            fsSessionRef.current = 0;
+            if (settled.fsPayout.amount > 0) {
+              notifyCashflow(settled.fsPayout.amount, "win");
+              showTotalWin(settled.fsPayout.amount, {
+                baseEarn: settled.fsPayout.baseEarn,
+                multiplier: settled.fsPayout.multiplier,
+              });
+            }
+          }
+        } else {
+          finishBase(script, settled.session);
+        }
+
+        if (gen === playbackGen.current && mountedRef.current) {
+          if (!isFree || settled.fsPayout) {
+            setBalanceLocal(settled.balance);
+          }
+        }
+      } catch (err) {
+        if (!isFree) {
+          setBalanceLocal(balance);
+        }
+        if (!(err instanceof DOMException && err.name === "AbortError")) {
+          const msg = err instanceof Error ? err.message : "Spin failed — try again";
+          // Server still has open FS — restore and continue as free spins
+          if (/finish free spins/i.test(msg)) {
+            try {
+              const session = await getProsperityLionSessionFn();
+              if (session.sessionId && session.freeSpinsLeft > 0) {
+                applySession({
+                  sessionId: session.sessionId,
+                  freeSpinsLeft: session.freeSpinsLeft,
+                  fsSessionWin: session.fsSessionWin,
+                  fsSpinsPlayed: session.fsSpinsPlayed,
+                  inFree: true,
+                });
+                toast.message(`Resuming ${session.freeSpinsLeft} free spins`);
+                recoveredToFree = true;
+                busyRef.current = false;
+                skipRef.current = false;
+                if (mountedRef.current) setPhase("idle");
+                void spin(true);
+                return;
+              }
+            } catch {
+              /* fall through */
+            }
+          }
+          console.error("[ProsperityLion] spin failed", err);
+          toast.error(msg);
+          setAutoSpin(false);
+        }
+      } finally {
+        if (!recoveredToFree && gen === playbackGen.current) {
+          busyRef.current = false;
+          skipRef.current = false;
+          if (mountedRef.current) setPhase("idle");
+        }
+      }
+    },
+    [
+      ante,
+      applySession,
+      balance,
+      bet,
+      finishBase,
+      inFree,
+      playScript,
+      refreshEngineConfig,
+      refreshJackpot,
+      schedule,
+      setBalanceLocal,
+      showTotalWin,
+      totalBet,
+      notifyCashflow,
+    ],
+  );
+
+  spinRef.current = spin;
+
+  const openBuyFeature = useCallback(
+    (mode: "normal" | "super" = "normal") => {
+      if (busyRef.current || phase !== "idle" || inFree) return;
+      prosperityLionAudio.playUiClick();
+      setBuyMode(mode);
+      setBuyOpen(true);
+    },
+    [inFree, phase],
+  );
+
+  const buyFeature = useCallback(
+    async (buyBet: number, quantity: number) => {
+      if (busyRef.current || phase !== "idle") return;
+      const unit = getBuyUnitPrice(buyBet, quantity);
+      const cost = +(unit * quantity).toFixed(2);
+      if (balance < cost) {
+        toast.error("Insufficient balance");
+        return;
+      }
+
+      setBuyOpen(false);
+      setBet(buyBet);
+      try {
+        const bought = await prosperityLionBuyFeatureFn({
+          data: { bet: buyBet, mode: buyMode, quantity },
+        });
+        setBalanceLocal(bought.balance);
+        void refreshJackpot();
+        applySession(bought.session);
+        const useAnte = buyMode === "super";
+        if (useAnte) setAnte(true);
+        const fsCount = bought.session.freeSpinsLeft || quantity;
+
+        setFsSummary(null);
+        setFsPaused(false);
+
+        const gen = ++playbackGen.current;
+        busyRef.current = true;
+        try {
+          await playBuyScatterIntro(gen, fsCount, useAnte);
+        } catch {
+          dismissTriggerModal();
+        } finally {
+          if (gen === playbackGen.current) {
+            busyRef.current = false;
+            if (mountedRef.current) setPhase("idle");
+          }
+        }
+        // First free spin starts via the auto-chain once the modal closes.
+      } catch (err) {
+        toast.error(err instanceof Error ? err.message : "Buy feature failed");
+      }
+    },
+    [
+      applySession,
+      balance,
+      buyMode,
+      dismissTriggerModal,
+      phase,
+      playBuyScatterIntro,
+      refreshJackpot,
+      setBalanceLocal,
+    ],
+  );
+
+  const nudgeBet = useCallback(
+    (dir: -1 | 1) => {
+      if (busy) return;
+      const i = betIndex(bet);
+      const next = BET_STEPS[i + dir];
+      if (next != null) setBet(next);
+    },
+    [bet, busy],
+  );
+
+  // Auto / free-spin chain — always invoke latest spin via ref (no stale closures).
   useEffect(() => {
-    if (!ui.locked) return;
-    const id = setTimeout(() => {
-      console.warn("[ProsperityLion] watchdog unlock — spin exceeded 12s");
-      runIdRef.current += 1;
-      clearTimer();
-      lockedRef.current = false;
-      applyIdle();
-      if (autoRef.current) scheduleContinue("auto");
-    }, 12_000);
-    return () => clearTimeout(id);
-  }, [ui.locked, ui.spinId, applyIdle, scheduleContinue]);
-
-  const cfg = cfgSnap;
-  const stepIdx = BET_STEPS.findIndex((s) => s >= bet);
-  const busy = ui.locked;
-  const winKeySet = new Set(ui.winKeys);
-  const cost = spinStake(bet, exMode, cfg);
-
-  function nudgeBet(dir: -1 | 1) {
-    if (dir < 0) {
-      const idx = Math.max(0, (stepIdx <= 0 ? 0 : stepIdx) - 1);
-      const prev = BET_STEPS[idx] ?? cfg.minBet;
-      setBet(Math.max(cfg.minBet, Math.min(cfg.maxBet, prev)));
+    if (busyRef.current || busy) return;
+    if (
+      winPopup ||
+      fsSummary ||
+      buyOpen ||
+      infoOpen ||
+      autoSpinModalOpen ||
+      betModalOpen ||
+      triggerModalCount != null
+    )
       return;
+
+    const spinGap = getAutoSpinGapMs(turbo, autoSpinConfig?.spinWithoutReels);
+
+    if (inFree && freeSpins > 0 && !fsPaused) {
+      const t = setTimeout(() => {
+        void spinRef.current(true);
+      }, spinGap);
+      return () => clearTimeout(t);
     }
-    const idx = BET_STEPS.findIndex((s) => s > bet);
-    const next = BET_STEPS[idx >= 0 ? idx : BET_STEPS.length - 1] ?? cfg.maxBet;
-    setBet(Math.max(cfg.minBet, Math.min(cfg.maxBet, next)));
-  }
+
+    if (autoSpin && !inFree) {
+      if (typeof remainingAutoSpins === "number" && remainingAutoSpins <= 0) {
+        setAutoSpin(false);
+        setAutoSpinConfig(null);
+        return;
+      }
+
+      if (autoSpinConfig?.stopOnAnyWin && lastWin > 0) {
+        setAutoSpin(false);
+        setAutoSpinConfig(null);
+        toast.info("Auto Spin stopped: Win achieved");
+        return;
+      }
+
+      if (autoSpinConfig?.singleWinExceeds && lastWin >= autoSpinConfig.singleWinExceeds) {
+        setAutoSpin(false);
+        setAutoSpinConfig(null);
+        toast.info(`Auto Spin stopped: Win exceeds ₱${autoSpinConfig.singleWinExceeds.toFixed(2)}`);
+        return;
+      }
+
+      if (
+        autoSpinConfig?.balanceIncreaseBy &&
+        balance - startBalance.current >= autoSpinConfig.balanceIncreaseBy
+      ) {
+        setAutoSpin(false);
+        setAutoSpinConfig(null);
+        toast.info(
+          `Auto Spin stopped: Balance increased by ₱${autoSpinConfig.balanceIncreaseBy.toFixed(2)}`,
+        );
+        return;
+      }
+
+      if (
+        autoSpinConfig?.balanceDecreaseBy &&
+        startBalance.current - balance >= autoSpinConfig.balanceDecreaseBy
+      ) {
+        setAutoSpin(false);
+        setAutoSpinConfig(null);
+        toast.info(
+          `Auto Spin stopped: Balance decreased by ₱${autoSpinConfig.balanceDecreaseBy.toFixed(2)}`,
+        );
+        return;
+      }
+
+      if (typeof remainingAutoSpins === "number") {
+        setRemainingAutoSpins((prev) => (typeof prev === "number" ? prev - 1 : prev));
+      }
+
+      const t = setTimeout(() => {
+        void spinRef.current(false);
+      }, spinGap);
+      return () => clearTimeout(t);
+    }
+  }, [
+    autoSpin,
+    autoSpinConfig,
+    autoSpinModalOpen,
+    balance,
+    busy,
+    fsSummary,
+    buyOpen,
+    infoOpen,
+    winPopup,
+    inFree,
+    freeSpins,
+    lastWin,
+    triggerModalCount,
+    fsPaused,
+    turbo,
+  ]);
+
+  const displayWin = dropTotal > 0 ? dropTotal : inFree ? fsSessionWin : lastWin;
+  const showTumbleBadge = tumbleStepWin > 0 && (phase === "glow" || phase === "popping");
+  const theme = prosperityLionTheme;
+  const themeVars = themeToCssVars(theme);
 
   return (
-    <div className="relative flex h-full w-full flex-col overflow-hidden bg-[#0c0814] text-white">
-      <style>{`
-        @keyframes fg-reel-scroll-kf {
-          from { transform: translateY(0); }
-          to { transform: translateY(-50%); }
-        }
-        @keyframes fg-reel-land-kf {
-          from { transform: translateY(-120%); opacity: 0.35; }
-          to { transform: translateY(0); opacity: 1; }
-        }
-        @keyframes fg-win-pulse-kf {
-          0%, 100% { transform: scale(1); filter: brightness(1); }
-          50% { transform: scale(1.06); filter: brightness(1.2); }
-        }
-        .fg-reel-scroll { animation: fg-reel-scroll-kf 0.22s linear infinite; }
-        .fg-reel-land { animation: fg-reel-land-kf 0.35s ease-out both; }
-        .fg-win-pulse { animation: fg-win-pulse-kf 0.5s ease-in-out 2; }
-      `}</style>
-
-      <div
-        className="pointer-events-none absolute inset-0 bg-cover bg-center bg-no-repeat"
-        style={{
-          backgroundImage: `url(${BG_SRC}), radial-gradient(ellipse at 50% 30%, #4a1d0a 0%, #120818 55%, #050308 100%)`,
-        }}
-      />
-      <div
-        className="pointer-events-none absolute inset-0"
-        style={{
-          background:
-            "radial-gradient(ellipse at 50% 42%, rgba(12,6,18,0.25) 0%, rgba(8,4,14,0.62) 58%, rgba(0,0,0,0.8) 100%)",
-        }}
+    <div
+      className="relative flex h-full min-h-0 w-full max-w-[100vw] flex-col overflow-hidden select-none"
+      style={themeVars}
+    >
+      <img
+        src={theme.assets.backdrop}
+        alt=""
+        className="absolute inset-0 size-full object-cover"
+        aria-hidden
+        decoding="async"
+        fetchPriority="high"
       />
 
-      <header className="relative z-10 flex shrink-0 flex-col items-center gap-2.5 px-3 pt-3 sm:pt-4">
-        <div className="relative w-full max-w-md rounded-2xl border border-amber-500/50 bg-gradient-to-b from-[#3a1a08]/90 to-[#120810]/95 px-5 py-2 text-center shadow-[0_0_28px_rgba(245,158,11,0.25)]">
-          <button
-            type="button"
-            onClick={() => setInfoOpen(true)}
-            className="absolute right-2 top-2 grid size-8 place-items-center rounded-lg border border-amber-500/50 bg-black/35 text-amber-100 hover:bg-amber-900/40"
-            title="Paytable & rules"
-            aria-label="Info"
-          >
-            <Info className="size-4" />
-          </button>
-          <p className="text-[9px] font-bold uppercase tracking-[0.28em] text-amber-400/90">
-            MaxHigh · Prosperity Lion
-          </p>
-          <h1 className="bg-gradient-to-r from-amber-200 via-yellow-300 to-rose-400 bg-clip-text text-xl font-black uppercase tracking-wide text-transparent sm:text-2xl">
-            Prosperity Lion
-          </h1>
-        </div>
+      <button
+        type="button"
+        onClick={toggleMute}
+        className="absolute right-2 top-[max(0.4rem,env(safe-area-inset-top))] z-30 grid size-9 place-items-center rounded-full border bg-black/55 backdrop-blur-sm hover:brightness-125"
+        style={{
+          borderColor: "var(--p-mute-border)",
+          color: "var(--p-mute-text)",
+        }}
+        aria-label={muted ? "Unmute" : "Mute"}
+        title={muted ? "Unmute" : "Mute"}
+      >
+        {muted ? <VolumeX size={16} /> : <Volume2 size={16} />}
+      </button>
 
-        <div className="flex w-full max-w-md items-center justify-center gap-3">
-          <div className="min-w-[8.5rem] flex-1 rounded-xl border border-amber-500/40 bg-[#1a0e14]/90 px-4 py-1.5 text-center">
-            <p className="text-[8px] font-black uppercase tracking-[0.2em] text-amber-400/80">
-              Balance
-            </p>
-            <p className="font-black tabular-nums text-amber-100">{formatMoney(balance)}</p>
-          </div>
-          <div className="min-w-[8.5rem] flex-1 rounded-xl border border-amber-500/40 bg-[#1a0e14]/90 px-4 py-1.5 text-center">
-            <p className="text-[8px] font-black uppercase tracking-[0.2em] text-amber-400/80">
-              Last win
-            </p>
-            <p className="font-black tabular-nums text-amber-100">{formatMoney(ui.lastWin)}</p>
-          </div>
-        </div>
-      </header>
-
-      <div className="relative z-10 mx-auto flex min-h-0 w-full max-w-[900px] flex-1 flex-col items-center justify-center px-2 py-2 sm:px-4">
-        <div className="flex h-full min-h-0 max-h-full w-full items-stretch gap-2 sm:gap-3">
-          {/* Main 3×3 grid */}
-          <div className="relative min-h-0 min-w-0 flex-[3]">
+      {/* Playfield — sit above Android 3-button nav (safe-area is often 0 there) */}
+      <div className="relative z-10 flex min-h-0 flex-1 flex-col px-1.5 pt-[max(0.25rem,env(safe-area-inset-top))] pb-[max(3.25rem,env(safe-area-inset-bottom))] sm:items-center sm:justify-center sm:px-3 sm:py-2 sm:pb-2">
+        <div className="mx-auto flex h-full min-h-0 w-full max-w-[840px] flex-col">
+          {/* Board well — hug the grid (no dual-grid temple layout) */}
+          <div className="relative flex min-h-0 w-full flex-1 items-center justify-center">
             <div
-              className="relative mx-auto size-full max-h-full"
-              style={{ aspectRatio: "3 / 3", maxHeight: "100%" }}
+              className="relative flex max-h-full max-w-full flex-col overflow-hidden rounded-[1.25rem] p-1.5 sm:rounded-2xl sm:p-2"
+              style={{
+                width: "fit-content",
+                height: "fit-content",
+                background:
+                  "linear-gradient(180deg, var(--p-well-top) 0%, var(--p-well-bottom) 100%)",
+                boxShadow:
+                  "inset 0 0 0 1.5px var(--p-rim), inset 0 0 40px rgba(0,0,0,0.35), 0 12px 36px rgba(0,0,0,0.45)",
+              }}
             >
               <div
-                className="relative grid size-full gap-1 overflow-hidden rounded-[0.85rem] border-[3px] border-amber-500/70 p-1.5 shadow-[0_18px_50px_rgba(180,83,9,0.45)] sm:gap-1.5 sm:rounded-[1.15rem] sm:p-2"
+                className="pointer-events-none absolute inset-x-0 top-0 z-0 h-16"
                 style={{
                   background:
-                    "linear-gradient(145deg,#fbbf24 0%,#b45309 40%,#7c2d12 100%)",
-                  gridTemplateColumns: "repeat(3, minmax(0, 1fr))",
-                  gridTemplateRows: "repeat(3, minmax(0, 1fr))",
+                    "radial-gradient(ellipse at 50% 0%, var(--p-top-glow) 0%, transparent 70%)",
+                }}
+                aria-hidden
+              />
+
+              <div className="relative z-10 flex max-h-full max-w-full items-center justify-center">
+                {showTumbleBadge && (
+                  <div className="pointer-events-none absolute left-1/2 top-1 z-20 -translate-x-1/2">
+                    <div
+                      className="rounded-full border-2 px-4 py-1.5 text-center shadow-[0_0_20px_var(--p-spin-shadow)]"
+                      style={{
+                        borderColor: "var(--p-tumble-border)",
+                        background:
+                          "linear-gradient(180deg, var(--p-tumble-from) 0%, var(--p-tumble-to) 100%)",
+                      }}
+                    >
+                      <div
+                        className="text-[10px] font-black uppercase tracking-[0.18em]"
+                        style={{ color: "var(--p-accent-soft)" }}
+                      >
+                        Tumble Win
+                      </div>
+                      <div
+                        className="text-lg font-black leading-none tabular-nums sm:text-xl"
+                        style={{ color: "var(--p-tumble-text)" }}
+                      >
+                        {formatMoney(tumbleStepWin, { signed: true })}
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                <ReelGrid visuals={reelVisuals} />
+              </div>
+            </div>
+          </div>
+
+          {/* Buy feature — compact on phones so the spin row stays on-screen */}
+          {!inFree && (
+            <div className="mt-1 flex shrink-0 justify-center gap-1.5 sm:mt-2 sm:gap-3">
+              <button
+                type="button"
+                disabled={busy}
+                onClick={() => openBuyFeature("normal")}
+                className="min-h-9 rounded-xl border-2 bg-black/70 px-3 py-1.5 text-[10px] font-black uppercase tracking-wide disabled:opacity-40 sm:min-h-10 sm:px-4 sm:py-2 sm:text-[11px]"
+                style={{
+                  borderColor: "var(--p-accent)",
+                  color: "var(--p-accent-soft)",
                 }}
               >
-                {Array.from({ length: cfg.rowsCount }, (_, row) =>
-                  Array.from({ length: cfg.reelsCount }, (_, reel) => {
-                    const kind = ui.grid[reel]?.[row] ?? "temple";
-                    const key = cellKey(reel, row);
-                    return (
-                      <div
-                        key={`${reel}-${row}`}
-                        className="relative min-h-0 min-w-0 overflow-hidden"
-                        style={{ gridColumn: reel + 1, gridRow: row + 1 }}
-                      >
-                        <ReelCell
-                          kind={kind}
-                          phase={ui.phase}
-                          reel={reel}
-                          row={row}
-                          spinId={ui.spinId}
-                          winning={winKeySet.has(key)}
-                          fading={ui.fading && winKeySet.has(key)}
-                          dimmed={
-                            winKeySet.size > 0 &&
-                            !winKeySet.has(key) &&
-                            !ui.fading
-                          }
-                          className="!aspect-auto h-full w-full"
-                        />
-                      </div>
-                    );
-                  }),
-                ).flat()}
-              </div>
+                Buy FS {formatMoneyCompact(buyCost)}
+              </button>
+            </div>
+          )}
 
-              {(ui.banner || ui.popup != null) && (
-                <div className="pointer-events-none absolute inset-x-0 top-2 z-30 flex justify-center sm:top-3">
-                  <div
-                    className={cn(
-                      "rounded-full border px-4 py-1.5 text-center text-sm font-black uppercase shadow-lg transition-opacity duration-350 ease-out",
-                      ui.fading ? "opacity-0" : "opacity-100",
-                      "border-amber-400/70 bg-gradient-to-b from-rose-900 to-[#1a0804] text-amber-100",
-                    )}
-                  >
-                    {ui.banner}
-                    {ui.popup != null && (
-                      <span className="ml-2 tabular-nums text-white">{formatMoney(ui.popup)}</span>
-                    )}
-                  </div>
+          {/* HUD — compact on Android so Spin sits above the system nav */}
+          <div className="mt-1 w-full min-w-0 shrink-0 sm:mt-3">
+            <div className="mb-1.5 grid grid-cols-3 gap-1 sm:mb-2 sm:gap-2">
+              <div
+                className="min-w-0 rounded-xl border bg-black/75 px-1 py-1.5 text-center sm:px-2 sm:py-2.5"
+                style={{ borderColor: "var(--p-hud-border)" }}
+              >
+                <div
+                  className="text-[9px] font-bold uppercase tracking-wider sm:text-[11px]"
+                  style={{ color: "var(--p-hud-label)" }}
+                >
+                  Bet
                 </div>
-              )}
+                <div
+                  className="break-all text-[11px] font-black tabular-nums leading-tight sm:text-base"
+                  style={{ color: "var(--p-hud-value)" }}
+                >
+                  {formatMoney(totalBet)}
+                </div>
+              </div>
+              <div
+                className="min-w-0 rounded-xl border px-1 py-1.5 text-center sm:px-2 sm:py-2.5"
+                style={{
+                  borderColor: "var(--p-win-border)",
+                  background: "linear-gradient(180deg, var(--p-win-from) 0%, var(--p-win-to) 100%)",
+                }}
+              >
+                <div
+                  className="text-[9px] font-bold uppercase tracking-wider sm:text-[11px]"
+                  style={{ color: "var(--p-win-label)" }}
+                >
+                  Win
+                </div>
+                <div
+                  className="break-all text-[11px] font-black tabular-nums leading-tight sm:text-base"
+                  style={{ color: "var(--p-win-value)" }}
+                  title={displayWin > 0 ? formatMoney(displayWin) : undefined}
+                >
+                  {displayWin > 0 ? formatMoney(displayWin) : "—"}
+                </div>
+              </div>
+              <div
+                className="min-w-0 rounded-xl border bg-black/75 px-1 py-1.5 text-center sm:px-2 sm:py-2.5"
+                style={{ borderColor: "var(--p-hud-border)" }}
+              >
+                <div
+                  className="text-[9px] font-bold uppercase tracking-wider sm:text-[11px]"
+                  style={{ color: "var(--p-hud-label)" }}
+                >
+                  Balance
+                </div>
+                <div
+                  className="break-all text-[11px] font-black tabular-nums leading-tight sm:text-base"
+                  style={{ color: "var(--p-hud-value)" }}
+                  title={formatMoney(balance)}
+                >
+                  {formatMoney(balance)}
+                </div>
+              </div>
             </div>
-          </div>
-
-          {/* 4th multiplier reel */}
-          <div className="relative min-h-0 w-[22%] max-w-[7.5rem] shrink-0 sm:w-[20%]">
-            <MultiplierReelView
-              faces={ui.multiplierReel.faces}
-              spinning={ui.phase === "spinning"}
-              highlight={ui.multHighlight}
-              fading={ui.fading}
-              spinId={ui.spinId}
-              className="h-full"
-            />
-          </div>
-        </div>
-
-        <p className="mt-1.5 shrink-0 text-center text-[10px] font-semibold uppercase tracking-wider text-amber-200/55 sm:text-[11px]">
-          5 lines · mult reel · {exMode ? "EX ON (+50%)" : "base"}
-          {busy ? " · spinning…" : ""}
-        </p>
-      </div>
-
-      <footer className="relative z-10 shrink-0 px-3 pb-3 pt-1 sm:px-4 sm:pb-4">
-        <div className="mx-auto w-full max-w-lg rounded-2xl border-2 border-amber-500/50 bg-gradient-to-b from-[#2a1408]/95 to-[#0c0610]/98 px-3 py-3 shadow-[0_0_30px_rgba(245,158,11,0.2)] sm:px-4">
-          <div className="flex flex-col items-center gap-2.5">
-            <div className="flex flex-wrap items-center justify-center gap-2">
+            <div
+              className="flex min-w-0 items-center gap-1 rounded-2xl border bg-black/80 px-1 py-1.5 backdrop-blur-md sm:gap-3 sm:px-3 sm:py-2.5"
+              style={{ borderColor: "var(--p-hud-border)" }}
+            >
               <button
                 type="button"
-                disabled={busy}
-                onClick={() => nudgeBet(-1)}
-                className="grid size-10 place-items-center rounded-xl border border-amber-500/50 bg-[#2a1408] text-lg font-black text-amber-100 disabled:opacity-40"
+                onClick={() => {
+                  prosperityLionAudio.playUiClick();
+                  setInfoOpen(true);
+                }}
+                className="grid size-10 shrink-0 place-items-center rounded-xl border border-white/20 bg-neutral-800 text-white sm:size-11"
+                aria-label="Paytable Info"
               >
-                −
+                <Info size={20} />
               </button>
 
-              <div className="min-w-[6.5rem] rounded-xl border border-amber-500/45 bg-gradient-to-b from-[#3a1608] to-[#0c0402] px-3 py-1.5 text-center">
-                <p className="text-[8px] font-black uppercase tracking-[0.2em] text-amber-400/75">
-                  Bet{exMode ? " → cost" : ""}
-                </p>
-                <p className="text-base font-black tabular-nums text-amber-100">
-                  {exMode ? (
-                    <>
-                      <span className="text-amber-200/60 line-through decoration-amber-500/50">
-                        {formatMoney(bet)}
-                      </span>{" "}
-                      {formatMoney(cost)}
-                    </>
-                  ) : (
-                    formatMoney(bet)
-                  )}
-                </p>
+              <div className="flex min-w-0 flex-1 items-center justify-center gap-0.5 rounded-xl border border-white/15 bg-neutral-900/90 px-0.5 py-0.5 sm:gap-1.5 sm:px-1.5 sm:py-1">
+                <button
+                  type="button"
+                  disabled={busy}
+                  onClick={() => nudgeBet(-1)}
+                  className="grid size-9 shrink-0 place-items-center rounded-lg bg-neutral-700 text-lg font-black text-white disabled:opacity-40 sm:size-10 sm:text-xl"
+                  aria-label="Decrease Bet"
+                >
+                  −
+                </button>
+                <button
+                  type="button"
+                  disabled={busy}
+                  onClick={() => setBetModalOpen(true)}
+                  className="min-w-0 flex-1 px-0.5 text-center disabled:opacity-40 sm:min-w-[4.25rem] sm:flex-none sm:px-1"
+                  aria-label="Select Bet Amount"
+                >
+                  <div className="text-[9px] font-bold uppercase tracking-wider text-white/55 sm:text-[10px]">
+                    Bet
+                  </div>
+                  <div
+                    className="truncate text-xs font-black tabular-nums sm:text-base"
+                    style={{ color: "var(--p-win-value)" }}
+                  >
+                    {formatMoney(totalBet)}
+                  </div>
+                </button>
+                <button
+                  type="button"
+                  disabled={busy}
+                  onClick={() => nudgeBet(1)}
+                  className="grid size-9 shrink-0 place-items-center rounded-lg bg-neutral-700 text-lg font-black text-white disabled:opacity-40 sm:size-10 sm:text-xl"
+                  aria-label="Increase Bet"
+                >
+                  +
+                </button>
               </div>
 
               <button
                 type="button"
-                disabled={busy}
-                onClick={() => nudgeBet(1)}
-                className="grid size-10 place-items-center rounded-xl border border-amber-500/50 bg-[#2a1408] text-lg font-black text-amber-100 disabled:opacity-40"
-              >
-                +
-              </button>
-            </div>
-
-            <div className="flex flex-wrap items-center justify-center gap-2">
-              <button
-                type="button"
-                disabled={busy}
-                onClick={() => setExMode((v) => !v)}
+                onClick={() => setTurbo((v) => !v)}
                 className={cn(
-                  "rounded-xl border px-4 py-2 text-[11px] font-black uppercase tracking-wider",
-                  exMode
-                    ? "border-rose-300 bg-gradient-to-b from-rose-500 to-amber-600 text-black shadow-[0_0_18px_rgba(244,63,94,0.45)]"
-                    : "border-amber-600/55 bg-[#1a0a06] text-amber-200/85",
+                  "grid size-10 shrink-0 place-items-center rounded-xl border sm:size-11",
+                  !turbo && "border-white/20 bg-neutral-800 text-white/70",
                 )}
-                title="Extra Bet +50% — improves multiplier-reel odds"
-              >
-                EX {exMode ? "ON" : "OFF"}
-              </button>
-
-              <button
-                type="button"
-                onClick={() => setTurbo((t) => !t)}
-                className={cn(
-                  "rounded-xl border px-4 py-2 text-[11px] font-black uppercase tracking-wider",
+                style={
                   turbo
-                    ? "border-amber-300 bg-gradient-to-b from-amber-400 to-rose-600 text-black"
-                    : "border-amber-600/55 bg-[#1a0a06] text-amber-200/85",
-                )}
+                    ? {
+                        borderColor: "var(--p-accent)",
+                        background: "color-mix(in srgb, var(--p-accent) 25%, transparent)",
+                        color: "var(--p-win-value)",
+                      }
+                    : undefined
+                }
+                aria-label="Turbo Fast Mode"
               >
-                Turbo
+                <FastForward size={18} />
               </button>
 
               <button
                 type="button"
-                disabled={busy || balance < cost}
-                onClick={() => startSpin()}
-                className="min-w-[8.5rem] rounded-full border-2 border-amber-300/80 bg-gradient-to-b from-amber-400 via-rose-600 to-rose-950 px-6 py-2.5 text-sm font-black uppercase tracking-wide text-amber-50 shadow-[0_0_28px_rgba(245,158,11,0.55)] disabled:opacity-40"
+                disabled={!busy && !autoSpin && inFree && freeSpins === 0}
+                onClick={() => {
+                  if (busy) {
+                    skipRef.current = true;
+                    if (inFree || freeSpins > 0) setFsPaused(true);
+                  } else if (autoSpin) {
+                    setAutoSpin(false);
+                    setAutoSpinConfig(null);
+                  } else if (inFree || freeSpins > 0) {
+                    setFsPaused(false);
+                    prosperityLionAudio.playUiClick();
+                    void spin(true);
+                  } else {
+                    prosperityLionAudio.playUiClick();
+                    void spin(false);
+                  }
+                }}
+                className="relative grid size-14 shrink-0 place-items-center rounded-full border-[3px] active:scale-95 sm:size-16"
+                style={{
+                  borderColor: "var(--p-accent-soft)",
+                  background:
+                    "linear-gradient(180deg, var(--p-spin-from) 0%, var(--p-spin-mid) 50%, var(--p-spin-to) 100%)",
+                  color: "var(--p-accent-deep)",
+                  boxShadow: "0 6px 22px var(--p-spin-shadow)",
+                }}
+                aria-label="Spin"
               >
-                {busy ? "…" : "Spin"}
+                <div className="absolute inset-1 flex items-center justify-center rounded-full bg-gradient-to-b from-neutral-900 to-black shadow-inner sm:inset-1.5">
+                  {inFree ? (
+                    <div className="flex flex-col items-center -space-y-0.5">
+                      <span
+                        className="text-xl font-black tabular-nums leading-none sm:text-2xl"
+                        style={{ color: "var(--p-win-value)" }}
+                      >
+                        {freeSpins}
+                      </span>
+                      <span
+                        className="text-[8px] font-black uppercase tracking-widest sm:text-[9px]"
+                        style={{ color: "var(--p-accent)" }}
+                      >
+                        Spins
+                      </span>
+                    </div>
+                  ) : autoSpin ? (
+                    <div className="flex flex-col items-center -space-y-0.5">
+                      <span
+                        className="text-xl font-black tabular-nums leading-none sm:text-2xl"
+                        style={{ color: "var(--p-win-value)" }}
+                      >
+                        {remainingAutoSpins === "infinity" ? "∞" : remainingAutoSpins}
+                      </span>
+                      <span
+                        className="text-[8px] font-black uppercase tracking-widest sm:text-[9px]"
+                        style={{ color: "var(--p-accent)" }}
+                      >
+                        Auto
+                      </span>
+                    </div>
+                  ) : busy ? (
+                    <RotateCw
+                      size={24}
+                      className="animate-spin sm:size-7"
+                      style={{ color: "var(--p-win-value)" }}
+                    />
+                  ) : (
+                    <RotateCw
+                      size={24}
+                      className="sm:size-7"
+                      style={{ color: "var(--p-win-value)" }}
+                    />
+                  )}
+                </div>
               </button>
 
               <button
                 type="button"
                 onClick={() => {
-                  setAutoSpin((on) => {
-                    const next = !on;
-                    if (next) {
-                      setTimeout(() => startSpinRef.current(), 40);
-                    } else {
-                      clearAutoTimer();
-                    }
-                    return next;
-                  });
+                  if (busy || autoSpin || inFree) {
+                    setAutoSpin(false);
+                    setAutoSpinConfig(null);
+                    skipRef.current = true;
+                    if (inFree) setFsPaused(true);
+                  } else {
+                    setAutoSpinModalOpen(true);
+                  }
                 }}
                 className={cn(
-                  "rounded-xl border px-4 py-2 text-[11px] font-black uppercase tracking-wider",
-                  autoSpin
-                    ? "border-yellow-300 bg-gradient-to-b from-amber-400 to-orange-600 text-black"
-                    : "border-amber-600/55 bg-[#1a0a06] text-amber-200/85",
+                  "grid size-10 shrink-0 place-items-center rounded-xl border sm:size-11",
+                  busy || autoSpin || (inFree && !fsPaused)
+                    ? "border-red-500 bg-red-600 text-white shadow-[0_0_14px_rgba(239,68,68,0.85)]"
+                    : "border-white/20 bg-neutral-800 text-white/70",
                 )}
+                aria-label={busy || autoSpin || inFree ? "Stop Game" : "Auto Spin Settings"}
               >
-                Auto
+                {busy || autoSpin || (inFree && !fsPaused) ? (
+                  <Square size={16} className="fill-white text-white" />
+                ) : (
+                  <RotateCcw size={18} />
+                )}
               </button>
             </div>
+
+            {busy && displayWin <= 0 && (
+              <p className="mt-1 hidden text-center text-[10px] font-bold uppercase tracking-[0.2em] text-amber-200/70 sm:mt-1.5 sm:block sm:text-xs">
+                Spinning…
+              </p>
+            )}
+            {!busy && displayWin <= 0 && !inFree && (
+              <p className="mt-1 hidden text-center text-[10px] font-bold uppercase tracking-[0.2em] text-amber-200/55 sm:mt-1.5 sm:block sm:text-xs">
+                Good luck
+              </p>
+            )}
           </div>
         </div>
-      </footer>
+      </div>
 
-      <PaytableModal open={infoOpen} onClose={() => setInfoOpen(false)} />
+      <AnimatePresence>
+        {autoSpinModalOpen && (
+          <AutoSpinModal
+            bet={totalBet}
+            onClose={() => setAutoSpinModalOpen(false)}
+            onStart={(options) => {
+              setAutoSpinConfig(options);
+              setRemainingAutoSpins(options.spinCount);
+              startBalance.current = balance;
+              if (options.spinWithoutReels) {
+                setTurbo(true);
+              }
+              setAutoSpinModalOpen(false);
+              setAutoSpin(true);
+            }}
+          />
+        )}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {infoOpen && <PaytableModal bet={totalBet} onClose={() => setInfoOpen(false)} />}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {betModalOpen && (
+          <BetSelectModal
+            currentBet={bet}
+            onSelectBet={(newBet) => setBet(newBet)}
+            onClose={() => setBetModalOpen(false)}
+          />
+        )}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {buyOpen && (
+          <BuyFeatureModal
+            balance={balance}
+            mode={buyMode}
+            onCancel={() => setBuyOpen(false)}
+            onConfirm={(buyBet, quantity) => {
+              void buyFeature(buyBet, quantity);
+            }}
+          />
+        )}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {fsSummary && (
+          <FreeSpinsCongrats
+            amount={fsSummary.amount}
+            baseEarn={fsSummary.baseEarn}
+            multiplier={fsSummary.multiplier}
+            spinsPlayed={fsSummary.spinsPlayed}
+            onContinue={dismissFsSummary}
+          />
+        )}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {winPopup && !fsSummary && (
+          <WinCelebration
+            amount={winPopup.amount}
+            bet={bet}
+            baseEarn={winPopup.baseEarn}
+            multiplier={winPopup.multiplier}
+            onDismiss={() => setWinPopup(null)}
+          />
+        )}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {triggerModalCount != null && (
+          <FreeSpinsTriggerModal count={triggerModalCount} onClose={dismissTriggerModal} />
+        )}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {banner && !winPopup && !fsSummary && !triggerModalCount && (
+          <div className="absolute inset-0 z-[100] flex items-center justify-center pointer-events-none animate-in fade-in zoom-in duration-300">
+            <div
+              className="rounded-2xl border-4 border-white px-10 py-5 text-center shadow-2xl"
+              style={{
+                background:
+                  "linear-gradient(180deg, var(--p-spin-from) 0%, var(--p-spin-mid) 100%)",
+              }}
+            >
+              <h2 className="mb-2 font-black uppercase tracking-widest text-white drop-shadow-md sm:text-lg">
+                {banner}
+              </h2>
+            </div>
+          </div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

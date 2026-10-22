@@ -126,9 +126,7 @@ function cardFlip(rand) {
 
 /** Short celebratory arpeggio — win */
 function winSting(rand, big = false) {
-  const notes = big
-    ? [392.0, 493.88, 587.33, 783.99, 987.77]
-    : [329.63, 415.3, 523.25, 659.25];
+  const notes = big ? [392.0, 493.88, 587.33, 783.99, 987.77] : [329.63, 415.3, 523.25, 659.25];
   const dur = big ? 1.35 : 0.85;
   const out = new Float32Array(Math.floor(SAMPLE_RATE * dur));
   const step = big ? 0.14 : 0.12;
@@ -164,8 +162,7 @@ function tieChime() {
     const t = i / SAMPLE_RATE;
     const env = Math.exp(-t * 3.5);
     out[i] =
-      (Math.sin(2 * Math.PI * freqs[0] * t) * 0.45 +
-        Math.sin(2 * Math.PI * freqs[1] * t) * 0.35) *
+      (Math.sin(2 * Math.PI * freqs[0] * t) * 0.45 + Math.sin(2 * Math.PI * freqs[1] * t) * 0.35) *
       env;
   }
   return normalize(out, 0.7);

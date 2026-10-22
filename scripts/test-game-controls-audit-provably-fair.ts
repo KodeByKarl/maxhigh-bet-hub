@@ -6,7 +6,14 @@
  */
 
 import { getDb } from "../src/server/db/client";
-import { users, sessions, gameControls, gameSettingsLogs, provablyFairSeeds, auditLogs } from "../src/server/db/schema";
+import {
+  users,
+  sessions,
+  gameControls,
+  gameSettingsLogs,
+  provablyFairSeeds,
+  auditLogs,
+} from "../src/server/db/schema";
 import { eq, desc } from "drizzle-orm";
 import {
   superBulkUpdateGameControls,
@@ -37,6 +44,7 @@ async function runAllTests() {
 
   await db.insert(users).values({
     id: superadminId,
+    publicUserId: `test_sa_controls_${timestamp}`,
     username: `test_sa_controls_${timestamp}`,
     passwordHash: "hash",
     balance: "100.00",
@@ -81,10 +89,16 @@ async function runAllTests() {
     afterSnapshot: JSON.stringify([{ gameId: testGameId, rtp: "96.50" }]),
   });
 
-  const [insertedLog] = await db.select().from(gameSettingsLogs).where(eq(gameSettingsLogs.id, logId)).limit(1);
+  const [insertedLog] = await db
+    .select()
+    .from(gameSettingsLogs)
+    .where(eq(gameSettingsLogs.id, logId))
+    .limit(1);
 
   if (insertedLog && Number(insertedLog.rtp) === 96.5) {
-    console.log("✅ Game settings log entry successfully recorded with full before/after snapshots.");
+    console.log(
+      "✅ Game settings log entry successfully recorded with full before/after snapshots.",
+    );
   } else {
     console.error("❌ Game settings log test failed!");
   }
@@ -152,7 +166,9 @@ async function runAllTests() {
     expectedServerSeedHash: serverSeedHash,
   });
 
-  console.log(`Round Verification Status: ${verification.isValid ? "VALID (SHA256 matched)" : "INVALID"}`);
+  console.log(
+    `Round Verification Status: ${verification.isValid ? "VALID (SHA256 matched)" : "INVALID"}`,
+  );
   if (verification.isValid && verification.floatValue === outcomeFloat1) {
     console.log("✅ Provably fair SHA256 seed verification passed!");
   } else {

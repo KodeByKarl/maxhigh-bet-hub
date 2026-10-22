@@ -1,7 +1,13 @@
 import { useEffect, useState } from "react";
 import { Link, useRouterState } from "@tanstack/react-router";
 import { ChevronDown, MoreHorizontal, Shield } from "lucide-react";
-import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+} from "@/components/ui/sheet";
 import { REPORT_SECTIONS, type ReportSection } from "../reports/ReportNav";
 import { SUPER_MOBILE_TABS, SUPER_MORE_NAV } from "./nav";
 
@@ -21,7 +27,9 @@ export function SuperMobileNav() {
   const moreActive =
     moreOpen ||
     SUPER_MORE_NAV.some((item) =>
-      item.exact ? pathname === item.to : pathname === item.to || pathname.startsWith(`${item.to}/`),
+      item.exact
+        ? pathname === item.to
+        : pathname === item.to || pathname.startsWith(`${item.to}/`),
     );
 
   return (
@@ -131,7 +139,9 @@ export function SuperMobileNav() {
                       onClick={() => setMoreOpen(false)}
                       className={[
                         "rounded-xl px-3 py-2.5 text-sm font-medium",
-                        active ? "bg-amber-500 text-black" : "bg-white/[0.04] text-muted-foreground",
+                        active
+                          ? "bg-amber-500 text-black"
+                          : "bg-white/[0.04] text-muted-foreground",
                       ].join(" ")}
                     >
                       {item.label}

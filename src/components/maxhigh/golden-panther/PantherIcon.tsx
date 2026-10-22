@@ -26,10 +26,15 @@ export const PantherIcon = memo(function PantherIcon({
 }: PantherIconProps) {
   const isScatter = kind === "lollipop";
   const isBomb = kind === "bomb";
-  const src = ICON_SRC[kind] || "/images/symbols/gp/10.png?v=1";
+  const src = ICON_SRC[kind] || "/images/symbols/golden-panther/10-v20261012-unique.png";
 
   return (
-    <div className={cn("relative grid place-items-center bg-transparent overflow-visible size-full select-none", className)}>
+    <div
+      className={cn(
+        "relative grid place-items-center bg-transparent overflow-visible size-full select-none",
+        className,
+      )}
+    >
       {/* CSS-only win ring — GPU-friendly, no animated bloom / box-shadow layers */}
       {winLit && (
         <div
@@ -48,11 +53,10 @@ export const PantherIcon = memo(function PantherIcon({
         loading="eager"
         className={cn(
           "relative z-[1] size-full object-contain pointer-events-none",
+          kind === "grape" && "scale-[0.9] p-[6%]",
           isScatter && !winLit && "scale-[1.06]",
           isBomb && !winLit && "scale-[1.06]",
-          !winLit &&
-            (kind === "heart" || kind === "purple" || kind === "green") &&
-            "scale-[1.04]",
+          !winLit && (kind === "heart" || kind === "purple" || kind === "green") && "scale-[1.04]",
           winLit && "scale-[1.05] brightness-125 saturate-125",
         )}
         style={
@@ -86,8 +90,7 @@ export const PantherIcon = memo(function PantherIcon({
             className="rounded-full border-2 px-2 py-0.5 font-black text-[clamp(12px,2.4vw,18px)] drop-shadow-[0_2px_4px_rgba(0,0,0,0.85)]"
             style={{
               borderColor: "var(--p-bomb-border)",
-              background:
-                "linear-gradient(135deg, var(--p-bomb-from), var(--p-bomb-to))",
+              background: "linear-gradient(135deg, var(--p-bomb-from), var(--p-bomb-to))",
               color: "var(--p-bomb-text)",
             }}
           >

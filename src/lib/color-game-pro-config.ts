@@ -17,14 +17,7 @@ export const COLOR_GAME_PRO_GAME_ID = "color-game-pro";
 export const GAME_ID = COLOR_GAME_PRO_GAME_ID;
 export const COLOR_GAME_PRO_TITLE = "Color Game Pro";
 
-export const COLOR_SPOT_IDS = [
-  "red",
-  "yellow",
-  "blue",
-  "green",
-  "white",
-  "pink",
-] as const;
+export const COLOR_SPOT_IDS = ["red", "yellow", "blue", "green", "white", "pink"] as const;
 
 export type ColorSpotId = (typeof COLOR_SPOT_IDS)[number];
 

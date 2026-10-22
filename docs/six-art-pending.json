@@ -1,0 +1,300 @@
+{
+  "status": "blocked_by_image_generation_usage_limit",
+  "reportedReset": "2026-10-13T13:25:47+08:00",
+  "pending": [
+    {
+      "game": "midnight-owl",
+      "asset": "premium-b",
+      "transparent": true,
+      "prompt": "Use case: stylized-concept. One standalone premium Midnight Owl casino reel symbol: an ornate celestial telescope in silver and indigo. Art direction: midnight indigo, moon silver, opal and intricate celestial feather ornament. Exquisite detailed 3D fantasy gemstone and metal artwork, bold readable silhouette, square canvas. Complete object centered with generous transparent margins. Genuine transparent background. No card tile, backdrop, floor, extra objects, watermark or text except the requested numeral or letter. Never crop any part. One symbol only."
+    },
+    {
+      "game": "midnight-owl",
+      "asset": "premium-c",
+      "transparent": true,
+      "prompt": "Use case: stylized-concept. One standalone premium Midnight Owl casino reel symbol: a majestic snowy owl with luminous blue eyes and a moon-silver crown. Art direction: midnight indigo, moon silver, opal and intricate celestial feather ornament. Exquisite detailed 3D fantasy gemstone and metal artwork, bold readable silhouette, square canvas. Complete object centered with generous transparent margins. Genuine transparent background. No card tile, backdrop, floor, extra objects, watermark or text except the requested numeral or letter. Never crop any part. One symbol only."
+    },
+    {
+      "game": "midnight-owl",
+      "asset": "scatter",
+      "transparent": true,
+      "prompt": "Use case: stylized-concept. One standalone premium Midnight Owl casino reel symbol: a silver owl constellation medallion. Art direction: midnight indigo, moon silver, opal and intricate celestial feather ornament. Exquisite detailed 3D fantasy gemstone and metal artwork, bold readable silhouette, square canvas. Complete object centered with generous transparent margins. Genuine transparent background. No card tile, backdrop, floor, extra objects, watermark or text except the requested numeral or letter. Never crop any part. One symbol only."
+    },
+    {
+      "game": "midnight-owl",
+      "asset": "wild",
+      "transparent": true,
+      "prompt": "Use case: stylized-concept. One standalone premium Midnight Owl casino reel symbol: a glowing indigo moonstone embraced by silver owl wings. Art direction: midnight indigo, moon silver, opal and intricate celestial feather ornament. Exquisite detailed 3D fantasy gemstone and metal artwork, bold readable silhouette, square canvas. Complete object centered with generous transparent margins. Genuine transparent background. No card tile, backdrop, floor, extra objects, watermark or text except the requested numeral or letter. Never crop any part. One symbol only."
+    },
+    {
+      "game": "midnight-owl",
+      "asset": "backdrop",
+      "transparent": false,
+      "prompt": "Use case: stylized-concept. Premium cinematic Midnight Owl slot-game environment, 16:9 landscape. an ancient moonlit woodland observatory with silver constellations, violet mist and giant tree silhouettes. Art direction: midnight indigo, moon silver, opal and intricate celestial feather ornament. Rich architecture and themed details concentrated at far outer edges. Central 60 percent a calm dark atmospheric field for the reel grid; top and bottom center quiet for controls. Safe to center crop on portrait mobile. Full bleed, sophisticated depth and materials. No portraits, text, UI, reels, cards, logos or watermark."
+    },
+    {
+      "game": "lotus-lynx",
+      "asset": "10",
+      "transparent": true,
+      "prompt": "Use case: stylized-concept. One standalone premium Lotus Lynx casino reel symbol: the single numeral 10, sculpted jade gemstone face with themed metal edging. Art direction: rose gold, blush lotus petals, jade and elegant water-garden ornament. Exquisite detailed 3D fantasy gemstone and metal artwork, bold readable silhouette, square canvas. Complete object centered with generous transparent margins. Genuine transparent background. No card tile, backdrop, floor, extra objects, watermark or text except the requested numeral or letter. Never crop any part. One symbol only."
+    },
+    {
+      "game": "lotus-lynx",
+      "asset": "J",
+      "transparent": true,
+      "prompt": "Use case: stylized-concept. One standalone premium Lotus Lynx casino reel symbol: the single letter J, sculpted sapphire gemstone face with themed metal edging. Art direction: rose gold, blush lotus petals, jade and elegant water-garden ornament. Exquisite detailed 3D fantasy gemstone and metal artwork, bold readable silhouette, square canvas. Complete object centered with generous transparent margins. Genuine transparent background. No card tile, backdrop, floor, extra objects, watermark or text except the requested numeral or letter. Never crop any part. One symbol only."
+    },
+    {
+      "game": "lotus-lynx",
+      "asset": "Q",
+      "transparent": true,
+      "prompt": "Use case: stylized-concept. One standalone premium Lotus Lynx casino reel symbol: the single letter Q, sculpted amethyst gemstone face with themed metal edging. Art direction: rose gold, blush lotus petals, jade and elegant water-garden ornament. Exquisite detailed 3D fantasy gemstone and metal artwork, bold readable silhouette, square canvas. Complete object centered with generous transparent margins. Genuine transparent background. No card tile, backdrop, floor, extra objects, watermark or text except the requested numeral or letter. Never crop any part. One symbol only."
+    },
+    {
+      "game": "lotus-lynx",
+      "asset": "K",
+      "transparent": true,
+      "prompt": "Use case: stylized-concept. One standalone premium Lotus Lynx casino reel symbol: the single letter K, sculpted ruby gemstone face with themed metal edging. Art direction: rose gold, blush lotus petals, jade and elegant water-garden ornament. Exquisite detailed 3D fantasy gemstone and metal artwork, bold readable silhouette, square canvas. Complete object centered with generous transparent margins. Genuine transparent background. No card tile, backdrop, floor, extra objects, watermark or text except the requested numeral or letter. Never crop any part. One symbol only."
+    },
+    {
+      "game": "lotus-lynx",
+      "asset": "A",
+      "transparent": true,
+      "prompt": "Use case: stylized-concept. One standalone premium Lotus Lynx casino reel symbol: the single letter A, sculpted amber gemstone face with themed metal edging. Art direction: rose gold, blush lotus petals, jade and elegant water-garden ornament. Exquisite detailed 3D fantasy gemstone and metal artwork, bold readable silhouette, square canvas. Complete object centered with generous transparent margins. Genuine transparent background. No card tile, backdrop, floor, extra objects, watermark or text except the requested numeral or letter. Never crop any part. One symbol only."
+    },
+    {
+      "game": "lotus-lynx",
+      "asset": "premium-a",
+      "transparent": true,
+      "prompt": "Use case: stylized-concept. One standalone premium Lotus Lynx casino reel symbol: an open jeweled pink lotus blossom. Art direction: rose gold, blush lotus petals, jade and elegant water-garden ornament. Exquisite detailed 3D fantasy gemstone and metal artwork, bold readable silhouette, square canvas. Complete object centered with generous transparent margins. Genuine transparent background. No card tile, backdrop, floor, extra objects, watermark or text except the requested numeral or letter. Never crop any part. One symbol only."
+    },
+    {
+      "game": "lotus-lynx",
+      "asset": "premium-b",
+      "transparent": true,
+      "prompt": "Use case: stylized-concept. One standalone premium Lotus Lynx casino reel symbol: an elegant jade perfume vessel with rose-gold fittings. Art direction: rose gold, blush lotus petals, jade and elegant water-garden ornament. Exquisite detailed 3D fantasy gemstone and metal artwork, bold readable silhouette, square canvas. Complete object centered with generous transparent margins. Genuine transparent background. No card tile, backdrop, floor, extra objects, watermark or text except the requested numeral or letter. Never crop any part. One symbol only."
+    },
+    {
+      "game": "lotus-lynx",
+      "asset": "premium-c",
+      "transparent": true,
+      "prompt": "Use case: stylized-concept. One standalone premium Lotus Lynx casino reel symbol: a regal lynx portrait with tufted ears, jade eyes and a lotus collar. Art direction: rose gold, blush lotus petals, jade and elegant water-garden ornament. Exquisite detailed 3D fantasy gemstone and metal artwork, bold readable silhouette, square canvas. Complete object centered with generous transparent margins. Genuine transparent background. No card tile, backdrop, floor, extra objects, watermark or text except the requested numeral or letter. Never crop any part. One symbol only."
+    },
+    {
+      "game": "lotus-lynx",
+      "asset": "scatter",
+      "transparent": true,
+      "prompt": "Use case: stylized-concept. One standalone premium Lotus Lynx casino reel symbol: a rose-gold lotus guardian medallion. Art direction: rose gold, blush lotus petals, jade and elegant water-garden ornament. Exquisite detailed 3D fantasy gemstone and metal artwork, bold readable silhouette, square canvas. Complete object centered with generous transparent margins. Genuine transparent background. No card tile, backdrop, floor, extra objects, watermark or text except the requested numeral or letter. Never crop any part. One symbol only."
+    },
+    {
+      "game": "lotus-lynx",
+      "asset": "wild",
+      "transparent": true,
+      "prompt": "Use case: stylized-concept. One standalone premium Lotus Lynx casino reel symbol: a glowing jade pearl in lotus petals. Art direction: rose gold, blush lotus petals, jade and elegant water-garden ornament. Exquisite detailed 3D fantasy gemstone and metal artwork, bold readable silhouette, square canvas. Complete object centered with generous transparent margins. Genuine transparent background. No card tile, backdrop, floor, extra objects, watermark or text except the requested numeral or letter. Never crop any part. One symbol only."
+    },
+    {
+      "game": "lotus-lynx",
+      "asset": "backdrop",
+      "transparent": false,
+      "prompt": "Use case: stylized-concept. Premium cinematic Lotus Lynx slot-game environment, 16:9 landscape. a tranquil lotus palace garden at pink twilight with jade terraces, lily ponds and misty waterfalls. Art direction: rose gold, blush lotus petals, jade and elegant water-garden ornament. Rich architecture and themed details concentrated at far outer edges. Central 60 percent a calm dark atmospheric field for the reel grid; top and bottom center quiet for controls. Safe to center crop on portrait mobile. Full bleed, sophisticated depth and materials. No portraits, text, UI, reels, cards, logos or watermark."
+    },
+    {
+      "game": "honey-hive",
+      "asset": "10",
+      "transparent": true,
+      "prompt": "Use case: stylized-concept. One standalone premium Honey Hive casino reel symbol: the single numeral 10, sculpted jade gemstone face with themed metal edging. Art direction: honey amber, golden wax, warm ivory and ornate hexagonal honeycomb motifs. Exquisite detailed 3D fantasy gemstone and metal artwork, bold readable silhouette, square canvas. Complete object centered with generous transparent margins. Genuine transparent background. No card tile, backdrop, floor, extra objects, watermark or text except the requested numeral or letter. Never crop any part. One symbol only."
+    },
+    {
+      "game": "honey-hive",
+      "asset": "J",
+      "transparent": true,
+      "prompt": "Use case: stylized-concept. One standalone premium Honey Hive casino reel symbol: the single letter J, sculpted sapphire gemstone face with themed metal edging. Art direction: honey amber, golden wax, warm ivory and ornate hexagonal honeycomb motifs. Exquisite detailed 3D fantasy gemstone and metal artwork, bold readable silhouette, square canvas. Complete object centered with generous transparent margins. Genuine transparent background. No card tile, backdrop, floor, extra objects, watermark or text except the requested numeral or letter. Never crop any part. One symbol only."
+    },
+    {
+      "game": "honey-hive",
+      "asset": "Q",
+      "transparent": true,
+      "prompt": "Use case: stylized-concept. One standalone premium Honey Hive casino reel symbol: the single letter Q, sculpted amethyst gemstone face with themed metal edging. Art direction: honey amber, golden wax, warm ivory and ornate hexagonal honeycomb motifs. Exquisite detailed 3D fantasy gemstone and metal artwork, bold readable silhouette, square canvas. Complete object centered with generous transparent margins. Genuine transparent background. No card tile, backdrop, floor, extra objects, watermark or text except the requested numeral or letter. Never crop any part. One symbol only."
+    },
+    {
+      "game": "honey-hive",
+      "asset": "K",
+      "transparent": true,
+      "prompt": "Use case: stylized-concept. One standalone premium Honey Hive casino reel symbol: the single letter K, sculpted ruby gemstone face with themed metal edging. Art direction: honey amber, golden wax, warm ivory and ornate hexagonal honeycomb motifs. Exquisite detailed 3D fantasy gemstone and metal artwork, bold readable silhouette, square canvas. Complete object centered with generous transparent margins. Genuine transparent background. No card tile, backdrop, floor, extra objects, watermark or text except the requested numeral or letter. Never crop any part. One symbol only."
+    },
+    {
+      "game": "honey-hive",
+      "asset": "A",
+      "transparent": true,
+      "prompt": "Use case: stylized-concept. One standalone premium Honey Hive casino reel symbol: the single letter A, sculpted amber gemstone face with themed metal edging. Art direction: honey amber, golden wax, warm ivory and ornate hexagonal honeycomb motifs. Exquisite detailed 3D fantasy gemstone and metal artwork, bold readable silhouette, square canvas. Complete object centered with generous transparent margins. Genuine transparent background. No card tile, backdrop, floor, extra objects, watermark or text except the requested numeral or letter. Never crop any part. One symbol only."
+    },
+    {
+      "game": "honey-hive",
+      "asset": "premium-a",
+      "transparent": true,
+      "prompt": "Use case: stylized-concept. One standalone premium Honey Hive casino reel symbol: a glossy golden honey dipper with amber droplets. Art direction: honey amber, golden wax, warm ivory and ornate hexagonal honeycomb motifs. Exquisite detailed 3D fantasy gemstone and metal artwork, bold readable silhouette, square canvas. Complete object centered with generous transparent margins. Genuine transparent background. No card tile, backdrop, floor, extra objects, watermark or text except the requested numeral or letter. Never crop any part. One symbol only."
+    },
+    {
+      "game": "honey-hive",
+      "asset": "premium-b",
+      "transparent": true,
+      "prompt": "Use case: stylized-concept. One standalone premium Honey Hive casino reel symbol: a jeweled honey jar with a hexagonal gold lid. Art direction: honey amber, golden wax, warm ivory and ornate hexagonal honeycomb motifs. Exquisite detailed 3D fantasy gemstone and metal artwork, bold readable silhouette, square canvas. Complete object centered with generous transparent margins. Genuine transparent background. No card tile, backdrop, floor, extra objects, watermark or text except the requested numeral or letter. Never crop any part. One symbol only."
+    },
+    {
+      "game": "honey-hive",
+      "asset": "premium-c",
+      "transparent": true,
+      "prompt": "Use case: stylized-concept. One standalone premium Honey Hive casino reel symbol: a charming regal queen honeybee with amber crown and translucent wings. Art direction: honey amber, golden wax, warm ivory and ornate hexagonal honeycomb motifs. Exquisite detailed 3D fantasy gemstone and metal artwork, bold readable silhouette, square canvas. Complete object centered with generous transparent margins. Genuine transparent background. No card tile, backdrop, floor, extra objects, watermark or text except the requested numeral or letter. Never crop any part. One symbol only."
+    },
+    {
+      "game": "honey-hive",
+      "asset": "scatter",
+      "transparent": true,
+      "prompt": "Use case: stylized-concept. One standalone premium Honey Hive casino reel symbol: a golden hexagonal hive blessing medallion. Art direction: honey amber, golden wax, warm ivory and ornate hexagonal honeycomb motifs. Exquisite detailed 3D fantasy gemstone and metal artwork, bold readable silhouette, square canvas. Complete object centered with generous transparent margins. Genuine transparent background. No card tile, backdrop, floor, extra objects, watermark or text except the requested numeral or letter. Never crop any part. One symbol only."
+    },
+    {
+      "game": "honey-hive",
+      "asset": "wild",
+      "transparent": true,
+      "prompt": "Use case: stylized-concept. One standalone premium Honey Hive casino reel symbol: a radiant amber honey crystal in golden bee wings. Art direction: honey amber, golden wax, warm ivory and ornate hexagonal honeycomb motifs. Exquisite detailed 3D fantasy gemstone and metal artwork, bold readable silhouette, square canvas. Complete object centered with generous transparent margins. Genuine transparent background. No card tile, backdrop, floor, extra objects, watermark or text except the requested numeral or letter. Never crop any part. One symbol only."
+    },
+    {
+      "game": "honey-hive",
+      "asset": "backdrop",
+      "transparent": false,
+      "prompt": "Use case: stylized-concept. Premium cinematic Honey Hive slot-game environment, 16:9 landscape. a fantastical honeybee woodland kingdom at warm dusk with golden hive architecture, flowers and amber lanterns. Art direction: honey amber, golden wax, warm ivory and ornate hexagonal honeycomb motifs. Rich architecture and themed details concentrated at far outer edges. Central 60 percent a calm dark atmospheric field for the reel grid; top and bottom center quiet for controls. Safe to center crop on portrait mobile. Full bleed, sophisticated depth and materials. No portraits, text, UI, reels, cards, logos or watermark."
+    },
+    {
+      "game": "frost-fox",
+      "asset": "10",
+      "transparent": true,
+      "prompt": "Use case: stylized-concept. One standalone premium Frost Fox casino reel symbol: the single numeral 10, sculpted jade gemstone face with themed metal edging. Art direction: ice silver, glacier cyan, sapphire and intricate snowflake ornament. Exquisite detailed 3D fantasy gemstone and metal artwork, bold readable silhouette, square canvas. Complete object centered with generous transparent margins. Genuine transparent background. No card tile, backdrop, floor, extra objects, watermark or text except the requested numeral or letter. Never crop any part. One symbol only."
+    },
+    {
+      "game": "frost-fox",
+      "asset": "J",
+      "transparent": true,
+      "prompt": "Use case: stylized-concept. One standalone premium Frost Fox casino reel symbol: the single letter J, sculpted sapphire gemstone face with themed metal edging. Art direction: ice silver, glacier cyan, sapphire and intricate snowflake ornament. Exquisite detailed 3D fantasy gemstone and metal artwork, bold readable silhouette, square canvas. Complete object centered with generous transparent margins. Genuine transparent background. No card tile, backdrop, floor, extra objects, watermark or text except the requested numeral or letter. Never crop any part. One symbol only."
+    },
+    {
+      "game": "frost-fox",
+      "asset": "Q",
+      "transparent": true,
+      "prompt": "Use case: stylized-concept. One standalone premium Frost Fox casino reel symbol: the single letter Q, sculpted amethyst gemstone face with themed metal edging. Art direction: ice silver, glacier cyan, sapphire and intricate snowflake ornament. Exquisite detailed 3D fantasy gemstone and metal artwork, bold readable silhouette, square canvas. Complete object centered with generous transparent margins. Genuine transparent background. No card tile, backdrop, floor, extra objects, watermark or text except the requested numeral or letter. Never crop any part. One symbol only."
+    },
+    {
+      "game": "frost-fox",
+      "asset": "K",
+      "transparent": true,
+      "prompt": "Use case: stylized-concept. One standalone premium Frost Fox casino reel symbol: the single letter K, sculpted ruby gemstone face with themed metal edging. Art direction: ice silver, glacier cyan, sapphire and intricate snowflake ornament. Exquisite detailed 3D fantasy gemstone and metal artwork, bold readable silhouette, square canvas. Complete object centered with generous transparent margins. Genuine transparent background. No card tile, backdrop, floor, extra objects, watermark or text except the requested numeral or letter. Never crop any part. One symbol only."
+    },
+    {
+      "game": "frost-fox",
+      "asset": "A",
+      "transparent": true,
+      "prompt": "Use case: stylized-concept. One standalone premium Frost Fox casino reel symbol: the single letter A, sculpted amber gemstone face with themed metal edging. Art direction: ice silver, glacier cyan, sapphire and intricate snowflake ornament. Exquisite detailed 3D fantasy gemstone and metal artwork, bold readable silhouette, square canvas. Complete object centered with generous transparent margins. Genuine transparent background. No card tile, backdrop, floor, extra objects, watermark or text except the requested numeral or letter. Never crop any part. One symbol only."
+    },
+    {
+      "game": "frost-fox",
+      "asset": "premium-a",
+      "transparent": true,
+      "prompt": "Use case: stylized-concept. One standalone premium Frost Fox casino reel symbol: an ornate faceted ice snowflake pendant. Art direction: ice silver, glacier cyan, sapphire and intricate snowflake ornament. Exquisite detailed 3D fantasy gemstone and metal artwork, bold readable silhouette, square canvas. Complete object centered with generous transparent margins. Genuine transparent background. No card tile, backdrop, floor, extra objects, watermark or text except the requested numeral or letter. Never crop any part. One symbol only."
+    },
+    {
+      "game": "frost-fox",
+      "asset": "premium-b",
+      "transparent": true,
+      "prompt": "Use case: stylized-concept. One standalone premium Frost Fox casino reel symbol: a frost crystal chalice with sapphire jewels. Art direction: ice silver, glacier cyan, sapphire and intricate snowflake ornament. Exquisite detailed 3D fantasy gemstone and metal artwork, bold readable silhouette, square canvas. Complete object centered with generous transparent margins. Genuine transparent background. No card tile, backdrop, floor, extra objects, watermark or text except the requested numeral or letter. Never crop any part. One symbol only."
+    },
+    {
+      "game": "frost-fox",
+      "asset": "premium-c",
+      "transparent": true,
+      "prompt": "Use case: stylized-concept. One standalone premium Frost Fox casino reel symbol: a majestic white arctic fox with blue eyes and silver ice crown. Art direction: ice silver, glacier cyan, sapphire and intricate snowflake ornament. Exquisite detailed 3D fantasy gemstone and metal artwork, bold readable silhouette, square canvas. Complete object centered with generous transparent margins. Genuine transparent background. No card tile, backdrop, floor, extra objects, watermark or text except the requested numeral or letter. Never crop any part. One symbol only."
+    },
+    {
+      "game": "frost-fox",
+      "asset": "scatter",
+      "transparent": true,
+      "prompt": "Use case: stylized-concept. One standalone premium Frost Fox casino reel symbol: a silver fox snowflake medallion. Art direction: ice silver, glacier cyan, sapphire and intricate snowflake ornament. Exquisite detailed 3D fantasy gemstone and metal artwork, bold readable silhouette, square canvas. Complete object centered with generous transparent margins. Genuine transparent background. No card tile, backdrop, floor, extra objects, watermark or text except the requested numeral or letter. Never crop any part. One symbol only."
+    },
+    {
+      "game": "frost-fox",
+      "asset": "wild",
+      "transparent": true,
+      "prompt": "Use case: stylized-concept. One standalone premium Frost Fox casino reel symbol: a glowing sapphire frost orb encircled by crystalline fox tails. Art direction: ice silver, glacier cyan, sapphire and intricate snowflake ornament. Exquisite detailed 3D fantasy gemstone and metal artwork, bold readable silhouette, square canvas. Complete object centered with generous transparent margins. Genuine transparent background. No card tile, backdrop, floor, extra objects, watermark or text except the requested numeral or letter. Never crop any part. One symbol only."
+    },
+    {
+      "game": "frost-fox",
+      "asset": "backdrop",
+      "transparent": false,
+      "prompt": "Use case: stylized-concept. Premium cinematic Frost Fox slot-game environment, 16:9 landscape. an arctic crystal sanctuary beneath a subtle aurora with snowy pine trees, frozen waterfalls and blue ice arches. Art direction: ice silver, glacier cyan, sapphire and intricate snowflake ornament. Rich architecture and themed details concentrated at far outer edges. Central 60 percent a calm dark atmospheric field for the reel grid; top and bottom center quiet for controls. Safe to center crop on portrait mobile. Full bleed, sophisticated depth and materials. No portraits, text, UI, reels, cards, logos or watermark."
+    },
+    {
+      "game": "coral-cobra",
+      "asset": "10",
+      "transparent": true,
+      "prompt": "Use case: stylized-concept. One standalone premium Coral Cobra casino reel symbol: the single numeral 10, sculpted jade gemstone face with themed metal edging. Art direction: coral orange, turquoise sea glass, pearl and ornate reef-gold ornament. Exquisite detailed 3D fantasy gemstone and metal artwork, bold readable silhouette, square canvas. Complete object centered with generous transparent margins. Genuine transparent background. No card tile, backdrop, floor, extra objects, watermark or text except the requested numeral or letter. Never crop any part. One symbol only."
+    },
+    {
+      "game": "coral-cobra",
+      "asset": "J",
+      "transparent": true,
+      "prompt": "Use case: stylized-concept. One standalone premium Coral Cobra casino reel symbol: the single letter J, sculpted sapphire gemstone face with themed metal edging. Art direction: coral orange, turquoise sea glass, pearl and ornate reef-gold ornament. Exquisite detailed 3D fantasy gemstone and metal artwork, bold readable silhouette, square canvas. Complete object centered with generous transparent margins. Genuine transparent background. No card tile, backdrop, floor, extra objects, watermark or text except the requested numeral or letter. Never crop any part. One symbol only."
+    },
+    {
+      "game": "coral-cobra",
+      "asset": "Q",
+      "transparent": true,
+      "prompt": "Use case: stylized-concept. One standalone premium Coral Cobra casino reel symbol: the single letter Q, sculpted amethyst gemstone face with themed metal edging. Art direction: coral orange, turquoise sea glass, pearl and ornate reef-gold ornament. Exquisite detailed 3D fantasy gemstone and metal artwork, bold readable silhouette, square canvas. Complete object centered with generous transparent margins. Genuine transparent background. No card tile, backdrop, floor, extra objects, watermark or text except the requested numeral or letter. Never crop any part. One symbol only."
+    },
+    {
+      "game": "coral-cobra",
+      "asset": "K",
+      "transparent": true,
+      "prompt": "Use case: stylized-concept. One standalone premium Coral Cobra casino reel symbol: the single letter K, sculpted ruby gemstone face with themed metal edging. Art direction: coral orange, turquoise sea glass, pearl and ornate reef-gold ornament. Exquisite detailed 3D fantasy gemstone and metal artwork, bold readable silhouette, square canvas. Complete object centered with generous transparent margins. Genuine transparent background. No card tile, backdrop, floor, extra objects, watermark or text except the requested numeral or letter. Never crop any part. One symbol only."
+    },
+    {
+      "game": "coral-cobra",
+      "asset": "A",
+      "transparent": true,
+      "prompt": "Use case: stylized-concept. One standalone premium Coral Cobra casino reel symbol: the single letter A, sculpted amber gemstone face with themed metal edging. Art direction: coral orange, turquoise sea glass, pearl and ornate reef-gold ornament. Exquisite detailed 3D fantasy gemstone and metal artwork, bold readable silhouette, square canvas. Complete object centered with generous transparent margins. Genuine transparent background. No card tile, backdrop, floor, extra objects, watermark or text except the requested numeral or letter. Never crop any part. One symbol only."
+    },
+    {
+      "game": "coral-cobra",
+      "asset": "premium-a",
+      "transparent": true,
+      "prompt": "Use case: stylized-concept. One standalone premium Coral Cobra casino reel symbol: a luminous pearl inside an ornate coral shell. Art direction: coral orange, turquoise sea glass, pearl and ornate reef-gold ornament. Exquisite detailed 3D fantasy gemstone and metal artwork, bold readable silhouette, square canvas. Complete object centered with generous transparent margins. Genuine transparent background. No card tile, backdrop, floor, extra objects, watermark or text except the requested numeral or letter. Never crop any part. One symbol only."
+    },
+    {
+      "game": "coral-cobra",
+      "asset": "premium-b",
+      "transparent": true,
+      "prompt": "Use case: stylized-concept. One standalone premium Coral Cobra casino reel symbol: a golden sea-glass trident with turquoise gems. Art direction: coral orange, turquoise sea glass, pearl and ornate reef-gold ornament. Exquisite detailed 3D fantasy gemstone and metal artwork, bold readable silhouette, square canvas. Complete object centered with generous transparent margins. Genuine transparent background. No card tile, backdrop, floor, extra objects, watermark or text except the requested numeral or letter. Never crop any part. One symbol only."
+    },
+    {
+      "game": "coral-cobra",
+      "asset": "premium-c",
+      "transparent": true,
+      "prompt": "Use case: stylized-concept. One standalone premium Coral Cobra casino reel symbol: a magnificent sea-themed cobra with coral hood patterns, turquoise eyes and pearl collar. Art direction: coral orange, turquoise sea glass, pearl and ornate reef-gold ornament. Exquisite detailed 3D fantasy gemstone and metal artwork, bold readable silhouette, square canvas. Complete object centered with generous transparent margins. Genuine transparent background. No card tile, backdrop, floor, extra objects, watermark or text except the requested numeral or letter. Never crop any part. One symbol only."
+    },
+    {
+      "game": "coral-cobra",
+      "asset": "scatter",
+      "transparent": true,
+      "prompt": "Use case: stylized-concept. One standalone premium Coral Cobra casino reel symbol: a golden coral cobra reef medallion. Art direction: coral orange, turquoise sea glass, pearl and ornate reef-gold ornament. Exquisite detailed 3D fantasy gemstone and metal artwork, bold readable silhouette, square canvas. Complete object centered with generous transparent margins. Genuine transparent background. No card tile, backdrop, floor, extra objects, watermark or text except the requested numeral or letter. Never crop any part. One symbol only."
+    },
+    {
+      "game": "coral-cobra",
+      "asset": "wild",
+      "transparent": true,
+      "prompt": "Use case: stylized-concept. One standalone premium Coral Cobra casino reel symbol: a glowing turquoise sea pearl embraced by golden coral branches. Art direction: coral orange, turquoise sea glass, pearl and ornate reef-gold ornament. Exquisite detailed 3D fantasy gemstone and metal artwork, bold readable silhouette, square canvas. Complete object centered with generous transparent margins. Genuine transparent background. No card tile, backdrop, floor, extra objects, watermark or text except the requested numeral or letter. Never crop any part. One symbol only."
+    },
+    {
+      "game": "coral-cobra",
+      "asset": "backdrop",
+      "transparent": false,
+      "prompt": "Use case: stylized-concept. Premium cinematic Coral Cobra slot-game environment, 16:9 landscape. a submerged coral temple with turquoise water, coral columns, distant reef formations and soft filtered rays. Art direction: coral orange, turquoise sea glass, pearl and ornate reef-gold ornament. Rich architecture and themed details concentrated at far outer edges. Central 60 percent a calm dark atmospheric field for the reel grid; top and bottom center quiet for controls. Safe to center crop on portrait mobile. Full bleed, sophisticated depth and materials. No portraits, text, UI, reels, cards, logos or watermark."
+    }
+  ]
+}

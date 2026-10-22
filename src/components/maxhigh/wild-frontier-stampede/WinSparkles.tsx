@@ -44,8 +44,7 @@ export const WinSparkles = memo(function WinSparkles({
         <motion.div
           className="absolute -inset-y-4 w-[40%] skew-x-[-20deg]"
           style={{
-            background:
-              "linear-gradient(90deg, transparent, rgba(255,255,255,0.5), transparent)",
+            background: "linear-gradient(90deg, transparent, rgba(255,255,255,0.5), transparent)",
           }}
           animate={{ x: ["-120%", "220%"] }}
           transition={{

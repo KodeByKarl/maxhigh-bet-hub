@@ -78,7 +78,15 @@ export function BaccaratChipFace({ value, className, size = 44 }: ChipFaceProps)
         stroke={look.dash}
         strokeWidth="1.6"
       />
-      <circle cx="32" cy="32" r="16.5" fill="none" stroke={look.rim} strokeWidth="1.2" opacity="0.45" />
+      <circle
+        cx="32"
+        cy="32"
+        r="16.5"
+        fill="none"
+        stroke={look.rim}
+        strokeWidth="1.2"
+        opacity="0.45"
+      />
       <text
         x="32"
         y="32"

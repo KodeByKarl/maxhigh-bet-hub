@@ -4,7 +4,7 @@
 
 export const WHALE_WAR_ASSET = {
   symbolDir: "/images/symbols/whale-war",
-  soundDir: "/sounds/whale-war",
+  soundDir: "/sounds/gentle-v1/whale-war",
   thumb: "/games/whale-war.webp",
   seabed: "/images/symbols/whale-war/seabed.webp",
 } as const;

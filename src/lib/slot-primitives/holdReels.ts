@@ -10,11 +10,7 @@ export type HoldMask = boolean[];
  * Merge a prior reel snapshot with a freshly generated reel set,
  * preserving held positions.
  */
-export function applyHoldReels<T>(opts: {
-  previous: T[];
-  generated: T[];
-  held: HoldMask;
-}): T[] {
+export function applyHoldReels<T>(opts: { previous: T[]; generated: T[]; held: HoldMask }): T[] {
   const n = Math.max(opts.previous.length, opts.generated.length, opts.held.length);
   const out: T[] = [];
   for (let i = 0; i < n; i++) {

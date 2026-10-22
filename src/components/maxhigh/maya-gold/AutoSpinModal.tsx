@@ -97,8 +97,8 @@ export function AutoSpinModal({ bet, onClose, onStart }: Props) {
                     className={cn(
                       "flex h-11 items-center justify-center rounded-lg text-sm font-black transition-all",
                       isSelected
-                        ? "bg-[#FDE047] text-black shadow-lg shadow-yellow-500/20"
-                        : "bg-[#222] text-white/90 hover:bg-[#2a2a2a]"
+                        ? "bg-[var(--p-accent-soft)] text-black shadow-lg shadow-yellow-500/20"
+                        : "bg-[#222] text-white/90 hover:bg-[#2a2a2a]",
                     )}
                   >
                     {cnt === "infinity" ? "∞" : cnt}
@@ -113,12 +113,19 @@ export function AutoSpinModal({ bet, onClose, onStart }: Props) {
             onClick={() => setSpinWithoutReels((v) => !v)}
             className={cn(
               "cursor-pointer flex items-center gap-3 rounded-full border-2 px-4 py-3 transition-all",
-              spinWithoutReels
-                ? "border-[#FDE047] bg-[#FDE047]/10"
-                : "border-[#FDE047]/60 bg-[#1a1a1a] hover:border-[#FDE047]"
+              !spinWithoutReels && "bg-[#1a1a1a]",
             )}
+            style={{
+              borderColor: "var(--p-accent-soft)",
+              background: spinWithoutReels
+                ? "color-mix(in srgb, var(--p-accent-soft) 10%, transparent)"
+                : undefined,
+            }}
           >
-            <div className="grid size-9 shrink-0 place-items-center rounded-full bg-[#FDE047] text-black">
+            <div
+              className="grid size-9 shrink-0 place-items-center rounded-full text-black"
+              style={{ background: "var(--p-accent-soft)" }}
+            >
               <Rocket size={20} className="fill-black" />
             </div>
             <div className="flex-1 min-w-0">
@@ -127,9 +134,9 @@ export function AutoSpinModal({ bet, onClose, onStart }: Props) {
                   type="checkbox"
                   checked={spinWithoutReels}
                   onChange={(e) => setSpinWithoutReels(e.target.checked)}
-                  className="size-4 rounded accent-[#FDE047] cursor-pointer"
+                  className="size-4 rounded accent-[var(--p-accent-soft)] cursor-pointer"
                 />
-                <span className="text-sm font-black tracking-wide text-[#FDE047] uppercase">
+                <span className="text-sm font-black tracking-wide text-[var(--p-accent-soft)] uppercase">
                   SPIN WITHOUT REELS
                 </span>
               </div>
@@ -152,7 +159,7 @@ export function AutoSpinModal({ bet, onClose, onStart }: Props) {
                   type="checkbox"
                   checked={stopOnAnyWin}
                   onChange={(e) => setStopOnAnyWin(e.target.checked)}
-                  className="size-4 rounded accent-[#FDE047] cursor-pointer"
+                  className="size-4 rounded accent-[var(--p-accent-soft)] cursor-pointer"
                 />
                 <span>On any win</span>
               </label>
@@ -162,7 +169,7 @@ export function AutoSpinModal({ bet, onClose, onStart }: Props) {
                   type="checkbox"
                   checked={stopOnFreeSpin}
                   onChange={(e) => setStopOnFreeSpin(e.target.checked)}
-                  className="size-4 rounded accent-[#FDE047] cursor-pointer"
+                  className="size-4 rounded accent-[var(--p-accent-soft)] cursor-pointer"
                 />
                 <span>Free spin win</span>
               </label>
@@ -178,11 +185,11 @@ export function AutoSpinModal({ bet, onClose, onStart }: Props) {
                       type="checkbox"
                       checked={enableSingleWin}
                       onChange={(e) => setEnableSingleWin(e.target.checked)}
-                      className="size-4 rounded accent-[#FDE047] cursor-pointer"
+                      className="size-4 rounded accent-[var(--p-accent-soft)] cursor-pointer"
                     />
                     <span className="text-white/80">If single win exceeds</span>
                   </label>
-                  <span className="text-[#FDE047] font-black tabular-nums">
+                  <span className="text-[var(--p-accent-soft)] font-black tabular-nums">
                     {enableSingleWin ? `₱${(bet * singleWinMult).toFixed(2)}` : "None"}
                   </span>
                 </div>
@@ -194,7 +201,7 @@ export function AutoSpinModal({ bet, onClose, onStart }: Props) {
                   disabled={!enableSingleWin}
                   value={singleWinMult}
                   onChange={(e) => setSingleWinMult(Number(e.target.value))}
-                  className="w-full h-1.5 bg-[#333] rounded-lg appearance-none cursor-pointer accent-[#FDE047] disabled:opacity-30"
+                  className="w-full h-1.5 bg-[#333] rounded-lg appearance-none cursor-pointer accent-[var(--p-accent-soft)] disabled:opacity-30"
                 />
               </div>
 
@@ -206,11 +213,11 @@ export function AutoSpinModal({ bet, onClose, onStart }: Props) {
                       type="checkbox"
                       checked={enableBalIncrease}
                       onChange={(e) => setEnableBalIncrease(e.target.checked)}
-                      className="size-4 rounded accent-[#FDE047] cursor-pointer"
+                      className="size-4 rounded accent-[var(--p-accent-soft)] cursor-pointer"
                     />
                     <span className="text-white/80">If balance increase by</span>
                   </label>
-                  <span className="text-[#FDE047] font-black tabular-nums">
+                  <span className="text-[var(--p-accent-soft)] font-black tabular-nums">
                     {enableBalIncrease ? `₱${(bet * balIncreaseMult).toFixed(2)}` : "None"}
                   </span>
                 </div>
@@ -222,7 +229,7 @@ export function AutoSpinModal({ bet, onClose, onStart }: Props) {
                   disabled={!enableBalIncrease}
                   value={balIncreaseMult}
                   onChange={(e) => setBalIncreaseMult(Number(e.target.value))}
-                  className="w-full h-1.5 bg-[#333] rounded-lg appearance-none cursor-pointer accent-[#FDE047] disabled:opacity-30"
+                  className="w-full h-1.5 bg-[#333] rounded-lg appearance-none cursor-pointer accent-[var(--p-accent-soft)] disabled:opacity-30"
                 />
               </div>
 
@@ -234,11 +241,11 @@ export function AutoSpinModal({ bet, onClose, onStart }: Props) {
                       type="checkbox"
                       checked={enableBalDecrease}
                       onChange={(e) => setEnableBalDecrease(e.target.checked)}
-                      className="size-4 rounded accent-[#FDE047] cursor-pointer"
+                      className="size-4 rounded accent-[var(--p-accent-soft)] cursor-pointer"
                     />
                     <span className="text-white/80">If balance decrease by</span>
                   </label>
-                  <span className="text-[#FDE047] font-black tabular-nums">
+                  <span className="text-[var(--p-accent-soft)] font-black tabular-nums">
                     {enableBalDecrease ? `₱${(bet * balDecreaseMult).toFixed(2)}` : "None"}
                   </span>
                 </div>
@@ -250,7 +257,7 @@ export function AutoSpinModal({ bet, onClose, onStart }: Props) {
                   disabled={!enableBalDecrease}
                   value={balDecreaseMult}
                   onChange={(e) => setBalDecreaseMult(Number(e.target.value))}
-                  className="w-full h-1.5 bg-[#333] rounded-lg appearance-none cursor-pointer accent-[#FDE047] disabled:opacity-30"
+                  className="w-full h-1.5 bg-[#333] rounded-lg appearance-none cursor-pointer accent-[var(--p-accent-soft)] disabled:opacity-30"
                 />
               </div>
             </div>
@@ -269,7 +276,7 @@ export function AutoSpinModal({ bet, onClose, onStart }: Props) {
           <button
             type="button"
             onClick={handleStart}
-            className="flex-1 h-11 rounded-lg bg-[#FDE047] hover:bg-[#facc15] text-black font-black text-base shadow-lg shadow-yellow-500/20 transition"
+            className="flex-1 h-11 rounded-lg bg-[var(--p-accent-soft)] hover:bg-[#facc15] text-black font-black text-base shadow-lg shadow-yellow-500/20 transition"
           >
             Start
           </button>

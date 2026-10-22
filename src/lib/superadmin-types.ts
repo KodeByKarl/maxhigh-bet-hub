@@ -109,4 +109,3 @@ export type CarouselSlideRow = {
   enabled: boolean;
   createdAt: string;
 };
-

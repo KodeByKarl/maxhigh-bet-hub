@@ -41,9 +41,7 @@ export function FireBorder({
       className={cn("fs-fire-border relative", radius, className)}
       style={{
         ...style,
-        ...(trap
-          ? { clipPath: "polygon(4% 0, 96% 0, 100% 100%, 0 100%)" }
-          : undefined),
+        ...(trap ? { clipPath: "polygon(4% 0, 96% 0, 100% 100%, 0 100%)" } : undefined),
         padding: thickness,
       }}
     >

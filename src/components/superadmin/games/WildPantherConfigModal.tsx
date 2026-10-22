@@ -98,10 +98,7 @@ export function WildPantherConfigModal({ game, open, onOpenChange, onPatchLobby 
     return weightPercents(list);
   }, [cfg.symbols]);
 
-  const bombPercents = useMemo(
-    () => bombTablePercents(cfg.bombTable),
-    [cfg.bombTable],
-  );
+  const bombPercents = useMemo(() => bombTablePercents(cfg.bombTable), [cfg.bombTable]);
 
   async function handleSaveAll() {
     setSaving(true);
@@ -144,7 +141,8 @@ export function WildPantherConfigModal({ game, open, onOpenChange, onPatchLobby 
                 Wild Panther Engine Configuration
               </DialogTitle>
               <DialogDescription className="text-xs text-muted-foreground">
-                Configure live RNG parameters, symbol weights, wild/bomb multipliers, and free spins.
+                Configure live RNG parameters, symbol weights, wild/bomb multipliers, and free
+                spins.
               </DialogDescription>
             </div>
 
@@ -197,7 +195,11 @@ export function WildPantherConfigModal({ game, open, onOpenChange, onPatchLobby 
                   <div className="grid gap-3">
                     <div>
                       <label className="text-xs text-muted-foreground">Tag / Badge</label>
-                      <Input value={tag} onChange={(e) => setTag(e.target.value)} className="mt-1" />
+                      <Input
+                        value={tag}
+                        onChange={(e) => setTag(e.target.value)}
+                        className="mt-1"
+                      />
                     </div>
                     <div className="grid grid-cols-2 gap-3">
                       <div>
@@ -244,7 +246,9 @@ export function WildPantherConfigModal({ game, open, onOpenChange, onPatchLobby 
 
               {section === "dead" && (
                 <div className="space-y-4 max-w-md">
-                  <h4 className="text-sm font-bold text-amber-300">Dead Spin & Seeding Parameters</h4>
+                  <h4 className="text-sm font-bold text-amber-300">
+                    Dead Spin & Seeding Parameters
+                  </h4>
                   <div className="grid gap-4">
                     <div>
                       <label className="text-xs text-muted-foreground font-bold">
@@ -296,7 +300,10 @@ export function WildPantherConfigModal({ game, open, onOpenChange, onPatchLobby 
                           className="flex flex-wrap items-center justify-between gap-4 rounded-xl border border-white/10 bg-white/[0.02] p-3"
                         >
                           <div className="flex items-center gap-3 min-w-[140px]">
-                            <WildPantherIcon kind={sym.kind as WildPantherSymKind} className="size-8 object-contain" />
+                            <WildPantherIcon
+                              kind={sym.kind as WildPantherSymKind}
+                              className="size-8 object-contain"
+                            />
                             <div>
                               <div className="text-xs font-bold text-white">{sym.label}</div>
                               <div className="text-[10px] text-amber-400">{spawnPct}% spawn</div>
@@ -319,7 +326,9 @@ export function WildPantherConfigModal({ game, open, onOpenChange, onPatchLobby 
 
                           {!sym.scatter && !sym.bomb && (
                             <div className="flex items-center gap-2">
-                              <span className="text-xs text-muted-foreground">Pay (8-9 / 10-11 / 12+):</span>
+                              <span className="text-xs text-muted-foreground">
+                                Pay (8-9 / 10-11 / 12+):
+                              </span>
                               <Input
                                 type="number"
                                 value={sym.pay[0]}
@@ -488,7 +497,9 @@ export function WildPantherConfigModal({ game, open, onOpenChange, onPatchLobby 
 
                     <div className="grid grid-cols-2 gap-3 pt-2">
                       <div>
-                        <label className="text-xs text-muted-foreground">Buy Feature Cost (x bet)</label>
+                        <label className="text-xs text-muted-foreground">
+                          Buy Feature Cost (x bet)
+                        </label>
                         <Input
                           type="number"
                           value={cfg.buyFeatureMult}
@@ -499,7 +510,9 @@ export function WildPantherConfigModal({ game, open, onOpenChange, onPatchLobby 
                         />
                       </div>
                       <div>
-                        <label className="text-xs text-muted-foreground">Super Buy Cost (x bet)</label>
+                        <label className="text-xs text-muted-foreground">
+                          Super Buy Cost (x bet)
+                        </label>
                         <Input
                           type="number"
                           value={cfg.superBuyFeatureMult}

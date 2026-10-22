@@ -1,23 +1,14 @@
 import type { AdminDashboardStats } from "@/lib/admin-types";
-import {
-  Coins,
-  Trophy,
-  Wallet,
-  TrendingUp,
-  TrendingDown,
-  Users,
-  Zap,
-  Target,
-} from "lucide-react";
+import { Coins, Trophy, Wallet, TrendingUp, TrendingDown, Users, Zap, Target } from "lucide-react";
 import { adminGlassElevated } from "../ui/glass";
 import { AdminSparkline } from "./AdminSparkline";
 
 // Sparkline seed data per card (decorative)
 const SPARKLINE_SEEDS = {
   wallet: [18, 15, 17, 14, 16, 13, 15, 12, 14, 11],
-  bets:   [6, 9, 8, 12, 10, 14, 13, 16, 15, 18],
-  wins:   [3, 5, 4, 8, 6, 9, 8, 11, 10, 13],
-  net:    [12, 14, 11, 15, 10, 13, 9, 12, 8, 10],
+  bets: [6, 9, 8, 12, 10, 14, 13, 16, 15, 18],
+  wins: [3, 5, 4, 8, 6, 9, 8, 11, 10, 13],
+  net: [12, 14, 11, 15, 10, 13, 9, 12, 8, 10],
 };
 
 interface StatCard {

@@ -21,8 +21,7 @@ type ReelGridProps = {
 
 /** Pug Den–style diamond: 3-4-5-4-3 circular columns. */
 export const ReelGrid = memo(function ReelGrid({ visuals }: ReelGridProps) {
-  const { slots, phase, winningKeys, payoutByKey, spawnedKeys, fallenKeys, fallDistance } =
-    visuals;
+  const { slots, phase, winningKeys, payoutByKey, spawnedKeys, fallenKeys, fallDistance } = visuals;
 
   return (
     <div className="flex w-full max-w-6xl items-center justify-center gap-1 overflow-hidden sm:gap-1.5 md:gap-2">

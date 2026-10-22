@@ -1,44 +1,24 @@
-/** Optional SFX — reuse Lucky 9 stubs when present. */
-const SOUND_DIR = "/sounds/lucky9";
-
-export type ColorGameSoundKey = "chip" | "deal" | "win" | "lose";
-
-const FILES: Record<ColorGameSoundKey, string> = {
-  chip: "chip.wav",
-  deal: "deal.wav",
-  win: "win.wav",
-  lose: "lose.wav",
-};
-
-let unlocked = false;
-const cache = new Map<string, HTMLAudioElement>();
-
-function getAudio(key: ColorGameSoundKey): HTMLAudioElement | null {
-  if (typeof window === "undefined") return null;
-  const src = `${SOUND_DIR}/${FILES[key]}`;
-  let a = cache.get(src);
-  if (!a) {
-    a = new Audio(src);
-    a.preload = "auto";
-    cache.set(src, a);
-  }
-  return a;
+import {
+  createGentleGameAudio,
+  scheduleGentleWheel,
+  type GentleWheelOptions,
+} from "@/lib/gentle-game-audio";
+export type ColorGameSoundKey = "chip" | "deal" | "win" | "bigWin" | "lose" | "tick" | "land";
+const audio = createGentleGameAudio("color-game", false);
+export const unlockColorGameAudio = audio.preload;
+export function isColorGameMuted() {
+  return audio.isMuted;
 }
-
-export function unlockColorGameAudio() {
-  if (unlocked) return;
-  unlocked = true;
+export function setColorGameMuted(next: boolean) {
+  audio.setMuted(next);
 }
-
-export function playColorGameSound(key: ColorGameSoundKey, volume = 0.55) {
-  unlockColorGameAudio();
-  const a = getAudio(key);
-  if (!a) return;
-  try {
-    a.volume = volume;
-    a.currentTime = 0;
-    void a.play().catch(() => undefined);
-  } catch {
-    /* ignore */
-  }
+export function playColorGameSound(key: ColorGameSoundKey, volume = 1) {
+  audio.play(key, volume);
+}
+export function wheelEase(p: number) {
+  const q = 1 - Math.min(1, Math.max(0, p));
+  return 1 - Math.pow(q, 4);
+}
+export function startWheelSpin(opts: GentleWheelOptions): () => void {
+  return scheduleGentleWheel(audio, opts, 4);
 }

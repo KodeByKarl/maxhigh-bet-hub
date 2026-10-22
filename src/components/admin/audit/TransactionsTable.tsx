@@ -45,7 +45,9 @@ export function TransactionsTable({ rows }: { rows: AdminTransactionRow[] }) {
                 <div className="text-[11px] text-muted-foreground">{r.email ?? "—"}</div>
               </td>
               <td className="px-4 py-3">
-                <span className={`rounded-full px-2 py-0.5 text-[11px] font-bold ${typeTone(r.type)}`}>
+                <span
+                  className={`rounded-full px-2 py-0.5 text-[11px] font-bold ${typeTone(r.type)}`}
+                >
                   {r.label}
                 </span>
               </td>
@@ -58,8 +60,13 @@ export function TransactionsTable({ rows }: { rows: AdminTransactionRow[] }) {
                 {r.amount >= 0 ? "+" : "−"}
                 {formatMoney(r.absAmount)}
               </td>
-              <td className="px-4 py-3 tabular-nums text-foreground">{formatMoney(r.balanceAfter)}</td>
-              <td className="max-w-[220px] truncate px-4 py-3 text-xs text-muted-foreground" title={r.note ?? ""}>
+              <td className="px-4 py-3 tabular-nums text-foreground">
+                {formatMoney(r.balanceAfter)}
+              </td>
+              <td
+                className="max-w-[220px] truncate px-4 py-3 text-xs text-muted-foreground"
+                title={r.note ?? ""}
+              >
                 {r.note ?? "—"}
               </td>
             </tr>

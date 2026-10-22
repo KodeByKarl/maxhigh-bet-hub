@@ -7,6 +7,7 @@ import { WILD_PANTHER_GAME_ID, normalizeWildPantherConfig } from "@/lib/wild-pan
 import { getDb } from "../db/client";
 import { gameControls, playSessions, users } from "../db/schema";
 import { money, newId, requireUser } from "../session";
+import { applyCapToScriptTotalWin, enforcePoolCap } from "../settlement/enforcePoolCap";
 import {
   assertNotInMaintenanceForBets,
   availableFrom,
@@ -44,17 +45,13 @@ async function loadEngineConfig() {
   }
 }
 
-async function resolveOnServer(opts: {
-  bet: number;
-  ante: boolean;
-  isFreeSpins: boolean;
-}) {
+async function resolveOnServer(opts: { bet: number; ante: boolean; isFreeSpins: boolean }) {
   const cfg = await loadEngineConfig();
   return withEngineExclusive(async () => {
-    const { setWildPantherConfig } = await import("@/components/maxhigh/wild-panther/runtimeConfig");
-    const { resolveSpin, finalizeFreeSpinTotal } = await import(
-      "@/components/maxhigh/wild-panther/spinResolver"
-    );
+    const { setWildPantherConfig } =
+      await import("@/components/maxhigh/wild-panther/runtimeConfig");
+    const { resolveSpin, finalizeFreeSpinTotal } =
+      await import("@/components/maxhigh/wild-panther/spinResolver");
     setWildPantherConfig(cfg);
     const script = resolveSpin({
       bet: opts.bet,
@@ -79,7 +76,9 @@ export type WildPantherSessionState = {
 
 export type WildPantherSpinResult = {
   balance: number;
-  script: Awaited<ReturnType<typeof import("@/components/maxhigh/wild-panther/spinResolver").resolveSpin>>;
+  script: Awaited<
+    ReturnType<typeof import("@/components/maxhigh/wild-panther/spinResolver").resolveSpin>
+  >;
   session: WildPantherSessionState;
   /** Set when a free-spin feature just finished and win was paid. */
   fsPayout?: {
@@ -129,7 +128,10 @@ async function closeOtherOpenSessions(userId: string, keepId?: string) {
     );
   for (const row of open) {
     if (keepId && row.id === keepId) continue;
-    await db.update(playSessions).set({ status: "closed", freeSpinsLeft: 0 }).where(eq(playSessions.id, row.id));
+    await db
+      .update(playSessions)
+      .set({ status: "closed", freeSpinsLeft: 0 })
+      .where(eq(playSessions.id, row.id));
   }
 }
 
@@ -186,6 +188,13 @@ export async function wildPantherPaidSpin(data: {
     ante: data.ante,
     isFreeSpins: false,
   });
+  applyCapToScriptTotalWin(script, {
+    gameId: WILD_PANTHER_GAME_ID,
+    gameName: GAME_NAME,
+    bet: data.bet,
+    maxWinMult: cfg.maxWinMult,
+    context: "paid-spin",
+  });
 
   const result = await db.transaction(async (tx) => {
     const userRows = await tx.select().from(users).where(eq(users.id, user.id)).limit(1);
@@ -239,7 +248,10 @@ export async function wildPantherPaidSpin(data: {
           ),
         );
       for (const s of stale) {
-        await tx.update(playSessions).set({ status: "closed", freeSpinsLeft: 0 }).where(eq(playSessions.id, s.id));
+        await tx
+          .update(playSessions)
+          .set({ status: "closed", freeSpinsLeft: 0 })
+          .where(eq(playSessions.id, s.id));
       }
 
       const id = newId();
@@ -292,10 +304,17 @@ export async function wildPantherFreeSpin(data: {
   if (Number(session.freeSpinsLeft) <= 0) throw new Error("No free spins remaining");
 
   const bet = Number(session.bet);
-  const { script, finalizeFreeSpinTotal } = await resolveOnServer({
+  const { script, finalizeFreeSpinTotal, cfg } = await resolveOnServer({
     bet,
     ante: session.ante === "yes",
     isFreeSpins: true,
+  });
+  applyCapToScriptTotalWin(script, {
+    gameId: WILD_PANTHER_GAME_ID,
+    gameName: GAME_NAME,
+    bet,
+    maxWinMult: cfg.maxWinMult,
+    context: "free-spin",
   });
 
   const result = await db.transaction(async (tx) => {
@@ -314,9 +333,9 @@ export async function wildPantherFreeSpin(data: {
     const u = userRows[0];
     if (!u) throw new Error("User not found");
 
-    let nextWin = +(Number(row.fsSessionWin) + script.totalWin).toFixed(2);
-    let nextBomb = Number(row.fsBombAcc) + script.bombAccumulator;
-    let nextPlayed = Number(row.fsSpinsPlayed) + 1;
+    const nextWin = +(Number(row.fsSessionWin) + script.totalWin).toFixed(2);
+    const nextBomb = Number(row.fsBombAcc) + script.bombAccumulator;
+    const nextPlayed = Number(row.fsSpinsPlayed) + 1;
     let nextLeft = left - 1;
     if (script.retriggerSpins > 0) nextLeft += script.retriggerSpins;
     nextLeft = Math.max(0, nextLeft);
@@ -325,7 +344,14 @@ export async function wildPantherFreeSpin(data: {
     let fsPayout: WildPantherSpinResult["fsPayout"];
 
     if (nextLeft === 0) {
-      const final = finalizeFreeSpinTotal(nextWin, nextBomb);
+      const final = enforcePoolCap({
+        gameId: WILD_PANTHER_GAME_ID,
+        gameName: GAME_NAME,
+        bet,
+        maxWinMult: cfg.maxWinMult,
+        computedWin: finalizeFreeSpinTotal(nextWin, nextBomb),
+        context: "free-spins-final",
+      }).payout;
       if (final > 0) {
         const winRes = await writeLedgerDelta(tx, {
           userId: user.id,
@@ -374,7 +400,11 @@ export async function wildPantherFreeSpin(data: {
       })
       .where(eq(playSessions.id, row.id));
 
-    const updated = await tx.select().from(playSessions).where(eq(playSessions.id, row.id)).limit(1);
+    const updated = await tx
+      .select()
+      .from(playSessions)
+      .where(eq(playSessions.id, row.id))
+      .limit(1);
     return {
       balance,
       sessionRow: updated[0] ?? null,
@@ -413,7 +443,8 @@ export async function wildPantherBuyFeature(data: {
   if (!Number.isFinite(data.bet) || data.bet <= 0) throw new Error("Invalid bet");
 
   const cfg = await loadEngineConfig();
-  const mult = data.mode === "super" ? cfg.superBuyFeatureMult : cfg.buyFeatureMult;
+  if (data.mode === "super") throw new Error("Super Buy is no longer available");
+  const mult = cfg.buyFeatureMult;
   const cost = +(data.bet * mult).toFixed(2);
   const maxBet = await getMaxSingleBet();
   if (cost > maxBet * Math.max(mult, 1)) {
@@ -454,7 +485,10 @@ export async function wildPantherBuyFeature(data: {
         ),
       );
     for (const s of stale) {
-      await tx.update(playSessions).set({ status: "closed", freeSpinsLeft: 0 }).where(eq(playSessions.id, s.id));
+      await tx
+        .update(playSessions)
+        .set({ status: "closed", freeSpinsLeft: 0 })
+        .where(eq(playSessions.id, s.id));
     }
 
     const betRes = await writeLedgerDelta(tx, {

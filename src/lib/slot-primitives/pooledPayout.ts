@@ -27,10 +27,7 @@ export function createPooledPayout(): PooledPayoutState {
   return { entries: [], pot: 0, settled: false, settledAmount: 0 };
 }
 
-export function addToPool(
-  state: PooledPayoutState,
-  entry: PooledPayoutEntry,
-): PooledPayoutState {
+export function addToPool(state: PooledPayoutState, entry: PooledPayoutEntry): PooledPayoutState {
   if (state.settled) {
     throw new Error("Cannot add to a settled payout pool");
   }

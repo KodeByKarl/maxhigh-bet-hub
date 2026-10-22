@@ -14,7 +14,12 @@ export const Route = createFileRoute("/originals")({
   }),
   component: () => (
     <>
-      <PageHeader title="Originals" description="Our in-house titles with custom thumbnails." icon={Sparkles} accent="#7C3AED" />
+      <PageHeader
+        title="Originals"
+        description="Our in-house titles with custom thumbnails."
+        icon={Sparkles}
+        accent="#7C3AED"
+      />
       <SlotGameGrid title="MaxHigh Originals" />
     </>
   ),

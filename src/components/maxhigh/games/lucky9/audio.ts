@@ -4,14 +4,7 @@
  */
 import { L9_ASSET } from "./animationConfig";
 
-export type Lucky9SoundKey =
-  | "chip"
-  | "deal"
-  | "flip"
-  | "win"
-  | "tie"
-  | "natural"
-  | "bigWin";
+export type Lucky9SoundKey = "chip" | "deal" | "flip" | "win" | "tie" | "natural" | "bigWin";
 
 const FILES: Record<Lucky9SoundKey, string> = {
   chip: "chip.wav",

@@ -1,10 +1,5 @@
 import { cn } from "@/lib/utils";
-import {
-  AH_SPOT_POS,
-  aceHighChipSrc,
-  nearestChipValue,
-  type AhBetSpot,
-} from "./animationConfig";
+import { AH_SPOT_POS, aceHighChipSrc, nearestChipValue, type AhBetSpot } from "./animationConfig";
 
 export type SpotChip = {
   id: string;

@@ -108,10 +108,38 @@ async function main() {
   });
 
   const players = [
-    { username: "player1", email: "player1@maxhigh.gg", pass: "player123", name: "Player One", bal: "15500.00", upline: agentId },
-    { username: "highroller88", email: "vip@maxhigh.gg", pass: "player123", name: "VIP High Roller", bal: "88000.00", upline: agentId },
-    { username: "slotmaster", email: "slots@maxhigh.gg", pass: "player123", name: "Slot Master Pro", bal: "3400.00", upline: agentId },
-    { username: "lucky_ace", email: "ace@maxhigh.gg", pass: "player123", name: "Lucky Ace", bal: "1280.00", upline: agentId },
+    {
+      username: "player1",
+      email: "player1@maxhigh.gg",
+      pass: "player123",
+      name: "Player One",
+      bal: "15500.00",
+      upline: agentId,
+    },
+    {
+      username: "highroller88",
+      email: "vip@maxhigh.gg",
+      pass: "player123",
+      name: "VIP High Roller",
+      bal: "88000.00",
+      upline: agentId,
+    },
+    {
+      username: "slotmaster",
+      email: "slots@maxhigh.gg",
+      pass: "player123",
+      name: "Slot Master Pro",
+      bal: "3400.00",
+      upline: agentId,
+    },
+    {
+      username: "lucky_ace",
+      email: "ace@maxhigh.gg",
+      pass: "player123",
+      name: "Lucky Ace",
+      bal: "1280.00",
+      upline: agentId,
+    },
   ];
 
   const games = ["Godly Gates of Olympus", "Candy Peak Bonanza", "Sugar Surge Deluxe"];
@@ -162,7 +190,10 @@ async function main() {
           amount: String(winAmt.toFixed(2)),
           balanceAfter: String((Number(p.bal) + winAmt).toFixed(2)),
           game: selectedGame,
-          note: winAmt > 5000 ? `MEGA JACKPOT PAYOUT on ${selectedGame}` : `Winning payout on ${selectedGame}`,
+          note:
+            winAmt > 5000
+              ? `MEGA JACKPOT PAYOUT on ${selectedGame}`
+              : `Winning payout on ${selectedGame}`,
         });
       }
 

@@ -16,9 +16,7 @@ export type WildMultiplierContribution = {
  * Sum revealed multipliers from wilds that participate in a win.
  * Returns 1 when no contributing wilds (identity — no change to base payout).
  */
-export function combineWildMultipliers(
-  contributions: WildMultiplierContribution[],
-): number {
+export function combineWildMultipliers(contributions: WildMultiplierContribution[]): number {
   let sum = 0;
   for (const c of contributions) {
     if (Number.isFinite(c.multiplier) && c.multiplier >= 1) {

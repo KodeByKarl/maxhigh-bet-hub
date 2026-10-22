@@ -1,6 +1,6 @@
-import { calcFreeSpinsAward } from "@/lib/buffalo-reign-config";
+import { calcFreeSpinsAward } from "@/lib/wild-frontier-stampede-config";
 import { createRng, newSpinSeed } from "./rng";
-import { getBuffaloReignConfig } from "./runtimeConfig";
+import { getStampedeConfig } from "./runtimeConfig";
 import { resolveTreasureChest } from "./treasureChest";
 import { applyGravity, generateInitialBoard } from "./tumbleEngine";
 import type { CascadeStep, SpinScript } from "./types";
@@ -18,7 +18,7 @@ export function resolveBuffaloSpin(opts: {
   sessionMultiplier?: number;
   seed?: string;
 }): SpinScript {
-  const config = getBuffaloReignConfig();
+  const config = getStampedeConfig();
   const bet = opts.bet;
   const ante = !!opts.ante;
   const isFreeSpins = !!opts.isFreeSpins;

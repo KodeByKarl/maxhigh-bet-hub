@@ -30,6 +30,10 @@ import { cn } from "@/lib/utils";
 import { SWIM } from "./animationConfig";
 import { playCrabCannonSound, setCrabCannonMuted, unlockCrabCannonAudio } from "./audio";
 import { FishSprite } from "./FishSprite";
+import { FishingSeabed } from "../fishing-shared/FishingSeabed";
+import { FishingCannon, type FireEvent } from "../fishing-shared/FishingCannon";
+import { HitBlasts, type Blast } from "../fishing-shared/HitBlasts";
+
 import { getCrabCannonConfig, setCrabCannonConfig } from "./runtimeConfig";
 import type { ArenaFish } from "./types";
 
@@ -55,7 +59,13 @@ export function CrabCannonGame({
   const [balance, setBalance] = useState<number | null>(null);
   const [weaponId, setWeaponId] = useState<WeaponTierId>("bamboo");
   const [fish, setFish] = useState<ArenaFish[]>([]);
+  const fishRef = useRef<ArenaFish[]>([]);
+  useEffect(() => {
+    fishRef.current = fish;
+  }, [fish]);
   const [firing, setFiring] = useState(false);
+  const [fire, setFire] = useState<FireEvent | null>(null);
+  const [blasts, setBlasts] = useState<Blast[]>([]);
   const [muted, setMuted] = useState(false);
   const [goldenHookMult, setGoldenHookMult] = useState(1);
   const [powerUps, setPowerUps] = useState<Partial<Record<PowerUpId, number>>>({});
@@ -236,9 +246,7 @@ export function CrabCannonGame({
   const weapon = getWeapon(cfg, weaponId);
 
   const removeFish = useCallback((instanceId: string) => {
-    setFish((prev) =>
-      prev.map((f) => (f.instanceId === instanceId ? { ...f, dying: true } : f)),
-    );
+    setFish((prev) => prev.map((f) => (f.instanceId === instanceId ? { ...f, dying: true } : f)));
     window.setTimeout(() => {
       setFish((prev) => prev.filter((f) => f.instanceId !== instanceId));
     }, SWIM.deathMs);
@@ -269,6 +277,13 @@ export function CrabCannonGame({
         setGoldenHookMult(res.goldenHookMult);
         setPowerUps(res.powerUps);
         playCrabCannonSound(res.shot.hit ? "hit" : "splash");
+        pushBlast(
+          target.instanceId,
+          res.shot.hit,
+          res.fishUpdate.killed,
+          target.tierId,
+          res.killBanner?.credit,
+        );
 
         setFish((prev) =>
           prev.map((f) =>
@@ -333,18 +348,31 @@ export function CrabCannonGame({
     if (!autoFire) return;
     const id = window.setInterval(() => {
       if (!autoFireRef.current || busyRef.current) return;
-      setFish((prev) => {
-        const candidates = prev.filter((f) => !f.dying);
-        if (candidates.length === 0) return prev;
-        // Prefer higher tier when auto
-        const ranked = [...candidates].sort((a, b) => {
-          const order: FishTierId[] = ["boss", "elite", "rare", "crate", "uncommon", "common"];
-          return order.indexOf(a.tierId) - order.indexOf(b.tierId);
-        });
-        const target = ranked[0]!;
-        void fireAt(target);
-        return prev;
-      });
+      // Only fish that are actually on screen right now, best tier first,
+      // then closest to the cannon.
+      const order = ["boss", "elite", "rare", "crate", "uncommon", "common"];
+      const cands = fishRef.current
+        .filter((f) => !f.dying)
+        .map((f) => ({ f, pos: fishPos(f.instanceId) }))
+        .filter(
+          (c): c is { f: ArenaFish; pos: { x: number; y: number } } =>
+            !!c.pos && c.pos.x > 8 && c.pos.x < 92 && c.pos.y > 6 && c.pos.y < 80,
+        )
+        .sort(
+          (a, b) =>
+            order.indexOf(a.f.tierId) - order.indexOf(b.f.tierId) ||
+            Math.hypot(a.pos.x - 50, a.pos.y - 88) - Math.hypot(b.pos.x - 50, b.pos.y - 88),
+        );
+      const pick = cands[0];
+      if (!pick) return;
+      setAim(pick.pos);
+      setFire((p) => ({
+        id: (p?.id ?? 0) + 1,
+        x: pick.pos.x,
+        y: pick.pos.y,
+        fid: pick.f.instanceId,
+      }));
+      void fireAt(pick.f);
     }, 280);
     return () => window.clearInterval(id);
   }, [autoFire, fireAt]);
@@ -371,7 +399,7 @@ export function CrabCannonGame({
     }
   }
 
-  async function useNetBomb() {
+  async function activateNetBomb() {
     if ((powerUps["net-bomb"] ?? 0) < 1) {
       toast.error("No Net Bomb");
       return;
@@ -394,9 +422,7 @@ export function CrabCannonGame({
         if (!instanceId) return;
         if (r.hit) {
           setFish((prev) =>
-            prev.map((f) =>
-              f.instanceId === instanceId ? { ...f, hitsTaken: r.hitsTaken } : f,
-            ),
+            prev.map((f) => (f.instanceId === instanceId ? { ...f, hitsTaken: r.hitsTaken } : f)),
           );
         }
         if (r.killed) killedIds.add(instanceId);
@@ -412,7 +438,7 @@ export function CrabCannonGame({
     }
   }
 
-  async function useFreeze() {
+  async function activateFreeze() {
     if ((powerUps["freeze-lure"] ?? 0) < 1) {
       toast.error("No Freeze Lure");
       return;
@@ -426,6 +452,50 @@ export function CrabCannonGame({
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Freeze failed");
     }
+  }
+
+  /** Live arena-% centre of a fish, read from the DOM (fish animate via motion). */
+  function fishPos(instanceId: string) {
+    const el = arenaRef.current;
+    const node = el?.querySelector<HTMLElement>(`[data-fid="${instanceId}"]`);
+    if (!el || !node) return null;
+    const r = el.getBoundingClientRect();
+    const n = node.getBoundingClientRect();
+    return {
+      x: ((n.left + n.width / 2 - r.left) / r.width) * 100,
+      y: ((n.top + n.height / 2 - r.top) / r.height) * 100,
+    };
+  }
+
+  function pushBlast(
+    instanceId: string,
+    hit: boolean,
+    killed: boolean,
+    tierId: string,
+    credit?: number,
+  ) {
+    const pos = fishPos(instanceId);
+    if (!pos) return;
+    const id = Date.now() + Math.random();
+    const kind: Blast["kind"] = killed
+      ? tierId === "boss"
+        ? "boss"
+        : "kill"
+      : hit
+        ? "hit"
+        : "miss";
+    setBlasts((b) => [...b.slice(-6), { id, x: pos.x, y: pos.y, kind, credit }]);
+    window.setTimeout(() => setBlasts((b) => b.filter((x) => x.id !== id)), 1300);
+  }
+
+  function markFire(e: MouseEvent, fid: string) {
+    const el = arenaRef.current;
+    if (!el) return;
+    const rect = el.getBoundingClientRect();
+    const x = ((e.clientX - rect.left) / rect.width) * 100;
+    const y = ((e.clientY - rect.top) / rect.height) * 100;
+    setAim({ x, y });
+    setFire((prev) => ({ id: (prev?.id ?? 0) + 1, x, y, fid }));
   }
 
   function onArenaMove(e: MouseEvent) {
@@ -521,6 +591,7 @@ export function CrabCannonGame({
         onMouseMove={onArenaMove}
         onMouseLeave={() => setAim(null)}
       >
+        <FishingSeabed theme="reef" />
         <AnimatePresence>
           {fish.map((f) => {
             const frozen = f.frozenUntil > Date.now();
@@ -538,6 +609,7 @@ export function CrabCannonGame({
             return (
               <motion.button
                 key={progressKey}
+                data-fid={f.instanceId}
                 type="button"
                 disabled={f.dying || firing}
                 initial={{
@@ -586,6 +658,7 @@ export function CrabCannonGame({
                 style={{ zIndex: f.tierId === "boss" ? 5 : 2 }}
                 onClick={(e) => {
                   e.stopPropagation();
+                  markFire(e, f.instanceId);
                   void fireAt(f);
                 }}
               >
@@ -642,17 +715,8 @@ export function CrabCannonGame({
           ) : null}
         </AnimatePresence>
 
-        {/* Cannon */}
-        <div className="pointer-events-none absolute bottom-3 left-1/2 z-10 -translate-x-1/2">
-          <div
-            className={cn(
-              "flex h-14 w-14 items-center justify-center rounded-full border-2 border-teal-300/50 bg-gradient-to-b from-teal-600 to-slate-900 shadow-lg",
-              firing && "scale-90",
-            )}
-          >
-            <Zap className="h-6 w-6 text-amber-200" />
-          </div>
-        </div>
+        <FishingCannon game="crab-cannon" aim={aim} firing={firing} fire={fire} getPos={fishPos} />
+        <HitBlasts game="crab-cannon" blasts={blasts} />
       </div>
 
       {/* Dock */}
@@ -696,8 +760,8 @@ export function CrabCannonGame({
               type="button"
               onClick={() => {
                 if ((powerUps[p.id] ?? 0) > 0) {
-                  if (p.id === "net-bomb") void useNetBomb();
-                  else if (p.id === "freeze-lure") void useFreeze();
+                  if (p.id === "net-bomb") void activateNetBomb();
+                  else if (p.id === "freeze-lure") void activateFreeze();
                   else toast.message("Golden Hook arms on next kill");
                 } else {
                   void buyPower(p.id);
@@ -711,17 +775,13 @@ export function CrabCannonGame({
                 <Zap className="h-3.5 w-3.5" />
               )}
               <span>
-                {p.label}{" "}
-                {(powerUps[p.id] ?? 0) > 0
-                  ? `×${powerUps[p.id]}`
-                  : formatPhp(p.cost)}
+                {p.label} {(powerUps[p.id] ?? 0) > 0 ? `×${powerUps[p.id]}` : formatPhp(p.cost)}
               </span>
             </button>
           ))}
 
           <div className="ml-auto text-[11px] text-teal-400/80">
-            Shot cost{" "}
-            <span className="font-bold text-teal-100">{formatPhp(weapon.betCost)}</span>
+            Shot cost <span className="font-bold text-teal-100">{formatPhp(weapon.betCost)}</span>
           </div>
         </div>
       </div>

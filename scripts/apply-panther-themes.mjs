@@ -23,15 +23,87 @@ const PARENT = {
 };
 
 const CLONES = [
-  { id: "jade-jaguar", name: "Jade Jaguar", pascal: "JadeJaguar", const: "JADE_JAGUAR", camel: "jadeJaguar", hue: 140, tint: { r: 40, g: 180, b: 120 } },
-  { id: "ember-tiger", name: "Ember Tiger", pascal: "EmberTiger", const: "EMBER_TIGER", camel: "emberTiger", hue: -25, tint: { r: 220, g: 80, b: 30 } },
-  { id: "lotus-lynx", name: "Lotus Lynx", pascal: "LotusLynx", const: "LOTUS_LYNX", camel: "lotusLynx", hue: 280, tint: { r: 200, g: 60, b: 200 } },
-  { id: "coral-cobra", name: "Coral Cobra", pascal: "CoralCobra", const: "CORAL_COBRA", camel: "coralCobra", hue: 170, tint: { r: 30, g: 180, b: 170 } },
-  { id: "frost-fox", name: "Frost Fox", pascal: "FrostFox", const: "FROST_FOX", camel: "frostFox", hue: 200, tint: { r: 60, g: 160, b: 230 } },
-  { id: "solar-serpent", name: "Solar Serpent", pascal: "SolarSerpent", const: "SOLAR_SERPENT", camel: "solarSerpent", hue: 10, tint: { r: 230, g: 180, b: 40 } },
-  { id: "honey-hive", name: "Honey Hive", pascal: "HoneyHive", const: "HONEY_HIVE", camel: "honeyHive", hue: 35, tint: { r: 230, g: 160, b: 30 } },
-  { id: "midnight-owl", name: "Midnight Owl", pascal: "MidnightOwl", const: "MIDNIGHT_OWL", camel: "midnightOwl", hue: 240, tint: { r: 90, g: 100, b: 220 } },
-  { id: "ruby-raven", name: "Ruby Raven", pascal: "RubyRaven", const: "RUBY_RAVEN", camel: "rubyRaven", hue: 340, tint: { r: 210, g: 40, b: 70 } },
+  {
+    id: "jade-jaguar",
+    name: "Jade Jaguar",
+    pascal: "JadeJaguar",
+    const: "JADE_JAGUAR",
+    camel: "jadeJaguar",
+    hue: 140,
+    tint: { r: 40, g: 180, b: 120 },
+  },
+  {
+    id: "ember-tiger",
+    name: "Ember Tiger",
+    pascal: "EmberTiger",
+    const: "EMBER_TIGER",
+    camel: "emberTiger",
+    hue: -25,
+    tint: { r: 220, g: 80, b: 30 },
+  },
+  {
+    id: "lotus-lynx",
+    name: "Lotus Lynx",
+    pascal: "LotusLynx",
+    const: "LOTUS_LYNX",
+    camel: "lotusLynx",
+    hue: 280,
+    tint: { r: 200, g: 60, b: 200 },
+  },
+  {
+    id: "coral-cobra",
+    name: "Coral Cobra",
+    pascal: "CoralCobra",
+    const: "CORAL_COBRA",
+    camel: "coralCobra",
+    hue: 170,
+    tint: { r: 30, g: 180, b: 170 },
+  },
+  {
+    id: "frost-fox",
+    name: "Frost Fox",
+    pascal: "FrostFox",
+    const: "FROST_FOX",
+    camel: "frostFox",
+    hue: 200,
+    tint: { r: 60, g: 160, b: 230 },
+  },
+  {
+    id: "solar-serpent",
+    name: "Solar Serpent",
+    pascal: "SolarSerpent",
+    const: "SOLAR_SERPENT",
+    camel: "solarSerpent",
+    hue: 10,
+    tint: { r: 230, g: 180, b: 40 },
+  },
+  {
+    id: "honey-hive",
+    name: "Honey Hive",
+    pascal: "HoneyHive",
+    const: "HONEY_HIVE",
+    camel: "honeyHive",
+    hue: 35,
+    tint: { r: 230, g: 160, b: 30 },
+  },
+  {
+    id: "midnight-owl",
+    name: "Midnight Owl",
+    pascal: "MidnightOwl",
+    const: "MIDNIGHT_OWL",
+    camel: "midnightOwl",
+    hue: 240,
+    tint: { r: 90, g: 100, b: 220 },
+  },
+  {
+    id: "ruby-raven",
+    name: "Ruby Raven",
+    pascal: "RubyRaven",
+    const: "RUBY_RAVEN",
+    camel: "rubyRaven",
+    hue: 340,
+    tint: { r: 210, g: 40, b: 70 },
+  },
 ];
 
 const VISUAL_FILES = [
@@ -123,9 +195,7 @@ function syncSlotFromParent(g) {
 async function tintFile(src, dest, hue, tint) {
   await fs.promises.mkdir(path.dirname(dest), { recursive: true });
   const meta = await sharp(src).metadata();
-  const rotated = await sharp(src)
-    .modulate({ hue, saturation: 1.15, brightness: 1.02 })
-    .toBuffer();
+  const rotated = await sharp(src).modulate({ hue, saturation: 1.15, brightness: 1.02 }).toBuffer();
   const overlay = Buffer.from(
     `<svg width="${meta.width || 512}" height="${meta.height || 512}">
       <rect width="100%" height="100%" fill="rgb(${tint.r},${tint.g},${tint.b})" fill-opacity="0.18"/>

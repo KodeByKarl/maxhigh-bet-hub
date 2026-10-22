@@ -1,13 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import {
-  Coins,
-  Flame,
-  LayoutGrid,
-  Save,
-  Settings2,
-  Store,
-  X,
-} from "lucide-react";
+import { Coins, Flame, LayoutGrid, Save, Settings2, Store, X } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -25,10 +17,8 @@ import {
   type FsRtpProfileId,
   type FsSymKind,
 } from "@/lib/fire-spike-config";
-import {
-  getFireSpikeEngineConfigFn,
-  saveFireSpikeEngineConfigFn,
-} from "@/functions/superadmin";
+import { getFireSpikeEngineConfigFn } from "@/functions/api";
+import { saveFireSpikeEngineConfigFn } from "@/functions/superadmin";
 import type { SuperGameRow } from "@/lib/superadmin-types";
 import { ICON_SRC } from "@/components/maxhigh/fire-spike/animationConfig";
 import { toast } from "sonner";
@@ -107,9 +97,7 @@ function SymThumb({ kind, name }: { kind: FsSymKind; name: string }) {
 
 export function FireSpikeConfigModal({ game, open, onOpenChange, onPatchLobby }: Props) {
   const [section, setSection] = useState<Section>("lobby");
-  const [cfg, setCfg] = useState<FireSpikeConfig>(() =>
-    structuredClone(DEFAULT_FIRE_SPIKE_CONFIG),
-  );
+  const [cfg, setCfg] = useState<FireSpikeConfig>(() => structuredClone(DEFAULT_FIRE_SPIKE_CONFIG));
   const [saving, setSaving] = useState(false);
   const [loading, setLoading] = useState(false);
 
@@ -493,11 +481,21 @@ export function FireSpikeConfigModal({ game, open, onOpenChange, onPatchLobby }:
                 </label>
                 <label className="space-y-1 text-xs font-semibold text-muted-foreground">
                   Engine min bet
-                  <Num value={cfg.minBet} onChange={(n) => patch({ minBet: n })} step={0.01} min={0.01} />
+                  <Num
+                    value={cfg.minBet}
+                    onChange={(n) => patch({ minBet: n })}
+                    step={0.01}
+                    min={0.01}
+                  />
                 </label>
                 <label className="space-y-1 text-xs font-semibold text-muted-foreground">
                   Engine max bet
-                  <Num value={cfg.maxBet} onChange={(n) => patch({ maxBet: n })} step={0.01} min={0.01} />
+                  <Num
+                    value={cfg.maxBet}
+                    onChange={(n) => patch({ maxBet: n })}
+                    step={0.01}
+                    min={0.01}
+                  />
                 </label>
               </div>
             </>
