@@ -1,3 +1,5 @@
+import { recordRoundConfig } from "../round-random.server";
+import { withFishingRoom } from "../fishing-state.server";
 /**
  * Crab Cannon — server-authoritative shot settlement + boss shared pool.
  * Client never moves money; every shot debits then optionally credits via ledger.
@@ -187,7 +189,7 @@ function lookupLiveFish(userId: string, instanceId: string): ShotTargetSnapshot 
 }
 
 /** Sync / top-up server-owned spawns for the player's open session. */
-export async function crabCannonSyncSpawns() {
+async function crabCannonSyncSpawnsImpl() {
   await assertGameEnabled();
   const user = await requireUser();
   const cfg = await loadEngineConfig();
@@ -220,7 +222,7 @@ function updateFishAfterShot(
 
 async function loadEngineConfig(): Promise<CrabCannonConfig> {
   const now = Date.now();
-  if (cachedConfig && now - cachedConfig.time < 30_000) return cachedConfig.cfg;
+  if (cachedConfig && now - cachedConfig.time < 30_000) return recordRoundConfig(cachedConfig.cfg);
   const db = getDb();
   try {
     const rows = await db
@@ -231,11 +233,9 @@ async function loadEngineConfig(): Promise<CrabCannonConfig> {
     const raw = rows[0]?.engineConfig;
     const cfg = normalizeCrabCannonConfig(raw ? (JSON.parse(raw) as unknown) : null);
     cachedConfig = { cfg, time: now };
-    return cfg;
+    return recordRoundConfig(cfg);
   } catch {
-    const cfg = normalizeCrabCannonConfig(null);
-    cachedConfig = { cfg, time: now };
-    return cfg;
+    throw new Error("Game configuration unavailable");
   }
 }
 
@@ -304,7 +304,7 @@ function publicBoss() {
   };
 }
 
-export async function getCrabCannonOpenSession() {
+async function getCrabCannonOpenSessionImpl() {
   const user = await requireUser();
   const db = getDb();
   const rows = await db
@@ -353,7 +353,7 @@ export async function getCrabCannonOpenSession() {
   };
 }
 
-export async function crabCannonEnsureSession(input?: { weaponId?: string }) {
+async function crabCannonEnsureSessionImpl(input?: { weaponId?: string }) {
   await assertNotInMaintenanceForBets();
   await assertGameEnabled();
   const user = await requireUser();
@@ -437,10 +437,7 @@ function maybeSpawnBoss(cfg: CrabCannonConfig) {
   globalBoss = createBossPool({ cfg, rng, now });
 }
 
-export async function crabCannonFireShot(input: {
-  weaponId: string;
-  target: { instanceId: string };
-}) {
+async function crabCannonFireShotImpl(input: { weaponId: string; target: { instanceId: string } }) {
   await assertNotInMaintenanceForBets();
   await assertGameEnabled();
   const user = await requireUser();
@@ -651,7 +648,7 @@ export async function crabCannonFireShot(input: {
   };
 }
 
-export async function crabCannonSetWeapon(input: { weaponId: string }) {
+async function crabCannonSetWeaponImpl(input: { weaponId: string }) {
   await assertGameEnabled();
   const user = await requireUser();
   if (!isWeaponTierId(input.weaponId)) throw new Error("Invalid weapon");
@@ -675,7 +672,7 @@ export async function crabCannonSetWeapon(input: { weaponId: string }) {
   return getCrabCannonOpenSession();
 }
 
-export async function crabCannonBuyPowerUp(input: { powerUpId: string }) {
+async function crabCannonBuyPowerUpImpl(input: { powerUpId: string }) {
   await assertNotInMaintenanceForBets();
   await assertGameEnabled();
   const user = await requireUser();
@@ -734,7 +731,7 @@ export async function crabCannonBuyPowerUp(input: { powerUpId: string }) {
   };
 }
 
-export async function crabCannonUseNetBomb(input: {
+async function crabCannonUseNetBombImpl(input: {
   weaponId: string;
   targets: { instanceId: string }[];
 }) {
@@ -833,7 +830,7 @@ export async function crabCannonUseNetBomb(input: {
   };
 }
 
-export async function crabCannonUseFreezeLure() {
+async function crabCannonUseFreezeLureImpl() {
   const user = await requireUser();
   const cfg = await loadEngineConfig();
   const session = await loadOpenSessionRow(user.id);
@@ -864,9 +861,93 @@ export async function crabCannonUseFreezeLure() {
 }
 
 /** Attempt boss spawn check for clients polling. */
-export async function crabCannonBossStatus() {
+async function crabCannonBossStatusImpl() {
   await requireUser();
   const cfg = await loadEngineConfig();
   maybeSpawnBoss(cfg);
   return { boss: publicBoss() };
+}
+
+export function crabCannonSyncSpawns(
+  ...args: Parameters<typeof crabCannonSyncSpawnsImpl>
+): ReturnType<typeof crabCannonSyncSpawnsImpl> {
+  return withFishingRoom("crab-cannon", captureRoom, restoreRoom, () =>
+    crabCannonSyncSpawnsImpl(...args),
+  );
+}
+
+export function getCrabCannonOpenSession(
+  ...args: Parameters<typeof getCrabCannonOpenSessionImpl>
+): ReturnType<typeof getCrabCannonOpenSessionImpl> {
+  return withFishingRoom("crab-cannon", captureRoom, restoreRoom, () =>
+    getCrabCannonOpenSessionImpl(...args),
+  );
+}
+
+export function crabCannonEnsureSession(
+  ...args: Parameters<typeof crabCannonEnsureSessionImpl>
+): ReturnType<typeof crabCannonEnsureSessionImpl> {
+  return withFishingRoom("crab-cannon", captureRoom, restoreRoom, () =>
+    crabCannonEnsureSessionImpl(...args),
+  );
+}
+
+export function crabCannonFireShot(
+  ...args: Parameters<typeof crabCannonFireShotImpl>
+): ReturnType<typeof crabCannonFireShotImpl> {
+  return withFishingRoom("crab-cannon", captureRoom, restoreRoom, () =>
+    crabCannonFireShotImpl(...args),
+  );
+}
+
+export function crabCannonSetWeapon(
+  ...args: Parameters<typeof crabCannonSetWeaponImpl>
+): ReturnType<typeof crabCannonSetWeaponImpl> {
+  return withFishingRoom("crab-cannon", captureRoom, restoreRoom, () =>
+    crabCannonSetWeaponImpl(...args),
+  );
+}
+
+export function crabCannonBuyPowerUp(
+  ...args: Parameters<typeof crabCannonBuyPowerUpImpl>
+): ReturnType<typeof crabCannonBuyPowerUpImpl> {
+  return withFishingRoom("crab-cannon", captureRoom, restoreRoom, () =>
+    crabCannonBuyPowerUpImpl(...args),
+  );
+}
+
+export function crabCannonUseNetBomb(
+  ...args: Parameters<typeof crabCannonUseNetBombImpl>
+): ReturnType<typeof crabCannonUseNetBombImpl> {
+  return withFishingRoom("crab-cannon", captureRoom, restoreRoom, () =>
+    crabCannonUseNetBombImpl(...args),
+  );
+}
+
+export function crabCannonUseFreezeLure(
+  ...args: Parameters<typeof crabCannonUseFreezeLureImpl>
+): ReturnType<typeof crabCannonUseFreezeLureImpl> {
+  return withFishingRoom("crab-cannon", captureRoom, restoreRoom, () =>
+    crabCannonUseFreezeLureImpl(...args),
+  );
+}
+
+export function crabCannonBossStatus(
+  ...args: Parameters<typeof crabCannonBossStatusImpl>
+): ReturnType<typeof crabCannonBossStatusImpl> {
+  return withFishingRoom("crab-cannon", captureRoom, restoreRoom, () =>
+    crabCannonBossStatusImpl(...args),
+  );
+}
+
+function captureRoom() {
+  return { globalBoss, lastBossEndedAt, fishRegistry };
+}
+function restoreRoom(state: ReturnType<typeof captureRoom>) {
+  globalBoss = state.globalBoss ?? null;
+  lastBossEndedAt = state.lastBossEndedAt ?? 0;
+  fishRegistry.clear();
+  const now = Date.now();
+  for (const [key, fish] of state.fishRegistry ?? [])
+    if (fish.expiresAt > now) fishRegistry.set(key, fish);
 }

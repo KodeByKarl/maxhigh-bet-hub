@@ -1,3 +1,4 @@
+import { gameRandom, hasRoundRandom } from "@/lib/game-random";
 /** Tiny mulberry32 RNG + seed helper (shared pattern with Lucky 9). */
 export function createRng(seed: string): () => number {
   let h = 2166136261 >>> 0;
@@ -15,5 +16,5 @@ export function createRng(seed: string): () => number {
 }
 
 export function newDealSeed(prefix = "cg"): string {
-  return `${prefix}-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`;
+  return `${prefix}-${Date.now().toString(36)}-${gameRandom().toString(36).slice(2, 10)}`;
 }

@@ -1,4 +1,7 @@
-import { useState } from "react";
+import { claimRewardFn, listMyRewardsFn } from "@/functions/rewards";
+import { useAuth } from "@/lib/auth";
+import { formatMoney } from "@/lib/currency";
+import { useState, useEffect } from "react";
 import { Gift, Sparkles, Ticket } from "lucide-react";
 import {
   Dialog,
@@ -9,63 +12,41 @@ import {
 } from "@/components/ui/dialog";
 import { toast } from "sonner";
 
-type GiftItem = {
-  id: string;
-  title: string;
-  detail: string;
-  value: string;
-  claimed: boolean;
-  kind: "bonus" | "spins" | "cash";
-};
-
-const INITIAL: GiftItem[] = [
-  {
-    id: "welcome",
-    title: "Welcome Pack",
-    detail: "One-time bonus for new MaxHigh players.",
-    value: "₱10 credit",
-    claimed: false,
-    kind: "bonus",
-  },
-  {
-    id: "daily",
-    title: "Daily Free Spins",
-    detail: "Claim once per day · Candy Peak only.",
-    value: "10 spins",
-    claimed: false,
-    kind: "spins",
-  },
-  {
-    id: "race",
-    title: "Race booster",
-    detail: "Extra race points for the next 24 hours.",
-    value: "2x points",
-    claimed: false,
-    kind: "cash",
-  },
-];
-
 type Props = { open: boolean; onOpenChange: (open: boolean) => void };
-
+type Reward = Awaited<ReturnType<typeof listMyRewardsFn>>[number];
 export function GiftsModal({ open, onOpenChange }: Props) {
-  const [gifts, setGifts] = useState<GiftItem[]>(() => {
-    if (typeof window === "undefined") return INITIAL;
+  const [gifts, setGifts] = useState<Reward[]>([]);
+  const [busy, setBusy] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const { refreshSession } = useAuth();
+  useEffect(() => {
+    if (!open) return;
+    let cancelled = false;
+    setError(null);
+    listMyRewardsFn()
+      .then((rows) => {
+        if (!cancelled) setGifts(rows);
+      })
+      .catch(() => {
+        if (!cancelled) setError("Unable to load rewards");
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [open]);
+  async function claim(id: string) {
+    if (busy) return;
+    setBusy(id);
     try {
-      const raw = localStorage.getItem("maxhigh.gifts");
-      return raw ? (JSON.parse(raw) as GiftItem[]) : INITIAL;
-    } catch {
-      return INITIAL;
+      await claimRewardFn({ data: { id } });
+      setGifts(await listMyRewardsFn());
+      await refreshSession();
+      toast.success("Reward credited to your wallet");
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Reward claim failed");
+    } finally {
+      setBusy(null);
     }
-  });
-
-  function claim(id: string) {
-    const next = gifts.map((g) => (g.id === id ? { ...g, claimed: true } : g));
-    setGifts(next);
-    localStorage.setItem("maxhigh.gifts", JSON.stringify(next));
-    const item = next.find((g) => g.id === id);
-    toast.success(`Claimed: ${item?.title ?? "Gift"}`, {
-      description: item?.value,
-    });
   }
 
   return (
@@ -77,29 +58,31 @@ export function GiftsModal({ open, onOpenChange }: Props) {
             Gifts & Rewards
           </DialogTitle>
           <DialogDescription className="text-xs text-muted-foreground">
-            Claim bonuses, free spins, and race boosters.
+            Claim rewards issued to your account.
           </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-2 p-4">
+          {error && <p role="alert">{error}</p>}
+          {!error && gifts.length === 0 && <p>No rewards have been issued to your account.</p>}
           {gifts.map((g) => (
             <div
               key={g.id}
               className="flex items-center gap-3 rounded-2xl border border-border bg-muted/60 p-3"
             >
               <span className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-lime/15 text-lime">
-                {g.kind === "spins" ? <Ticket size={18} /> : <Sparkles size={18} />}
+                <Sparkles size={18} />
               </span>
               <div className="min-w-0 flex-1">
                 <div className="truncate text-sm font-bold text-foreground">{g.title}</div>
-                <div className="text-xs text-muted-foreground">{g.detail}</div>
+                <div className="text-xs text-muted-foreground">Wallet credit</div>
                 <div className="mt-1 text-[11px] font-black uppercase tracking-wider text-lime">
-                  {g.value}
+                  {formatMoney(g.amount)}
                 </div>
               </div>
               <button
                 type="button"
-                disabled={g.claimed}
+                disabled={g.claimed || busy !== null}
                 onClick={() => claim(g.id)}
                 className="h-9 shrink-0 rounded-full bg-primary px-3 text-xs font-bold uppercase tracking-wider text-primary-foreground hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-50"
               >

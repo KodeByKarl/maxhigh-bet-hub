@@ -1,3 +1,5 @@
+import { recordRoundConfig } from "../round-random.server";
+import { withFishingRoom } from "../fishing-state.server";
 /**
  * Dragon Fisher — server-authoritative shot settlement + boss shared pool.
  * Client never moves money; every shot debits then optionally credits via ledger.
@@ -187,7 +189,7 @@ function lookupLiveFish(userId: string, instanceId: string): ShotTargetSnapshot 
 }
 
 /** Sync / top-up server-owned spawns for the player's open session. */
-export async function dragonFisherSyncSpawns() {
+async function dragonFisherSyncSpawnsImpl() {
   await assertGameEnabled();
   const user = await requireUser();
   const cfg = await loadEngineConfig();
@@ -220,7 +222,7 @@ function updateFishAfterShot(
 
 async function loadEngineConfig(): Promise<DragonFisherConfig> {
   const now = Date.now();
-  if (cachedConfig && now - cachedConfig.time < 30_000) return cachedConfig.cfg;
+  if (cachedConfig && now - cachedConfig.time < 30_000) return recordRoundConfig(cachedConfig.cfg);
   const db = getDb();
   try {
     const rows = await db
@@ -231,11 +233,9 @@ async function loadEngineConfig(): Promise<DragonFisherConfig> {
     const raw = rows[0]?.engineConfig;
     const cfg = normalizeDragonFisherConfig(raw ? (JSON.parse(raw) as unknown) : null);
     cachedConfig = { cfg, time: now };
-    return cfg;
+    return recordRoundConfig(cfg);
   } catch {
-    const cfg = normalizeDragonFisherConfig(null);
-    cachedConfig = { cfg, time: now };
-    return cfg;
+    throw new Error("Game configuration unavailable");
   }
 }
 
@@ -304,7 +304,7 @@ function publicBoss() {
   };
 }
 
-export async function getDragonFisherOpenSession() {
+async function getDragonFisherOpenSessionImpl() {
   const user = await requireUser();
   const db = getDb();
   const rows = await db
@@ -353,7 +353,7 @@ export async function getDragonFisherOpenSession() {
   };
 }
 
-export async function dragonFisherEnsureSession(input?: { weaponId?: string }) {
+async function dragonFisherEnsureSessionImpl(input?: { weaponId?: string }) {
   await assertNotInMaintenanceForBets();
   await assertGameEnabled();
   const user = await requireUser();
@@ -437,7 +437,7 @@ function maybeSpawnBoss(cfg: DragonFisherConfig) {
   globalBoss = createBossPool({ cfg, rng, now });
 }
 
-export async function dragonFisherFireShot(input: {
+async function dragonFisherFireShotImpl(input: {
   weaponId: string;
   target: { instanceId: string };
 }) {
@@ -651,7 +651,7 @@ export async function dragonFisherFireShot(input: {
   };
 }
 
-export async function dragonFisherSetWeapon(input: { weaponId: string }) {
+async function dragonFisherSetWeaponImpl(input: { weaponId: string }) {
   await assertGameEnabled();
   const user = await requireUser();
   if (!isWeaponTierId(input.weaponId)) throw new Error("Invalid weapon");
@@ -675,7 +675,7 @@ export async function dragonFisherSetWeapon(input: { weaponId: string }) {
   return getDragonFisherOpenSession();
 }
 
-export async function dragonFisherBuyPowerUp(input: { powerUpId: string }) {
+async function dragonFisherBuyPowerUpImpl(input: { powerUpId: string }) {
   await assertNotInMaintenanceForBets();
   await assertGameEnabled();
   const user = await requireUser();
@@ -734,7 +734,7 @@ export async function dragonFisherBuyPowerUp(input: { powerUpId: string }) {
   };
 }
 
-export async function dragonFisherUseNetBomb(input: {
+async function dragonFisherUseNetBombImpl(input: {
   weaponId: string;
   targets: { instanceId: string }[];
 }) {
@@ -833,7 +833,7 @@ export async function dragonFisherUseNetBomb(input: {
   };
 }
 
-export async function dragonFisherUseFreezeLure() {
+async function dragonFisherUseFreezeLureImpl() {
   const user = await requireUser();
   const cfg = await loadEngineConfig();
   const session = await loadOpenSessionRow(user.id);
@@ -864,9 +864,93 @@ export async function dragonFisherUseFreezeLure() {
 }
 
 /** Attempt boss spawn check for clients polling. */
-export async function dragonFisherBossStatus() {
+async function dragonFisherBossStatusImpl() {
   await requireUser();
   const cfg = await loadEngineConfig();
   maybeSpawnBoss(cfg);
   return { boss: publicBoss() };
+}
+
+export function dragonFisherSyncSpawns(
+  ...args: Parameters<typeof dragonFisherSyncSpawnsImpl>
+): ReturnType<typeof dragonFisherSyncSpawnsImpl> {
+  return withFishingRoom("dragon-fisher", captureRoom, restoreRoom, () =>
+    dragonFisherSyncSpawnsImpl(...args),
+  );
+}
+
+export function getDragonFisherOpenSession(
+  ...args: Parameters<typeof getDragonFisherOpenSessionImpl>
+): ReturnType<typeof getDragonFisherOpenSessionImpl> {
+  return withFishingRoom("dragon-fisher", captureRoom, restoreRoom, () =>
+    getDragonFisherOpenSessionImpl(...args),
+  );
+}
+
+export function dragonFisherEnsureSession(
+  ...args: Parameters<typeof dragonFisherEnsureSessionImpl>
+): ReturnType<typeof dragonFisherEnsureSessionImpl> {
+  return withFishingRoom("dragon-fisher", captureRoom, restoreRoom, () =>
+    dragonFisherEnsureSessionImpl(...args),
+  );
+}
+
+export function dragonFisherFireShot(
+  ...args: Parameters<typeof dragonFisherFireShotImpl>
+): ReturnType<typeof dragonFisherFireShotImpl> {
+  return withFishingRoom("dragon-fisher", captureRoom, restoreRoom, () =>
+    dragonFisherFireShotImpl(...args),
+  );
+}
+
+export function dragonFisherSetWeapon(
+  ...args: Parameters<typeof dragonFisherSetWeaponImpl>
+): ReturnType<typeof dragonFisherSetWeaponImpl> {
+  return withFishingRoom("dragon-fisher", captureRoom, restoreRoom, () =>
+    dragonFisherSetWeaponImpl(...args),
+  );
+}
+
+export function dragonFisherBuyPowerUp(
+  ...args: Parameters<typeof dragonFisherBuyPowerUpImpl>
+): ReturnType<typeof dragonFisherBuyPowerUpImpl> {
+  return withFishingRoom("dragon-fisher", captureRoom, restoreRoom, () =>
+    dragonFisherBuyPowerUpImpl(...args),
+  );
+}
+
+export function dragonFisherUseNetBomb(
+  ...args: Parameters<typeof dragonFisherUseNetBombImpl>
+): ReturnType<typeof dragonFisherUseNetBombImpl> {
+  return withFishingRoom("dragon-fisher", captureRoom, restoreRoom, () =>
+    dragonFisherUseNetBombImpl(...args),
+  );
+}
+
+export function dragonFisherUseFreezeLure(
+  ...args: Parameters<typeof dragonFisherUseFreezeLureImpl>
+): ReturnType<typeof dragonFisherUseFreezeLureImpl> {
+  return withFishingRoom("dragon-fisher", captureRoom, restoreRoom, () =>
+    dragonFisherUseFreezeLureImpl(...args),
+  );
+}
+
+export function dragonFisherBossStatus(
+  ...args: Parameters<typeof dragonFisherBossStatusImpl>
+): ReturnType<typeof dragonFisherBossStatusImpl> {
+  return withFishingRoom("dragon-fisher", captureRoom, restoreRoom, () =>
+    dragonFisherBossStatusImpl(...args),
+  );
+}
+
+function captureRoom() {
+  return { globalBoss, lastBossEndedAt, fishRegistry };
+}
+function restoreRoom(state: ReturnType<typeof captureRoom>) {
+  globalBoss = state.globalBoss ?? null;
+  lastBossEndedAt = state.lastBossEndedAt ?? 0;
+  fishRegistry.clear();
+  const now = Date.now();
+  for (const [key, fish] of state.fishRegistry ?? [])
+    if (fish.expiresAt > now) fishRegistry.set(key, fish);
 }

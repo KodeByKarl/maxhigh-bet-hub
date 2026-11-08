@@ -1,3 +1,7 @@
+import { recordRoundConfig } from "../round-random.server";
+import { assertNoOpenFeature } from "../feature-guard.server";
+import { minorUnits } from "@/lib/money";
+import { assertGameWager } from "../wallet.server";
 /**
  * Godly Gates — server-authoritative spin settle.
  * Client only receives scripts + balances; it cannot choose win amounts.
@@ -43,10 +47,10 @@ async function loadEngineConfig() {
       .where(eq(gameControls.gameId, GODLY_GATES_GAME_ID))
       .limit(1);
     const raw = rows[0]?.engineConfig;
-    if (!raw) return normalizeGodlyGatesConfig(null);
-    return normalizeGodlyGatesConfig(JSON.parse(raw) as unknown);
+    if (!raw) return recordRoundConfig(normalizeGodlyGatesConfig(null));
+    return recordRoundConfig(normalizeGodlyGatesConfig(JSON.parse(raw) as unknown));
   } catch {
-    return normalizeGodlyGatesConfig(null);
+    throw new Error("Game configuration unavailable");
   }
 }
 
@@ -167,6 +171,8 @@ export async function godlyGatesPaidSpin(data: {
   ante: boolean;
 }): Promise<GodlyGatesSpinResult> {
   const user = await requireUser();
+  minorUnits(data.bet);
+  await assertGameWager(GODLY_GATES_GAME_ID, data.bet);
   if (!Number.isFinite(data.bet) || data.bet <= 0) throw new Error("Invalid bet");
 
   const cfg = await loadEngineConfig();
@@ -274,6 +280,7 @@ export async function godlyGatesPaidSpin(data: {
         ante: data.ante ? "yes" : "no",
         freeSpinsLeft: script.freeSpinsAwarded,
         fsSessionWin: "0.00",
+        baseCredited: money(script.totalWin),
         fsBombAcc: "0.00",
         fsSpinsPlayed: 0,
       });
@@ -367,6 +374,7 @@ export async function godlyGatesFreeSpin(data: {
         bet,
         maxWinMult: cfg.maxWinMult,
         computedWin: finalizeFreeSpinTotal(nextWin, nextBomb),
+        alreadyCredited: Number(row.baseCredited),
         context: "free-spins-final",
       }).payout;
       if (final > 0) {
@@ -459,6 +467,8 @@ export async function godlyGatesBuyFeature(data: {
   quantity: number;
 }): Promise<{ balance: number; session: GodlyGatesSessionState }> {
   const user = await requireUser();
+  minorUnits(data.bet);
+  await assertGameWager(GODLY_GATES_GAME_ID, data.bet);
   if (!Number.isFinite(data.bet) || data.bet <= 0) throw new Error("Invalid bet");
   const quantity = Math.round(data.quantity);
   if (!Number.isFinite(quantity) || quantity < 1 || quantity > 50) {
@@ -483,7 +493,7 @@ export async function godlyGatesBuyFeature(data: {
   }
 
   await assertNotInMaintenanceForBets();
-  await closeOtherOpenSessions(user.id);
+  await assertNoOpenFeature(user.id, GODLY_GATES_GAME_ID);
 
   const db = getDb();
   const result = await db.transaction(async (tx) => {

@@ -1,3 +1,4 @@
+import { SlotControlDeck } from "./SlotControlDeck";
 /**
  * Panther Peak — Sweet Bonanza layout (cluster-pay tumble slot).
  * Engine resolves spins instantly; this file plays back the animation script.
@@ -1039,274 +1040,61 @@ export function FrostFoxSlot({
           </div>
 
           {/* Buy feature — compact on phones so the spin row stays on-screen */}
-          {!inFree && (
-            <div className="mt-1 flex shrink-0 justify-center gap-1.5 sm:mt-2 sm:gap-3">
-              <button
-                type="button"
-                disabled={busy}
-                onClick={() => openBuyFeature("normal")}
-                className="min-h-9 rounded-xl border-2 bg-black/70 px-3 py-1.5 text-[10px] font-black uppercase tracking-wide disabled:opacity-40 sm:min-h-10 sm:px-4 sm:py-2 sm:text-[11px]"
-                style={{
-                  borderColor: "var(--p-accent)",
-                  color: "var(--p-accent-soft)",
-                }}
-              >
-                Buy FS {formatMoneyCompact(buyCost)}
-              </button>
-            </div>
-          )}
 
           {/* HUD — compact on Android so Spin sits above the system nav */}
-          <div className="mt-1 w-full min-w-0 shrink-0 sm:mt-3">
-            <div className="mb-1.5 grid grid-cols-3 gap-1 sm:mb-2 sm:gap-2">
-              <div
-                className="min-w-0 rounded-xl border bg-black/75 px-1 py-1.5 text-center sm:px-2 sm:py-2.5"
-                style={{ borderColor: "var(--p-hud-border)" }}
-              >
-                <div
-                  className="text-[9px] font-bold uppercase tracking-wider sm:text-[11px]"
-                  style={{ color: "var(--p-hud-label)" }}
-                >
-                  Bet
-                </div>
-                <div
-                  className="break-all text-[11px] font-black tabular-nums leading-tight sm:text-base"
-                  style={{ color: "var(--p-hud-value)" }}
-                >
-                  {formatMoney(totalBet)}
-                </div>
-              </div>
-              <div
-                className="min-w-0 rounded-xl border px-1 py-1.5 text-center sm:px-2 sm:py-2.5"
-                style={{
-                  borderColor: "var(--p-win-border)",
-                  background: "linear-gradient(180deg, var(--p-win-from) 0%, var(--p-win-to) 100%)",
-                }}
-              >
-                <div
-                  className="text-[9px] font-bold uppercase tracking-wider sm:text-[11px]"
-                  style={{ color: "var(--p-win-label)" }}
-                >
-                  Win
-                </div>
-                <div
-                  className="break-all text-[11px] font-black tabular-nums leading-tight sm:text-base"
-                  style={{ color: "var(--p-win-value)" }}
-                  title={displayWin > 0 ? formatMoney(displayWin) : undefined}
-                >
-                  {displayWin > 0 ? formatMoney(displayWin) : "—"}
-                </div>
-              </div>
-              <div
-                className="min-w-0 rounded-xl border bg-black/75 px-1 py-1.5 text-center sm:px-2 sm:py-2.5"
-                style={{ borderColor: "var(--p-hud-border)" }}
-              >
-                <div
-                  className="text-[9px] font-bold uppercase tracking-wider sm:text-[11px]"
-                  style={{ color: "var(--p-hud-label)" }}
-                >
-                  Balance
-                </div>
-                <div
-                  className="break-all text-[11px] font-black tabular-nums leading-tight sm:text-base"
-                  style={{ color: "var(--p-hud-value)" }}
-                  title={formatMoney(balance)}
-                >
-                  {formatMoney(balance)}
-                </div>
-              </div>
-            </div>
-
-            <div
-              className="flex min-w-0 items-center gap-1 rounded-2xl border bg-black/80 px-1 py-1.5 backdrop-blur-md sm:gap-3 sm:px-3 sm:py-2.5"
-              style={{ borderColor: "var(--p-hud-border)" }}
-            >
-              <button
-                type="button"
-                onClick={() => {
-                  frostFoxAudio.playUiClick();
-                  setInfoOpen(true);
-                }}
-                className="grid size-10 shrink-0 place-items-center rounded-xl border border-white/20 bg-neutral-800 text-white sm:size-11"
-                aria-label="Paytable Info"
-              >
-                <Info size={20} />
-              </button>
-
-              <div className="flex min-w-0 flex-1 items-center justify-center gap-0.5 rounded-xl border border-white/15 bg-neutral-900/90 px-0.5 py-0.5 sm:gap-1.5 sm:px-1.5 sm:py-1">
-                <button
-                  type="button"
-                  disabled={busy}
-                  onClick={() => nudgeBet(-1)}
-                  className="grid size-9 shrink-0 place-items-center rounded-lg bg-neutral-700 text-lg font-black text-white disabled:opacity-40 sm:size-10 sm:text-xl"
-                  aria-label="Decrease Bet"
-                >
-                  −
-                </button>
-                <button
-                  type="button"
-                  disabled={busy}
-                  onClick={() => setBetModalOpen(true)}
-                  className="min-w-0 flex-1 px-0.5 text-center disabled:opacity-40 sm:min-w-[4.25rem] sm:flex-none sm:px-1"
-                  aria-label="Select Bet Amount"
-                >
-                  <div className="text-[9px] font-bold uppercase tracking-wider text-white/55 sm:text-[10px]">
-                    Bet
-                  </div>
-                  <div
-                    className="truncate text-xs font-black tabular-nums sm:text-base"
-                    style={{ color: "var(--p-win-value)" }}
-                  >
-                    {formatMoney(totalBet)}
-                  </div>
-                </button>
-                <button
-                  type="button"
-                  disabled={busy}
-                  onClick={() => nudgeBet(1)}
-                  className="grid size-9 shrink-0 place-items-center rounded-lg bg-neutral-700 text-lg font-black text-white disabled:opacity-40 sm:size-10 sm:text-xl"
-                  aria-label="Increase Bet"
-                >
-                  +
-                </button>
-              </div>
-
-              <button
-                type="button"
-                onClick={() => setTurbo((v) => !v)}
-                className={cn(
-                  "grid size-10 shrink-0 place-items-center rounded-xl border sm:size-11",
-                  !turbo && "border-white/20 bg-neutral-800 text-white/70",
-                )}
-                style={
-                  turbo
-                    ? {
-                        borderColor: "var(--p-accent)",
-                        background: "color-mix(in srgb, var(--p-accent) 25%, transparent)",
-                        color: "var(--p-win-value)",
-                      }
-                    : undefined
-                }
-                aria-label="Turbo Fast Mode"
-              >
-                <FastForward size={18} />
-              </button>
-
-              <button
-                type="button"
-                disabled={!busy && !autoSpin && inFree && freeSpins === 0}
-                onClick={() => {
-                  if (busy) {
-                    skipRef.current = true;
-                    if (inFree || freeSpins > 0) setFsPaused(true);
-                  } else if (autoSpin) {
-                    setAutoSpin(false);
-                    setAutoSpinConfig(null);
-                  } else if (inFree || freeSpins > 0) {
-                    setFsPaused(false);
-                    frostFoxAudio.playUiClick();
-                    void spin(true);
-                  } else {
-                    frostFoxAudio.playUiClick();
-                    void spin(false);
-                  }
-                }}
-                className="relative grid size-14 shrink-0 place-items-center rounded-full border-[3px] active:scale-95 sm:size-16"
-                style={{
-                  borderColor: "var(--p-accent-soft)",
-                  background:
-                    "linear-gradient(180deg, var(--p-spin-from) 0%, var(--p-spin-mid) 50%, var(--p-spin-to) 100%)",
-                  color: "var(--p-accent-deep)",
-                  boxShadow: "0 6px 22px var(--p-spin-shadow)",
-                }}
-                aria-label="Spin"
-              >
-                <div className="absolute inset-1 flex items-center justify-center rounded-full bg-gradient-to-b from-neutral-900 to-black shadow-inner sm:inset-1.5">
-                  {inFree ? (
-                    <div className="flex flex-col items-center -space-y-0.5">
-                      <span
-                        className="text-xl font-black tabular-nums leading-none sm:text-2xl"
-                        style={{ color: "var(--p-win-value)" }}
-                      >
-                        {freeSpins}
-                      </span>
-                      <span
-                        className="text-[8px] font-black uppercase tracking-widest sm:text-[9px]"
-                        style={{ color: "var(--p-accent)" }}
-                      >
-                        Spins
-                      </span>
-                    </div>
-                  ) : autoSpin ? (
-                    <div className="flex flex-col items-center -space-y-0.5">
-                      <span
-                        className="text-xl font-black tabular-nums leading-none sm:text-2xl"
-                        style={{ color: "var(--p-win-value)" }}
-                      >
-                        {remainingAutoSpins === "infinity" ? "∞" : remainingAutoSpins}
-                      </span>
-                      <span
-                        className="text-[8px] font-black uppercase tracking-widest sm:text-[9px]"
-                        style={{ color: "var(--p-accent)" }}
-                      >
-                        Auto
-                      </span>
-                    </div>
-                  ) : busy ? (
-                    <RotateCw
-                      size={24}
-                      className="animate-spin sm:size-7"
-                      style={{ color: "var(--p-win-value)" }}
-                    />
-                  ) : (
-                    <RotateCw
-                      size={24}
-                      className="sm:size-7"
-                      style={{ color: "var(--p-win-value)" }}
-                    />
-                  )}
-                </div>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => {
-                  if (busy || autoSpin || inFree) {
-                    setAutoSpin(false);
-                    setAutoSpinConfig(null);
-                    skipRef.current = true;
-                    if (inFree) setFsPaused(true);
-                  } else {
-                    setAutoSpinModalOpen(true);
-                  }
-                }}
-                className={cn(
-                  "grid size-10 shrink-0 place-items-center rounded-xl border sm:size-11",
-                  busy || autoSpin || (inFree && !fsPaused)
-                    ? "border-red-500 bg-red-600 text-white shadow-[0_0_14px_rgba(239,68,68,0.85)]"
-                    : "border-white/20 bg-neutral-800 text-white/70",
-                )}
-                aria-label={busy || autoSpin || inFree ? "Stop Game" : "Auto Spin Settings"}
-              >
-                {busy || autoSpin || (inFree && !fsPaused) ? (
-                  <Square size={16} className="fill-white text-white" />
-                ) : (
-                  <RotateCcw size={18} />
-                )}
-              </button>
-            </div>
-
-            {busy && displayWin <= 0 && (
-              <p className="mt-1 hidden text-center text-[10px] font-bold uppercase tracking-[0.2em] text-amber-200/70 sm:mt-1.5 sm:block sm:text-xs">
-                Spinning…
-              </p>
-            )}
-            {!busy && displayWin <= 0 && !inFree && (
-              <p className="mt-1 hidden text-center text-[10px] font-bold uppercase tracking-[0.2em] text-amber-200/55 sm:mt-1.5 sm:block sm:text-xs">
-                Good luck
-              </p>
-            )}
-          </div>
+          <SlotControlDeck
+            gameId="frost-fox"
+            bet={totalBet}
+            win={displayWin}
+            balance={balance}
+            busy={busy}
+            turbo={turbo}
+            autoSpin={autoSpin}
+            inFree={inFree}
+            freeSpins={freeSpins}
+            freeSpinsPaused={fsPaused}
+            autoRemaining={remainingAutoSpins}
+            spinDisabled={!busy && !autoSpin && inFree && freeSpins === 0}
+            onSpin={() => {
+              if (busy) {
+                skipRef.current = true;
+                if (inFree || freeSpins > 0) setFsPaused(true);
+              } else if (autoSpin) {
+                setAutoSpin(false);
+                setAutoSpinConfig(null);
+              } else if (inFree || freeSpins > 0) {
+                setFsPaused(false);
+                frostFoxAudio.playUiClick();
+                void spin(true);
+              } else {
+                frostFoxAudio.playUiClick();
+                void spin(false);
+              }
+            }}
+            onInfo={() => {
+              frostFoxAudio.playUiClick();
+              setInfoOpen(true);
+            }}
+            onDecreaseBet={() => nudgeBet(-1)}
+            onIncreaseBet={() => nudgeBet(1)}
+            onSelectBet={() => setBetModalOpen(true)}
+            onTurbo={() => setTurbo((v) => !v)}
+            onAuto={() => {
+              if (busy || autoSpin || inFree) {
+                setAutoSpin(false);
+                setAutoSpinConfig(null);
+                skipRef.current = true;
+                if (inFree) setFsPaused(true);
+              } else {
+                setAutoSpinModalOpen(true);
+              }
+            }}
+            buyFeature={
+              !inFree
+                ? { price: buyCost, disabled: busy, onClick: () => openBuyFeature("normal") }
+                : undefined
+            }
+          />
         </div>
       </div>
 

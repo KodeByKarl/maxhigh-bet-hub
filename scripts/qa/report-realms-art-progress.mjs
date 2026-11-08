@@ -1,0 +1,11 @@
+import fs from 'node:fs';
+const root='output/realms-art-rework';
+const prompts=JSON.parse(fs.readFileSync(`${root}/prompts.json`,'utf8'));
+const files=fs.readdirSync(`${root}/generated`).filter(file=>file.endsWith('.json'));
+const saved=new Set(files.map(file=>JSON.parse(fs.readFileSync(`${root}/generated/${file}`,'utf8')).id));
+const ready=JSON.parse(fs.readFileSync('src/lib/realms-art-ready.json','utf8'));
+const pending=prompts.filter(asset=>!saved.has(asset.id));
+const report={updatedAt:new Date().toISOString(),totalGames:50,totalAssets:600,generatedAssets:saved.size,installedGames:ready.length,installedAssets:ready.length*12,remainingAssets:pending.length,readyGames:ready,remainingGames:[...new Set(pending.map(asset=>asset.gameId))],generator:'built-in imagegen'};
+fs.writeFileSync(`${root}/progress.json`,JSON.stringify(report,null,2));
+fs.writeFileSync(`${root}/pending-prompts.json`,JSON.stringify(pending,null,2));
+console.log(JSON.stringify({...report,readyGames:undefined,remainingGames:undefined}));

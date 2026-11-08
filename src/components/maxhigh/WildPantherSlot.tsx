@@ -1,3 +1,4 @@
+import { SlotControlDeck } from "./SlotControlDeck";
 /**
  * Wild Panther — Sweet Bonanza layout (cluster-pay tumble slot).
  * Engine resolves spins instantly; this file plays back the animation script.
@@ -1021,195 +1022,56 @@ export function WildPantherSlot({
           </div>
 
           {/* Buy feature — larger taps on mobile */}
-          {!inFree && (
-            <div className="mt-2 flex shrink-0 justify-center gap-2 sm:mt-2 sm:gap-3">
-              <button
-                type="button"
-                disabled={busy}
-                onClick={() => openBuyFeature("normal")}
-                className="min-h-11 rounded-xl border-2 border-amber-400/80 bg-black/70 px-4 py-2 text-xs font-black uppercase tracking-wide text-amber-200 disabled:opacity-40 sm:min-h-10 sm:text-[11px]"
-              >
-                Buy FS {formatMoneyCompact(buyCost)}
-              </button>
-            </div>
-          )}
 
           {/* Elder-friendly HUD */}
-          <div className="mt-2 w-full shrink-0 sm:mt-3">
-            {/* Meters — large readable values */}
-            <div className="mb-2 grid grid-cols-3 gap-1.5 sm:gap-2">
-              <div className="rounded-xl border border-amber-500/40 bg-black/75 px-2 py-2 text-center sm:py-2.5">
-                <div className="text-[10px] font-bold uppercase tracking-wider text-amber-200/70 sm:text-[11px]">
-                  Bet
-                </div>
-                <div className="text-base font-black tabular-nums text-amber-100 sm:text-lg">
-                  {totalBet.toFixed(2)}
-                </div>
-              </div>
-              <div className="rounded-xl border border-fuchsia-400/50 bg-gradient-to-b from-purple-900/90 to-black/80 px-2 py-2 text-center sm:py-2.5">
-                <div className="text-[10px] font-bold uppercase tracking-wider text-fuchsia-200/80 sm:text-[11px]">
-                  Win
-                </div>
-                <div className="truncate text-base font-black tabular-nums text-yellow-200 sm:text-lg">
-                  {displayWin > 0 ? formatMoneyCompact(displayWin) : "—"}
-                </div>
-              </div>
-              <div className="rounded-xl border border-amber-500/40 bg-black/75 px-2 py-2 text-center sm:py-2.5">
-                <div className="text-[10px] font-bold uppercase tracking-wider text-amber-200/70 sm:text-[11px]">
-                  Balance
-                </div>
-                <div className="truncate text-base font-black tabular-nums text-amber-100 sm:text-lg">
-                  {formatMoneyCompact(balance)}
-                </div>
-              </div>
-            </div>
-
-            {/* Actions — big touch targets */}
-            <div className="flex items-center justify-between gap-2 rounded-2xl border border-amber-500/35 bg-black/80 px-2 py-2 backdrop-blur-md sm:gap-3 sm:px-3 sm:py-2.5">
-              <button
-                type="button"
-                onClick={() => setInfoOpen(true)}
-                className="grid size-12 shrink-0 place-items-center rounded-xl border border-white/20 bg-neutral-800 text-white sm:size-11"
-                aria-label="Paytable Info"
-              >
-                <Info size={22} />
-              </button>
-
-              <div className="flex items-center gap-1.5 rounded-xl border border-white/15 bg-neutral-900/90 px-1.5 py-1">
-                <button
-                  type="button"
-                  disabled={busy}
-                  onClick={() => nudgeBet(-1)}
-                  className="grid size-11 place-items-center rounded-lg bg-neutral-700 text-xl font-black text-white disabled:opacity-40 sm:size-10"
-                  aria-label="Decrease Bet"
-                >
-                  −
-                </button>
-                <button
-                  type="button"
-                  disabled={busy}
-                  onClick={() => setBetModalOpen(true)}
-                  className="min-w-[4.25rem] px-1 text-center disabled:opacity-40"
-                  aria-label="Select Bet Amount"
-                >
-                  <div className="text-[10px] font-bold uppercase tracking-wider text-white/55">
-                    Bet
-                  </div>
-                  <div className="text-sm font-black tabular-nums text-yellow-300 sm:text-base">
-                    {totalBet.toFixed(2)}
-                  </div>
-                </button>
-                <button
-                  type="button"
-                  disabled={busy}
-                  onClick={() => nudgeBet(1)}
-                  className="grid size-11 place-items-center rounded-lg bg-neutral-700 text-xl font-black text-white disabled:opacity-40 sm:size-10"
-                  aria-label="Increase Bet"
-                >
-                  +
-                </button>
-              </div>
-
-              <button
-                type="button"
-                onClick={() => setTurbo((v) => !v)}
-                className={cn(
-                  "grid size-12 shrink-0 place-items-center rounded-xl border sm:size-11",
-                  turbo
-                    ? "border-amber-400 bg-amber-400/25 text-yellow-200"
-                    : "border-white/20 bg-neutral-800 text-white/70",
-                )}
-                aria-label="Turbo Fast Mode"
-              >
-                <FastForward size={22} />
-              </button>
-
-              <button
-                type="button"
-                disabled={!busy && !autoSpin && inFree && freeSpins === 0}
-                onClick={() => {
-                  if (busy) {
-                    skipRef.current = true;
-                    if (inFree || freeSpins > 0) setFsPaused(true);
-                  } else if (autoSpin) {
-                    setAutoSpin(false);
-                    setAutoSpinConfig(null);
-                  } else if (inFree || freeSpins > 0) {
-                    setFsPaused(false);
-                    void spin(true);
-                  } else {
-                    void spin(false);
-                  }
-                }}
-                className="relative grid size-[4.25rem] shrink-0 place-items-center rounded-full border-[3px] border-amber-300 bg-gradient-to-b from-amber-400 via-amber-600 to-amber-800 text-amber-950 shadow-[0_6px_22px_rgba(217,119,6,0.65)] active:scale-95 sm:size-16"
-                aria-label="Spin"
-              >
-                <div className="absolute inset-1.5 flex items-center justify-center rounded-full bg-gradient-to-b from-neutral-900 to-black shadow-inner">
-                  {inFree ? (
-                    <div className="flex flex-col items-center -space-y-0.5">
-                      <span className="text-2xl font-black tabular-nums leading-none text-yellow-300">
-                        {freeSpins}
-                      </span>
-                      <span className="text-[9px] font-black uppercase tracking-widest text-amber-500">
-                        Spins
-                      </span>
-                    </div>
-                  ) : autoSpin ? (
-                    <div className="flex flex-col items-center -space-y-0.5">
-                      <span className="text-2xl font-black tabular-nums leading-none text-yellow-300">
-                        {remainingAutoSpins === "infinity" ? "∞" : remainingAutoSpins}
-                      </span>
-                      <span className="text-[9px] font-black uppercase tracking-widest text-amber-500">
-                        Auto
-                      </span>
-                    </div>
-                  ) : busy ? (
-                    <RotateCw size={28} className="animate-spin text-yellow-300" />
-                  ) : (
-                    <RotateCw size={28} className="text-yellow-300" />
-                  )}
-                </div>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => {
-                  if (busy || autoSpin || inFree) {
-                    setAutoSpin(false);
-                    setAutoSpinConfig(null);
-                    skipRef.current = true;
-                    if (inFree) setFsPaused(true);
-                  } else {
-                    setAutoSpinModalOpen(true);
-                  }
-                }}
-                className={cn(
-                  "grid size-12 shrink-0 place-items-center rounded-xl border sm:size-11",
-                  busy || autoSpin || (inFree && !fsPaused)
-                    ? "border-red-500 bg-red-600 text-white shadow-[0_0_14px_rgba(239,68,68,0.85)]"
-                    : "border-white/20 bg-neutral-800 text-white/70",
-                )}
-                aria-label={busy || autoSpin || inFree ? "Stop Game" : "Auto Spin Settings"}
-              >
-                {busy || autoSpin || (inFree && !fsPaused) ? (
-                  <Square size={18} className="fill-white text-white" />
-                ) : (
-                  <RotateCcw size={22} />
-                )}
-              </button>
-            </div>
-
-            {busy && displayWin <= 0 && (
-              <p className="mt-1.5 text-center text-xs font-bold uppercase tracking-[0.2em] text-amber-200/70">
-                Spinning…
-              </p>
-            )}
-            {!busy && displayWin <= 0 && !inFree && (
-              <p className="mt-1.5 text-center text-xs font-bold uppercase tracking-[0.2em] text-amber-200/55">
-                Good luck
-              </p>
-            )}
-          </div>
+          <SlotControlDeck
+            gameId="wild-panther"
+            bet={totalBet}
+            win={displayWin}
+            balance={balance}
+            busy={busy}
+            turbo={turbo}
+            autoSpin={autoSpin}
+            inFree={inFree}
+            freeSpins={freeSpins}
+            freeSpinsPaused={fsPaused}
+            autoRemaining={remainingAutoSpins}
+            spinDisabled={!busy && !autoSpin && inFree && freeSpins === 0}
+            onSpin={() => {
+              if (busy) {
+                skipRef.current = true;
+                if (inFree || freeSpins > 0) setFsPaused(true);
+              } else if (autoSpin) {
+                setAutoSpin(false);
+                setAutoSpinConfig(null);
+              } else if (inFree || freeSpins > 0) {
+                setFsPaused(false);
+                void spin(true);
+              } else {
+                void spin(false);
+              }
+            }}
+            onInfo={() => setInfoOpen(true)}
+            onDecreaseBet={() => nudgeBet(-1)}
+            onIncreaseBet={() => nudgeBet(1)}
+            onSelectBet={() => setBetModalOpen(true)}
+            onTurbo={() => setTurbo((v) => !v)}
+            onAuto={() => {
+              if (busy || autoSpin || inFree) {
+                setAutoSpin(false);
+                setAutoSpinConfig(null);
+                skipRef.current = true;
+                if (inFree) setFsPaused(true);
+              } else {
+                setAutoSpinModalOpen(true);
+              }
+            }}
+            buyFeature={
+              !inFree
+                ? { price: buyCost, disabled: busy, onClick: () => openBuyFeature("normal") }
+                : undefined
+            }
+          />
         </div>
       </div>
 

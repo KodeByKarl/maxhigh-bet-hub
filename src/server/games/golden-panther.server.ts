@@ -1,3 +1,7 @@
+import { recordRoundConfig } from "../round-random.server";
+import { assertNoOpenFeature } from "../feature-guard.server";
+import { minorUnits } from "@/lib/money";
+import { assertGameWager } from "../wallet.server";
 /**
  * Panther Peak — server-authoritative spin settle.
  * Client only receives scripts + balances; it cannot choose win amounts.
@@ -43,10 +47,10 @@ async function loadEngineConfig() {
       .where(eq(gameControls.gameId, GOLDEN_PANTHER_GAME_ID))
       .limit(1);
     const raw = rows[0]?.engineConfig;
-    if (!raw) return normalizeGoldenPantherConfig(null);
-    return normalizeGoldenPantherConfig(JSON.parse(raw) as unknown);
+    if (!raw) return recordRoundConfig(normalizeGoldenPantherConfig(null));
+    return recordRoundConfig(normalizeGoldenPantherConfig(JSON.parse(raw) as unknown));
   } catch {
-    return normalizeGoldenPantherConfig(null);
+    throw new Error("Game configuration unavailable");
   }
 }
 
@@ -168,6 +172,8 @@ export async function goldenPantherPaidSpin(data: {
   ante: boolean;
 }): Promise<GoldenPantherSpinResult> {
   const user = await requireUser();
+  minorUnits(data.bet);
+  await assertGameWager(GOLDEN_PANTHER_GAME_ID, data.bet);
   if (!Number.isFinite(data.bet) || data.bet <= 0) throw new Error("Invalid bet");
 
   const cfg = await loadEngineConfig();
@@ -275,6 +281,7 @@ export async function goldenPantherPaidSpin(data: {
         ante: data.ante ? "yes" : "no",
         freeSpinsLeft: script.freeSpinsAwarded,
         fsSessionWin: "0.00",
+        baseCredited: money(script.totalWin),
         fsBombAcc: "0.00",
         fsSpinsPlayed: 0,
       });
@@ -368,6 +375,7 @@ export async function goldenPantherFreeSpin(data: {
         bet,
         maxWinMult: cfg.maxWinMult,
         computedWin: finalizeFreeSpinTotal(nextWin, nextBomb),
+        alreadyCredited: Number(row.baseCredited),
         context: "free-spins-final",
       }).payout;
       if (final > 0) {
@@ -460,6 +468,8 @@ export async function goldenPantherBuyFeature(data: {
   quantity: number;
 }): Promise<{ balance: number; session: GoldenPantherSessionState }> {
   const user = await requireUser();
+  minorUnits(data.bet);
+  await assertGameWager(GOLDEN_PANTHER_GAME_ID, data.bet);
   if (!Number.isFinite(data.bet) || data.bet <= 0) throw new Error("Invalid bet");
   const quantity = Math.round(data.quantity);
   if (!Number.isFinite(quantity) || quantity < 1 || quantity > 50) {
@@ -484,7 +494,7 @@ export async function goldenPantherBuyFeature(data: {
   }
 
   await assertNotInMaintenanceForBets();
-  await closeOtherOpenSessions(user.id);
+  await assertNoOpenFeature(user.id, GOLDEN_PANTHER_GAME_ID);
 
   const db = getDb();
   const result = await db.transaction(async (tx) => {

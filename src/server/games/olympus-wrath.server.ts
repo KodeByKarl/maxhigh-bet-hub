@@ -1,3 +1,7 @@
+import { recordRoundConfig } from "../round-random.server";
+import { assertNoOpenFeature } from "../feature-guard.server";
+import { minorUnits } from "@/lib/money";
+import { assertGameWager } from "../wallet.server";
 /**
  * Olympus Wrath — server-authoritative spin settle.
  * Client only receives scripts + balances; it cannot choose win amounts.
@@ -43,10 +47,10 @@ async function loadEngineConfig() {
       .where(eq(gameControls.gameId, OLYMPUS_WRATH_GAME_ID))
       .limit(1);
     const raw = rows[0]?.engineConfig;
-    if (!raw) return normalizeOlympusWrathConfig(null);
-    return normalizeOlympusWrathConfig(JSON.parse(raw) as unknown);
+    if (!raw) return recordRoundConfig(normalizeOlympusWrathConfig(null));
+    return recordRoundConfig(normalizeOlympusWrathConfig(JSON.parse(raw) as unknown));
   } catch {
-    return normalizeOlympusWrathConfig(null);
+    throw new Error("Game configuration unavailable");
   }
 }
 
@@ -168,6 +172,8 @@ export async function olympusWrathPaidSpin(data: {
   ante: boolean;
 }): Promise<OlympusWrathSpinResult> {
   const user = await requireUser();
+  minorUnits(data.bet);
+  await assertGameWager(OLYMPUS_WRATH_GAME_ID, data.bet);
   if (!Number.isFinite(data.bet) || data.bet <= 0) throw new Error("Invalid bet");
 
   const cfg = await loadEngineConfig();
@@ -275,6 +281,7 @@ export async function olympusWrathPaidSpin(data: {
         ante: data.ante ? "yes" : "no",
         freeSpinsLeft: script.freeSpinsAwarded,
         fsSessionWin: "0.00",
+        baseCredited: money(script.totalWin),
         fsBombAcc: "0.00",
         fsSpinsPlayed: 0,
       });
@@ -368,6 +375,7 @@ export async function olympusWrathFreeSpin(data: {
         bet,
         maxWinMult: cfg.maxWinMult,
         computedWin: finalizeFreeSpinTotal(nextWin, nextBomb),
+        alreadyCredited: Number(row.baseCredited),
         context: "free-spins-final",
       }).payout;
       if (final > 0) {
@@ -460,6 +468,8 @@ export async function olympusWrathBuyFeature(data: {
   quantity: number;
 }): Promise<{ balance: number; session: OlympusWrathSessionState }> {
   const user = await requireUser();
+  minorUnits(data.bet);
+  await assertGameWager(OLYMPUS_WRATH_GAME_ID, data.bet);
   if (!Number.isFinite(data.bet) || data.bet <= 0) throw new Error("Invalid bet");
   const quantity = Math.round(data.quantity);
   if (!Number.isFinite(quantity) || quantity < 1 || quantity > 50) {
@@ -484,7 +494,7 @@ export async function olympusWrathBuyFeature(data: {
   }
 
   await assertNotInMaintenanceForBets();
-  await closeOtherOpenSessions(user.id);
+  await assertNoOpenFeature(user.id, OLYMPUS_WRATH_GAME_ID);
 
   const db = getDb();
   const result = await db.transaction(async (tx) => {

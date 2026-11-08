@@ -1,3 +1,4 @@
+import "../../native-game-controls.css";
 import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { toast } from "sonner";
 import { baccaratDealFn, getBaccaratEngineConfigFn } from "@/functions/baccarat";
@@ -374,7 +375,10 @@ export function BaccaratTable({
   );
 
   return (
-    <div className="relative flex h-full min-h-0 w-full flex-col overflow-hidden overscroll-none touch-manipulation text-[#e8eef8] select-none">
+    <div
+      className="relative flex h-full min-h-0 w-full flex-col overflow-hidden overscroll-none touch-manipulation text-[#e8eef8] select-none"
+      data-game-control-root="baccarat"
+    >
       <div className="pointer-events-none absolute inset-0 bg-[#030b14]">
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_50%_22%,_#1a4570_0%,_#0a1c34_42%,_#030a12_100%)]" />
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_80%,_rgba(56,189,248,0.08),_transparent_45%)]" />

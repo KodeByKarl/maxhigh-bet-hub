@@ -1,3 +1,5 @@
+import { startVisiblePolling } from "@/lib/visible-poller";
+import "../../native-game-controls.css";
 /**
  * Deep Bass arena — continuous-fire fish hunter shell.
  * Spawns are server-owned; client only renders live fish from syncSpawns. Shots settle server-side.
@@ -290,62 +292,66 @@ export function DeepBassGame({
         // keep last frame on transient sync errors
       }
     };
-    const id = window.setInterval(() => void tick(), Math.max(400, cfg.spawnIntervalSec * 1000));
-    void tick();
+    const stopPolling = startVisiblePolling(tick, Math.max(400, cfg.spawnIntervalSec * 1000));
     return () => {
       cancelled = true;
-      window.clearInterval(id);
+      stopPolling();
     };
   }, [cfg]);
 
   // Boss poll (low frequency — boss state also updates on shots)
   useEffect(() => {
-    const id = window.setInterval(() => {
-      void deepBassBossStatusFn()
-        .then((res) => {
-          if (res.boss?.active) {
-            setBossHud({
-              hitsTaken: res.boss.hitsTaken,
-              hitsRequired: res.boss.hitsRequired,
-              expiresAt: res.boss.expiresAt,
-            });
-            setFish((prev) => {
-              if (prev.some((f) => f.instanceId === res.boss!.instanceId)) {
-                return prev.map((f) =>
-                  f.instanceId === res.boss!.instanceId
-                    ? {
-                        ...f,
-                        hitsTaken: res.boss!.hitsTaken,
-                        hitsRequired: res.boss!.hitsRequired,
-                        payoutMult: res.boss!.payoutMult,
-                      }
-                    : f,
-                );
-              }
-              playDeepBassSound("bossRoar");
-              return [
-                ...prev.filter((f) => f.tierId !== "boss"),
-                makeBossFish({
-                  instanceId: res.boss!.instanceId,
-                  hitsTaken: res.boss!.hitsTaken,
-                  hitsRequired: res.boss!.hitsRequired,
-                  payoutMult: res.boss!.payoutMult,
-                  fromLeft: Math.random() > 0.5,
-                }),
-              ];
-            });
-          } else {
-            setBossHud(null);
-            setFish((prev) =>
-              prev.some((f) => f.tierId === "boss")
-                ? prev.filter((f) => f.tierId !== "boss")
-                : prev,
-            );
-          }
-        })
-        .catch(() => undefined);
-    }, TIMING.bossPollMs);
-    return () => window.clearInterval(id);
+    const stopPolling = startVisiblePolling(
+      (active) => {
+        return deepBassBossStatusFn()
+          .then((res) => {
+            if (!active()) return;
+            if (res.boss?.active) {
+              setBossHud({
+                hitsTaken: res.boss.hitsTaken,
+                hitsRequired: res.boss.hitsRequired,
+                expiresAt: res.boss.expiresAt,
+              });
+              setFish((prev) => {
+                if (prev.some((f) => f.instanceId === res.boss!.instanceId)) {
+                  return prev.map((f) =>
+                    f.instanceId === res.boss!.instanceId
+                      ? {
+                          ...f,
+                          hitsTaken: res.boss!.hitsTaken,
+                          hitsRequired: res.boss!.hitsRequired,
+                          payoutMult: res.boss!.payoutMult,
+                        }
+                      : f,
+                  );
+                }
+                playDeepBassSound("bossRoar");
+                return [
+                  ...prev.filter((f) => f.tierId !== "boss"),
+                  makeBossFish({
+                    instanceId: res.boss!.instanceId,
+                    hitsTaken: res.boss!.hitsTaken,
+                    hitsRequired: res.boss!.hitsRequired,
+                    payoutMult: res.boss!.payoutMult,
+                    fromLeft: Math.random() > 0.5,
+                  }),
+                ];
+              });
+            } else {
+              setBossHud(null);
+              setFish((prev) =>
+                prev.some((f) => f.tierId === "boss")
+                  ? prev.filter((f) => f.tierId !== "boss")
+                  : prev,
+              );
+            }
+          })
+          .catch(() => undefined);
+      },
+      TIMING.bossPollMs,
+      { immediate: false },
+    );
+    return stopPolling;
   }, []);
 
   const weapon = getWeapon(cfg, weaponId);
@@ -622,7 +628,10 @@ export function DeepBassGame({
   }
 
   return (
-    <div className="relative flex h-full min-h-0 w-full flex-col overflow-hidden bg-[#021820] text-teal-50">
+    <div
+      className="relative flex h-full min-h-0 w-full flex-col overflow-hidden bg-[#021820] text-teal-50"
+      data-game-control-root="deep-bass"
+    >
       {/* Top HUD — boat console */}
       <div className="relative z-20 flex flex-wrap items-center justify-between gap-2 border-b border-teal-500/25 bg-gradient-to-b from-[#0a2a36]/95 to-black/70 px-3 py-2 backdrop-blur-md">
         <div className="flex items-center gap-2">
@@ -882,7 +891,10 @@ export function DeepBassGame({
           paddingRight: "max(0.5rem, env(safe-area-inset-right))",
         }}
       >
-        <div className="w-full space-y-2 px-2 pt-2 sm:px-3 sm:pt-2.5">
+        <div
+          className="w-full space-y-2 px-2 pt-2 sm:px-3 sm:pt-2.5"
+          data-native-controls="deep-bass"
+        >
           {/* Weapons — stretch across full width */}
           <div className="grid w-full grid-cols-5 gap-1 sm:gap-1.5">
             {cfg.weapons.map((w) => (
@@ -896,6 +908,8 @@ export function DeepBassGame({
                     ? "border-teal-300/80 bg-teal-500/30 text-teal-50 shadow-[0_0_16px_rgba(45,212,191,0.25)]"
                     : "border-white/10 bg-white/5 text-teal-200/80 hover:bg-white/10",
                 )}
+                data-control-action="weapon"
+                aria-pressed={weaponId === w.id}
               >
                 <div className="truncate text-[9px] font-bold leading-tight sm:text-[11px]">
                   {w.id === "master" ? "Master Rig" : w.label}
@@ -922,6 +936,8 @@ export function DeepBassGame({
                   ? "bg-amber-500 text-amber-950"
                   : "bg-teal-600 text-white hover:bg-teal-500",
               )}
+              data-control-action="auto"
+              aria-pressed={autoFire}
             >
               {autoFire ? "AUTO ON" : "AUTO FIRE"}
             </button>
@@ -941,6 +957,7 @@ export function DeepBassGame({
                     }
                   }}
                   className="inline-flex shrink-0 items-center gap-1.5 rounded-xl border border-white/10 bg-white/5 px-2.5 py-2.5 text-[10px] text-teal-100 hover:bg-white/10 sm:text-[11px]"
+                  data-control-action="power"
                 >
                   {p.id === "freeze-lure" ? (
                     <Snowflake className="h-3.5 w-3.5 shrink-0" />

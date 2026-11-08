@@ -1,3 +1,8 @@
+import { manilaDayBounds, manilaWeekStart } from "@/lib/business-time";
+import { lockAccounts } from "../financial-locks.server";
+import { signedMinorUnits } from "@/lib/money";
+import { sumPendingWithdrawals } from "../wallet.server";
+import { assertCanEditAccount } from "../auth/target-policy.server";
 /**
  * Admin portal server logic (Domain 2).
  * Keep all admin-only DB operations here — not in player services.
@@ -18,7 +23,7 @@ import type {
   WinLoseByProductRow,
 } from "@/lib/admin-types";
 import { destroyUserSessions, money, newId, requireAdmin, toPublicUser } from "../session";
-import { writeAuditLog } from "./audit.server";
+import { writeAuditLog, redactAuditMeta } from "./audit.server";
 import { requirePermission } from "../auth/rbac.server";
 import { assertCanManageChips, scopeToDownline, isInDownline } from "../auth/network-scope.server";
 
@@ -36,22 +41,12 @@ export type {
 const WEEK_LABELS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"] as const;
 
 function startOfWeekMonday(ref = new Date()) {
-  const d = new Date(ref);
-  d.setHours(0, 0, 0, 0);
-  const day = d.getDay(); // 0 Sun
-  const offset = day === 0 ? -6 : 1 - day;
-  d.setDate(d.getDate() + offset);
-  return d;
+  return manilaWeekStart(ref);
 }
-
 function dayBounds(dayIndex: number) {
   const idx = Math.min(6, Math.max(0, Math.floor(dayIndex)));
-  const start = startOfWeekMonday();
-  start.setDate(start.getDate() + idx);
-  start.setHours(0, 0, 0, 0);
-  const end = new Date(start);
-  end.setDate(start.getDate() + 1);
-  return { start, end, idx };
+  const start = new Date(manilaWeekStart().getTime() + idx * 86400000);
+  return { start, end: new Date(start.getTime() + 86400000), idx };
 }
 
 function formatPhp(n: number) {
@@ -251,12 +246,13 @@ export async function adminUpdateUser(data: {
   email?: string;
   password?: string;
 }): Promise<PublicUser> {
-  const actor = await requireAdmin();
+  const actor = await requirePermission("USER_UPDATE");
   const db = getDb();
 
   const rows = await db.select().from(users).where(eq(users.id, data.userId)).limit(1);
   const user = rows[0];
   if (!user) throw new Error("User not found");
+  assertCanEditAccount(actor, user);
 
   if (!(await isInDownline(actor, user.id))) {
     throw new Error("Forbidden — user is outside your downline");
@@ -270,14 +266,23 @@ export async function adminUpdateUser(data: {
   }
 
   if (Object.keys(updates).length > 0) {
-    await db.update(users).set(updates).where(eq(users.id, user.id));
+    await db.transaction(async (tx) => {
+      await tx.update(users).set(updates).where(eq(users.id, user.id));
+      if (updates.passwordHash)
+        await tx
+          .delete((await import("../db/schema")).sessions)
+          .where(eq((await import("../db/schema")).sessions.userId, user.id));
+    });
     await writeAuditLog({
       actor,
       action: "user.update",
       summary: `Updated profile for @${user.username}`,
       targetType: "user",
       targetId: user.id,
-      meta: updates,
+      meta: {
+        changedFields: Object.keys(updates).filter((key) => key !== "passwordHash"),
+        passwordReset: !!updates.passwordHash,
+      },
     });
   }
 
@@ -458,11 +463,18 @@ export async function adminAdjustUserBalance(data: {
     await verifySuperadminChipPassword(actor.id, data.confirmPassword);
   }
 
+  signedMinorUnits(data.delta);
   const db = getDb();
   const unlimited = actor.role === "superadmin";
 
   const result = await db.transaction(async (tx) => {
-    const targetRows = await tx.select().from(users).where(eq(users.id, data.userId)).limit(1);
+    await lockAccounts(tx, [actor.id, data.userId]);
+    const targetRows = await tx
+      .select()
+      .from(users)
+      .where(eq(users.id, data.userId))
+      .for("update")
+      .limit(1);
     const target = targetRows[0];
     if (!target) throw new Error("User not found");
 
@@ -483,6 +495,13 @@ export async function adminAdjustUserBalance(data: {
 
     // Non-superadmin: add = deduct from actor wallet; withdraw = credit actor wallet
     let actorNextBalance = Number(actorUser.balance);
+    const actorHeld = await sumPendingWithdrawals(tx, actor.id);
+    const targetHeld = await sumPendingWithdrawals(tx, target.id);
+    if (
+      (!unlimited && data.delta > 0 && data.delta > actorNextBalance - actorHeld) ||
+      (data.delta < 0 && -data.delta > Number(target.balance) - targetHeld)
+    )
+      throw new Error("Insufficient available balance");
     if (!unlimited) {
       if (data.delta > 0 && Number(actorUser.balance) < data.delta) {
         throw new Error(
@@ -829,7 +848,7 @@ export async function listAdminAuditLogs(opts?: {
     targetType: r.targetType,
     targetId: r.targetId,
     summary: r.summary,
-    meta: r.meta,
+    meta: r.meta ? JSON.stringify(redactAuditMeta(JSON.parse(r.meta))) : null,
     createdAt: r.createdAt?.toISOString?.() ?? String(r.createdAt),
   }));
 }

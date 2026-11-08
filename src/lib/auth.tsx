@@ -11,6 +11,7 @@ import {
 import { getJackpotFn, getSessionFn, heartbeatFn, loginFn, logoutFn } from "@/functions/api";
 import type { PublicUser } from "@/lib/user";
 import { toast } from "sonner";
+import { startVisiblePolling } from "./visible-poller";
 
 /** Client idle logout — slightly under server idle so UX feels intentional. */
 const CLIENT_IDLE_MS = 55 * 60 * 1000;
@@ -63,13 +64,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return session;
       });
     } catch {
-      setUser((prevUser) => {
-        if (prevUser && logoutReasonRef.current !== "manual") {
-          toast.error("Your session expired. Please sign in again.", { duration: 6000 });
-        }
-        logoutReasonRef.current = null;
-        return null;
-      });
+      // Restarts/overload do not prove session expiry. Keep the last UI identity
+      // until an authoritative response returns null; protected RPCs continue
+      // to revalidate the session on the server for every action.
     }
   }, []);
 
@@ -94,19 +91,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [refreshSession, refreshJackpot]);
 
   useEffect(() => {
-    const id = window.setInterval(() => {
-      void refreshJackpot();
-    }, 8000);
-    return () => window.clearInterval(id);
+    return startVisiblePolling(refreshJackpot, 30000, { immediate: false });
   }, [refreshJackpot]);
 
   /** Session validation poll — does not bump idle clock on the server. */
   useEffect(() => {
     if (!user) return;
-    const id = window.setInterval(() => {
-      void refreshSession();
-    }, SESSION_POLL_MS);
-    return () => window.clearInterval(id);
+    return startVisiblePolling(refreshSession, SESSION_POLL_MS, { immediate: false });
   }, [user, refreshSession]);
 
   /**

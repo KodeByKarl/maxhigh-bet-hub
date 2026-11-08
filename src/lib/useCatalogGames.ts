@@ -14,7 +14,7 @@ export function useCatalogGames() {
     let cancelled = false;
     getCatalogGamesFn()
       .then((rows) => {
-        if (!cancelled && Array.isArray(rows) && rows.length > 0) {
+        if (!cancelled && Array.isArray(rows)) {
           setGames((rows as SlotGame[]).filter((g) => isLobbyVisibleGame(g.id)));
         }
       })

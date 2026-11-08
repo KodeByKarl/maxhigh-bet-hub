@@ -1,0 +1,5 @@
+[Unit]
+Description=Rotate MaxHigh operational logs
+[Service]
+Type=oneshot
+ExecStart=/usr/sbin/logrotate --state /var/lib/logrotate/maxhigh.status /etc/logrotate.d/maxhigh

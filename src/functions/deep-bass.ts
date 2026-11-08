@@ -1,3 +1,4 @@
+import { operationIdentity } from "@/lib/operation-identity";
 /**
  * Deep Bass client RPC bridge (createServerFn).
  */
@@ -27,19 +28,37 @@ const netBombSchema = z.object({
 });
 
 export const deepBassFireShotFn = createServerFn({ method: "POST" })
+  .middleware([operationIdentity])
   .validator(fireSchema)
   .handler(async ({ data }) => {
-    const { deepBassFireShot } = await import("../server/games/deep-bass.server");
-    return JSON.parse(JSON.stringify(await deepBassFireShot(data))) as Awaited<
-      ReturnType<typeof deepBassFireShot>
-    >;
+    const { withFinancialOperation } = await import("../server/operation.server");
+    return withFinancialOperation(
+      "deepBassFireShotFn",
+      data,
+      async () => {
+        const { deepBassFireShot } = await import("../server/games/deep-bass.server");
+        return JSON.parse(JSON.stringify(await deepBassFireShot(data))) as Awaited<
+          ReturnType<typeof deepBassFireShot>
+        >;
+      },
+      "deep-bass",
+    );
   });
 
 export const deepBassEnsureSessionFn = createServerFn({ method: "POST" })
+  .middleware([operationIdentity])
   .validator(z.object({ weaponId: z.string().optional() }))
   .handler(async ({ data }) => {
-    const { deepBassEnsureSession } = await import("../server/games/deep-bass.server");
-    return deepBassEnsureSession(data);
+    const { withFinancialOperation } = await import("../server/operation.server");
+    return withFinancialOperation(
+      "deepBassEnsureSessionFn",
+      data,
+      async () => {
+        const { deepBassEnsureSession } = await import("../server/games/deep-bass.server");
+        return deepBassEnsureSession(data);
+      },
+      "deep-bass",
+    );
   });
 
 export const getDeepBassSessionFn = createServerFn({ method: "GET" }).handler(async () => {
@@ -53,37 +72,84 @@ export const getDeepBassEngineConfigFn = createServerFn({ method: "GET" }).handl
 });
 
 export const deepBassSetWeaponFn = createServerFn({ method: "POST" })
+  .middleware([operationIdentity])
   .validator(weaponSchema)
   .handler(async ({ data }) => {
-    const { deepBassSetWeapon } = await import("../server/games/deep-bass.server");
-    return deepBassSetWeapon(data);
+    const { withFinancialOperation } = await import("../server/operation.server");
+    return withFinancialOperation(
+      "deepBassSetWeaponFn",
+      data,
+      async () => {
+        const { deepBassSetWeapon } = await import("../server/games/deep-bass.server");
+        return deepBassSetWeapon(data);
+      },
+      "deep-bass",
+    );
   });
 
 export const deepBassBuyPowerUpFn = createServerFn({ method: "POST" })
+  .middleware([operationIdentity])
   .validator(powerSchema)
   .handler(async ({ data }) => {
-    const { deepBassBuyPowerUp } = await import("../server/games/deep-bass.server");
-    return deepBassBuyPowerUp(data);
+    const { withFinancialOperation } = await import("../server/operation.server");
+    return withFinancialOperation(
+      "deepBassBuyPowerUpFn",
+      data,
+      async () => {
+        const { deepBassBuyPowerUp } = await import("../server/games/deep-bass.server");
+        return deepBassBuyPowerUp(data);
+      },
+      "deep-bass",
+    );
   });
 
 export const deepBassUseNetBombFn = createServerFn({ method: "POST" })
+  .middleware([operationIdentity])
   .validator(netBombSchema)
   .handler(async ({ data }) => {
-    const { deepBassUseNetBomb } = await import("../server/games/deep-bass.server");
-    return JSON.parse(JSON.stringify(await deepBassUseNetBomb(data))) as Awaited<
-      ReturnType<typeof deepBassUseNetBomb>
-    >;
+    const { withFinancialOperation } = await import("../server/operation.server");
+    return withFinancialOperation(
+      "deepBassUseNetBombFn",
+      data,
+      async () => {
+        const { deepBassUseNetBomb } = await import("../server/games/deep-bass.server");
+        return JSON.parse(JSON.stringify(await deepBassUseNetBomb(data))) as Awaited<
+          ReturnType<typeof deepBassUseNetBomb>
+        >;
+      },
+      "deep-bass",
+    );
   });
 
-export const deepBassUseFreezeLureFn = createServerFn({ method: "POST" }).handler(async () => {
-  const { deepBassUseFreezeLure } = await import("../server/games/deep-bass.server");
-  return deepBassUseFreezeLure();
-});
+export const deepBassUseFreezeLureFn = createServerFn({ method: "POST" })
+  .middleware([operationIdentity])
+  .handler(async () => {
+    const { withFinancialOperation } = await import("../server/operation.server");
+    return withFinancialOperation(
+      "deepBassUseFreezeLureFn",
+      null,
+      async () => {
+        const { deepBassUseFreezeLure } = await import("../server/games/deep-bass.server");
+        return deepBassUseFreezeLure();
+      },
+      "deep-bass",
+    );
+  });
 
-export const deepBassSyncSpawnsFn = createServerFn({ method: "POST" }).handler(async () => {
-  const { deepBassSyncSpawns } = await import("../server/games/deep-bass.server");
-  return deepBassSyncSpawns();
-});
+export const deepBassSyncSpawnsFn = createServerFn({ method: "POST" })
+  .middleware([operationIdentity])
+  .handler(async () => {
+    const { withFinancialOperation } = await import("../server/operation.server");
+    return withFinancialOperation(
+      "deepBassSyncSpawnsFn",
+      null,
+      async () => {
+        const { deepBassSyncSpawns } = await import("../server/games/deep-bass.server");
+        return deepBassSyncSpawns();
+      },
+      "deep-bass",
+    );
+  });
 
 export const deepBassBossStatusFn = createServerFn({ method: "GET" }).handler(async () => {
   const { deepBassBossStatus } = await import("../server/games/deep-bass.server");
@@ -98,6 +164,7 @@ export const getDeepBassAdminConfigFn = createServerFn({ method: "GET" }).handle
 
 /** Superadmin — persist engineConfig JSON. */
 export const saveDeepBassAdminConfigFn = createServerFn({ method: "POST" })
+  .middleware([operationIdentity])
   .validator(z.object({ config: z.unknown() }))
   .handler(async ({ data }) => {
     const { saveDeepBassEngineConfig } = await import("../server/superadmin/services.server");

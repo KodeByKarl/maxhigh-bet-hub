@@ -1,3 +1,4 @@
+import { startVisiblePolling } from "@/lib/visible-poller";
 import { useState, useEffect, useRef } from "react";
 import {
   Send,
@@ -45,7 +46,7 @@ export function MessengerChat({ onBack }: { onBack?: () => void }) {
   const [isCreatingTicket, setIsCreatingTicket] = useState(false);
 
   const scrollRef = useRef<HTMLDivElement>(null);
-  const pollIntervalRef = useRef<number | null>(null);
+  const pollIntervalRef = useRef<(() => void) | null>(null);
 
   // Set default player name when user loaded
   useEffect(() => {
@@ -93,7 +94,7 @@ export function MessengerChat({ onBack }: { onBack?: () => void }) {
         // If ticketId was set, and the fetched ticket has a different ID or is null, it means the old one was resolved!
         if (ticketId && (!res.ticket || res.ticket.id !== ticketId)) {
           if (pollIntervalRef.current) {
-            window.clearInterval(pollIntervalRef.current);
+            pollIntervalRef.current();
           }
 
           // Notify the player
@@ -150,12 +151,12 @@ export function MessengerChat({ onBack }: { onBack?: () => void }) {
     }
 
     if (ticketId) {
-      pollIntervalRef.current = window.setInterval(poll, 2500);
+      pollIntervalRef.current = startVisiblePolling(poll, 2500, { immediate: false });
     }
 
     return () => {
       if (pollIntervalRef.current) {
-        window.clearInterval(pollIntervalRef.current);
+        pollIntervalRef.current();
       }
     };
   }, [ticketId, lang, onBack]);

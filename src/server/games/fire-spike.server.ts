@@ -1,3 +1,6 @@
+import { recordRoundConfig } from "../round-random.server";
+import { minorUnits } from "@/lib/money";
+import { assertGameWager } from "../wallet.server";
 /**
  * Fire Spike — server-authoritative spin settlement (base game only).
  * No free spins, gamble hold, or buy-feature sessions.
@@ -35,7 +38,7 @@ export function clearFireSpikeEngineCache() {
 
 async function loadEngineConfig(): Promise<FireSpikeConfig> {
   const now = Date.now();
-  if (cachedConfig && now - cachedConfig.time < 30_000) return cachedConfig.cfg;
+  if (cachedConfig && now - cachedConfig.time < 30_000) return recordRoundConfig(cachedConfig.cfg);
   const db = getDb();
   try {
     const rows = await db
@@ -46,11 +49,9 @@ async function loadEngineConfig(): Promise<FireSpikeConfig> {
     const raw = rows[0]?.engineConfig;
     const cfg = normalizeFireSpikeConfig(raw ? (JSON.parse(raw) as unknown) : null);
     cachedConfig = { cfg, time: now };
-    return cfg;
+    return recordRoundConfig(cfg);
   } catch {
-    const cfg = normalizeFireSpikeConfig(null);
-    cachedConfig = { cfg, time: now };
-    return cfg;
+    throw new Error("Game configuration unavailable");
   }
 }
 
@@ -61,6 +62,8 @@ export type FireSpikeSpinResult = {
 
 export async function fireSpikePaidSpin(data: { bet: number }): Promise<FireSpikeSpinResult> {
   const user = await requireUser();
+  minorUnits(data.bet);
+  await assertGameWager(FIRE_SPIKE_GAME_ID, data.bet);
   if (!Number.isFinite(data.bet) || data.bet <= 0) throw new Error("Invalid bet amount");
 
   const cfg = await loadEngineConfig();

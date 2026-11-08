@@ -29,45 +29,34 @@ export function SlotGameGrid({
   const [selected, setSelected] = useState<SlotGame | null>(null);
 
   return (
-    <section className="flex flex-col gap-4">
-      <div className="flex items-center justify-between">
-        <h2 className="text-lg font-bold text-foreground">{t(title)}</h2>
-        <div className="flex items-center gap-2">
-          <button className="text-xs font-semibold uppercase tracking-wider text-muted-foreground hover:text-foreground">
-            {t("View All")}
-          </button>
-          <button className="grid h-8 w-8 place-items-center rounded-full border border-border bg-muted text-foreground hover:bg-panel-hover">
-            <ChevronLeft size={16} />
-          </button>
-          <button className="grid h-8 w-8 place-items-center rounded-full border border-border bg-muted text-foreground hover:bg-panel-hover">
-            <ChevronRight size={16} />
-          </button>
-        </div>
+    <section className="game-catalog-section flex flex-col gap-4">
+      <div className="flex items-center justify-center sm:justify-between">
+        <h2 className="text-center text-lg font-bold text-foreground sm:text-left">{t(title)}</h2>
       </div>
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
-        {list.map((game) => (
+      <div className="game-card-grid">
+        {list.map((game, index) => (
           <button
             key={game.id}
             type="button"
+            aria-label={`Play ${game.name}`}
             onClick={() => setSelected(game)}
-            className="group relative aspect-square min-w-0 overflow-hidden rounded-2xl border border-border bg-panel text-left transition-[transform,box-shadow] duration-300 ease-out hover:-translate-y-0.5 hover:shadow-[0_12px_28px_rgba(0,0,0,0.35)] active:scale-[0.98]"
+            className="game-card group relative aspect-square min-w-0 overflow-hidden rounded-xl border border-border bg-panel text-left shadow-[0_8px_24px_rgba(9,4,24,0.24)] transition-[transform,box-shadow,border-color] duration-200 ease-out hover:-translate-y-0.5 hover:border-white/25 hover:shadow-[0_14px_30px_rgba(9,4,24,0.42)] active:scale-[0.97] sm:rounded-2xl"
           >
             <img
               src={game.thumb}
               alt=""
-              className="h-full w-full object-cover transition-transform duration-500 ease-out group-hover:scale-105"
+              loading={index < 6 ? "eager" : "lazy"}
+              decoding="async"
+              fetchPriority={index < 4 ? "high" : "auto"}
+              sizes="(max-width: 479px) calc(50vw - 1rem), (max-width: 767px) 31vw, (max-width: 1199px) 23vw, 15rem"
+              className="h-full w-full object-cover transition-transform duration-300 ease-out group-hover:scale-[1.025]"
             />
-            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/10 to-transparent transition-opacity duration-300 group-hover:from-black/70" />
+            <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-white/[0.04]" />
             {game.tag && (
-              <span className="absolute left-2 top-2 rounded-full bg-lime px-2 py-0.5 text-[10px] font-black uppercase text-on-lime">
+              <span className="absolute left-1.5 top-1.5 rounded-md bg-lime px-1.5 py-0.5 text-[9px] font-black uppercase tracking-wide text-on-lime shadow-md sm:left-2 sm:top-2 sm:px-2 sm:text-[10px]">
                 {game.tag}
               </span>
             )}
-            <div className="absolute inset-x-0 bottom-0 p-2.5 transition-transform duration-300 ease-out group-hover:translate-y-[-2px]">
-              <div className="truncate text-xs font-bold uppercase tracking-wide text-white">
-                {game.name}
-              </div>
-            </div>
           </button>
         ))}
       </div>

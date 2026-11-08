@@ -1,3 +1,5 @@
+import { recordRoundConfig } from "../round-random.server";
+import { withFishingRoom } from "../fishing-state.server";
 /**
  * Octopus Armada — server-authoritative shot settlement + boss shared pool.
  * Client never moves money; every shot debits then optionally credits via ledger.
@@ -187,7 +189,7 @@ function lookupLiveFish(userId: string, instanceId: string): ShotTargetSnapshot 
 }
 
 /** Sync / top-up server-owned spawns for the player's open session. */
-export async function octopusArmadaSyncSpawns() {
+async function octopusArmadaSyncSpawnsImpl() {
   await assertGameEnabled();
   const user = await requireUser();
   const cfg = await loadEngineConfig();
@@ -220,7 +222,7 @@ function updateFishAfterShot(
 
 async function loadEngineConfig(): Promise<OctopusArmadaConfig> {
   const now = Date.now();
-  if (cachedConfig && now - cachedConfig.time < 30_000) return cachedConfig.cfg;
+  if (cachedConfig && now - cachedConfig.time < 30_000) return recordRoundConfig(cachedConfig.cfg);
   const db = getDb();
   try {
     const rows = await db
@@ -231,11 +233,9 @@ async function loadEngineConfig(): Promise<OctopusArmadaConfig> {
     const raw = rows[0]?.engineConfig;
     const cfg = normalizeOctopusArmadaConfig(raw ? (JSON.parse(raw) as unknown) : null);
     cachedConfig = { cfg, time: now };
-    return cfg;
+    return recordRoundConfig(cfg);
   } catch {
-    const cfg = normalizeOctopusArmadaConfig(null);
-    cachedConfig = { cfg, time: now };
-    return cfg;
+    throw new Error("Game configuration unavailable");
   }
 }
 
@@ -304,7 +304,7 @@ function publicBoss() {
   };
 }
 
-export async function getOctopusArmadaOpenSession() {
+async function getOctopusArmadaOpenSessionImpl() {
   const user = await requireUser();
   const db = getDb();
   const rows = await db
@@ -353,7 +353,7 @@ export async function getOctopusArmadaOpenSession() {
   };
 }
 
-export async function octopusArmadaEnsureSession(input?: { weaponId?: string }) {
+async function octopusArmadaEnsureSessionImpl(input?: { weaponId?: string }) {
   await assertNotInMaintenanceForBets();
   await assertGameEnabled();
   const user = await requireUser();
@@ -437,7 +437,7 @@ function maybeSpawnBoss(cfg: OctopusArmadaConfig) {
   globalBoss = createBossPool({ cfg, rng, now });
 }
 
-export async function octopusArmadaFireShot(input: {
+async function octopusArmadaFireShotImpl(input: {
   weaponId: string;
   target: { instanceId: string };
 }) {
@@ -651,7 +651,7 @@ export async function octopusArmadaFireShot(input: {
   };
 }
 
-export async function octopusArmadaSetWeapon(input: { weaponId: string }) {
+async function octopusArmadaSetWeaponImpl(input: { weaponId: string }) {
   await assertGameEnabled();
   const user = await requireUser();
   if (!isWeaponTierId(input.weaponId)) throw new Error("Invalid weapon");
@@ -675,7 +675,7 @@ export async function octopusArmadaSetWeapon(input: { weaponId: string }) {
   return getOctopusArmadaOpenSession();
 }
 
-export async function octopusArmadaBuyPowerUp(input: { powerUpId: string }) {
+async function octopusArmadaBuyPowerUpImpl(input: { powerUpId: string }) {
   await assertNotInMaintenanceForBets();
   await assertGameEnabled();
   const user = await requireUser();
@@ -734,7 +734,7 @@ export async function octopusArmadaBuyPowerUp(input: { powerUpId: string }) {
   };
 }
 
-export async function octopusArmadaUseNetBomb(input: {
+async function octopusArmadaUseNetBombImpl(input: {
   weaponId: string;
   targets: { instanceId: string }[];
 }) {
@@ -833,7 +833,7 @@ export async function octopusArmadaUseNetBomb(input: {
   };
 }
 
-export async function octopusArmadaUseFreezeLure() {
+async function octopusArmadaUseFreezeLureImpl() {
   const user = await requireUser();
   const cfg = await loadEngineConfig();
   const session = await loadOpenSessionRow(user.id);
@@ -864,9 +864,93 @@ export async function octopusArmadaUseFreezeLure() {
 }
 
 /** Attempt boss spawn check for clients polling. */
-export async function octopusArmadaBossStatus() {
+async function octopusArmadaBossStatusImpl() {
   await requireUser();
   const cfg = await loadEngineConfig();
   maybeSpawnBoss(cfg);
   return { boss: publicBoss() };
+}
+
+export function octopusArmadaSyncSpawns(
+  ...args: Parameters<typeof octopusArmadaSyncSpawnsImpl>
+): ReturnType<typeof octopusArmadaSyncSpawnsImpl> {
+  return withFishingRoom("octopus-armada", captureRoom, restoreRoom, () =>
+    octopusArmadaSyncSpawnsImpl(...args),
+  );
+}
+
+export function getOctopusArmadaOpenSession(
+  ...args: Parameters<typeof getOctopusArmadaOpenSessionImpl>
+): ReturnType<typeof getOctopusArmadaOpenSessionImpl> {
+  return withFishingRoom("octopus-armada", captureRoom, restoreRoom, () =>
+    getOctopusArmadaOpenSessionImpl(...args),
+  );
+}
+
+export function octopusArmadaEnsureSession(
+  ...args: Parameters<typeof octopusArmadaEnsureSessionImpl>
+): ReturnType<typeof octopusArmadaEnsureSessionImpl> {
+  return withFishingRoom("octopus-armada", captureRoom, restoreRoom, () =>
+    octopusArmadaEnsureSessionImpl(...args),
+  );
+}
+
+export function octopusArmadaFireShot(
+  ...args: Parameters<typeof octopusArmadaFireShotImpl>
+): ReturnType<typeof octopusArmadaFireShotImpl> {
+  return withFishingRoom("octopus-armada", captureRoom, restoreRoom, () =>
+    octopusArmadaFireShotImpl(...args),
+  );
+}
+
+export function octopusArmadaSetWeapon(
+  ...args: Parameters<typeof octopusArmadaSetWeaponImpl>
+): ReturnType<typeof octopusArmadaSetWeaponImpl> {
+  return withFishingRoom("octopus-armada", captureRoom, restoreRoom, () =>
+    octopusArmadaSetWeaponImpl(...args),
+  );
+}
+
+export function octopusArmadaBuyPowerUp(
+  ...args: Parameters<typeof octopusArmadaBuyPowerUpImpl>
+): ReturnType<typeof octopusArmadaBuyPowerUpImpl> {
+  return withFishingRoom("octopus-armada", captureRoom, restoreRoom, () =>
+    octopusArmadaBuyPowerUpImpl(...args),
+  );
+}
+
+export function octopusArmadaUseNetBomb(
+  ...args: Parameters<typeof octopusArmadaUseNetBombImpl>
+): ReturnType<typeof octopusArmadaUseNetBombImpl> {
+  return withFishingRoom("octopus-armada", captureRoom, restoreRoom, () =>
+    octopusArmadaUseNetBombImpl(...args),
+  );
+}
+
+export function octopusArmadaUseFreezeLure(
+  ...args: Parameters<typeof octopusArmadaUseFreezeLureImpl>
+): ReturnType<typeof octopusArmadaUseFreezeLureImpl> {
+  return withFishingRoom("octopus-armada", captureRoom, restoreRoom, () =>
+    octopusArmadaUseFreezeLureImpl(...args),
+  );
+}
+
+export function octopusArmadaBossStatus(
+  ...args: Parameters<typeof octopusArmadaBossStatusImpl>
+): ReturnType<typeof octopusArmadaBossStatusImpl> {
+  return withFishingRoom("octopus-armada", captureRoom, restoreRoom, () =>
+    octopusArmadaBossStatusImpl(...args),
+  );
+}
+
+function captureRoom() {
+  return { globalBoss, lastBossEndedAt, fishRegistry };
+}
+function restoreRoom(state: ReturnType<typeof captureRoom>) {
+  globalBoss = state.globalBoss ?? null;
+  lastBossEndedAt = state.lastBossEndedAt ?? 0;
+  fishRegistry.clear();
+  const now = Date.now();
+  for (const [key, fish] of state.fishRegistry ?? [])
+    if (fish.expiresAt > now) fishRegistry.set(key, fish);
 }

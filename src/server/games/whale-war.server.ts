@@ -1,3 +1,5 @@
+import { recordRoundConfig } from "../round-random.server";
+import { withFishingRoom } from "../fishing-state.server";
 /**
  * Whale War — server-authoritative shot settlement + boss shared pool.
  * Client never moves money; every shot debits then optionally credits via ledger.
@@ -187,7 +189,7 @@ function lookupLiveFish(userId: string, instanceId: string): ShotTargetSnapshot 
 }
 
 /** Sync / top-up server-owned spawns for the player's open session. */
-export async function whaleWarSyncSpawns() {
+async function whaleWarSyncSpawnsImpl() {
   await assertGameEnabled();
   const user = await requireUser();
   const cfg = await loadEngineConfig();
@@ -220,7 +222,7 @@ function updateFishAfterShot(
 
 async function loadEngineConfig(): Promise<WhaleWarConfig> {
   const now = Date.now();
-  if (cachedConfig && now - cachedConfig.time < 30_000) return cachedConfig.cfg;
+  if (cachedConfig && now - cachedConfig.time < 30_000) return recordRoundConfig(cachedConfig.cfg);
   const db = getDb();
   try {
     const rows = await db
@@ -231,11 +233,9 @@ async function loadEngineConfig(): Promise<WhaleWarConfig> {
     const raw = rows[0]?.engineConfig;
     const cfg = normalizeWhaleWarConfig(raw ? (JSON.parse(raw) as unknown) : null);
     cachedConfig = { cfg, time: now };
-    return cfg;
+    return recordRoundConfig(cfg);
   } catch {
-    const cfg = normalizeWhaleWarConfig(null);
-    cachedConfig = { cfg, time: now };
-    return cfg;
+    throw new Error("Game configuration unavailable");
   }
 }
 
@@ -304,7 +304,7 @@ function publicBoss() {
   };
 }
 
-export async function getWhaleWarOpenSession() {
+async function getWhaleWarOpenSessionImpl() {
   const user = await requireUser();
   const db = getDb();
   const rows = await db
@@ -353,7 +353,7 @@ export async function getWhaleWarOpenSession() {
   };
 }
 
-export async function whaleWarEnsureSession(input?: { weaponId?: string }) {
+async function whaleWarEnsureSessionImpl(input?: { weaponId?: string }) {
   await assertNotInMaintenanceForBets();
   await assertGameEnabled();
   const user = await requireUser();
@@ -437,10 +437,7 @@ function maybeSpawnBoss(cfg: WhaleWarConfig) {
   globalBoss = createBossPool({ cfg, rng, now });
 }
 
-export async function whaleWarFireShot(input: {
-  weaponId: string;
-  target: { instanceId: string };
-}) {
+async function whaleWarFireShotImpl(input: { weaponId: string; target: { instanceId: string } }) {
   await assertNotInMaintenanceForBets();
   await assertGameEnabled();
   const user = await requireUser();
@@ -651,7 +648,7 @@ export async function whaleWarFireShot(input: {
   };
 }
 
-export async function whaleWarSetWeapon(input: { weaponId: string }) {
+async function whaleWarSetWeaponImpl(input: { weaponId: string }) {
   await assertGameEnabled();
   const user = await requireUser();
   if (!isWeaponTierId(input.weaponId)) throw new Error("Invalid weapon");
@@ -675,7 +672,7 @@ export async function whaleWarSetWeapon(input: { weaponId: string }) {
   return getWhaleWarOpenSession();
 }
 
-export async function whaleWarBuyPowerUp(input: { powerUpId: string }) {
+async function whaleWarBuyPowerUpImpl(input: { powerUpId: string }) {
   await assertNotInMaintenanceForBets();
   await assertGameEnabled();
   const user = await requireUser();
@@ -734,7 +731,7 @@ export async function whaleWarBuyPowerUp(input: { powerUpId: string }) {
   };
 }
 
-export async function whaleWarUseNetBomb(input: {
+async function whaleWarUseNetBombImpl(input: {
   weaponId: string;
   targets: { instanceId: string }[];
 }) {
@@ -833,7 +830,7 @@ export async function whaleWarUseNetBomb(input: {
   };
 }
 
-export async function whaleWarUseFreezeLure() {
+async function whaleWarUseFreezeLureImpl() {
   const user = await requireUser();
   const cfg = await loadEngineConfig();
   const session = await loadOpenSessionRow(user.id);
@@ -864,9 +861,93 @@ export async function whaleWarUseFreezeLure() {
 }
 
 /** Attempt boss spawn check for clients polling. */
-export async function whaleWarBossStatus() {
+async function whaleWarBossStatusImpl() {
   await requireUser();
   const cfg = await loadEngineConfig();
   maybeSpawnBoss(cfg);
   return { boss: publicBoss() };
+}
+
+export function whaleWarSyncSpawns(
+  ...args: Parameters<typeof whaleWarSyncSpawnsImpl>
+): ReturnType<typeof whaleWarSyncSpawnsImpl> {
+  return withFishingRoom("whale-war", captureRoom, restoreRoom, () =>
+    whaleWarSyncSpawnsImpl(...args),
+  );
+}
+
+export function getWhaleWarOpenSession(
+  ...args: Parameters<typeof getWhaleWarOpenSessionImpl>
+): ReturnType<typeof getWhaleWarOpenSessionImpl> {
+  return withFishingRoom("whale-war", captureRoom, restoreRoom, () =>
+    getWhaleWarOpenSessionImpl(...args),
+  );
+}
+
+export function whaleWarEnsureSession(
+  ...args: Parameters<typeof whaleWarEnsureSessionImpl>
+): ReturnType<typeof whaleWarEnsureSessionImpl> {
+  return withFishingRoom("whale-war", captureRoom, restoreRoom, () =>
+    whaleWarEnsureSessionImpl(...args),
+  );
+}
+
+export function whaleWarFireShot(
+  ...args: Parameters<typeof whaleWarFireShotImpl>
+): ReturnType<typeof whaleWarFireShotImpl> {
+  return withFishingRoom("whale-war", captureRoom, restoreRoom, () =>
+    whaleWarFireShotImpl(...args),
+  );
+}
+
+export function whaleWarSetWeapon(
+  ...args: Parameters<typeof whaleWarSetWeaponImpl>
+): ReturnType<typeof whaleWarSetWeaponImpl> {
+  return withFishingRoom("whale-war", captureRoom, restoreRoom, () =>
+    whaleWarSetWeaponImpl(...args),
+  );
+}
+
+export function whaleWarBuyPowerUp(
+  ...args: Parameters<typeof whaleWarBuyPowerUpImpl>
+): ReturnType<typeof whaleWarBuyPowerUpImpl> {
+  return withFishingRoom("whale-war", captureRoom, restoreRoom, () =>
+    whaleWarBuyPowerUpImpl(...args),
+  );
+}
+
+export function whaleWarUseNetBomb(
+  ...args: Parameters<typeof whaleWarUseNetBombImpl>
+): ReturnType<typeof whaleWarUseNetBombImpl> {
+  return withFishingRoom("whale-war", captureRoom, restoreRoom, () =>
+    whaleWarUseNetBombImpl(...args),
+  );
+}
+
+export function whaleWarUseFreezeLure(
+  ...args: Parameters<typeof whaleWarUseFreezeLureImpl>
+): ReturnType<typeof whaleWarUseFreezeLureImpl> {
+  return withFishingRoom("whale-war", captureRoom, restoreRoom, () =>
+    whaleWarUseFreezeLureImpl(...args),
+  );
+}
+
+export function whaleWarBossStatus(
+  ...args: Parameters<typeof whaleWarBossStatusImpl>
+): ReturnType<typeof whaleWarBossStatusImpl> {
+  return withFishingRoom("whale-war", captureRoom, restoreRoom, () =>
+    whaleWarBossStatusImpl(...args),
+  );
+}
+
+function captureRoom() {
+  return { globalBoss, lastBossEndedAt, fishRegistry };
+}
+function restoreRoom(state: ReturnType<typeof captureRoom>) {
+  globalBoss = state.globalBoss ?? null;
+  lastBossEndedAt = state.lastBossEndedAt ?? 0;
+  fishRegistry.clear();
+  const now = Date.now();
+  for (const [key, fish] of state.fishRegistry ?? [])
+    if (fish.expiresAt > now) fishRegistry.set(key, fish);
 }

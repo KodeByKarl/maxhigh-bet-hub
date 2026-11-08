@@ -1,3 +1,4 @@
+import { gameRandom, hasRoundRandom } from "@/lib/game-random";
 /**
  * Seeded Mulberry32 RNG — replayable / auditable spin resolution.
  */
@@ -22,6 +23,7 @@ function hashSeed(seed: string): number {
 export function createRng(seed: string): FsRng {
   let state = hashSeed(seed) || 1;
   const next = () => {
+    if (hasRoundRandom()) return gameRandom();
     state |= 0;
     state = (state + 0x6d2b79f5) | 0;
     let t = Math.imul(state ^ (state >>> 15), 1 | state);
@@ -55,6 +57,6 @@ export function newSpinSeed(prefix = "fs"): string {
   const rand =
     typeof crypto !== "undefined" && "randomUUID" in crypto
       ? crypto.randomUUID()
-      : `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+      : `${Date.now()}-${gameRandom().toString(36).slice(2)}`;
   return `${prefix}-${rand}`;
 }

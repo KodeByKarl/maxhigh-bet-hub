@@ -9,6 +9,9 @@ import { resolveLazyGame } from "./gamePlayRegistry";
 import { FAMILY_NAME, findRealmsGame, isRealmsGameId } from "@/lib/realms";
 import { REALMS_WORLDS } from "@/lib/realms/worlds";
 import { realmsAssets } from "./realms/theme";
+import { GameLoadingScreen } from "./GameLoadingScreen";
+import { GameBootBoundary } from "./GameBootBoundary";
+import { GAME_LOADING_THEMES } from "@/lib/game-loading-themes";
 
 type Props = {
   game: SlotGame | null;
@@ -1252,9 +1255,21 @@ function ComingSoonPlay({ game }: { game: SlotGame }) {
 }
 
 /** Full-bleed play surface — fill the shell, never nest another 100dvh. */
-function PlaySurface({ children, className }: { children: ReactNode; className?: string }) {
+function PlaySurface({
+  children,
+  className,
+  inert = false,
+}: {
+  children: ReactNode;
+  className?: string;
+  inert?: boolean;
+}) {
   return (
-    <div className={cn("absolute inset-0 h-full w-full overflow-hidden bg-[#0A0912]", className)}>
+    <div
+      className={cn("absolute inset-0 h-full w-full overflow-hidden bg-[#0A0912]", className)}
+      inert={inert}
+      aria-hidden={inert}
+    >
       {children}
     </div>
   );
@@ -1269,6 +1284,8 @@ function GameMountSignal({ onReady }: { onReady: () => void }) {
 }
 
 export function GamePlayModal({ game, open, onOpenChange }: Props) {
+  const gameId = game?.id;
+  const gameName = game?.name;
   const [progress, setProgress] = useState(0);
   const [mountGame, setMountGame] = useState(false);
   const [gameReady, setGameReady] = useState(false);
@@ -1276,14 +1293,48 @@ export function GamePlayModal({ game, open, onOpenChange }: Props) {
   const [loaderFading, setLoaderFading] = useState(false);
   const [loaderGone, setLoaderGone] = useState(false);
   const [mounted, setMounted] = useState(false);
+  const [artworkReady, setArtworkReady] = useState(false);
+  const [bootSlow, setBootSlow] = useState(false);
+  const [bootError, setBootError] = useState(false);
   const shellRef = useRef<HTMLDivElement>(null);
   const { isLoggedIn, openLogin } = useAuth();
 
   const handleGameReady = useCallback(() => {
     setGameReady(true);
   }, []);
+  const handleArtworkReady = useCallback(() => setArtworkReady(true), []);
+  const handleBootError = useCallback(() => setBootError(true), []);
 
   useEffect(() => setMounted(true), []);
+
+  useEffect(() => {
+    if (!open) return;
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") onOpenChange(false);
+      if (event.key !== "Tab") return;
+      const buttons = shellRef.current?.querySelectorAll<HTMLElement>(
+        "button:not([disabled]), a[href], input:not([disabled]), [tabindex='0']",
+      );
+      const targets = [...(buttons ?? [])].filter(
+        (element) => !element.closest("[inert]") && element.getClientRects().length > 0,
+      );
+      const first = targets[0];
+      const last = targets[targets.length - 1];
+      if (!first || !last) return;
+      if (
+        !shellRef.current?.contains(document.activeElement) ||
+        (!event.shiftKey && document.activeElement === last)
+      ) {
+        event.preventDefault();
+        first.focus();
+      } else if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault();
+        last.focus();
+      }
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [open, onOpenChange]);
 
   useEffect(() => {
     if (!open) return;
@@ -1368,32 +1419,22 @@ export function GamePlayModal({ game, open, onOpenChange }: Props) {
 
   // Boot progress + early game mount so the chunk loads under the loader.
   useEffect(() => {
-    if (!open || !game || !isLoggedIn) return;
+    if (!open || !gameId || !isLoggedIn) return;
     setProgress(0);
-    setMountGame(false);
+    setMountGame(Boolean(GAME_LOADING_THEMES[gameId]));
     setGameReady(false);
     setProgressDone(false);
     setLoaderFading(false);
     setLoaderGone(false);
+    setArtworkReady(false);
+    setBootSlow(false);
+    setBootError(false);
 
     const start = Date.now();
-    const duration =
-      game.id === "ace-high" ||
-      game.id === "baccarat" ||
-      game.id === "lucky9" ||
-      game.id === "threecardpoker" ||
-      game.id === "color-game" ||
-      game.id === "tongits-arena" ||
-      game.id === "lucky-drop" ||
-      game.id === "color-game-pro" ||
-      game.id === "lucky-nine-plus" ||
-      game.id === "drop-deluxe" ||
-      game.id === "poker-showdown"
-        ? 1600
-        : 4200;
+    const duration = GAME_LOADING_THEMES[gameId] ? 700 : 4200;
 
     // Prefetch themed boot art so the loader never flashes empty.
-    const boot = PANTHER_FAMILY_BOOT[game.id];
+    const boot = GAME_LOADING_THEMES[gameId] ? null : PANTHER_FAMILY_BOOT[gameId];
     if (boot && typeof Image !== "undefined") {
       for (const src of [boot.bgImage, ...boot.imageParticles]) {
         const img = new Image();
@@ -1402,9 +1443,10 @@ export function GamePlayModal({ game, open, onOpenChange }: Props) {
       }
     }
 
-    // Start mounting the game mid-load so Suspense resolves under the overlay.
-    const mountAt = Math.max(400, Math.floor(duration * 0.35));
-    const mountTimer = window.setTimeout(() => setMountGame(true), mountAt);
+    const slowTimer = window.setTimeout(() => setBootSlow(true), 12_000);
+    const mountTimer = GAME_LOADING_THEMES[gameId]
+      ? null
+      : window.setTimeout(() => setMountGame(true), Math.max(400, Math.floor(duration * 0.35)));
 
     const tick = window.setInterval(() => {
       const p = Math.min(100, Math.round(((Date.now() - start) / duration) * 100));
@@ -1413,31 +1455,35 @@ export function GamePlayModal({ game, open, onOpenChange }: Props) {
         window.clearInterval(tick);
         setProgressDone(true);
         setMountGame(true);
-        void recordGameSessionFn({
-          data: { gameId: game.id, gameName: game.name },
-        }).catch(() => undefined);
       }
     }, 40);
 
     return () => {
       window.clearInterval(tick);
-      window.clearTimeout(mountTimer);
+      window.clearTimeout(slowTimer);
+      if (mountTimer !== null) window.clearTimeout(mountTimer);
     };
-  }, [open, game?.id, game?.name, isLoggedIn]);
+  }, [open, gameId, isLoggedIn]);
 
   // Crossfade: wait until progress is done AND the lazy game has mounted, then fade loader out.
   useEffect(() => {
-    if (!open || !progressDone || loaderGone) return;
-    const hasEngine = Boolean(game?.id && resolveLazyGame(game.id));
+    if (!open || !progressDone || loaderGone || bootError) return;
+    const hasEngine = Boolean(gameId && resolveLazyGame(gameId));
     const ready = gameReady || !hasEngine;
-    if (!ready) return;
+    if (!ready || (gameId && GAME_LOADING_THEMES[gameId] && !artworkReady)) return;
 
     setLoaderFading(true);
     const fadeTimer = window.setTimeout(() => {
       setLoaderGone(true);
     }, 520);
     return () => window.clearTimeout(fadeTimer);
-  }, [open, progressDone, gameReady, loaderGone, game?.id]);
+  }, [open, progressDone, gameReady, loaderGone, gameId, artworkReady, bootError]);
+
+  // Record an opened game only after its view actually committed.
+  useEffect(() => {
+    if (!open || !loaderGone || !gameId || !gameName) return;
+    void recordGameSessionFn({ data: { gameId, gameName } }).catch(() => undefined);
+  }, [open, loaderGone, gameId, gameName]);
 
   const LazyGame = game ? resolveLazyGame(game.id) : null;
   const showLoader = !loaderGone;
@@ -1469,20 +1515,24 @@ export function GamePlayModal({ game, open, onOpenChange }: Props) {
       <div className="relative z-[10000] min-h-0 flex-1 overflow-hidden bg-[#0A0912]">
         {mountGame && LazyGame ? (
           <PlaySurface
+            inert={showLoader || bootError}
             className={cn(
               "transition-opacity duration-500 ease-out",
               loaderFading || loaderGone ? "opacity-100" : "opacity-0",
             )}
           >
-            <Suspense fallback={null}>
-              <GameMountSignal onReady={handleGameReady} />
-              <LazyGame gameId={game.id} gameName={game.name} />
-            </Suspense>
+            <GameBootBoundary key={game.id} onError={handleBootError}>
+              <Suspense fallback={null}>
+                <GameMountSignal onReady={handleGameReady} />
+                <LazyGame gameId={game.id} gameName={game.name} />
+              </Suspense>
+            </GameBootBoundary>
           </PlaySurface>
         ) : null}
 
         {mountGame && !LazyGame ? (
           <PlaySurface
+            inert={showLoader || bootError}
             className={cn(
               "transition-opacity duration-500 ease-out",
               loaderFading || loaderGone ? "opacity-100" : "opacity-0",
@@ -1493,15 +1543,45 @@ export function GamePlayModal({ game, open, onOpenChange }: Props) {
           </PlaySurface>
         ) : null}
 
-        {showLoader ? (
+        {showLoader || bootError ? (
           <div
             className={cn(
               "absolute inset-0 z-20 transition-opacity duration-500 ease-out",
-              loaderFading ? "pointer-events-none opacity-0" : "opacity-100",
+              loaderFading && !bootError ? "pointer-events-none opacity-0" : "opacity-100",
             )}
-            aria-hidden={loaderFading}
+            aria-hidden={loaderFading && !bootError}
           >
-            <CreativeLoader game={game} progress={progress} />
+            {GAME_LOADING_THEMES[game.id] ? (
+              <GameLoadingScreen
+                key={game.id}
+                game={game}
+                gameReady={gameReady}
+                slow={bootSlow}
+                error={bootError}
+                onArtworkReady={handleArtworkReady}
+                onClose={() => onOpenChange(false)}
+              />
+            ) : bootError ? (
+              <div
+                className="absolute inset-0 grid place-content-center gap-4 bg-[#0A0912] p-8 text-center text-white"
+                role="alert"
+              >
+                <h2 className="text-xl font-semibold">We couldn't open {game.name}</h2>
+                <p>Check your connection and reload the page to try again.</p>
+                <button
+                  type="button"
+                  className="min-h-11 underline"
+                  onClick={() => window.location.reload()}
+                >
+                  Reload page
+                </button>
+              </div>
+            ) : (
+              <CreativeLoader
+                game={game}
+                progress={gameReady ? progress : Math.min(progress, 90)}
+              />
+            )}
           </div>
         ) : null}
       </div>

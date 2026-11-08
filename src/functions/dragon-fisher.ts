@@ -1,3 +1,4 @@
+import { operationIdentity } from "@/lib/operation-identity";
 /**
  * Dragon Fisher client RPC bridge (createServerFn).
  */
@@ -27,19 +28,37 @@ const netBombSchema = z.object({
 });
 
 export const dragonFisherFireShotFn = createServerFn({ method: "POST" })
+  .middleware([operationIdentity])
   .validator(fireSchema)
   .handler(async ({ data }) => {
-    const { dragonFisherFireShot } = await import("../server/games/dragon-fisher.server");
-    return JSON.parse(JSON.stringify(await dragonFisherFireShot(data))) as Awaited<
-      ReturnType<typeof dragonFisherFireShot>
-    >;
+    const { withFinancialOperation } = await import("../server/operation.server");
+    return withFinancialOperation(
+      "dragonFisherFireShotFn",
+      data,
+      async () => {
+        const { dragonFisherFireShot } = await import("../server/games/dragon-fisher.server");
+        return JSON.parse(JSON.stringify(await dragonFisherFireShot(data))) as Awaited<
+          ReturnType<typeof dragonFisherFireShot>
+        >;
+      },
+      "dragon-fisher",
+    );
   });
 
 export const dragonFisherEnsureSessionFn = createServerFn({ method: "POST" })
+  .middleware([operationIdentity])
   .validator(z.object({ weaponId: z.string().optional() }))
   .handler(async ({ data }) => {
-    const { dragonFisherEnsureSession } = await import("../server/games/dragon-fisher.server");
-    return dragonFisherEnsureSession(data);
+    const { withFinancialOperation } = await import("../server/operation.server");
+    return withFinancialOperation(
+      "dragonFisherEnsureSessionFn",
+      data,
+      async () => {
+        const { dragonFisherEnsureSession } = await import("../server/games/dragon-fisher.server");
+        return dragonFisherEnsureSession(data);
+      },
+      "dragon-fisher",
+    );
   });
 
 export const getDragonFisherSessionFn = createServerFn({ method: "GET" }).handler(async () => {
@@ -54,37 +73,84 @@ export const getDragonFisherEngineConfigFn = createServerFn({ method: "GET" }).h
 });
 
 export const dragonFisherSetWeaponFn = createServerFn({ method: "POST" })
+  .middleware([operationIdentity])
   .validator(weaponSchema)
   .handler(async ({ data }) => {
-    const { dragonFisherSetWeapon } = await import("../server/games/dragon-fisher.server");
-    return dragonFisherSetWeapon(data);
+    const { withFinancialOperation } = await import("../server/operation.server");
+    return withFinancialOperation(
+      "dragonFisherSetWeaponFn",
+      data,
+      async () => {
+        const { dragonFisherSetWeapon } = await import("../server/games/dragon-fisher.server");
+        return dragonFisherSetWeapon(data);
+      },
+      "dragon-fisher",
+    );
   });
 
 export const dragonFisherBuyPowerUpFn = createServerFn({ method: "POST" })
+  .middleware([operationIdentity])
   .validator(powerSchema)
   .handler(async ({ data }) => {
-    const { dragonFisherBuyPowerUp } = await import("../server/games/dragon-fisher.server");
-    return dragonFisherBuyPowerUp(data);
+    const { withFinancialOperation } = await import("../server/operation.server");
+    return withFinancialOperation(
+      "dragonFisherBuyPowerUpFn",
+      data,
+      async () => {
+        const { dragonFisherBuyPowerUp } = await import("../server/games/dragon-fisher.server");
+        return dragonFisherBuyPowerUp(data);
+      },
+      "dragon-fisher",
+    );
   });
 
 export const dragonFisherUseNetBombFn = createServerFn({ method: "POST" })
+  .middleware([operationIdentity])
   .validator(netBombSchema)
   .handler(async ({ data }) => {
-    const { dragonFisherUseNetBomb } = await import("../server/games/dragon-fisher.server");
-    return JSON.parse(JSON.stringify(await dragonFisherUseNetBomb(data))) as Awaited<
-      ReturnType<typeof dragonFisherUseNetBomb>
-    >;
+    const { withFinancialOperation } = await import("../server/operation.server");
+    return withFinancialOperation(
+      "dragonFisherUseNetBombFn",
+      data,
+      async () => {
+        const { dragonFisherUseNetBomb } = await import("../server/games/dragon-fisher.server");
+        return JSON.parse(JSON.stringify(await dragonFisherUseNetBomb(data))) as Awaited<
+          ReturnType<typeof dragonFisherUseNetBomb>
+        >;
+      },
+      "dragon-fisher",
+    );
   });
 
-export const dragonFisherUseFreezeLureFn = createServerFn({ method: "POST" }).handler(async () => {
-  const { dragonFisherUseFreezeLure } = await import("../server/games/dragon-fisher.server");
-  return dragonFisherUseFreezeLure();
-});
+export const dragonFisherUseFreezeLureFn = createServerFn({ method: "POST" })
+  .middleware([operationIdentity])
+  .handler(async () => {
+    const { withFinancialOperation } = await import("../server/operation.server");
+    return withFinancialOperation(
+      "dragonFisherUseFreezeLureFn",
+      null,
+      async () => {
+        const { dragonFisherUseFreezeLure } = await import("../server/games/dragon-fisher.server");
+        return dragonFisherUseFreezeLure();
+      },
+      "dragon-fisher",
+    );
+  });
 
-export const dragonFisherSyncSpawnsFn = createServerFn({ method: "POST" }).handler(async () => {
-  const { dragonFisherSyncSpawns } = await import("../server/games/dragon-fisher.server");
-  return dragonFisherSyncSpawns();
-});
+export const dragonFisherSyncSpawnsFn = createServerFn({ method: "POST" })
+  .middleware([operationIdentity])
+  .handler(async () => {
+    const { withFinancialOperation } = await import("../server/operation.server");
+    return withFinancialOperation(
+      "dragonFisherSyncSpawnsFn",
+      null,
+      async () => {
+        const { dragonFisherSyncSpawns } = await import("../server/games/dragon-fisher.server");
+        return dragonFisherSyncSpawns();
+      },
+      "dragon-fisher",
+    );
+  });
 
 export const dragonFisherBossStatusFn = createServerFn({ method: "GET" }).handler(async () => {
   const { dragonFisherBossStatus } = await import("../server/games/dragon-fisher.server");
@@ -99,6 +165,7 @@ export const getDragonFisherAdminConfigFn = createServerFn({ method: "GET" }).ha
 
 /** Superadmin — persist engineConfig JSON. */
 export const saveDragonFisherAdminConfigFn = createServerFn({ method: "POST" })
+  .middleware([operationIdentity])
   .validator(z.object({ config: z.unknown() }))
   .handler(async ({ data }) => {
     const { saveDragonFisherEngineConfig } = await import("../server/superadmin/services.server");

@@ -1,0 +1,22 @@
+name: maxhigh-demo
+services:
+  database:
+    image: mariadb:11.4
+    container_name: maxhigh-demo-db
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:${MYSQL_PORT:-3306}:3306"
+    environment:
+      MARIADB_DATABASE: ${MYSQL_DATABASE:?Set MYSQL_DATABASE in .env}
+      MARIADB_USER: ${MYSQL_USER:?Set MYSQL_USER in .env}
+      MARIADB_PASSWORD: ${MYSQL_PASSWORD:?Set MYSQL_PASSWORD in .env}
+      MARIADB_ROOT_PASSWORD: ${DEMO_DB_ROOT_PASSWORD:?Set DEMO_DB_ROOT_PASSWORD in .env}
+    volumes:
+      - database-data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+volumes:
+  database-data:

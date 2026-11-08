@@ -1,3 +1,4 @@
+import { operationIdentity } from "@/lib/operation-identity";
 import { riskControlsSchema } from "@/lib/risk-controls"; /**
  * Domain 3 Superadmin RPC — client-safe.
  */
@@ -32,6 +33,7 @@ const setRoleSchema = z.object({
 });
 
 export const superSetUserRoleFn = createServerFn({ method: "POST" })
+  .middleware([operationIdentity])
   .validator(setRoleSchema)
   .handler(async ({ data }) => {
     const { superSetUserRole } = await import("../server/superadmin/services.server");
@@ -64,6 +66,7 @@ const createUserSchema = z.object({
 });
 
 export const superCreateUserFn = createServerFn({ method: "POST" })
+  .middleware([operationIdentity])
   .validator(createUserSchema)
   .handler(async ({ data }) => {
     const { superCreateUser } = await import("../server/superadmin/services.server");
@@ -90,6 +93,7 @@ const updateUserSchema = z.object({
 });
 
 export const superUpdateUserFn = createServerFn({ method: "POST" })
+  .middleware([operationIdentity])
   .validator(updateUserSchema)
   .handler(async ({ data }) => {
     const { superUpdateUser } = await import("../server/superadmin/services.server");
@@ -104,10 +108,19 @@ const adjustSchema = z.object({
 });
 
 export const superAdjustBalanceFn = createServerFn({ method: "POST" })
+  .middleware([operationIdentity])
   .validator(adjustSchema)
   .handler(async ({ data }) => {
-    const { superAdjustBalance } = await import("../server/superadmin/services.server");
-    return superAdjustBalance(data);
+    const { withFinancialOperation } = await import("../server/operation.server");
+    return withFinancialOperation(
+      "superAdjustBalanceFn",
+      data,
+      async () => {
+        const { superAdjustBalance } = await import("../server/superadmin/services.server");
+        return superAdjustBalance(data);
+      },
+      undefined,
+    );
   });
 
 export const listSuperGamesFn = createServerFn({ method: "GET" }).handler(async () => {
@@ -129,6 +142,7 @@ const updateGameSchema = z.object({
 });
 
 export const superUpdateGameFn = createServerFn({ method: "POST" })
+  .middleware([operationIdentity])
   .validator(updateGameSchema)
   .handler(async ({ data }) => {
     const { superUpdateGame } = await import("../server/superadmin/services.server");
@@ -140,6 +154,7 @@ const jackpotSchema = z.object({
 });
 
 export const superSetJackpotFn = createServerFn({ method: "POST" })
+  .middleware([operationIdentity])
   .validator(jackpotSchema)
   .handler(async ({ data }) => {
     const { superSetJackpot } = await import("../server/superadmin/services.server");
@@ -147,6 +162,7 @@ export const superSetJackpotFn = createServerFn({ method: "POST" })
   });
 
 export const superSetJackpotEnabledFn = createServerFn({ method: "POST" })
+  .middleware([operationIdentity])
   .validator(z.object({ enabled: z.boolean() }))
   .handler(async ({ data }) => {
     const { superSetJackpotEnabled } = await import("../server/superadmin/services.server");
@@ -154,6 +170,7 @@ export const superSetJackpotEnabledFn = createServerFn({ method: "POST" })
   });
 
 export const superSetUltraMegaJackpotFn = createServerFn({ method: "POST" })
+  .middleware([operationIdentity])
   .validator(jackpotSchema)
   .handler(async ({ data }) => {
     const { superSetUltraMegaJackpot } = await import("../server/superadmin/services.server");
@@ -161,6 +178,7 @@ export const superSetUltraMegaJackpotFn = createServerFn({ method: "POST" })
   });
 
 export const assignJackpotToPlayerFn = createServerFn({ method: "POST" })
+  .middleware([operationIdentity])
   .validator(
     z.object({
       username: z.string().min(1).max(64),
@@ -168,8 +186,16 @@ export const assignJackpotToPlayerFn = createServerFn({ method: "POST" })
     }),
   )
   .handler(async ({ data }) => {
-    const { assignJackpotToPlayer } = await import("../server/superadmin/services.server");
-    return assignJackpotToPlayer(data);
+    const { withFinancialOperation } = await import("../server/operation.server");
+    return withFinancialOperation(
+      "assignJackpotToPlayerFn",
+      data,
+      async () => {
+        const { assignJackpotToPlayer } = await import("../server/superadmin/services.server");
+        return assignJackpotToPlayer(data);
+      },
+      undefined,
+    );
   });
 
 /** Public — enabled games for casino lobby. */
@@ -187,6 +213,7 @@ export const getGoldenPantherEngineConfigFn = createServerFn({ method: "GET" }).
 );
 
 export const saveGoldenPantherEngineConfigFn = createServerFn({ method: "POST" })
+  .middleware([operationIdentity])
   .validator(z.object({ config: z.unknown() }))
   .handler(async ({ data }) => {
     const { saveGoldenPantherEngineConfig } = await import("../server/superadmin/services.server");
@@ -201,6 +228,7 @@ export const getEnchantedGroveEngineConfigFn = createServerFn({ method: "GET" })
 );
 
 export const saveEnchantedGroveEngineConfigFn = createServerFn({ method: "POST" })
+  .middleware([operationIdentity])
   .validator(z.object({ config: z.unknown() }))
   .handler(async ({ data }) => {
     const { saveEnchantedGroveEngineConfig } = await import("../server/superadmin/services.server");
@@ -213,6 +241,7 @@ export const getOlympusWrathEngineConfigFn = createServerFn({ method: "GET" }).h
 });
 
 export const saveOlympusWrathEngineConfigFn = createServerFn({ method: "POST" })
+  .middleware([operationIdentity])
   .validator(z.object({ config: z.unknown() }))
   .handler(async ({ data }) => {
     const { saveOlympusWrathEngineConfig } = await import("../server/superadmin/services.server");
@@ -225,6 +254,7 @@ export const getGodlyGatesEngineConfigFn = createServerFn({ method: "GET" }).han
 });
 
 export const saveGodlyGatesEngineConfigFn = createServerFn({ method: "POST" })
+  .middleware([operationIdentity])
   .validator(z.object({ config: z.unknown() }))
   .handler(async ({ data }) => {
     const { saveGodlyGatesEngineConfig } = await import("../server/superadmin/services.server");
@@ -237,6 +267,7 @@ export const getThorThunderEngineConfigFn = createServerFn({ method: "GET" }).ha
 });
 
 export const saveThorThunderEngineConfigFn = createServerFn({ method: "POST" })
+  .middleware([operationIdentity])
   .validator(z.object({ config: z.unknown() }))
   .handler(async ({ data }) => {
     const { saveThorThunderEngineConfig } = await import("../server/superadmin/services.server");
@@ -249,6 +280,7 @@ export const getZeusStrikeEngineConfigFn = createServerFn({ method: "GET" }).han
 });
 
 export const saveZeusStrikeEngineConfigFn = createServerFn({ method: "POST" })
+  .middleware([operationIdentity])
   .validator(z.object({ config: z.unknown() }))
   .handler(async ({ data }) => {
     const { saveZeusStrikeEngineConfig } = await import("../server/superadmin/services.server");
@@ -261,6 +293,7 @@ export const getGateOfRaEngineConfigFn = createServerFn({ method: "GET" }).handl
 });
 
 export const saveGateOfRaEngineConfigFn = createServerFn({ method: "POST" })
+  .middleware([operationIdentity])
   .validator(z.object({ config: z.unknown() }))
   .handler(async ({ data }) => {
     const { saveGateOfRaEngineConfig } = await import("../server/superadmin/services.server");
@@ -273,6 +306,7 @@ export const getDesertRichesEngineConfigFn = createServerFn({ method: "GET" }).h
 });
 
 export const saveDesertRichesEngineConfigFn = createServerFn({ method: "POST" })
+  .middleware([operationIdentity])
   .validator(z.object({ config: z.unknown() }))
   .handler(async ({ data }) => {
     const { saveDesertRichesEngineConfig } = await import("../server/superadmin/services.server");
@@ -285,6 +319,7 @@ export const getPharaohFireEngineConfigFn = createServerFn({ method: "GET" }).ha
 });
 
 export const savePharaohFireEngineConfigFn = createServerFn({ method: "POST" })
+  .middleware([operationIdentity])
   .validator(z.object({ config: z.unknown() }))
   .handler(async ({ data }) => {
     const { savePharaohFireEngineConfig } = await import("../server/superadmin/services.server");
@@ -297,6 +332,7 @@ export const getTempleRushEngineConfigFn = createServerFn({ method: "GET" }).han
 });
 
 export const saveTempleRushEngineConfigFn = createServerFn({ method: "POST" })
+  .middleware([operationIdentity])
   .validator(z.object({ config: z.unknown() }))
   .handler(async ({ data }) => {
     const { saveTempleRushEngineConfig } = await import("../server/superadmin/services.server");
@@ -309,6 +345,7 @@ export const getMayaGoldEngineConfigFn = createServerFn({ method: "GET" }).handl
 });
 
 export const saveMayaGoldEngineConfigFn = createServerFn({ method: "POST" })
+  .middleware([operationIdentity])
   .validator(z.object({ config: z.unknown() }))
   .handler(async ({ data }) => {
     const { saveMayaGoldEngineConfig } = await import("../server/superadmin/services.server");
@@ -323,6 +360,7 @@ export const getCleopatraGoldEngineConfigFn = createServerFn({ method: "GET" }).
 );
 
 export const saveCleopatraGoldEngineConfigFn = createServerFn({ method: "POST" })
+  .middleware([operationIdentity])
   .validator(z.object({ config: z.unknown() }))
   .handler(async ({ data }) => {
     const { saveCleopatraGoldEngineConfig } = await import("../server/superadmin/services.server");
@@ -335,6 +373,7 @@ export const getSafariGoldEngineConfigFn = createServerFn({ method: "GET" }).han
 });
 
 export const saveSafariGoldEngineConfigFn = createServerFn({ method: "POST" })
+  .middleware([operationIdentity])
   .validator(z.object({ config: z.unknown() }))
   .handler(async ({ data }) => {
     const { saveSafariGoldEngineConfig } = await import("../server/superadmin/services.server");
@@ -347,6 +386,7 @@ export const getBuffaloReignEngineConfigFn = createServerFn({ method: "GET" }).h
 });
 
 export const saveBuffaloReignEngineConfigFn = createServerFn({ method: "POST" })
+  .middleware([operationIdentity])
   .validator(z.object({ config: z.unknown() }))
   .handler(async ({ data }) => {
     const { saveBuffaloReignEngineConfig } = await import("../server/superadmin/services.server");
@@ -361,6 +401,7 @@ export const getProsperityLionEngineConfigFn = createServerFn({ method: "GET" })
 );
 
 export const saveProsperityLionEngineConfigFn = createServerFn({ method: "POST" })
+  .middleware([operationIdentity])
   .validator(z.object({ config: z.unknown() }))
   .handler(async ({ data }) => {
     const { saveProsperityLionEngineConfig } = await import("../server/superadmin/services.server");
@@ -373,6 +414,7 @@ export const getFortuneMouseEngineConfigFn = createServerFn({ method: "GET" }).h
 });
 
 export const saveFortuneMouseEngineConfigFn = createServerFn({ method: "POST" })
+  .middleware([operationIdentity])
   .validator(z.object({ config: z.unknown() }))
   .handler(async ({ data }) => {
     const { saveFortuneMouseEngineConfig } = await import("../server/superadmin/services.server");
@@ -387,6 +429,7 @@ export const getFortuneRabbitEngineConfigFn = createServerFn({ method: "GET" }).
 );
 
 export const saveFortuneRabbitEngineConfigFn = createServerFn({ method: "POST" })
+  .middleware([operationIdentity])
   .validator(z.object({ config: z.unknown() }))
   .handler(async ({ data }) => {
     const { saveFortuneRabbitEngineConfig } = await import("../server/superadmin/services.server");
@@ -399,6 +442,7 @@ export const getFortuneOxEngineConfigFn = createServerFn({ method: "GET" }).hand
 });
 
 export const saveFortuneOxEngineConfigFn = createServerFn({ method: "POST" })
+  .middleware([operationIdentity])
   .validator(z.object({ config: z.unknown() }))
   .handler(async ({ data }) => {
     const { saveFortuneOxEngineConfig } = await import("../server/superadmin/services.server");
@@ -411,6 +455,7 @@ export const getFortuneTigerEngineConfigFn = createServerFn({ method: "GET" }).h
 });
 
 export const saveFortuneTigerEngineConfigFn = createServerFn({ method: "POST" })
+  .middleware([operationIdentity])
   .validator(z.object({ config: z.unknown() }))
   .handler(async ({ data }) => {
     const { saveFortuneTigerEngineConfig } = await import("../server/superadmin/services.server");
@@ -423,6 +468,7 @@ export const getLuckyNekoEngineConfigFn = createServerFn({ method: "GET" }).hand
 });
 
 export const saveLuckyNekoEngineConfigFn = createServerFn({ method: "POST" })
+  .middleware([operationIdentity])
   .validator(z.object({ config: z.unknown() }))
   .handler(async ({ data }) => {
     const { saveLuckyNekoEngineConfig } = await import("../server/superadmin/services.server");
@@ -435,6 +481,7 @@ export const getRubyRavenEngineConfigFn = createServerFn({ method: "GET" }).hand
 });
 
 export const saveRubyRavenEngineConfigFn = createServerFn({ method: "POST" })
+  .middleware([operationIdentity])
   .validator(z.object({ config: z.unknown() }))
   .handler(async ({ data }) => {
     const { saveRubyRavenEngineConfig } = await import("../server/superadmin/services.server");
@@ -447,6 +494,7 @@ export const getMidnightOwlEngineConfigFn = createServerFn({ method: "GET" }).ha
 });
 
 export const saveMidnightOwlEngineConfigFn = createServerFn({ method: "POST" })
+  .middleware([operationIdentity])
   .validator(z.object({ config: z.unknown() }))
   .handler(async ({ data }) => {
     const { saveMidnightOwlEngineConfig } = await import("../server/superadmin/services.server");
@@ -459,6 +507,7 @@ export const getHoneyHiveEngineConfigFn = createServerFn({ method: "GET" }).hand
 });
 
 export const saveHoneyHiveEngineConfigFn = createServerFn({ method: "POST" })
+  .middleware([operationIdentity])
   .validator(z.object({ config: z.unknown() }))
   .handler(async ({ data }) => {
     const { saveHoneyHiveEngineConfig } = await import("../server/superadmin/services.server");
@@ -471,6 +520,7 @@ export const getSolarSerpentEngineConfigFn = createServerFn({ method: "GET" }).h
 });
 
 export const saveSolarSerpentEngineConfigFn = createServerFn({ method: "POST" })
+  .middleware([operationIdentity])
   .validator(z.object({ config: z.unknown() }))
   .handler(async ({ data }) => {
     const { saveSolarSerpentEngineConfig } = await import("../server/superadmin/services.server");
@@ -483,6 +533,7 @@ export const getFrostFoxEngineConfigFn = createServerFn({ method: "GET" }).handl
 });
 
 export const saveFrostFoxEngineConfigFn = createServerFn({ method: "POST" })
+  .middleware([operationIdentity])
   .validator(z.object({ config: z.unknown() }))
   .handler(async ({ data }) => {
     const { saveFrostFoxEngineConfig } = await import("../server/superadmin/services.server");
@@ -495,6 +546,7 @@ export const getCoralCobraEngineConfigFn = createServerFn({ method: "GET" }).han
 });
 
 export const saveCoralCobraEngineConfigFn = createServerFn({ method: "POST" })
+  .middleware([operationIdentity])
   .validator(z.object({ config: z.unknown() }))
   .handler(async ({ data }) => {
     const { saveCoralCobraEngineConfig } = await import("../server/superadmin/services.server");
@@ -507,6 +559,7 @@ export const getLotusLynxEngineConfigFn = createServerFn({ method: "GET" }).hand
 });
 
 export const saveLotusLynxEngineConfigFn = createServerFn({ method: "POST" })
+  .middleware([operationIdentity])
   .validator(z.object({ config: z.unknown() }))
   .handler(async ({ data }) => {
     const { saveLotusLynxEngineConfig } = await import("../server/superadmin/services.server");
@@ -519,6 +572,7 @@ export const getEmberTigerEngineConfigFn = createServerFn({ method: "GET" }).han
 });
 
 export const saveEmberTigerEngineConfigFn = createServerFn({ method: "POST" })
+  .middleware([operationIdentity])
   .validator(z.object({ config: z.unknown() }))
   .handler(async ({ data }) => {
     const { saveEmberTigerEngineConfig } = await import("../server/superadmin/services.server");
@@ -531,6 +585,7 @@ export const getJadeJaguarEngineConfigFn = createServerFn({ method: "GET" }).han
 });
 
 export const saveJadeJaguarEngineConfigFn = createServerFn({ method: "POST" })
+  .middleware([operationIdentity])
   .validator(z.object({ config: z.unknown() }))
   .handler(async ({ data }) => {
     const { saveJadeJaguarEngineConfig } = await import("../server/superadmin/services.server");
@@ -538,6 +593,7 @@ export const saveJadeJaguarEngineConfigFn = createServerFn({ method: "POST" })
   });
 
 export const saveRealmsEngineConfigFn = createServerFn({ method: "POST" })
+  .middleware([operationIdentity])
   .validator(z.object({ gameId: z.string().min(1).max(64), config: z.unknown() }))
   .handler(async ({ data }) => {
     const { saveRealmsEngineConfig } = await import("../server/superadmin/services.server");
@@ -547,6 +603,7 @@ export const saveRealmsEngineConfigFn = createServerFn({ method: "POST" })
 /** Public — Buffalo Reign (buffalo-reign) math config. */
 
 export const saveFireSpikeEngineConfigFn = createServerFn({ method: "POST" })
+  .middleware([operationIdentity])
   .validator(z.object({ config: z.unknown() }))
   .handler(async ({ data }) => {
     const { saveFireSpikeEngineConfig } = await import("../server/superadmin/services.server");
@@ -559,6 +616,7 @@ export const getAceHighEngineConfigFn = createServerFn({ method: "GET" }).handle
 });
 
 export const saveAceHighEngineConfigFn = createServerFn({ method: "POST" })
+  .middleware([operationIdentity])
   .validator(z.object({ config: z.unknown() }))
   .handler(async ({ data }) => {
     const { saveAceHighEngineConfig } = await import("../server/superadmin/services.server");
@@ -574,6 +632,7 @@ export const getLucky9EngineConfigFn = createServerFn({ method: "GET" }).handler
 });
 
 export const saveLucky9EngineConfigFn = createServerFn({ method: "POST" })
+  .middleware([operationIdentity])
   .validator(z.object({ config: z.unknown() }))
   .handler(async ({ data }) => {
     const { saveLucky9EngineConfig } = await import("../server/superadmin/services.server");
@@ -589,6 +648,7 @@ export const getThreeCardPokerEngineConfigFn = createServerFn({ method: "GET" })
 );
 
 export const saveThreeCardPokerEngineConfigFn = createServerFn({ method: "POST" })
+  .middleware([operationIdentity])
   .validator(z.object({ config: z.unknown() }))
   .handler(async ({ data }) => {
     const { saveThreeCardPokerEngineConfig } = await import("../server/superadmin/services.server");
@@ -602,6 +662,7 @@ export const getColorGameEngineConfigFn = createServerFn({ method: "GET" }).hand
 });
 
 export const saveColorGameEngineConfigFn = createServerFn({ method: "POST" })
+  .middleware([operationIdentity])
   .validator(z.object({ config: z.unknown() }))
   .handler(async ({ data }) => {
     const { saveColorGameEngineConfig } = await import("../server/superadmin/services.server");
@@ -615,6 +676,7 @@ export const getTongitsArenaEngineConfigFn = createServerFn({ method: "GET" }).h
 });
 
 export const saveTongitsArenaEngineConfigFn = createServerFn({ method: "POST" })
+  .middleware([operationIdentity])
   .validator(z.object({ config: z.unknown() }))
   .handler(async ({ data }) => {
     const { saveTongitsArenaEngineConfig } = await import("../server/superadmin/services.server");
@@ -628,6 +690,7 @@ export const getLuckyDropEngineConfigFn = createServerFn({ method: "GET" }).hand
 });
 
 export const saveLuckyDropEngineConfigFn = createServerFn({ method: "POST" })
+  .middleware([operationIdentity])
   .validator(z.object({ config: z.unknown() }))
   .handler(async ({ data }) => {
     const { saveLuckyDropEngineConfig } = await import("../server/superadmin/services.server");
@@ -641,6 +704,7 @@ export const getColorGameProEngineConfigFn = createServerFn({ method: "GET" }).h
 });
 
 export const saveColorGameProEngineConfigFn = createServerFn({ method: "POST" })
+  .middleware([operationIdentity])
   .validator(z.object({ config: z.unknown() }))
   .handler(async ({ data }) => {
     const { saveColorGameProEngineConfig } = await import("../server/superadmin/services.server");
@@ -656,6 +720,7 @@ export const getLuckyNinePlusEngineConfigFn = createServerFn({ method: "GET" }).
 );
 
 export const saveLuckyNinePlusEngineConfigFn = createServerFn({ method: "POST" })
+  .middleware([operationIdentity])
   .validator(z.object({ config: z.unknown() }))
   .handler(async ({ data }) => {
     const { saveLuckyNinePlusEngineConfig } = await import("../server/superadmin/services.server");
@@ -669,6 +734,7 @@ export const getDropDeluxeEngineConfigFn = createServerFn({ method: "GET" }).han
 });
 
 export const saveDropDeluxeEngineConfigFn = createServerFn({ method: "POST" })
+  .middleware([operationIdentity])
   .validator(z.object({ config: z.unknown() }))
   .handler(async ({ data }) => {
     const { saveDropDeluxeEngineConfig } = await import("../server/superadmin/services.server");
@@ -684,6 +750,7 @@ export const getPokerShowdownEngineConfigFn = createServerFn({ method: "GET" }).
 );
 
 export const savePokerShowdownEngineConfigFn = createServerFn({ method: "POST" })
+  .middleware([operationIdentity])
   .validator(z.object({ config: z.unknown() }))
   .handler(async ({ data }) => {
     const { savePokerShowdownEngineConfig } = await import("../server/superadmin/services.server");
@@ -705,6 +772,7 @@ const saveSettingsSchema = z.object({
 });
 
 export const savePlatformSettingsFn = createServerFn({ method: "POST" })
+  .middleware([operationIdentity])
   .validator(saveSettingsSchema)
   .handler(async ({ data }) => {
     const { savePlatformSettings } = await import("../server/superadmin/services.server");
@@ -718,6 +786,7 @@ const playSessionCleanupSchema = z.object({
 });
 
 export const cleanupPlaySessionsFn = createServerFn({ method: "POST" })
+  .middleware([operationIdentity])
   .validator(playSessionCleanupSchema)
   .handler(async ({ data }) => {
     const { runPlaySessionCleanup } = await import("../server/superadmin/services.server");
@@ -738,6 +807,7 @@ const createPromoSchema = z.object({
 });
 
 export const createPromotionFn = createServerFn({ method: "POST" })
+  .middleware([operationIdentity])
   .validator(createPromoSchema)
   .handler(async ({ data }) => {
     const { createPromotion } = await import("../server/superadmin/services.server");
@@ -745,6 +815,7 @@ export const createPromotionFn = createServerFn({ method: "POST" })
   });
 
 export const togglePromotionFn = createServerFn({ method: "POST" })
+  .middleware([operationIdentity])
   .validator(z.object({ id: z.string().uuid(), enabled: z.boolean() }))
   .handler(async ({ data }) => {
     const { togglePromotion } = await import("../server/superadmin/services.server");
@@ -759,57 +830,36 @@ export const getRiskControlsFn = createServerFn({ method: "GET" }).handler(async
 const saveRiskSchema = riskControlsSchema;
 
 export const saveRiskControlsFn = createServerFn({ method: "POST" })
+  .middleware([operationIdentity])
   .validator(saveRiskSchema)
   .handler(async ({ data }) => {
     const { saveRiskControls } = await import("../server/superadmin/services.server");
     return saveRiskControls(data);
   });
 
-// Carousel & Additional Superadmin RPC exports
+// Canonical persisted carousel implementation; public reads exclude disabled slides.
+export { createCarouselSlideFn, deleteCarouselSlideFn } from "./carousel";
 export const listCarouselSlidesFn = createServerFn({ method: "GET" }).handler(async () => {
-  return [
-    {
-      id: "daily",
-      badge: "Daily",
-      title: "Daily Race",
-      headline: "Daily Race",
-      sub: "Compete for prizes · Active now",
-      cta: "Join Race",
-      linkUrl: null,
-      imageUrl: "/promos/promo-daily-race.webp",
-      sortOrder: 0,
-      enabled: true,
-      createdAt: new Date().toISOString(),
-    },
-    {
-      id: "cny",
-      badge: "Festive",
-      title: "Chinese New Year",
-      headline: "Chinese New Year",
-      sub: "Play the new Chinese Zodiac slot!",
-      cta: "Play Now",
-      linkUrl: null,
-      imageUrl: "/images/thumbnails/chinese_thumb.webp",
-      sortOrder: 1,
-      enabled: true,
-      createdAt: new Date().toISOString(),
-    },
-  ];
+  const { getSessionUser } = await import("../server/session");
+  const { listCarouselSlides } = await import("../server/superadmin/carousel.server");
+  const user = await getSessionUser();
+  const rows = await listCarouselSlides({ includeDisabled: user?.role === "superadmin" });
+  return rows.map((row) => ({
+    ...row,
+    enabled: row.enabled === "yes",
+    sortOrder: Number(row.sortOrder),
+    createdAt: row.createdAt.toISOString(),
+  }));
 });
-
-export const createCarouselSlideFn = createServerFn({ method: "POST" })
-  .validator(z.unknown())
-  .handler(async () => ({ success: true }));
-
-export const deleteCarouselSlideFn = createServerFn({ method: "POST" })
-  .validator(z.object({ id: z.string() }))
-  .handler(async () => ({ success: true }));
-
 export const toggleCarouselSlideFn = createServerFn({ method: "POST" })
-  .validator(z.object({ id: z.string(), enabled: z.boolean() }))
-  .handler(async () => ({ success: true }));
+  .validator(z.object({ id: z.string().uuid(), enabled: z.boolean() }))
+  .handler(async ({ data }) => {
+    const { updateCarouselSlide } = await import("../server/superadmin/carousel.server");
+    return updateCarouselSlide({ id: data.id, enabled: data.enabled ? "yes" : "no" });
+  });
 
 export const bulkApplyGameOutcomesFn = createServerFn({ method: "POST" })
+  .middleware([operationIdentity])
   .validator(
     z.object({
       scope: z.enum(["all", "slots", "cards", "fishing", "table", "live"]),
@@ -844,6 +894,7 @@ export const superGetUserSecurityDetailsFn = createServerFn({ method: "GET" })
   });
 
 export const superToggleLockUserFn = createServerFn({ method: "POST" })
+  .middleware([operationIdentity])
   .validator(
     z.object({
       userId: userIdSchema,
@@ -867,6 +918,7 @@ export const superToggleLockUserFn = createServerFn({ method: "POST" })
   });
 
 export const superForceLogoutUserFn = createServerFn({ method: "POST" })
+  .middleware([operationIdentity])
   .validator(z.object({ userId: userIdSchema }))
   .handler(async ({ data }) => {
     const { adminForceLogoutUser } = await import("../server/admin/services.server");
@@ -874,6 +926,7 @@ export const superForceLogoutUserFn = createServerFn({ method: "POST" })
   });
 
 export const superResetFailedAttemptsFn = createServerFn({ method: "POST" })
+  .middleware([operationIdentity])
   .validator(z.object({ userId: userIdSchema }))
   .handler(async ({ data }) => {
     const { adminResetFailedAttempts } = await import("../server/admin/services.server");
@@ -895,6 +948,7 @@ export const getPlatformEarningsGraphFn = createServerFn({ method: "GET" })
   });
 
 export const saveCoinVolcanoEngineConfigFn = createServerFn({ method: "POST" })
+  .middleware([operationIdentity])
   .validator(z.object({ config: z.unknown() }))
   .handler(async ({ data }) => {
     const { saveCoinVolcanoEngineConfig } = await import("../server/superadmin/services.server");
@@ -907,6 +961,7 @@ export const getWildPantherEngineConfigFn = createServerFn({ method: "GET" }).ha
 });
 
 export const saveWildPantherEngineConfigFn = createServerFn({ method: "POST" })
+  .middleware([operationIdentity])
   .validator(z.object({ config: z.unknown() }))
   .handler(async ({ data }) => {
     const { saveWildPantherEngineConfig } = await import("../server/superadmin/services.server");

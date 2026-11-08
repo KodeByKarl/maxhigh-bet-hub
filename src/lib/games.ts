@@ -1,4 +1,4 @@
-import { REALMS_SLOT_GAMES } from "./realms";
+import { REALMS_SLOT_GAMES } from "./realms/lobby-catalog";
 
 export type GameCategory = "slot" | "cards" | "fishing";
 
@@ -33,7 +33,7 @@ const defaults = {
 };
 
 /** MaxHigh original titles with thumbnail art */
-export const slotGames: SlotGame[] = [
+const baseSlotGames: SlotGame[] = [
   {
     ...defaults,
     id: "golden-panther",
@@ -965,6 +965,12 @@ export const slotGames: SlotGame[] = [
   // Realms family — 50 titles generated from src/lib/realms/catalog.ts
   ...REALMS_SLOT_GAMES,
 ];
+
+/** Versioned cover URLs ensure the Home lobby fetches the distinct artwork. */
+export const slotGames: SlotGame[] = baseSlotGames.map((game) => ({
+  ...game,
+  thumb: `/games/home-v20261101/${game.id}.webp`,
+}));
 
 export function gamesByCategory(category: GameCategory) {
   return slotGames.filter((g) => g.category === category);

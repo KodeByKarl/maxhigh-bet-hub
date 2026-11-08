@@ -1,3 +1,4 @@
+import { operationIdentity } from "@/lib/operation-identity";
 /**
  * Color Game client RPC bridge (createServerFn).
  */
@@ -11,12 +12,21 @@ const colorGameDealSchema = z.object({
 });
 
 export const colorGameDealFn = createServerFn({ method: "POST" })
+  .middleware([operationIdentity])
   .validator(colorGameDealSchema)
   .handler(async ({ data }) => {
-    const { colorGamePaidDeal } = await import("../server/games/color-game.server");
-    return JSON.parse(JSON.stringify(await colorGamePaidDeal(data))) as Awaited<
-      ReturnType<typeof colorGamePaidDeal>
-    >;
+    const { withFinancialOperation } = await import("../server/operation.server");
+    return withFinancialOperation(
+      "colorGameDealFn",
+      data,
+      async () => {
+        const { colorGamePaidDeal } = await import("../server/games/color-game.server");
+        return JSON.parse(JSON.stringify(await colorGamePaidDeal(data))) as Awaited<
+          ReturnType<typeof colorGamePaidDeal>
+        >;
+      },
+      "color-game",
+    );
   });
 
 export const getColorGameEngineConfigFn = createServerFn({ method: "GET" }).handler(async () => {

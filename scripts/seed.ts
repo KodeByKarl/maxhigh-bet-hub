@@ -1,3 +1,4 @@
+if (process.env.NODE_ENV === "production" || process.env.ALLOW_DEMO_SEED !== "disposable-test-only") { throw new Error("Demo seeding requires ALLOW_DEMO_SEED=disposable-test-only outside production"); }
 import "dotenv/config";
 import { eq, sql } from "drizzle-orm";
 import { hash } from "bcryptjs";
@@ -35,7 +36,7 @@ async function upsertUser(opts: {
       displayName: opts.displayName,
       parentAgentId: opts.parentAgentId,
     });
-    console.log(`Created ${opts.role}: ${username} / ${opts.password}`);
+    console.log(`Created demo ${opts.role}: ${username}`);
     return userId;
   }
 
@@ -225,18 +226,8 @@ async function main() {
   `);
   console.log("Seeded platform_settings table.");
 
-  console.log("\n=== Seeded staff login accounts ===");
-  console.log("superadmin   / super123   (superadmin)");
-  console.log("masteragent  / master123  (master_agent)");
-  console.log("masteragent2 / master123  (master_agent)");
-  console.log("agent1       / agent123   (agent → masteragent)");
-  console.log("agent2       / agent123   (agent → masteragent)");
-  console.log("player1      / player123  (player → agent1)");
-  console.log("Full player activities & audit log seed complete!");
+  console.log("Demo fixtures created.");
   process.exit(0);
 }
 
-main().catch((err) => {
-  console.error(err);
-  process.exit(1);
-});
+main().catch(() => { console.error("Demo seed failed"); process.exit(1); });

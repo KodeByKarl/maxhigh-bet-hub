@@ -1,4 +1,6 @@
-﻿/**
+import { manilaDayBounds, manilaWeekStart, manilaMonthStart } from "@/lib/business-time";
+import { signedMinorUnits } from "@/lib/money";
+import { sumPendingWithdrawals, writeLedgerDelta } from "../wallet.server"; /**
  * Domain 3 — Superadmin server logic.
  * Full control: users, admins, games, jackpot.
  */
@@ -425,7 +427,10 @@ export async function superUpdateUser(data: {
   }
 
   try {
-    await db.update(users).set(patch).where(eq(users.id, data.userId));
+    await db.transaction(async (tx) => {
+      await tx.update(users).set(patch).where(eq(users.id, data.userId));
+      if (patch.passwordHash) await tx.delete(sessions).where(eq(sessions.userId, data.userId));
+    });
   } catch {
     throw new Error("Username or email already exists");
   }
@@ -452,13 +457,19 @@ export async function superAdjustBalance(data: {
   const actor = await requireSuperadmin();
   if (!Number.isFinite(data.delta) || data.delta === 0) throw new Error("Invalid amount");
 
+  signedMinorUnits(data.delta);
   const db = getDb();
 
   // Password re-auth for Super Admin chip actions (Task 4)
   await verifySuperadminChipPassword(actor.id, data.confirmPassword);
 
   const result = await db.transaction(async (tx) => {
-    const rows = await tx.select().from(users).where(eq(users.id, data.userId)).limit(1);
+    const rows = await tx
+      .select()
+      .from(users)
+      .where(eq(users.id, data.userId))
+      .for("update")
+      .limit(1);
     const user = rows[0];
     if (!user) throw new Error("User not found");
 
@@ -475,7 +486,8 @@ export async function superAdjustBalance(data: {
 
     const current = Number(user.balance);
     const next = +(current + data.delta).toFixed(2);
-    if (next < 0) throw new Error("Balance cannot go negative");
+    if (next < (await sumPendingWithdrawals(tx, user.id)))
+      throw new Error("Insufficient available balance");
     await tx
       .update(users)
       .set({ balance: money(next) })
@@ -789,24 +801,30 @@ export async function assignJackpotToPlayer(data: {
   }
 
   const result = await db.transaction(async (tx) => {
-    const [jp] = await tx.select().from(jackpot).where(eq(jackpot.id, "mega")).limit(1);
+    const [lockedPlayer] = await tx
+      .select()
+      .from(users)
+      .where(eq(users.id, player.id))
+      .for("update")
+      .limit(1);
+    if (!lockedPlayer) throw new Error("Player not found");
+    const [jp] = await tx
+      .select()
+      .from(jackpot)
+      .where(eq(jackpot.id, "mega"))
+      .for("update")
+      .limit(1);
     if (!jp || (jp.enabled ?? "yes") !== "yes") {
       throw new Error("Forbidden — Mega Jackpot is currently OFF and cannot be won or assigned");
     }
     const amountAwarded = Number(jp.amount);
     if (amountAwarded <= 0) throw new Error("Mega Jackpot pool is empty");
 
-    const nextBal = +(Number(player.balance) + amountAwarded).toFixed(2);
-    await tx
-      .update(users)
-      .set({ balance: money(nextBal) })
-      .where(eq(users.id, player.id));
-    await tx.insert(transactions).values({
-      id: newId(),
-      userId: player.id,
+    await writeLedgerDelta(tx, {
+      userId: lockedPlayer.id,
+      username: lockedPlayer.username,
+      delta: amountAwarded,
       type: "jackpot",
-      amount: money(amountAwarded),
-      balanceAfter: money(nextBal),
       game: "MegaJackpot",
       note: `Mega Jackpot awarded by @${actor.username}`,
     });
@@ -847,7 +865,7 @@ export async function listEnabledCatalogGames() {
   type Row = (typeof slotGames)[number] & { _sort: number };
   const rows: Row[] = [];
   for (const g of slotGames) {
-    // Soft-launch: lobby shows the Golden Panther family only.
+    // The enabled flag is the source of truth for Dashboard visibility.
     if (!isLobbyVisibleGame(g.id) || isThumbnailOnlyGame(g.id)) continue;
     const c = map.get(g.id);
     if (c && c.enabled === "no") continue;
@@ -3179,36 +3197,30 @@ export async function listWalletRequests(opts?: {
   status?: "pending" | "approved" | "rejected" | "all";
   limit?: number;
 }): Promise<SuperWalletRequestRow[]> {
-  await requireAdmin();
+  const actor = await requirePermission("WALLET_LIST");
   const db = getDb();
   const status = opts?.status ?? "pending";
   const limit = Math.min(Math.max(opts?.limit ?? 50, 1), 200);
 
-  const rows =
-    status === "all"
-      ? await db
-          .select({
-            req: walletRequests,
-            username: users.username,
-            displayName: users.displayName,
-            balance: users.balance,
-          })
-          .from(walletRequests)
-          .innerJoin(users, eq(walletRequests.userId, users.id))
-          .orderBy(desc(walletRequests.createdAt))
-          .limit(limit)
-      : await db
-          .select({
-            req: walletRequests,
-            username: users.username,
-            displayName: users.displayName,
-            balance: users.balance,
-          })
-          .from(walletRequests)
-          .innerJoin(users, eq(walletRequests.userId, users.id))
-          .where(eq(walletRequests.status, status))
-          .orderBy(desc(walletRequests.createdAt))
-          .limit(limit);
+  const scope = await scopeToDownline(actor);
+  if (scope !== null && scope.length === 0) return [];
+  const rows = await db
+    .select({
+      req: walletRequests,
+      username: users.username,
+      displayName: users.displayName,
+      balance: users.balance,
+    })
+    .from(walletRequests)
+    .innerJoin(users, eq(walletRequests.userId, users.id))
+    .where(
+      and(
+        status === "all" ? undefined : eq(walletRequests.status, status),
+        scope === null ? undefined : inArray(users.id, scope),
+      ),
+    )
+    .orderBy(desc(walletRequests.createdAt))
+    .limit(limit);
 
   return rows.map((r) => ({
     id: r.req.id,
@@ -3233,7 +3245,7 @@ export async function reviewWalletRequest(data: {
   decision: "approve" | "reject";
   note?: string;
 }): Promise<SuperWalletRequestRow> {
-  const actor = await requireAdmin();
+  const actor = await requirePermission("WALLET_REVIEW");
   const db = getDb();
 
   const result = await db.transaction(async (tx) => {
@@ -3256,6 +3268,8 @@ export async function reviewWalletRequest(data: {
       .limit(1);
     const user = userRows[0];
     if (!user) throw new Error("User not found");
+    if (user.role !== "player" || user.id === actor.id)
+      throw new Error("Only other player payment requests may be reviewed");
 
     const amount = Number(req.amount);
     const now = new Date();
@@ -3314,23 +3328,15 @@ export async function reviewWalletRequest(data: {
       throw new Error("Request already reviewed");
     }
 
-    await tx
-      .update(users)
-      .set({ balance: money(next) })
-      .where(eq(users.id, user.id));
-    await tx.insert(transactions).values({
-      id: newId(),
+    const settled = await writeLedgerDelta(tx, {
       userId: user.id,
+      username: user.username,
+      delta,
       type: req.type,
-      amount: money(delta),
-      balanceAfter: money(next),
       game: "Wallet",
-      note:
-        staffNote ||
-        (req.type === "deposit"
-          ? `Deposit approved · request ${data.id.slice(0, 8)}`
-          : `Withdrawal approved · request ${data.id.slice(0, 8)}`),
+      note: staffNote ?? `Wallet request ${req.id}`,
     });
+    if (settled.balance !== next) throw new Error("Wallet balance invariant failed");
 
     return {
       id: req.id,
@@ -3721,11 +3727,11 @@ export async function fetchPlatformEarningsGraph(opts?: {
 
   // Overall KPI aggregations
   const now = new Date();
-  const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const startOfDay = manilaDayBounds(now).start;
 
   const dayOfWeek = (now.getDay() + 6) % 7; // Monday = 0
-  const startOfWeek = new Date(startOfDay.getTime() - dayOfWeek * 24 * 60 * 60 * 1000);
-  const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+  const startOfWeek = manilaWeekStart(now);
+  const startOfMonth = manilaMonthStart(now);
 
   const filterGame = game ? like(transactions.game, `%${game}%`) : undefined;
   const filterNetwork = networkIds !== null ? inArray(transactions.userId, networkIds) : undefined;
@@ -3744,7 +3750,7 @@ export async function fetchPlatformEarningsGraph(opts?: {
       monthWins: sql<number>`coalesce(sum(case when ${transactions.type} in ('win','jackpot') and ${transactions.createdAt} >= ${startOfMonth} then abs(${transactions.amount}) else 0 end), 0)`,
 
       allBets: sql<number>`coalesce(sum(case when ${transactions.type} = 'bet' then abs(${transactions.amount}) else 0 end), 0)`,
-      allWins: sql<number>`coalesce(sum(case when ${transactions.type} in ('win','jackpot') and ${transactions.createdAt} >= ${startOfMonth} then abs(${transactions.amount}) else 0 end), 0)`,
+      allWins: sql<number>`coalesce(sum(case when ${transactions.type} in ('win','jackpot') then abs(${transactions.amount}) else 0 end), 0)`,
     })
     .from(transactions)
     .where(baseWhere);
@@ -3837,10 +3843,10 @@ export async function fetchPlatformEarningsGraph(opts?: {
       "Nov",
       "Dec",
     ];
-    const currentYear = now.getFullYear();
+    const currentYear = new Date(now.getTime() + 8 * 3600000).getUTCFullYear();
     for (let m = 0; m < 12; m++) {
-      const mStart = new Date(currentYear, m, 1);
-      const mEnd = new Date(currentYear, m + 1, 1);
+      const mStart = new Date(Date.UTC(currentYear, m, 1) - 8 * 3600000);
+      const mEnd = new Date(Date.UTC(currentYear, m + 1, 1) - 8 * 3600000);
 
       const [mRow] = await db
         .select({

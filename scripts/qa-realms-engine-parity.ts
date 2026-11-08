@@ -48,7 +48,8 @@ const realmsCfg: RealmsConfig = {
 setRubyRavenConfig(ref);
 
 const SPINS = 20_000;
-const nativeRandom = Math.random;
+const randomRuntime = globalThis as typeof globalThis & { __maxhighRandom?: () => number };
+const nativeRandom = randomRuntime.__maxhighRandom;
 let mismatches = 0;
 let refTotal = 0;
 let newTotal = 0;
@@ -62,9 +63,9 @@ for (let i = 0; i < SPINS; i++) {
     initialBombAccumulator: mode === 3 ? 3 : 0,
   };
 
-  Math.random = mulberry32(1000 + i);
+  randomRuntime.__maxhighRandom = mulberry32(1000 + i);
   const a = resolveReference({ ...opts, collectBombsInFreeSpins: true });
-  Math.random = nativeRandom;
+  randomRuntime.__maxhighRandom = nativeRandom;
 
   const b = resolveSpin(
     createEngineCtx(realmsCfg, { cols: COLS, rows: ROWS }, mulberry32(1000 + i)),

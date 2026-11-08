@@ -1,0 +1,145 @@
+/* Generated from native-control-skins.ts by extend-all-game-controls.mjs. */
+[data-game-control-root="ace-high"],
+[data-native-controls="ace-high"] {
+  --native-accent: #e6d3bd;
+  --native-surface: #321923;
+  --native-ink: #281b1d;
+  --native-radius: 5px;
+  --native-font: Georgia, serif;
+}
+[data-game-control-root="baccarat"],
+[data-native-controls="baccarat"] {
+  --native-accent: #d9c9a8;
+  --native-surface: #142b42;
+  --native-ink: #152435;
+  --native-radius: 3px;
+  --native-font: Georgia, serif;
+}
+[data-game-control-root="lucky9"],
+[data-native-controls="lucky9"] {
+  --native-accent: #b2d6b5;
+  --native-surface: #173e35;
+  --native-ink: #1c3c30;
+  --native-radius: 24px;
+  --native-font: ui-sans-serif, system-ui;
+}
+[data-game-control-root="threecardpoker"],
+[data-native-controls="threecardpoker"] {
+  --native-accent: #e2c7a1;
+  --native-surface: #392822;
+  --native-ink: #412b1e;
+  --native-radius: 7px;
+  --native-font: Georgia, serif;
+}
+[data-game-control-root="color-game"],
+[data-native-controls="color-game"] {
+  --native-accent: #f5d47c;
+  --native-surface: #273c48;
+  --native-ink: #4a3326;
+  --native-radius: 15px;
+  --native-font: ui-sans-serif, system-ui;
+}
+[data-game-control-root="tongits-arena"],
+[data-native-controls="tongits-arena"] {
+  --native-accent: #9ee4d4;
+  --native-surface: #173b35;
+  --native-ink: #173b35;
+  --native-radius: 3px 16px;
+  --native-font: ui-sans-serif, system-ui;
+}
+[data-game-control-root="lucky-drop"],
+[data-native-controls="lucky-drop"] {
+  --native-accent: #aad4ff;
+  --native-surface: #153764;
+  --native-ink: #153764;
+  --native-radius: 20px;
+  --native-font: ui-sans-serif, system-ui;
+}
+[data-game-control-root="color-game-pro"],
+[data-native-controls="color-game-pro"] {
+  --native-accent: #e0a5ff;
+  --native-surface: #261740;
+  --native-ink: #321a49;
+  --native-radius: 3px;
+  --native-font: ui-sans-serif, system-ui;
+}
+[data-game-control-root="lucky-nine-plus"],
+[data-native-controls="lucky-nine-plus"] {
+  --native-accent: #e9dfb9;
+  --native-surface: #203b2e;
+  --native-ink: #203b2e;
+  --native-radius: 28px 6px;
+  --native-font: Georgia, serif;
+}
+[data-game-control-root="drop-deluxe"],
+[data-native-controls="drop-deluxe"] {
+  --native-accent: #edd8bf;
+  --native-surface: #3c2333;
+  --native-ink: #3c2333;
+  --native-radius: 30px;
+  --native-font: Georgia, serif;
+}
+[data-game-control-root="poker-showdown"],
+[data-native-controls="poker-showdown"] {
+  --native-accent: #edb4ac;
+  --native-surface: #291b22;
+  --native-ink: #361b22;
+  --native-radius: 2px;
+  --native-font: ui-sans-serif, system-ui;
+}
+[data-game-control-root="deep-bass"],
+[data-native-controls="deep-bass"] {
+  --native-accent: #dce1b4;
+  --native-surface: #193c37;
+  --native-ink: #233e32;
+  --native-radius: 6px;
+  --native-font: Georgia, serif;
+}
+[data-game-control-root="dragon-fisher"],
+[data-native-controls="dragon-fisher"] {
+  --native-accent: #bbd9ee;
+  --native-surface: #172f4b;
+  --native-ink: #172f4b;
+  --native-radius: 3px 22px;
+  --native-font: Georgia, serif;
+}
+[data-game-control-root="crab-cannon"],
+[data-native-controls="crab-cannon"] {
+  --native-accent: #ffc4a9;
+  --native-surface: #213c4b;
+  --native-ink: #593531;
+  --native-radius: 18px;
+  --native-font: ui-sans-serif, system-ui;
+}
+[data-game-control-root="shark-hunter"],
+[data-native-controls="shark-hunter"] {
+  --native-accent: #b6d6e8;
+  --native-surface: #122734;
+  --native-ink: #122734;
+  --native-radius: 2px;
+  --native-font: ui-sans-serif, system-ui;
+}
+[data-game-control-root="octopus-armada"],
+[data-native-controls="octopus-armada"] {
+  --native-accent: #dac0eb;
+  --native-surface: #30223e;
+  --native-ink: #30223e;
+  --native-radius: 22px 5px;
+  --native-font: Georgia, serif;
+}
+[data-game-control-root="turtle-tide"],
+[data-native-controls="turtle-tide"] {
+  --native-accent: #a9dcc6;
+  --native-surface: #20443e;
+  --native-ink: #20443e;
+  --native-radius: 24px;
+  --native-font: ui-sans-serif, system-ui;
+}
+[data-game-control-root="whale-war"],
+[data-native-controls="whale-war"] {
+  --native-accent: #d2e7f3;
+  --native-surface: #20313e;
+  --native-ink: #20313e;
+  --native-radius: 4px;
+  --native-font: ui-monospace, monospace;
+}

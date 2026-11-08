@@ -1,3 +1,4 @@
+import "../../native-game-controls.css";
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
 import {
@@ -257,7 +258,10 @@ export function DropDeluxeTable({ gameName = "Deluxe Draw", onBalance }: Props) 
   const won = payout > 0 && result && result !== "none";
 
   return (
-    <div className="relative flex h-full min-h-0 flex-col overflow-hidden bg-[#06110d] text-white">
+    <div
+      className="relative flex h-full min-h-0 flex-col overflow-hidden bg-[#06110d] text-white"
+      data-game-control-root="drop-deluxe"
+    >
       <style>{CSS}</style>
       {/* felt */}
       <div
@@ -353,7 +357,7 @@ export function DropDeluxeTable({ gameName = "Deluxe Draw", onBalance }: Props) 
 
       {/* rail */}
       <div className="relative z-20 shrink-0 px-4 pb-[max(0.7rem,env(safe-area-inset-bottom))] pt-2">
-        <div className="mx-auto flex max-w-lg flex-col gap-2">
+        <div className="mx-auto flex max-w-lg flex-col gap-2" data-native-controls="drop-deluxe">
           {phase !== "hold" && (
             <div className="flex flex-wrap items-center justify-center gap-1.5">
               {cfg.betSteps.map((v) => (
@@ -371,6 +375,7 @@ export function DropDeluxeTable({ gameName = "Deluxe Draw", onBalance }: Props) 
                       ? "-translate-y-1 scale-110 border-white bg-amber-300 text-amber-950"
                       : "border-white/50 bg-red-800/80 text-white",
                   )}
+                  data-control-action="secondary"
                 >
                   {v}
                 </button>
@@ -385,6 +390,7 @@ export function DropDeluxeTable({ gameName = "Deluxe Draw", onBalance }: Props) 
                 disabled={!canEditBet}
                 onClick={() => stepBet(-1)}
                 className="h-full rounded-l-2xl px-3 text-2xl font-black text-amber-300 active:bg-white/10 disabled:opacity-30"
+                data-control-action="secondary"
               >
                 −
               </button>
@@ -402,6 +408,7 @@ export function DropDeluxeTable({ gameName = "Deluxe Draw", onBalance }: Props) 
                 disabled={!canEditBet}
                 onClick={() => stepBet(1)}
                 className="h-full rounded-r-2xl px-3 text-2xl font-black text-amber-300 active:bg-white/10 disabled:opacity-30"
+                data-control-action="secondary"
               >
                 +
               </button>
@@ -414,6 +421,7 @@ export function DropDeluxeTable({ gameName = "Deluxe Draw", onBalance }: Props) 
               }
               className="flex-1 rounded-full bg-gradient-to-b from-amber-200 via-amber-300 to-amber-500 py-3.5 text-base font-black tracking-[0.2em] text-amber-950 uppercase shadow-[0_6px_0_#92400e,0_14px_24px_rgba(0,0,0,.5)] transition active:translate-y-1 active:shadow-[0_2px_0_#92400e] disabled:opacity-50"
               style={phase === "hold" ? { animation: "dd-pulse 1.4s infinite" } : undefined}
+              data-control-action="primary"
             >
               {busy
                 ? "…"

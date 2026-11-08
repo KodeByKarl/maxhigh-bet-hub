@@ -1,0 +1,19 @@
+# REVIEW ONLY: merge directives INTO the existing maxhigh.online HTTPS block.
+# Do not replace the working site or its tls, certificate, origin allowlist,
+# trusted_proxies, authentication, HSTS or existing Cloudflare policy.
+# These proxy directives target PRODUCTION port 8080, never staging port 18080.
+# Do not add an http:// site address, auto_https off or tls_insecure_skip_verify.
+
+@maxhighPrivateOps path /api/health /api/metrics
+respond @maxhighPrivateOps 404
+@maxhighSensitive path /_serverFn/* /api/* /admin* /superadmin*
+header @maxhighSensitive Cache-Control "private, no-store"
+encode zstd gzip
+reverse_proxy 127.0.0.1:8080 {
+    header_up X-Real-IP {client_ip}
+    header_up X-Forwarded-For {client_ip}
+    header_up -CF-Connecting-IP
+}
+# If an existing reverse_proxy/encode directive exists, edit it instead of
+# duplicating it. Review the full Cloudflare profile for trusted proxy ranges;
+# do not trust arbitrary public Forwarded/X-Forwarded-For/CF-Connecting-IP.

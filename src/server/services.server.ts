@@ -1,4 +1,9 @@
-import { eq, desc, sql, and, gt, gte, or } from "drizzle-orm";
+import { minorUnits } from "@/lib/money";
+import { publicReadCache } from "./public-cache.server";
+import { lockAccounts } from "./financial-locks.server";
+import { requirePermission } from "./auth/rbac.server";
+import { isInDownline, scopeToDownline } from "./auth/network-scope.server";
+import { eq, desc, sql, and, gt, gte, or, inArray } from "drizzle-orm";
 import { compare, hash } from "bcryptjs";
 import { getDb } from "./db/client";
 import {
@@ -14,6 +19,7 @@ import {
 } from "./db/schema";
 import type { PublicUser } from "@/lib/user";
 import { isStaffRole } from "@/lib/user";
+import { loginFailureCode, publicLoginError } from "./auth/login-errors.server";
 import {
   createSession,
   destroySession,
@@ -26,6 +32,19 @@ import {
 } from "./session";
 
 export async function loginUser(username: string, password: string): Promise<PublicUser> {
+  try {
+    return await authenticateUser(username, password);
+  } catch (error) {
+    const safe = publicLoginError(error);
+    if (!(error instanceof Error) || safe.message !== error.message) {
+      // Never log the wrapped SQL, bound parameters, or supplied credentials.
+      console.error("[auth] Sign-in service failure", { code: loginFailureCode(error) });
+    }
+    throw safe;
+  }
+}
+
+async function authenticateUser(username: string, password: string): Promise<PublicUser> {
   const db = getDb();
   const normalized = username.trim().toLowerCase();
   if (!normalized) throw new Error("Invalid username or password");
@@ -40,27 +59,25 @@ export async function loginUser(username: string, password: string): Promise<Pub
 
   // Check if account is locked
   const isCurrentlyLocked =
-    user.isLocked === "yes" ||
-    (user.failedAttempts ?? 0) >= 3 ||
-    (user.lockedUntil && new Date() < new Date(user.lockedUntil));
+    user.isLocked === "yes" || (user.lockedUntil && new Date() < new Date(user.lockedUntil));
 
   if (isCurrentlyLocked) {
-    throw new Error("Account locked — contact support");
+    if (user.isLocked === "yes") throw new Error("Account locked — contact support");
+    throw new Error("Too many attempts. Please retry in 30 seconds.");
   }
 
   const ok = await compare(password, user.passwordHash);
 
   if (!ok) {
     const currentAttempts = user.failedAttempts ?? 0;
-    const nextAttempts = currentAttempts + 1;
+    const nextAttempts = Math.min(currentAttempts + 1, 3);
     const willBeLocked = nextAttempts >= 3;
 
     await db
       .update(users)
       .set({
-        failedAttempts: nextAttempts,
-        isLocked: willBeLocked ? "yes" : "no",
-        lockedUntil: willBeLocked ? new Date(Date.now() + 365 * 24 * 60 * 60 * 1000) : null,
+        failedAttempts: sql`LEAST(${users.failedAttempts} + 1, 3)`,
+        lockedUntil: new Date(Date.now() + 30_000),
       })
       .where(eq(users.id, user.id));
 
@@ -69,21 +86,22 @@ export async function loginUser(username: string, password: string): Promise<Pub
       id: newId(),
       actorId: user.id,
       actorUsername: user.username,
-      action: willBeLocked ? "login_lockout" : "login_failed",
+      action: "login_cooldown",
       targetType: "user",
       targetId: user.id,
       summary: willBeLocked
-        ? `Account locked after ${nextAttempts} failed login attempts.`
+        ? `Temporary sign-in cooldown after ${nextAttempts} failed attempts.`
         : `Failed login attempt (${nextAttempts}/3).`,
       meta: JSON.stringify({
         failedAttempts: nextAttempts,
         timestamp: new Date().toISOString(),
-        isLocked: willBeLocked,
+        isLocked: false,
+        cooldownSeconds: 30,
       }),
     });
 
     if (willBeLocked) {
-      throw new Error("Account locked — contact support");
+      throw new Error("Too many attempts. Please retry in 30 seconds.");
     } else {
       throw new Error(`Invalid username or password (${nextAttempts}/3 attempts)`);
     }
@@ -158,7 +176,10 @@ export async function changePassword(data: {
   if (!ok) throw new Error("Incorrect current password");
 
   const passwordHash = await hash(data.newPassword, 10);
-  await db.update(users).set({ passwordHash }).where(eq(users.id, session.id));
+  await db.transaction(async (tx) => {
+    await tx.update(users).set({ passwordHash }).where(eq(users.id, session.id));
+    await tx.delete(sessions).where(eq(sessions.userId, session.id));
+  });
 
   return { ok: true };
 }
@@ -188,7 +209,7 @@ export async function recordGameSessionOpen(data: { gameId: string; gameName: st
   return { ok: true as const };
 }
 
-export async function fetchJackpot() {
+async function readPublicJackpot() {
   const db = getDb();
   const rows = await db.select().from(jackpot).where(eq(jackpot.id, "mega")).limit(1);
   let row = rows[0];
@@ -216,7 +237,9 @@ export async function fetchJackpot() {
   };
 }
 
-export async function listLiveWins() {
+export const fetchJackpot = publicReadCache(readPublicJackpot, 5000);
+
+async function readPublicLiveWins() {
   const db = getDb();
   // Pull a wider window, then keep only the newest win per username.
   const rows = await db.select().from(liveWins).orderBy(desc(liveWins.createdAt)).limit(80);
@@ -237,6 +260,8 @@ export async function listLiveWins() {
   return unique;
 }
 
+export const listLiveWins = publicReadCache(readPublicLiveWins, 5000);
+
 /** Active in the last 5 minutes = online. */
 const ONLINE_WINDOW_MS = 5 * 60 * 1000;
 
@@ -245,7 +270,7 @@ export async function heartbeatPresence() {
   return { ok };
 }
 
-export async function fetchPlatformStats() {
+async function computePlatformStats() {
   const db = getDb();
   const now = new Date();
   const onlineSince = new Date(now.getTime() - ONLINE_WINDOW_MS);
@@ -320,6 +345,9 @@ export async function createWalletRequest(data: {
   note?: string;
 }): Promise<WalletRequestRow> {
   const session = await requireUser();
+  if (session.role !== "player")
+    throw new Error("Only player accounts can request wallet payments");
+  minorUnits(data.amount);
   if (!Number.isFinite(data.amount) || data.amount < 1) {
     throw new Error("Minimum amount is ₱1.00");
   }
@@ -329,46 +357,59 @@ export async function createWalletRequest(data: {
 
   const amount = +data.amount.toFixed(2);
   const db = getDb();
-  const { availableFrom, sumPendingWithdrawals } = await import("./wallet.server");
-
-  if (data.type === "withdraw") {
-    const rows = await db
-      .select({ balance: users.balance })
-      .from(users)
-      .where(eq(users.id, session.id))
+  return db.transaction(async (tx) => {
+    await lockAccounts(tx, [session.id]);
+    const { platformSettings } = await import("./db/schema");
+    const [settings] = await tx
+      .select()
+      .from(platformSettings)
+      .where(eq(platformSettings.id, "default"))
       .limit(1);
-    const balance = Number(rows[0]?.balance ?? 0);
-    const pending = await sumPendingWithdrawals(db, session.id);
-    const available = availableFrom(balance, pending);
-    if (amount > available) {
-      throw new Error(
-        pending > 0
-          ? `Insufficient available balance (₱${pending.toFixed(2)} already pending withdrawal)`
-          : "Insufficient balance for this withdrawal",
-      );
+    if (!settings) throw new Error("Platform settings unavailable");
+    const min = Number(data.type === "deposit" ? settings.minDeposit : settings.minWithdraw);
+    const max = Number(data.type === "deposit" ? settings.maxDeposit : settings.maxWithdraw);
+    if (amount < min || amount > max) throw new Error(`Amount must be between ${min} and ${max}`);
+    const { availableFrom, sumPendingWithdrawals } = await import("./wallet.server");
+
+    if (data.type === "withdraw") {
+      const rows = await tx
+        .select({ balance: users.balance })
+        .from(users)
+        .where(eq(users.id, session.id))
+        .limit(1);
+      const balance = Number(rows[0]?.balance ?? 0);
+      const pending = await sumPendingWithdrawals(tx, session.id);
+      const available = availableFrom(balance, pending);
+      if (amount > available) {
+        throw new Error(
+          pending > 0
+            ? `Insufficient available balance (₱${pending.toFixed(2)} already pending withdrawal)`
+            : "Insufficient balance for this withdrawal",
+        );
+      }
     }
-  }
 
-  const id = newId();
-  await db.insert(walletRequests).values({
-    id,
-    userId: session.id,
-    type: data.type,
-    amount: money(amount),
-    status: "pending",
-    playerNote: data.note?.trim() || null,
+    const id = newId();
+    await tx.insert(walletRequests).values({
+      id,
+      userId: session.id,
+      type: data.type,
+      amount: money(amount),
+      status: "pending",
+      playerNote: data.note?.trim() || null,
+    });
+
+    return {
+      id,
+      type: data.type,
+      amount,
+      status: "pending",
+      playerNote: data.note?.trim() || null,
+      staffNote: null,
+      createdAt: new Date().toISOString(),
+      reviewedAt: null,
+    };
   });
-
-  return {
-    id,
-    type: data.type,
-    amount,
-    status: "pending",
-    playerNote: data.note?.trim() || null,
-    staffNote: null,
-    createdAt: new Date().toISOString(),
-    reviewedAt: null,
-  };
 }
 
 export async function listMyWalletRequests(limit = 20): Promise<WalletRequestRow[]> {
@@ -523,7 +564,8 @@ export async function addPlayerSupportMessage(text: string, lang: "en" | "tl") {
 }
 
 export async function addAgentSupportMessage(ticketId: string, text: string) {
-  const session = await requireUser();
+  const session = await requirePermission("SUPPORT_MANAGE");
+  await requireScopedTicket(session, ticketId);
   if (!isStaffRole(session.role)) {
     throw new Error("Unauthorized");
   }
@@ -540,16 +582,23 @@ export async function addAgentSupportMessage(ticketId: string, text: string) {
 }
 
 export async function fetchAdminTickets() {
-  const session = await requireUser();
+  const session = await requirePermission("SUPPORT_MANAGE");
   if (!isStaffRole(session.role)) {
     throw new Error("Unauthorized");
   }
   const db = getDb();
 
+  const scope = await scopeToDownline(session);
+  if (scope !== null && scope.length === 0) return [];
   const tickets = await db
     .select()
     .from(supportTickets)
-    .where(eq(supportTickets.status, "open"))
+    .where(
+      and(
+        eq(supportTickets.status, "open"),
+        scope === null ? undefined : inArray(supportTickets.userId, scope),
+      ),
+    )
     .orderBy(desc(supportTickets.updatedAt));
 
   return tickets.map((t) => ({
@@ -609,7 +658,8 @@ export async function createPlayerTicket(playerName: string, concern: string) {
 }
 
 export async function assignAgentToTicket(ticketId: string) {
-  const session = await requireUser();
+  const session = await requirePermission("SUPPORT_MANAGE");
+  await requireScopedTicket(session, ticketId);
   if (!isStaffRole(session.role)) {
     throw new Error("Unauthorized");
   }
@@ -632,7 +682,8 @@ export async function assignAgentToTicket(ticketId: string) {
 }
 
 export async function fetchAdminTicketMessages(ticketId: string) {
-  const session = await requireUser();
+  const session = await requirePermission("SUPPORT_MANAGE");
+  await requireScopedTicket(session, ticketId);
   if (!isStaffRole(session.role)) {
     throw new Error("Unauthorized");
   }
@@ -654,7 +705,8 @@ export async function fetchAdminTicketMessages(ticketId: string) {
 }
 
 export async function resolveSupportTicket(ticketId: string) {
-  const session = await requireUser();
+  const session = await requirePermission("SUPPORT_MANAGE");
+  await requireScopedTicket(session, ticketId);
   if (!isStaffRole(session.role)) {
     throw new Error("Unauthorized");
   }
@@ -678,7 +730,10 @@ export async function resolveSupportTicket(ticketId: string) {
     summary: `Resolved support ticket for player ${ticket.username}`,
   });
 
-  await db.delete(supportTickets).where(eq(supportTickets.id, ticketId));
+  await db
+    .update(supportTickets)
+    .set({ status: "resolved" })
+    .where(eq(supportTickets.id, ticketId));
 
   return { ok: true, userId: ticket.userId };
 }
@@ -871,4 +926,28 @@ export async function fetchMyWalletSummary(): Promise<MyWalletSummary> {
     net: +(winVolume - betVolume).toFixed(2),
     byGame,
   };
+}
+
+async function requireScopedTicket(actor: PublicUser, ticketId: string) {
+  const [ticket] = await getDb()
+    .select()
+    .from(supportTickets)
+    .where(eq(supportTickets.id, ticketId))
+    .limit(1);
+  if (!ticket || !(await isInDownline(actor, ticket.userId)))
+    throw new Error("Forbidden — support ticket is outside your scope");
+  return ticket;
+}
+
+let statsCache:
+  { until: number; value: Promise<Awaited<ReturnType<typeof computePlatformStats>>> } | undefined;
+export async function fetchPlatformStats() {
+  if (!statsCache || statsCache.until < Date.now()) {
+    const value = computePlatformStats();
+    statsCache = { until: Date.now() + 20_000, value };
+    void value.catch(() => {
+      statsCache = undefined;
+    });
+  }
+  return statsCache.value;
 }

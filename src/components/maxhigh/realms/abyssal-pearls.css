@@ -1,0 +1,32 @@
+[data-realms-game="abyssal-pearls"] .realms-reel-grid {
+  border: 1px solid #92dce24d;
+  border-radius: 18px;
+  padding: 7px;
+  background: linear-gradient(180deg, #071b35d9, #091226f2);
+  box-shadow:
+    inset 0 1px 0 #e1e5ff38,
+    inset 0 0 45px #0c365755,
+    0 10px 40px #0009;
+}
+[data-realms-game="abyssal-pearls"] .realms-reel-cell {
+  border: 1px solid #9ac6e21a !important;
+  border-radius: 13% !important;
+  background: radial-gradient(ellipse at 50% 35%, #284a6b77, #0d193600 80%) !important;
+  box-shadow: inset 0 1px 0 #c7eaff12 !important;
+}
+[data-realms-game="abyssal-pearls"] .realms-reel-cell[data-winning="true"] {
+  border-color: #b8e6f7d9 !important;
+  background: radial-gradient(ellipse at center, #65bbd64d, #132b4955) !important;
+  box-shadow:
+    inset 0 0 18px #91cfea33,
+    0 0 12px #91cfea66 !important;
+}
+[data-realms-game="abyssal-pearls"] .realms-reel-cell img {
+  padding: 0;
+}
+@media (max-width: 480px) {
+  [data-realms-game="abyssal-pearls"] .realms-reel-grid {
+    border-radius: 12px;
+    padding: 4px;
+  }
+}

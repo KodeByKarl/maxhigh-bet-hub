@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { lazy, Suspense, useCallback, useEffect, useMemo, useState } from "react";
 import {
   bulkApplyGameOutcomesFn,
   getBulkOutcomeSettingsFn,
@@ -68,58 +68,262 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { GodlyGatesConfigModal } from "@/components/superadmin/games/GodlyGatesConfigModal";
-import { OlympusWrathConfigModal } from "@/components/superadmin/games/OlympusWrathConfigModal";
-import { EnchantedGroveConfigModal } from "@/components/superadmin/games/EnchantedGroveConfigModal";
-import { GoldenPantherConfigModal } from "@/components/superadmin/games/GoldenPantherConfigModal";
-import { BuffaloReignConfigModal } from "@/components/superadmin/games/BuffaloReignConfigModal";
-import { FireSpikeConfigModal } from "@/components/superadmin/games/FireSpikeConfigModal";
-import { FortuneOxConfigModal } from "@/components/superadmin/games/FortuneOxConfigModal";
-import { FortuneTigerConfigModal } from "@/components/superadmin/games/FortuneTigerConfigModal";
-import { FortuneRabbitConfigModal } from "@/components/superadmin/games/FortuneRabbitConfigModal";
-import { CleopatraGoldConfigModal } from "@/components/superadmin/games/CleopatraGoldConfigModal";
-import { LuckyNekoConfigModal } from "@/components/superadmin/games/LuckyNekoConfigModal";
-import { FortuneMouseConfigModal } from "@/components/superadmin/games/FortuneMouseConfigModal";
-import { ProsperityLionConfigModal } from "@/components/superadmin/games/ProsperityLionConfigModal";
-import { CoinVolcanoConfigModal } from "@/components/superadmin/games/CoinVolcanoConfigModal";
-import { ZeusStrikeConfigModal } from "@/components/superadmin/games/ZeusStrikeConfigModal";
-import { ThorThunderConfigModal } from "@/components/superadmin/games/ThorThunderConfigModal";
-import { MayaGoldConfigModal } from "@/components/superadmin/games/MayaGoldConfigModal";
-import { TempleRushConfigModal } from "@/components/superadmin/games/TempleRushConfigModal";
-import { SafariGoldConfigModal } from "@/components/superadmin/games/SafariGoldConfigModal";
-import { PharaohFireConfigModal } from "@/components/superadmin/games/PharaohFireConfigModal";
-import { DesertRichesConfigModal } from "@/components/superadmin/games/DesertRichesConfigModal";
-import { GateOfRaConfigModal } from "@/components/superadmin/games/GateOfRaConfigModal";
-import { WildPantherConfigModal } from "@/components/superadmin/games/WildPantherConfigModal";
-import { RubyRavenConfigModal } from "@/components/superadmin/games/RubyRavenConfigModal";
-import { MidnightOwlConfigModal } from "@/components/superadmin/games/MidnightOwlConfigModal";
-import { HoneyHiveConfigModal } from "@/components/superadmin/games/HoneyHiveConfigModal";
-import { SolarSerpentConfigModal } from "@/components/superadmin/games/SolarSerpentConfigModal";
-import { FrostFoxConfigModal } from "@/components/superadmin/games/FrostFoxConfigModal";
-import { CoralCobraConfigModal } from "@/components/superadmin/games/CoralCobraConfigModal";
-import { LotusLynxConfigModal } from "@/components/superadmin/games/LotusLynxConfigModal";
-import { EmberTigerConfigModal } from "@/components/superadmin/games/EmberTigerConfigModal";
-import { JadeJaguarConfigModal } from "@/components/superadmin/games/JadeJaguarConfigModal";
-import { AceHighConfigModal } from "@/components/superadmin/games/AceHighConfigModal";
-import { BaccaratConfigModal } from "@/components/superadmin/games/BaccaratConfigModal";
-import { Lucky9ConfigModal } from "@/components/superadmin/games/Lucky9ConfigModal";
-import { ThreeCardPokerConfigModal } from "@/components/superadmin/games/ThreeCardPokerConfigModal";
-import { ColorGameConfigModal } from "@/components/superadmin/games/ColorGameConfigModal";
-import { TongitsArenaConfigModal } from "@/components/superadmin/games/TongitsArenaConfigModal";
-import { LuckyDropConfigModal } from "@/components/superadmin/games/LuckyDropConfigModal";
-import { DeepBassConfigModal } from "@/components/superadmin/games/DeepBassConfigModal";
-import { DragonFisherConfigModal } from "@/components/superadmin/games/DragonFisherConfigModal";
-import { CrabCannonConfigModal } from "@/components/superadmin/games/CrabCannonConfigModal";
-import { SharkHunterConfigModal } from "@/components/superadmin/games/SharkHunterConfigModal";
-import { OctopusArmadaConfigModal } from "@/components/superadmin/games/OctopusArmadaConfigModal";
-import { TurtleTideConfigModal } from "@/components/superadmin/games/TurtleTideConfigModal";
-import { WhaleWarConfigModal } from "@/components/superadmin/games/WhaleWarConfigModal";
-import { ColorGameProConfigModal } from "@/components/superadmin/games/ColorGameProConfigModal";
-import { LuckyNinePlusConfigModal } from "@/components/superadmin/games/LuckyNinePlusConfigModal";
-import { DropDeluxeConfigModal } from "@/components/superadmin/games/DropDeluxeConfigModal";
-import { PokerShowdownConfigModal } from "@/components/superadmin/games/PokerShowdownConfigModal";
+const GodlyGatesConfigModal = lazy(() =>
+  import("@/components/superadmin/games/GodlyGatesConfigModal").then((module) => ({
+    default: module.GodlyGatesConfigModal,
+  })),
+);
+const OlympusWrathConfigModal = lazy(() =>
+  import("@/components/superadmin/games/OlympusWrathConfigModal").then((module) => ({
+    default: module.OlympusWrathConfigModal,
+  })),
+);
+const EnchantedGroveConfigModal = lazy(() =>
+  import("@/components/superadmin/games/EnchantedGroveConfigModal").then((module) => ({
+    default: module.EnchantedGroveConfigModal,
+  })),
+);
+const GoldenPantherConfigModal = lazy(() =>
+  import("@/components/superadmin/games/GoldenPantherConfigModal").then((module) => ({
+    default: module.GoldenPantherConfigModal,
+  })),
+);
+const BuffaloReignConfigModal = lazy(() =>
+  import("@/components/superadmin/games/BuffaloReignConfigModal").then((module) => ({
+    default: module.BuffaloReignConfigModal,
+  })),
+);
+const FireSpikeConfigModal = lazy(() =>
+  import("@/components/superadmin/games/FireSpikeConfigModal").then((module) => ({
+    default: module.FireSpikeConfigModal,
+  })),
+);
+const FortuneOxConfigModal = lazy(() =>
+  import("@/components/superadmin/games/FortuneOxConfigModal").then((module) => ({
+    default: module.FortuneOxConfigModal,
+  })),
+);
+const FortuneTigerConfigModal = lazy(() =>
+  import("@/components/superadmin/games/FortuneTigerConfigModal").then((module) => ({
+    default: module.FortuneTigerConfigModal,
+  })),
+);
+const FortuneRabbitConfigModal = lazy(() =>
+  import("@/components/superadmin/games/FortuneRabbitConfigModal").then((module) => ({
+    default: module.FortuneRabbitConfigModal,
+  })),
+);
+const CleopatraGoldConfigModal = lazy(() =>
+  import("@/components/superadmin/games/CleopatraGoldConfigModal").then((module) => ({
+    default: module.CleopatraGoldConfigModal,
+  })),
+);
+const LuckyNekoConfigModal = lazy(() =>
+  import("@/components/superadmin/games/LuckyNekoConfigModal").then((module) => ({
+    default: module.LuckyNekoConfigModal,
+  })),
+);
+const FortuneMouseConfigModal = lazy(() =>
+  import("@/components/superadmin/games/FortuneMouseConfigModal").then((module) => ({
+    default: module.FortuneMouseConfigModal,
+  })),
+);
+const ProsperityLionConfigModal = lazy(() =>
+  import("@/components/superadmin/games/ProsperityLionConfigModal").then((module) => ({
+    default: module.ProsperityLionConfigModal,
+  })),
+);
+const CoinVolcanoConfigModal = lazy(() =>
+  import("@/components/superadmin/games/CoinVolcanoConfigModal").then((module) => ({
+    default: module.CoinVolcanoConfigModal,
+  })),
+);
+const ZeusStrikeConfigModal = lazy(() =>
+  import("@/components/superadmin/games/ZeusStrikeConfigModal").then((module) => ({
+    default: module.ZeusStrikeConfigModal,
+  })),
+);
+const ThorThunderConfigModal = lazy(() =>
+  import("@/components/superadmin/games/ThorThunderConfigModal").then((module) => ({
+    default: module.ThorThunderConfigModal,
+  })),
+);
+const MayaGoldConfigModal = lazy(() =>
+  import("@/components/superadmin/games/MayaGoldConfigModal").then((module) => ({
+    default: module.MayaGoldConfigModal,
+  })),
+);
+const TempleRushConfigModal = lazy(() =>
+  import("@/components/superadmin/games/TempleRushConfigModal").then((module) => ({
+    default: module.TempleRushConfigModal,
+  })),
+);
+const SafariGoldConfigModal = lazy(() =>
+  import("@/components/superadmin/games/SafariGoldConfigModal").then((module) => ({
+    default: module.SafariGoldConfigModal,
+  })),
+);
+const PharaohFireConfigModal = lazy(() =>
+  import("@/components/superadmin/games/PharaohFireConfigModal").then((module) => ({
+    default: module.PharaohFireConfigModal,
+  })),
+);
+const DesertRichesConfigModal = lazy(() =>
+  import("@/components/superadmin/games/DesertRichesConfigModal").then((module) => ({
+    default: module.DesertRichesConfigModal,
+  })),
+);
+const GateOfRaConfigModal = lazy(() =>
+  import("@/components/superadmin/games/GateOfRaConfigModal").then((module) => ({
+    default: module.GateOfRaConfigModal,
+  })),
+);
+const WildPantherConfigModal = lazy(() =>
+  import("@/components/superadmin/games/WildPantherConfigModal").then((module) => ({
+    default: module.WildPantherConfigModal,
+  })),
+);
+const RubyRavenConfigModal = lazy(() =>
+  import("@/components/superadmin/games/RubyRavenConfigModal").then((module) => ({
+    default: module.RubyRavenConfigModal,
+  })),
+);
+const MidnightOwlConfigModal = lazy(() =>
+  import("@/components/superadmin/games/MidnightOwlConfigModal").then((module) => ({
+    default: module.MidnightOwlConfigModal,
+  })),
+);
+const HoneyHiveConfigModal = lazy(() =>
+  import("@/components/superadmin/games/HoneyHiveConfigModal").then((module) => ({
+    default: module.HoneyHiveConfigModal,
+  })),
+);
+const SolarSerpentConfigModal = lazy(() =>
+  import("@/components/superadmin/games/SolarSerpentConfigModal").then((module) => ({
+    default: module.SolarSerpentConfigModal,
+  })),
+);
+const FrostFoxConfigModal = lazy(() =>
+  import("@/components/superadmin/games/FrostFoxConfigModal").then((module) => ({
+    default: module.FrostFoxConfigModal,
+  })),
+);
+const CoralCobraConfigModal = lazy(() =>
+  import("@/components/superadmin/games/CoralCobraConfigModal").then((module) => ({
+    default: module.CoralCobraConfigModal,
+  })),
+);
+const LotusLynxConfigModal = lazy(() =>
+  import("@/components/superadmin/games/LotusLynxConfigModal").then((module) => ({
+    default: module.LotusLynxConfigModal,
+  })),
+);
+const EmberTigerConfigModal = lazy(() =>
+  import("@/components/superadmin/games/EmberTigerConfigModal").then((module) => ({
+    default: module.EmberTigerConfigModal,
+  })),
+);
+const JadeJaguarConfigModal = lazy(() =>
+  import("@/components/superadmin/games/JadeJaguarConfigModal").then((module) => ({
+    default: module.JadeJaguarConfigModal,
+  })),
+);
+const AceHighConfigModal = lazy(() =>
+  import("@/components/superadmin/games/AceHighConfigModal").then((module) => ({
+    default: module.AceHighConfigModal,
+  })),
+);
+const BaccaratConfigModal = lazy(() =>
+  import("@/components/superadmin/games/BaccaratConfigModal").then((module) => ({
+    default: module.BaccaratConfigModal,
+  })),
+);
+const Lucky9ConfigModal = lazy(() =>
+  import("@/components/superadmin/games/Lucky9ConfigModal").then((module) => ({
+    default: module.Lucky9ConfigModal,
+  })),
+);
+const ThreeCardPokerConfigModal = lazy(() =>
+  import("@/components/superadmin/games/ThreeCardPokerConfigModal").then((module) => ({
+    default: module.ThreeCardPokerConfigModal,
+  })),
+);
+const ColorGameConfigModal = lazy(() =>
+  import("@/components/superadmin/games/ColorGameConfigModal").then((module) => ({
+    default: module.ColorGameConfigModal,
+  })),
+);
+const TongitsArenaConfigModal = lazy(() =>
+  import("@/components/superadmin/games/TongitsArenaConfigModal").then((module) => ({
+    default: module.TongitsArenaConfigModal,
+  })),
+);
+const LuckyDropConfigModal = lazy(() =>
+  import("@/components/superadmin/games/LuckyDropConfigModal").then((module) => ({
+    default: module.LuckyDropConfigModal,
+  })),
+);
+const DeepBassConfigModal = lazy(() =>
+  import("@/components/superadmin/games/DeepBassConfigModal").then((module) => ({
+    default: module.DeepBassConfigModal,
+  })),
+);
+const DragonFisherConfigModal = lazy(() =>
+  import("@/components/superadmin/games/DragonFisherConfigModal").then((module) => ({
+    default: module.DragonFisherConfigModal,
+  })),
+);
+const CrabCannonConfigModal = lazy(() =>
+  import("@/components/superadmin/games/CrabCannonConfigModal").then((module) => ({
+    default: module.CrabCannonConfigModal,
+  })),
+);
+const SharkHunterConfigModal = lazy(() =>
+  import("@/components/superadmin/games/SharkHunterConfigModal").then((module) => ({
+    default: module.SharkHunterConfigModal,
+  })),
+);
+const OctopusArmadaConfigModal = lazy(() =>
+  import("@/components/superadmin/games/OctopusArmadaConfigModal").then((module) => ({
+    default: module.OctopusArmadaConfigModal,
+  })),
+);
+const TurtleTideConfigModal = lazy(() =>
+  import("@/components/superadmin/games/TurtleTideConfigModal").then((module) => ({
+    default: module.TurtleTideConfigModal,
+  })),
+);
+const WhaleWarConfigModal = lazy(() =>
+  import("@/components/superadmin/games/WhaleWarConfigModal").then((module) => ({
+    default: module.WhaleWarConfigModal,
+  })),
+);
+const ColorGameProConfigModal = lazy(() =>
+  import("@/components/superadmin/games/ColorGameProConfigModal").then((module) => ({
+    default: module.ColorGameProConfigModal,
+  })),
+);
+const LuckyNinePlusConfigModal = lazy(() =>
+  import("@/components/superadmin/games/LuckyNinePlusConfigModal").then((module) => ({
+    default: module.LuckyNinePlusConfigModal,
+  })),
+);
+const DropDeluxeConfigModal = lazy(() =>
+  import("@/components/superadmin/games/DropDeluxeConfigModal").then((module) => ({
+    default: module.DropDeluxeConfigModal,
+  })),
+);
+const PokerShowdownConfigModal = lazy(() =>
+  import("@/components/superadmin/games/PokerShowdownConfigModal").then((module) => ({
+    default: module.PokerShowdownConfigModal,
+  })),
+);
 import { saGlass } from "@/components/superadmin/ui/glass";
-import { RealmsConfigModal } from "@/components/superadmin/games/RealmsConfigModal";
+const RealmsConfigModal = lazy(() =>
+  import("@/components/superadmin/games/RealmsConfigModal").then((module) => ({
+    default: module.RealmsConfigModal,
+  })),
+);
 import { REALMS_GAME_IDS, isRealmsGameId } from "@/lib/realms";
 import { toast } from "sonner";
 import { Sliders, ShieldCheck, Zap, History, Search } from "lucide-react";
@@ -817,476 +1021,478 @@ function SuperGamesPage() {
         </div>
       </div>
 
-      {selected && isRealmsGameId(selected.gameId) ? (
-        <RealmsConfigModal
-          key={selected.gameId}
-          game={selected}
-          open
-          onOpenChange={(open) => {
-            if (!open) setSelected(null);
-          }}
-          onPatchLobby={(data) => patch(selected.gameId, data)}
-        />
-      ) : selected && isGodly ? (
-        <GodlyGatesConfigModal
-          game={selected}
-          open
-          onOpenChange={(open) => {
-            if (!open) setSelected(null);
-          }}
-          onPatchLobby={(data) => patch(selected.gameId, data)}
-        />
-      ) : selected && isOlympusWrath ? (
-        <OlympusWrathConfigModal
-          game={selected}
-          open
-          onOpenChange={(open) => {
-            if (!open) setSelected(null);
-          }}
-          onPatchLobby={(data) => patch(selected.gameId, data)}
-        />
-      ) : selected && isEnchantedGrove ? (
-        <EnchantedGroveConfigModal
-          game={selected}
-          open
-          onOpenChange={(open) => {
-            if (!open) setSelected(null);
-          }}
-          onPatchLobby={(data) => patch(selected.gameId, data)}
-        />
-      ) : selected && isPanther ? (
-        <GoldenPantherConfigModal
-          game={selected}
-          open
-          onOpenChange={(open) => {
-            if (!open) setSelected(null);
-          }}
-          onPatchLobby={(data) => patch(selected.gameId, data)}
-        />
-      ) : selected && isBuffalo ? (
-        <BuffaloReignConfigModal
-          game={selected}
-          open
-          onOpenChange={(open) => {
-            if (!open) setSelected(null);
-          }}
-          onPatchLobby={(data) => patch(selected.gameId, data)}
-        />
-      ) : selected && isCleopatraGold ? (
-        <CleopatraGoldConfigModal
-          game={selected}
-          open
-          onOpenChange={(open) => {
-            if (!open) setSelected(null);
-          }}
-          onPatchLobby={(data) => patch(selected.gameId, data)}
-        />
-      ) : selected && isFireSpike ? (
-        <FireSpikeConfigModal
-          game={selected}
-          open
-          onOpenChange={(open) => {
-            if (!open) setSelected(null);
-          }}
-          onPatchLobby={(data) => patch(selected.gameId, data)}
-        />
-      ) : selected && isFortuneOx ? (
-        <FortuneOxConfigModal
-          game={selected}
-          open
-          onOpenChange={(open) => {
-            if (!open) setSelected(null);
-          }}
-          onPatchLobby={(data) => patch(selected.gameId, data)}
-        />
-      ) : selected && isFortuneTiger ? (
-        <FortuneTigerConfigModal
-          game={selected}
-          open
-          onOpenChange={(open) => {
-            if (!open) setSelected(null);
-          }}
-          onPatchLobby={(data) => patch(selected.gameId, data)}
-        />
-      ) : selected && isFortuneRabbit ? (
-        <FortuneRabbitConfigModal
-          game={selected}
-          open
-          onOpenChange={(open) => {
-            if (!open) setSelected(null);
-          }}
-          onPatchLobby={(data) => patch(selected.gameId, data)}
-        />
-      ) : selected && isLuckyNeko ? (
-        <LuckyNekoConfigModal
-          game={selected}
-          open
-          onOpenChange={(open) => {
-            if (!open) setSelected(null);
-          }}
-          onPatchLobby={(data) => patch(selected.gameId, data)}
-        />
-      ) : selected && isFortuneMouse ? (
-        <FortuneMouseConfigModal
-          game={selected}
-          open
-          onOpenChange={(open) => {
-            if (!open) setSelected(null);
-          }}
-          onPatchLobby={(data) => patch(selected.gameId, data)}
-        />
-      ) : selected && isProsperityLion ? (
-        <ProsperityLionConfigModal
-          game={selected}
-          open
-          onOpenChange={(open) => {
-            if (!open) setSelected(null);
-          }}
-          onPatchLobby={(data) => patch(selected.gameId, data)}
-        />
-      ) : selected && isCoinVolcano ? (
-        <CoinVolcanoConfigModal
-          game={selected}
-          open
-          onOpenChange={(open) => {
-            if (!open) setSelected(null);
-          }}
-          onPatchLobby={(data) => patch(selected.gameId, data)}
-        />
-      ) : selected && isZeusStrike ? (
-        <ZeusStrikeConfigModal
-          game={selected}
-          open
-          onOpenChange={(open) => {
-            if (!open) setSelected(null);
-          }}
-          onPatchLobby={(data) => patch(selected.gameId, data)}
-        />
-      ) : selected && isThorThunder ? (
-        <ThorThunderConfigModal
-          game={selected}
-          open
-          onOpenChange={(open) => {
-            if (!open) setSelected(null);
-          }}
-          onPatchLobby={(data) => patch(selected.gameId, data)}
-        />
-      ) : selected && isMayaGold ? (
-        <MayaGoldConfigModal
-          game={selected}
-          open
-          onOpenChange={(open) => {
-            if (!open) setSelected(null);
-          }}
-          onPatchLobby={(data) => patch(selected.gameId, data)}
-        />
-      ) : selected && isTempleRush ? (
-        <TempleRushConfigModal
-          game={selected}
-          open
-          onOpenChange={(open) => {
-            if (!open) setSelected(null);
-          }}
-          onPatchLobby={(data) => patch(selected.gameId, data)}
-        />
-      ) : selected && isAceHigh ? (
-        <AceHighConfigModal
-          game={selected}
-          open
-          onOpenChange={(open) => {
-            if (!open) setSelected(null);
-          }}
-          onPatchLobby={(data) => patch(selected.gameId, data)}
-        />
-      ) : selected && isBaccarat ? (
-        <BaccaratConfigModal
-          game={selected}
-          open
-          onOpenChange={(open) => {
-            if (!open) setSelected(null);
-          }}
-          onPatchLobby={(data) => patch(selected.gameId, data)}
-        />
-      ) : selected && isLucky9 ? (
-        <Lucky9ConfigModal
-          game={selected}
-          open
-          onOpenChange={(open) => {
-            if (!open) setSelected(null);
-          }}
-          onPatchLobby={(data) => patch(selected.gameId, data)}
-        />
-      ) : selected && isThreeCardPoker ? (
-        <ThreeCardPokerConfigModal
-          game={selected}
-          open
-          onOpenChange={(open) => {
-            if (!open) setSelected(null);
-          }}
-          onPatchLobby={(data) => patch(selected.gameId, data)}
-        />
-      ) : selected && isColorGame ? (
-        <ColorGameConfigModal
-          game={selected}
-          open
-          onOpenChange={(open) => {
-            if (!open) setSelected(null);
-          }}
-          onPatchLobby={(data) => patch(selected.gameId, data)}
-        />
-      ) : selected && isTongitsArena ? (
-        <TongitsArenaConfigModal
-          game={selected}
-          open
-          onOpenChange={(open) => {
-            if (!open) setSelected(null);
-          }}
-          onPatchLobby={(data) => patch(selected.gameId, data)}
-        />
-      ) : selected && isLuckyDrop ? (
-        <LuckyDropConfigModal
-          game={selected}
-          open
-          onOpenChange={(open) => {
-            if (!open) setSelected(null);
-          }}
-          onPatchLobby={(data) => patch(selected.gameId, data)}
-        />
-      ) : selected && isDeepBass ? (
-        <DeepBassConfigModal
-          game={selected}
-          open
-          onOpenChange={(open) => {
-            if (!open) setSelected(null);
-          }}
-          onPatchLobby={(data) => patch(selected.gameId, data)}
-        />
-      ) : selected && isDragonFisher ? (
-        <DragonFisherConfigModal
-          game={selected}
-          open
-          onOpenChange={(open) => {
-            if (!open) setSelected(null);
-          }}
-          onPatchLobby={(data) => patch(selected.gameId, data)}
-        />
-      ) : selected && isCrabCannon ? (
-        <CrabCannonConfigModal
-          game={selected}
-          open
-          onOpenChange={(open) => {
-            if (!open) setSelected(null);
-          }}
-          onPatchLobby={(data) => patch(selected.gameId, data)}
-        />
-      ) : selected && isSharkHunter ? (
-        <SharkHunterConfigModal
-          game={selected}
-          open
-          onOpenChange={(open) => {
-            if (!open) setSelected(null);
-          }}
-          onPatchLobby={(data) => patch(selected.gameId, data)}
-        />
-      ) : selected && isOctopusArmada ? (
-        <OctopusArmadaConfigModal
-          game={selected}
-          open
-          onOpenChange={(open) => {
-            if (!open) setSelected(null);
-          }}
-          onPatchLobby={(data) => patch(selected.gameId, data)}
-        />
-      ) : selected && isTurtleTide ? (
-        <TurtleTideConfigModal
-          game={selected}
-          open
-          onOpenChange={(open) => {
-            if (!open) setSelected(null);
-          }}
-          onPatchLobby={(data) => patch(selected.gameId, data)}
-        />
-      ) : selected && isWhaleWar ? (
-        <WhaleWarConfigModal
-          game={selected}
-          open
-          onOpenChange={(open) => {
-            if (!open) setSelected(null);
-          }}
-          onPatchLobby={(data) => patch(selected.gameId, data)}
-        />
-      ) : selected && isColorGamePro ? (
-        <ColorGameProConfigModal
-          game={selected}
-          open
-          onOpenChange={(open) => {
-            if (!open) setSelected(null);
-          }}
-          onPatchLobby={(data) => patch(selected.gameId, data)}
-        />
-      ) : selected && isLuckyNinePlus ? (
-        <LuckyNinePlusConfigModal
-          game={selected}
-          open
-          onOpenChange={(open) => {
-            if (!open) setSelected(null);
-          }}
-          onPatchLobby={(data) => patch(selected.gameId, data)}
-        />
-      ) : selected && isDropDeluxe ? (
-        <DropDeluxeConfigModal
-          game={selected}
-          open
-          onOpenChange={(open) => {
-            if (!open) setSelected(null);
-          }}
-          onPatchLobby={(data) => patch(selected.gameId, data)}
-        />
-      ) : selected && isPokerShowdown ? (
-        <PokerShowdownConfigModal
-          game={selected}
-          open
-          onOpenChange={(open) => {
-            if (!open) setSelected(null);
-          }}
-          onPatchLobby={(data) => patch(selected.gameId, data)}
-        />
-      ) : selected && isSafariGold ? (
-        <SafariGoldConfigModal
-          game={selected}
-          open
-          onOpenChange={(open) => {
-            if (!open) setSelected(null);
-          }}
-          onPatchLobby={(data) => patch(selected.gameId, data)}
-        />
-      ) : selected && isPharaohFire ? (
-        <PharaohFireConfigModal
-          game={selected}
-          open
-          onOpenChange={(open) => {
-            if (!open) setSelected(null);
-          }}
-          onPatchLobby={(data) => patch(selected.gameId, data)}
-        />
-      ) : selected && isDesertRiches ? (
-        <DesertRichesConfigModal
-          game={selected}
-          open
-          onOpenChange={(open) => {
-            if (!open) setSelected(null);
-          }}
-          onPatchLobby={(data) => patch(selected.gameId, data)}
-        />
-      ) : selected && isGateOfRa ? (
-        <GateOfRaConfigModal
-          game={selected}
-          open
-          onOpenChange={(open) => {
-            if (!open) setSelected(null);
-          }}
-          onPatchLobby={(data) => patch(selected.gameId, data)}
-        />
-      ) : selected && isWildPanther ? (
-        <WildPantherConfigModal
-          game={selected}
-          open
-          onOpenChange={(open) => {
-            if (!open) setSelected(null);
-          }}
-          onPatchLobby={(data) => patch(selected.gameId, data)}
-        />
-      ) : selected && isJadeJaguar ? (
-        <JadeJaguarConfigModal
-          game={selected}
-          open
-          onOpenChange={(open) => {
-            if (!open) setSelected(null);
-          }}
-          onPatchLobby={(data) => patch(selected.gameId, data)}
-        />
-      ) : selected && isEmberTiger ? (
-        <EmberTigerConfigModal
-          game={selected}
-          open
-          onOpenChange={(open) => {
-            if (!open) setSelected(null);
-          }}
-          onPatchLobby={(data) => patch(selected.gameId, data)}
-        />
-      ) : selected && isLotusLynx ? (
-        <LotusLynxConfigModal
-          game={selected}
-          open
-          onOpenChange={(open) => {
-            if (!open) setSelected(null);
-          }}
-          onPatchLobby={(data) => patch(selected.gameId, data)}
-        />
-      ) : selected && isCoralCobra ? (
-        <CoralCobraConfigModal
-          game={selected}
-          open
-          onOpenChange={(open) => {
-            if (!open) setSelected(null);
-          }}
-          onPatchLobby={(data) => patch(selected.gameId, data)}
-        />
-      ) : selected && isFrostFox ? (
-        <FrostFoxConfigModal
-          game={selected}
-          open
-          onOpenChange={(open) => {
-            if (!open) setSelected(null);
-          }}
-          onPatchLobby={(data) => patch(selected.gameId, data)}
-        />
-      ) : selected && isSolarSerpent ? (
-        <SolarSerpentConfigModal
-          game={selected}
-          open
-          onOpenChange={(open) => {
-            if (!open) setSelected(null);
-          }}
-          onPatchLobby={(data) => patch(selected.gameId, data)}
-        />
-      ) : selected && isHoneyHive ? (
-        <HoneyHiveConfigModal
-          game={selected}
-          open
-          onOpenChange={(open) => {
-            if (!open) setSelected(null);
-          }}
-          onPatchLobby={(data) => patch(selected.gameId, data)}
-        />
-      ) : selected && isMidnightOwl ? (
-        <MidnightOwlConfigModal
-          game={selected}
-          open
-          onOpenChange={(open) => {
-            if (!open) setSelected(null);
-          }}
-          onPatchLobby={(data) => patch(selected.gameId, data)}
-        />
-      ) : selected && isRubyRaven ? (
-        <RubyRavenConfigModal
-          game={selected}
-          open
-          onOpenChange={(open) => {
-            if (!open) setSelected(null);
-          }}
-          onPatchLobby={(data) => patch(selected.gameId, data)}
-        />
-      ) : selected && !hasFullEngine ? (
-        <GameControlModal
-          game={selected}
-          open={!!selected}
-          onOpenChange={(open) => {
-            if (!open) setSelected(null);
-          }}
-          onPatch={patch}
-        />
-      ) : null}
+      <Suspense fallback={<p role="status">Loading game controls…</p>}>
+        {selected && isRealmsGameId(selected.gameId) ? (
+          <RealmsConfigModal
+            key={selected.gameId}
+            game={selected}
+            open
+            onOpenChange={(open) => {
+              if (!open) setSelected(null);
+            }}
+            onPatchLobby={(data) => patch(selected.gameId, data)}
+          />
+        ) : selected && isGodly ? (
+          <GodlyGatesConfigModal
+            game={selected}
+            open
+            onOpenChange={(open) => {
+              if (!open) setSelected(null);
+            }}
+            onPatchLobby={(data) => patch(selected.gameId, data)}
+          />
+        ) : selected && isOlympusWrath ? (
+          <OlympusWrathConfigModal
+            game={selected}
+            open
+            onOpenChange={(open) => {
+              if (!open) setSelected(null);
+            }}
+            onPatchLobby={(data) => patch(selected.gameId, data)}
+          />
+        ) : selected && isEnchantedGrove ? (
+          <EnchantedGroveConfigModal
+            game={selected}
+            open
+            onOpenChange={(open) => {
+              if (!open) setSelected(null);
+            }}
+            onPatchLobby={(data) => patch(selected.gameId, data)}
+          />
+        ) : selected && isPanther ? (
+          <GoldenPantherConfigModal
+            game={selected}
+            open
+            onOpenChange={(open) => {
+              if (!open) setSelected(null);
+            }}
+            onPatchLobby={(data) => patch(selected.gameId, data)}
+          />
+        ) : selected && isBuffalo ? (
+          <BuffaloReignConfigModal
+            game={selected}
+            open
+            onOpenChange={(open) => {
+              if (!open) setSelected(null);
+            }}
+            onPatchLobby={(data) => patch(selected.gameId, data)}
+          />
+        ) : selected && isCleopatraGold ? (
+          <CleopatraGoldConfigModal
+            game={selected}
+            open
+            onOpenChange={(open) => {
+              if (!open) setSelected(null);
+            }}
+            onPatchLobby={(data) => patch(selected.gameId, data)}
+          />
+        ) : selected && isFireSpike ? (
+          <FireSpikeConfigModal
+            game={selected}
+            open
+            onOpenChange={(open) => {
+              if (!open) setSelected(null);
+            }}
+            onPatchLobby={(data) => patch(selected.gameId, data)}
+          />
+        ) : selected && isFortuneOx ? (
+          <FortuneOxConfigModal
+            game={selected}
+            open
+            onOpenChange={(open) => {
+              if (!open) setSelected(null);
+            }}
+            onPatchLobby={(data) => patch(selected.gameId, data)}
+          />
+        ) : selected && isFortuneTiger ? (
+          <FortuneTigerConfigModal
+            game={selected}
+            open
+            onOpenChange={(open) => {
+              if (!open) setSelected(null);
+            }}
+            onPatchLobby={(data) => patch(selected.gameId, data)}
+          />
+        ) : selected && isFortuneRabbit ? (
+          <FortuneRabbitConfigModal
+            game={selected}
+            open
+            onOpenChange={(open) => {
+              if (!open) setSelected(null);
+            }}
+            onPatchLobby={(data) => patch(selected.gameId, data)}
+          />
+        ) : selected && isLuckyNeko ? (
+          <LuckyNekoConfigModal
+            game={selected}
+            open
+            onOpenChange={(open) => {
+              if (!open) setSelected(null);
+            }}
+            onPatchLobby={(data) => patch(selected.gameId, data)}
+          />
+        ) : selected && isFortuneMouse ? (
+          <FortuneMouseConfigModal
+            game={selected}
+            open
+            onOpenChange={(open) => {
+              if (!open) setSelected(null);
+            }}
+            onPatchLobby={(data) => patch(selected.gameId, data)}
+          />
+        ) : selected && isProsperityLion ? (
+          <ProsperityLionConfigModal
+            game={selected}
+            open
+            onOpenChange={(open) => {
+              if (!open) setSelected(null);
+            }}
+            onPatchLobby={(data) => patch(selected.gameId, data)}
+          />
+        ) : selected && isCoinVolcano ? (
+          <CoinVolcanoConfigModal
+            game={selected}
+            open
+            onOpenChange={(open) => {
+              if (!open) setSelected(null);
+            }}
+            onPatchLobby={(data) => patch(selected.gameId, data)}
+          />
+        ) : selected && isZeusStrike ? (
+          <ZeusStrikeConfigModal
+            game={selected}
+            open
+            onOpenChange={(open) => {
+              if (!open) setSelected(null);
+            }}
+            onPatchLobby={(data) => patch(selected.gameId, data)}
+          />
+        ) : selected && isThorThunder ? (
+          <ThorThunderConfigModal
+            game={selected}
+            open
+            onOpenChange={(open) => {
+              if (!open) setSelected(null);
+            }}
+            onPatchLobby={(data) => patch(selected.gameId, data)}
+          />
+        ) : selected && isMayaGold ? (
+          <MayaGoldConfigModal
+            game={selected}
+            open
+            onOpenChange={(open) => {
+              if (!open) setSelected(null);
+            }}
+            onPatchLobby={(data) => patch(selected.gameId, data)}
+          />
+        ) : selected && isTempleRush ? (
+          <TempleRushConfigModal
+            game={selected}
+            open
+            onOpenChange={(open) => {
+              if (!open) setSelected(null);
+            }}
+            onPatchLobby={(data) => patch(selected.gameId, data)}
+          />
+        ) : selected && isAceHigh ? (
+          <AceHighConfigModal
+            game={selected}
+            open
+            onOpenChange={(open) => {
+              if (!open) setSelected(null);
+            }}
+            onPatchLobby={(data) => patch(selected.gameId, data)}
+          />
+        ) : selected && isBaccarat ? (
+          <BaccaratConfigModal
+            game={selected}
+            open
+            onOpenChange={(open) => {
+              if (!open) setSelected(null);
+            }}
+            onPatchLobby={(data) => patch(selected.gameId, data)}
+          />
+        ) : selected && isLucky9 ? (
+          <Lucky9ConfigModal
+            game={selected}
+            open
+            onOpenChange={(open) => {
+              if (!open) setSelected(null);
+            }}
+            onPatchLobby={(data) => patch(selected.gameId, data)}
+          />
+        ) : selected && isThreeCardPoker ? (
+          <ThreeCardPokerConfigModal
+            game={selected}
+            open
+            onOpenChange={(open) => {
+              if (!open) setSelected(null);
+            }}
+            onPatchLobby={(data) => patch(selected.gameId, data)}
+          />
+        ) : selected && isColorGame ? (
+          <ColorGameConfigModal
+            game={selected}
+            open
+            onOpenChange={(open) => {
+              if (!open) setSelected(null);
+            }}
+            onPatchLobby={(data) => patch(selected.gameId, data)}
+          />
+        ) : selected && isTongitsArena ? (
+          <TongitsArenaConfigModal
+            game={selected}
+            open
+            onOpenChange={(open) => {
+              if (!open) setSelected(null);
+            }}
+            onPatchLobby={(data) => patch(selected.gameId, data)}
+          />
+        ) : selected && isLuckyDrop ? (
+          <LuckyDropConfigModal
+            game={selected}
+            open
+            onOpenChange={(open) => {
+              if (!open) setSelected(null);
+            }}
+            onPatchLobby={(data) => patch(selected.gameId, data)}
+          />
+        ) : selected && isDeepBass ? (
+          <DeepBassConfigModal
+            game={selected}
+            open
+            onOpenChange={(open) => {
+              if (!open) setSelected(null);
+            }}
+            onPatchLobby={(data) => patch(selected.gameId, data)}
+          />
+        ) : selected && isDragonFisher ? (
+          <DragonFisherConfigModal
+            game={selected}
+            open
+            onOpenChange={(open) => {
+              if (!open) setSelected(null);
+            }}
+            onPatchLobby={(data) => patch(selected.gameId, data)}
+          />
+        ) : selected && isCrabCannon ? (
+          <CrabCannonConfigModal
+            game={selected}
+            open
+            onOpenChange={(open) => {
+              if (!open) setSelected(null);
+            }}
+            onPatchLobby={(data) => patch(selected.gameId, data)}
+          />
+        ) : selected && isSharkHunter ? (
+          <SharkHunterConfigModal
+            game={selected}
+            open
+            onOpenChange={(open) => {
+              if (!open) setSelected(null);
+            }}
+            onPatchLobby={(data) => patch(selected.gameId, data)}
+          />
+        ) : selected && isOctopusArmada ? (
+          <OctopusArmadaConfigModal
+            game={selected}
+            open
+            onOpenChange={(open) => {
+              if (!open) setSelected(null);
+            }}
+            onPatchLobby={(data) => patch(selected.gameId, data)}
+          />
+        ) : selected && isTurtleTide ? (
+          <TurtleTideConfigModal
+            game={selected}
+            open
+            onOpenChange={(open) => {
+              if (!open) setSelected(null);
+            }}
+            onPatchLobby={(data) => patch(selected.gameId, data)}
+          />
+        ) : selected && isWhaleWar ? (
+          <WhaleWarConfigModal
+            game={selected}
+            open
+            onOpenChange={(open) => {
+              if (!open) setSelected(null);
+            }}
+            onPatchLobby={(data) => patch(selected.gameId, data)}
+          />
+        ) : selected && isColorGamePro ? (
+          <ColorGameProConfigModal
+            game={selected}
+            open
+            onOpenChange={(open) => {
+              if (!open) setSelected(null);
+            }}
+            onPatchLobby={(data) => patch(selected.gameId, data)}
+          />
+        ) : selected && isLuckyNinePlus ? (
+          <LuckyNinePlusConfigModal
+            game={selected}
+            open
+            onOpenChange={(open) => {
+              if (!open) setSelected(null);
+            }}
+            onPatchLobby={(data) => patch(selected.gameId, data)}
+          />
+        ) : selected && isDropDeluxe ? (
+          <DropDeluxeConfigModal
+            game={selected}
+            open
+            onOpenChange={(open) => {
+              if (!open) setSelected(null);
+            }}
+            onPatchLobby={(data) => patch(selected.gameId, data)}
+          />
+        ) : selected && isPokerShowdown ? (
+          <PokerShowdownConfigModal
+            game={selected}
+            open
+            onOpenChange={(open) => {
+              if (!open) setSelected(null);
+            }}
+            onPatchLobby={(data) => patch(selected.gameId, data)}
+          />
+        ) : selected && isSafariGold ? (
+          <SafariGoldConfigModal
+            game={selected}
+            open
+            onOpenChange={(open) => {
+              if (!open) setSelected(null);
+            }}
+            onPatchLobby={(data) => patch(selected.gameId, data)}
+          />
+        ) : selected && isPharaohFire ? (
+          <PharaohFireConfigModal
+            game={selected}
+            open
+            onOpenChange={(open) => {
+              if (!open) setSelected(null);
+            }}
+            onPatchLobby={(data) => patch(selected.gameId, data)}
+          />
+        ) : selected && isDesertRiches ? (
+          <DesertRichesConfigModal
+            game={selected}
+            open
+            onOpenChange={(open) => {
+              if (!open) setSelected(null);
+            }}
+            onPatchLobby={(data) => patch(selected.gameId, data)}
+          />
+        ) : selected && isGateOfRa ? (
+          <GateOfRaConfigModal
+            game={selected}
+            open
+            onOpenChange={(open) => {
+              if (!open) setSelected(null);
+            }}
+            onPatchLobby={(data) => patch(selected.gameId, data)}
+          />
+        ) : selected && isWildPanther ? (
+          <WildPantherConfigModal
+            game={selected}
+            open
+            onOpenChange={(open) => {
+              if (!open) setSelected(null);
+            }}
+            onPatchLobby={(data) => patch(selected.gameId, data)}
+          />
+        ) : selected && isJadeJaguar ? (
+          <JadeJaguarConfigModal
+            game={selected}
+            open
+            onOpenChange={(open) => {
+              if (!open) setSelected(null);
+            }}
+            onPatchLobby={(data) => patch(selected.gameId, data)}
+          />
+        ) : selected && isEmberTiger ? (
+          <EmberTigerConfigModal
+            game={selected}
+            open
+            onOpenChange={(open) => {
+              if (!open) setSelected(null);
+            }}
+            onPatchLobby={(data) => patch(selected.gameId, data)}
+          />
+        ) : selected && isLotusLynx ? (
+          <LotusLynxConfigModal
+            game={selected}
+            open
+            onOpenChange={(open) => {
+              if (!open) setSelected(null);
+            }}
+            onPatchLobby={(data) => patch(selected.gameId, data)}
+          />
+        ) : selected && isCoralCobra ? (
+          <CoralCobraConfigModal
+            game={selected}
+            open
+            onOpenChange={(open) => {
+              if (!open) setSelected(null);
+            }}
+            onPatchLobby={(data) => patch(selected.gameId, data)}
+          />
+        ) : selected && isFrostFox ? (
+          <FrostFoxConfigModal
+            game={selected}
+            open
+            onOpenChange={(open) => {
+              if (!open) setSelected(null);
+            }}
+            onPatchLobby={(data) => patch(selected.gameId, data)}
+          />
+        ) : selected && isSolarSerpent ? (
+          <SolarSerpentConfigModal
+            game={selected}
+            open
+            onOpenChange={(open) => {
+              if (!open) setSelected(null);
+            }}
+            onPatchLobby={(data) => patch(selected.gameId, data)}
+          />
+        ) : selected && isHoneyHive ? (
+          <HoneyHiveConfigModal
+            game={selected}
+            open
+            onOpenChange={(open) => {
+              if (!open) setSelected(null);
+            }}
+            onPatchLobby={(data) => patch(selected.gameId, data)}
+          />
+        ) : selected && isMidnightOwl ? (
+          <MidnightOwlConfigModal
+            game={selected}
+            open
+            onOpenChange={(open) => {
+              if (!open) setSelected(null);
+            }}
+            onPatchLobby={(data) => patch(selected.gameId, data)}
+          />
+        ) : selected && isRubyRaven ? (
+          <RubyRavenConfigModal
+            game={selected}
+            open
+            onOpenChange={(open) => {
+              if (!open) setSelected(null);
+            }}
+            onPatchLobby={(data) => patch(selected.gameId, data)}
+          />
+        ) : selected && !hasFullEngine ? (
+          <GameControlModal
+            game={selected}
+            open={!!selected}
+            onOpenChange={(open) => {
+              if (!open) setSelected(null);
+            }}
+            onPatch={patch}
+          />
+        ) : null}
+      </Suspense>
     </div>
   );
 }

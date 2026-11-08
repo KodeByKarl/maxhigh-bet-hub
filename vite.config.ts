@@ -5,6 +5,13 @@
 //     React/TanStack dedupe, error logger plugins, and sandbox detection (port/host/strictPort).
 // You can pass additional config via defineConfig({ vite: { ... }, etc... }) if needed.
 import { defineConfig } from "@lovable.dev/vite-tanstack-config";
+import type { NitroConfig } from "nitro/types";
+
+// The wrapper forwards these options; its public type covers fewer Nitro fields.
+const nitroOptions = {
+  preset: "node-server",
+  compressPublicAssets: { gzip: true, brotli: true },
+} satisfies NitroConfig;
 
 export default defineConfig({
   vite: {
@@ -23,7 +30,5 @@ export default defineConfig({
     server: { entry: "server" },
   },
   // Self-hosted behind Caddy (https://maxhigh.online) — Node HTTP server, not Cloudflare Workers.
-  nitro: {
-    preset: "node-server",
-  },
+  nitro: nitroOptions,
 });

@@ -1,4 +1,4 @@
-import { FAMILY_LOBBY_VISIBLE, isRealmsGameId } from "@/lib/realms";
+import { FAMILY_LOBBY_VISIBLE, isRealmsGameId } from "@/lib/realms/identity";
 
 /**
  * Previous lobby rotation, retained so Superadmin can still configure its titles.
@@ -56,14 +56,18 @@ const PREVIOUS_LOBBY_GAME_IDS = [
   "whale-war",
 ] as const;
 
-/** Current test rotation: previously hidden standalone games plus the Realms family. */
+/** Standalone titles added after the original lobby catalog. */
 export const LOBBY_VISIBLE_GAME_IDS = ["fire-spike", "coin-volcano"] as const;
 
 const LOBBY_VISIBLE_GAME_ID_SET = new Set<string>(LOBBY_VISIBLE_GAME_IDS);
 const PREVIOUS_LOBBY_GAME_ID_SET = new Set<string>(PREVIOUS_LOBBY_GAME_IDS);
 
 export function isLobbyVisibleGame(gameId: string): boolean {
-  return LOBBY_VISIBLE_GAME_ID_SET.has(gameId) || (FAMILY_LOBBY_VISIBLE && isRealmsGameId(gameId));
+  return (
+    LOBBY_VISIBLE_GAME_ID_SET.has(gameId) ||
+    PREVIOUS_LOBBY_GAME_ID_SET.has(gameId) ||
+    (FAMILY_LOBBY_VISIBLE && isRealmsGameId(gameId))
+  );
 }
 
 /**

@@ -1,0 +1,428 @@
+/* Individual Realms cabinet finishes, paired with per-title palettes. */
+[data-slot-deck="abyssal-pearls"] {
+  border-radius: 24px 5px;
+  border-top-width: 1px;
+  border-top-style: double;
+}
+[data-slot-deck="abyssal-pearls"] .slot-deck__spin {
+  border-radius: 24px 5px;
+  clip-path: none;
+  border-inline-width: 3px;
+}
+[data-slot-deck="sirens-lagoon"] {
+  border-radius: 24px 5px;
+  border-top-width: 2px;
+  border-top-style: solid;
+}
+[data-slot-deck="sirens-lagoon"] .slot-deck__spin {
+  border-radius: 4px;
+}
+[data-slot-deck="tidecaller-hoard"] {
+  border-radius: 24px 5px;
+  border-top-width: 3px;
+  border-top-style: solid;
+}
+[data-slot-deck="tidecaller-hoard"] .slot-deck__spin {
+  border-radius: 50%;
+}
+[data-slot-deck="lighthouse-loot"] {
+  border-radius: 24px 5px;
+  border-top-width: 1px;
+  border-top-style: solid;
+}
+[data-slot-deck="lighthouse-loot"] .slot-deck__spin {
+  border-radius: 8px 30px;
+  clip-path: none;
+}
+[data-slot-deck="moonjelly-bay"] {
+  border-radius: 24px 5px;
+  border-top-width: 2px;
+  border-top-style: double;
+}
+[data-slot-deck="moonjelly-bay"] .slot-deck__spin {
+  border-radius: 30px 5px 30px 5px;
+}
+[data-slot-deck="starfall-sanctum"] {
+  border-radius: 4px;
+  border-top-width: 3px;
+  border-top-style: solid;
+}
+[data-slot-deck="starfall-sanctum"] .slot-deck__spin {
+  border-radius: 3px 22px 3px 22px;
+  border-inline-width: 3px;
+}
+[data-slot-deck="aurora-spire"] {
+  border-radius: 4px;
+  border-top-width: 1px;
+  border-top-style: solid;
+}
+[data-slot-deck="aurora-spire"] .slot-deck__spin {
+  border-radius: 12px 12px 30px 30px;
+  clip-path: none;
+}
+[data-slot-deck="comet-carnival"] {
+  border-radius: 4px;
+  border-top-width: 2px;
+  border-top-style: solid;
+}
+[data-slot-deck="comet-carnival"] .slot-deck__spin {
+  border-radius: 25px;
+}
+[data-slot-deck="moonwell-mysteries"] {
+  border-radius: 4px;
+  border-top-width: 3px;
+  border-top-style: double;
+}
+[data-slot-deck="moonwell-mysteries"] .slot-deck__spin {
+  border-radius: 2px 2px 24px 24px;
+}
+[data-slot-deck="constellation-keep"] {
+  border-radius: 4px;
+  border-top-width: 1px;
+  border-top-style: solid;
+}
+[data-slot-deck="constellation-keep"] .slot-deck__spin {
+  border-radius: 16px 3px;
+  clip-path: none;
+}
+[data-slot-deck="cinder-crown"] {
+  border-radius: 50%;
+  border-top-width: 2px;
+  border-top-style: solid;
+}
+[data-slot-deck="cinder-crown"] .slot-deck__spin {
+  border-radius: 24px 5px;
+  border-inline-width: 3px;
+}
+[data-slot-deck="magma-anvil"] {
+  border-radius: 50%;
+  border-top-width: 3px;
+  border-top-style: solid;
+}
+[data-slot-deck="magma-anvil"] .slot-deck__spin {
+  border-radius: 4px;
+}
+[data-slot-deck="obsidian-oracle"] {
+  border-radius: 50%;
+  border-top-width: 1px;
+  border-top-style: double;
+}
+[data-slot-deck="obsidian-oracle"] .slot-deck__spin {
+  border-radius: 50%;
+  clip-path: none;
+}
+[data-slot-deck="salamander-sun"] {
+  border-radius: 50%;
+  border-top-width: 2px;
+  border-top-style: solid;
+}
+[data-slot-deck="salamander-sun"] .slot-deck__spin {
+  border-radius: 8px 30px;
+}
+[data-slot-deck="ashfall-citadel"] {
+  border-radius: 50%;
+  border-top-width: 3px;
+  border-top-style: solid;
+}
+[data-slot-deck="ashfall-citadel"] .slot-deck__spin {
+  border-radius: 30px 5px 30px 5px;
+}
+[data-slot-deck="glacier-glyphs"] {
+  border-radius: 8px 30px;
+  border-top-width: 1px;
+  border-top-style: solid;
+}
+[data-slot-deck="glacier-glyphs"] .slot-deck__spin {
+  border-radius: 3px 22px 3px 22px;
+  clip-path: none;
+  border-inline-width: 3px;
+}
+[data-slot-deck="northwind-narwhal"] {
+  border-radius: 8px 30px;
+  border-top-width: 2px;
+  border-top-style: double;
+}
+[data-slot-deck="northwind-narwhal"] .slot-deck__spin {
+  border-radius: 12px 12px 30px 30px;
+}
+[data-slot-deck="snowglobe-sorcery"] {
+  border-radius: 8px 30px;
+  border-top-width: 3px;
+  border-top-style: solid;
+}
+[data-slot-deck="snowglobe-sorcery"] .slot-deck__spin {
+  border-radius: 25px;
+}
+[data-slot-deck="frostbound-fjord"] {
+  border-radius: 8px 30px;
+  border-top-width: 1px;
+  border-top-style: solid;
+}
+[data-slot-deck="frostbound-fjord"] .slot-deck__spin {
+  border-radius: 2px 2px 24px 24px;
+  clip-path: none;
+}
+[data-slot-deck="polar-prism"] {
+  border-radius: 8px 30px;
+  border-top-width: 2px;
+  border-top-style: solid;
+}
+[data-slot-deck="polar-prism"] .slot-deck__spin {
+  border-radius: 16px 3px;
+}
+[data-slot-deck="orchid-oasis"] {
+  border-radius: 30px 5px 30px 5px;
+  border-top-width: 3px;
+  border-top-style: double;
+}
+[data-slot-deck="orchid-oasis"] .slot-deck__spin {
+  border-radius: 24px 5px;
+  border-inline-width: 3px;
+}
+[data-slot-deck="firefly-hollow"] {
+  border-radius: 30px 5px 30px 5px;
+  border-top-width: 1px;
+  border-top-style: solid;
+}
+[data-slot-deck="firefly-hollow"] .slot-deck__spin {
+  border-radius: 4px;
+  clip-path: none;
+}
+[data-slot-deck="canopy-kingdom"] {
+  border-radius: 30px 5px 30px 5px;
+  border-top-width: 2px;
+  border-top-style: solid;
+}
+[data-slot-deck="canopy-kingdom"] .slot-deck__spin {
+  border-radius: 50%;
+}
+[data-slot-deck="monsoon-grove"] {
+  border-radius: 30px 5px 30px 5px;
+  border-top-width: 3px;
+  border-top-style: solid;
+}
+[data-slot-deck="monsoon-grove"] .slot-deck__spin {
+  border-radius: 8px 30px;
+}
+[data-slot-deck="hummingbird-haven"] {
+  border-radius: 30px 5px 30px 5px;
+  border-top-width: 1px;
+  border-top-style: double;
+}
+[data-slot-deck="hummingbird-haven"] .slot-deck__spin {
+  border-radius: 30px 5px 30px 5px;
+  clip-path: none;
+}
+[data-slot-deck="babylon-gardens"] {
+  border-radius: 3px 22px 3px 22px;
+  border-top-width: 2px;
+  border-top-style: solid;
+}
+[data-slot-deck="babylon-gardens"] .slot-deck__spin {
+  border-radius: 3px 22px 3px 22px;
+  border-inline-width: 3px;
+}
+[data-slot-deck="persian-peacock"] {
+  border-radius: 3px 22px 3px 22px;
+  border-top-width: 3px;
+  border-top-style: solid;
+}
+[data-slot-deck="persian-peacock"] .slot-deck__spin {
+  border-radius: 12px 12px 30px 30px;
+}
+[data-slot-deck="celtic-clover-court"] {
+  border-radius: 3px 22px 3px 22px;
+  border-top-width: 1px;
+  border-top-style: solid;
+}
+[data-slot-deck="celtic-clover-court"] .slot-deck__spin {
+  border-radius: 25px;
+  clip-path: none;
+}
+[data-slot-deck="shogun-sakura"] {
+  border-radius: 3px 22px 3px 22px;
+  border-top-width: 2px;
+  border-top-style: double;
+}
+[data-slot-deck="shogun-sakura"] .slot-deck__spin {
+  border-radius: 2px 2px 24px 24px;
+}
+[data-slot-deck="longship-raiders"] {
+  border-radius: 3px 22px 3px 22px;
+  border-top-width: 3px;
+  border-top-style: solid;
+}
+[data-slot-deck="longship-raiders"] .slot-deck__spin {
+  border-radius: 16px 3px;
+}
+[data-slot-deck="clockwork-cache"] {
+  border-radius: 12px 12px 30px 30px;
+  border-top-width: 1px;
+  border-top-style: solid;
+}
+[data-slot-deck="clockwork-cache"] .slot-deck__spin {
+  border-radius: 24px 5px;
+  clip-path: none;
+  border-inline-width: 3px;
+}
+[data-slot-deck="brass-zeppelin"] {
+  border-radius: 12px 12px 30px 30px;
+  border-top-width: 2px;
+  border-top-style: solid;
+}
+[data-slot-deck="brass-zeppelin"] .slot-deck__spin {
+  border-radius: 4px;
+}
+[data-slot-deck="tesla-tower"] {
+  border-radius: 12px 12px 30px 30px;
+  border-top-width: 3px;
+  border-top-style: double;
+}
+[data-slot-deck="tesla-tower"] .slot-deck__spin {
+  border-radius: 50%;
+}
+[data-slot-deck="gearspring-gala"] {
+  border-radius: 12px 12px 30px 30px;
+  border-top-width: 1px;
+  border-top-style: solid;
+}
+[data-slot-deck="gearspring-gala"] .slot-deck__spin {
+  border-radius: 8px 30px;
+  clip-path: none;
+}
+[data-slot-deck="steamforge-express"] {
+  border-radius: 12px 12px 30px 30px;
+  border-top-width: 2px;
+  border-top-style: solid;
+}
+[data-slot-deck="steamforge-express"] .slot-deck__spin {
+  border-radius: 30px 5px 30px 5px;
+}
+[data-slot-deck="alchemist-atelier"] {
+  border-radius: 25px;
+  border-top-width: 3px;
+  border-top-style: solid;
+}
+[data-slot-deck="alchemist-atelier"] .slot-deck__spin {
+  border-radius: 3px 22px 3px 22px;
+  border-inline-width: 3px;
+}
+[data-slot-deck="crystal-grimoire"] {
+  border-radius: 25px;
+  border-top-width: 1px;
+  border-top-style: double;
+}
+[data-slot-deck="crystal-grimoire"] .slot-deck__spin {
+  border-radius: 12px 12px 30px 30px;
+  clip-path: none;
+}
+[data-slot-deck="tarot-twilight"] {
+  border-radius: 25px;
+  border-top-width: 2px;
+  border-top-style: solid;
+}
+[data-slot-deck="tarot-twilight"] .slot-deck__spin {
+  border-radius: 25px;
+}
+[data-slot-deck="potion-parlor"] {
+  border-radius: 25px;
+  border-top-width: 3px;
+  border-top-style: solid;
+}
+[data-slot-deck="potion-parlor"] .slot-deck__spin {
+  border-radius: 2px 2px 24px 24px;
+}
+[data-slot-deck="hexbound-library"] {
+  border-radius: 25px;
+  border-top-width: 1px;
+  border-top-style: solid;
+}
+[data-slot-deck="hexbound-library"] .slot-deck__spin {
+  border-radius: 16px 3px;
+  clip-path: none;
+}
+[data-slot-deck="cosmic-koi"] {
+  border-radius: 2px 2px 24px 24px;
+  border-top-width: 2px;
+  border-top-style: double;
+}
+[data-slot-deck="cosmic-koi"] .slot-deck__spin {
+  border-radius: 24px 5px;
+  border-inline-width: 3px;
+}
+[data-slot-deck="saturn-rings"] {
+  border-radius: 2px 2px 24px 24px;
+  border-top-width: 3px;
+  border-top-style: solid;
+}
+[data-slot-deck="saturn-rings"] .slot-deck__spin {
+  border-radius: 4px;
+}
+[data-slot-deck="rocket-rendezvous"] {
+  border-radius: 2px 2px 24px 24px;
+  border-top-width: 1px;
+  border-top-style: solid;
+}
+[data-slot-deck="rocket-rendezvous"] .slot-deck__spin {
+  border-radius: 50%;
+  clip-path: none;
+}
+[data-slot-deck="asteroid-miners"] {
+  border-radius: 2px 2px 24px 24px;
+  border-top-width: 2px;
+  border-top-style: solid;
+}
+[data-slot-deck="asteroid-miners"] .slot-deck__spin {
+  border-radius: 8px 30px;
+}
+[data-slot-deck="nebula-nomads"] {
+  border-radius: 2px 2px 24px 24px;
+  border-top-width: 3px;
+  border-top-style: double;
+}
+[data-slot-deck="nebula-nomads"] .slot-deck__spin {
+  border-radius: 30px 5px 30px 5px;
+}
+[data-slot-deck="stag-spirit-glade"] {
+  border-radius: 16px 3px;
+  border-top-width: 1px;
+  border-top-style: solid;
+}
+[data-slot-deck="stag-spirit-glade"] .slot-deck__spin {
+  border-radius: 3px 22px 3px 22px;
+  clip-path: none;
+  border-inline-width: 3px;
+}
+[data-slot-deck="tortoise-treasury"] {
+  border-radius: 16px 3px;
+  border-top-width: 2px;
+  border-top-style: solid;
+}
+[data-slot-deck="tortoise-treasury"] .slot-deck__spin {
+  border-radius: 12px 12px 30px 30px;
+}
+[data-slot-deck="crane-pavilion"] {
+  border-radius: 16px 3px;
+  border-top-width: 3px;
+  border-top-style: solid;
+}
+[data-slot-deck="crane-pavilion"] .slot-deck__spin {
+  border-radius: 25px;
+}
+[data-slot-deck="thunderbird-totem"] {
+  border-radius: 16px 3px;
+  border-top-width: 1px;
+  border-top-style: double;
+}
+[data-slot-deck="thunderbird-totem"] .slot-deck__spin {
+  border-radius: 2px 2px 24px 24px;
+  clip-path: none;
+}
+[data-slot-deck="monarch-meadow"] {
+  border-radius: 16px 3px;
+  border-top-width: 2px;
+  border-top-style: solid;
+}
+[data-slot-deck="monarch-meadow"] .slot-deck__spin {
+  border-radius: 16px 3px;
+}

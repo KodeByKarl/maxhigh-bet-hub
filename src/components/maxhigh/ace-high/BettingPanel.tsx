@@ -1,3 +1,4 @@
+import "../native-game-controls.css";
 import { useRef, useState, type ReactNode } from "react";
 import { BET_STEPS, type AceHighConfig } from "@/lib/ace-high-config";
 import { cn } from "@/lib/utils";
@@ -127,7 +128,11 @@ export function BettingPanel({
   ] as const;
 
   return (
-    <div className="space-y-2 touch-manipulation sm:space-y-1">
+    <div
+      className="space-y-2 touch-manipulation sm:space-y-1"
+      data-game-control-root="ace-high"
+      data-native-controls="ace-high"
+    >
       <div className="grid grid-cols-3 gap-1.5 sm:gap-1">
         {spots.map((spot) => {
           const meta = SPOT_META[spot.id];

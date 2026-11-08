@@ -7,6 +7,9 @@ import {
   text,
   index,
   bigint,
+  mediumtext,
+  check,
+  type AnyMySqlColumn,
 } from "drizzle-orm/mysql-core";
 import { sql } from "drizzle-orm";
 
@@ -34,7 +37,9 @@ export const users = mysqlTable(
     unlockedBy: varchar("unlocked_by", { length: 36 }),
     displayName: varchar("display_name", { length: 128 }),
     avatarUrl: varchar("avatar_url", { length: 512 }),
-    parentAgentId: varchar("upline_id", { length: 36 }),
+    parentAgentId: varchar("upline_id", { length: 36 }).references((): AnyMySqlColumn => users.id, {
+      onDelete: "restrict",
+    }),
     createdAt: timestamp("created_at")
       .notNull()
       .default(sql`CURRENT_TIMESTAMP`),
@@ -44,6 +49,11 @@ export const users = mysqlTable(
       .onUpdateNow(),
   },
   (t) => [
+    check("users_balance_nonnegative", sql`${t.balance} >= 0`),
+    check(
+      "users_upline_not_self",
+      sql`${t.parentAgentId} IS NULL OR ${t.parentAgentId} <> ${t.id}`,
+    ),
     index("users_email_idx").on(t.email),
     index("users_username_idx").on(t.username),
     index("users_public_user_id_idx").on(t.publicUserId),
@@ -99,7 +109,7 @@ export const transactions = mysqlTable(
     id: varchar("id", { length: 36 }).primaryKey(),
     userId: varchar("user_id", { length: 36 })
       .notNull()
-      .references(() => users.id, { onDelete: "cascade" }),
+      .references(() => users.id, { onDelete: "restrict" }),
     type: mysqlEnum("type", ["deposit", "withdraw", "bet", "win", "adjust", "jackpot"]).notNull(),
     amount: decimal("amount", { precision: 14, scale: 2 }).notNull(),
     balanceAfter: decimal("balance_after", { precision: 14, scale: 2 }).notNull(),
@@ -111,6 +121,7 @@ export const transactions = mysqlTable(
       .default(sql`CURRENT_TIMESTAMP`),
   },
   (t) => [
+    index("tx_user_time_idx").on(t.userId, t.createdAt),
     index("tx_user_idx").on(t.userId),
     index("tx_created_idx").on(t.createdAt),
     index("tx_seq_idx").on(t.seq),
@@ -246,6 +257,11 @@ export const playSessions = mysqlTable(
   "play_sessions",
   {
     id: varchar("id", { length: 36 }).primaryKey(),
+    openGameKey: varchar("open_game_key", { length: 101 })
+      .generatedAlwaysAs(
+        sql`case when status = 'open' then concat(user_id, ':', game_id) else null end`,
+      )
+      .unique(),
     userId: varchar("user_id", { length: 36 })
       .notNull()
       .references(() => users.id, { onDelete: "cascade" }),
@@ -255,6 +271,7 @@ export const playSessions = mysqlTable(
     ante: mysqlEnum("ante", ["yes", "no"]).notNull().default("no"),
     freeSpinsLeft: bigint("free_spins_left", { mode: "number" }).notNull().default(0),
     fsSessionWin: decimal("fs_session_win", { precision: 14, scale: 2 }).notNull().default("0.00"),
+    baseCredited: decimal("base_credited", { precision: 14, scale: 2 }).notNull().default("0.00"),
     fsBombAcc: decimal("fs_bomb_acc", { precision: 14, scale: 2 }).notNull().default("0.00"),
     fsSpinsPlayed: bigint("fs_spins_played", { mode: "number" }).notNull().default(0),
     featureState: text("feature_state"),
@@ -393,6 +410,9 @@ export const provablyFairSeeds = mysqlTable(
   "provably_fair_seeds",
   {
     id: varchar("id", { length: 36 }).primaryKey(),
+    activeUserKey: varchar("active_user_key", { length: 36 })
+      .generatedAlwaysAs(sql`case when status = 'active' then user_id else null end`)
+      .unique(),
     userId: varchar("user_id", { length: 36 })
       .notNull()
       .references(() => users.id, { onDelete: "cascade" }),
@@ -419,3 +439,34 @@ export type RiskControl = typeof riskControls.$inferSelect;
 export type SupportTicket = typeof supportTickets.$inferSelect;
 export type SupportMessage = typeof supportMessages.$inferSelect;
 export type ProvablyFairSeed = typeof provablyFairSeeds.$inferSelect;
+
+/** Durable intent/result identity; retained with financial history. */
+export const financialOperations = mysqlTable("financial_operations", {
+  id: varchar("id", { length: 64 }).primaryKey(),
+  userId: varchar("user_id", { length: 36 })
+    .notNull()
+    .references(() => users.id, { onDelete: "restrict" }),
+  action: varchar("action", { length: 128 }).notNull(),
+  inputHash: varchar("input_hash", { length: 64 }).notNull(),
+  result: mediumtext("result"),
+  proof: mediumtext("proof"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+export const fishingRooms = mysqlTable("fishing_rooms", {
+  gameId: varchar("game_id", { length: 64 }).primaryKey(),
+  state: mediumtext("state").notNull(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow().onUpdateNow(),
+});
+
+/** Explicitly issued rewards only; no automatic new-money eligibility is invented. */
+export const rewardEntitlements = mysqlTable("reward_entitlements", {
+  id: varchar("id", { length: 36 }).primaryKey(),
+  userId: varchar("user_id", { length: 36 })
+    .notNull()
+    .references(() => users.id, { onDelete: "restrict" }),
+  title: varchar("title", { length: 128 }).notNull(),
+  amount: decimal("amount", { precision: 14, scale: 2 }).notNull(),
+  claimedAt: timestamp("claimed_at"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});

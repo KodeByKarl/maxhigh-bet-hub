@@ -1,3 +1,4 @@
+import { operationIdentity } from "@/lib/operation-identity";
 /**
  * Crab Cannon client RPC bridge (createServerFn).
  */
@@ -27,19 +28,37 @@ const netBombSchema = z.object({
 });
 
 export const crabCannonFireShotFn = createServerFn({ method: "POST" })
+  .middleware([operationIdentity])
   .validator(fireSchema)
   .handler(async ({ data }) => {
-    const { crabCannonFireShot } = await import("../server/games/crab-cannon.server");
-    return JSON.parse(JSON.stringify(await crabCannonFireShot(data))) as Awaited<
-      ReturnType<typeof crabCannonFireShot>
-    >;
+    const { withFinancialOperation } = await import("../server/operation.server");
+    return withFinancialOperation(
+      "crabCannonFireShotFn",
+      data,
+      async () => {
+        const { crabCannonFireShot } = await import("../server/games/crab-cannon.server");
+        return JSON.parse(JSON.stringify(await crabCannonFireShot(data))) as Awaited<
+          ReturnType<typeof crabCannonFireShot>
+        >;
+      },
+      "crab-cannon",
+    );
   });
 
 export const crabCannonEnsureSessionFn = createServerFn({ method: "POST" })
+  .middleware([operationIdentity])
   .validator(z.object({ weaponId: z.string().optional() }))
   .handler(async ({ data }) => {
-    const { crabCannonEnsureSession } = await import("../server/games/crab-cannon.server");
-    return crabCannonEnsureSession(data);
+    const { withFinancialOperation } = await import("../server/operation.server");
+    return withFinancialOperation(
+      "crabCannonEnsureSessionFn",
+      data,
+      async () => {
+        const { crabCannonEnsureSession } = await import("../server/games/crab-cannon.server");
+        return crabCannonEnsureSession(data);
+      },
+      "crab-cannon",
+    );
   });
 
 export const getCrabCannonSessionFn = createServerFn({ method: "GET" }).handler(async () => {
@@ -53,37 +72,84 @@ export const getCrabCannonEngineConfigFn = createServerFn({ method: "GET" }).han
 });
 
 export const crabCannonSetWeaponFn = createServerFn({ method: "POST" })
+  .middleware([operationIdentity])
   .validator(weaponSchema)
   .handler(async ({ data }) => {
-    const { crabCannonSetWeapon } = await import("../server/games/crab-cannon.server");
-    return crabCannonSetWeapon(data);
+    const { withFinancialOperation } = await import("../server/operation.server");
+    return withFinancialOperation(
+      "crabCannonSetWeaponFn",
+      data,
+      async () => {
+        const { crabCannonSetWeapon } = await import("../server/games/crab-cannon.server");
+        return crabCannonSetWeapon(data);
+      },
+      "crab-cannon",
+    );
   });
 
 export const crabCannonBuyPowerUpFn = createServerFn({ method: "POST" })
+  .middleware([operationIdentity])
   .validator(powerSchema)
   .handler(async ({ data }) => {
-    const { crabCannonBuyPowerUp } = await import("../server/games/crab-cannon.server");
-    return crabCannonBuyPowerUp(data);
+    const { withFinancialOperation } = await import("../server/operation.server");
+    return withFinancialOperation(
+      "crabCannonBuyPowerUpFn",
+      data,
+      async () => {
+        const { crabCannonBuyPowerUp } = await import("../server/games/crab-cannon.server");
+        return crabCannonBuyPowerUp(data);
+      },
+      "crab-cannon",
+    );
   });
 
 export const crabCannonUseNetBombFn = createServerFn({ method: "POST" })
+  .middleware([operationIdentity])
   .validator(netBombSchema)
   .handler(async ({ data }) => {
-    const { crabCannonUseNetBomb } = await import("../server/games/crab-cannon.server");
-    return JSON.parse(JSON.stringify(await crabCannonUseNetBomb(data))) as Awaited<
-      ReturnType<typeof crabCannonUseNetBomb>
-    >;
+    const { withFinancialOperation } = await import("../server/operation.server");
+    return withFinancialOperation(
+      "crabCannonUseNetBombFn",
+      data,
+      async () => {
+        const { crabCannonUseNetBomb } = await import("../server/games/crab-cannon.server");
+        return JSON.parse(JSON.stringify(await crabCannonUseNetBomb(data))) as Awaited<
+          ReturnType<typeof crabCannonUseNetBomb>
+        >;
+      },
+      "crab-cannon",
+    );
   });
 
-export const crabCannonUseFreezeLureFn = createServerFn({ method: "POST" }).handler(async () => {
-  const { crabCannonUseFreezeLure } = await import("../server/games/crab-cannon.server");
-  return crabCannonUseFreezeLure();
-});
+export const crabCannonUseFreezeLureFn = createServerFn({ method: "POST" })
+  .middleware([operationIdentity])
+  .handler(async () => {
+    const { withFinancialOperation } = await import("../server/operation.server");
+    return withFinancialOperation(
+      "crabCannonUseFreezeLureFn",
+      null,
+      async () => {
+        const { crabCannonUseFreezeLure } = await import("../server/games/crab-cannon.server");
+        return crabCannonUseFreezeLure();
+      },
+      "crab-cannon",
+    );
+  });
 
-export const crabCannonSyncSpawnsFn = createServerFn({ method: "POST" }).handler(async () => {
-  const { crabCannonSyncSpawns } = await import("../server/games/crab-cannon.server");
-  return crabCannonSyncSpawns();
-});
+export const crabCannonSyncSpawnsFn = createServerFn({ method: "POST" })
+  .middleware([operationIdentity])
+  .handler(async () => {
+    const { withFinancialOperation } = await import("../server/operation.server");
+    return withFinancialOperation(
+      "crabCannonSyncSpawnsFn",
+      null,
+      async () => {
+        const { crabCannonSyncSpawns } = await import("../server/games/crab-cannon.server");
+        return crabCannonSyncSpawns();
+      },
+      "crab-cannon",
+    );
+  });
 
 export const crabCannonBossStatusFn = createServerFn({ method: "GET" }).handler(async () => {
   const { crabCannonBossStatus } = await import("../server/games/crab-cannon.server");
@@ -98,6 +164,7 @@ export const getCrabCannonAdminConfigFn = createServerFn({ method: "GET" }).hand
 
 /** Superadmin — persist engineConfig JSON. */
 export const saveCrabCannonAdminConfigFn = createServerFn({ method: "POST" })
+  .middleware([operationIdentity])
   .validator(z.object({ config: z.unknown() }))
   .handler(async ({ data }) => {
     const { saveCrabCannonEngineConfig } = await import("../server/superadmin/services.server");

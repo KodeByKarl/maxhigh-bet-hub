@@ -1,3 +1,4 @@
+import { operationIdentity } from "@/lib/operation-identity";
 /**
  * Shark Hunter client RPC bridge (createServerFn).
  */
@@ -27,19 +28,37 @@ const netBombSchema = z.object({
 });
 
 export const sharkHunterFireShotFn = createServerFn({ method: "POST" })
+  .middleware([operationIdentity])
   .validator(fireSchema)
   .handler(async ({ data }) => {
-    const { sharkHunterFireShot } = await import("../server/games/shark-hunter.server");
-    return JSON.parse(JSON.stringify(await sharkHunterFireShot(data))) as Awaited<
-      ReturnType<typeof sharkHunterFireShot>
-    >;
+    const { withFinancialOperation } = await import("../server/operation.server");
+    return withFinancialOperation(
+      "sharkHunterFireShotFn",
+      data,
+      async () => {
+        const { sharkHunterFireShot } = await import("../server/games/shark-hunter.server");
+        return JSON.parse(JSON.stringify(await sharkHunterFireShot(data))) as Awaited<
+          ReturnType<typeof sharkHunterFireShot>
+        >;
+      },
+      "shark-hunter",
+    );
   });
 
 export const sharkHunterEnsureSessionFn = createServerFn({ method: "POST" })
+  .middleware([operationIdentity])
   .validator(z.object({ weaponId: z.string().optional() }))
   .handler(async ({ data }) => {
-    const { sharkHunterEnsureSession } = await import("../server/games/shark-hunter.server");
-    return sharkHunterEnsureSession(data);
+    const { withFinancialOperation } = await import("../server/operation.server");
+    return withFinancialOperation(
+      "sharkHunterEnsureSessionFn",
+      data,
+      async () => {
+        const { sharkHunterEnsureSession } = await import("../server/games/shark-hunter.server");
+        return sharkHunterEnsureSession(data);
+      },
+      "shark-hunter",
+    );
   });
 
 export const getSharkHunterSessionFn = createServerFn({ method: "GET" }).handler(async () => {
@@ -53,37 +72,84 @@ export const getSharkHunterEngineConfigFn = createServerFn({ method: "GET" }).ha
 });
 
 export const sharkHunterSetWeaponFn = createServerFn({ method: "POST" })
+  .middleware([operationIdentity])
   .validator(weaponSchema)
   .handler(async ({ data }) => {
-    const { sharkHunterSetWeapon } = await import("../server/games/shark-hunter.server");
-    return sharkHunterSetWeapon(data);
+    const { withFinancialOperation } = await import("../server/operation.server");
+    return withFinancialOperation(
+      "sharkHunterSetWeaponFn",
+      data,
+      async () => {
+        const { sharkHunterSetWeapon } = await import("../server/games/shark-hunter.server");
+        return sharkHunterSetWeapon(data);
+      },
+      "shark-hunter",
+    );
   });
 
 export const sharkHunterBuyPowerUpFn = createServerFn({ method: "POST" })
+  .middleware([operationIdentity])
   .validator(powerSchema)
   .handler(async ({ data }) => {
-    const { sharkHunterBuyPowerUp } = await import("../server/games/shark-hunter.server");
-    return sharkHunterBuyPowerUp(data);
+    const { withFinancialOperation } = await import("../server/operation.server");
+    return withFinancialOperation(
+      "sharkHunterBuyPowerUpFn",
+      data,
+      async () => {
+        const { sharkHunterBuyPowerUp } = await import("../server/games/shark-hunter.server");
+        return sharkHunterBuyPowerUp(data);
+      },
+      "shark-hunter",
+    );
   });
 
 export const sharkHunterUseNetBombFn = createServerFn({ method: "POST" })
+  .middleware([operationIdentity])
   .validator(netBombSchema)
   .handler(async ({ data }) => {
-    const { sharkHunterUseNetBomb } = await import("../server/games/shark-hunter.server");
-    return JSON.parse(JSON.stringify(await sharkHunterUseNetBomb(data))) as Awaited<
-      ReturnType<typeof sharkHunterUseNetBomb>
-    >;
+    const { withFinancialOperation } = await import("../server/operation.server");
+    return withFinancialOperation(
+      "sharkHunterUseNetBombFn",
+      data,
+      async () => {
+        const { sharkHunterUseNetBomb } = await import("../server/games/shark-hunter.server");
+        return JSON.parse(JSON.stringify(await sharkHunterUseNetBomb(data))) as Awaited<
+          ReturnType<typeof sharkHunterUseNetBomb>
+        >;
+      },
+      "shark-hunter",
+    );
   });
 
-export const sharkHunterUseFreezeLureFn = createServerFn({ method: "POST" }).handler(async () => {
-  const { sharkHunterUseFreezeLure } = await import("../server/games/shark-hunter.server");
-  return sharkHunterUseFreezeLure();
-});
+export const sharkHunterUseFreezeLureFn = createServerFn({ method: "POST" })
+  .middleware([operationIdentity])
+  .handler(async () => {
+    const { withFinancialOperation } = await import("../server/operation.server");
+    return withFinancialOperation(
+      "sharkHunterUseFreezeLureFn",
+      null,
+      async () => {
+        const { sharkHunterUseFreezeLure } = await import("../server/games/shark-hunter.server");
+        return sharkHunterUseFreezeLure();
+      },
+      "shark-hunter",
+    );
+  });
 
-export const sharkHunterSyncSpawnsFn = createServerFn({ method: "POST" }).handler(async () => {
-  const { sharkHunterSyncSpawns } = await import("../server/games/shark-hunter.server");
-  return sharkHunterSyncSpawns();
-});
+export const sharkHunterSyncSpawnsFn = createServerFn({ method: "POST" })
+  .middleware([operationIdentity])
+  .handler(async () => {
+    const { withFinancialOperation } = await import("../server/operation.server");
+    return withFinancialOperation(
+      "sharkHunterSyncSpawnsFn",
+      null,
+      async () => {
+        const { sharkHunterSyncSpawns } = await import("../server/games/shark-hunter.server");
+        return sharkHunterSyncSpawns();
+      },
+      "shark-hunter",
+    );
+  });
 
 export const sharkHunterBossStatusFn = createServerFn({ method: "GET" }).handler(async () => {
   const { sharkHunterBossStatus } = await import("../server/games/shark-hunter.server");
@@ -98,6 +164,7 @@ export const getSharkHunterAdminConfigFn = createServerFn({ method: "GET" }).han
 
 /** Superadmin — persist engineConfig JSON. */
 export const saveSharkHunterAdminConfigFn = createServerFn({ method: "POST" })
+  .middleware([operationIdentity])
   .validator(z.object({ config: z.unknown() }))
   .handler(async ({ data }) => {
     const { saveSharkHunterEngineConfig } = await import("../server/superadmin/services.server");

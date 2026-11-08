@@ -1,3 +1,4 @@
+import { operationIdentity } from "@/lib/operation-identity";
 /**
  * Admin portal RPC (Domain 2).
  * Client-safe — must stay outside src/server/**
@@ -50,6 +51,7 @@ const createUserSchema = z.object({
 });
 
 export const adminCreateUserFn = createServerFn({ method: "POST" })
+  .middleware([operationIdentity])
   .validator(createUserSchema)
   .handler(async ({ data }) => {
     const { adminCreatePlayer } = await import("../server/admin/services.server");
@@ -64,6 +66,7 @@ const updateUserSchema = z.object({
 });
 
 export const adminUpdateUserFn = createServerFn({ method: "POST" })
+  .middleware([operationIdentity])
   .validator(updateUserSchema)
   .handler(async ({ data }) => {
     const { adminUpdateUser } = await import("../server/admin/services.server");
@@ -78,10 +81,19 @@ const adjustUserSchema = z.object({
 });
 
 export const adminAdjustBalanceFn = createServerFn({ method: "POST" })
+  .middleware([operationIdentity])
   .validator(adjustUserSchema)
   .handler(async ({ data }) => {
-    const { adminAdjustUserBalance } = await import("../server/admin/services.server");
-    return adminAdjustUserBalance(data);
+    const { withFinancialOperation } = await import("../server/operation.server");
+    return withFinancialOperation(
+      "adminAdjustBalanceFn",
+      data,
+      async () => {
+        const { adminAdjustUserBalance } = await import("../server/admin/services.server");
+        return adminAdjustUserBalance(data);
+      },
+      undefined,
+    );
   });
 
 const toggleLockSchema = z.object({
@@ -91,6 +103,7 @@ const toggleLockSchema = z.object({
 });
 
 export const adminToggleUserLockFn = createServerFn({ method: "POST" })
+  .middleware([operationIdentity])
   .validator(toggleLockSchema)
   .handler(async ({ data }) => {
     const { adminToggleUserLock } = await import("../server/admin/services.server");
@@ -103,6 +116,7 @@ const lockUserSchema = z.object({
 });
 
 export const adminLockUserFn = createServerFn({ method: "POST" })
+  .middleware([operationIdentity])
   .validator(lockUserSchema)
   .handler(async ({ data }) => {
     const { adminLockUser } = await import("../server/admin/services.server");
@@ -114,6 +128,7 @@ const userIdOnlySchema = z.object({
 });
 
 export const adminUnlockUserFn = createServerFn({ method: "POST" })
+  .middleware([operationIdentity])
   .validator(userIdOnlySchema)
   .handler(async ({ data }) => {
     const { adminUnlockUser } = await import("../server/admin/services.server");
@@ -121,6 +136,7 @@ export const adminUnlockUserFn = createServerFn({ method: "POST" })
   });
 
 export const adminForceLogoutUserFn = createServerFn({ method: "POST" })
+  .middleware([operationIdentity])
   .validator(userIdOnlySchema)
   .handler(async ({ data }) => {
     const { adminForceLogoutUser } = await import("../server/admin/services.server");
@@ -128,6 +144,7 @@ export const adminForceLogoutUserFn = createServerFn({ method: "POST" })
   });
 
 export const adminResetFailedAttemptsFn = createServerFn({ method: "POST" })
+  .middleware([operationIdentity])
   .validator(userIdOnlySchema)
   .handler(async ({ data }) => {
     const { adminResetFailedAttempts } = await import("../server/admin/services.server");
@@ -160,15 +177,17 @@ export const getAdminDayPulseFn = createServerFn({ method: "GET" })
     return fetchAdminDayPulse(data.dayIndex);
   });
 
-export const recordAdminLoginFn = createServerFn({ method: "POST" }).handler(async () => {
-  const { getSessionUser } = await import("../server/session");
-  const { recordAdminLogin } = await import("../server/admin/services.server");
-  const { isStaffRole } = await import("../lib/user");
-  const user = await getSessionUser();
-  if (!user || !isStaffRole(user.role)) throw new Error("Admin access only");
-  await recordAdminLogin(user);
-  return { ok: true as const };
-});
+export const recordAdminLoginFn = createServerFn({ method: "POST" })
+  .middleware([operationIdentity])
+  .handler(async () => {
+    const { getSessionUser } = await import("../server/session");
+    const { recordAdminLogin } = await import("../server/admin/services.server");
+    const { isStaffRole } = await import("../lib/user");
+    const user = await getSessionUser();
+    if (!user || !isStaffRole(user.role)) throw new Error("Admin access only");
+    await recordAdminLogin(user);
+    return { ok: true as const };
+  });
 
 const txListSchema = z.object({
   q: z.string().max(128).optional(),

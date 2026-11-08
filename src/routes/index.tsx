@@ -31,6 +31,7 @@ function Index() {
 
   return (
     <>
+      <h1 className="sr-only">MaxHigh casino lobby</h1>
       <PromoCarousel />
       <StatsBar />
       <CategoryTabs value={tab} onChange={setTab} />

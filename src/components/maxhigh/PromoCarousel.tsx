@@ -47,7 +47,7 @@ const defaultPromos: CarouselSlideRow[] = [
 ];
 
 export function PromoCarousel() {
-  const [slides, setSlides] = useState<CarouselSlideRow[]>(defaultPromos);
+  const [slides, setSlides] = useState<CarouselSlideRow[]>([]);
   const [emblaRef, emblaApi] = useEmblaCarousel({ loop: true, align: "start" });
   const [index, setIndex] = useState(0);
 
@@ -55,9 +55,9 @@ export function PromoCarousel() {
     void listCarouselSlidesFn()
       .then((res) => {
         const active = res.filter((s) => s.enabled);
-        if (active.length > 0) setSlides(active);
+        setSlides(active);
       })
-      .catch(() => {});
+      .catch(() => setSlides([]));
   }, []);
 
   const onSelect = useCallback(() => {
@@ -85,6 +85,7 @@ export function PromoCarousel() {
     return () => window.clearInterval(id);
   }, [emblaApi]);
 
+  if (slides.length === 0) return null;
   return (
     <section className="relative w-full min-w-0 overflow-hidden rounded-3xl border border-border bg-panel shadow-xl">
       <div className="overflow-hidden" ref={emblaRef}>
@@ -124,7 +125,11 @@ export function PromoCarousel() {
                         {p.cta}
                       </a>
                     ) : (
-                      <button className="mt-5 inline-flex h-11 items-center rounded-full bg-primary px-6 text-sm font-bold uppercase tracking-wider text-primary-foreground transition-colors hover:bg-primary/90">
+                      <button
+                        disabled
+                        aria-label="Promotion link unavailable"
+                        className="disabled:opacity-50 mt-5 inline-flex h-11 items-center rounded-full bg-primary px-6 text-sm font-bold uppercase tracking-wider text-primary-foreground transition-colors hover:bg-primary/90"
+                      >
                         {p.cta}
                       </button>
                     )}

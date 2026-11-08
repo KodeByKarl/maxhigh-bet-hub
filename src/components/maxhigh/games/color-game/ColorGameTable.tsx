@@ -1,3 +1,4 @@
+import "../../native-game-controls.css";
 import { Volume2, VolumeX } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
@@ -267,7 +268,10 @@ export function ColorGameTable({
   );
 
   return (
-    <div className="cg-root relative flex h-full min-h-0 flex-col overflow-hidden text-white">
+    <div
+      className="cg-root relative flex h-full min-h-0 flex-col overflow-hidden text-white"
+      data-game-control-root="color-game"
+    >
       <style>{CSS}</style>
 
       {/* felt table + vignette + perya string lights */}

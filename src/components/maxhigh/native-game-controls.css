@@ -1,0 +1,148 @@
+@import "./native-control-colors.css";
+
+[data-native-controls] {
+  border-radius: var(--native-radius);
+  outline: 1px solid color-mix(in srgb, var(--native-accent) 35%, transparent);
+  background: linear-gradient(
+    135deg,
+    color-mix(in srgb, var(--native-accent) 8%, var(--native-surface)),
+    var(--native-surface)
+  ) !important;
+  box-shadow:
+    0 8px 24px #0004,
+    inset 0 1px 0 color-mix(in srgb, var(--native-accent) 22%, transparent);
+}
+[data-game-control-root] [data-control-action],
+[data-native-controls] [data-control-action] {
+  min-height: 44px;
+  touch-action: manipulation;
+  border-radius: var(--native-radius) !important;
+  transition:
+    filter 0.15s,
+    box-shadow 0.15s;
+  font-family: var(--native-font);
+}
+[data-game-control-root] [data-control-action="primary"],
+[data-native-controls] [data-control-action="primary"] {
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--native-accent) 65%, white),
+    var(--native-accent)
+  ) !important;
+  color: var(--native-ink) !important;
+  border: 1px solid color-mix(in srgb, var(--native-accent) 75%, white) !important;
+  box-shadow:
+    inset 0 1px 0 #fff7,
+    0 3px 0 color-mix(in srgb, var(--native-accent) 40%, #101522),
+    0 6px 16px #0004 !important;
+}
+[data-game-control-root] [data-control-action="secondary"],
+[data-native-controls] [data-control-action="secondary"],
+[data-native-controls] [data-control-action="power"] {
+  background: color-mix(in srgb, var(--native-accent) 12%, var(--native-surface)) !important;
+  color: var(--native-accent) !important;
+  border-color: color-mix(in srgb, var(--native-accent) 45%, transparent) !important;
+}
+[data-native-controls] [data-control-action="weapon"] {
+  border-radius: var(--native-radius) !important;
+  border-color: color-mix(in srgb, var(--native-accent) 25%, transparent) !important;
+  background: #ffffff08 !important;
+  color: #f2f5ef !important;
+}
+[data-native-controls] [data-control-action="weapon"][aria-pressed="true"] {
+  background: color-mix(in srgb, var(--native-accent) 24%, var(--native-surface)) !important;
+  border-color: var(--native-accent) !important;
+  box-shadow: inset 0 -3px 0 var(--native-accent);
+}
+[data-native-controls] [data-control-action="auto"] {
+  background: var(--native-accent) !important;
+  color: var(--native-ink) !important;
+}
+[data-native-controls] [data-control-action="auto"][aria-pressed="true"] {
+  background: #843d46 !important;
+  color: #ffe2dc !important;
+  outline: 1px solid #ffb4a8;
+}
+[data-game-control-root] [data-control-action="danger"],
+[data-native-controls] [data-control-action="danger"] {
+  color: #ffd8d1 !important;
+  background: #69343e !important;
+  border-color: #bf7881 !important;
+}
+[data-game-control-root] [data-control-action]:hover:not(:disabled),
+[data-native-controls] [data-control-action]:hover:not(:disabled) {
+  filter: brightness(1.1);
+}
+[data-game-control-root] [data-control-action]:focus-visible,
+[data-native-controls] [data-control-action]:focus-visible {
+  outline: 2px solid #fff;
+  outline-offset: 3px;
+}
+[data-game-control-root="baccarat"] [data-control-action="primary"] {
+  border-style: double !important;
+  border-width: 3px !important;
+  letter-spacing: 0.2em;
+}
+[data-game-control-root="ace-high"] [data-control-action="primary"] {
+  border-inline: 5px double #68464c !important;
+}
+[data-game-control-root="lucky9"] [data-control-action="primary"] {
+  border-bottom: 4px solid #58896c !important;
+}
+[data-game-control-root="threecardpoker"] [data-control-action="primary"] {
+  border: 3px double #7f583b !important;
+}
+[data-game-control-root="color-game"] [data-control-action="primary"] {
+  background: linear-gradient(90deg, #f5c96b, #f1da8b) !important;
+  border-bottom: 4px solid #ab6752 !important;
+}
+[data-game-control-root="tongits-arena"] [data-control-action="primary"] {
+  clip-path: polygon(6% 0, 100% 0, 94% 100%, 0 100%);
+}
+[data-game-control-root="lucky-drop"] [data-control-action="primary"] {
+  border-bottom: 5px solid #5785c5 !important;
+  box-shadow: 0 5px 0 #123764 !important;
+}
+[data-game-control-root="color-game-pro"] [data-control-action="primary"] {
+  clip-path: polygon(7% 0, 100% 0, 93% 100%, 0 100%);
+  box-shadow: 0 0 18px #c897ff55 !important;
+}
+[data-game-control-root="lucky-nine-plus"] [data-control-action="primary"] {
+  border: 3px double #3c6b50 !important;
+}
+[data-game-control-root="drop-deluxe"] [data-control-action="primary"] {
+  font-style: italic;
+  letter-spacing: 0.09em;
+}
+[data-game-control-root="poker-showdown"] [data-control-action="primary"] {
+  border-left: 5px solid #b65359 !important;
+  letter-spacing: 0.12em;
+}
+[data-native-controls="deep-bass"] {
+  border-top: 3px double #cdd7a8;
+}
+[data-native-controls="dragon-fisher"] {
+  border-top: 2px solid #719dc3;
+  border-bottom: 2px solid #719dc3;
+}
+[data-native-controls="crab-cannon"] {
+  border-top: 4px solid #e79579;
+}
+[data-native-controls="shark-hunter"] {
+  border-top: 3px ridge #6e91a8;
+}
+[data-native-controls="octopus-armada"] {
+  border-top: 3px double #b68bca;
+}
+[data-native-controls="turtle-tide"] {
+  border-top: 4px solid #6fa58c;
+}
+[data-native-controls="whale-war"] {
+  border-top: 3px solid #a2b9c8;
+}
+@media (prefers-reduced-motion: reduce) {
+  [data-native-controls] [data-control-action],
+  [data-game-control-root] [data-control-action] {
+    transition: none !important;
+  }
+}

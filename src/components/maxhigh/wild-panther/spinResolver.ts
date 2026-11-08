@@ -81,6 +81,10 @@ export function resolveSpin(opts: ResolveOpts): SpinScript {
     board = gravity.next;
   }
 
+  // The 40th refill is visible even when the tumble safety guard stops further
+  // cluster evaluation. Count its scatters without another tumble or RNG draw.
+  maxScatters = Math.max(maxScatters, board.filter((cell) => cell.sym.scatter).length);
+
   // Bombs only count when a winning cluster is on the board (handled in applyBombToTumble).
   // Do NOT bank leftover bombs on a dead / no-win board — those multipliers are invalid.
 

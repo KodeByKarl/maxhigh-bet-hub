@@ -4,26 +4,34 @@
   "sideEffects": false,
   "type": "module",
   "scripts": {
-    "dev": "vite dev",
+    "dev": "node scripts/start-dev.mjs",
     "build": "vite build",
     "build:dev": "vite build --mode development",
     "preview": "vite preview",
     "start": "node .output/server/index.mjs",
-    "lint": "eslint .",
+    "lint": "eslint src vite.config.ts eslint.config.js",
     "format": "prettier --write .",
     "db:push": "npx drizzle-kit push",
     "db:studio": "npx drizzle-kit studio",
     "db:seed": "npx tsx --env-file=.env scripts/seed.ts",
     "db:seed-chips": "npx tsx --env-file=.env scripts/seed-all-chips.ts",
     "db:setup": "npm run db:push && npm run db:seed && npm run db:seed-chips",
-    "db:sync": "npx tsx --env-file=.env scripts/db-sync.ts",
+    "db:sync": "node scripts/migrate.mjs",
     "db:generate": "npx drizzle-kit generate",
     "db:cleanup-play-sessions": "npx tsx --env-file=.env scripts/cleanup-play-sessions.ts",
     "deploy:check": "node deploy/auto-update.mjs --check",
     "deploy:now": "node deploy/auto-update.mjs",
     "deploy:force": "node deploy/auto-update.mjs --force",
     "deploy:watch": "node deploy/watcher.mjs",
-    "deploy:pm2": "pm2 startOrReload deploy/ecosystem.config.cjs --update-env"
+    "deploy:pm2": "pm2 startOrReload deploy/ecosystem.config.cjs --update-env",
+    "db:migrate": "node scripts/migrate.mjs --apply",
+    "typecheck": "tsc --noEmit",
+    "test:unit": "node scripts/run-unit.mjs",
+    "test:migrations": "node scripts/test-migrations.mjs",
+    "test:integration": "node scripts/test-integration.mjs",
+    "test": "npm run test:unit",
+    "ci:test": "node scripts/ci/test-deployment.mjs",
+    "ci:build": "node deploy/ci/build-artifact.mjs"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",
@@ -55,11 +63,10 @@
     "@radix-ui/react-tooltip": "^1.2.8",
     "@tailwindcss/vite": "^4.2.1",
     "@tanstack/react-query": "^5.101.1",
-    "@tanstack/react-router": "^1.170.16",
-    "@tanstack/react-start": "^1.168.26",
-    "@tanstack/router-plugin": "^1.168.18",
+    "@tanstack/react-router": "^1.170.46",
+    "@tanstack/react-start": "^1.169.5",
+    "@tanstack/router-plugin": "^1.169.0",
     "bcryptjs": "^3.0.3",
-    "bootstrap": "^5.3.8",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "cmdk": "^1.1.1",
@@ -83,7 +90,7 @@
     "tw-animate-css": "^1.3.4",
     "vaul": "^1.1.2",
     "vite-tsconfig-paths": "^6.0.2",
-    "zod": "^3.24.2"
+    "zod": "^4.6.7"
   },
   "devDependencies": {
     "@eslint/js": "^9.32.0",
@@ -94,7 +101,7 @@
     "@types/react": "^19.2.0",
     "@types/react-dom": "^19.2.0",
     "@vitejs/plugin-react": "^5.2.0",
-    "drizzle-kit": "^0.31.10",
+    "drizzle-kit": "^0.31.11",
     "eslint": "^9.32.0",
     "eslint-config-prettier": "^10.1.1",
     "eslint-plugin-prettier": "^5.2.6",
@@ -103,10 +110,19 @@
     "globals": "^15.15.0",
     "nitro": "3.0.260603-beta",
     "prettier": "^3.7.3",
-    "sharp": "^0.35.3",
+    "sharp": "^0.35.5",
     "tsx": "^4.23.1",
     "typescript": "^5.8.3",
-    "typescript-eslint": "^8.56.1",
-    "vite": "^8.0.16"
+    "typescript-eslint": "^8.72.1",
+    "vite": "^8.3.6"
+  },
+  "overrides": {
+    "@typescript-eslint/typescript-estree": {
+      "minimatch": "^11.0.1"
+    },
+    "esbuild": "^0.28.2"
+  },
+  "engines": {
+    "node": ">=24.22.2 <25"
   }
 }

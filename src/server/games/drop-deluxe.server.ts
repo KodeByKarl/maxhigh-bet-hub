@@ -1,3 +1,4 @@
+import { recordRoundConfig } from "../round-random.server";
 /**
  * Deluxe Draw (drop-deluxe) — server-authoritative 5-card draw video poker.
  * Deck + dealt hand live in play_sessions.feature_state; the draw is resolved
@@ -41,7 +42,7 @@ export function clearDropDeluxeEngineCache() {
 
 async function loadEngineConfig(): Promise<DropDeluxeConfig> {
   const now = Date.now();
-  if (cachedConfig && now - cachedConfig.time < 30_000) return cachedConfig.cfg;
+  if (cachedConfig && now - cachedConfig.time < 30_000) return recordRoundConfig(cachedConfig.cfg);
   const db = getDb();
   try {
     const rows = await db
@@ -52,11 +53,9 @@ async function loadEngineConfig(): Promise<DropDeluxeConfig> {
     const raw = rows[0]?.engineConfig;
     const cfg = normalizeDropDeluxeConfig(raw ? (JSON.parse(raw) as unknown) : null);
     cachedConfig = { cfg, time: now };
-    return cfg;
+    return recordRoundConfig(cfg);
   } catch {
-    const cfg = normalizeDropDeluxeConfig(null);
-    cachedConfig = { cfg, time: now };
-    return cfg;
+    throw new Error("Game configuration unavailable");
   }
 }
 

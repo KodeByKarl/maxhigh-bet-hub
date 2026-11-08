@@ -16,8 +16,8 @@
 
 	reverse_proxy 127.0.0.1:{$PORT:8080} {
 		header_up Host {host}
-		header_up X-Real-IP {remote_host}
-		header_up X-Forwarded-For {remote_host}
+		header_up X-Real-IP {client_ip}
+		header_up X-Forwarded-For {client_ip}
 		header_up X-Forwarded-Proto {scheme}
 	}
 
@@ -25,6 +25,8 @@
 		Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
 		X-Content-Type-Options nosniff
 		Referrer-Policy strict-origin-when-cross-origin
+		X-Frame-Options DENY
+		Permissions-Policy "camera=(), microphone=(), geolocation=(), payment=()"
 		-Server
 	}
 

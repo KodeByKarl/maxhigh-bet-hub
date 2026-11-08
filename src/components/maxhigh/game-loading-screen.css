@@ -1,0 +1,389 @@
+.game-boot {
+  position: absolute;
+  inset: 0;
+  isolation: isolate;
+  overflow: hidden;
+  background: #070a12;
+  color: #fff;
+  font-family: Inter, ui-sans-serif, system-ui, sans-serif;
+}
+.game-boot__backdrop {
+  position: absolute;
+  inset: 0;
+  z-index: -3;
+  background-position: center 40%;
+  background-size: cover;
+  filter: blur(24px) saturate(1.2);
+  opacity: 0.65;
+  animation: game-splash-breathe 12s ease-in-out infinite alternate;
+}
+.game-boot__vignette {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background:
+    linear-gradient(
+      180deg,
+      #070a1255 0%,
+      transparent 25%,
+      #070a1200 45%,
+      #070a12e0 79%,
+      #070a12 100%
+    ),
+    radial-gradient(ellipse at 50% 42%, transparent 15%, #070a12bb 100%);
+}
+.game-boot__scene {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding-bottom: clamp(100px, 14vh, 160px);
+  pointer-events: none;
+}
+.game-boot__art {
+  position: relative;
+  width: min(100vw, 82vh, 820px);
+  aspect-ratio: 1;
+  flex: none;
+  animation: game-splash-arrive 0.7s ease-out both;
+  mask-image:
+    linear-gradient(180deg, transparent, #000 12%, #000 94%, transparent),
+    radial-gradient(ellipse 68% 68% at 50% 46%, #000 48%, #000b 68%, transparent 86%);
+  mask-composite: intersect;
+}
+.game-boot__art img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+.game-boot--illustrated .game-boot__scene {
+  padding-bottom: 0;
+}
+.game-boot--illustrated .game-boot__art {
+  width: 100%;
+  height: 100%;
+  aspect-ratio: auto;
+  mask-image: linear-gradient(180deg, #000 55%, transparent 100%);
+}
+.game-boot--illustrated .game-boot__art img {
+  object-fit: cover;
+  object-position: center 35%;
+}
+@media (min-aspect-ratio: 1/1) {
+  .game-boot--illustrated .game-boot__art {
+    width: min(70vh, 65vw);
+  }
+  .game-boot--illustrated .game-boot__art img {
+    object-fit: contain;
+  }
+}
+.game-boot__art-fallback {
+  display: grid;
+  place-items: center;
+  height: 100%;
+  padding: 48px;
+  background: radial-gradient(
+    ellipse,
+    color-mix(in srgb, var(--boot-accent) 28%, #070a12),
+    transparent 72%
+  );
+  text-align: center;
+  font-size: clamp(36px, 9vw, 72px);
+  font-weight: 900;
+  text-transform: uppercase;
+  color: var(--boot-accent);
+  text-shadow: 0 4px 24px #000;
+}
+.game-boot__particles {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 1;
+  overflow: hidden;
+}
+.game-boot__particles > span {
+  position: absolute;
+  left: var(--particle-x);
+  bottom: -20px;
+  width: var(--particle-size);
+  height: var(--particle-size);
+  background: var(--boot-accent);
+  box-shadow: 0 0 12px var(--boot-accent);
+  border-radius: 1px;
+  opacity: 0;
+  animation: game-splash-rise var(--particle-duration) linear var(--particle-delay) infinite;
+}
+.game-boot--fishing .game-boot__particles > span {
+  border: 1px solid var(--boot-accent);
+  border-radius: 50%;
+  background: transparent;
+  width: calc(var(--particle-size) * 2.5);
+  height: calc(var(--particle-size) * 2.5);
+  box-shadow: none;
+}
+.game-boot--cards .game-boot__particles > span {
+  transform: rotate(45deg);
+}
+.game-boot--soft .game-boot__particles > span {
+  border-radius: 50%;
+  filter: blur(1px);
+}
+.game-boot__back {
+  position: absolute;
+  left: max(16px, env(safe-area-inset-left));
+  top: max(16px, env(safe-area-inset-top));
+  z-index: 4;
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border: 1px solid #ffffff30;
+  border-radius: 50%;
+  background: #080c19a0;
+  color: #fff;
+  backdrop-filter: blur(12px);
+  cursor: pointer;
+}
+.game-boot__back:hover {
+  background: #ffffff20;
+}
+.game-boot button:focus-visible {
+  outline: 2px solid #fff;
+  outline-offset: 4px;
+}
+.game-boot__console {
+  position: absolute;
+  z-index: 3;
+  bottom: max(24px, env(safe-area-inset-bottom));
+  left: 50%;
+  translate: -50% 0;
+  width: min(78%, 380px);
+  text-align: center;
+}
+.game-boot__name {
+  margin: 0 0 13px;
+  color: #ffffffe0;
+  font-size: 12px;
+  font-weight: 750;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  text-shadow: 0 2px 8px #000;
+}
+.game-boot__status {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  min-height: 22px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #ffffffc9;
+  margin-bottom: 12px;
+}
+.game-boot__dots {
+  display: flex;
+  gap: 3px;
+  align-items: center;
+}
+.game-boot__dots i {
+  display: block;
+  width: 3px;
+  height: 3px;
+  border-radius: 50%;
+  background: var(--boot-accent);
+  animation: game-splash-dot 1.2s ease-in-out infinite;
+}
+.game-boot__dots i:nth-child(2) {
+  animation-delay: 0.15s;
+}
+.game-boot__dots i:nth-child(3) {
+  animation-delay: 0.3s;
+}
+.game-boot__progress {
+  position: relative;
+  height: 12px;
+  padding: 2px;
+  border-radius: 9px;
+  border: 1px solid color-mix(in srgb, var(--boot-accent) 45%, #ffffff30);
+  background: #030710d9;
+  box-shadow:
+    0 2px 12px #0009,
+    inset 0 1px 4px #000;
+}
+.game-boot__progress > span {
+  position: relative;
+  display: block;
+  height: 100%;
+  border-radius: 6px;
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--boot-accent) 55%, white),
+    var(--boot-accent)
+  );
+  box-shadow: 0 0 15px color-mix(in srgb, var(--boot-accent) 40%, transparent);
+  transition: width 0.5s ease-out;
+  overflow: hidden;
+}
+.game-boot__progress > span > i {
+  position: absolute;
+  inset: 0;
+  width: 40%;
+  background: linear-gradient(90deg, transparent, #ffffff70, transparent);
+  animation: game-splash-shine 2.4s ease-in-out infinite;
+}
+.game-boot__brand {
+  display: block;
+  margin-top: 25px;
+  color: #ffffff55;
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.3em;
+}
+.game-boot__notice {
+  margin-top: 12px;
+  padding: 12px;
+  border-radius: 12px;
+  background: #070a12de;
+  font-size: 12px;
+  line-height: 1.6;
+  color: #ffffffbf;
+}
+.game-boot__actions {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 8px;
+}
+.game-boot__actions button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  min-height: 44px;
+  padding: 6px 13px;
+  border-radius: 9px;
+  background: #ffffff12;
+  border: 1px solid #ffffff25;
+  color: #fff;
+  font-weight: 650;
+  cursor: pointer;
+}
+@keyframes game-splash-arrive {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+@keyframes game-splash-breathe {
+  from {
+    opacity: 0.55;
+  }
+  to {
+    opacity: 0.75;
+  }
+}
+@keyframes game-splash-rise {
+  0% {
+    opacity: 0;
+    translate: 0 0;
+  }
+  15% {
+    opacity: 0.65;
+  }
+  85% {
+    opacity: 0.35;
+  }
+  100% {
+    opacity: 0;
+    translate: 24px -100vh;
+  }
+}
+@keyframes game-splash-dot {
+  0%,
+  100% {
+    opacity: 0.3;
+    scale: 0.7;
+  }
+  50% {
+    opacity: 1;
+    scale: 1.2;
+  }
+}
+@keyframes game-splash-shine {
+  0%,
+  15% {
+    translate: -100% 0;
+  }
+  85%,
+  100% {
+    translate: 350% 0;
+  }
+}
+@media (max-width: 680px) {
+  .game-boot__art {
+    width: min(100vw, 72vh);
+    max-width: 520px;
+  }
+  .game-boot__scene {
+    padding-bottom: 110px;
+  }
+  .game-boot__console {
+    bottom: max(28px, env(safe-area-inset-bottom));
+    width: 76%;
+  }
+}
+@media (max-height: 560px) and (min-width: 681px) {
+  .game-boot__art {
+    width: 92vh;
+  }
+  .game-boot__scene {
+    padding-bottom: 62px;
+  }
+  .game-boot__console {
+    width: min(42%, 320px);
+    bottom: 14px;
+  }
+  .game-boot__name {
+    display: none;
+  }
+  .game-boot__brand {
+    margin-top: 12px;
+  }
+  .game-boot__notice {
+    position: absolute;
+    bottom: 45px;
+    left: -30%;
+    right: -30%;
+  }
+}
+@media (max-width: 680px) and (max-height: 700px) {
+  .game-boot__art {
+    width: min(100vw, 70vh);
+  }
+  .game-boot__scene {
+    padding-bottom: 100px;
+  }
+  .game-boot__console {
+    bottom: max(18px, env(safe-area-inset-bottom));
+  }
+  .game-boot__brand {
+    margin-top: 18px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .game-boot *,
+  .game-boot *::before,
+  .game-boot *::after {
+    animation: none !important;
+    transition: none !important;
+  }
+  .game-boot__particles > span {
+    opacity: 0.3;
+    bottom: 35%;
+  }
+}

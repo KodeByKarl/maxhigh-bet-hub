@@ -1,3 +1,4 @@
+import { WalletRequestsPanel } from "./WalletRequestsPanel";
 import { useCallback, useEffect, useState, type ReactNode } from "react";
 import { ArrowDownLeft, ArrowUpRight, History, Loader2, Wallet } from "lucide-react";
 import {
@@ -89,6 +90,7 @@ export function WalletModal({ open, onOpenChange }: Props) {
         </div>
 
         <div className="min-h-0 flex-1 overflow-y-auto px-4 py-3">
+          <WalletRequestsPanel onChanged={() => void load(tab)} />
           {loading && (
             <div className="flex items-center justify-center gap-2 py-12 text-sm text-muted-foreground">
               <Loader2 size={16} className="animate-spin" />

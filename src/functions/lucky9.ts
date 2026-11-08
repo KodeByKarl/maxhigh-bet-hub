@@ -1,3 +1,4 @@
+import { operationIdentity } from "@/lib/operation-identity";
 /**
  * Lucky 9 client RPC bridge (createServerFn).
  * Player deal + public engine config. Superadmin save/load lives in `@/functions/superadmin`
@@ -13,12 +14,21 @@ const lucky9DealSchema = z.object({
 });
 
 export const lucky9DealFn = createServerFn({ method: "POST" })
+  .middleware([operationIdentity])
   .validator(lucky9DealSchema)
   .handler(async ({ data }) => {
-    const { lucky9PaidDeal } = await import("../server/games/lucky9.server");
-    return JSON.parse(JSON.stringify(await lucky9PaidDeal(data))) as Awaited<
-      ReturnType<typeof lucky9PaidDeal>
-    >;
+    const { withFinancialOperation } = await import("../server/operation.server");
+    return withFinancialOperation(
+      "lucky9DealFn",
+      data,
+      async () => {
+        const { lucky9PaidDeal } = await import("../server/games/lucky9.server");
+        return JSON.parse(JSON.stringify(await lucky9PaidDeal(data))) as Awaited<
+          ReturnType<typeof lucky9PaidDeal>
+        >;
+      },
+      "lucky9",
+    );
   });
 
 /** Public engine config for the live table UI (reads game_controls.engineConfig). */

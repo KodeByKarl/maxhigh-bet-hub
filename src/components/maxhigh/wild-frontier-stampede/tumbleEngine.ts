@@ -1,11 +1,12 @@
-﻿import type { StampedeSymbolConfig } from "@/lib/wild-frontier-stampede-config";
+import { gameRandom, hasRoundRandom } from "@/lib/game-random";
+import type { StampedeSymbolConfig } from "@/lib/wild-frontier-stampede-config";
 import { getStampedeConfig } from "./runtimeConfig";
 import type { BoardCell } from "./types";
 
 let keyCounter = 1;
 
 export function nextCellKey(): string {
-  return `wfs_${Date.now()}_${keyCounter++}_${Math.random().toString(36).slice(2, 7)}`;
+  return `wfs_${Date.now()}_${keyCounter++}_${gameRandom().toString(36).slice(2, 7)}`;
 }
 
 /** Weighted pick (ante boosts scatter; free spins suppress bonus chests). */
@@ -24,7 +25,7 @@ export function pickRandomSymbol(ante: boolean, isFreeSpins: boolean): StampedeS
   }
 
   if (total <= 0) return config.symbols[0]!;
-  let roll = Math.random() * total;
+  let roll = gameRandom() * total;
   for (let i = 0; i < config.symbols.length; i++) {
     roll -= weights[i]!;
     if (roll <= 0) return config.symbols[i]!;

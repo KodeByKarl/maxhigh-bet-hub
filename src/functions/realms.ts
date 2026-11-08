@@ -1,3 +1,4 @@
+import { operationIdentity } from "@/lib/operation-identity";
 /**
  * Realms family client RPC bridge (createServerFn) — one set of calls for all
  * 50 titles, each naming its gameId. Superadmin save/load lives in
@@ -29,24 +30,51 @@ const buySchema = z.object({
 });
 
 export const realmsSpinFn = createServerFn({ method: "POST" })
+  .middleware([operationIdentity])
   .validator(spinSchema)
   .handler(async ({ data }) => {
-    const { realmsPaidSpin } = await import("../server/games/realms.server");
-    return realmsPaidSpin(data);
+    const { withFinancialOperation } = await import("../server/operation.server");
+    return withFinancialOperation(
+      "realmsSpinFn",
+      data,
+      async () => {
+        const { realmsPaidSpin } = await import("../server/games/realms.server");
+        return realmsPaidSpin(data);
+      },
+      data.gameId,
+    );
   });
 
 export const realmsFreeSpinFn = createServerFn({ method: "POST" })
+  .middleware([operationIdentity])
   .validator(freeSpinSchema)
   .handler(async ({ data }) => {
-    const { realmsFreeSpin } = await import("../server/games/realms.server");
-    return realmsFreeSpin(data);
+    const { withFinancialOperation } = await import("../server/operation.server");
+    return withFinancialOperation(
+      "realmsFreeSpinFn",
+      data,
+      async () => {
+        const { realmsFreeSpin } = await import("../server/games/realms.server");
+        return realmsFreeSpin(data);
+      },
+      data.gameId,
+    );
   });
 
 export const realmsBuyFeatureFn = createServerFn({ method: "POST" })
+  .middleware([operationIdentity])
   .validator(buySchema)
   .handler(async ({ data }) => {
-    const { realmsBuyFeature } = await import("../server/games/realms.server");
-    return realmsBuyFeature(data);
+    const { withFinancialOperation } = await import("../server/operation.server");
+    return withFinancialOperation(
+      "realmsBuyFeatureFn",
+      data,
+      async () => {
+        const { realmsBuyFeature } = await import("../server/games/realms.server");
+        return realmsBuyFeature(data);
+      },
+      data.gameId,
+    );
   });
 
 export const getRealmsSessionFn = createServerFn({ method: "GET" })

@@ -1,3 +1,4 @@
+import "../../native-game-controls.css";
 import { type PokerShowdownConfig } from "@/lib/poker-showdown-config";
 import { cn } from "@/lib/utils";
 import { TCP_CHIP_VALUES, type TcpBetSpot } from "./animationConfig";
@@ -47,7 +48,11 @@ export function BettingPanel({
   const totalWager = +(ante + pairPlus).toFixed(2);
 
   return (
-    <div className="touch-manipulation space-y-2.5 short-h:space-y-2">
+    <div
+      className="touch-manipulation space-y-2.5 short-h:space-y-2"
+      data-game-control-root="poker-showdown"
+      data-native-controls="poker-showdown"
+    >
       <div className="flex items-center justify-between px-0.5 text-[11px] tracking-[0.12em] uppercase short-h:text-[9px]">
         <span className="text-[#e8c96a]/80">
           Betting on{" "}
@@ -107,6 +112,7 @@ export function BettingPanel({
           onClick={() => onUndo?.()}
           className="grid h-14 w-14 shrink-0 place-items-center rounded-2xl border border-[#e8c96a]/30 bg-black/50 text-2xl text-[#f7e7bd]/85 transition active:scale-95 disabled:opacity-30 short-h:h-12 short-h:w-12 short-h:rounded-xl short-h:text-xl"
           aria-label="Undo last chip"
+          data-control-action="secondary"
         >
           ↶
         </button>
@@ -120,6 +126,7 @@ export function BettingPanel({
             background: "linear-gradient(180deg,#f8e7b0 0%,#e8c96a 45%,#b7912f 100%)",
             boxShadow: "0 6px 22px rgba(201,162,39,0.4), inset 0 1px 0 rgba(255,255,255,0.6)",
           }}
+          data-control-action="primary"
         >
           <span
             className="text-base font-black tracking-[0.2em] short-h:text-sm"
@@ -140,6 +147,7 @@ export function BettingPanel({
           onClick={() => onClearAll?.()}
           className="grid h-14 min-w-14 shrink-0 place-items-center rounded-2xl border border-[#e8c96a]/30 bg-black/50 px-1.5 text-[11px] font-extrabold tracking-wide text-[#f7e7bd]/85 transition active:scale-95 disabled:opacity-30 short-h:h-12 short-h:min-w-12 short-h:rounded-xl short-h:text-[10px]"
           aria-label="Clear all bets"
+          data-control-action="secondary"
         >
           CLEAR
         </button>

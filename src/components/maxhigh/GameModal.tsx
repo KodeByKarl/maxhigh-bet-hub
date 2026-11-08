@@ -12,6 +12,9 @@ import type { SlotGame } from "@/lib/games";
 import { useAuth } from "@/lib/auth";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { GameLoadingScreen } from "./GameLoadingScreen";
+import { GAME_LOADING_THEMES } from "@/lib/game-loading-themes";
+import { GameBootBoundary } from "./GameBootBoundary";
 
 const GamePlayModal = lazy(() =>
   import("./GamePlayModal").then((m) => ({ default: m.GamePlayModal })),
@@ -41,25 +44,40 @@ function Stars({ rating }: { rating: number }) {
   );
 }
 
-function PlayBootPlate() {
+function PlayBootPlate({
+  game,
+  onClose,
+  error = false,
+}: {
+  game: SlotGame;
+  onClose: () => void;
+  error?: boolean;
+}) {
   if (typeof document === "undefined") return null;
   return createPortal(
     <div
       className="fixed inset-0 z-[9998] bg-[#0A0912] animate-[loader-fade_0.28s_ease-out]"
-      aria-hidden
-    />,
+      role="dialog"
+      aria-modal="true"
+      aria-label={`Opening ${game.name}`}
+    >
+      {GAME_LOADING_THEMES[game.id] && (
+        <GameLoadingScreen game={game} error={error} onClose={onClose} />
+      )}
+    </div>,
     document.body,
   );
 }
 
 export function GameModal({ game, open, onOpenChange }: Props) {
   const [playing, setPlaying] = useState(false);
+  const [shellError, setShellError] = useState(false);
   const { requireAuth } = useAuth();
 
   // Prefetch the play shell while the info dialog is open.
   useEffect(() => {
     if (!open) return;
-    void import("./GamePlayModal");
+    void import("./GamePlayModal").catch(() => undefined);
   }, [open]);
 
   if (!game) return null;
@@ -72,6 +90,12 @@ export function GameModal({ game, open, onOpenChange }: Props) {
       return;
     }
     setPlaying(true);
+  }
+
+  function closePlay() {
+    setPlaying(false);
+    setShellError(false);
+    onOpenChange(false);
   }
 
   const stats = [
@@ -205,17 +229,21 @@ export function GameModal({ game, open, onOpenChange }: Props) {
         </DialogContent>
       </Dialog>
 
-      {playing ? (
-        <Suspense fallback={<PlayBootPlate />}>
-          <GamePlayModal
-            game={game}
-            open={playing}
-            onOpenChange={(next) => {
-              setPlaying(next);
-              if (!next) onOpenChange(false);
-            }}
-          />
-        </Suspense>
+      {playing && shellError ? (
+        <PlayBootPlate game={game} error onClose={closePlay} />
+      ) : playing ? (
+        <GameBootBoundary onError={() => setShellError(true)}>
+          <Suspense fallback={<PlayBootPlate game={game} onClose={closePlay} />}>
+            <GamePlayModal
+              game={game}
+              open={playing}
+              onOpenChange={(next) => {
+                setPlaying(next);
+                if (!next) onOpenChange(false);
+              }}
+            />
+          </Suspense>
+        </GameBootBoundary>
       ) : null}
     </>
   );

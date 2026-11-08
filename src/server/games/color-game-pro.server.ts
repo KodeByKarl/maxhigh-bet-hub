@@ -1,3 +1,4 @@
+import { recordRoundConfig } from "../round-random.server";
 /**
  * Color Game Pro — server-authoritative one-shot deal + settlement.
  */
@@ -33,7 +34,7 @@ export function clearColorGameProEngineCache() {
 
 async function loadEngineConfig(): Promise<ColorGameProConfig> {
   const now = Date.now();
-  if (cachedConfig && now - cachedConfig.time < 30_000) return cachedConfig.cfg;
+  if (cachedConfig && now - cachedConfig.time < 30_000) return recordRoundConfig(cachedConfig.cfg);
   const db = getDb();
   try {
     const rows = await db
@@ -44,11 +45,9 @@ async function loadEngineConfig(): Promise<ColorGameProConfig> {
     const raw = rows[0]?.engineConfig;
     const cfg = normalizeColorGameProConfig(raw ? (JSON.parse(raw) as unknown) : null);
     cachedConfig = { cfg, time: now };
-    return cfg;
+    return recordRoundConfig(cfg);
   } catch {
-    const cfg = normalizeColorGameProConfig(null);
-    cachedConfig = { cfg, time: now };
-    return cfg;
+    throw new Error("Game configuration unavailable");
   }
 }
 
