@@ -1,6 +1,7 @@
 import { buildBoard, cloneBoard } from "./gridState";
 import { applyBombToTumble, finalizeFreeSpinTotal } from "./multiplierEngine";
 import { resolveScatters } from "./scatterEngine";
+import { getWildPantherConfig } from "./runtimeConfig";
 import { applyGravity, evaluateBoard } from "./tumbleEngine";
 import type { BoardCell, SpinScript, TumbleStep } from "./types";
 
@@ -94,7 +95,9 @@ export function resolveSpin(opts: ResolveOpts): SpinScript {
     rawWin += scatter.cashPay;
   }
 
-  const finalTotal = +totalWin.toFixed(2);
+  let finalTotal = +totalWin.toFixed(2);
+  const capMult = getWildPantherConfig().maxWinMult;
+  if (capMult > 0) finalTotal = Math.min(finalTotal, +(opts.bet * capMult).toFixed(2));
   const finalRaw = +rawWin.toFixed(2);
   // Base: peak bomb only if this spin actually won. FS: banked mult from winning tumbles only.
   const displayMult =

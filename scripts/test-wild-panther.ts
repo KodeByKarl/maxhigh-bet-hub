@@ -83,9 +83,51 @@ try {
   assert.equal(quiet.scatters, CELLS);
   assert.equal(quiet.freeSpinsAwarded, getWildPantherConfig().freeSpinsBase);
   checks++;
+
+  // A legal high-bomb board can exceed the advertised cap. This must be
+  // deterministic rather than relying on a rare random referee hit.
+  for (const [free, bet, cap] of [
+    [false, 1, 10000],
+    [false, 0.23, 25],
+    [false, 1, 0],
+    [true, 1, 25],
+  ] as const) {
+    setWildPantherConfig({ ...DEFAULT_WILD_PANTHER_CONFIG, maxWinMult: cap });
+    const active = getRuntimeSymbols();
+    const heart = active.find((symbol) => symbol.kind === "heart")!;
+    const bomb = active.find((symbol) => symbol.bomb)!;
+    let draws = 0;
+    // Refill exclusively with bombs, so this fixture has exactly one paid tumble.
+    runtime.__maxhighRandom = () => {
+      draws++;
+      return 0;
+    };
+    const result = resolveSpin({
+      bet,
+      ante: false,
+      isFreeSpins: free,
+      forceBoard: Array.from({ length: CELLS }, (_, i) => ({
+        key: `cap-${i}`,
+        sym: i < 12 ? heart : bomb,
+        ...(i < 12 ? {} : { mult: 100 }),
+      })),
+    });
+    const rawCluster = +(bet * heart.pay[2]).toFixed(2);
+    const rawTotal = free ? rawCluster : +(rawCluster * (CELLS - 12) * 100).toFixed(2);
+    assert.equal(result.steps.length, 1);
+    assert.equal(result.steps[0].tumbleWin, rawTotal, "Original tumble math retained");
+    assert.equal(
+      result.totalWin,
+      cap > 0 ? Math.min(rawTotal, +(bet * cap).toFixed(2)) : rawTotal,
+      "Resolver total obeys the configured cap; zero explicitly remains uncapped",
+    );
+    assert.equal(result.bombAccumulator, free ? (CELLS - 12) * 100 : 0);
+    assert.equal(draws, CELLS * 3, "Cap enforcement consumes no extra randomness");
+    checks++;
+  }
 } finally {
   setWildPantherConfig(previousConfig);
   if (previousRandom === undefined) delete runtime.__maxhighRandom;
   else runtime.__maxhighRandom = previousRandom;
 }
-console.log(`PASS ${checks} Wild Panther final-refill/scatter regressions`);
+console.log(`PASS ${checks} Wild Panther final-refill/scatter/cap regressions`);
