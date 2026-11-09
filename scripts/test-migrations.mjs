@@ -110,8 +110,10 @@ try {
 } finally {
   await admin.end();
 }
+const outputDirectory = process.env.MIGRATION_OUTPUT ?? "audit/remediation/evidence";
+fs.mkdirSync(outputDirectory, { recursive: true });
 fs.writeFileSync(
-  (process.env.MIGRATION_OUTPUT ?? "audit/remediation/evidence") + "/migrations.json",
+  outputDirectory + "/migrations.json",
   JSON.stringify(results, null, 2),
 );
 console.log(JSON.stringify(results, null, 2));
