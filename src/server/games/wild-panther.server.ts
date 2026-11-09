@@ -1,3 +1,7 @@
+import { recordRoundConfig } from "../round-random.server";
+import { assertNoOpenFeature } from "../feature-guard.server";
+import { minorUnits } from "@/lib/money";
+import { assertGameWager } from "../wallet.server";
 /**
  * Wild Panther — server-authoritative spin settle.
  * Client only receives scripts + balances; it cannot choose win amounts.
@@ -38,10 +42,10 @@ async function loadEngineConfig() {
       .where(eq(gameControls.gameId, WILD_PANTHER_GAME_ID))
       .limit(1);
     const raw = rows[0]?.engineConfig;
-    if (!raw) return normalizeWildPantherConfig(null);
-    return normalizeWildPantherConfig(JSON.parse(raw) as unknown);
+    if (!raw) return recordRoundConfig(normalizeWildPantherConfig(null));
+    return recordRoundConfig(normalizeWildPantherConfig(JSON.parse(raw) as unknown));
   } catch {
-    return normalizeWildPantherConfig(null);
+    throw new Error("Game configuration unavailable");
   }
 }
 
@@ -157,6 +161,8 @@ export async function wildPantherPaidSpin(data: {
   ante: boolean;
 }): Promise<WildPantherSpinResult> {
   const user = await requireUser();
+  minorUnits(data.bet);
+  await assertGameWager(WILD_PANTHER_GAME_ID, data.bet);
   if (!Number.isFinite(data.bet) || data.bet <= 0) throw new Error("Invalid bet");
 
   const cfg = await loadEngineConfig();
@@ -264,6 +270,7 @@ export async function wildPantherPaidSpin(data: {
         ante: data.ante ? "yes" : "no",
         freeSpinsLeft: script.freeSpinsAwarded,
         fsSessionWin: "0.00",
+        baseCredited: money(script.totalWin),
         fsBombAcc: "0.00",
         fsSpinsPlayed: 0,
       });
@@ -337,7 +344,10 @@ export async function wildPantherFreeSpin(data: {
     const nextBomb = Number(row.fsBombAcc) + script.bombAccumulator;
     const nextPlayed = Number(row.fsSpinsPlayed) + 1;
     let nextLeft = left - 1;
-    if (script.retriggerSpins > 0) nextLeft += script.retriggerSpins;
+    // Hard bound: past the per-feature ceiling retriggers are ignored. Wins already earned are untouched.
+    if (script.retriggerSpins > 0 && nextPlayed < cfg.maxFsSessionSpins) {
+      nextLeft = Math.min(nextLeft + script.retriggerSpins, cfg.maxFsSessionSpins - nextPlayed);
+    }
     nextLeft = Math.max(0, nextLeft);
 
     let balance = Number(u.balance);
@@ -350,6 +360,7 @@ export async function wildPantherFreeSpin(data: {
         bet,
         maxWinMult: cfg.maxWinMult,
         computedWin: finalizeFreeSpinTotal(nextWin, nextBomb),
+        alreadyCredited: Number(row.baseCredited),
         context: "free-spins-final",
       }).payout;
       if (final > 0) {
@@ -440,6 +451,8 @@ export async function wildPantherBuyFeature(data: {
   mode: "normal" | "super";
 }): Promise<{ balance: number; session: WildPantherSessionState }> {
   const user = await requireUser();
+  minorUnits(data.bet);
+  await assertGameWager(WILD_PANTHER_GAME_ID, data.bet);
   if (!Number.isFinite(data.bet) || data.bet <= 0) throw new Error("Invalid bet");
 
   const cfg = await loadEngineConfig();
@@ -455,7 +468,7 @@ export async function wildPantherBuyFeature(data: {
   }
 
   await assertNotInMaintenanceForBets();
-  await closeOtherOpenSessions(user.id);
+  await assertNoOpenFeature(user.id, WILD_PANTHER_GAME_ID);
 
   const db = getDb();
   const result = await db.transaction(async (tx) => {

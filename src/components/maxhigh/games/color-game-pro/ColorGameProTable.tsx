@@ -1,3 +1,4 @@
+import "../../native-game-controls.css";
 import { Volume2, VolumeX } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
@@ -206,21 +207,25 @@ export function ColorGameProTable({
       const cur = angleRef.current;
       const jitter = (Math.random() - 0.5) * slice * 0.6;
       const want = mod(-(idx * slice + slice / 2 + jitter), 360);
-      const total = 360 * 6 + mod(want - cur, 360);
+      const reduceMotion =
+        typeof window !== "undefined" &&
+        window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
+      const dur = reduceMotion ? 1200 : SPIN_MS;
+      const total = 360 * (reduceMotion ? 1 : 6) + mod(want - cur, 360);
 
       stopAudioRef.current();
       stopAudioRef.current = startWheelSpinPro({
         totalDeg: total,
         startDeg: cur,
         sliceDeg: slice,
-        durationSec: SPIN_MS / 1000,
+        durationSec: dur / 1000,
       });
 
       const t0 = performance.now();
       let lastSlice = Math.floor(cur / slice);
       const frame = (now: number) => {
         if (!mountedRef.current) return;
-        const p = Math.min(1, (now - t0) / SPIN_MS);
+        const p = Math.min(1, (now - t0) / dur);
         const deg = cur + total * wheelEasePro(p);
         angleRef.current = deg;
         paintWheel(deg);
@@ -229,11 +234,9 @@ export function ColorGameProTable({
           lastSlice = s;
           const f = flapRef.current;
           if (f) {
-            f.style.transition = "none";
-            f.style.transform = "rotate(-20deg)";
-            requestAnimationFrame(() => {
-              f.style.transition = "transform 100ms ease-out";
-              f.style.transform = "rotate(0deg)";
+            f.animate([{ transform: "rotate(-20deg)" }, { transform: "rotate(0deg)" }], {
+              duration: 100,
+              easing: "ease-out",
             });
           }
         }
@@ -244,6 +247,13 @@ export function ColorGameProTable({
         }
       };
       rafRef.current = requestAnimationFrame(frame);
+      window.setTimeout(() => {
+        if (!mountedRef.current) return;
+        cancelAnimationFrame(rafRef.current);
+        angleRef.current = cur + total;
+        paintWheel(cur + total);
+        resolve();
+      }, dur + 1500);
     });
   }
 
@@ -312,7 +322,10 @@ export function ColorGameProTable({
   const hexOf = (id: ColorSpotId) => cfg.spots.find((s) => s.id === id)?.hex ?? "#fff";
 
   return (
-    <div className="pro-root relative flex h-full min-h-0 flex-col overflow-hidden text-white">
+    <div
+      className={`pro-root relative flex h-full min-h-0 flex-col overflow-hidden text-white${spinning ? " pro-spinning" : ""}`}
+      data-game-control-root="color-game-pro"
+    >
       <style>{CSS}</style>
 
       {/* ── atmosphere ─────────────────────────────────────────── */}
@@ -732,7 +745,7 @@ const CSS = `
   border: 3px solid #67e8f9; box-shadow: 0 0 22px rgba(34,211,238,.7), inset 0 0 20px rgba(0,0,0,.7);
 }
 .pro-hub-label { background: linear-gradient(90deg,#67e8f9,#f0abfc); -webkit-background-clip: text; background-clip: text; color: transparent; }
-.pro-win-slice { animation: pro-sl .5s ease-in-out infinite alternate; mix-blend-mode: overlay; }
+.pro-win-slice { animation: pro-sl .5s ease-in-out infinite alternate; }
 @keyframes pro-sl { from { opacity: .2; } to { opacity: 1; } }
 .pro-pop { animation: pro-pp .45s cubic-bezier(.2,1.6,.4,1); }
 @keyframes pro-pp { from { transform: scale(.3); opacity: 0; } to { transform: scale(1); opacity: 1; } }
@@ -749,6 +762,9 @@ const CSS = `
 .pro-coin { position: absolute; top: -4%; border-radius: 9999px; box-shadow: 0 0 8px currentColor; animation: pro-cf linear forwards; }
 @keyframes pro-cf { 0% { transform: translate(0,-10px); opacity: 1; } 100% { transform: translate(var(--dx), 108vh) rotate(540deg); opacity: .9; } }
 .pro-dock { background: linear-gradient(180deg, rgba(8,6,32,.2), rgba(8,6,32,.85)); border-top: 1px solid rgba(125,211,252,.28); backdrop-filter: blur(10px); }
+/* While the wheel spins, pause the expensive decorative layers (blurred aurora, backdrop-filter glass) so the wheel gets the frame budget. */
+.pro-root.pro-spinning .pro-aurora::before, .pro-root.pro-spinning .pro-aurora::after { animation-play-state: paused; }
+.pro-root.pro-spinning .pro-glass, .pro-root.pro-spinning .pro-dock { backdrop-filter: none; -webkit-backdrop-filter: none; }
 @media (prefers-reduced-motion: reduce) {
   .pro-aurora::before, .pro-aurora::after, .pro-star, .pro-lantern, .pro-floor::before, .pro-ring, .pro-orbit, .pro-halo, .pro-win-slice, .pro-coin { animation: none; }
 }

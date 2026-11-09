@@ -1,3 +1,4 @@
+import { gameRandom, hasRoundRandom } from "@/lib/game-random";
 import type { BoardCell, CellSym } from "./types";
 import { CELLS, COLS, ROWS } from "./types";
 import { getWildPantherConfig, getRuntimeSymbols } from "./runtimeConfig";
@@ -23,7 +24,7 @@ export function pickSym(ante: boolean): CellSym {
   const { weighted, weightTotal, scatter } = pools();
   let total = weightTotal;
   if (ante) total += scatter.weight * (cfg.anteScatterWeightMult - 1);
-  let r = Math.random() * total;
+  let r = gameRandom() * total;
   for (const s of weighted) {
     const w = ante && s.scatter ? s.weight * cfg.anteScatterWeightMult : s.weight;
     if (r < w) return s;
@@ -35,7 +36,7 @@ export function pickSym(ante: boolean): CellSym {
 export function pickBombMult(): number {
   const table = getWildPantherConfig().bombTable;
   const total = table.reduce((a, b) => a + b.weight, 0);
-  let r = Math.random() * total;
+  let r = gameRandom() * total;
   for (const b of table) {
     if (r < b.weight) return b.mult;
     r -= b.weight;
@@ -43,18 +44,27 @@ export function pickBombMult(): number {
   return table[0]?.mult ?? 2;
 }
 
-export function makeCell(sym: CellSym, freeSpins: boolean, forceBomb = false): BoardCell {
+export function makeCell(
+  sym: CellSym,
+  freeSpins: boolean,
+  forceBomb = false,
+  opts?: { allowScatter?: boolean },
+): BoardCell {
   const cfg = getWildPantherConfig();
-  const { bomb } = pools();
+  const { bomb, pay } = pools();
+  // Tumble refills never spawn scatters (matches the calibrated Panther family); only opening boards can carry them.
+  let use = sym;
+  if (opts?.allowScatter === false && use.scatter)
+    use = pay[Math.floor(gameRandom() * pay.length)] ?? use;
   const bombChance = (freeSpins ? cfg.bombChanceFreeSpinsPercent : cfg.bombChanceBasePercent) / 100;
-  if (forceBomb || sym.bomb || Math.random() < bombChance) {
+  if (forceBomb || use.bomb || gameRandom() < bombChance) {
     return {
       key: nextKey(),
       sym: bomb,
       mult: pickBombMult(),
     };
   }
-  return { key: nextKey(), sym };
+  return { key: nextKey(), sym: use };
 }
 
 export function fillerCell(i: number): BoardCell {
@@ -69,7 +79,7 @@ export function initialBoard(): BoardCell[] {
 function shuffle<T>(arr: T[]): T[] {
   const a = [...arr];
   for (let i = a.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
+    const j = Math.floor(gameRandom() * (i + 1));
     [a[i], a[j]] = [a[j], a[i]];
   }
   return a;
@@ -107,15 +117,15 @@ export function buildBoard(ante: boolean, freeSpins: boolean, seedWin = true): B
   const minCluster = cfg.minCluster;
 
   // Forced-hit path (only when seedWin allowed)
-  if (seedWin && Math.random() < seedChance) {
+  if (seedWin && gameRandom() < seedChance) {
     const board = randomFill(ante, freeSpins);
     const min = Math.min(cfg.seedClusterMin, cfg.seedClusterMax);
     const max = Math.max(cfg.seedClusterMin, cfg.seedClusterMax);
     const target =
-      Math.random() < cfg.seedMelonBiasPercent / 100
+      gameRandom() < cfg.seedMelonBiasPercent / 100
         ? (pay.find((s) => s.id === "melon") ?? pay[0])
-        : pay[Math.floor(Math.random() * pay.length)];
-    const count = min + Math.floor(Math.random() * (max - min + 1));
+        : pay[Math.floor(gameRandom() * pay.length)];
+    const count = min + Math.floor(gameRandom() * (max - min + 1));
     const indices = shuffle(ALL_INDICES);
     for (let k = 0; k < Math.min(count, CELLS); k++) {
       board[indices[k]] = makeCell(target, freeSpins);

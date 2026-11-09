@@ -102,8 +102,11 @@ export function PaytableModal({ bet, onClose }: Props) {
             <div className="flex items-center gap-3 rounded-xl border border-white/15 bg-white/10 px-2.5 py-2">
               <WildPantherIcon kind="lollipop" className="size-10 shrink-0" />
               <div className="text-[11px] font-bold leading-snug text-white">
-                <span className="text-[#F5D76E]">Scatter</span> — {cfg.freeSpinsTriggerCount}+
-                awards Free Spins. Pays cash by cane count.
+                <span className="text-[#F5D76E]">Scatter</span> — {cfg.freeSpinsTriggerCount}+ on
+                the opening board awards {cfg.freeSpinsBase} Free Spins and pays cash by cane count.
+                In Free Spins, {cfg.freeSpinsRetriggerCount}+ canes add {cfg.freeSpinsRetrigger}{" "}
+                spins (up to {cfg.maxFsSessionSpins} spins per feature). New symbols that fall after
+                a win never carry canes.
               </div>
             </div>
 

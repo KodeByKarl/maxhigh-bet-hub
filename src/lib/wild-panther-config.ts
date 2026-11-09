@@ -54,6 +54,8 @@ export type WildPantherConfig = {
   freeSpinsRetriggerCount: number;
   freeSpinsBase: number;
   freeSpinsRetrigger: number;
+  /** Hard ceiling on spins played in one feature; at the ceiling further retriggers are ignored (earned wins are never reduced). */
+  maxFsSessionSpins: number;
   /** Ante multiplies scatter weight by this factor */
   anteScatterWeightMult: number;
   scatterCashTiers: WildPantherScatterCashTier[];
@@ -81,57 +83,52 @@ export const SYMBOL_LABELS: Record<WildPantherSymKind, string> = {
 
 export const DEFAULT_WILD_PANTHER_CONFIG: WildPantherConfig = {
   schemaVersion: 1,
-  deadSpinChancePercent: 38,
+  deadSpinChancePercent: 82,
   seedMelonBiasPercent: 35,
-  seedClusterMin: 8,
-  seedClusterMax: 12,
-  bombChanceBasePercent: 4,
-  bombChanceFreeSpinsPercent: 22,
+  seedClusterMin: 12,
+  seedClusterMax: 13,
+  bombChanceBasePercent: 1.5,
+  bombChanceFreeSpinsPercent: 3,
   bombTable: [
-    { mult: 2, weight: 28 },
-    { mult: 3, weight: 22 },
-    { mult: 4, weight: 16 },
-    { mult: 5, weight: 12 },
-    { mult: 8, weight: 8 },
-    { mult: 10, weight: 6 },
-    { mult: 12, weight: 3 },
-    { mult: 15, weight: 2 },
-    { mult: 20, weight: 1.5 },
-    { mult: 25, weight: 1 },
-    { mult: 50, weight: 0.4 },
-    { mult: 100, weight: 0.1 },
+    { mult: 2, weight: 34 },
+    { mult: 3, weight: 28 },
+    { mult: 4, weight: 22 },
+    { mult: 5, weight: 16 },
   ],
   freeSpinsTriggerCount: 4,
-  freeSpinsRetriggerCount: 3,
+  /** Scatters only land on opening boards (never in tumble refills). 4+ => ~7% retrigger x 5 spins = ~0.34 < 1, so features terminate (mean ~15 spins); maxFsSessionSpins is the hard ceiling. */
+  freeSpinsRetriggerCount: 4,
   freeSpinsBase: 10,
   freeSpinsRetrigger: 5,
-  anteScatterWeightMult: 2,
+  maxFsSessionSpins: 100,
+  anteScatterWeightMult: 1.27,
   scatterCashTiers: [
     { count: 3, mult: 1 },
     { count: 4, mult: 3 },
     { count: 5, mult: 5 },
     { count: 6, mult: 100 },
   ],
-  buyFeatureMult: 100,
+  /** Price of the whole 10-spin package (x bet). Calibrator output is per spin (4.1) x 10 spins = 41. */
+  buyFeatureMult: 41,
   superBuyFeatureMult: 500,
   anteBetMult: 1.25,
-  minCluster: 8,
+  minCluster: 12,
   /** Matches the 10,000× max win advertised in the lobby. */
   maxWinMult: 10_000,
   symbols: [
-    { id: "grape", kind: "grape", label: "10", weight: 18, pay: [1, 3, 8] },
-    { id: "plum", kind: "plum", label: "J", weight: 16, pay: [1.2, 3.5, 10] },
-    { id: "melon", kind: "melon", label: "Q", weight: 14, pay: [1.5, 4, 12] },
-    { id: "apple", kind: "apple", label: "K", weight: 12, pay: [2, 5, 20] },
-    { id: "blue", kind: "blue", label: "A", weight: 10, pay: [2.5, 6, 25] },
-    { id: "green", kind: "green", label: "Owl", weight: 8, pay: [4, 10, 35] },
-    { id: "purple", kind: "purple", label: "Wolf", weight: 6, pay: [6, 18, 50] },
-    { id: "heart", kind: "heart", label: "Ram", weight: 5, pay: [12, 30, 80] },
+    { id: "grape", kind: "grape", label: "10", weight: 18, pay: [0.02, 0.03, 0.08] },
+    { id: "plum", kind: "plum", label: "J", weight: 16, pay: [0.03, 0.05, 0.11] },
+    { id: "melon", kind: "melon", label: "Q", weight: 14, pay: [0.05, 0.06, 0.19] },
+    { id: "apple", kind: "apple", label: "K", weight: 12, pay: [0.06, 0.08, 0.38] },
+    { id: "blue", kind: "blue", label: "A", weight: 10, pay: [0.08, 0.24, 0.76] },
+    { id: "green", kind: "green", label: "Owl", weight: 8, pay: [0.19, 0.95, 4.73] },
+    { id: "purple", kind: "purple", label: "Wolf", weight: 6, pay: [0.57, 2.37, 14.19] },
+    { id: "heart", kind: "heart", label: "Ram", weight: 5, pay: [1.14, 7.57, 47.31] },
     {
       id: "lollipop",
       kind: "lollipop",
       label: "Scatter",
-      weight: 3.2,
+      weight: 1.292,
       pay: [0, 0, 0],
       scatter: true,
     },
@@ -257,6 +254,7 @@ export function normalizeWildPantherConfig(raw: unknown): WildPantherConfig {
     ),
     freeSpinsBase: clamp(Math.round(num(o.freeSpinsBase, d.freeSpinsBase)), 1, 100),
     freeSpinsRetrigger: clamp(Math.round(num(o.freeSpinsRetrigger, d.freeSpinsRetrigger)), 0, 100),
+    maxFsSessionSpins: clamp(Math.round(num(o.maxFsSessionSpins, d.maxFsSessionSpins)), 10, 200),
     anteScatterWeightMult: clamp(num(o.anteScatterWeightMult, d.anteScatterWeightMult), 1, 10),
     scatterCashTiers,
     buyFeatureMult: clamp(num(o.buyFeatureMult, d.buyFeatureMult), 1, 10_000),
