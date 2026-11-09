@@ -6,7 +6,8 @@ const jobs=['pool-cap','risk-controls','golden-panther','wild-panther','staging-
 for(const name of ['game-audit','realms-family','realms-engine-parity','cluster-referee','payline-referee'])jobs.push({name,file:`scripts/qa-${name}.ts`});
 const results=[];
 async function worker(){while(jobs.length){const job=jobs.shift();const start=Date.now();const log=fs.openSync(path.join(output,job.name+'.txt'),'w');
- const result=await new Promise(resolve=>{const child=spawn(process.execPath,['--import','tsx',job.file],{windowsHide:true,env:{...process.env,DATABASE_URL:'mysql://audit:audit@127.0.0.1:1/audit'},stdio:['ignore',log,log]});const timer=setTimeout(()=>child.kill(),240000);child.on('error',error=>resolve({error:error.message}));child.on('exit',(code,signal)=>{clearTimeout(timer);resolve({code,signal});});});
+ const timeoutMs=job.name==='cluster-referee'?600000:240000; // Full 80-game referee needs shared-runner CPU headroom; retain a bounded timeout.
+ const result=await new Promise(resolve=>{const child=spawn(process.execPath,['--import','tsx',job.file],{windowsHide:true,env:{...process.env,DATABASE_URL:'mysql://audit:audit@127.0.0.1:1/audit'},stdio:['ignore',log,log]});const timer=setTimeout(()=>child.kill(),timeoutMs);child.on('error',error=>resolve({error:error.message}));child.on('exit',(code,signal)=>{clearTimeout(timer);resolve({code,signal});});});
  fs.closeSync(log);results.push({name:job.name,...result,ms:Date.now()-start});console.log(JSON.stringify(results.at(-1)));fs.writeFileSync(path.join(output,'results.json'),JSON.stringify(results,null,2));
 }}
 await Promise.all([worker(),worker(),worker()]);if(results.some(result=>result.code!==0))process.exitCode=1;
