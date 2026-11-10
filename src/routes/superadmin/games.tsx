@@ -326,7 +326,7 @@ const RealmsConfigModal = lazy(() =>
 );
 import { REALMS_GAME_IDS, isRealmsGameId } from "@/lib/realms";
 import { toast } from "sonner";
-import { Sliders, ShieldCheck, Zap, History, Search } from "lucide-react";
+import { Sliders, ShieldCheck, Zap, History, Search, Lock } from "lucide-react";
 
 export const Route = createFileRoute("/superadmin/games")({
   component: SuperGamesPage,
@@ -1005,7 +1005,12 @@ function SuperGamesPage() {
                     {FULL_ENGINE_IDS.has(g.gameId) ? " · full config" : ""}
                   </div>
                 </div>
-                {!g.enabled && (
+                {g.locked && (
+                  <div className="absolute right-3 top-3 flex items-center gap-1 rounded-full bg-amber-500 px-2 py-0.5 text-[10px] font-bold uppercase text-black">
+                    <Lock size={10} aria-hidden /> Locked
+                  </div>
+                )}
+                {!g.locked && !g.enabled && (
                   <div className="absolute right-3 top-3 rounded-full bg-rose-500 px-2 py-0.5 text-[10px] font-bold uppercase text-foreground">
                     Disabled
                   </div>
@@ -1532,15 +1537,30 @@ function GameControlModal({
         </div>
 
         <div className="space-y-4 p-5">
+          {game.locked && (
+            <div
+              role="alert"
+              className="flex items-start gap-2 rounded-xl border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-sm font-semibold text-amber-200"
+            >
+              <Lock size={16} className="mt-0.5 shrink-0" aria-hidden />
+              <span>
+                Game Locked. Please settle the remaining project payment to activate this game.
+              </span>
+            </div>
+          )}
           <div className="flex flex-wrap gap-2">
             <button
               type="button"
               onClick={() => void onPatch(game.gameId, { enabled: !game.enabled })}
               className={`rounded-full px-3 py-1.5 text-xs font-bold ${
-                game.enabled ? "bg-emerald-500/20 text-emerald-400" : "bg-rose-500/20 text-rose-400"
+                game.locked
+                  ? "bg-amber-500/20 text-amber-300"
+                  : game.enabled
+                    ? "bg-emerald-500/20 text-emerald-400"
+                    : "bg-rose-500/20 text-rose-400"
               }`}
             >
-              {game.enabled ? "Enabled" : "Disabled"}
+              {game.locked ? "Locked" : game.enabled ? "Enabled" : "Disabled"}
             </button>
             <button
               type="button"

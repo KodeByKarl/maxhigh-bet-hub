@@ -36,10 +36,10 @@ try {
   if (maxClients !== null) await c.query("UPDATE account_limits SET max_client_accounts = ? WHERE id='default'", [maxClients]);
   if (enforce) await c.query("UPDATE account_limits SET enforced = ? WHERE id='default'", [enforce]);
   const [[lim1]] = await c.query("SELECT max_client_accounts m, enforced e, active_clients a FROM account_limits WHERE id='default'");
-  const [[real]] = await c.query("SELECT COUNT(*) n FROM users WHERE account_class='client' AND NOT (is_locked='yes' AND locked_by IS NOT NULL)");
+  const [[real]] = await c.query("SELECT COUNT(*) n FROM users WHERE account_class='client' AND role<>'player' AND NOT (is_locked='yes' AND locked_by IS NOT NULL)");
   say("after: limits", lim1); say("after: real active clients", real.n);
   if (lim1.a !== real.n) throw new Error("counter drift: active_clients does not equal the real count");
-  if (enforce === "yes" && real.n > lim1.m) console.log(`NOTE: ${real.n} active client accounts already exceed the cap ${lim1.m}. Nothing is disabled; only NEW client accounts are refused.`);
+  if (enforce === "yes" && real.n > lim1.m) console.log(`NOTE: ${real.n} active staff client accounts already exceed the cap ${lim1.m}. Nothing is disabled; only NEW client accounts are refused.`);
   if (apply) {
     await c.query("INSERT INTO audit_logs (id, actor_id, actor_username, action, target_type, target_id, summary, meta, created_at) VALUES (?,?,?,?,?,?,?,?,NOW())",
       [crypto.randomUUID(), null, "developer-script", "restrictions.activate", "account_limit", "default", `Classified ${classify.length} account(s); max=${maxClients ?? "unchanged"}; enforced=${enforce ?? "unchanged"}`.slice(0, 500), JSON.stringify({ classify, maxClients, enforce })]);

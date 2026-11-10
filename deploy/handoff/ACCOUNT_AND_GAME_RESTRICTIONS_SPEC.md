@@ -24,7 +24,7 @@ This document supersedes `RESTRICTIONS_DESIGN_NOT_IMPLEMENTED.md`.
 * **Entry points covered (tested):** spin/deal/start/ensure-session/room sync/fishing shot for every locked game; feature purchase; direct RPC calls. There is no WebSocket channel in this application.
 * **Rounds already paid for:** actions that *finish* a round (`...FreeSpinFn`, `...PlayFn`, `...FoldFn`, `...DrawFn`, `...GuessFn`, `...SkipFn`, `...CashoutFn`) are still allowed on a locked game so a player never loses a paid round or winnings; every new wager or purchase is refused. Verified: a feature bought before the lock was completed (10 free spins) and a new purchase was refused. Unknown/new action names default to refused.
 * **No data is touched:** nothing is deleted, no balance is changed, history and audit stay readable. Locked attempts write an audit row (`game.locked_attempt`).
-* **Message (exact):** "Game temporarily unavailable. Additional games will be activated after final payment confirmation."
+* **Message (exact):** "Game Locked. Please settle the remaining project payment to activate this game." (error code `GAME_LOCKED`; audit actions `game.locked_attempt` and `game.activation_rejected`)
 * **Not a client-editable flag:** the lock list is compiled into the release. Changing it means a new reviewed release; unlocking one game needs a signed grant (section 4).
 
 ## 3. Two client accounts
@@ -35,7 +35,8 @@ This document supersedes `RESTRICTIONS_DESIGN_NOT_IMPLEMENTED.md`.
 * **Disabled-account replacement policy:** an admin-disabled client account does not count; disabling one frees exactly one slot; re-enabling it while full is rejected.
 * **Existing accounts:** the migration only adds the column (default `client`) and marks `superadmin` accounts `admin`. UAT's 5 synthetic players stay `client` until the developer activation step classifies them `qa`. Nothing is deleted, disabled or edited otherwise (byte-for-byte check of every user row).
 * **Audit:** `account.create_rejected` for every refused attempt (application and database layers); `restrictions.activate` for the activation step.
-* **Messages (exact):** user-facing "User registration is temporarily unavailable. Additional users will be enabled after the remaining payment is completed."; admin screens only: "Waiting for Last Payment Before Adding New Users." (shown in the three create-account forms; not on the public login screen).
+* **Message (exact, every surface):** "Account Limit Reached. Please settle the remaining project payment to add more client accounts." (error code `ACCOUNT_LIMIT_REACHED`; audit action `account.create_rejected`). Shown in the create-account forms, the admin notice and API errors.
+* **Who counts (migration 0006):** only STAFF accounts (any role other than `player`, class `client`, not admin-disabled). Ordinary player accounts are never counted or limited. Promoting a player to a staff role while the cap is full is refused.
 
 ## 4. Unlocking / lifting (no master password, no backdoor)
 Grants are JSON payloads signed offline with an Ed25519 private key held by the developer (never on the VPS, never in the repository). The build contains only the **public** key(s) (`grantKeys` in the policy). Applying a grant needs: a superadmin session + password re-confirmation + typing `APPLY SIGNED GRANT` + a valid signature, for this environment, unexpired, single-use (nonce). It is recorded in an append-only table and audited (`entitlement.apply`). Stored grants are **re-verified on every load**, so a row inserted straight into the database without a valid signature unlocks nothing (tested). Kinds: `unlock-games`, `lift-client-cap`, `authorize-exempt-account`.

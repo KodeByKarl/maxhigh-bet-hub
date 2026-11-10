@@ -12,6 +12,7 @@ import { hash } from "bcryptjs";
 import {
   assertClientCapacity,
   auditClientLimitRejection,
+  countsTowardCap,
   ClientLimitError,
   isClientLimitDbError,
   resolveNewAccountClass,
@@ -369,7 +370,7 @@ export async function adminCreatePlayer(data: {
       }
 
       const accountClass = await resolveNewAccountClass(username, tx); // never from caller input; same connection as the open transaction
-      if (accountClass === "client")
+      if (countsTowardCap(role, accountClass))
         await assertClientCapacity(tx, {
           actor,
           attempt: `adminCreateUser @${username} (${role})`,
@@ -678,7 +679,7 @@ export async function adminUnlockUser(data: { userId: string }): Promise<PublicU
   try {
     await db.transaction(async (tx) => {
       // Re-enabling an admin-disabled client account counts as activating a client account.
-      if (user.accountClass === "client" && user.isLocked === "yes" && user.lockedBy)
+      if (countsTowardCap(user.role, user.accountClass) && user.isLocked === "yes" && user.lockedBy)
         await assertClientCapacity(tx, { actor, attempt: `unlock @${user.username}` });
       await tx
         .update(users)

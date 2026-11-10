@@ -25,14 +25,14 @@ Account **class** (separate from role): `client`, `admin`, `qa`. The class is se
 * **Audit log:** every sensitive action is recorded (user create/lock/unlock, balance adjust, role change, risk change, large wins, locked-game attempts, rejected account creations, entitlement grants). Entries cannot be edited in the application.
 
 ## 4. Locked games (when activated)
-* Locked games show a **Locked** badge in the lobby and the message *"Game temporarily unavailable. Additional games will be activated after final payment confirmation."* They cannot be played by anyone, including owners and superadmins.
+* Locked games show a **Locked** badge in the lobby and the message *"Game Locked. Please settle the remaining project payment to activate this game."* They cannot be played by anyone, including owners and superadmins.
 * A round that was already paid for (free spins, an open hand, a climb in progress) can still be **finished** so no one loses a paid round or a win. New bets and feature purchases are refused.
 * History, balances and audit records for locked games remain readable.
 * **Unlocking is not an admin setting.** It needs a grant signed by the developer (an Ed25519 signature) that a superadmin applies: Superadmin -> Entitlements -> paste the grant (payload, signature, key id), re-enter the password and type `APPLY SIGNED GRANT`. The grant is single-use, bound to this environment, recorded and audited. There is no master password and no hidden control. *(The Entitlements screen is not built; today the grant is applied through the audited `applyEntitlementGrantFn` server call by the developer. A small admin form is a recommended follow-up.)*
 
 ## 5. Client accounts (when activated)
 * Up to **2 active client accounts**. Administrative accounts (`admin` class) and synthetic QA accounts (`qa` class) do not count and are never removed.
-* A third client account is refused with *"User registration is temporarily unavailable. Additional users will be enabled after the remaining payment is completed."* Admin screens show *"Waiting for Last Payment Before Adding New Users."* (not shown on the public login page).
+* A third client account is refused with *"Account Limit Reached. Please settle the remaining project payment to add more client accounts."* Admin screens show *"Waiting for Last Payment Before Adding New Users."* (not shown on the public login page).
 * Replacing a client account: disable the old one (it stops counting), then create the new one.
 * Raising the limit, or authorizing an extra QA/admin account, is a developer-signed grant (same mechanism as unlocking).
 

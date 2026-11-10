@@ -45,8 +45,9 @@ class DumpCommands(unittest.TestCase):
     def test_backup_dump_is_consistent_lockless_and_restore_needs_no_lock_or_alter_privilege(self):
         command = recovery.backup_dump_command('/root/maxhigh-staging-admin/backup-client.cnf')
         for flag in ('--single-transaction', '--skip-lock-tables', '--skip-add-locks', '--skip-disable-keys',
-                     '--skip-triggers', '--no-create-db', '--skip-add-drop-table'):
+                     '--triggers', '--no-create-db', '--skip-add-drop-table'):
             self.assertIn(flag, command)
+        self.assertNotIn('--skip-triggers', command)
         self.assertEqual(command[-1], 'maxhigh_staging')
         self.assertNotIn('--add-locks', command)
         self.assertNotIn('--databases', command)
@@ -164,6 +165,32 @@ class Grants(unittest.TestCase):
         reasons = ' '.join(self.check([self.USAGE.replace('0123456789ABCDEF', 'SECRETHASH'), 'GRANT ALL PRIVILEGES ON *.* TO `u`@`h`']))
         self.assertNotIn('SECRETHASH', reasons)
         self.assertNotIn('GRANT', reasons)
+
+
+class ReviewedTriggers(unittest.TestCase):
+    OK = ','.join(name + '|root@localhost' for name in recovery.EXPECTED_TRIGGERS)
+
+    def test_pre_migration_database_without_triggers_is_allowed(self):
+        self.assertTrue(recovery.triggers_allowed(''))
+        self.assertTrue(recovery.triggers_allowed('NULL'))
+
+    def test_exactly_the_five_reviewed_root_triggers_are_allowed(self):
+        self.assertTrue(recovery.triggers_allowed(self.OK))
+
+    def test_anything_else_is_refused(self):
+        self.assertFalse(recovery.triggers_allowed(self.OK.replace('users_client_cap_ad|root@localhost', 'users_client_cap_ad|mallory@%')))
+        self.assertFalse(recovery.triggers_allowed(','.join(self.OK.split(',')[:4])))
+        self.assertFalse(recovery.triggers_allowed(self.OK + ',other|root@localhost'))
+
+    def test_restore_filter_removes_only_the_definer_of_trigger_lines(self):
+        self.assertIn("\\1", recovery.DEFINER_STRIP)
+        self.assertIn('DEFINER=', recovery.DEFINER_STRIP)
+        self.assertTrue(recovery.DEFINER_STRIP.startswith('s/^'))      # anchored: data rows are never rewritten
+
+    def test_trigger_fingerprint_is_part_of_the_schema_comparison(self):
+        self.assertIn("'triggers'", recovery.FINGERPRINT_SQL)
+        self.assertIn('TRIGGER', recovery.RESTORE_PRIVILEGES)
+        self.assertNotIn('TRIGGER', recovery.RESTORE_PRIVILEGES - {'TRIGGER'})
 
 
 if __name__ == '__main__':

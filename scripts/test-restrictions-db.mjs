@@ -1,4 +1,4 @@
-// Database-layer tests for migration 0005 (account classes, client-cap trigger, entitlement tables) on a DISPOSABLE MariaDB
+// Database-layer tests for migrations 0005 + 0006 (account classes, client-cap trigger, entitlement tables) on a DISPOSABLE MariaDB
 // (127.0.0.1:19307). Never touches any other server. Run: node scripts/test-restrictions-db.mjs
 import assert from "node:assert/strict";
 import fs from "node:fs";
@@ -26,12 +26,17 @@ async function freshDb(name, withFiles) {
   return c;
 }
 const all = fs.readdirSync("drizzle").filter((f) => f.endsWith(".sql")).sort();
-const before = all.filter((f) => !f.startsWith("0005"));
+const before = all.filter((f) => !/^000[56]/.test(f));        // pre-0005 (UAT state before the first restriction migration)
+const before6 = all.filter((f) => !f.startsWith("0006"));      // 0005 applied, 0006 pending
 const addUser = (c, name, role = "player", extra = {}) => c.query("INSERT INTO users(id,public_user_id,username,password_hash,balance,role,display_name) VALUES (?,?,?,?,?,?,?)", [randomUUID(), name, name, "x".repeat(60), extra.balance ?? 0, role, name]);
+const triggersOf = async (c) => (await c.query("SHOW TRIGGERS"))[0].map((t) => t.Trigger).sort().join(",");
+const addStaff = (c, name, extra = {}) => addUser(c, name, "admin", extra);
 const snapshot = async (c) => createHash("sha256").update(JSON.stringify((await c.query("SELECT id,public_user_id,username,password_hash,balance,role,is_locked,created_at FROM users ORDER BY id"))[0])).digest("hex");
 
 // ---------------------------------------------------------------- upgrade from the UAT-like pre-0005 state
 let up = await freshDb("restr_upgrade", before);
+// extra staff-style fixture so the upgrade path proves existing rows survive
+
 await addUser(up, "uat_owner", "superadmin");
 for (let i = 1; i <= 5; i++) await addUser(up, `uat_player${i}`, "player", { balance: 100000 });
 const uBefore = await snapshot(up);
@@ -67,9 +72,21 @@ await test("developer classification step (session flag) marks the 5 synthetic p
 });
 await test("when enforced: first and second client accounts are allowed, the third is rejected", async () => {
   await up.query("UPDATE account_limits SET enforced='yes' WHERE id='default'");
-  await addUser(up, "client_one"); await addUser(up, "client_two");
-  await assert.rejects(addUser(up, "client_three"), /CLIENT_ACCOUNT_LIMIT/);
-  assert.equal((await up.query("SELECT COUNT(*) n FROM users WHERE account_class='client'"))[0][0].n, 2);
+  await addStaff(up, "client_one"); await addStaff(up, "client_two");
+  await assert.rejects(addStaff(up, "client_three"), /CLIENT_ACCOUNT_LIMIT/);
+  assert.equal((await up.query("SELECT COUNT(*) n FROM users WHERE account_class='client' AND role<>'player'"))[0][0].n, 2);
+});
+await test("ordinary PLAYER accounts are never limited and never counted, even when the staff cap is full", async () => {
+  const before = (await up.query("SELECT active_clients a FROM account_limits"))[0][0].a;
+  for (let i = 1; i <= 5; i++) await addUser(up, `new_player_${i}`, "player");
+  assert.equal((await up.query("SELECT active_clients a FROM account_limits"))[0][0].a, before);
+  await up.query("DELETE FROM users WHERE username LIKE 'new\_player\_%'");
+});
+await test("promoting a player to a staff role is refused while the staff cap is full, and the role stays unchanged", async () => {
+  await addUser(up, "to_promote", "player");
+  await assert.rejects(up.query("UPDATE users SET role='admin' WHERE username='to_promote'"), /CLIENT_ACCOUNT_LIMIT/);
+  assert.equal((await up.query("SELECT role FROM users WHERE username='to_promote'"))[0][0].role, "player");
+  await up.query("DELETE FROM users WHERE username='to_promote'");
 });
 await test("existing admin and qa accounts keep working (rows intact, balances untouched) while the cap is enforced", async () => {
   await up.query("UPDATE users SET display_name='still ok' WHERE username IN ('uat_owner','uat_player3')");
@@ -78,18 +95,18 @@ await test("existing admin and qa accounts keep working (rows intact, balances u
 await test("a disabled (admin-locked) client frees a slot; re-enabling it when full is rejected", async () => {
   const owner = (await up.query("SELECT id FROM users WHERE username='uat_owner'"))[0][0].id;
   await up.query("UPDATE users SET is_locked='yes', locked_by=?, locked_until=NOW() + INTERVAL 1 YEAR WHERE username='client_two'", [owner]);
-  await addUser(up, "client_replacement");                                     // slot freed by the disabled account
+  await addStaff(up, "client_replacement");                                     // slot freed by the disabled account
   await assert.rejects(up.query("UPDATE users SET is_locked='no' WHERE username='client_two'"), /CLIENT_ACCOUNT_LIMIT/);
 });
 await test("lifting the cap (limit raised by a developer step) allows another client", async () => {
   await up.query("UPDATE account_limits SET max_client_accounts=3 WHERE id='default'");
-  await addUser(up, "client_third_after_lift");
+  await addStaff(up, "client_third_after_lift");
 });
 
 await test("trigger-maintained counter equals the real number of active client accounts after inserts, locks, unlocks and deletes", async () => {
   await up.query("DELETE FROM users WHERE username='client_third_after_lift'");
   const [[c]] = await up.query("SELECT active_clients a FROM account_limits WHERE id='default'");
-  const [[r]] = await up.query("SELECT COUNT(*) n FROM users WHERE account_class='client' AND NOT (is_locked='yes' AND locked_by IS NOT NULL)");
+  const [[r]] = await up.query("SELECT COUNT(*) n FROM users WHERE account_class='client' AND role<>'player' AND NOT (is_locked='yes' AND locked_by IS NOT NULL)");
   assert.equal(c.a, r.n);
 });
 
@@ -98,7 +115,7 @@ const conc = await freshDb("restr_conc", all);
 await conc.query("UPDATE account_limits SET enforced='yes', max_client_accounts=2 WHERE id='default'");
 await test("20 concurrent client creations on separate connections -> exactly 2 succeed, the rest are rejected by the cap", async () => {
   const conns = await Promise.all(Array.from({ length: 20 }, () => conn("restr_conc")));
-  const out = await Promise.allSettled(conns.map((c, i) => addUser(c, `race_${i}`)));
+  const out = await Promise.allSettled(conns.map((c, i) => addStaff(c, `race_${i}`)));
   await Promise.all(conns.map((c) => c.end()));
   const ok = out.filter((o) => o.status === "fulfilled").length;
   const bad = out.filter((o) => o.status === "rejected").map((o) => o.reason.message);
@@ -106,6 +123,32 @@ await test("20 concurrent client creations on separate connections -> exactly 2 
   assert.ok(bad.every((m) => /CLIENT_ACCOUNT_LIMIT|Deadlock|Lock wait/.test(m)), "unexpected failure kind: " + bad.find((m) => !/CLIENT_ACCOUNT_LIMIT|Deadlock|Lock wait/.test(m)));
   assert.equal((await conc.query("SELECT COUNT(*) n FROM users"))[0][0].n, 2);
   assert.equal((await conc.query("SELECT active_clients a FROM account_limits WHERE id='default'"))[0][0].a, 2);
+});
+
+// ---------------------------------------------------------------- 0006 upgrade from a database that already has 0005 (the real UAT path)
+await test("0006 on a 0005 database: recount excludes players, nothing else changes, still inactive", async () => {
+  const u6 = await freshDb("restr_u6", before6);
+  await addUser(u6, "o", "superadmin");
+  for (let i = 1; i <= 5; i++) await addUser(u6, `p${i}`, "player", { balance: 1000 });
+  await addUser(u6, "staff1", "admin");
+  await u6.query("SET @maxhigh_class_admin = 1");
+  await u6.query("UPDATE users SET account_class='admin' WHERE username='o'");      // as the 0005 migration does for superadmins
+  await u6.query("SET @maxhigh_class_admin = 0");
+  assert.equal((await u6.query("SELECT active_clients a FROM account_limits"))[0][0].a, 6, "0005 counted players too");
+  const snap = await snapshot(u6);
+  await migrate(u6, { apply: true, directory: "drizzle" });
+  assert.equal(await snapshot(u6), snap);
+  const [[l]] = await u6.query("SELECT active_clients a, enforced e FROM account_limits");
+  assert.deepEqual([l.a, l.e], [1, "no"]);
+  await u6.query("UPDATE account_limits SET enforced='yes' WHERE id='default'");
+  await addStaff(u6, "staff2");
+  await assert.rejects(addStaff(u6, "staff3"), /CLIENT_ACCOUNT_LIMIT/);
+  await addUser(u6, "p6", "player");
+  const rerun = fs.readFileSync("drizzle/0006_staff_accounts_only_cap.sql", "utf8").split("--> statement-breakpoint").map((x) => x.trim()).filter(Boolean);
+  for (let i = 0; i < 2; i++) for (const q of rerun) await u6.query(q);                // re-runnable
+  assert.equal((await triggersOf(u6)).split(",").length, 5);
+  assert.equal((await u6.query("SELECT active_clients a FROM account_limits"))[0][0].a, 2);
+  await u6.end();
 });
 
 // ---------------------------------------------------------------- entitlement table
@@ -117,7 +160,6 @@ await test("entitlement_grants rejects a replayed nonce", async () => {
 
 // ---------------------------------------------------------------- 0005 is re-runnable: no half-applied state is possible
 const statements = fs.readFileSync("drizzle/0005_account_classes_and_entitlements.sql", "utf8").split("--> statement-breakpoint").map((x) => x.trim()).filter(Boolean);
-const triggersOf = async (c) => (await c.query("SHOW TRIGGERS"))[0].map((t) => t.Trigger).sort().join(",");
 await test("executing every 0005 statement a second and third time succeeds and changes nothing (idempotent)", async () => {
   const rr = await freshDb("restr_rerun", before);
   await addUser(rr, "keep_a", "player", { balance: 10 }); await addUser(rr, "keep_s", "superadmin");

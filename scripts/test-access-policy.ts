@@ -66,10 +66,19 @@ for (const who of roles) {
 ok("a round already paid for can still be finished on a locked game (no stranded sessions)");
 for (const who of roles) await assertGameAccess("color-game", "colorGameDealFn", who);
 ok("unlocked games are untouched");
-assert.equal(GAME_LOCKED_MESSAGE, "Game temporarily unavailable. Additional games will be activated after final payment confirmation.");
-assert.equal(mod.REGISTRATION_LIMIT_MESSAGE, "User registration is temporarily unavailable. Additional users will be enabled after the remaining payment is completed.");
-assert.equal(mod.ADMIN_LIMIT_MESSAGE, "Waiting for Last Payment Before Adding New Users.");
-ok("client-facing messages match the approved wording exactly");
+assert.equal(GAME_LOCKED_MESSAGE, "Game Locked. Please settle the remaining project payment to activate this game.");
+assert.equal(mod.ACCOUNT_LIMIT_MESSAGE, "Account Limit Reached. Please settle the remaining project payment to add more client accounts.");
+assert.equal(mod.REGISTRATION_LIMIT_MESSAGE, mod.ACCOUNT_LIMIT_MESSAGE);
+assert.equal(mod.ADMIN_LIMIT_MESSAGE, mod.ACCOUNT_LIMIT_MESSAGE);
+assert.equal(new mod.GameLockedError().code, "GAME_LOCKED");
+assert.equal(new mod.ClientLimitError("x", 2).code, "ACCOUNT_LIMIT_REACHED");
+assert.equal(new mod.ClientLimitError("x", 2).message, mod.ACCOUNT_LIMIT_MESSAGE);
+// only STAFF accounts count toward the cap; ordinary players never do
+assert.equal(mod.countsTowardCap("player", "client"), false);
+for (const r of ["admin", "agent", "master_agent", "superadmin"]) assert.equal(mod.countsTowardCap(r, "client"), true, r);
+assert.equal(mod.countsTowardCap("admin", "qa"), false);
+assert.equal(mod.countsTowardCap("superadmin", "admin"), false);
+ok("payment notifications use the final wording, stable error codes, and the cap counts staff accounts only");
 
 // ---- grant verification (keyed policy; verifyGrant itself never touches the database)
 overridePolicyForDisposableTests(policy);

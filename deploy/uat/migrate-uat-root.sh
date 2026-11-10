@@ -21,5 +21,5 @@ if [ "$MODE" = apply ]; then
   echo "== pending after apply"; "$N" .output/migrate.mjs
   echo "== trigger definers"
   mariadb -N -e "SELECT trigger_name,definer FROM information_schema.triggers WHERE trigger_schema='maxhigh_staging' ORDER BY 1"
-  mariadb -N -e "SELECT version FROM maxhigh_staging._maxhigh_migrations ORDER BY 1; SELECT enforced,max_clients FROM maxhigh_staging.account_limits; SELECT COUNT(*) FROM maxhigh_staging.entitlement_grants"
+  mariadb -N -e "SELECT version FROM maxhigh_staging._maxhigh_migrations ORDER BY 1; SELECT enforced,max_client_accounts,active_clients FROM maxhigh_staging.account_limits; SELECT COUNT(*) FROM maxhigh_staging.entitlement_grants"
 fi

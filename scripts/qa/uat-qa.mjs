@@ -203,7 +203,7 @@ async function refusal(c, g, label, input) {
 }
 
 // ---------------------------------------------------------------- locked-game access check (restricted configuration)
-const LOCKED_MSG = "Game temporarily unavailable. Additional games will be activated after final payment confirmation.";
+const LOCKED_MSG = "Game Locked. Please settle the remaining project payment to activate this game.";
 async function lockedCheck(c, g) {
   const before = await snapshot(c);
   let rejected = false, msg = "";

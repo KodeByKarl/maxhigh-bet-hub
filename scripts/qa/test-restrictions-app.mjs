@@ -14,9 +14,9 @@ fs.mkdirSync(OUT, { recursive: true });
 const results = [];
 const note = (name, ok, detail = "") => { results.push({ name, ok, detail }); console.log(`${ok ? "PASS" : "FAIL"}  ${name}${detail ? "  - " + String(detail).slice(0, 200) : ""}`); };
 const run = (args, env = {}) => spawnSync(process.execPath, args, { env: { ...process.env, ...env }, encoding: "utf8", maxBuffer: 128 * 1024 * 1024 });
-const LOCKED = "Game temporarily unavailable. Additional games will be activated after final payment confirmation.";
-const REG = "User registration is temporarily unavailable. Additional users will be enabled after the remaining payment is completed.";
-const ADMIN = "Waiting for Last Payment Before Adding New Users.";
+const LOCKED = "Game Locked. Please settle the remaining project payment to activate this game.";
+const REG = "Account Limit Reached. Please settle the remaining project payment to add more client accounts.";
+const ADMIN = REG;
 
 // ---- clone up (restrictions OFF)
 const up = run(["scripts/qa/local-clone.mjs", "setup"], { CLONE_ROOT_PW: ROOT_PW });
@@ -136,9 +136,10 @@ try {
   }
 
   // ============================================================ Phase B2: client-account cap
-  const clientsNow = async () => (await q("SELECT COUNT(*) n FROM users WHERE account_class='client' AND NOT (is_locked='yes' AND locked_by IS NOT NULL)"))[0].n;
-  note("before: 0 active client accounts (1 admin + 5 qa preserved)", (await clientsNow()) === 0);
-  const mk = (name, extra = {}) => owner.rpc("superCreateUserFn", { username: name, password: "Client-Pass-12345", role: "player", balance: 0, displayName: name, ...extra });
+  const clientsNow = async () => (await q("SELECT COUNT(*) n FROM users WHERE account_class='client' AND role<>'player' AND NOT (is_locked='yes' AND locked_by IS NOT NULL)"))[0].n;
+  note("before: 0 active staff client accounts (1 admin + 5 qa preserved)", (await clientsNow()) === 0);
+  const mk = (name, extra = {}) => owner.rpc("superCreateUserFn", { username: name, password: "Client-Pass-12345", role: "admin", balance: 0, displayName: name, ...extra });
+  const mkPlayer = (name) => owner.rpc("superCreateUserFn", { username: name, password: "Client-Pass-12345", role: "player", balance: 0, displayName: name });
   const c1 = await mk("client_one", { accountClass: "qa" }).catch((e) => ({ error: e.message }));
   const c1row = (await q("SELECT id, account_class FROM users WHERE username='client_one'"))[0];
   note("first client account allowed; caller-supplied accountClass is ignored/refused (cannot self-assign exemption)", !!c1row && c1row.account_class === "client", c1.error ?? "created as client");
@@ -156,12 +157,18 @@ try {
     return { out, ms: Date.now() - t0 };
   };
   const b1 = await burst("super path", (i) => mk(`race_s_${i}`)).catch((e) => ({ error: e.message }));
-  note("24 concurrent creations (superadmin path, cold grant cache) neither deadlock nor bypass the cap", !b1.error && b1.out.every((p) => p.status === "rejected" && /temporarily unavailable/.test(String(p.reason?.message))) && (await clientsNow()) === 2, b1.error ?? `all rejected in ${b1.ms}ms`);
-  const b2 = await burst("admin path", (i) => owner.rpc("adminCreateUserFn", { username: `race_a_${i}`, password: "Client-Pass-12345", role: "player", balance: 0 })).catch((e) => ({ error: e.message }));
-  note("24 concurrent creations (admin path, cold grant cache) neither deadlock nor bypass the cap", !b2.error && b2.out.every((p) => p.status === "rejected" && /temporarily unavailable/.test(String(p.reason?.message))) && (await clientsNow()) === 2, b2.error ?? `all rejected in ${b2.ms}ms`);
+  note("24 concurrent creations (superadmin path, cold grant cache) neither deadlock nor bypass the cap", !b1.error && b1.out.every((p) => p.status === "rejected" && /Account Limit Reached/.test(String(p.reason?.message))) && (await clientsNow()) === 2, b1.error ?? `all rejected in ${b1.ms}ms`);
+  const b2 = await burst("admin path", (i) => owner.rpc("adminCreateUserFn", { username: `race_a_${i}`, password: "Client-Pass-12345", role: "admin", balance: 0 })).catch((e) => ({ error: e.message }));
+  note("24 concurrent creations (admin path, cold grant cache) neither deadlock nor bypass the cap", !b2.error && b2.out.every((p) => p.status === "rejected" && /Account Limit Reached/.test(String(p.reason?.message))) && (await clientsNow()) === 2, b2.error ?? `all rejected in ${b2.ms}ms`);
   note("the app still answers after the bursts", (await withTimeout(fetch(envC.UAT_BASE + "/api/health").then((r) => r.ok), 10000, "health").catch(() => false)) === true);
   const [[rej]] = await db.query("SELECT COUNT(*) n FROM audit_logs WHERE action='account.create_rejected'");
   note("every rejected attempt is audited (1 + 24 + 24)", rej.n >= 49, `${rej.n} rows`);
+  // ordinary players are NOT limited while the staff cap is full
+  const pls = await Promise.all(["pl_extra_1", "pl_extra_2", "pl_extra_3"].map((n) => mkPlayer(n).then(() => null, (e) => e.message)));
+  note("ordinary PLAYER accounts can still be created while the staff cap is full (they are not counted)", pls.every((x) => x === null) && (await clientsNow()) === 2, pls.filter(Boolean).join("; "));
+  const plId = (await q("SELECT id FROM users WHERE username='pl_extra_1'"))[0].id;
+  const promo = await refused(() => owner.rpc("superSetUserRoleFn", { userId: plId, role: "admin" }));
+  note("promoting a player to a staff role while the cap is full is REJECTED with the approved message", promo.refused && promo.msg === REG && (await q("SELECT role FROM users WHERE username='pl_extra_1'"))[0].role === "player", promo.msg);
   const adm = await owner.rpc("getAdminLimitStatusFn", undefined, { method: "GET" });
   note("admin screen shows the approved waiting message", adm.restricted === true && adm.message === ADMIN, adm.message);
   const noAdmin = await refused(() => new Client().rpc("getAdminLimitStatusFn", undefined, { method: "GET" }));
@@ -175,6 +182,20 @@ try {
   note("disabling a client account frees exactly one slot (documented replacement policy)", !c3b.error && (await clientsNow()) === 2, c3b.error);
   const unl = await refused(() => owner.rpc("adminUnlockUserFn", { userId: c1row.id }));
   note("re-enabling the disabled account while full is REJECTED", unl.refused && unl.msg === REG, unl.msg);
+  // admin catalog: locked games are shown as Locked and cannot be switched on through the admin API
+  const catalogRows = await owner.rpc("listSuperGamesFn", undefined, { method: "GET" });
+  const lockedRows = catalogRows.filter((r) => r.locked), openRows = catalogRows.filter((r) => !r.locked);
+  note("admin catalog marks every restricted game Locked and none of the available games", lockedRows.length > 0 && lockedRows.every((r) => lockedSet.has(r.gameId)) && openRows.every((r) => !lockedSet.has(r.gameId)), `${lockedRows.length} locked / ${openRows.length} open listed`);
+  const actTarget = lockedRows[0]?.gameId;
+  const act1 = await refused(() => owner.rpc("superUpdateGameFn", { gameId: actTarget, enabled: true }));
+  note("manual activation of a locked game through the admin API is REJECTED with the approved message", act1.refused && act1.msg === LOCKED, act1.msg);
+  const [[actAud]] = await db.query("SELECT COUNT(*) n FROM audit_logs WHERE action='game.activation_rejected'");
+  note("the rejected activation is audited", actAud.n >= 1);
+  const bulk = await owner.rpc("bulkApplyGameOutcomesFn", { scope: "all", deadSpinPct: 40, winChancePct: 60, maxMultiplier: 5000, rtp: 96 }).catch((e) => ({ error: e.message }));
+  const [[lockedCtl]] = await db.query("SELECT COUNT(*) n FROM game_controls WHERE game_id IN (?)", [[...lockedSet]]);
+  note("bulk admin actions do not create or enable controls for locked games", lockedCtl.n === 0, bulk.error ?? `${lockedCtl.n} control rows for locked games`);
+  const stillClosed = await refused(() => owner.rpc(...spinCall(actTarget)));
+  note("a locked game still refuses play after the activation attempt", stillClosed.msg === LOCKED, stillClosed.msg);
   // existing QA/admin identities keep working
   const qaOk = new Client(); await qaOk.login("uat_player3");
   const before = await qaOk.balance();
@@ -229,7 +250,7 @@ try {
   // ============================================================ integrity
   const rec = run(["scripts/qa/clone-reconcile.mjs"], { CLONE_ROOT_PW: ROOT_PW });
   note("wallet/ledger reconciliation after all restricted-mode tests", /chain breaks: 0/.test(rec.stdout) && /negative balances: 0/.test(rec.stdout));
-  const [[counter]] = await db.query("SELECT a.active_clients a, (SELECT COUNT(*) FROM users WHERE account_class='client' AND NOT (is_locked='yes' AND locked_by IS NOT NULL)) r FROM account_limits a WHERE id='default'");
+  const [[counter]] = await db.query("SELECT a.active_clients a, (SELECT COUNT(*) FROM users WHERE account_class='client' AND role<>'player' AND NOT (is_locked='yes' AND locked_by IS NOT NULL)) r FROM account_limits a WHERE id='default'");
   note("trigger-maintained cap counter equals reality", counter.a === counter.r, `${counter.a} vs ${counter.r}`);
 } catch (e) {
   note("TEST HARNESS ERROR", false, e.stack?.split("\n").slice(0, 3).join(" | ") ?? e.message);

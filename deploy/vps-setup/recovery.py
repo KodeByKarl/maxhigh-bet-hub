@@ -13,7 +13,26 @@ RECIPIENT = re.compile(r'age1[02-9ac-hj-np-z]{58}')
 BACKUP_ACCOUNT = 'maxhigh_stage_backup'
 RESTORE_ACCOUNT = 'maxhigh_stage_restore'
 BACKUP_PRIVILEGES = frozenset({'SELECT', 'SHOW VIEW', 'TRIGGER'})
-RESTORE_PRIVILEGES = frozenset({'SELECT', 'INSERT', 'CREATE', 'INDEX', 'REFERENCES'})
+# TRIGGER is needed ONLY on the disposable restore-check schema, so the reviewed migration-0005/0006 triggers can be recreated there.
+RESTORE_PRIVILEGES = frozenset({'SELECT', 'INSERT', 'CREATE', 'INDEX', 'REFERENCES', 'TRIGGER'})
+# The only triggers a backup may contain: the reviewed access-restriction triggers (migrations 0005/0006), all owned by root@localhost.
+# Any other trigger, routine, event or view still requires a reviewed expansion of this tool.
+EXPECTED_TRIGGERS = ('users_class_guard_bu', 'users_client_cap_ad', 'users_client_cap_ai', 'users_client_cap_au', 'users_client_cap_bi')
+EXPECTED_DEFINER = 'root@localhost'
+TRIGGER_LIST_SQL = ("SELECT GROUP_CONCAT(CONCAT(trigger_name,'|',definer) ORDER BY trigger_name SEPARATOR ',') "
+                    "FROM information_schema.triggers WHERE trigger_schema=DATABASE();")
+# mariadb-dump writes triggers as "/*!50003 CREATE*/ /*!50017 DEFINER=`u`@`h`*/ /*!50003 TRIGGER ..." on one line. The restore account cannot
+# (and must not) assume another account's identity, so only THAT line shape loses its DEFINER clause; data rows are never touched.
+DEFINER_STRIP = r"s/^(\/\*!50003 CREATE\*\/ )\/\*!50017 DEFINER=`[^`]+`@`[^`]+`\*\/ /\1/"
+
+
+def triggers_allowed(listing):
+    """Empty (pre-0005) or exactly the reviewed five, all defined by root@localhost. Anything else is refused."""
+    listing = (listing or '').strip()
+    if listing in ('', 'NULL'):
+        return True
+    return listing == ','.join(name + '|' + EXPECTED_DEFINER for name in EXPECTED_TRIGGERS)
+
 # Identical statements run against the source and the restore schema (each client pins its own DATABASE()).
 FINGERPRINT_SQL = """SET SESSION group_concat_max_len=10000000;
 SELECT 'tables',COUNT(*),MD5(GROUP_CONCAT(CONCAT_WS('|',table_name,engine,table_collation) ORDER BY table_name)) FROM information_schema.tables WHERE table_schema=DATABASE() AND table_type='BASE TABLE'
@@ -21,6 +40,7 @@ UNION ALL SELECT 'columns',COUNT(*),MD5(GROUP_CONCAT(CONCAT_WS('|',table_name,or
 UNION ALL SELECT 'constraints',COUNT(*),MD5(GROUP_CONCAT(CONCAT_WS('|',table_name,constraint_name,constraint_type) ORDER BY table_name,constraint_name)) FROM information_schema.table_constraints WHERE constraint_schema=DATABASE()
 UNION ALL SELECT 'fk-rules',COUNT(*),MD5(GROUP_CONCAT(CONCAT_WS('|',table_name,constraint_name,delete_rule,update_rule,referenced_table_name) ORDER BY table_name,constraint_name)) FROM information_schema.referential_constraints WHERE constraint_schema=DATABASE()
 UNION ALL SELECT 'checks',COUNT(*),MD5(GROUP_CONCAT(CONCAT_WS('|',table_name,constraint_name,check_clause) ORDER BY table_name,constraint_name)) FROM information_schema.check_constraints WHERE constraint_schema=DATABASE()
+UNION ALL SELECT 'triggers',COUNT(*),MD5(IFNULL(GROUP_CONCAT(CONCAT_WS('|',trigger_name,event_manipulation,action_timing,event_object_table,action_statement) ORDER BY trigger_name),'')) FROM information_schema.triggers WHERE trigger_schema=DATABASE()
 UNION ALL SELECT 'indexes',COUNT(*),MD5(GROUP_CONCAT(CONCAT_WS('|',table_name,index_name,seq_in_index,column_name,non_unique) ORDER BY table_name,index_name,seq_in_index)) FROM information_schema.statistics WHERE table_schema=DATABASE();"""
 
 
@@ -59,7 +79,7 @@ def backup_dump_command(options):
     # --skip-disable-keys keeps ALTER TABLE out of it so the restore account never needs ALTER.
     return ['nice', '-n', '19', 'ionice', '-c', '3', 'mariadb-dump', '--defaults-extra-file=' + str(options),
             '--single-transaction', '--quick', '--hex-blob', '--skip-lock-tables', '--skip-add-locks',
-            '--skip-disable-keys', '--skip-comments', '--skip-add-drop-table', '--no-create-db', '--skip-triggers', DB]
+            '--skip-disable-keys', '--skip-comments', '--skip-add-drop-table', '--no-create-db', '--triggers', DB]
 
 
 def compare_dump_command(options, database):
@@ -132,7 +152,8 @@ def backup(args):
     require(sql(options, DB, 'SELECT DATABASE();') == DB, 'Wrong backup target')
     require_minimal_account(options, DB, BACKUP_PRIVILEGES)
     require(sql(options, DB, "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema=DATABASE() AND table_type='BASE TABLE' AND engine<>'InnoDB';") == '0', 'Non-InnoDB staging table requires separate backup plan')
-    require(sql(options, DB, "SELECT (SELECT COUNT(*) FROM information_schema.triggers WHERE trigger_schema=DATABASE())+(SELECT COUNT(*) FROM information_schema.routines WHERE routine_schema=DATABASE())+(SELECT COUNT(*) FROM information_schema.events WHERE event_schema=DATABASE())+(SELECT COUNT(*) FROM information_schema.views WHERE table_schema=DATABASE());") == '0', 'Views/triggers/routines/events require reviewed expanded backup/restore')
+    require(triggers_allowed(sql(options, DB, TRIGGER_LIST_SQL)), 'Unexpected triggers (only the reviewed root@localhost access-restriction triggers are supported); reviewed expansion required')
+    require(sql(options, DB, "SELECT (SELECT COUNT(*) FROM information_schema.routines WHERE routine_schema=DATABASE())+(SELECT COUNT(*) FROM information_schema.events WHERE event_schema=DATABASE())+(SELECT COUNT(*) FROM information_schema.views WHERE table_schema=DATABASE());") == '0', 'Views/routines/events require reviewed expanded backup/restore')
     require(BACKUPS.is_dir(), 'Provision root-private backup directory first')
     path = BACKUPS / ('staging-' + datetime.now(timezone.utc).strftime('%Y%m%dT%H%M%S%fZ') + '.sql.gz.age')
     with path.open('xb') as output:
@@ -158,7 +179,8 @@ def restore(args):
     actual = sql(options, RESTORE_DB, 'SELECT DATABASE(); SELECT COUNT(*) FROM information_schema.tables WHERE table_schema=DATABASE();')
     require(actual == RESTORE_DB + '\n0', 'Restorecheck target must be precreated and EMPTY; no drop/overwrite')
     require(args.restore_grants_reviewed, 'Approve restore identity has no production or source-staging grants')
-    decrypt = [['age', '-d', '-i', identity, path], ['gzip', '-d']]
+    require(sql(options, RESTORE_DB, "SELECT COUNT(*) FROM information_schema.triggers WHERE trigger_schema=DATABASE();") == '0', 'Restorecheck target must hold no triggers')
+    decrypt = [['age', '-d', '-i', identity, path], ['gzip', '-d'], ['sed', '-E', DEFINER_STRIP]]
     # Complete authenticated decryption/decompression validation before any import.
     pipeline([['age', '-d', '-i', identity, path], ['gzip', '-t']])
     pipeline([*decrypt, ['mariadb', '--defaults-extra-file=' + str(options), RESTORE_DB]])

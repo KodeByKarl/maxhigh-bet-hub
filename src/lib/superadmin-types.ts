@@ -7,6 +7,8 @@ export type SuperGameRow = {
   category: string;
   thumb: string;
   enabled: boolean;
+  /** True while the game is restricted pending the remaining project payment (display and activation guard). */
+  locked?: boolean;
   featured: boolean;
   sortOrder: number;
   tag: string | null;

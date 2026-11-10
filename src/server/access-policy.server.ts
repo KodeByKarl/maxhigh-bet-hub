@@ -21,10 +21,23 @@ import { writeAuditLog } from "./admin/audit.server";
 import { ACCESS_POLICY, type AccessPolicy } from "./policy/access-policy.config";
 
 export const GAME_LOCKED_MESSAGE =
-  "Game temporarily unavailable. Additional games will be activated after final payment confirmation.";
-export const REGISTRATION_LIMIT_MESSAGE =
-  "User registration is temporarily unavailable. Additional users will be enabled after the remaining payment is completed.";
-export const ADMIN_LIMIT_MESSAGE = "Waiting for Last Payment Before Adding New Users.";
+  "Game Locked. Please settle the remaining project payment to activate this game.";
+export const ACCOUNT_LIMIT_MESSAGE =
+  "Account Limit Reached. Please settle the remaining project payment to add more client accounts.";
+// Same text on every surface (create forms, admin notice, API errors).
+export const REGISTRATION_LIMIT_MESSAGE = ACCOUNT_LIMIT_MESSAGE;
+export const ADMIN_LIMIT_MESSAGE = ACCOUNT_LIMIT_MESSAGE;
+/** Stable machine-readable codes, carried on the error object and written to the audit metadata. */
+export const GAME_LOCKED_CODE = "GAME_LOCKED";
+export const ACCOUNT_LIMIT_CODE = "ACCOUNT_LIMIT_REACHED";
+
+export class GameLockedError extends Error {
+  readonly code = GAME_LOCKED_CODE;
+  constructor() {
+    super(GAME_LOCKED_MESSAGE);
+    this.name = "GameLockedError";
+  }
+}
 
 // ------------------------------------------------------------------------------------------------ policy source
 let policy: AccessPolicy = ACCESS_POLICY;
@@ -181,9 +194,30 @@ export async function assertGameAccess(
     summary: `Blocked ${action} on locked game ${gameId}`,
     targetType: "game",
     targetId: gameId,
-    meta: { action },
+    meta: { action, code: GAME_LOCKED_CODE },
   });
-  throw new Error(GAME_LOCKED_MESSAGE); // same message for every role, including owner/superadmin
+  throw new GameLockedError(); // same message for every role, including owner/superadmin
+}
+
+/**
+ * Admin attempts to switch a restricted game ON. Refused for every role while the lock is in force, audited with a stable code.
+ * (The wager gate refuses play regardless of this flag; this makes the admin screen and API say so explicitly.)
+ */
+export async function assertGameActivatable(
+  gameId: string,
+  actor: { id: string; username: string },
+): Promise<void> {
+  const locked = await getEffectiveLockedGames();
+  if (!locked.has(gameId)) return;
+  await writeAuditLog({
+    actor,
+    action: "game.activation_rejected",
+    summary: `Blocked activation of locked game ${gameId}`,
+    targetType: "game",
+    targetId: gameId,
+    meta: { code: GAME_LOCKED_CODE },
+  });
+  throw new GameLockedError();
 }
 
 /** Public, non-sensitive view for the lobby: which games show as locked. No payment or implementation details. */
@@ -196,12 +230,17 @@ export async function getPublicAccessStatus(): Promise<{
 }
 
 // ------------------------------------------------------------------------------------------------ client-account cap
+/** Only STAFF accounts (any role other than player) count toward the cap; ordinary players never do. Mirrors migration 0006. */
+export const countsTowardCap = (role: string, accountClass: string) =>
+  accountClass === "client" && role !== "player";
+
 export class ClientLimitError extends Error {
+  readonly code = ACCOUNT_LIMIT_CODE;
   constructor(
     readonly attempt: string = "unknown",
     readonly max: number | null = null,
   ) {
-    super(REGISTRATION_LIMIT_MESSAGE);
+    super(ACCOUNT_LIMIT_MESSAGE);
     this.name = "ClientLimitError";
   }
 }
@@ -237,6 +276,7 @@ export async function resolveNewAccountClass(
 const activeClientFilter = () =>
   and(
     eq(users.accountClass, "client"),
+    ne(users.role, "player"),
     not(and(eq(users.isLocked, "yes"), isNotNull(users.lockedBy))!),
   );
 
@@ -266,10 +306,10 @@ export async function auditClientLimitRejection(
   await writeAuditLog({
     actor,
     action: "account.create_rejected",
-    summary: `Client-account limit reached; rejected: ${err.attempt}`.slice(0, 500),
+    summary: `Staff-account limit reached; rejected: ${err.attempt}`.slice(0, 500),
     targetType: "account_limit",
     targetId: "default",
-    meta: { attempt: err.attempt, max: err.max, layer },
+    meta: { attempt: err.attempt, max: err.max, layer, code: ACCOUNT_LIMIT_CODE },
   });
 }
 

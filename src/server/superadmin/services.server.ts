@@ -41,6 +41,9 @@ import { writeAuditLog } from "../admin/audit.server";
 import {
   assertClientCapacity,
   auditClientLimitRejection,
+  assertGameActivatable,
+  getEffectiveLockedGames,
+  countsTowardCap,
   ClientLimitError,
   isClientLimitDbError,
   resolveNewAccountClass,
@@ -285,7 +288,31 @@ export async function superSetUserRole(data: {
   const target = rows[0];
   if (!target) throw new Error("User not found");
 
-  await db.update(users).set({ role: data.role }).where(eq(users.id, data.userId));
+  // Promoting a player into a staff role makes the account count toward the staff cap (mirrored by the DB trigger).
+  try {
+    await db.transaction(async (tx) => {
+      if (
+        !countsTowardCap(target.role, target.accountClass) &&
+        countsTowardCap(data.role, target.accountClass)
+      )
+        await assertClientCapacity(tx, {
+          actor,
+          attempt: `role change @${target.username} ${target.role} -> ${data.role}`,
+        });
+      await tx.update(users).set({ role: data.role }).where(eq(users.id, data.userId));
+    });
+  } catch (e) {
+    if (e instanceof ClientLimitError) {
+      await auditClientLimitRejection(actor, e);
+      throw e;
+    }
+    if (isClientLimitDbError(e)) {
+      const limit = new ClientLimitError(`role change @${target.username} -> ${data.role}`);
+      await auditClientLimitRejection(actor, limit, "database");
+      throw limit;
+    }
+    throw e;
+  }
 
   // Immediate privilege revocation: destroy active sessions so demotion takes effect instantly
   const terminatedSessionsCount = await destroyUserSessions(data.userId);
@@ -350,7 +377,7 @@ export async function superCreateUser(data: {
   const passwordHash = await hash(data.password, 10);
   try {
     await db.transaction(async (tx) => {
-      if (accountClass === "client")
+      if (countsTowardCap(data.role, accountClass))
         await assertClientCapacity(tx, {
           actor,
           attempt: `superCreateUser @${username} (${data.role})`,
@@ -610,6 +637,7 @@ export async function listSuperGames(): Promise<SuperGameRow[]> {
   // Soft-launch: hide thumbnail-only (Coming Soon) titles from the admin grid;
   // families still hidden from players stay listed so they can be configured.
   const rows: SuperGameRow[] = [];
+  const lockedNow = await getEffectiveLockedGames();
   for (const catalog of slotGames) {
     const id = catalog.id;
     if (!isAdminListedGame(id) || isThumbnailOnlyGame(id)) continue;
@@ -619,7 +647,8 @@ export async function listSuperGames(): Promise<SuperGameRow[]> {
       name: catalog.name,
       category: catalog.category ?? "slot",
       thumb: catalog.thumb ?? "/games/candy-peak.webp",
-      enabled: (c?.enabled ?? "yes") === "yes",
+      enabled: (c?.enabled ?? "yes") === "yes" && !lockedNow.has(id),
+      locked: lockedNow.has(id),
       featured: (c?.featured ?? "no") === "yes",
       sortOrder: Number(c?.sortOrder ?? 0),
       tag: c?.tag ?? catalog.tag ?? null,
@@ -650,6 +679,8 @@ export async function superUpdateGame(data: {
   const db = getDb();
   const catalog = slotGames.find((g) => g.id === data.gameId);
   if (!catalog) throw new Error("Unknown game id");
+  // A restricted game cannot be switched on through the admin API (same refusal for every role, audited).
+  if (data.enabled === true) await assertGameActivatable(data.gameId, actor);
 
   // Soft-launch: thumbnail-only titles stay disabled until engines are mounted.
   if (isThumbnailOnlyGame(data.gameId) && data.enabled === true) {
