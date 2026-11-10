@@ -895,7 +895,7 @@ export function WildPantherSlot({
       />
 
       {/* Playfield — mobile-first, elder-readable */}
-      <div className="relative z-10 flex min-h-0 flex-1 flex-col px-1.5 pt-[max(0.25rem,env(safe-area-inset-top))] pb-[max(0.35rem,env(safe-area-inset-bottom))] sm:items-center sm:justify-center sm:px-3 sm:py-2">
+      <div className="relative z-10 flex min-h-0 flex-1 flex-col px-1.5 pt-1 pb-[0.35rem] sm:items-center sm:justify-center sm:px-3 sm:py-2">
         <div className="mx-auto flex h-full min-h-0 w-full max-w-[840px] flex-col">
           {/* Open temple well — thin gold rim, no heavy metal box */}
           <div className="relative flex min-h-0 w-full flex-1 flex-col">
