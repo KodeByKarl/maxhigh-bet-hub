@@ -3,6 +3,7 @@
  * null = unrestricted (admin / superadmin) for list scoping.
  */
 import { and, eq, inArray } from "drizzle-orm";
+import { ownerMayCreditSelf } from "../access-policy.server";
 import { getDb } from "../db/client";
 import { users } from "../db/schema";
 import type { PublicUser, UserRole } from "@/lib/user";
@@ -98,6 +99,7 @@ export async function assertCanManageChips(
   dbOrTx?: Queryable,
 ): Promise<void> {
   if (target.id === actor.id) {
+    if (ownerMayCreditSelf(actor, target.id)) return; // owner QA credits on the private UAT only
     throw new Error("Forbidden — cannot manage chips on your own account");
   }
 

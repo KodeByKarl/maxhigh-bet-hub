@@ -12,6 +12,7 @@ import { hash } from "bcryptjs";
 import {
   assertClientCapacity,
   auditClientLimitRejection,
+  assertNotProtectedOwner,
   countsTowardCap,
   ClientLimitError,
   isClientLimitDbError,
@@ -107,6 +108,8 @@ async function assertCanManageAccount(actor: PublicUser, targetId: string): Prom
   if (targetId === actor.id) {
     throw new Error("Forbidden — cannot lock or unlock your own account");
   }
+  const [targetRow] = await getDb().select().from(users).where(eq(users.id, targetId)).limit(1);
+  if (targetRow) await assertNotProtectedOwner(actor, targetRow);
   if (!(await isInDownline(actor, targetId))) {
     throw new Error("Forbidden — user is outside your downline");
   }
@@ -260,6 +263,7 @@ export async function adminUpdateUser(data: {
   const rows = await db.select().from(users).where(eq(users.id, data.userId)).limit(1);
   const user = rows[0];
   if (!user) throw new Error("User not found");
+  await assertNotProtectedOwner(actor, user);
   assertCanEditAccount(actor, user);
 
   if (!(await isInDownline(actor, user.id))) {
@@ -501,6 +505,7 @@ export async function adminAdjustUserBalance(data: {
       .limit(1);
     const target = targetRows[0];
     if (!target) throw new Error("User not found");
+    await assertNotProtectedOwner(actor, target);
 
     await assertCanManageChips(
       actor,
@@ -734,6 +739,7 @@ export async function adminForceLogoutUser(data: {
   const rows = await db.select().from(users).where(eq(users.id, data.userId)).limit(1);
   const user = rows[0];
   if (!user) throw new Error("User not found");
+  await assertNotProtectedOwner(actor, user);
 
   const terminatedCount = await destroyUserSessions(user.id);
 

@@ -17,6 +17,7 @@ const policy = {
   version: 1 as const, environment: "uat",
   gameLocks: { ...base, lockedGames: ["golden-panther", "deep-bass", "threecardpoker", "abyssal-pearls"] },
   clientAccounts: { ...base, maxClientAccounts: 2 },
+  ownerAccounts: ["owner_superadmin"],
   grantKeys: [{ id: "dev-1", publicKeyPem: pem }],
 };
 const signPayload = (p: string, key = privateKey) => sign(null, Buffer.from(p, "utf8"), key).toString("base64");
@@ -28,8 +29,8 @@ const grant = (extra: object = {}) => JSON.stringify({ v: 1, kind: "unlock-games
   const alloc = JSON.parse(fs.readFileSync("deploy/handoff/PROPOSED_GAME_ALLOCATION.json", "utf8"));
   const p = getAccessPolicy();
   assert.equal(p.gameLocks.enforcement, "on");
-  assert.equal(p.clientAccounts.enforcement, "on");
-  assert.equal(p.clientAccounts.maxClientAccounts, 2);
+  assert.equal(p.clientAccounts.enforcement, "off", "the client account cap was removed by the owner");
+  assert.deepEqual([...p.ownerAccounts], ["uat_owner"], "the owner account is named in the compiled policy");
   assert.equal(p.grantKeys.length, 0, "no signing key for this handover: unlocking requires a new verified release");
   assert.equal(p.gameLocks.lockedGames.length, 50);
   assert.equal(new Set(p.gameLocks.lockedGames).size, 50);
@@ -38,7 +39,7 @@ const grant = (extra: object = {}) => JSON.stringify({ v: 1, kind: "unlock-games
   assert.ok(p.gameLocks.lockedGames.includes("color-game-pro"), "Color Game Pro stays locked");
   for (const g of alloc.available) assert.ok(!p.gameLocks.lockedGames.includes(g), g);
 }
-ok("shipped policy is the approved configuration: 50 locked, 50 playable, staff cap 2, no grant keys");
+ok("shipped policy is the approved configuration: 50 locked, 50 playable, NO account cap, owner account named, no grant keys");
 
 // ---- override is refused outside a disposable environment
 process.env.MAXHIGH_POLICY_TEST_OVERRIDE = "";
@@ -61,14 +62,41 @@ for (const a of ["goldenPantherSpinFn", "realmsSpinFn", "wildPantherBuyFeatureFn
 ok("settle actions (finish a paid round) are distinguished from new wagers; unknown actions default to refused");
 
 // ---- the gate
-const roles = [{ id: "u1", username: "player" }, { id: "u2", username: "owner_superadmin" }, { id: "u3", username: "client_admin" }];
+const roles = [{ id: "u1", username: "player", role: "player" }, { id: "u3", username: "client_admin", role: "superadmin" }, { id: "u4", username: "staff_admin", role: "admin" }];
+const owner = { id: "u2", username: "owner_superadmin", role: "superadmin" };
 const locked = await getEffectiveLockedGames();
 assert.deepEqual([...locked].sort(), ["abyssal-pearls", "deep-bass", "golden-panther", "threecardpoker"]);
 for (const who of roles) {
   for (const [g, a] of [["golden-panther", "goldenPantherSpinFn"], ["golden-panther", "goldenPantherBuyFeatureFn"], ["deep-bass", "deepBassFireShotFn"], ["threecardpoker", "threeCardPokerDealFn"], ["abyssal-pearls", "realmsSpinFn"]] as const)
     await assert.rejects(assertGameAccess(g, a, who), new RegExp(GAME_LOCKED_MESSAGE.slice(0, 30)), `${who.username} ${g} ${a}`);
 }
-ok("every new wager / feature purchase / fishing shot on a locked game is refused for player, superadmin and client admin alike");
+ok("every new wager / feature purchase / fishing shot on a locked game is refused for players, client superadmins and client staff");
+// ---- owner QA path: by account identity only, server-side
+for (const [g, a] of [["golden-panther", "goldenPantherSpinFn"], ["deep-bass", "deepBassFireShotFn"], ["abyssal-pearls", "realmsSpinFn"]]) await assertGameAccess(g, a, owner);
+await assert.rejects(assertGameAccess("golden-panther", "goldenPantherSpinFn", { id: "x", username: "owner_superadmin", role: "admin" }), new RegExp(GAME_LOCKED_MESSAGE.slice(0, 30)), "owner username without the superadmin role is NOT the owner");
+await assert.rejects(assertGameAccess("golden-panther", "goldenPantherSpinFn", { id: "x", username: "Owner_Superadmin2", role: "superadmin" }), new RegExp(GAME_LOCKED_MESSAGE.slice(0, 30)), "a similar username is not the owner");
+assert.equal(mod.isOwnerAccount(owner), true);
+assert.equal(mod.isOwnerAccount({ username: "OWNER_SUPERADMIN", role: "superadmin" }), true);
+assert.equal(mod.isOwnerAccount({ username: "client_admin", role: "superadmin" }), false);
+assert.equal(mod.isOwnerAccount(null), false);
+assert.equal((await mod.getPublicAccessStatus(owner)).lockedGames.length, 0);
+assert.equal((await mod.getPublicAccessStatus(owner)).ownerQa, true);
+assert.equal((await mod.getPublicAccessStatus(roles[1]!)).lockedGames.length, 4);
+assert.equal((await mod.getPublicAccessStatus()).lockedGames.length, 4);
+await mod.assertGameActivatable("golden-panther", owner);
+await assert.rejects(mod.assertGameActivatable("golden-panther", roles[1]!), new RegExp(GAME_LOCKED_MESSAGE.slice(0, 30)), "a client superadmin cannot switch a locked game on");
+ok("owner QA path works for the named owner account only; the lobby status and activation guard stay locked for everyone else");
+// ---- the owner account is protected from client administrators
+await mod.assertNotProtectedOwner(owner, { id: "u2", username: "owner_superadmin" });
+await mod.assertNotProtectedOwner(roles[1]!, { id: "u9", username: "some_player" });
+await assert.rejects(mod.assertNotProtectedOwner(roles[1]!, { id: "u2", username: "owner_superadmin" }), /protected owner account/);
+await assert.rejects(mod.assertNotProtectedOwner(roles[2]!, { id: "u2", username: "OWNER_SUPERADMIN" }), /protected owner account/);
+ok("a client administrator cannot modify the protected owner account (case-insensitive); the owner and ordinary targets are unaffected");
+assert.equal(mod.ownerMayCreditSelf(owner, owner.id), true, "the owner may credit itself with synthetic QA credits on the UAT");
+assert.equal(mod.ownerMayCreditSelf(owner, "someone-else"), false);
+assert.equal(mod.ownerMayCreditSelf(roles[1]!, roles[1]!.id), false, "a client superadmin may not credit itself");
+assert.equal(mod.ownerMayCreditSelf({ ...owner, role: "admin" }, owner.id), false);
+ok("only the named owner account may self-credit synthetic QA credits (UAT environment only)");
 for (const who of roles) {
   await assertGameAccess("golden-panther", "goldenPantherFreeSpinFn", who);
   await assertGameAccess("threecardpoker", "threeCardPokerPlayFn", who);

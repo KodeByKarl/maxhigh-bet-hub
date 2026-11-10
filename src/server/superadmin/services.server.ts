@@ -42,6 +42,8 @@ import {
   assertClientCapacity,
   auditClientLimitRejection,
   assertGameActivatable,
+  assertNotProtectedOwner,
+  isOwnerAccount,
   getEffectiveLockedGames,
   countsTowardCap,
   ClientLimitError,
@@ -287,6 +289,7 @@ export async function superSetUserRole(data: {
   const rows = await db.select().from(users).where(eq(users.id, data.userId)).limit(1);
   const target = rows[0];
   if (!target) throw new Error("User not found");
+  await assertNotProtectedOwner(actor, target);
 
   // Promoting a player into a staff role makes the account count toward the staff cap (mirrored by the DB trigger).
   try {
@@ -433,6 +436,7 @@ export async function superUpdateUser(data: {
   const rows = await db.select().from(users).where(eq(users.id, data.userId)).limit(1);
   const target = rows[0];
   if (!target) throw new Error("User not found");
+  await assertNotProtectedOwner(actor, target);
 
   const patch: Partial<{
     username: string;
@@ -526,6 +530,7 @@ export async function superAdjustBalance(data: {
       .limit(1);
     const user = rows[0];
     if (!user) throw new Error("User not found");
+    await assertNotProtectedOwner(actor, user);
 
     await assertCanManageChips(
       actor,
@@ -622,7 +627,7 @@ async function ensureThumbnailOnlyGamesDisabled() {
 }
 
 export async function listSuperGames(): Promise<SuperGameRow[]> {
-  await requireSuperadmin();
+  const viewer = await requireSuperadmin();
   const db = getDb();
   try {
     await ensureThumbnailOnlyGamesDisabled();
@@ -647,8 +652,9 @@ export async function listSuperGames(): Promise<SuperGameRow[]> {
       name: catalog.name,
       category: catalog.category ?? "slot",
       thumb: catalog.thumb ?? "/games/candy-peak.webp",
-      enabled: (c?.enabled ?? "yes") === "yes" && !lockedNow.has(id),
+      enabled: (c?.enabled ?? "yes") === "yes" && (isOwnerAccount(viewer) || !lockedNow.has(id)),
       locked: lockedNow.has(id),
+      ownerQa: lockedNow.has(id) && isOwnerAccount(viewer),
       featured: (c?.featured ?? "no") === "yes",
       sortOrder: Number(c?.sortOrder ?? 0),
       tag: c?.tag ?? catalog.tag ?? null,

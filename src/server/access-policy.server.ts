@@ -182,12 +182,17 @@ export async function getEffectiveLockedGames(): Promise<Set<string>> {
 export async function assertGameAccess(
   gameId: string,
   action: string,
-  actor: { id: string; username: string },
+  actor: { id: string; username: string; role?: string | null },
 ): Promise<void> {
   if (policy.gameLocks.enforcement !== "on") return;
   const locked = await getEffectiveLockedGames();
   if (!locked.has(gameId)) return;
   if (isSettleAction(action)) return; // never strand a paid-for round: let the player finish it
+  // Owner QA path: server-side, by account identity (compiled policy), audited, synthetic credits only. It changes nothing for clients.
+  if (isOwnerAccount(actor)) {
+    await auditOwnerQa(actor, gameId, action);
+    return;
+  }
   await writeAuditLog({
     actor,
     action: "game.locked_attempt",
@@ -205,8 +210,9 @@ export async function assertGameAccess(
  */
 export async function assertGameActivatable(
   gameId: string,
-  actor: { id: string; username: string },
+  actor: { id: string; username: string; role?: string | null },
 ): Promise<void> {
+  if (isOwnerAccount(actor)) return; // the owner configures all 100 games; the client-facing lock is unaffected
   const locked = await getEffectiveLockedGames();
   if (!locked.has(gameId)) return;
   await writeAuditLog({
@@ -221,15 +227,74 @@ export async function assertGameActivatable(
 }
 
 /** Public, non-sensitive view for the lobby: which games show as locked. No payment or implementation details. */
-export async function getPublicAccessStatus(): Promise<{
+export async function getPublicAccessStatus(
+  viewer?: { username?: string | null; role?: string | null } | null,
+): Promise<{
   lockedGames: string[];
   message: string | null;
+  ownerQa?: boolean;
 }> {
+  if (isOwnerAccount(viewer)) return { lockedGames: [], message: null, ownerQa: true }; // display only; clients are unaffected
   const locked = [...(await getEffectiveLockedGames())].sort();
   return { lockedGames: locked, message: locked.length ? GAME_LOCKED_MESSAGE : null };
 }
 
 // ------------------------------------------------------------------------------------------------ client-account cap
+/** The OWNER superadmin account(s) named in the compiled policy. A client superadmin is NOT an owner. */
+export const isOwnerAccount = (
+  u: { username?: string | null; role?: string | null } | null | undefined,
+) =>
+  !!u &&
+  u.role === "superadmin" &&
+  !!u.username &&
+  (policy.ownerAccounts ?? []).includes(u.username.toLowerCase());
+
+/**
+ * The named owner account may credit ITSELF with synthetic QA credits, only while the compiled environment is "uat". Every other
+ * account (including client superadmins) keeps the rule "no chips on your own account". The adjustment is still ledgered and audited.
+ */
+export const ownerMayCreditSelf = (
+  actor: { id: string; username?: string | null; role?: string | null },
+  targetId: string,
+) => actor.id === targetId && isOwnerAccount(actor) && policy.environment === "uat";
+
+/** Client administrators must never modify the protected owner account (profile, role, password, balance, lock state, sessions). */
+export async function assertNotProtectedOwner(
+  actor: { id: string; username: string; role?: string | null },
+  target: { id: string; username: string },
+): Promise<void> {
+  if (!(policy.ownerAccounts ?? []).includes(target.username.toLowerCase())) return;
+  if (isOwnerAccount(actor)) return;
+  await writeAuditLog({
+    actor,
+    action: "owner.protected_denied",
+    summary: `Blocked attempt to modify the protected owner account by @${actor.username}`,
+    targetType: "user",
+    targetId: target.id,
+    meta: { code: "OWNER_PROTECTED" },
+  });
+  throw new Error("Forbidden — protected owner account");
+}
+
+const ownerQaSeen = new Map<string, number>();
+async function auditOwnerQa(
+  actor: { id: string; username: string },
+  gameId: string,
+  action: string,
+) {
+  const key = `${actor.id}:${gameId}`;
+  if (Date.now() - (ownerQaSeen.get(key) ?? 0) < 30 * 60_000) return; // one audit row per owner/game per 30 minutes
+  ownerQaSeen.set(key, Date.now());
+  await writeAuditLog({
+    actor,
+    action: "game.owner_qa_access",
+    summary: `Owner QA access to locked game ${gameId} (${action})`,
+    targetType: "game",
+    targetId: gameId,
+    meta: { action, code: "OWNER_QA" },
+  });
+}
+
 /** Only STAFF accounts (any role other than player) count toward the cap; ordinary players never do. Mirrors migration 0006. */
 export const countsTowardCap = (role: string, accountClass: string) =>
   accountClass === "client" && role !== "player";

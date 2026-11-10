@@ -267,11 +267,95 @@ try {
   const own2 = new Client(); await own2.login("uat_owner");
   const lockedCnt = (await own2.rpc("listSuperGamesFn", undefined, { method: "GET" })).filter((r) => r.locked).length;
   note("C: admin catalog (compiled build) shows the locked games as Locked", lockedCnt > 0 && lockedCnt <= 50, `${lockedCnt} locked rows listed`);
-  const activeStaff = (await q("SELECT COUNT(*) n FROM users WHERE account_class='client' AND role<>'player' AND NOT (is_locked='yes' AND locked_by IS NOT NULL)"))[0].n;
-  const staffX = await refused(() => own2.rpc("superCreateUserFn", { username: "c_staff_extra", password: "Client-Pass-12345", role: "admin", balance: 0, displayName: "x" }));
-  note("C: with the cap full (>= 2 active client staff; stored test grants are ignored because the build has no grant keys), a further staff account is REJECTED with the approved notice and not created", activeStaff >= 2 && staffX.refused && staffX.msg === REG && (await q("SELECT COUNT(*) n FROM users WHERE username='c_staff_extra'"))[0].n === 0, `active staff ${activeStaff}; ${staffX.msg}`);
-  const plN = await own2.rpc("superCreateUserFn", { username: "c_player_x", password: "Client-Pass-12345", role: "player", balance: 0, displayName: "p" }).then(() => "ok", (e) => e.message);
-  note("C: ordinary player accounts are still created freely", plN === "ok", plN);
+  // ---- account policy: the staff-account cap was REMOVED; ordinary role permissions apply
+  // The real UAT keeps account_limits.enforced = 'no' (the activation script is NOT run with --enforce yes). Earlier phases switched it on.
+  await db.query("UPDATE account_limits SET enforced='no' WHERE id='default'");
+  const rejectedBefore = (await q("SELECT COUNT(*) n FROM audit_logs WHERE action='account.create_rejected'"))[0].n;
+  const PW = "Client-Pass-12345";
+  const ownerPw2 = fs.readFileSync(envC.UAT_CREDS_FILE, "utf8").split(/\r?\n/).find((l) => l.startsWith("uat_owner")).split("\t")[2];
+  const ownerId = (await q("SELECT id FROM users WHERE username='uat_owner'"))[0].id;
+  const mkAcc = (n, role) => own2.rpc("superCreateUserFn", { username: n, password: PW, role, balance: 0, displayName: n }).then(() => "ok", (e) => e.message);
+  const created = [];
+  for (const n of ["c_sa_one", "c_sa_two", "c_sa_three", "c_sa_four", "c_sa_five"]) created.push(await mkAcc(n, "superadmin"));
+  note("C: NO staff-account cap: five client administrator accounts are created without any limit notice", created.every((x) => x === "ok"), created.join(","));
+  const adm2 = await own2.rpc("getAdminLimitStatusFn", undefined, { method: "GET" });
+  note("C: the admin screens show no account-limit notice", adm2.restricted === false && adm2.message === null, JSON.stringify(adm2));
+  note("C: ordinary player accounts are created freely", (await mkAcc("c_player_x", "player")) === "ok");
+  note("C: no 'account.create_rejected' audit rows were written while creating the accounts", (await q("SELECT COUNT(*) n FROM audit_logs WHERE action='account.create_rejected'"))[0].n === rejectedBefore);
+
+  // ---- owner: all 100 games, QA play on locked games with synthetic credits, no effect on clients
+  const adj = await own2.rpc("superAdjustBalanceFn", { userId: ownerId, delta: 100, note: "owner QA credits", confirmPassword: ownerPw2 }).then(() => "ok", (e) => e.message);
+  note("C: owner receives synthetic QA credits through the audited flow", adj === "ok", adj);
+  const ost = await own2.rpc("getAccessStatusFn", undefined, { method: "GET" });
+  note("C: owner lobby has no locked games (QA mode); this is display only", ost.lockedGames.length === 0 && ost.ownerQa === true, JSON.stringify(ost).slice(0, 80));
+  const ownerPlays = await own2.rpc("colorGameProDealFn", { bets: { red: 1 } }).then(() => "played", (e) => e.message);
+  note("C: owner can play a CLIENT-LOCKED game (Color Game Pro) with synthetic credits", ownerPlays === "played", ownerPlays);
+  const ownerPlays2 = await own2.rpc(...spinCall(lockedSet.has("constellation-keep") ? "constellation-keep" : [...lockedSet][0])).then(() => "played", (e) => e.message);
+  note("C: owner can play a locked slot", ownerPlays2 === "played", ownerPlays2);
+  const cat100 = await own2.rpc("listSuperGamesFn", undefined, { method: "GET" });
+  note("C: owner sees all 100 games in the admin catalog; the locked ones are flagged for owner QA", cat100.length === 100 && cat100.filter((r) => r.ownerQa).length === 50 && cat100.filter((r) => r.locked).length === 50, `${cat100.length} listed`);
+  const lockedId = cat100.find((r) => r.locked).gameId;
+  const t1 = await own2.rpc("superUpdateGameFn", { gameId: lockedId, enabled: false }).then(() => "ok", (e) => e.message);
+  const t2 = await own2.rpc("superUpdateGameFn", { gameId: lockedId, enabled: true }).then(() => "ok", (e) => e.message);
+  note("C: owner can configure/enable/disable a locked game", t1 === "ok" && t2 === "ok", `${t1}/${t2}`);
+  const cfg = await own2.rpc("getColorGameProEngineConfigFn", undefined, { method: "GET" }).then(() => "ok", (e) => e.message);
+  note("C: owner can open the configuration of a locked game", cfg === "ok", cfg);
+  const bulk2 = await own2.rpc("bulkApplyGameOutcomesFn", { scope: "all", deadSpinPct: 40, winChancePct: 60, maxMultiplier: 5000, rtp: 96 }).then((r) => r, (e) => ({ error: e.message }));
+  note("C: owner bulk configuration covers all 100 games", !bulk2.error && bulk2.affectedCount === 100, bulk2.error ?? `affected ${bulk2.affectedCount}`);
+  note("C: owner QA access is audited", (await q("SELECT COUNT(*) n FROM audit_logs WHERE action='game.owner_qa_access'"))[0].n >= 1);
+  const plClient = new Client(); await plClient.login("uat_player2");
+  const sl = await plClient.rpc("getAccessStatusFn", undefined, { method: "GET" });
+  const slRefused = await refused(() => plClient.rpc("colorGameProDealFn", { bets: { red: 1 } }));
+  note("C: owner QA did not unlock anything for clients (still 50 locked; Color Game Pro still refused)", sl.lockedGames.length === 50 && slRefused.refused && slRefused.msg === LOCKED, slRefused.msg);
+  await plClient.logout();
+
+  // ---- a CLIENT administrator (superadmin tier, not the owner)
+  const csa = new Client(); await csa.login("c_sa_one", PW);
+  const csaSt = await csa.rpc("getAccessStatusFn", undefined, { method: "GET" });
+  note("C: client administrator sees exactly the 50 locked games in the lobby", csaSt.lockedGames.length === 50 && csaSt.ownerQa !== true);
+  const csaPlay = await refused(() => csa.rpc("colorGameProDealFn", { bets: { red: 1 } }));
+  note("C: client administrator cannot play a locked game", csaPlay.refused && csaPlay.msg === LOCKED, csaPlay.msg);
+  const csaEnable = await refused(() => csa.rpc("superUpdateGameFn", { gameId: lockedId, enabled: true }));
+  note("C: client administrator cannot activate a locked game through the admin API", csaEnable.refused && csaEnable.msg === LOCKED, csaEnable.msg);
+  const csaCat = await csa.rpc("listSuperGamesFn", undefined, { method: "GET" });
+  note("C: client administrator sees the locked games as Locked (not owner QA)", csaCat.filter((r) => r.locked).length === 50 && csaCat.every((r) => !r.ownerQa));
+  const csaBulk = await csa.rpc("bulkApplyGameOutcomesFn", { scope: "all", deadSpinPct: 40, winChancePct: 60, maxMultiplier: 5000, rtp: 96 }).then((r) => r, (e) => ({ error: e.message }));
+  note("C: client administrator bulk configuration covers only the 50 playable games", !csaBulk.error && csaBulk.affectedCount === 50, csaBulk.error ?? `affected ${csaBulk.affectedCount}`);
+  const csaCfg = await csa.rpc("superUpdateGameFn", { gameId: availableIds[0], featured: true }).then(() => "ok", (e) => e.message);
+  note("C: client administrator can configure a playable game", csaCfg === "ok", csaCfg);
+  const protectedTries = {
+    role: () => csa.rpc("superSetUserRoleFn", { userId: ownerId, role: "player" }),
+    update: () => csa.rpc("superUpdateUserFn", { userId: ownerId, displayName: "hijacked" }),
+    balance: () => csa.rpc("superAdjustBalanceFn", { userId: ownerId, delta: 1, confirmPassword: PW }),
+    lock: () => csa.rpc("adminLockUserFn", { userId: ownerId, reason: "x" }),
+    logout: () => csa.rpc("adminForceLogoutUserFn", { userId: ownerId }),
+    adminUpdate: () => csa.rpc("adminUpdateUserFn", { userId: ownerId, displayName: "hijacked" }),
+    adminBalance: () => csa.rpc("adminAdjustBalanceFn", { userId: ownerId, delta: 1, confirmPassword: PW }),
+  };
+  const blocked = [];
+  for (const [k, fn] of Object.entries(protectedTries)) { const r = await refused(fn); if (!r.refused) blocked.push(`${k}:ALLOWED`); }
+  note("C: client administrator cannot modify the owner account by any path (role, profile, balance, lock, logout)", blocked.length === 0, blocked.join(","));
+  const ownerRow = (await q("SELECT role, display_name, is_locked FROM users WHERE username='uat_owner'"))[0];
+  note("C: the owner account is unchanged", ownerRow.role === "superadmin" && ownerRow.is_locked === "no" && ownerRow.display_name !== "hijacked");
+  const grantTry = await refused(() => csa.rpc("applyEntitlementGrantFn", { payload: "{}", signature: "AAAAAAAAAAAA", keyId: "none", confirm: "APPLY SIGNED GRANT", confirmPassword: PW }));
+  note("C: client administrator cannot apply an unlock grant (no signing key exists)", grantTry.refused);
+  const csaMakes = await csa.rpc("superCreateUserFn", { username: "c_sa_made_by_client", password: PW, role: "admin", balance: 0, displayName: "m" }).then(() => "ok", (e) => e.message);
+  const csaMakesPl = await csa.rpc("superCreateUserFn", { username: "c_pl_made_by_client", password: PW, role: "player", balance: 0, displayName: "m" }).then(() => "ok", (e) => e.message);
+  note("C: client administrator can create staff and player accounts", csaMakes === "ok" && csaMakesPl === "ok", `${csaMakes}/${csaMakesPl}`);
+  note("C: no hidden owner-name collision: a client cannot create an account named like the owner", (await refused(() => csa.rpc("superCreateUserFn", { username: "uat_owner", password: PW, role: "superadmin", balance: 0, displayName: "x" }))).refused);
+  await csa.logout();
+  // staff-tier (role admin) administrators cannot escalate
+  const stf = new Client(); await stf.login("c_sa_made_by_client", PW);
+  const esc = {};
+  for (const [k, fn] of Object.entries({
+    createSuper: () => stf.rpc("adminCreateUserFn", { username: "c_esc_1", password: PW, role: "superadmin", balance: 0 }),
+    createStaff: () => stf.rpc("adminCreateUserFn", { username: "c_esc_2", password: PW, role: "admin", balance: 0 }),
+    setRole: () => stf.rpc("superSetUserRoleFn", { userId: ownerId, role: "player" }),
+    enableLocked: () => stf.rpc("superUpdateGameFn", { gameId: lockedId, enabled: true }),
+    grant: () => stf.rpc("applyEntitlementGrantFn", { payload: "{}", signature: "AAAAAAAAAAAA", keyId: "none", confirm: "APPLY SIGNED GRANT" }),
+  })) { const r = await refused(fn); if (!r.refused) esc[k] = "ALLOWED"; }
+  note("C: a staff-tier administrator (role admin) cannot escalate: no superadmin/staff creation, no role change, no game activation, no grants", Object.keys(esc).length === 0, JSON.stringify(esc));
+  await stf.logout();
   await own2.logout();
 
   // ============================================================ integrity

@@ -62,8 +62,8 @@ export class Client {
     if (!response.ok) throw new Error(`RPC ${name}: HTTP ${response.status}`);
     return decoded?.result;
   }
-  async login(username) {
-    const password = credentialsFor(username);
+  async login(username, passwordOverride) {
+    const password = passwordOverride ?? credentialsFor(username);
     const result = await this.rpc("loginFn", { username, password });
     if (!this.cookie) throw new Error("login returned no session cookie");
     this.who = username;

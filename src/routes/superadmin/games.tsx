@@ -1007,7 +1007,7 @@ function SuperGamesPage() {
                 </div>
                 {g.locked && (
                   <div className="absolute right-3 top-3 flex items-center gap-1 rounded-full bg-amber-500 px-2 py-0.5 text-[10px] font-bold uppercase text-black">
-                    <Lock size={10} aria-hidden /> Locked
+                    <Lock size={10} aria-hidden /> {g.ownerQa ? "Locked for clients" : "Locked"}
                   </div>
                 )}
                 {!g.locked && !g.enabled && (
@@ -1544,7 +1544,9 @@ function GameControlModal({
             >
               <Lock size={16} className="mt-0.5 shrink-0" aria-hidden />
               <span>
-                Game Locked. Please settle the remaining project payment to activate this game.
+                {game.ownerQa
+                  ? "Locked for client accounts pending the remaining project payment. Owner access is active: you can configure and test this game; clients still cannot play it."
+                  : "Game Locked. Please settle the remaining project payment to activate this game."}
               </span>
             </div>
           )}
@@ -1553,14 +1555,14 @@ function GameControlModal({
               type="button"
               onClick={() => void onPatch(game.gameId, { enabled: !game.enabled })}
               className={`rounded-full px-3 py-1.5 text-xs font-bold ${
-                game.locked
+                game.locked && !game.ownerQa
                   ? "bg-amber-500/20 text-amber-300"
                   : game.enabled
                     ? "bg-emerald-500/20 text-emerald-400"
                     : "bg-rose-500/20 text-rose-400"
               }`}
             >
-              {game.locked ? "Locked" : game.enabled ? "Enabled" : "Disabled"}
+              {game.locked && !game.ownerQa ? "Locked" : game.enabled ? "Enabled" : "Disabled"}
             </button>
             <button
               type="button"

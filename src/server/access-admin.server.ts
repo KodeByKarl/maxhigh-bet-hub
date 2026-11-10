@@ -1,4 +1,4 @@
-import { requireAdmin, requireSuperadmin } from "./session";
+import { getSessionUser, requireAdmin, requireSuperadmin } from "./session";
 import { verifySuperadminChipPassword } from "./superadmin/services.server";
 import {
   applyEntitlementGrant,
@@ -9,7 +9,8 @@ import {
 export const APPLY_CONFIRMATION = "APPLY SIGNED GRANT";
 
 /** Public lobby view. Reveals only which games are locked and the approved client-facing message. */
-export const publicAccessStatus = () => getPublicAccessStatus();
+export const publicAccessStatus = async () =>
+  getPublicAccessStatus(await getSessionUser().catch(() => null));
 
 /** Admin screens only: whether new client accounts can currently be added. */
 export async function adminLimitStatus() {
