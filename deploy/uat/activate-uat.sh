@@ -5,7 +5,7 @@ set -eu
 umask 077
 R=/var/www/maxhigh/staging
 A=/root/maxhigh-staging-admin
-SHA=2294d79afb2b900f13a9cd05c427dc9857b89de1
+SHA=e89359f0ea26ea71bea4522a2c8eced7911d8fc3
 D=$(cd "$(dirname "$0")" && pwd)
 SEED=${1:?seed directory required}/uat-seed.sql
 

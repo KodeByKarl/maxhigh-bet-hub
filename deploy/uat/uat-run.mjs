@@ -4,7 +4,7 @@ import path from 'node:path';
 import { pathToFileURL } from 'node:url';
 
 const root = '/var/www/maxhigh/staging';
-const sha = '2294d79afb2b900f13a9cd05c427dc9857b89de1';
+const sha = 'e89359f0ea26ea71bea4522a2c8eced7911d8fc3';
 const release = path.join(root, 'releases', sha);
 if (process.platform !== 'linux' || fs.realpathSync(root) !== root) throw Error('Wrong UAT target');
 const manifest = JSON.parse(fs.readFileSync(path.join(release, 'release-validation.json')));
