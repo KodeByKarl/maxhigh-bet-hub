@@ -32,7 +32,7 @@
 
 ## Restrictions status (not activated)
 The 50-game lock and the 2-client-account cap are built and tested locally but **shipped inactive** and **not activated**. Activation needs, in the owner's own words, an authorizing agreement and an approved 50-game list; neither exists in the repository. See `ACCOUNT_AND_GAME_RESTRICTIONS_SPEC.md`, `PROPOSED_GAME_ALLOCATION.md` (proposal only) and `GRANT_SECURITY_REVIEW.md`.
-Note: the built-in messages use the earlier owner-approved wording ("User registration is temporarily unavailable..."); the newer wording ("Game Locked. Please settle the remaining project payment..." / "Account Limit Reached...") would need a small code change and a new CI build before activation.
+Update: the final notification wording, error codes, admin-catalog lock, staff-only cap (migration 0006) and trigger-aware backups were built after this deployment as release 8066092 (CI green, staged on the VPS, not deployed). See ACTIVATION_RUNBOOK.md.
 
 ## Known limitations
 See `SECURITY_AND_QA_SUMMARY.md`, `WILD_PANTHER_REPORT.md`, `MOBILE_COMPATIBILITY_REPORT.md`. The recovery tool refuses to back up a schema that has triggers, so the next backups after migration 0005 need a reviewed extension of `recovery.py` (the pre-migration backup above is the recovery point for this deployment).
