@@ -4,7 +4,7 @@
 Every step marked `[OWNER]` needs the owner (sudo password, approvals). Steps marked `[DEV]` are read-only or local.
 
 ## 1. What is being released
-Branch `release/uat-phase2` = the deployed release **2294d79** + 6 logical commits (163 files; see `RELEASE_MANIFEST.json` for the exact commit and checksums):
+Branch `release/uat-phase2` = the deployed release **2294d79** + 16 explicit commits (exact commit, file list and checksums: `RELEASE_MANIFEST.json`). Logical groups:
 1. **DB safety:** idempotent seed of the default `risk_controls` row (the original "Financial risk controls unavailable" defect; UAT already has the row from G11, the migration is a no-op there), migration preflight, destructive-script guards.
 2. **Ops tooling:** encrypted backup/restore tooling, runbooks, diagnostics (not runtime code).
 3. **Wild Panther calibration + Color Game wheel** (gameplay change, pending client acceptance).
@@ -21,6 +21,7 @@ Why a separate branch: the main working branch carried a different history from 
 No `DROP`, no `TRUNCATE`, no data rewrite. Tested on a disposable MariaDB 10.11.14 clone: upgrade from the UAT-like pre-0005 state preserved every user row byte-for-byte; 20 concurrent inserts -> exactly 2 clients; rollback restores the pre-0005 shape with identical user data (`scripts/test-restrictions-db.mjs`, 15/15).
 
 ### Two pre-deployment checks that could block migration 0005 `[OWNER]`
+**Local reproduction (MariaDB 10.11.14 with `--log-bin`, `scripts/qa/test-binlog-trigger.mjs`): with binary logging ON and `log_bin_trust_function_creators=0`, a NON-SUPER account with every normal privilege (including TRIGGER) FAILS at the first `CREATE TRIGGER` (error 1419), leaving the column/table created and no triggers; re-running after the setting is enabled, or running as an account with SUPER, succeeds and keeps all user data.** The VPS state is unknown until the read-only preflight is run: use `deploy/diagnostics/vps-db-preflight-sudo.sh` + `scripts/qa/compare-ledger.mjs` (commands and decision options in APPROVAL_GATES.md).
 1. **Trigger privilege.** `CREATE TRIGGER` needs the `TRIGGER` privilege for the migration account, and with binary logging enabled MariaDB additionally requires `log_bin_trust_function_creators=1` or SUPER (error 1419). Check (read-only): `SHOW VARIABLES LIKE 'log_bin%'; SHOW VARIABLES LIKE 'log_bin_trust_function_creators'; SHOW GRANTS FOR <migration account>;`. If binary logging is on and the variable is 0, **stop and ask the developer**; do not change server settings without review.
 2. **Application account grants.** The UAT app account must be able to `SELECT/INSERT/UPDATE` the two new tables. If its grants are schema-wide (`maxhigh_staging.*`) nothing is needed; if they are per-table, add grants for `account_limits` and `entitlement_grants` (reviewed SQL, `[OWNER]`). Until activation the app only *reads* them (and only when the policy is on).
 

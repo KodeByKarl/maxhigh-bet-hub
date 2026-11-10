@@ -1,3 +1,5 @@
+> **Superseded.** This was the 03:50 checkpoint of an earlier session. The current state is in `APPROVAL_GATES.md`, `SECURITY_AND_QA_SUMMARY.md` and `RELEASE_MANIFEST.json` (built from the clean `release/uat-phase2` branch). Kept for history.
+
 # MAXHIGH FINAL OVERNIGHT RELEASE REPORT - CHECKPOINT (written before the 03:50 PHT cutoff)
 
 Written 2026-11-10 ~03:30 PHT. Hard stop: 03:50 (Windows shutdown 04:00, not disabled or postponed).

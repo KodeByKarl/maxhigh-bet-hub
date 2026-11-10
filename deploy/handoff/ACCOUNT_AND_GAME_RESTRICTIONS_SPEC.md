@@ -9,7 +9,7 @@ This document supersedes `RESTRICTIONS_DESIGN_NOT_IMPLEMENTED.md`.
 |---|---|
 | Server-side game-access gate in the shared financial wrapper | IMPLEMENTED, TESTED |
 | Policy compiled into the build (`src/server/policy/access-policy.config.ts`), shipped **off** | IMPLEMENTED |
-| Locked-game status for the lobby (display only) + approved client message | IMPLEMENTED, TESTED (browser smoke pending re-run on final build) |
+| Locked-game status for the lobby (display only) + approved client message | IMPLEMENTED, TESTED |
 | Account classes (`client` / `admin` / `qa`) + cap (application layer + DB triggers) | IMPLEMENTED, TESTED |
 | Developer-signed entitlement grants (unlock games, lift cap, authorize exempt account) | IMPLEMENTED, TESTED |
 | Developer activation script (dry run by default) | IMPLEMENTED, TESTED |
@@ -30,7 +30,7 @@ This document supersedes `RESTRICTIONS_DESIGN_NOT_IMPLEMENTED.md`.
 ## 3. Two client accounts
 * **Classes:** `client` (counts toward the cap), `admin` (maintenance/recovery), `qa` (synthetic test). The class is **never** taken from request data: new accounts are always `client` unless a valid developer-signed grant names that exact username (tested: a caller-supplied `accountClass` is ignored).
 * **Cap:** maximum 2 active client accounts (active = class client and not admin-disabled). Brute-force lockouts are temporary and still count as active.
-* **Atomic enforcement, two layers:** (1) application: capacity check inside the creating transaction, serialised on the single `account_limits` row; (2) database: `users_client_cap_bi/ai/au/ad` triggers maintain a counter and refuse a third active client (`CLIENT_ACCOUNT_LIMIT`) even for direct SQL. Tested: 20 concurrent inserts -> exactly 2; 12 concurrent app-level creations at the cap -> 0 created.
+* **Atomic enforcement, two layers:** (1) application: capacity check inside the creating transaction, serialised on the single `account_limits` row; (2) database: `users_client_cap_bi/ai/au/ad` triggers maintain a counter and refuse a third active client (`CLIENT_ACCOUNT_LIMIT`) even for direct SQL. Tested: 20 concurrent inserts -> exactly 2; 24 concurrent creations through EACH creation path at the cap with a cold grant cache -> 0 created, app still answering (this test also guards against a connection-pool deadlock that an earlier version of the capacity check had).
 * **Paths covered:** superadmin create, admin/agent create, re-enabling an admin-disabled client account, role change (class does not change), direct DB update of `account_class` (blocked without the developer session flag, trigger `users_class_guard_bu`).
 * **Disabled-account replacement policy:** an admin-disabled client account does not count; disabling one frees exactly one slot; re-enabling it while full is rejected.
 * **Existing accounts:** the migration only adds the column (default `client`) and marks `superadmin` accounts `admin`. UAT's 5 synthetic players stay `client` until the developer activation step classifies them `qa`. Nothing is deleted, disabled or edited otherwise (byte-for-byte check of every user row).
