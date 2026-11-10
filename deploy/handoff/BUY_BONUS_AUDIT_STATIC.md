@@ -28,7 +28,7 @@ Columns: model (dedicated component/server file vs the shared Realms engine), bu
 | Pharaoh Fire | dedicated | 42.5 | 10 | 4 | yes | yes | yes | yes | FREE SPINS! |
 | Desert Riches | dedicated | 42.5 | 10 | 4 | yes | yes | yes | yes | FREE SPINS! |
 | Gate of Ra | dedicated | 42.5 | 10 | 4 | yes | yes | yes | yes | FREE SPINS! |
-| Wild Panther | dedicated | 41 | 10 | 4 | yes | yes | no | yes | FREE SPINS! | FREE SPINS · $ |
+| Wild Panther | dedicated | 41 | 10 | 4 | yes | yes | no | yes | FREE SPINS! |
 | Jade Jaguar | dedicated | 42.5 | 10 | 4 | yes | yes | yes | yes | FREE SPINS! |
 | Ember Tiger | dedicated | 42.5 | 10 | 4 | yes | yes | yes | yes | FREE SPINS! |
 | Lotus Lynx | dedicated | 42.5 | 10 | 4 | yes | yes | yes | yes | FREE SPINS! |

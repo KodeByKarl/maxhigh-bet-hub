@@ -43,16 +43,36 @@ await page.waitForSelector(".slot-deck", { timeout: 30000 }).catch(() => undefin
 await page.waitForTimeout(2500);
 await page.screenshot({ path: path.join(out, `${game}-1-base.png`) });
 
-for (let k = 0; k < 6; k++) {
+// start from a clean base game: finish/dismiss any recovered bonus left by an earlier run (this also exercises session recovery)
+for (let k = 0; k < 150; k++) {
   const pending = page.locator('button[aria-label^="Free spins complete"]').first();
-  if (await pending.count()) { await pending.click().catch(() => undefined); await page.waitForTimeout(1200); } else break;
+  if (await pending.count()) { await pending.click().catch(() => undefined); await page.waitForTimeout(800); continue; }
+  const modal = page.locator('.fixed.inset-0[class*="z-[150]"]').first();
+  if (await modal.count()) { await modal.click({ position: { x: 4, y: 4 }, timeout: 800 }).catch(() => undefined); await page.waitForTimeout(800); continue; }
+  const b = page.getByRole("button", { name: buyBtn }).first();
+  if ((await b.count()) && (await b.isEnabled().catch(() => false))) break;
+  await page.waitForTimeout(1000);
 }
 const buy = page.getByRole("button", { name: buyBtn }).first();
 const priceText = await buy.innerText();
-const price = money(priceText);
+let price = money(priceText);
+const QTY = process.env.QTY ? Number(process.env.QTY) : null;
 note("Buy Bonus control shows the price from the game's configuration", price > 0, priceText.replace(/\s+/g, " "));
 await buy.click();
 await page.waitForTimeout(900);
+if (QTY) {
+  // quantity-priced dialog (Bet / Quantity / Price / Total Price): choose the purchased number of bonus spins
+  const plus = page.locator("button").filter({ hasText: /^\s*\+\s*$/ });
+  const qtyPlus = plus.nth((await plus.count()) - 1); // the last "+" in the dialog is the Quantity stepper
+  for (let k = 1; k < QTY; k++) await qtyPlus.click();
+  await page.waitForTimeout(1200);
+  const dialogText = await page.locator("body").innerText();
+  const tots = [...dialogText.matchAll(/total price\s*₱?\s*([\d,]+(?:\.\d+)?)/gi)];
+  const tot = tots.at(-1) ?? null;
+  if (tot) price = Number(tot[1].replace(/,/g, ""));
+  const ctx = (dialogText.match(/.{0,40}total price.{0,40}/gi) ?? []).map((x) => x.replace(/\s+/g, " ")).slice(-2).join(" || ");
+  note("dialog shows the Total Price for the chosen quantity (existing calibrated pricing)", !!tot && price > 0, `qty ${QTY}, total ${price}; ${ctx}`);
+}
 await page.screenshot({ path: path.join(out, `${game}-2-confirm.png`) });
 note("purchase needs an explicit confirmation (existing dialog)", (await page.getByRole("button", { name: confirmBtn }).count()) > 0);
 const deckBefore = await page.locator(".slot-deck").first().innerText();
@@ -99,7 +119,7 @@ const nums = counterSeen.map((x) => x.split("/").map(Number));
 const total = nums.at(-1)?.[1] ?? 0;
 const sequential = nums.every((n, i) => i === 0 || n[0] === nums[i - 1][0] + 1 || n[0] === nums[i - 1][0]);
 note("the counter progresses without skipping (1/N ... N/N)", sequential && nums.at(-1)?.[0] === total, counterSeen.join(" "));
-note("the counter total reflects the spins actually awarded (not a hard-coded value)", total >= 1, `N=${total}`);
+note("the counter total reflects the spins actually awarded (not a hard-coded value)", QTY ? total >= QTY : total >= 1, `N=${total}${QTY ? ` (purchased ${QTY}; retriggers can only add)` : ""}`);
 note("a Total Bonus Win summary is shown at the end", ended && /₱\s*[\d,]+\.\d\d|total|win/i.test(summaryText), summaryText.slice(0, 120));
 await page.waitForTimeout(1500);
 const deckAfter = await page.locator(".slot-deck").first().innerText().catch(() => "");

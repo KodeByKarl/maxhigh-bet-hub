@@ -55,6 +55,7 @@ import { AutoSpinModal, type AutoSpinOptions } from "./realms/AutoSpinModal";
 import { ReelGrid, type ReelVisuals } from "./realms/ReelGrid";
 import type { ReelPhase, SymbolArt } from "./realms/ReelCell";
 import { realmsCssVars, realmsTheme } from "./realms/theme";
+import { freeSpinsProgress } from "./bonus/freeSpinsProgress";
 
 type Phase = ReelPhase;
 type Slot = BoardCell | null;
@@ -146,6 +147,9 @@ function RealmsTable({ def }: { def: RealmsGameDef }) {
   const [turbo, setTurbo] = useState(false);
   const [lastWin, setLastWin] = useState(0);
   const [freeSpins, setFreeSpins] = useState(0);
+  const [fsPlayed, setFsPlayed] = useState(0);
+  /** True from the confirmed purchase until the Free Spins announcement is dismissed: the HUD counter stays hidden meanwhile. */
+  const [buyPresenting, setBuyPresenting] = useState(false);
   const [inFree, setInFree] = useState(false);
   const [fsSessionWin, setFsSessionWin] = useState(0);
   const [dropTotal, setDropTotal] = useState(0);
@@ -373,6 +377,7 @@ function RealmsTable({ def }: { def: RealmsGameDef }) {
         freeSpinsRef.current = session.freeSpinsLeft;
         fsSessionRef.current = session.fsSessionWin;
         fsSpinsPlayedRef.current = session.fsSpinsPlayed;
+        setFsPlayed(session.fsSpinsPlayed);
         if (session.bet > 0) setBet(session.bet);
         setAnte(session.ante);
         setFsPaused(false);
@@ -416,6 +421,7 @@ function RealmsTable({ def }: { def: RealmsGameDef }) {
       freeSpinsRef.current = session.freeSpinsLeft;
       fsSessionRef.current = session.fsSessionWin;
       fsSpinsPlayedRef.current = session.fsSpinsPlayed;
+      setFsPlayed(session.fsSpinsPlayed);
     },
     [],
   );
@@ -556,6 +562,7 @@ function RealmsTable({ def }: { def: RealmsGameDef }) {
   const dismissFsSummary = useCallback(() => {
     setFsSummary(null);
     fsSpinsPlayedRef.current = 0;
+    setFsPlayed(0);
     audio.endFreespins();
   }, [audio]);
 
@@ -707,6 +714,7 @@ function RealmsTable({ def }: { def: RealmsGameDef }) {
           setLastWin(settled.session.fsSessionWin || settled.fsPayout?.amount || 0);
           fsSessionRef.current = settled.session.fsSessionWin;
           fsSpinsPlayedRef.current = settled.session.fsSpinsPlayed;
+          setFsPlayed(settled.session.fsSpinsPlayed);
 
           if (script.retriggerSpins > 0 && settled.session.inFree) {
             audio.playScatterTrigger();
@@ -825,6 +833,8 @@ function RealmsTable({ def }: { def: RealmsGameDef }) {
       }
 
       setBuyOpen(false);
+
+      setBuyPresenting(true);
       setBet(buyBet);
       try {
         const bought = await realmsBuyFeatureFn({
@@ -845,6 +855,7 @@ function RealmsTable({ def }: { def: RealmsGameDef }) {
         } catch {
           dismissTriggerModal();
         } finally {
+          setBuyPresenting(false);
           if (gen === playbackGen.current) {
             busyRef.current = false;
             if (mountedRef.current) setPhase("idle");
@@ -853,6 +864,7 @@ function RealmsTable({ def }: { def: RealmsGameDef }) {
         // First free spin starts via the auto-chain once the modal closes.
       } catch (err) {
         toast.error(err instanceof Error ? err.message : "Buy feature failed");
+        setBuyPresenting(false);
       }
     },
     [
@@ -969,6 +981,7 @@ function RealmsTable({ def }: { def: RealmsGameDef }) {
     freeSpins,
     lastWin,
     triggerModalCount,
+    buyPresenting,
     fsPaused,
     turbo,
   ]);
@@ -1078,8 +1091,13 @@ function RealmsTable({ def }: { def: RealmsGameDef }) {
             busy={busy}
             turbo={turbo}
             autoSpin={autoSpin}
-            inFree={inFree}
+            inFree={inFree && triggerModalCount == null && !buyPresenting}
             freeSpins={freeSpins}
+            freeSpinsProgress={
+              inFree && triggerModalCount == null && !buyPresenting
+                ? freeSpinsProgress(fsPlayed, freeSpins, busy)
+                : null
+            }
             freeSpinsPaused={fsPaused}
             autoRemaining={remainingAutoSpins}
             spinDisabled={!busy && !autoSpin && inFree && freeSpins === 0}

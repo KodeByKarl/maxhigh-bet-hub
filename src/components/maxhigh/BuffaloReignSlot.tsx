@@ -54,6 +54,7 @@ import { themeToCssVars } from "./panther-shared/theme";
 import { type ReelPhase } from "./buffalo-reign/ReelCell";
 import { getBuffaloReignEngineConfigFn } from "@/functions/superadmin";
 import { BUFFALO_REIGN_GAME_ID } from "@/lib/buffalo-reign-config";
+import { freeSpinsProgress } from "./bonus/freeSpinsProgress";
 
 type Phase = ReelPhase;
 type Slot = BoardCell | null;
@@ -129,6 +130,9 @@ export function BuffaloReignSlot({
   const [turbo, setTurbo] = useState(false);
   const [lastWin, setLastWin] = useState(0);
   const [freeSpins, setFreeSpins] = useState(0);
+  const [fsPlayed, setFsPlayed] = useState(0);
+  /** True from the confirmed purchase until the Free Spins announcement is dismissed: the HUD counter stays hidden meanwhile. */
+  const [buyPresenting, setBuyPresenting] = useState(false);
   const [inFree, setInFree] = useState(false);
   const [fsSessionWin, setFsSessionWin] = useState(0);
   const [dropTotal, setDropTotal] = useState(0);
@@ -348,6 +352,7 @@ export function BuffaloReignSlot({
           freeSpinsRef.current = session.freeSpinsLeft;
           fsSessionRef.current = session.fsSessionWin;
           fsSpinsPlayedRef.current = session.fsSpinsPlayed;
+          setFsPlayed(session.fsSpinsPlayed);
           if (session.bet > 0) setBet(session.bet);
           setAnte(session.ante);
           setFsPaused(false);
@@ -393,6 +398,7 @@ export function BuffaloReignSlot({
       freeSpinsRef.current = session.freeSpinsLeft;
       fsSessionRef.current = session.fsSessionWin;
       fsSpinsPlayedRef.current = session.fsSpinsPlayed;
+      setFsPlayed(session.fsSpinsPlayed);
     },
     [],
   );
@@ -533,6 +539,7 @@ export function BuffaloReignSlot({
   const dismissFsSummary = useCallback(() => {
     setFsSummary(null);
     fsSpinsPlayedRef.current = 0;
+    setFsPlayed(0);
     buffaloReignAudio.endFreespins();
   }, []);
 
@@ -681,6 +688,7 @@ export function BuffaloReignSlot({
           setLastWin(settled.session.fsSessionWin || settled.fsPayout?.amount || 0);
           fsSessionRef.current = settled.session.fsSessionWin;
           fsSpinsPlayedRef.current = settled.session.fsSpinsPlayed;
+          setFsPlayed(settled.session.fsSpinsPlayed);
 
           if (script.retriggerSpins > 0 && settled.session.inFree) {
             buffaloReignAudio.playScatterTrigger();
@@ -802,6 +810,8 @@ export function BuffaloReignSlot({
       }
 
       setBuyOpen(false);
+
+      setBuyPresenting(true);
       setBet(buyBet);
       try {
         const bought = await buffaloReignBuyFeatureFn({
@@ -824,6 +834,7 @@ export function BuffaloReignSlot({
         } catch {
           dismissTriggerModal();
         } finally {
+          setBuyPresenting(false);
           if (gen === playbackGen.current) {
             busyRef.current = false;
             if (mountedRef.current) setPhase("idle");
@@ -832,6 +843,7 @@ export function BuffaloReignSlot({
         // First free spin starts via the auto-chain once the modal closes.
       } catch (err) {
         toast.error(err instanceof Error ? err.message : "Buy feature failed");
+        setBuyPresenting(false);
       }
     },
     [
@@ -947,6 +959,7 @@ export function BuffaloReignSlot({
     freeSpins,
     lastWin,
     triggerModalCount,
+    buyPresenting,
     fsPaused,
     turbo,
   ]);
@@ -1052,8 +1065,13 @@ export function BuffaloReignSlot({
             busy={busy}
             turbo={turbo}
             autoSpin={autoSpin}
-            inFree={inFree}
+            inFree={inFree && triggerModalCount == null && !buyPresenting}
             freeSpins={freeSpins}
+            freeSpinsProgress={
+              inFree && triggerModalCount == null && !buyPresenting
+                ? freeSpinsProgress(fsPlayed, freeSpins, busy)
+                : null
+            }
             freeSpinsPaused={fsPaused}
             autoRemaining={remainingAutoSpins}
             spinDisabled={!busy && !autoSpin && inFree && freeSpins === 0}
