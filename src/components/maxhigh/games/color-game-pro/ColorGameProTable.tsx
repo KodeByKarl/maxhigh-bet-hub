@@ -234,9 +234,11 @@ export function ColorGameProTable({
           lastSlice = s;
           const f = flapRef.current;
           if (f) {
-            f.animate([{ transform: "rotate(-20deg)" }, { transform: "rotate(0deg)" }], {
-              duration: 100,
-              easing: "ease-out",
+            f.style.transition = "none";
+            f.style.transform = "rotate(-20deg)";
+            requestAnimationFrame(() => {
+              f.style.transition = "transform 100ms ease-out";
+              f.style.transform = "rotate(0deg)";
             });
           }
         }
@@ -745,7 +747,7 @@ const CSS = `
   border: 3px solid #67e8f9; box-shadow: 0 0 22px rgba(34,211,238,.7), inset 0 0 20px rgba(0,0,0,.7);
 }
 .pro-hub-label { background: linear-gradient(90deg,#67e8f9,#f0abfc); -webkit-background-clip: text; background-clip: text; color: transparent; }
-.pro-win-slice { animation: pro-sl .5s ease-in-out infinite alternate; }
+.pro-win-slice { animation: pro-sl .5s ease-in-out infinite alternate; mix-blend-mode: overlay; }
 @keyframes pro-sl { from { opacity: .2; } to { opacity: 1; } }
 .pro-pop { animation: pro-pp .45s cubic-bezier(.2,1.6,.4,1); }
 @keyframes pro-pp { from { transform: scale(.3); opacity: 0; } to { transform: scale(1); opacity: 1; } }

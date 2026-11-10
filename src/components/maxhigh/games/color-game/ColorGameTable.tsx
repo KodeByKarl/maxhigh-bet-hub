@@ -186,14 +186,12 @@ export function ColorGameTable({
           const f = flapRef.current;
           if (f) {
             // kick the pointer flapper on every peg
-            // Web Animations API: runs off the main thread, no per-peg style/transition rewrites or nested rAF.
-            f.animate(
-              [
-                { transform: "translateX(0) rotate(-22deg)" },
-                { transform: "translateX(0) rotate(0deg)" },
-              ],
-              { duration: 90, easing: "ease-out" },
-            );
+            f.style.transition = "none";
+            f.style.transform = "translateX(0) rotate(-22deg)";
+            requestAnimationFrame(() => {
+              f.style.transition = "transform 90ms ease-out";
+              f.style.transform = "translateX(0) rotate(0deg)";
+            });
           }
         }
         if (p < 1) rafRef.current = requestAnimationFrame(frame);
@@ -578,7 +576,7 @@ const CSS = `
   --r: 47.2cqw;
 }
 .cg-bulbs-fast .cg-bulb { animation-duration: .18s; }
-@keyframes cg-twinkle { from { opacity: .35; } to { opacity: 1; } } /* opacity only: filter animations repaint on the main thread */
+@keyframes cg-twinkle { from { opacity: .35; filter: brightness(.7); } to { opacity: 1; filter: brightness(1.35); } }
 .cg-peg {
   width: 3.2%; aspect-ratio: 1; border-radius: 9999px;
   background: radial-gradient(circle at 35% 30%, #fff, #fcd34d 50%, #92400e);
@@ -594,7 +592,7 @@ const CSS = `
   border: 3px solid #f5d76e;
   box-shadow: inset 0 8px 18px rgba(0,0,0,.6), 0 0 0 3px rgba(0,0,0,.4), 0 6px 14px rgba(0,0,0,.6);
 }
-.cg-win-slice { animation: cg-slice 0.55s ease-in-out infinite alternate; } /* no mix-blend-mode: forces backdrop readback on mobile GPUs */
+.cg-win-slice { animation: cg-slice 0.55s ease-in-out infinite alternate; mix-blend-mode: overlay; }
 @keyframes cg-slice { from { opacity: .25; } to { opacity: 1; } }
 .cg-pop { animation: cg-pop .45s cubic-bezier(.2,1.6,.4,1); }
 @keyframes cg-pop { from { transform: scale(.3); opacity: 0; } to { transform: scale(1); opacity: 1; } }
