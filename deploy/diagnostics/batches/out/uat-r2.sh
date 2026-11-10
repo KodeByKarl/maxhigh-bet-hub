@@ -102,9 +102,13 @@ main() {
   done
   [ "$(sqlv "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema='$RESTORE_DB'")" = 0 ] && ok "restore-check schema is empty" || die "restore-check not empty"
   [ "$(sqlv "SELECT COUNT(*) FROM information_schema.triggers WHERE trigger_schema='$RESTORE_DB'")" = 0 ] && ok "restore-check holds no triggers" || die "restore-check still has triggers"
-  mariadb -e "GRANT TRIGGER ON \`maxhigh_staging_restorecheck\`.* TO 'maxhigh_stage_restore'@'127.0.0.1'"
+  # The kit created the restore account's privileges on the ESCAPED schema name (maxhigh\_staging\_restorecheck). MariaDB keeps a separate
+  # row for the unescaped spelling and uses only ONE matching row, so TRIGGER must be added to the escaped row and any stray row removed.
+  mariadb -e "REVOKE TRIGGER ON \`maxhigh_staging_restorecheck\`.* FROM 'maxhigh_stage_restore'@'127.0.0.1'" 2> /dev/null || true
+  mariadb -e "GRANT TRIGGER ON \`maxhigh\\_staging\\_restorecheck\`.* TO 'maxhigh_stage_restore'@'127.0.0.1'"
   GR=$(mariadb -N -e "SHOW GRANTS FOR 'maxhigh_stage_restore'@'127.0.0.1'")
-  printf '%s\n' "$GR" | grep -q 'TRIGGER ON `maxhigh_staging_restorecheck`' && ok "restore account has TRIGGER on the restore-check schema" || die "TRIGGER grant missing"
+  [ "$(printf '%s\n' "$GR" | grep -c 'restorecheck`\.\* TO')" = 1 ] && ok "exactly one privilege row covers the restore-check schema" || die "restore-check privileges are split over several rows"
+  printf '%s\n' "$GR" | grep 'restorecheck`\.\* TO' | grep -q 'TRIGGER' && ok "that row includes TRIGGER" || die "TRIGGER grant missing"
   [ "$(printf '%s\n' "$GR" | grep -c "ON \`maxhigh_staging\`\.")" = 0 ] && ok "restore account has NO privilege on the live schema" || die "restore account has a live-schema privilege"
   [ "$(printf '%s\n' "$GR" | grep -c '\*\.\* TO' )" -le 1 ] && ok "restore account has no global privileges beyond USAGE" || die "restore account has global privileges"
 
