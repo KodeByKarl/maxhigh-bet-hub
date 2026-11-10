@@ -1,6 +1,6 @@
 {
   "schema": "maxhigh_staging",
-  "applicationSha": "75cc41980c70a2d188a9a8263ed56d4eb580d7a1",
+  "applicationSha": "07d670abe485e06292d8c3e624e7df4824ae80eb",
   "backupPath": "/var/backups/maxhigh-staging/EXACT_VERIFIED_BACKUP.sql.gz.age",
   "ciphertextSha256": "SET_FROM_ACTUAL_VERIFIED_CIPHERTEXT",
   "restoreCompared": false,

@@ -1,12 +1,14 @@
 # MaxHigh - 7-day private client testing handover
 
-**STATUS: DRAFT - NOT YET ACTIVE.** This package describes the limited testing configuration. The 50-game lock and the 2-staff-account limit are **built and tested but NOT activated** on the testing system until the owner confirms (1) the contractual basis, (2) the exact game list below and (3) the two client staff accounts. Do not send this document or any login to the client before then. Credentials are never written in this document.
+**STATUS: DRAFT - NOT YET ACTIVE.** This package describes the limited testing configuration. The 50-game lock is **built and tested but NOT activated** on the testing system until the owner confirms (1) the contractual basis, (2) the exact game list below. Do not send this document or any login to the client before then. Credentials are never written in this document.
 
 ## 1. What the client receives
 * A private testing system with synthetic (test) credits only. No real money, no real payments, no public access.
 * Private URL: provided separately by the owner (HTTPS, protected access) - not listed here.
 * Testing period: **7 days starting on the day the owner confirms the start** (start date and expiry date to be entered by the owner: ____ to ____).
-* Two client staff accounts (administrator/staff). Ordinary player accounts are not counted against that limit.
+* **Client Owner account (client_owner)**: the business owner's primary account. Full administration: create and manage staff, agents, administrators and players, and view and edit the configuration of **all 100 games**, including the 50 locked ones. Gameplay and activation of the 50 locked games stay unavailable until payment and the unlock release.
+* **Client administrator accounts (client_admin01, client_admin02)**: create and manage permitted staff and player accounts and configure the 50 playable games.
+* **There is no limit on accounts.** The developer keeps a separate technical-maintenance account for authorized support; it is never the client's identity.
 
 ## 2. Playable games (50) - proposal awaiting owner approval
 | # | Game | Category |
@@ -120,14 +122,13 @@ Visible in the administrator catalog with a **Locked** status. They cannot be ac
 ## 4. Payment-related unlock terms
 * Outstanding project balance: **PHP 50,000**.
 * Attempting to activate or play a locked game shows: "Game Locked. Please settle the remaining project payment to activate this game."
-* Attempting to add a third client staff account shows: "Account Limit Reached. Please settle the remaining project payment to add more client accounts."
-* Locked games and additional accounts are enabled after the remaining payment is settled, by a new reviewed release or a developer-signed entitlement. Nothing is deleted, no balance is touched, and existing accounts and history stay available.
+* The 50 locked games are enabled after the remaining payment is settled, by a new reviewed release or a developer-signed entitlement. Nothing is deleted, no balance is touched, and existing accounts and history stay available.
 
 ## 5. How the client tests
-1. Sign in with the staff account you receive; review the lobby, the administrator dashboard and the game catalog (locked games show a Locked badge).
+1. Sign in with the account you receive (Client Owner or Client Administrator); review the lobby, the administrator dashboard and the game catalog (locked games show a Locked badge; the Client Owner can open and configure them).
 2. Play several of the 50 available games on desktop and on a phone (portrait and landscape).
-3. Try to open a locked game and try to create a third staff account to see the notices.
-4. Create player accounts (these are not limited), add synthetic credits through the normal administrator tools, and play.
+3. Try to open a locked game to see the notice.
+4. Create staff and player accounts as needed, add synthetic credits through the normal administrator tools, configure the playable games, and play.
 5. Report anything unexpected using section 7.
 
 ## 6. Known limitations
@@ -145,9 +146,9 @@ Report issues to the developer (KodeByKarl) with: the time, the account name, th
 - [ ] The lobby shows 50 playable games and the other 50 as Locked.
 - [ ] Three or more of the playable games work as expected (bet, win, history).
 - [ ] A locked game shows the payment notice and cannot be played.
-- [ ] A third staff account is refused with the payment notice; player accounts can still be created.
+- [ ] I can create further staff and player accounts and configure the playable games.
 - [ ] Balances and the transaction history look correct.
-- [ ] I understand the remaining payment (PHP 50,000) unlocks the remaining games and accounts.
+- [ ] I understand the remaining payment (PHP 50,000) unlocks the remaining 50 games.
 
 ## 9. Secure credential delivery (owner only)
 Send each login through a separate private channel chosen by the owner (never together with the URL, never by this tool). Require a password change at first sign-in and rotate the temporary passwords at the end of testing.

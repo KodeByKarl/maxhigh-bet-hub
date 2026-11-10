@@ -23,7 +23,9 @@ const md = `# MaxHigh - 7-day private client testing handover
 * A private testing system with synthetic (test) credits only. No real money, no real payments, no public access.
 * Private URL: provided separately by the owner (HTTPS, protected access) - not listed here.
 * Testing period: **7 days starting on the day the owner confirms the start** (start date and expiry date to be entered by the owner: ____ to ____).
-* Client administrator accounts (client_admin01 and client_admin02). **There is no limit on accounts**: client administrators can create further staff and player accounts for testing, within their normal role permissions.
+* **Client Owner account (client_owner)**: the business owner's primary account. Full administration: create and manage staff, agents, administrators and players, and view and edit the configuration of **all 100 games**, including the 50 locked ones. Gameplay and activation of the 50 locked games stay unavailable until payment and the unlock release.
+* **Client administrator accounts (client_admin01, client_admin02)**: create and manage permitted staff and player accounts and configure the 50 playable games.
+* **There is no limit on accounts.** The developer keeps a separate technical-maintenance account for authorized support; it is never the client's identity.
 
 ## 2. Playable games (50) - proposal awaiting owner approval
 ${table(proposal.available)}
@@ -38,7 +40,7 @@ ${table(proposal.locked)}
 * The 50 locked games are enabled after the remaining payment is settled, by a new reviewed release or a developer-signed entitlement. Nothing is deleted, no balance is touched, and existing accounts and history stay available.
 
 ## 5. How the client tests
-1. Sign in with the staff account you receive; review the lobby, the administrator dashboard and the game catalog (locked games show a Locked badge).
+1. Sign in with the account you receive (Client Owner or Client Administrator); review the lobby, the administrator dashboard and the game catalog (locked games show a Locked badge; the Client Owner can open and configure them).
 2. Play several of the 50 available games on desktop and on a phone (portrait and landscape).
 3. Try to open a locked game to see the notice.
 4. Create staff and player accounts as needed, add synthetic credits through the normal administrator tools, configure the playable games, and play.

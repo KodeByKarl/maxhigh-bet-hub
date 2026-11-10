@@ -14,7 +14,7 @@ from common import *
 import stage
 
 STATE = Path('/var/lib/maxhigh-bootstrap')
-INBOX = Path('/home/maxhigh-ops/maxhigh-release-75cc419')
+INBOX = Path('/home/maxhigh-ops/maxhigh-release-07d670a')
 
 
 def grants_readonly(grants):
