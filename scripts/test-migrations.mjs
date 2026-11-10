@@ -23,7 +23,9 @@ try {
       if (upgrade) {
         // Apply the original immutable baseline before the additive upgrade.
         const pending = await migrate(db, { apply: false });
-        if (pending.length === 5) {
+        // A pristine database has every migration pending: build the immutable baseline + sentinel rows first.
+        const total = fs.readdirSync("drizzle").filter((x) => x.endsWith(".sql")).length;
+        if (pending.length === total) {
           const temp = "audit/remediation/runtime/baseline-migrations";
           fs.mkdirSync(temp, { recursive: true });
           fs.copyFileSync("drizzle/0000_init-from-schema.sql", temp + "/0000_init-from-schema.sql");
@@ -39,6 +41,13 @@ try {
       const applied = await migrate(db, { apply: true });
       const [[risk]] = await db.query("SELECT COUNT(*) AS n FROM risk_controls WHERE id='default'");
       assert.equal(Number(risk.n), 1, "default risk_controls row must exist after migration");
+      // Migration 0005 (access restrictions) must land INACTIVE: enforcement off, no grants, five backstop triggers.
+      const [[lim]] = await db.query("SELECT enforced, max_client_accounts AS m FROM account_limits WHERE id='default'");
+      assert.deepEqual([lim.enforced, Number(lim.m)], ["no", 2], "restrictions must ship inactive");
+      const [[grants]] = await db.query("SELECT COUNT(*) AS n FROM entitlement_grants");
+      assert.equal(Number(grants.n), 0);
+      const [trg] = await db.query("SHOW TRIGGERS");
+      assert.equal(trg.filter((t) => /^users_(client_cap|class_guard)/.test(t.Trigger)).length, 5);
       assert.deepEqual(await migrate(db, { apply: false }), []);
       assert.deepEqual(await migrate(db, { apply: true }), []);
       const tampered = "audit/remediation/runtime/checksum-negative";
