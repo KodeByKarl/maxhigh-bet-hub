@@ -1496,7 +1496,7 @@ export function GamePlayModal({ game, open, onOpenChange }: Props) {
   return createPortal(
     <div
       ref={shellRef}
-      className="fixed inset-0 z-[9999] flex w-full max-w-[100vw] flex-col overflow-hidden overscroll-none bg-[#0A0912] animate-[loader-fade_0.35s_ease-out]"
+      className="fixed inset-0 z-[9999] flex w-full max-w-[100vw] flex-col overflow-hidden overscroll-none bg-[#0A0912] pb-[env(safe-area-inset-bottom)] pl-[env(safe-area-inset-left)] pr-[env(safe-area-inset-right)] pt-[env(safe-area-inset-top)] animate-[loader-fade_0.35s_ease-out]"
       role="dialog"
       aria-modal="true"
       aria-label={`${game.name} game`}
