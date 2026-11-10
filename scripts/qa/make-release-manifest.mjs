@@ -34,7 +34,7 @@ const evidence = {};
 for (const f of walk(evidenceDir)) if (/\.(json|txt|log|md)$/.test(f) && fs.statSync(f).size < 20_000_000) evidence[path.relative(evidenceDir, f).replaceAll("\\", "/")] = sha(f);
 const manifest = {
   generatedUtc: new Date().toISOString(),
-  status: "PREPARED - NOT DEPLOYED - DEPLOYMENT ON HOLD",
+  status: "PREPARED - NOT DEPLOYED - DEPLOYMENT BLOCKED AT THE ARTIFACT-PROVENANCE GATE (no Linux CI artifact can be produced; see DEPLOYMENT_AND_ROLLBACK.md)",
   repository: "maxhigh-bet-hub", branch: git("rev-parse", "--abbrev-ref", "HEAD"), commit: git("rev-parse", "HEAD"), baseDeployedRelease: git("rev-parse", base),
   commits: git("log", "--format=%H %s", `${base}..HEAD`).split("\n"),
   changedFiles: { total: changed.length, byStatus: changed.reduce((a, c) => ((a[c.status] = (a[c.status] ?? 0) + 1), a), {}), list: changed },
