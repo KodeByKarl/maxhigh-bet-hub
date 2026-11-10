@@ -100,7 +100,8 @@ Inline 'secrets-and-environment-config' {
   @{ ok = ($bad.Count -eq 0); note = $(if ($bad.Count) { "tracked secret-like files: $($bad -join ', ')" } else { 'no tracked .env / key / credentials files' }) }
 }
 Inline 'build-integrity-manifest (local, non-deployable)' {
-  $files = Get-ChildItem .output -Recurse -File; $lines = $files | % { "{0}  {1}" -f (Get-FileHash $_.FullName -Algorithm SHA256).Hash.ToLower(), $_.FullName.Substring((Resolve-Path .output).Path.Length + 1).Replace('\', '/') } | Sort-Object { $_.Split('  ')[1] }
+  $root = (Resolve-Path .output).Path; $files = @(Get-ChildItem -LiteralPath $root -Recurse -File -Force); $sha = [System.Security.Cryptography.SHA256]::Create()
+  $lines = $files | % { $h = [BitConverter]::ToString($sha.ComputeHash([IO.File]::ReadAllBytes($_.FullName))).Replace('-', '').ToLower(); "$h  $($_.FullName.Substring($root.Length + 1).Replace([string][char]92, '/'))" } | Sort-Object { $_.Substring(66) }
   $lines | Set-Content "$Evidence\local-build-manifest.sha256"
   $digest = (Get-FileHash "$Evidence\local-build-manifest.sha256" -Algorithm SHA256).Hash.ToLower()
   $games = (Get-ChildItem .output/public/games -Directory -ErrorAction SilentlyContinue).Count
