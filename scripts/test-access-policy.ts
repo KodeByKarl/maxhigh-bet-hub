@@ -22,12 +22,23 @@ const policy = {
 const signPayload = (p: string, key = privateKey) => sign(null, Buffer.from(p, "utf8"), key).toString("base64");
 const grant = (extra: object = {}) => JSON.stringify({ v: 1, kind: "unlock-games", environment: "uat", nonce: "n".repeat(20), issuedAt: "2026-11-10T00:00:00.000Z", games: ["deep-bass"], ...extra });
 
-// ---- shipped default is inactive
-assert.equal(getAccessPolicy().gameLocks.enforcement, "off");
-assert.equal(getAccessPolicy().clientAccounts.enforcement, "off");
-assert.equal(getAccessPolicy().gameLocks.lockedGames.length, 0);
-assert.equal(getAccessPolicy().grantKeys.length, 0);
-ok("shipped policy is INACTIVE: no locks, no cap, no grant keys");
+// ---- shipped policy = the approved limited client testing configuration
+{
+  const fs = await import("node:fs");
+  const alloc = JSON.parse(fs.readFileSync("deploy/handoff/PROPOSED_GAME_ALLOCATION.json", "utf8"));
+  const p = getAccessPolicy();
+  assert.equal(p.gameLocks.enforcement, "on");
+  assert.equal(p.clientAccounts.enforcement, "on");
+  assert.equal(p.clientAccounts.maxClientAccounts, 2);
+  assert.equal(p.grantKeys.length, 0, "no signing key for this handover: unlocking requires a new verified release");
+  assert.equal(p.gameLocks.lockedGames.length, 50);
+  assert.equal(new Set(p.gameLocks.lockedGames).size, 50);
+  assert.deepEqual([...p.gameLocks.lockedGames].sort(), [...alloc.locked].sort(), "compiled locks equal the approved allocation");
+  assert.ok(!p.gameLocks.lockedGames.includes("wild-panther"), "Wild Panther stays playable");
+  assert.ok(p.gameLocks.lockedGames.includes("color-game-pro"), "Color Game Pro stays locked");
+  for (const g of alloc.available) assert.ok(!p.gameLocks.lockedGames.includes(g), g);
+}
+ok("shipped policy is the approved configuration: 50 locked, 50 playable, staff cap 2, no grant keys");
 
 // ---- override is refused outside a disposable environment
 process.env.MAXHIGH_POLICY_TEST_OVERRIDE = "";
@@ -106,7 +117,7 @@ assert.equal(verifyGrant(cap, signPayload(cap), "dev-1").kind, "lift-client-cap"
 ok("exempt-account and lift-cap grants verify");
 
 overridePolicyForDisposableTests(null);
-assert.equal((await getEffectiveLockedGames()).size, 0);
-ok("resetting the override restores the inactive default");
+assert.equal((await getEffectiveLockedGames()).size, 50);
+ok("resetting the override restores the compiled configuration (50 locked)");
 
 console.log(`PASS ${checks} access-policy checks`);

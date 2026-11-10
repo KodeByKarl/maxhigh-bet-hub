@@ -19,7 +19,10 @@ const REG = "Account Limit Reached. Please settle the remaining project payment 
 const ADMIN = REG;
 
 // ---- clone up (restrictions OFF)
-const up = run(["scripts/qa/local-clone.mjs", "setup"], { CLONE_ROOT_PW: ROOT_PW });
+// The build now ships the approved configuration COMPILED IN (restrictions on). Phase A needs the "everything open" baseline, so it
+// starts the app with an explicit test policy that switches both restrictions off (accepted only for a disposable loopback database).
+fs.writeFileSync(path.join(OUT, "off-policy.json"), JSON.stringify({ version: 1, environment: "uat", gameLocks: { enforcement: "off", lockedGames: [] }, clientAccounts: { enforcement: "off", maxClientAccounts: 2 }, grantKeys: [] }));
+const up = run(["scripts/qa/local-clone.mjs", "setup"], { CLONE_ROOT_PW: ROOT_PW, CLONE_POLICY_FILE: path.resolve(path.join(OUT, "off-policy.json")) });
 if (up.status !== 0) throw new Error("clone setup failed: " + up.stderr.slice(0, 300));
 const info = JSON.parse(up.stdout.trim().split("\n").pop());
 const envC = { UAT_BASE: info.UAT_BASE, UAT_CREDS_FILE: info.UAT_CREDS_FILE, UAT_QA_CREDS_FILE: info.UAT_QA_CREDS_FILE, UAT_EXPECT_RELEASE: info.UAT_EXPECT_RELEASE };
@@ -246,6 +249,30 @@ try {
   note("a signed exempt-account grant creates a QA account that does not count toward the cap", !helper.error && hc?.account_class === "qa" && (await clientsNow()) === 3, helper.error);
   note("another username without a grant is still refused", (await refused(() => mk("qa_other"))).msg === REG);
   await owner.logout(); await pl.logout().catch(() => {}); await pl2.logout().catch(() => {});
+
+  // ============================================================ Phase C: the COMPILED configuration (no test policy file at all)
+  const rcApp = run(["scripts/qa/local-clone.mjs", "restart-app"], { CLONE_ROOT_PW: ROOT_PW });
+  note("C: app restarted with NO test policy (compiled configuration only)", rcApp.status === 0 && /without policy/.test(rcApp.stdout), rcApp.stdout.trim().slice(0, 100));
+  const compiled = JSON.parse(fs.readFileSync("deploy/handoff/PROPOSED_GAME_ALLOCATION.json", "utf8"));
+  const cp = new Client(); await cp.login("uat_player2");
+  const cst = await cp.rpc("getAccessStatusFn", undefined, { method: "GET" });
+  note("C: compiled build reports exactly 50 locked games, equal to the approved list", cst.lockedGames.length === 50 && [...cst.lockedGames].sort().join() === [...compiled.locked].sort().join(), `${cst.lockedGames.length} locked`);
+  note("C: the lobby message is the approved game notice", cst.message === LOCKED, cst.message);
+  note("C: Wild Panther is playable and Color Game Pro is locked in the compiled build", !cst.lockedGames.includes("wild-panther") && cst.lockedGames.includes("color-game-pro"));
+  const wp = await cp.rpc("wildPantherSpinFn", { bet: 1, ante: false }).then(() => "played", (e) => e.message);
+  note("C: Wild Panther spin works", wp === "played", wp);
+  const cgp = await refused(() => cp.rpc("colorGameProDealFn", { bets: { red: 1 } }));
+  note("C: Color Game Pro refuses with the approved message", cgp.refused && cgp.msg === LOCKED, cgp.msg);
+  await cp.logout();
+  const own2 = new Client(); await own2.login("uat_owner");
+  const lockedCnt = (await own2.rpc("listSuperGamesFn", undefined, { method: "GET" })).filter((r) => r.locked).length;
+  note("C: admin catalog (compiled build) shows the locked games as Locked", lockedCnt > 0 && lockedCnt <= 50, `${lockedCnt} locked rows listed`);
+  const activeStaff = (await q("SELECT COUNT(*) n FROM users WHERE account_class='client' AND role<>'player' AND NOT (is_locked='yes' AND locked_by IS NOT NULL)"))[0].n;
+  const staffX = await refused(() => own2.rpc("superCreateUserFn", { username: "c_staff_extra", password: "Client-Pass-12345", role: "admin", balance: 0, displayName: "x" }));
+  note("C: with the cap full (>= 2 active client staff; stored test grants are ignored because the build has no grant keys), a further staff account is REJECTED with the approved notice and not created", activeStaff >= 2 && staffX.refused && staffX.msg === REG && (await q("SELECT COUNT(*) n FROM users WHERE username='c_staff_extra'"))[0].n === 0, `active staff ${activeStaff}; ${staffX.msg}`);
+  const plN = await own2.rpc("superCreateUserFn", { username: "c_player_x", password: "Client-Pass-12345", role: "player", balance: 0, displayName: "p" }).then(() => "ok", (e) => e.message);
+  note("C: ordinary player accounts are still created freely", plN === "ok", plN);
+  await own2.logout();
 
   // ============================================================ integrity
   const rec = run(["scripts/qa/clone-reconcile.mjs"], { CLONE_ROOT_PW: ROOT_PW });

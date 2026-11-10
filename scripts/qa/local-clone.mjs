@@ -67,7 +67,7 @@ async function setup() {
   await c.end();
   const creds = path.join(dir, "creds.txt");
   fs.writeFileSync(creds, `uat_owner\tsuperadmin\t${ownerPw}\nuat_player\tplayer\t${playerPw}\n`);
-  await startApp(url, dir);
+  await startApp(url, dir, process.env.CLONE_POLICY_FILE);
   console.log(JSON.stringify({ UAT_BASE: `http://127.0.0.1:${APP_PORT}`, UAT_CREDS_FILE: creds, UAT_QA_CREDS_FILE: path.join(dir, "qa-creds.txt"), UAT_EXPECT_RELEASE: "2294d79-localclone", serverLog: path.join(dir, "server.log") }));
 }
 
