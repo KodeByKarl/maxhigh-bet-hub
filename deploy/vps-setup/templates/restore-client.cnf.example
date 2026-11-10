@@ -1,0 +1,11 @@
+# Create locally through the DBA's approved channel; root0600 only, never commit real values.
+# Account MUST be exactly maxhigh_stage_restore and hold ONLY this grant (recovery.py re-checks it):
+#   GRANT SELECT, INSERT, CREATE, INDEX, REFERENCES ON `maxhigh\_staging\_restorecheck`.* TO 'maxhigh_stage_restore'@'127.0.0.1';
+# No LOCK TABLES, ALTER, DROP, grant option, global or maxhigh_staging privilege.
+[client]
+host=127.0.0.1
+port=3306
+protocol=tcp
+database=maxhigh_staging_restorecheck
+user=maxhigh_stage_restore
+password=REPLACE_LOCALLY_NEVER_IN_ARGUMENTS_OR_LOGS

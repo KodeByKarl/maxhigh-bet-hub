@@ -1,0 +1,47 @@
+
+# Appended to the existing /etc/caddy/Caddyfile. The uat.maxhigh.online block (with Basic Auth) stays untouched.
+# Public player site: no Basic Auth popup; the application's own login is the only gate.
+www.maxhigh.online {
+	redir https://maxhigh.online{uri} permanent
+}
+
+maxhigh.online {
+	encode zstd gzip
+
+	# Staff consoles are NOT served on the public host. Administer via https://uat.maxhigh.online
+	# (Basic Auth + application login). Role checks still apply server-side on every request.
+	@staff path /superadmin /superadmin/* /admin /admin/*
+	respond @staff 404
+
+	@internal path /api/health /api/metrics
+	respond @internal 404
+
+	# UAT: the built-in support chatbot gives GCash/PayMaya deposit instructions. Its two server functions
+	# (ticket creation, message send) are disabled at the edge for this release (2294d79) only.
+	# These IDs are fixed per build; re-derive them if the release changes.
+	@chatbot path /_serverFn/17fa25b5c40a7b9b503c0620f296da6d85910cb333594101911f03d873b35c5b /_serverFn/2b93dd1c2b561c86520b79dd17d56a4e8e3021157614ea30cf6a9f18565be8e4
+	respond @chatbot "Live chat is disabled during UAT. No real-money deposits or withdrawals." 403
+
+	reverse_proxy 127.0.0.1:18080 {
+		header_up X-Real-IP {client_ip}
+		header_up X-Forwarded-For {client_ip}
+	}
+
+	header {
+		Strict-Transport-Security "max-age=31536000"
+		X-Content-Type-Options nosniff
+		X-Frame-Options DENY
+		Referrer-Policy strict-origin-when-cross-origin
+		X-Robots-Tag "noindex, nofollow"
+		-Server
+	}
+	@api path /_serverFn/* /api/*
+	header @api Cache-Control "private, no-store"
+
+	log {
+		output file /var/log/caddy/maxhigh-public-access.log {
+			roll_size 10mb
+			roll_keep 5
+		}
+	}
+}

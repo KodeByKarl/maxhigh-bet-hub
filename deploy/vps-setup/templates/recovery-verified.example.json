@@ -1,0 +1,11 @@
+{
+  "schema": "maxhigh_staging",
+  "applicationSha": "2294d79afb2b900f13a9cd05c427dc9857b89de1",
+  "backupPath": "/var/backups/maxhigh-staging/EXACT_VERIFIED_BACKUP.sql.gz.age",
+  "ciphertextSha256": "SET_FROM_ACTUAL_VERIFIED_CIPHERTEXT",
+  "restoreCompared": false,
+  "corruptionRejected": false,
+  "offHostRetrieved": false,
+  "keyRecoveryVerified": false,
+  "note": "Not a certification. Populate only from successful actual recovery evidence; never set true to bypass a gate. Root-only0600 at the approved certification path."
+}
