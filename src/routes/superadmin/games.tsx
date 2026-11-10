@@ -986,7 +986,15 @@ function SuperGamesPage() {
             <button
               key={g.gameId}
               type="button"
-              onClick={() => setSelected(g)}
+              onClick={() => {
+                if (g.configLocked) {
+                  toast.error(
+                    "Game Locked. Please settle the remaining project payment to activate this game.",
+                  );
+                  return;
+                }
+                setSelected(g);
+              }}
               className={`${saGlass} group overflow-hidden text-left transition hover:ring-2 hover:ring-amber-400/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400`}
             >
               <div className="relative aspect-[16/10]">
@@ -1545,8 +1553,8 @@ function GameControlModal({
               <Lock size={16} className="mt-0.5 shrink-0" aria-hidden />
               <span>
                 {game.ownerQa
-                  ? "Locked for client accounts pending the remaining project payment. Owner access is active: you can configure and test this game; clients still cannot play it."
-                  : "Game Locked. Please settle the remaining project payment to activate this game."}
+                  ? "Locked for client accounts pending the remaining project payment. Developer maintenance access is active: this game can be configured and tested; clients still cannot play it."
+                  : "Game Locked. You can view and edit this game's configuration, but it cannot be played or activated until the remaining project payment is settled and the unlock release is deployed."}
               </span>
             </div>
           )}

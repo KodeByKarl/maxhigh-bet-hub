@@ -11,6 +11,8 @@ export type SuperGameRow = {
   locked?: boolean;
   /** True when the viewer is the owner account: the game is locked for clients but the owner can configure and test it. */
   ownerQa?: boolean;
+  /** Locked game whose configuration this viewer may not open (client administrators). The client owner and the developer may. */
+  configLocked?: boolean;
   featured: boolean;
   sortOrder: number;
   tag: string | null;

@@ -1,5 +1,6 @@
-// Verification of the ACTIVATED UAT through the loopback tunnel: exactly 50 playable / 50 locked for clients, owner access to all 100,
-// no account cap, approved notice. Uses the synthetic QA players and the owner account only.
+// Verification of the ACTIVATED UAT through the loopback tunnel: exactly 50 playable / 50 locked for clients, developer maintenance
+// access to all 100, client-owner view (all 100 games configurable, locked ones not playable), no account cap, approved notice.
+// Uses the synthetic QA players, the developer account and (with --client-owner) the client owner's credentials from the local file.
 //   UAT_EXPECT_RELEASE=<sha7> node scripts/qa/verify-activation.mjs
 import fs from "node:fs";
 import { Client, health, knownFunctions } from "./uat-client.mjs";
@@ -33,12 +34,27 @@ await p.logout();
 
 const o = new Client(); await o.login("uat_owner");
 const ost = await o.rpc("getAccessStatusFn", undefined, { method: "GET" });
-note("owner lobby is in QA mode: all 100 games available to the owner", ost.lockedGames.length === 0 && ost.ownerQa === true);
+note("developer lobby is in QA mode: all 100 games available to the developer maintenance account", ost.lockedGames.length === 0 && ost.ownerQa === true);
 const cat = await o.rpc("listSuperGames" + "Fn", undefined, { method: "GET" });
-note("owner admin catalog lists all 100 games; 50 flagged locked for clients", cat.length === 100 && cat.filter((r) => r.locked).length === 50 && cat.filter((r) => r.ownerQa).length === 50, `${cat.length} listed`);
+note("developer admin catalog lists all 100 games; 50 flagged locked for clients", cat.length === 100 && cat.filter((r) => r.locked).length === 50 && cat.filter((r) => r.ownerQa).length === 50, `${cat.length} listed`);
 const adm = await o.rpc("getAdminLimitStatusFn", undefined, { method: "GET" });
 note("no account limit: admin screens show no notice", adm.restricted === false && adm.message === null, JSON.stringify(adm));
 await o.logout();
+if (process.argv.includes("--client-owner")) {
+  const credFile = process.env.CLIENT_STAFF_CREDS_FILE ?? "C:\\Users\\Keydi\\maxhigh-uat-secrets\\client-staff-credentials.txt";
+  const row = fs.readFileSync(credFile, "utf8").split(/\r?\n/).find((l) => l.startsWith("client_owner\t"));
+  if (!row) throw new Error("client_owner not found in the local credentials file");
+  const co = new Client(); await co.login("client_owner", row.split("\t")[2]);
+  const cst = await co.rpc("getAccessStatusFn", undefined, { method: "GET" });
+  note("client owner lobby: exactly the 50 locked games (no developer QA mode)", cst.lockedGames.length === 50 && cst.ownerQa !== true);
+  const ccat = await co.rpc("listSuperGamesFn", undefined, { method: "GET" });
+  note("client owner admin catalog: all 100 games, 50 Locked, none restricted from configuration", ccat.length === 100 && ccat.filter((r) => r.locked).length === 50 && ccat.every((r) => !r.configLocked));
+  const cp = await refused(() => co.rpc(...spinCall(alloc.locked[0])));
+  note("client owner cannot play a locked game", cp.refused && cp.msg === LOCKED, cp.msg);
+  const cact = await refused(() => co.rpc("superUpdateGameFn", { gameId: alloc.locked[0], enabled: true }));
+  note("client owner cannot activate a locked game", cact.refused && cact.msg === LOCKED, cact.msg);
+  await co.logout();
+}
 const failedN = results.filter((x) => !x).length;
 console.log(`\n${results.length} checks, ${failedN} failed`);
 process.exit(failedN ? 1 : 0);

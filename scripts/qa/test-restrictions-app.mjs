@@ -309,6 +309,56 @@ try {
   note("C: owner QA did not unlock anything for clients (still 50 locked; Color Game Pro still refused)", sl.lockedGames.length === 50 && slRefused.refused && slRefused.msg === LOCKED, slRefused.msg);
   await plClient.logout();
 
+  // ---- the CLIENT OWNER (primary business owner): everything except playing/activating locked games
+  note("C: the developer creates the client owner as a superadmin-tier account", (await mkAcc("client_owner", "superadmin")) === "ok");
+  const coId = (await q("SELECT id FROM users WHERE username='client_owner'"))[0].id;
+  const co = new Client(); await co.login("client_owner", PW);
+  const coSt = await co.rpc("getAccessStatusFn", undefined, { method: "GET" });
+  note("C: client owner lobby shows exactly the 50 locked games (no developer QA mode)", coSt.lockedGames.length === 50 && coSt.ownerQa !== true);
+  const coLocked = await refused(() => co.rpc("colorGameProDealFn", { bets: { red: 1 } }));
+  note("C: client owner CANNOT play a locked game", coLocked.refused && coLocked.msg === LOCKED, coLocked.msg);
+  const coCredit = await co.rpc("superAdjustBalanceFn", { userId: coId, delta: 100, note: "client owner test credits", confirmPassword: PW }).then(() => "ok", (e) => e.message);
+  note("C: client owner can credit itself with synthetic test credits (UAT)", coCredit === "ok", coCredit);
+  const coPlay = await co.rpc("wildPantherSpinFn", { bet: 1, ante: false }).then(() => "played", (e) => e.message);
+  note("C: client owner can play the unlocked games", coPlay === "played", coPlay);
+  const coCat = await co.rpc("listSuperGamesFn", undefined, { method: "GET" });
+  note("C: client owner sees all 100 games, 50 marked Locked, none config-restricted", coCat.length === 100 && coCat.filter((r) => r.locked).length === 50 && coCat.every((r) => !r.configLocked) && coCat.every((r) => !r.ownerQa));
+  const curPro = await co.rpc("getColorGameProEngineConfigFn", undefined, { method: "GET" });
+  const cfgPro = curPro?.config ?? curPro;
+  const coSave = await co.rpc("saveColorGameProEngineConfigFn", { config: cfgPro }).then(() => "ok", (e) => e.message);
+  note("C: client owner can view AND edit the configuration of a locked game", coSave === "ok", coSave);
+  const coEdit = await co.rpc("superUpdateGameFn", { gameId: lockedId, notes: "client owner note" }).then(() => "ok", (e) => e.message);
+  note("C: client owner can edit the catalog settings of a locked game", coEdit === "ok", coEdit);
+  const coEnable = await refused(() => co.rpc("superUpdateGameFn", { gameId: lockedId, enabled: true }));
+  note("C: client owner CANNOT activate a locked game", coEnable.refused && coEnable.msg === LOCKED, coEnable.msg);
+  const coBulk = await co.rpc("bulkApplyGameOutcomesFn", { scope: "all", deadSpinPct: 40, winChancePct: 60, maxMultiplier: 5000, rtp: 96 }).then((r) => r, (e) => ({ error: e.message }));
+  note("C: client owner bulk configuration covers all 100 games", !coBulk.error && coBulk.affectedCount === 100, coBulk.error ?? `affected ${coBulk.affectedCount}`);
+  const coAfter = await refused(() => co.rpc("colorGameProDealFn", { bets: { red: 1 } }));
+  const coSt2 = await co.rpc("getAccessStatusFn", undefined, { method: "GET" });
+  note("C: configuration, bulk and catalog edits did not unlock anything (still 50 locked, play still refused)", coAfter.refused && coAfter.msg === LOCKED && coSt2.lockedGames.length === 50);
+  const coStaff = await co.rpc("superCreateUserFn", { username: "c_by_owner_staff", password: PW, role: "admin", balance: 0, displayName: "s" }).then(() => "ok", (e) => e.message);
+  const coAgent = await co.rpc("superCreateUserFn", { username: "c_by_owner_agent", password: PW, role: "agent", balance: 0, displayName: "a" }).then(() => "ok", (e) => e.message);
+  const coPlayer = await co.rpc("superCreateUserFn", { username: "c_by_owner_player", password: PW, role: "player", balance: 0, displayName: "p" }).then(() => "ok", (e) => e.message);
+  const coAdmin2 = await co.rpc("superCreateUserFn", { username: "c_by_owner_admin", password: PW, role: "superadmin", balance: 0, displayName: "x" }).then(() => "ok", (e) => e.message);
+  note("C: client owner creates staff, agents, players and administrators", [coStaff, coAgent, coPlayer, coAdmin2].every((x) => x === "ok"), [coStaff, coAgent, coPlayer, coAdmin2].join("/"));
+  const roleIdCa = (await q("SELECT id FROM users WHERE username='c_sa_two'"))[0].id;
+  const roleDown = await co.rpc("superSetUserRoleFn", { userId: roleIdCa, role: "player" }).then(() => "ok", (e) => e.message);
+  const roleUp = await co.rpc("superSetUserRoleFn", { userId: roleIdCa, role: "superadmin" }).then(() => "ok", (e) => e.message);
+  note("C: client owner manages roles of its staff", roleDown === "ok" && roleUp === "ok", `${roleDown}/${roleUp}`);
+  const coVsDev = {
+    role: () => co.rpc("superSetUserRoleFn", { userId: ownerId, role: "player" }),
+    update: () => co.rpc("superUpdateUserFn", { userId: ownerId, displayName: "hijacked" }),
+    balance: () => co.rpc("superAdjustBalanceFn", { userId: ownerId, delta: 1, confirmPassword: PW }),
+    lock: () => co.rpc("adminLockUserFn", { userId: ownerId, reason: "x" }),
+    logout: () => co.rpc("adminForceLogoutUserFn", { userId: ownerId }),
+  };
+  const coLeaks = [];
+  for (const [k, fn] of Object.entries(coVsDev)) { const r = await refused(fn); if (!r.refused) coLeaks.push(`${k}:ALLOWED`); }
+  note("C: client owner cannot modify the DEVELOPER maintenance account", coLeaks.length === 0, coLeaks.join(","));
+  const coGrant = await refused(() => co.rpc("applyEntitlementGrantFn", { payload: "{}", signature: "AAAAAAAAAAAA", keyId: "none", confirm: "APPLY SIGNED GRANT", confirmPassword: PW }));
+  note("C: client owner cannot apply an unlock grant (no signing key exists)", coGrant.refused);
+  await co.logout();
+
   // ---- a CLIENT administrator (superadmin tier, not the owner)
   const csa = new Client(); await csa.login("c_sa_one", PW);
   const csaSt = await csa.rpc("getAccessStatusFn", undefined, { method: "GET" });
@@ -343,6 +393,25 @@ try {
   const csaMakesPl = await csa.rpc("superCreateUserFn", { username: "c_pl_made_by_client", password: PW, role: "player", balance: 0, displayName: "m" }).then(() => "ok", (e) => e.message);
   note("C: client administrator can create staff and player accounts", csaMakes === "ok" && csaMakesPl === "ok", `${csaMakes}/${csaMakesPl}`);
   note("C: no hidden owner-name collision: a client cannot create an account named like the owner", (await refused(() => csa.rpc("superCreateUserFn", { username: "uat_owner", password: PW, role: "superadmin", balance: 0, displayName: "x" }))).refused);
+  const caCfgLocked = await refused(() => csa.rpc("saveColorGameProEngineConfigFn", { config: cfgPro }));
+  note("C: client administrator CANNOT edit the configuration of a locked game", caCfgLocked.refused && caCfgLocked.msg === LOCKED, caCfgLocked.msg);
+  const caEditLocked = await refused(() => csa.rpc("superUpdateGameFn", { gameId: lockedId, notes: "x" }));
+  note("C: client administrator CANNOT edit catalog settings of a locked game", caEditLocked.refused && caEditLocked.msg === LOCKED, caEditLocked.msg);
+  const colorCur = await csa.rpc("getColorGameEngineConfigFn", undefined, { method: "GET" });
+  const caCfgOpen = await csa.rpc("saveColorGameEngineConfigFn", { config: colorCur?.config ?? colorCur }).then(() => "ok", (e) => e.message);
+  note("C: client administrator CAN edit the configuration of a playable game", caCfgOpen === "ok", caCfgOpen);
+  const caVsCo = {
+    role: () => csa.rpc("superSetUserRoleFn", { userId: coId, role: "player" }),
+    update: () => csa.rpc("superUpdateUserFn", { userId: coId, displayName: "hijacked" }),
+    balance: () => csa.rpc("superAdjustBalanceFn", { userId: coId, delta: 1, confirmPassword: PW }),
+    lock: () => csa.rpc("adminLockUserFn", { userId: coId, reason: "x" }),
+    logout: () => csa.rpc("adminForceLogoutUserFn", { userId: coId }),
+  };
+  const caLeaks = [];
+  for (const [k, fn] of Object.entries(caVsCo)) { const r = await refused(fn); if (!r.refused) caLeaks.push(`${k}:ALLOWED`); }
+  note("C: client administrator cannot modify the CLIENT OWNER account by any path", caLeaks.length === 0, caLeaks.join(","));
+  const coRow = (await q("SELECT role, is_locked, display_name FROM users WHERE username='client_owner'"))[0];
+  note("C: the client owner account is unchanged", coRow.role === "superadmin" && coRow.is_locked === "no" && coRow.display_name !== "hijacked");
   await csa.logout();
   // staff-tier (role admin) administrators cannot escalate
   const stf = new Client(); await stf.login("c_sa_made_by_client", PW);

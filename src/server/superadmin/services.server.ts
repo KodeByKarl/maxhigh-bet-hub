@@ -42,8 +42,10 @@ import {
   assertClientCapacity,
   auditClientLimitRejection,
   assertGameActivatable,
+  assertGameConfigAccess,
+  hasFullGameConfigAccess,
   assertNotProtectedOwner,
-  isOwnerAccount,
+  isDeveloperAccount,
   getEffectiveLockedGames,
   countsTowardCap,
   ClientLimitError,
@@ -626,6 +628,13 @@ async function ensureThumbnailOnlyGamesDisabled() {
   }
 }
 
+/** Superadmin session + (for payment-locked games) the client-owner/developer-only configuration rule. */
+async function requireGameConfigAccess(gameId: string) {
+  const actor = await requireSuperadmin();
+  await assertGameConfigAccess(actor, gameId);
+  return actor;
+}
+
 export async function listSuperGames(): Promise<SuperGameRow[]> {
   const viewer = await requireSuperadmin();
   const db = getDb();
@@ -652,9 +661,11 @@ export async function listSuperGames(): Promise<SuperGameRow[]> {
       name: catalog.name,
       category: catalog.category ?? "slot",
       thumb: catalog.thumb ?? "/games/candy-peak.webp",
-      enabled: (c?.enabled ?? "yes") === "yes" && (isOwnerAccount(viewer) || !lockedNow.has(id)),
+      enabled:
+        (c?.enabled ?? "yes") === "yes" && (isDeveloperAccount(viewer) || !lockedNow.has(id)),
       locked: lockedNow.has(id),
-      ownerQa: lockedNow.has(id) && isOwnerAccount(viewer),
+      ownerQa: lockedNow.has(id) && isDeveloperAccount(viewer),
+      configLocked: lockedNow.has(id) && !hasFullGameConfigAccess(viewer),
       featured: (c?.featured ?? "no") === "yes",
       sortOrder: Number(c?.sortOrder ?? 0),
       tag: c?.tag ?? catalog.tag ?? null,
@@ -687,6 +698,9 @@ export async function superUpdateGame(data: {
   if (!catalog) throw new Error("Unknown game id");
   // A restricted game cannot be switched on through the admin API (same refusal for every role, audited).
   if (data.enabled === true) await assertGameActivatable(data.gameId, actor);
+  const { gameId: _gid, enabled: _en, ...otherEdits } = data;
+  if (Object.values(otherEdits).some((v) => v !== undefined))
+    await assertGameConfigAccess(actor, data.gameId);
 
   // Soft-launch: thumbnail-only titles stay disabled until engines are mounted.
   if (isThumbnailOnlyGame(data.gameId) && data.enabled === true) {
@@ -991,7 +1005,7 @@ export async function getGodlyGatesEngineConfig() {
 
 /** Superadmin — save full Godly Gates math config. */
 export async function saveGodlyGatesEngineConfig(raw: unknown) {
-  const actor = await requireSuperadmin();
+  const actor = await requireGameConfigAccess("godly-gates");
   const { GODLY_GATES_GAME_ID, normalizeGodlyGatesConfig } =
     await import("@/lib/godly-gates-config");
   const catalog = slotGames.find((g) => g.id === GODLY_GATES_GAME_ID);
@@ -1062,7 +1076,7 @@ export async function getOlympusWrathEngineConfig() {
 
 /** Superadmin — save full Olympus Wrath math config. */
 export async function saveOlympusWrathEngineConfig(raw: unknown) {
-  const actor = await requireSuperadmin();
+  const actor = await requireGameConfigAccess("olympus-wrath");
   const { OLYMPUS_WRATH_GAME_ID, normalizeOlympusWrathConfig } =
     await import("@/lib/olympus-wrath-config");
   const catalog = slotGames.find((g) => g.id === OLYMPUS_WRATH_GAME_ID);
@@ -1133,7 +1147,7 @@ export async function getEnchantedGroveEngineConfig() {
 
 /** Superadmin — save full Enchanted Grove math config. */
 export async function saveEnchantedGroveEngineConfig(raw: unknown) {
-  const actor = await requireSuperadmin();
+  const actor = await requireGameConfigAccess("enchanted-grove");
   const { ENCHANTED_GROVE_GAME_ID, normalizeEnchantedGroveConfig } =
     await import("@/lib/enchanted-grove-config");
   const catalog = slotGames.find((g) => g.id === ENCHANTED_GROVE_GAME_ID);
@@ -1204,7 +1218,7 @@ export async function getBuffaloReignEngineConfig() {
 
 /** Superadmin — save Buffalo Reign math config. */
 export async function saveBuffaloReignEngineConfig(raw: unknown) {
-  const actor = await requireSuperadmin();
+  const actor = await requireGameConfigAccess("buffalo-reign");
   const { BUFFALO_REIGN_GAME_ID, normalizeBuffaloReignConfig } =
     await import("@/lib/buffalo-reign-config");
   const catalog = slotGames.find((g) => g.id === BUFFALO_REIGN_GAME_ID);
@@ -1276,7 +1290,7 @@ export async function getFireSpikeEngineConfig() {
 
 /** Superadmin — save full Fire Spike math config. */
 export async function saveFireSpikeEngineConfig(raw: unknown) {
-  const actor = await requireSuperadmin();
+  const actor = await requireGameConfigAccess("fire-spike");
   const { FIRE_SPIKE_GAME_ID, normalizeFireSpikeConfig } = await import("@/lib/fire-spike-config");
   const catalog = slotGames.find((g) => g.id === FIRE_SPIKE_GAME_ID);
   if (!catalog) throw new Error("Fire Spike not in catalog");
@@ -1357,7 +1371,7 @@ export async function getFortuneOxEngineConfig() {
 
 /** Superadmin — save full Fortune Ox math config. */
 export async function saveFortuneOxEngineConfig(raw: unknown) {
-  const actor = await requireSuperadmin();
+  const actor = await requireGameConfigAccess("fortune-ox");
   const { FORTUNE_OX_GAME_ID, normalizeFortuneOxConfig } = await import("@/lib/fortune-ox-config");
   const catalog = slotGames.find((g) => g.id === FORTUNE_OX_GAME_ID);
   if (!catalog) throw new Error("Fortune Ox not in catalog");
@@ -1428,7 +1442,7 @@ export async function getFortuneTigerEngineConfig() {
 
 /** Superadmin — save full Fortune Tiger math config. */
 export async function saveFortuneTigerEngineConfig(raw: unknown) {
-  const actor = await requireSuperadmin();
+  const actor = await requireGameConfigAccess("fortune-tiger");
   const { FORTUNE_TIGER_GAME_ID, normalizeFortuneTigerConfig } =
     await import("@/lib/fortune-tiger-config");
   const catalog = slotGames.find((g) => g.id === FORTUNE_TIGER_GAME_ID);
@@ -1500,7 +1514,7 @@ export async function getFortuneRabbitEngineConfig() {
 
 /** Superadmin — save full Fortune Rabbit math config. */
 export async function saveFortuneRabbitEngineConfig(raw: unknown) {
-  const actor = await requireSuperadmin();
+  const actor = await requireGameConfigAccess("fortune-rabbit");
   const { FORTUNE_RABBIT_GAME_ID, normalizeFortuneRabbitConfig } =
     await import("@/lib/fortune-rabbit-config");
   const catalog = slotGames.find((g) => g.id === FORTUNE_RABBIT_GAME_ID);
@@ -1572,7 +1586,7 @@ export async function getCleopatraGoldEngineConfig() {
 
 /** Superadmin — save Cleopatra Gold math config. */
 export async function saveCleopatraGoldEngineConfig(raw: unknown) {
-  const actor = await requireSuperadmin();
+  const actor = await requireGameConfigAccess("cleopatra-gold");
   const { CLEOPATRA_GOLD_GAME_ID, normalizeCleopatraGoldConfig } =
     await import("@/lib/cleopatra-gold-config");
   const catalog = slotGames.find((g) => g.id === CLEOPATRA_GOLD_GAME_ID);
@@ -1644,7 +1658,7 @@ export async function getBaccaratEngineConfig() {
 
 /** Superadmin — save full Baccarat math config. */
 export async function saveBaccaratEngineConfig(raw: unknown) {
-  const actor = await requireSuperadmin();
+  const actor = await requireGameConfigAccess("baccarat");
   const { BACCARAT_GAME_ID, normalizeBaccaratConfig } = await import("@/lib/baccarat-config");
   const catalog = slotGames.find((g) => g.id === BACCARAT_GAME_ID);
   if (!catalog) throw new Error("Baccarat not in catalog");
@@ -1733,7 +1747,7 @@ export async function getDeepBassEngineConfig() {
 
 /** Superadmin — save full Deep Bass math config. */
 export async function saveDeepBassEngineConfig(raw: unknown) {
-  const actor = await requireSuperadmin();
+  const actor = await requireGameConfigAccess("deep-bass");
   const { DEEP_BASS_GAME_ID, normalizeDeepBassConfig } = await import("@/lib/deep-bass-config");
   const catalog = slotGames.find((g) => g.id === DEEP_BASS_GAME_ID);
   if (!catalog) throw new Error("Deep Bass not in catalog");
@@ -1820,7 +1834,7 @@ export async function getDragonFisherEngineConfig() {
 
 /** Superadmin — save full Dragon Fisher math config. */
 export async function saveDragonFisherEngineConfig(raw: unknown) {
-  const actor = await requireSuperadmin();
+  const actor = await requireGameConfigAccess("dragon-fisher");
   const { DRAGON_FISHER_GAME_ID, normalizeDragonFisherConfig } =
     await import("@/lib/dragon-fisher-config");
   const catalog = slotGames.find((g) => g.id === DRAGON_FISHER_GAME_ID);
@@ -1908,7 +1922,7 @@ export async function getCrabCannonEngineConfig() {
 
 /** Superadmin — save full Crab Cannon math config. */
 export async function saveCrabCannonEngineConfig(raw: unknown) {
-  const actor = await requireSuperadmin();
+  const actor = await requireGameConfigAccess("crab-cannon");
   const { CRAB_CANNON_GAME_ID, normalizeCrabCannonConfig } =
     await import("@/lib/crab-cannon-config");
   const catalog = slotGames.find((g) => g.id === CRAB_CANNON_GAME_ID);
@@ -1996,7 +2010,7 @@ export async function getSharkHunterEngineConfig() {
 
 /** Superadmin — save full Shark Hunter math config. */
 export async function saveSharkHunterEngineConfig(raw: unknown) {
-  const actor = await requireSuperadmin();
+  const actor = await requireGameConfigAccess("shark-hunter");
   const { SHARK_HUNTER_GAME_ID, normalizeSharkHunterConfig } =
     await import("@/lib/shark-hunter-config");
   const catalog = slotGames.find((g) => g.id === SHARK_HUNTER_GAME_ID);
@@ -2084,7 +2098,7 @@ export async function getOctopusArmadaEngineConfig() {
 
 /** Superadmin — save full Octopus Armada math config. */
 export async function saveOctopusArmadaEngineConfig(raw: unknown) {
-  const actor = await requireSuperadmin();
+  const actor = await requireGameConfigAccess("octopus-armada");
   const { OCTOPUS_ARMADA_GAME_ID, normalizeOctopusArmadaConfig } =
     await import("@/lib/octopus-armada-config");
   const catalog = slotGames.find((g) => g.id === OCTOPUS_ARMADA_GAME_ID);
@@ -2172,7 +2186,7 @@ export async function getTurtleTideEngineConfig() {
 
 /** Superadmin — save full Turtle Tide math config. */
 export async function saveTurtleTideEngineConfig(raw: unknown) {
-  const actor = await requireSuperadmin();
+  const actor = await requireGameConfigAccess("turtle-tide");
   const { TURTLE_TIDE_GAME_ID, normalizeTurtleTideConfig } =
     await import("@/lib/turtle-tide-config");
   const catalog = slotGames.find((g) => g.id === TURTLE_TIDE_GAME_ID);
@@ -2260,7 +2274,7 @@ export async function getWhaleWarEngineConfig() {
 
 /** Superadmin — save full Whale War math config. */
 export async function saveWhaleWarEngineConfig(raw: unknown) {
-  const actor = await requireSuperadmin();
+  const actor = await requireGameConfigAccess("whale-war");
   const { WHALE_WAR_GAME_ID, normalizeWhaleWarConfig } = await import("@/lib/whale-war-config");
   const catalog = slotGames.find((g) => g.id === WHALE_WAR_GAME_ID);
   if (!catalog) throw new Error("Whale War not in catalog");
@@ -2347,7 +2361,7 @@ export async function getLucky9EngineConfig() {
 
 /** Superadmin — save full Lucky 9 math config. */
 export async function saveLucky9EngineConfig(raw: unknown) {
-  const actor = await requireSuperadmin();
+  const actor = await requireGameConfigAccess("lucky9");
   const { LUCKY9_GAME_ID, normalizeLucky9Config } = await import("@/lib/lucky9-config");
   const catalog = slotGames.find((g) => g.id === LUCKY9_GAME_ID);
   if (!catalog) throw new Error("Lucky 9 not in catalog");
@@ -2439,7 +2453,7 @@ export async function getThreeCardPokerEngineConfig() {
 
 /** Superadmin — save full Three Card Poker math config. */
 export async function saveThreeCardPokerEngineConfig(raw: unknown) {
-  const actor = await requireSuperadmin();
+  const actor = await requireGameConfigAccess("threecardpoker");
   const { THREE_CARD_POKER_GAME_ID, normalizeThreeCardPokerConfig } =
     await import("@/lib/threecardpoker-config");
   const catalog = slotGames.find((g) => g.id === THREE_CARD_POKER_GAME_ID);
@@ -2527,7 +2541,7 @@ export async function getColorGameEngineConfig() {
 
 /** Superadmin — save full Color Game math config. */
 export async function saveColorGameEngineConfig(raw: unknown) {
-  const actor = await requireSuperadmin();
+  const actor = await requireGameConfigAccess("color-game");
   const { COLOR_GAME_GAME_ID, normalizeColorGameConfig } = await import("@/lib/color-game-config");
   const catalog = slotGames.find((g) => g.id === COLOR_GAME_GAME_ID);
   if (!catalog) throw new Error("Color Game not in catalog");
@@ -2605,7 +2619,7 @@ export async function getTongitsArenaEngineConfig() {
 
 /** Superadmin — save full Tongits Arena math config. */
 export async function saveTongitsArenaEngineConfig(raw: unknown) {
-  const actor = await requireSuperadmin();
+  const actor = await requireGameConfigAccess("tongits-arena");
   const { TONGITS_ARENA_GAME_ID, normalizeTongitsArenaConfig } =
     await import("@/lib/tongits-arena-config");
   const catalog = slotGames.find((g) => g.id === TONGITS_ARENA_GAME_ID);
@@ -2693,7 +2707,7 @@ export async function getLuckyDropEngineConfig() {
 
 /** Superadmin — save full Lucky Drop math config. */
 export async function saveLuckyDropEngineConfig(raw: unknown) {
-  const actor = await requireSuperadmin();
+  const actor = await requireGameConfigAccess("lucky-drop");
   const { LUCKY_DROP_GAME_ID, normalizeLuckyDropConfig } = await import("@/lib/lucky-drop-config");
   const catalog = slotGames.find((g) => g.id === LUCKY_DROP_GAME_ID);
   if (!catalog) throw new Error("Lucky Drop not in catalog");
@@ -2776,7 +2790,7 @@ export async function getColorGameProEngineConfig() {
 
 /** Superadmin — save full Color Game Pro math config. */
 export async function saveColorGameProEngineConfig(raw: unknown) {
-  const actor = await requireSuperadmin();
+  const actor = await requireGameConfigAccess("color-game-pro");
   const { COLOR_GAME_PRO_GAME_ID, normalizeColorGameProConfig } =
     await import("@/lib/color-game-pro-config");
   const catalog = slotGames.find((g) => g.id === COLOR_GAME_PRO_GAME_ID);
@@ -2855,7 +2869,7 @@ export async function getLuckyNinePlusEngineConfig() {
 
 /** Superadmin — save full Lucky Nine Plus math config. */
 export async function saveLuckyNinePlusEngineConfig(raw: unknown) {
-  const actor = await requireSuperadmin();
+  const actor = await requireGameConfigAccess("lucky-nine-plus");
   const { LUCKY_NINE_PLUS_GAME_ID, normalizeLuckyNinePlusConfig } =
     await import("@/lib/lucky-nine-plus-config");
   const catalog = slotGames.find((g) => g.id === LUCKY_NINE_PLUS_GAME_ID);
@@ -2945,7 +2959,7 @@ export async function getDropDeluxeEngineConfig() {
 
 /** Superadmin — save full Drop Deluxe math config. */
 export async function saveDropDeluxeEngineConfig(raw: unknown) {
-  const actor = await requireSuperadmin();
+  const actor = await requireGameConfigAccess("drop-deluxe");
   const { DROP_DELUXE_GAME_ID, normalizeDropDeluxeConfig } =
     await import("@/lib/drop-deluxe-config");
   const catalog = slotGames.find((g) => g.id === DROP_DELUXE_GAME_ID);
@@ -3027,7 +3041,7 @@ export async function getPokerShowdownEngineConfig() {
 
 /** Superadmin — save full Poker Showdown math config. */
 export async function savePokerShowdownEngineConfig(raw: unknown) {
-  const actor = await requireSuperadmin();
+  const actor = await requireGameConfigAccess("poker-showdown");
   const { POKER_SHOWDOWN_GAME_ID, normalizePokerShowdownConfig } =
     await import("@/lib/poker-showdown-config");
   const catalog = slotGames.find((g) => g.id === POKER_SHOWDOWN_GAME_ID);
@@ -3115,7 +3129,7 @@ export async function getAceHighEngineConfig() {
 
 /** Superadmin — save full Ace High math config. */
 export async function saveAceHighEngineConfig(raw: unknown) {
-  const actor = await requireSuperadmin();
+  const actor = await requireGameConfigAccess("ace-high");
   const { ACE_HIGH_GAME_ID, normalizeAceHighConfig } = await import("@/lib/ace-high-config");
   const catalog = slotGames.find((g) => g.id === ACE_HIGH_GAME_ID);
   if (!catalog) throw new Error("Ace High not in catalog");
@@ -3204,7 +3218,7 @@ export async function getGoldenPantherEngineConfig() {
 
 /** Superadmin — save full Golden Panther math config. */
 export async function saveGoldenPantherEngineConfig(raw: unknown) {
-  const actor = await requireSuperadmin();
+  const actor = await requireGameConfigAccess("golden-panther");
   const { GOLDEN_PANTHER_GAME_ID, normalizeGoldenPantherConfig } =
     await import("@/lib/golden-panther-config");
   const catalog = slotGames.find((g) => g.id === GOLDEN_PANTHER_GAME_ID);
@@ -3962,7 +3976,7 @@ export async function getLuckyNekoEngineConfig() {
 
 /** Superadmin — save full Lucky Neko math config. */
 export async function saveLuckyNekoEngineConfig(raw: unknown) {
-  const actor = await requireSuperadmin();
+  const actor = await requireGameConfigAccess("lucky-neko");
   const { LUCKY_NEKO_GAME_ID, normalizeLuckyNekoConfig } = await import("@/lib/lucky-neko-config");
   const catalog = slotGames.find((g) => g.id === LUCKY_NEKO_GAME_ID);
   if (!catalog) throw new Error("Lucky Neko not in catalog");
@@ -4033,7 +4047,7 @@ export async function getFortuneMouseEngineConfig() {
 
 /** Superadmin — save full Fortune Mouse math config. */
 export async function saveFortuneMouseEngineConfig(raw: unknown) {
-  const actor = await requireSuperadmin();
+  const actor = await requireGameConfigAccess("fortune-mouse");
   const { FORTUNE_MOUSE_GAME_ID, normalizeFortuneMouseConfig } =
     await import("@/lib/fortune-mouse-config");
   const catalog = slotGames.find((g) => g.id === FORTUNE_MOUSE_GAME_ID);
@@ -4105,7 +4119,7 @@ export async function getProsperityLionEngineConfig() {
 
 /** Superadmin — save full Prosperity Lion math config. */
 export async function saveProsperityLionEngineConfig(raw: unknown) {
-  const actor = await requireSuperadmin();
+  const actor = await requireGameConfigAccess("prosperity-lion");
   const { PROSPERITY_LION_GAME_ID, normalizeProsperityLionConfig } =
     await import("@/lib/prosperity-lion-config");
   const catalog = slotGames.find((g) => g.id === PROSPERITY_LION_GAME_ID);
@@ -4177,7 +4191,7 @@ export async function getCoinVolcanoEngineConfig() {
 
 /** Superadmin — save full Coin Volcano math config. */
 export async function saveCoinVolcanoEngineConfig(raw: unknown) {
-  const actor = await requireSuperadmin();
+  const actor = await requireGameConfigAccess("coin-volcano");
   const { COIN_VOLCANO_GAME_ID, normalizeCoinVolcanoConfig } =
     await import("@/lib/coin-volcano-config");
   const catalog = slotGames.find((g) => g.id === COIN_VOLCANO_GAME_ID);
@@ -4264,7 +4278,7 @@ export async function getZeusStrikeEngineConfig() {
 
 /** Superadmin — save full Zeus Strike math config. */
 export async function saveZeusStrikeEngineConfig(raw: unknown) {
-  const actor = await requireSuperadmin();
+  const actor = await requireGameConfigAccess("zeus-strike");
   const { ZEUS_STRIKE_GAME_ID, normalizeZeusStrikeConfig } =
     await import("@/lib/zeus-strike-config");
   const catalog = slotGames.find((g) => g.id === ZEUS_STRIKE_GAME_ID);
@@ -4335,7 +4349,7 @@ export async function getThorThunderEngineConfig() {
 
 /** Superadmin — save full Thor Thunder math config. */
 export async function saveThorThunderEngineConfig(raw: unknown) {
-  const actor = await requireSuperadmin();
+  const actor = await requireGameConfigAccess("thor-thunder");
   const { THOR_THUNDER_GAME_ID, normalizeThorThunderConfig } =
     await import("@/lib/thor-thunder-config");
   const catalog = slotGames.find((g) => g.id === THOR_THUNDER_GAME_ID);
@@ -4406,7 +4420,7 @@ export async function getMayaGoldEngineConfig() {
 
 /** Superadmin — save full Maya Gold math config. */
 export async function saveMayaGoldEngineConfig(raw: unknown) {
-  const actor = await requireSuperadmin();
+  const actor = await requireGameConfigAccess("maya-gold");
   const { MAYA_GOLD_GAME_ID, normalizeMayaGoldConfig } = await import("@/lib/maya-gold-config");
   const catalog = slotGames.find((g) => g.id === MAYA_GOLD_GAME_ID);
   if (!catalog) throw new Error("Maya Gold not in catalog");
@@ -4477,7 +4491,7 @@ export async function getTempleRushEngineConfig() {
 
 /** Superadmin — save full Temple Rush math config. */
 export async function saveTempleRushEngineConfig(raw: unknown) {
-  const actor = await requireSuperadmin();
+  const actor = await requireGameConfigAccess("temple-rush");
   const { TEMPLE_RUSH_GAME_ID, normalizeTempleRushConfig } =
     await import("@/lib/temple-rush-config");
   const catalog = slotGames.find((g) => g.id === TEMPLE_RUSH_GAME_ID);
@@ -4549,7 +4563,7 @@ export async function getSafariGoldEngineConfig() {
 
 /** Superadmin — save full Safari Gold math config. */
 export async function saveSafariGoldEngineConfig(raw: unknown) {
-  const actor = await requireSuperadmin();
+  const actor = await requireGameConfigAccess("safari-gold");
   const { SAFARI_GOLD_GAME_ID, normalizeSafariGoldConfig } =
     await import("@/lib/safari-gold-config");
   const catalog = slotGames.find((g) => g.id === SAFARI_GOLD_GAME_ID);
@@ -4621,7 +4635,7 @@ export async function getPharaohFireEngineConfig() {
 
 /** Superadmin — save full Pharaoh Fire math config. */
 export async function savePharaohFireEngineConfig(raw: unknown) {
-  const actor = await requireSuperadmin();
+  const actor = await requireGameConfigAccess("pharaoh-fire");
   const { PHARAOH_FIRE_GAME_ID, normalizePharaohFireConfig } =
     await import("@/lib/pharaoh-fire-config");
   const catalog = slotGames.find((g) => g.id === PHARAOH_FIRE_GAME_ID);
@@ -4693,7 +4707,7 @@ export async function getDesertRichesEngineConfig() {
 
 /** Superadmin — save full Desert Riches math config. */
 export async function saveDesertRichesEngineConfig(raw: unknown) {
-  const actor = await requireSuperadmin();
+  const actor = await requireGameConfigAccess("desert-riches");
   const { DESERT_RICHES_GAME_ID, normalizeDesertRichesConfig } =
     await import("@/lib/desert-riches-config");
   const catalog = slotGames.find((g) => g.id === DESERT_RICHES_GAME_ID);
@@ -4765,7 +4779,7 @@ export async function getGateOfRaEngineConfig() {
 
 /** Superadmin — save full Gate of Ra math config. */
 export async function saveGateOfRaEngineConfig(raw: unknown) {
-  const actor = await requireSuperadmin();
+  const actor = await requireGameConfigAccess("gate-of-ra");
   const { GATE_OF_RA_GAME_ID, normalizeGateOfRaConfig } = await import("@/lib/gate-of-ra-config");
   const catalog = slotGames.find((g) => g.id === GATE_OF_RA_GAME_ID);
   if (!catalog) throw new Error("Gate of Ra not in catalog");
@@ -4831,7 +4845,7 @@ export async function getWildPantherEngineConfig() {
 
 /** Superadmin — save full Wild Panther math config. */
 export async function saveWildPantherEngineConfig(raw: unknown) {
-  const actor = await requireSuperadmin();
+  const actor = await requireGameConfigAccess("wild-panther");
   const { WILD_PANTHER_GAME_ID, normalizeWildPantherConfig } =
     await import("@/lib/wild-panther-config");
   const catalog = slotGames.find((g) => g.id === WILD_PANTHER_GAME_ID);
@@ -4901,7 +4915,7 @@ export async function getJadeJaguarEngineConfig() {
 }
 
 export async function saveJadeJaguarEngineConfig(raw: unknown) {
-  const actor = await requireSuperadmin();
+  const actor = await requireGameConfigAccess("jade-jaguar");
   const { JADE_JAGUAR_GAME_ID, normalizeJadeJaguarConfig } =
     await import("@/lib/jade-jaguar-config");
   const catalog = slotGames.find((row) => row.id === JADE_JAGUAR_GAME_ID);
@@ -4971,7 +4985,7 @@ export async function getEmberTigerEngineConfig() {
 }
 
 export async function saveEmberTigerEngineConfig(raw: unknown) {
-  const actor = await requireSuperadmin();
+  const actor = await requireGameConfigAccess("ember-tiger");
   const { EMBER_TIGER_GAME_ID, normalizeEmberTigerConfig } =
     await import("@/lib/ember-tiger-config");
   const catalog = slotGames.find((row) => row.id === EMBER_TIGER_GAME_ID);
@@ -5041,7 +5055,7 @@ export async function getLotusLynxEngineConfig() {
 }
 
 export async function saveLotusLynxEngineConfig(raw: unknown) {
-  const actor = await requireSuperadmin();
+  const actor = await requireGameConfigAccess("lotus-lynx");
   const { LOTUS_LYNX_GAME_ID, normalizeLotusLynxConfig } = await import("@/lib/lotus-lynx-config");
   const catalog = slotGames.find((row) => row.id === LOTUS_LYNX_GAME_ID);
   if (!catalog) throw new Error("Lotus Lynx not in catalog");
@@ -5110,7 +5124,7 @@ export async function getCoralCobraEngineConfig() {
 }
 
 export async function saveCoralCobraEngineConfig(raw: unknown) {
-  const actor = await requireSuperadmin();
+  const actor = await requireGameConfigAccess("coral-cobra");
   const { CORAL_COBRA_GAME_ID, normalizeCoralCobraConfig } =
     await import("@/lib/coral-cobra-config");
   const catalog = slotGames.find((row) => row.id === CORAL_COBRA_GAME_ID);
@@ -5180,7 +5194,7 @@ export async function getFrostFoxEngineConfig() {
 }
 
 export async function saveFrostFoxEngineConfig(raw: unknown) {
-  const actor = await requireSuperadmin();
+  const actor = await requireGameConfigAccess("frost-fox");
   const { FROST_FOX_GAME_ID, normalizeFrostFoxConfig } = await import("@/lib/frost-fox-config");
   const catalog = slotGames.find((row) => row.id === FROST_FOX_GAME_ID);
   if (!catalog) throw new Error("Frost Fox not in catalog");
@@ -5249,7 +5263,7 @@ export async function getSolarSerpentEngineConfig() {
 }
 
 export async function saveSolarSerpentEngineConfig(raw: unknown) {
-  const actor = await requireSuperadmin();
+  const actor = await requireGameConfigAccess("solar-serpent");
   const { SOLAR_SERPENT_GAME_ID, normalizeSolarSerpentConfig } =
     await import("@/lib/solar-serpent-config");
   const catalog = slotGames.find((row) => row.id === SOLAR_SERPENT_GAME_ID);
@@ -5319,7 +5333,7 @@ export async function getHoneyHiveEngineConfig() {
 }
 
 export async function saveHoneyHiveEngineConfig(raw: unknown) {
-  const actor = await requireSuperadmin();
+  const actor = await requireGameConfigAccess("honey-hive");
   const { HONEY_HIVE_GAME_ID, normalizeHoneyHiveConfig } = await import("@/lib/honey-hive-config");
   const catalog = slotGames.find((row) => row.id === HONEY_HIVE_GAME_ID);
   if (!catalog) throw new Error("Honey Hive not in catalog");
@@ -5388,7 +5402,7 @@ export async function getMidnightOwlEngineConfig() {
 }
 
 export async function saveMidnightOwlEngineConfig(raw: unknown) {
-  const actor = await requireSuperadmin();
+  const actor = await requireGameConfigAccess("midnight-owl");
   const { MIDNIGHT_OWL_GAME_ID, normalizeMidnightOwlConfig } =
     await import("@/lib/midnight-owl-config");
   const catalog = slotGames.find((row) => row.id === MIDNIGHT_OWL_GAME_ID);
@@ -5458,7 +5472,7 @@ export async function getRubyRavenEngineConfig() {
 }
 
 export async function saveRubyRavenEngineConfig(raw: unknown) {
-  const actor = await requireSuperadmin();
+  const actor = await requireGameConfigAccess("ruby-raven");
   const { RUBY_RAVEN_GAME_ID, normalizeRubyRavenConfig } = await import("@/lib/ruby-raven-config");
   const catalog = slotGames.find((row) => row.id === RUBY_RAVEN_GAME_ID);
   if (!catalog) throw new Error("Ruby Raven not in catalog");
@@ -5516,6 +5530,7 @@ export async function saveRealmsEngineConfig(gameId: string, raw: unknown) {
   const { FAMILY_KEY, getRealmsGame, isRealmsGameId, normalizeRealmsGameConfig } =
     await import("@/lib/realms");
   if (!isRealmsGameId(gameId)) throw new Error("Unknown game");
+  await assertGameConfigAccess(actor, gameId);
   const def = getRealmsGame(gameId);
   const catalog = slotGames.find((g) => g.id === gameId);
   if (!catalog) throw new Error(`${def.name} not in catalog`);

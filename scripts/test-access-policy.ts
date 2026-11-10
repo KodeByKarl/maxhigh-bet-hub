@@ -17,7 +17,8 @@ const policy = {
   version: 1 as const, environment: "uat",
   gameLocks: { ...base, lockedGames: ["golden-panther", "deep-bass", "threecardpoker", "abyssal-pearls"] },
   clientAccounts: { ...base, maxClientAccounts: 2 },
-  ownerAccounts: ["owner_superadmin"],
+  developerAccounts: ["owner_superadmin"],
+  clientOwnerAccounts: ["client_owner"],
   grantKeys: [{ id: "dev-1", publicKeyPem: pem }],
 };
 const signPayload = (p: string, key = privateKey) => sign(null, Buffer.from(p, "utf8"), key).toString("base64");
@@ -30,7 +31,9 @@ const grant = (extra: object = {}) => JSON.stringify({ v: 1, kind: "unlock-games
   const p = getAccessPolicy();
   assert.equal(p.gameLocks.enforcement, "on");
   assert.equal(p.clientAccounts.enforcement, "off", "the client account cap was removed by the owner");
-  assert.deepEqual([...p.ownerAccounts], ["uat_owner"], "the owner account is named in the compiled policy");
+  assert.deepEqual([...p.developerAccounts], ["uat_owner"], "the developer maintenance account is named in the compiled policy");
+  assert.deepEqual([...p.clientOwnerAccounts], ["client_owner"], "the client's primary owner account is named in the compiled policy");
+  assert.ok(![...p.clientOwnerAccounts].some((n) => p.developerAccounts.includes(n)), "client owner and developer are different identities");
   assert.equal(p.grantKeys.length, 0, "no signing key for this handover: unlocking requires a new verified release");
   assert.equal(p.gameLocks.lockedGames.length, 50);
   assert.equal(new Set(p.gameLocks.lockedGames).size, 50);
@@ -39,7 +42,7 @@ const grant = (extra: object = {}) => JSON.stringify({ v: 1, kind: "unlock-games
   assert.ok(p.gameLocks.lockedGames.includes("color-game-pro"), "Color Game Pro stays locked");
   for (const g of alloc.available) assert.ok(!p.gameLocks.lockedGames.includes(g), g);
 }
-ok("shipped policy is the approved configuration: 50 locked, 50 playable, NO account cap, owner account named, no grant keys");
+ok("shipped policy is the approved configuration: 50 locked, 50 playable, NO account cap, client owner and developer identities named, no grant keys");
 
 // ---- override is refused outside a disposable environment
 process.env.MAXHIGH_POLICY_TEST_OVERRIDE = "";
@@ -75,17 +78,17 @@ ok("every new wager / feature purchase / fishing shot on a locked game is refuse
 for (const [g, a] of [["golden-panther", "goldenPantherSpinFn"], ["deep-bass", "deepBassFireShotFn"], ["abyssal-pearls", "realmsSpinFn"]]) await assertGameAccess(g, a, owner);
 await assert.rejects(assertGameAccess("golden-panther", "goldenPantherSpinFn", { id: "x", username: "owner_superadmin", role: "admin" }), new RegExp(GAME_LOCKED_MESSAGE.slice(0, 30)), "owner username without the superadmin role is NOT the owner");
 await assert.rejects(assertGameAccess("golden-panther", "goldenPantherSpinFn", { id: "x", username: "Owner_Superadmin2", role: "superadmin" }), new RegExp(GAME_LOCKED_MESSAGE.slice(0, 30)), "a similar username is not the owner");
-assert.equal(mod.isOwnerAccount(owner), true);
-assert.equal(mod.isOwnerAccount({ username: "OWNER_SUPERADMIN", role: "superadmin" }), true);
-assert.equal(mod.isOwnerAccount({ username: "client_admin", role: "superadmin" }), false);
-assert.equal(mod.isOwnerAccount(null), false);
+assert.equal(mod.isDeveloperAccount(owner), true);
+assert.equal(mod.isDeveloperAccount({ username: "OWNER_SUPERADMIN", role: "superadmin" }), true);
+assert.equal(mod.isDeveloperAccount({ username: "client_admin", role: "superadmin" }), false);
+assert.equal(mod.isDeveloperAccount(null), false);
 assert.equal((await mod.getPublicAccessStatus(owner)).lockedGames.length, 0);
 assert.equal((await mod.getPublicAccessStatus(owner)).ownerQa, true);
 assert.equal((await mod.getPublicAccessStatus(roles[1]!)).lockedGames.length, 4);
 assert.equal((await mod.getPublicAccessStatus()).lockedGames.length, 4);
 await mod.assertGameActivatable("golden-panther", owner);
 await assert.rejects(mod.assertGameActivatable("golden-panther", roles[1]!), new RegExp(GAME_LOCKED_MESSAGE.slice(0, 30)), "a client superadmin cannot switch a locked game on");
-ok("owner QA path works for the named owner account only; the lobby status and activation guard stay locked for everyone else");
+ok("developer QA path works for the named developer account only; the lobby status and activation guard stay locked for everyone else");
 // ---- the owner account is protected from client administrators
 await mod.assertNotProtectedOwner(owner, { id: "u2", username: "owner_superadmin" });
 await mod.assertNotProtectedOwner(roles[1]!, { id: "u9", username: "some_player" });
@@ -93,6 +96,34 @@ await assert.rejects(mod.assertNotProtectedOwner(roles[1]!, { id: "u2", username
 await assert.rejects(mod.assertNotProtectedOwner(roles[2]!, { id: "u2", username: "OWNER_SUPERADMIN" }), /protected owner account/);
 ok("a client administrator cannot modify the protected owner account (case-insensitive); the owner and ordinary targets are unaffected");
 assert.equal(mod.ownerMayCreditSelf(owner, owner.id), true, "the owner may credit itself with synthetic QA credits on the UAT");
+// ---- client owner: full configuration of all 100 games, but NO gameplay or activation of locked games
+const clientOwner = { id: "u5", username: "client_owner", role: "superadmin" };
+await assert.rejects(assertGameAccess("golden-panther", "goldenPantherSpinFn", clientOwner), new RegExp(GAME_LOCKED_MESSAGE.slice(0, 30)), "the client owner cannot play a locked game");
+await assert.rejects(assertGameAccess("deep-bass", "deepBassFireShotFn", clientOwner), new RegExp(GAME_LOCKED_MESSAGE.slice(0, 30)));
+await assertGameAccess("color-game", "colorGameDealFn", clientOwner);
+await assert.rejects(mod.assertGameActivatable("golden-panther", clientOwner), new RegExp(GAME_LOCKED_MESSAGE.slice(0, 30)), "the client owner cannot activate a locked game");
+assert.equal((await mod.getPublicAccessStatus(clientOwner)).lockedGames.length, 4, "the client owner's lobby shows the locked games");
+assert.equal(mod.isClientOwnerAccount(clientOwner), true);
+assert.equal(mod.isClientOwnerAccount({ ...clientOwner, role: "admin" }), false);
+assert.equal(mod.isDeveloperAccount(clientOwner), false, "the client owner is not the developer");
+assert.equal(mod.isClientOwnerAccount(owner), false, "the developer is not the client owner");
+assert.equal(mod.hasFullGameConfigAccess(clientOwner), true);
+assert.equal(mod.hasFullGameConfigAccess(owner), true);
+assert.equal(mod.hasFullGameConfigAccess(roles[1]!), false);
+await mod.assertGameConfigAccess(clientOwner, "golden-panther");
+await mod.assertGameConfigAccess(owner, "golden-panther");
+await mod.assertGameConfigAccess(roles[1]!, "color-game");
+await assert.rejects(mod.assertGameConfigAccess(roles[1]!, "golden-panther"), new RegExp(GAME_LOCKED_MESSAGE.slice(0, 30)), "a client administrator cannot configure a locked game");
+await assert.rejects(mod.assertGameConfigAccess(roles[0]!, "deep-bass"), new RegExp(GAME_LOCKED_MESSAGE.slice(0, 30)));
+assert.equal(mod.ownerMayCreditSelf(clientOwner, clientOwner.id), true, "the client owner may credit itself with synthetic test credits on the UAT");
+ok("client owner: configures all games, plays only unlocked ones, cannot play/activate locked ones; client administrators configure unlocked games only");
+// protected identities
+await mod.assertNotProtectedOwner(clientOwner, { id: "u5", username: "client_owner" });
+await mod.assertNotProtectedOwner(owner, { id: "u5", username: "client_owner" });
+await assert.rejects(mod.assertNotProtectedOwner(roles[1]!, { id: "u5", username: "client_owner" }), /protected owner account/, "client administrators cannot modify the client owner");
+await assert.rejects(mod.assertNotProtectedOwner(clientOwner, { id: "u2", username: "owner_superadmin" }), /protected owner account/, "the client owner cannot modify the developer account");
+await mod.assertNotProtectedOwner(clientOwner, { id: "u9", username: "some_admin" });
+ok("protected identities: client owner modifiable by itself and the developer only; developer account by the developer only");
 assert.equal(mod.ownerMayCreditSelf(owner, "someone-else"), false);
 assert.equal(mod.ownerMayCreditSelf(roles[1]!, roles[1]!.id), false, "a client superadmin may not credit itself");
 assert.equal(mod.ownerMayCreditSelf({ ...owner, role: "admin" }, owner.id), false);
