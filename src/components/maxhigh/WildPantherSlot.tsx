@@ -883,8 +883,9 @@ export function WildPantherSlot({
   const showTumbleBadge =
     dropTotal > 0 && (phase === "glow" || phase === "popping" || phase === "falling");
 
+  // h-full: fill the (safe-area padded) game shell, not the whole viewport (h-dvh overflowed it by the inset total).
   return (
-    <div className="relative flex h-dvh w-full flex-col overflow-hidden select-none">
+    <div className="relative flex h-full w-full flex-col overflow-hidden select-none">
       <img
         src="/images/symbols/wild-panther/backdrop-v20261012-unique.webp"
         alt=""
