@@ -25,7 +25,7 @@ function Step([string]$Name, [string]$Exe, [string[]]$ArgList, [int]$Timeout = $
   $n = $steps.Count + 1
   $out = "$Evidence\step-$('{0:00}' -f $n)-$($Name -replace '[^A-Za-z0-9]+','-').txt"
   $t0 = Get-Date; $last = $t0; $beat = $t0; $seen = 0; $line = 'starting'; $warned = $false
-  Log "[STEP $n] $Name: RUNNING"
+  Log "[STEP $n] ${Name}: RUNNING"
   Save $Name 'RUNNING'
   $p = Start-Process -FilePath $Exe -ArgumentList $ArgList -RedirectStandardOutput $out -RedirectStandardError "$out.err" -NoNewWindow -PassThru
   $timedOut = $false
