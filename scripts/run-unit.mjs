@@ -2,7 +2,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { spawn } from 'node:child_process';
 const output=process.env.TEST_OUTPUT??'output/unit-tests';fs.mkdirSync(output,{recursive:true});
-const jobs=['pool-cap','risk-controls','golden-panther','wild-panther','staging-preview','buffalo-reign','fire-spike','fortune-ox','ace-high','baccarat','threecardpoker','lucky9','lucky-nine-plus','deep-bass','gentle-audio','security-regressions','ph-vps2','destructive-guard'].map(name=>({name,file:`scripts/test-${name}.ts`}));
+const jobs=['pool-cap','risk-controls','golden-panther','wild-panther','staging-preview','buffalo-reign','fire-spike','fortune-ox','ace-high','baccarat','threecardpoker','lucky9','lucky-nine-plus','deep-bass','gentle-audio','security-regressions','ph-vps2','destructive-guard','bonus-progress'].map(name=>({name,file:`scripts/test-${name}.ts`}));
 for(const name of ['game-audit','realms-family','realms-engine-parity','cluster-referee','payline-referee'])jobs.push({name,file:`scripts/qa-${name}.ts`});
 const results=[];
 async function worker(){while(jobs.length){const job=jobs.shift();const start=Date.now();const log=fs.openSync(path.join(output,job.name+'.txt'),'w');

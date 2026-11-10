@@ -52,6 +52,7 @@ import { CELLS, COLS, MAIN_CELLS, ROWS, TOP_COLS } from "./wild-panther/types";
 import { WinCelebration } from "./wild-panther/WinCelebration";
 import { FreeSpinsCongrats } from "./wild-panther/FreeSpinsCongrats";
 import { FreeSpinsTriggerModal } from "./wild-panther/FreeSpinsTriggerModal";
+import { freeSpinsProgress } from "./bonus/freeSpinsProgress";
 import { BuyFeatureModal } from "./wild-panther/BuyFeatureModal";
 import { PaytableModal } from "./wild-panther/PaytableModal";
 import { GameMenuModal } from "./wild-panther/GameMenuModal";
@@ -143,6 +144,9 @@ export function WildPantherSlot({
   const [turbo, setTurbo] = useState(false);
   const [lastWin, setLastWin] = useState(0);
   const [freeSpins, setFreeSpins] = useState(0);
+  const [fsPlayed, setFsPlayed] = useState(0);
+  /** True from the confirmed purchase until the Free Spins announcement is dismissed: the HUD counter stays hidden meanwhile. */
+  const [buyPresenting, setBuyPresenting] = useState(false);
   const [inFree, setInFree] = useState(false);
   const [fsBombAcc, setFsBombAcc] = useState(0);
   const [fsSessionWin, setFsSessionWin] = useState(0);
@@ -288,6 +292,7 @@ export function WildPantherSlot({
       fsBombRef.current = session.fsBombAcc;
       fsSessionRef.current = session.fsSessionWin;
       fsSpinsPlayedRef.current = session.fsSpinsPlayed;
+      setFsPlayed(session.fsSpinsPlayed);
     },
     [],
   );
@@ -429,6 +434,7 @@ export function WildPantherSlot({
   const dismissFsSummary = useCallback(() => {
     setFsSummary(null);
     fsSpinsPlayedRef.current = 0;
+    setFsPlayed(0);
   }, []);
 
   const finishBase = useCallback(
@@ -688,6 +694,8 @@ export function WildPantherSlot({
     }
 
     setBuyOpen(false);
+    setBuyPresenting(true);
+    let awardedSpins = getFreeSpinsBase();
     try {
       const bought = await wildPantherBuyFeatureFn({
         data: { bet, mode: buyMode },
@@ -696,10 +704,10 @@ export function WildPantherSlot({
       void refreshJackpot();
       applySession(bought.session);
       if (buyMode === "super") setAnte(true);
-      setTriggerModalCount(bought.session.freeSpinsLeft || getFreeSpinsBase());
-      pantherAudio.playScatterTrigger();
+      awardedSpins = bought.session.freeSpinsLeft || getFreeSpinsBase();
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Buy feature failed");
+      setBuyPresenting(false);
       return;
     }
 
@@ -710,44 +718,55 @@ export function WildPantherSlot({
     setDropTotal(0);
     setLastWin(0);
 
-    setBanner(
-      buyMode === "super"
-        ? `SUPER FREE SPINS · ${getFreeSpinsBase()}`
-        : `BUY FREE SPINS · ${getFreeSpinsBase()}`,
-    );
-    pantherAudio.playScatterTrigger();
-    schedule(() => setBanner(null), 1400);
-
+    // Scatter-triggered presentation. The purchase and the free-spin session are already settled by the server; nothing below
+    // can change a price, a result or a payout. Sequence: (1) the reels spin with the game's own drop animation and land on the
+    // scatter board, (2) the scatters glow with the game's own highlight and trigger sound, (3) the existing Free Spins
+    // announcement opens, (4) the free spins then run automatically from 1/N. The scatter moment consumes NO free spin.
     const gen = ++playbackGen.current;
     busyRef.current = true;
     try {
-      const seeded = buildBoard(true, true, false);
-      // Fisher–Yates for scatter seed positions (unbiased vs sort-shuffle).
+      const board = buildBoard(true, true, false);
       const indices = ALL_BOARD_INDICES.slice() as number[];
       for (let i = indices.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
+        const j = Math.floor(Math.random() * (i + 1)); // cell placement only (visual); never a result
         [indices[i], indices[j]] = [indices[j], indices[i]];
       }
+      const scatterKeys = new Set<string>();
       for (let k = 0; k < 4; k++) {
-        seeded[indices[k]] = {
-          key: nextKey(),
-          sym: scatterSym(),
-        };
+        const key = nextKey();
+        board[indices[k]] = { key, sym: scatterSym() };
+        scatterKeys.add(key);
       }
-      setSlots(asSlots(seeded));
-      await wait(turboRef.current ? 350 : 650, gen);
+      setWinningKeys(EMPTY_SET);
+      setPayoutByKey(EMPTY_PAY);
+      setSpawnedKeys(EMPTY_SET);
+      setFallenKeys(EMPTY_SET);
+      setPhase("dropping");
+      setSlots(asSlots(board));
+      pantherAudio.startSpinLoop();
+      await wait(ANIM.dropDuration + COLS * ANIM.dropStaggerCol + ROWS * ANIM.dropStaggerRow, gen);
+      pantherAudio.stopSpinLoop();
+      pantherAudio.playReelStop(5);
+      setWinningKeys(scatterKeys);
+      setPhase("glow");
+      pantherAudio.playScatterTrigger();
+      await wait(ANIM.glowDuration + 500, gen);
+      setWinningKeys(EMPTY_SET);
+      setPhase("idle");
+      setBanner(`${awardedSpins} FREE SPINS!`);
+      setTriggerModalCount(awardedSpins);
+      setBuyPresenting(false);
+      schedule(() => setBanner(null), ANIM.bannerHold);
     } catch {
       /* aborted */
     } finally {
       if (gen === playbackGen.current) {
         busyRef.current = false;
+        setBuyPresenting(false);
         if (mountedRef.current) setPhase("idle");
       }
     }
-
-    if (mountedRef.current && gen === playbackGen.current) {
-      await spinRef.current(true);
-    }
+    // The free spins start from 1/N through the existing automatic chain once the announcement is dismissed.
   }, [
     applySession,
     balance,
@@ -1033,8 +1052,13 @@ export function WildPantherSlot({
             busy={busy}
             turbo={turbo}
             autoSpin={autoSpin}
-            inFree={inFree}
+            inFree={inFree && triggerModalCount == null && !buyPresenting}
             freeSpins={freeSpins}
+            freeSpinsProgress={
+              inFree && triggerModalCount == null && !buyPresenting
+                ? freeSpinsProgress(fsPlayed, freeSpins, busy)
+                : null
+            }
             freeSpinsPaused={fsPaused}
             autoRemaining={remainingAutoSpins}
             spinDisabled={!busy && !autoSpin && inFree && freeSpins === 0}

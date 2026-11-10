@@ -30,6 +30,8 @@ export type SlotControlDeckProps = {
   autoSpin: boolean;
   inFree?: boolean;
   freeSpins?: number;
+  /** Optional "n/N" progress derived from the server session (see bonus/freeSpinsProgress). Falls back to the plain count. */
+  freeSpinsProgress?: { current: number; total: number } | null;
   freeSpinsPaused?: boolean;
   autoRemaining?: number | "infinity";
   spinDisabled?: boolean;
@@ -59,6 +61,7 @@ export function SlotControlDeck({
   autoSpin,
   inFree = false,
   freeSpins = 0,
+  freeSpinsProgress = null,
   freeSpinsPaused = false,
   autoRemaining,
   spinDisabled = false,
@@ -92,8 +95,13 @@ export function SlotControlDeck({
     "--deck-surface": skin.surface,
     "--deck-ink": skin.ink,
   } as CSSProperties;
+  const fsCounter = freeSpinsProgress
+    ? `${freeSpinsProgress.current}/${freeSpinsProgress.total}`
+    : null;
   const spinDetail = inFree
-    ? `${freeSpins} left`
+    ? fsCounter
+      ? `FREE SPINS ${fsCounter}`
+      : `${freeSpins} left`
     : autoSpin && autoRemaining !== undefined
       ? `${autoRemaining === "infinity" ? "∞" : autoRemaining} left`
       : null;
@@ -132,7 +140,9 @@ export function SlotControlDeck({
           <div className="slot-deck__round">
             <Motif size={18} />
             <span>{inFree ? "Free spins" : "Ready to play"}</span>
-            {inFree && <strong>{freeSpins}</strong>}
+            {inFree && (
+              <strong data-fs-counter={fsCounter ?? undefined}>{fsCounter ?? freeSpins}</strong>
+            )}
           </div>
         )}
       </div>
@@ -238,7 +248,9 @@ export function SlotControlDeck({
         {busy
           ? "Spin in progress"
           : inFree
-            ? `${freeSpins} free spins${freeSpinsPaused ? " · paused" : " remaining"}`
+            ? fsCounter
+              ? `FREE SPINS ${fsCounter}${freeSpinsPaused ? " · paused" : ""}`
+              : `${freeSpins} free spins${freeSpinsPaused ? " · paused" : " remaining"}`
             : autoSpin
               ? "Auto spin active"
               : win > 0
