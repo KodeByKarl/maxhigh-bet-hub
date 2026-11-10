@@ -22,7 +22,7 @@ try {
   checks.push('read-only notice and header');
   const health = await context.request.get(new URL('/api/health', url).href);
   assert.equal(health.status(), 200);
-  assert.deepEqual(await health.json(), { ok: true, release: 'e89359f0ea26ea71bea4522a2c8eced7911d8fc3' });
+  assert.deepEqual(await health.json(), { ok: true, release: '8066092cc16ee8f990cdbf6d5bced89cd186fb5b' });
   assert.match(health.headers()['cache-control'], /no-store/);
   checks.push('healthy exact pinned release');
   for (const target of ['/admin', '/api/auth/login', '/_serverFn/paid-round', '/api/deposit', '/api/withdraw']) {
