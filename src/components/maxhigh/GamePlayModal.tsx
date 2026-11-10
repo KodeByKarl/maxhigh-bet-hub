@@ -1504,7 +1504,7 @@ export function GamePlayModal({ game, open, onOpenChange }: Props) {
       {/* Extra opaque plate in case of any subpixel gap */}
       <div className="pointer-events-none absolute inset-0 bg-[#0A0912]" aria-hidden />
 
-      <div className="absolute right-[max(0.75rem,env(safe-area-inset-right))] top-[max(0.75rem,env(safe-area-inset-top))] z-[10001] sm:right-5 sm:top-5">
+      <div className="absolute right-[calc(env(safe-area-inset-right)+0.75rem)] top-[calc(env(safe-area-inset-top)+0.75rem)] z-[10001] sm:right-[calc(env(safe-area-inset-right)+1.25rem)] sm:top-[calc(env(safe-area-inset-top)+1.25rem)]">
         <button
           type="button"
           onClick={() => onOpenChange(false)}
