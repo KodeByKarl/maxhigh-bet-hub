@@ -157,21 +157,26 @@ export function ColorGameTable({
       // land inside the slice (not always dead-centre) for a natural feel
       const jitter = (Math.random() - 0.5) * slice * 0.6;
       const want = mod(-(idx * slice + slice / 2 + jitter), 360);
-      const total = 360 * 5 + mod(want - cur, 360);
+      const reduceMotion =
+        typeof window !== "undefined" &&
+        window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
+      // Reduced motion: one gentle turn, shorter. The server result is already settled; this is presentation only.
+      const dur = reduceMotion ? 1200 : SPIN_MS;
+      const total = 360 * (reduceMotion ? 1 : 5) + mod(want - cur, 360);
 
       stopAudioRef.current();
       stopAudioRef.current = startWheelSpin({
         totalDeg: total,
         startDeg: cur,
         sliceDeg: slice,
-        durationSec: SPIN_MS / 1000,
+        durationSec: dur / 1000,
       });
 
       const t0 = performance.now();
       let lastSlice = Math.floor(cur / slice);
       const frame = (now: number) => {
         if (!mountedRef.current) return;
-        const p = Math.min(1, (now - t0) / SPIN_MS);
+        const p = Math.min(1, (now - t0) / dur);
         const deg = cur + total * wheelEase(p);
         angleRef.current = deg;
         paintWheel(deg);
@@ -181,12 +186,14 @@ export function ColorGameTable({
           const f = flapRef.current;
           if (f) {
             // kick the pointer flapper on every peg
-            f.style.transition = "none";
-            f.style.transform = "translateX(0) rotate(-22deg)";
-            requestAnimationFrame(() => {
-              f.style.transition = "transform 90ms ease-out";
-              f.style.transform = "translateX(0) rotate(0deg)";
-            });
+            // Web Animations API: runs off the main thread, no per-peg style/transition rewrites or nested rAF.
+            f.animate(
+              [
+                { transform: "translateX(0) rotate(-22deg)" },
+                { transform: "translateX(0) rotate(0deg)" },
+              ],
+              { duration: 90, easing: "ease-out" },
+            );
           }
         }
         if (p < 1) rafRef.current = requestAnimationFrame(frame);
@@ -196,6 +203,14 @@ export function ColorGameTable({
         }
       };
       rafRef.current = requestAnimationFrame(frame);
+      // Backgrounded tab: rAF is paused by the browser. Never leave the round hanging; settle the visuals after the duration.
+      window.setTimeout(() => {
+        if (!mountedRef.current) return;
+        cancelAnimationFrame(rafRef.current);
+        angleRef.current = cur + total;
+        paintWheel(cur + total);
+        resolve();
+      }, dur + 1500);
     });
   }
 
@@ -563,7 +578,7 @@ const CSS = `
   --r: 47.2cqw;
 }
 .cg-bulbs-fast .cg-bulb { animation-duration: .18s; }
-@keyframes cg-twinkle { from { opacity: .35; filter: brightness(.7); } to { opacity: 1; filter: brightness(1.35); } }
+@keyframes cg-twinkle { from { opacity: .35; } to { opacity: 1; } } /* opacity only: filter animations repaint on the main thread */
 .cg-peg {
   width: 3.2%; aspect-ratio: 1; border-radius: 9999px;
   background: radial-gradient(circle at 35% 30%, #fff, #fcd34d 50%, #92400e);
@@ -579,7 +594,7 @@ const CSS = `
   border: 3px solid #f5d76e;
   box-shadow: inset 0 8px 18px rgba(0,0,0,.6), 0 0 0 3px rgba(0,0,0,.4), 0 6px 14px rgba(0,0,0,.6);
 }
-.cg-win-slice { animation: cg-slice 0.55s ease-in-out infinite alternate; mix-blend-mode: overlay; }
+.cg-win-slice { animation: cg-slice 0.55s ease-in-out infinite alternate; } /* no mix-blend-mode: forces backdrop readback on mobile GPUs */
 @keyframes cg-slice { from { opacity: .25; } to { opacity: 1; } }
 .cg-pop { animation: cg-pop .45s cubic-bezier(.2,1.6,.4,1); }
 @keyframes cg-pop { from { transform: scale(.3); opacity: 0; } to { transform: scale(1); opacity: 1; } }

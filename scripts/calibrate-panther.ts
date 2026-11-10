@@ -103,6 +103,21 @@ function metrics(g: PantherGame, cfg: PantherCfg, buyPricePerSpin: (q: number) =
 
 const round = (n: number, step: number) => Math.round(n / step) * step;
 
+/** Live progress on stderr (never mixed with the stdout summary/JSON): elapsed, stage, iteration, candidate and best RTP, target, rough ETA. */
+const T_START = Date.now();
+const STAGE_WEIGHT: Record<string, number> = { "1 scatter-weight": 0.05, "2 pay-scale": 0.3, "3 ante": 0.1, "4 buy-curve": 0.55 }; // rough share of a run
+const bestSeen: Record<string, number> = {};
+function progress(id: string, stage: string, iteration: number, total: number, candidateRtp: number | null, target: number) {
+  if (candidateRtp !== null && (bestSeen[id] === undefined || Math.abs(candidateRtp - target) < Math.abs(bestSeen[id] - target))) bestSeen[id] = candidateRtp;
+  const order = Object.keys(STAGE_WEIGHT);
+  const done = order.slice(0, order.indexOf(stage)).reduce((a, k) => a + STAGE_WEIGHT[k]!, 0) + (STAGE_WEIGHT[stage] ?? 0) * Math.min(1, iteration / Math.max(1, total));
+  const elapsed = (Date.now() - T_START) / 1000;
+  const eta = done > 0.02 ? Math.max(0, elapsed / done - elapsed) : NaN;
+  const pct = (x: number | null | undefined) => (x === null || x === undefined ? "n/a" : (x * 100).toFixed(2) + "%");
+  const mm = (x: number) => (Number.isFinite(x) ? `${Math.floor(x / 60)}m${String(Math.round(x % 60)).padStart(2, "0")}s` : "n/a");
+  console.error(`[progress] ${id} stage ${stage} iter ${iteration}/${total} | candidate RTP ${pct(candidateRtp)} | best RTP ${pct(bestSeen[id])} | target ${pct(target)} | elapsed ${mm(elapsed)} | ETA ${mm(eta)} (${(done * 100).toFixed(0)}%)`);
+}
+
 async function calibrate(id: string) {
   const t0 = Date.now();
   const g = await loadPanther(id);
@@ -118,10 +133,12 @@ async function calibrate(id: string) {
     let r0 = now;
     let w1 = w0 * (TRIGGER_TARGET / Math.max(r0, 1e-6)) ** 0.35;
     let r1 = scatterRates(g, withScatter(cfg, w1), false).trigger;
+    progress(id, "1 scatter-weight", 0, 8, null, target);
     for (let i = 0; i < 8 && Math.abs(r1 - TRIGGER_TARGET) / TRIGGER_TARGET > 0.03; i++) {
       const next = Math.max(0.01, w1 + ((TRIGGER_TARGET - r1) * (w1 - w0)) / (r1 - r0 || 1e-9));
       [w0, r0, w1] = [w1, r1, next];
       r1 = scatterRates(g, withScatter(cfg, w1), false).trigger;
+      progress(id, "1 scatter-weight", i + 1, 8, null, target);
     }
     cfg = withScatter(cfg, +w1.toFixed(3));
   }
@@ -135,6 +152,7 @@ async function calibrate(id: string) {
   const measured =
     tumbleWins(g, trial, false) + sr.trigger * featureValue(g, trial, cfg.freeSpinsBase);
   payScale *= (target - sr.cash) / measured;
+  progress(id, "2 pay-scale", 1, 1, measured + sr.cash, target);
   cfg = withPayScale(cfg, payScale);
 
   // 3. Ante boost: secant search so a 1.25× ante spin returns the target RTP.
@@ -152,6 +170,7 @@ async function calibrate(id: string) {
     const next = Math.min(10, Math.max(1, m1 + ((target - v1) * (m1 - m0)) / (v1 - v0 || 1e-9)));
     [m0, v0, m1] = [m1, v1, next];
     v1 = anteValue(m1);
+    progress(id, "3 ante", i + 1, 8, v1, target);
   }
   cfg = withScatter(cfg, scatterOf(cfg).weight, +m1.toFixed(3));
 
@@ -162,9 +181,12 @@ async function calibrate(id: string) {
       : 50;
   const sampleQs = [1, 2, 3, 4, 6, 8, 10, 12, 15, 20, 25, 30, 40, 50].filter((q) => q <= maxQ);
   if (sampleQs[sampleQs.length - 1] !== maxQ) sampleQs.push(maxQ);
-  const raw = sampleQs.map(
-    (q) => featureValue(g, cfg, q, Math.max(4000, Math.ceil(600_000 / q))) / q,
-  );
+  let qDone = 0;
+  const raw = sampleQs.map((q) => {
+    const v = featureValue(g, cfg, q, Math.max(4000, Math.ceil(600_000 / q))) / q;
+    progress(id, "4 buy-curve", ++qDone, sampleQs.length, null, target);
+    return v;
+  });
   const fit: number[] = [];
   for (const v of raw) fit.push(Math.max(v, fit[fit.length - 1] ?? 0));
   const curve: number[] = [];
@@ -206,6 +228,7 @@ async function calibrate(id: string) {
       `ante ${pct(before.anteRtp)} → ${pct(after.anteRtp)} | buy×1 ${pct(before.buy1)} → ${pct(after.buy1)} | buy×${d.freeSpinsBase} ${pct(before.buyStd)} → ${pct(after.buyStd)} | ` +
       `price ${d.buyFeatureMult}× → ${cfg.buyFeatureMult}× (${((Date.now() - t0) / 1000).toFixed(0)}s)`,
   );
+  if (process.env.CAL_JSON) console.log(`RESULT_JSON ${JSON.stringify(result)}`);
   return result;
 }
 

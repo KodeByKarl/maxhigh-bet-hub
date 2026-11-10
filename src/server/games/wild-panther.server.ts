@@ -344,7 +344,10 @@ export async function wildPantherFreeSpin(data: {
     const nextBomb = Number(row.fsBombAcc) + script.bombAccumulator;
     const nextPlayed = Number(row.fsSpinsPlayed) + 1;
     let nextLeft = left - 1;
-    if (script.retriggerSpins > 0) nextLeft += script.retriggerSpins;
+    // Hard bound: past the per-feature ceiling retriggers are ignored. Wins already earned are untouched.
+    if (script.retriggerSpins > 0 && nextPlayed < cfg.maxFsSessionSpins) {
+      nextLeft = Math.min(nextLeft + script.retriggerSpins, cfg.maxFsSessionSpins - nextPlayed);
+    }
     nextLeft = Math.max(0, nextLeft);
 
     let balance = Number(u.balance);

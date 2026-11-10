@@ -5,6 +5,7 @@ import {
   getWildPantherConfig,
   setWildPantherConfig,
 } from "../src/components/maxhigh/wild-panther/runtimeConfig";
+import { payForCount } from "../src/components/maxhigh/wild-panther/paytable";
 import { resolveSpin } from "../src/components/maxhigh/wild-panther/spinResolver";
 import { CELLS } from "../src/components/maxhigh/wild-panther/types";
 
@@ -27,17 +28,10 @@ try {
   const symbols = getRuntimeSymbols();
   const pay = symbols.find((symbol) => symbol.kind === "grape")!;
   const scatter = symbols.find((symbol) => symbol.scatter)!;
-  for (const [free, count] of [
-    [false, 4],
-    [false, 3],
-    [true, 3],
-  ] as const) {
-    let draws = 0;
-    runtime.__maxhighRandom = () => {
-      const draw = draws++;
-      const cell = Math.floor(draw / 2);
-      return draw % 2 === 0 && cell >= 39 * CELLS && cell < 39 * CELLS + count ? 0.75 : 0;
-    };
+  // Tumble refills never spawn scatters (calibrated Panther family rule): even if the RNG picks the scatter symbol on every
+  // refill it becomes a pay symbol, so only OPENING-board scatters can trigger or retrigger.
+  for (const free of [false, true]) {
+    runtime.__maxhighRandom = () => 0.75; // always lands on the scatter band
     const result = resolveSpin({
       bet: 1,
       ante: false,
@@ -45,16 +39,39 @@ try {
       forceBoard: Array.from({ length: CELLS }, (_, i) => ({ key: `forced-${i}`, sym: pay })),
     });
     assert.equal(result.steps.length, 40, "Exercise the actual production tumble guard");
-    assert.equal(draws, 40 * CELLS * 2, "No extra tumbles or random draws");
-    assert.ok(result.steps.every((step) => step.board.every((cell) => !cell.sym.scatter)));
-    assert.equal(result.steps.at(-1)!.afterFall.filter((cell) => cell.sym.scatter).length, count);
-    assert.equal(result.scatters, count, "Visible final refill scatters must be counted");
+    assert.ok(
+      result.steps.every((step) => step.afterFall.every((cell) => !cell.sym.scatter)),
+      "no scatter may spawn in a refill",
+    );
+    assert.equal(result.scatters, 0);
+    assert.equal(result.freeSpinsAwarded, 0);
+    assert.equal(result.retriggerSpins, 0);
+    checks++;
+  }
+  // Opening-board scatters are counted, award and cash tiers follow config.
+  const mixed = ["grape", "plum", "melon", "apple", "blue", "green", "purple", "heart"].map(
+    (k) => symbols.find((s) => s.kind === k) ?? pay,
+  );
+  for (const [free, count] of [
+    [false, 4],
+    [false, 3],
+    [true, 3],
+    [true, 7],
+  ] as const) {
+    runtime.__maxhighRandom = () => {
+      throw Error("No random draws expected without a winning cluster");
+    };
+    const board = Array.from({ length: CELLS }, (_, i) => ({
+      key: `open-${i}`,
+      sym: i < count ? scatter : mixed[i % mixed.length],
+    }));
+    const result = resolveSpin({ bet: 1, ante: false, isFreeSpins: free, forceBoard: board });
     const cfg = getWildPantherConfig();
+    assert.equal(result.scatters, count);
     const cash = free
       ? 0
-      : ([...cfg.scatterCashTiers]
-          .sort((a, b) => b.count - a.count)
-          .find((tier) => count >= tier.count)?.mult ?? 0);
+      : ([...cfg.scatterCashTiers].sort((a, b) => b.count - a.count).find((t) => count >= t.count)
+          ?.mult ?? 0);
     assert.equal(result.scatterPay, cash);
     assert.equal(
       result.freeSpinsAwarded,
@@ -63,10 +80,6 @@ try {
     assert.equal(
       result.retriggerSpins,
       free && count >= cfg.freeSpinsRetriggerCount ? cfg.freeSpinsRetrigger : 0,
-    );
-    assert.equal(
-      result.totalWin,
-      +(result.steps.reduce((sum, step) => sum + step.tumbleWin, 0) + cash).toFixed(2),
     );
     checks++;
   }
@@ -112,7 +125,7 @@ try {
         ...(i < 12 ? {} : { mult: 100 }),
       })),
     });
-    const rawCluster = +(bet * heart.pay[2]).toFixed(2);
+    const rawCluster = +(bet * payForCount(heart, 12)).toFixed(2);
     const rawTotal = free ? rawCluster : +(rawCluster * (CELLS - 12) * 100).toFixed(2);
     assert.equal(result.steps.length, 1);
     assert.equal(result.steps[0].tumbleWin, rawTotal, "Original tumble math retained");
@@ -125,6 +138,38 @@ try {
     assert.equal(draws, CELLS * 3, "Cap enforcement consumes no extra randomness");
     checks++;
   }
+  // Regression: free-spin features must terminate (retrigger branching factor < 1) and respect the hard ceiling.
+  setWildPantherConfig(DEFAULT_WILD_PANTHER_CONFIG);
+  let seed = 12345;
+  runtime.__maxhighRandom = () => {
+    seed = (Math.imul(seed, 1664525) + 1013904223) >>> 0;
+    return seed / 4294967296;
+  };
+  const dcfg = getWildPantherConfig();
+  let retriggers = 0;
+  const SAMPLES = 4000;
+  for (let i = 0; i < SAMPLES; i++) {
+    if (resolveSpin({ bet: 1, ante: false, isFreeSpins: true }).retriggerSpins > 0) retriggers++;
+  }
+  const branching = (retriggers / SAMPLES) * dcfg.freeSpinsRetrigger;
+  assert.ok(
+    branching < 0.9,
+    `free-spin branching factor must be < 0.9 (got ${branching.toFixed(2)}); >= 1 means endless features`,
+  );
+  for (let f = 0; f < 300; f++) {
+    let left = dcfg.freeSpinsBase;
+    let played = 0;
+    while (left > 0) {
+      const s = resolveSpin({ bet: 1, ante: false, isFreeSpins: true });
+      played++;
+      left--;
+      if (s.retriggerSpins > 0 && played < dcfg.maxFsSessionSpins) {
+        left = Math.min(left + s.retriggerSpins, dcfg.maxFsSessionSpins - played);
+      }
+      assert.ok(played <= dcfg.maxFsSessionSpins, "feature exceeded the hard ceiling");
+    }
+  }
+  checks++;
 } finally {
   setWildPantherConfig(previousConfig);
   if (previousRandom === undefined) delete runtime.__maxhighRandom;

@@ -44,18 +44,27 @@ export function pickBombMult(): number {
   return table[0]?.mult ?? 2;
 }
 
-export function makeCell(sym: CellSym, freeSpins: boolean, forceBomb = false): BoardCell {
+export function makeCell(
+  sym: CellSym,
+  freeSpins: boolean,
+  forceBomb = false,
+  opts?: { allowScatter?: boolean },
+): BoardCell {
   const cfg = getWildPantherConfig();
-  const { bomb } = pools();
+  const { bomb, pay } = pools();
+  // Tumble refills never spawn scatters (matches the calibrated Panther family); only opening boards can carry them.
+  let use = sym;
+  if (opts?.allowScatter === false && use.scatter)
+    use = pay[Math.floor(gameRandom() * pay.length)] ?? use;
   const bombChance = (freeSpins ? cfg.bombChanceFreeSpinsPercent : cfg.bombChanceBasePercent) / 100;
-  if (forceBomb || sym.bomb || gameRandom() < bombChance) {
+  if (forceBomb || use.bomb || gameRandom() < bombChance) {
     return {
       key: nextKey(),
       sym: bomb,
       mult: pickBombMult(),
     };
   }
-  return { key: nextKey(), sym };
+  return { key: nextKey(), sym: use };
 }
 
 export function fillerCell(i: number): BoardCell {
