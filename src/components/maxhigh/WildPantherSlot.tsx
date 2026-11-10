@@ -756,6 +756,12 @@ export function WildPantherSlot({
       setBanner(`${awardedSpins} FREE SPINS!`);
       setTriggerModalCount(awardedSpins);
       setBuyPresenting(false);
+      // the announcement closes by itself so the first free spin starts automatically (a tap still skips ahead)
+      const autoCloseAnnouncement = schedule(
+        () => setTriggerModalCount(null),
+        turboRef.current ? 900 : 2400,
+      );
+      void autoCloseAnnouncement;
       schedule(() => setBanner(null), ANIM.bannerHold);
     } catch {
       /* aborted */
@@ -1152,7 +1158,6 @@ export function WildPantherSlot({
             bet={bet}
             cost={activeBuyCost}
             balance={balance}
-            onBetChange={setBet}
             onCancel={() => setBuyOpen(false)}
             onConfirm={() => {
               void buyFeature();

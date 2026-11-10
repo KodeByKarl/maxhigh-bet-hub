@@ -33,7 +33,7 @@ import {
 } from "./coral-cobra/playbackHelpers";
 import { BetSelectModal } from "./coral-cobra/BetSelectModal";
 import { buildBuyScatterIntroBoard, initialBoard } from "./coral-cobra/gridState";
-import { BET_STEPS, BUY_FS_START_BET, getAnteMult, getBuyUnitPrice } from "./coral-cobra/paytable";
+import { BET_STEPS, getAnteMult, getBuyUnitPrice } from "./coral-cobra/paytable";
 import { setCoralCobraConfig } from "./coral-cobra/runtimeConfig";
 import type { BoardCell, SpinScript } from "./coral-cobra/types";
 import { CELLS, COLS, MAIN_CELLS, ROWS } from "./coral-cobra/types";
@@ -49,6 +49,8 @@ import { themeToCssVars } from "./panther-shared/theme";
 import { type ReelPhase } from "./coral-cobra/ReelCell";
 import { getCoralCobraEngineConfigFn } from "@/functions/superadmin";
 import { CORAL_COBRA_GAME_ID } from "@/lib/coral-cobra-config";
+import { freeSpinsProgress } from "./bonus/freeSpinsProgress";
+import { BUY_BONUS_FREE_SPINS } from "@/lib/buy-bonus";
 
 type Phase = ReelPhase;
 type Slot = BoardCell | null;
@@ -125,6 +127,9 @@ export function CoralCobraSlot({
   const [turbo, setTurbo] = useState(false);
   const [lastWin, setLastWin] = useState(0);
   const [freeSpins, setFreeSpins] = useState(0);
+  const [fsPlayed, setFsPlayed] = useState(0);
+  /** True from the confirmed purchase until the Free Spins announcement is dismissed: the HUD counter stays hidden meanwhile. */
+  const [buyPresenting, setBuyPresenting] = useState(false);
   const [inFree, setInFree] = useState(false);
   const [fsSessionWin, setFsSessionWin] = useState(0);
   const [dropTotal, setDropTotal] = useState(0);
@@ -142,7 +147,7 @@ export function CoralCobraSlot({
 
   const busy = phase !== "idle";
   const totalBet = +(bet * (ante ? getAnteMult() : 1)).toFixed(2);
-  const buyCost = getBuyUnitPrice(BUY_FS_START_BET, 1);
+  const buyCost = +(getBuyUnitPrice(bet, BUY_BONUS_FREE_SPINS) * BUY_BONUS_FREE_SPINS).toFixed(2);
 
   const busyRef = useRef(false);
   const skipRef = useRef(false);
@@ -311,9 +316,12 @@ export function CoralCobraSlot({
       setWinningKeys(EMPTY_SET);
       setPhase("idle");
       setTriggerModalCount(fsCount);
+      // the announcement closes by itself so the first free spin starts automatically (a tap still skips ahead)
+      const autoClose = window.setTimeout(dismissTriggerModal, turboRef.current ? 900 : 2400);
       await waitForTriggerModal();
+      window.clearTimeout(autoClose);
     },
-    [wait, waitForTriggerModal],
+    [wait, dismissTriggerModal, waitForTriggerModal],
   );
 
   useEffect(() => {
@@ -344,6 +352,7 @@ export function CoralCobraSlot({
           freeSpinsRef.current = session.freeSpinsLeft;
           fsSessionRef.current = session.fsSessionWin;
           fsSpinsPlayedRef.current = session.fsSpinsPlayed;
+          setFsPlayed(session.fsSpinsPlayed);
           if (session.bet > 0) setBet(session.bet);
           setAnte(session.ante);
           setFsPaused(false);
@@ -389,6 +398,7 @@ export function CoralCobraSlot({
       freeSpinsRef.current = session.freeSpinsLeft;
       fsSessionRef.current = session.fsSessionWin;
       fsSpinsPlayedRef.current = session.fsSpinsPlayed;
+      setFsPlayed(session.fsSpinsPlayed);
     },
     [],
   );
@@ -529,6 +539,7 @@ export function CoralCobraSlot({
   const dismissFsSummary = useCallback(() => {
     setFsSummary(null);
     fsSpinsPlayedRef.current = 0;
+    setFsPlayed(0);
     coralCobraAudio.endFreespins();
   }, []);
 
@@ -677,6 +688,7 @@ export function CoralCobraSlot({
           setLastWin(settled.session.fsSessionWin || settled.fsPayout?.amount || 0);
           fsSessionRef.current = settled.session.fsSessionWin;
           fsSpinsPlayedRef.current = settled.session.fsSpinsPlayed;
+          setFsPlayed(settled.session.fsSpinsPlayed);
 
           if (script.retriggerSpins > 0 && settled.session.inFree) {
             coralCobraAudio.playScatterTrigger();
@@ -798,6 +810,8 @@ export function CoralCobraSlot({
       }
 
       setBuyOpen(false);
+
+      setBuyPresenting(true);
       setBet(buyBet);
       try {
         const bought = await coralCobraBuyFeatureFn({
@@ -820,6 +834,7 @@ export function CoralCobraSlot({
         } catch {
           dismissTriggerModal();
         } finally {
+          setBuyPresenting(false);
           if (gen === playbackGen.current) {
             busyRef.current = false;
             if (mountedRef.current) setPhase("idle");
@@ -828,6 +843,7 @@ export function CoralCobraSlot({
         // First free spin starts via the auto-chain once the modal closes.
       } catch (err) {
         toast.error(err instanceof Error ? err.message : "Buy feature failed");
+        setBuyPresenting(false);
       }
     },
     [
@@ -943,6 +959,7 @@ export function CoralCobraSlot({
     freeSpins,
     lastWin,
     triggerModalCount,
+    buyPresenting,
     fsPaused,
     turbo,
   ]);
@@ -1064,8 +1081,13 @@ export function CoralCobraSlot({
             busy={busy}
             turbo={turbo}
             autoSpin={autoSpin}
-            inFree={inFree}
+            inFree={inFree && triggerModalCount == null && !buyPresenting}
             freeSpins={freeSpins}
+            freeSpinsProgress={
+              inFree && triggerModalCount == null && !buyPresenting
+                ? freeSpinsProgress(fsPlayed, freeSpins, busy)
+                : null
+            }
             freeSpinsPaused={fsPaused}
             autoRemaining={remainingAutoSpins}
             spinDisabled={!busy && !autoSpin && inFree && freeSpins === 0}
@@ -1149,6 +1171,7 @@ export function CoralCobraSlot({
         {buyOpen && (
           <BuyFeatureModal
             balance={balance}
+            bet={bet}
             mode={buyMode}
             onCancel={() => setBuyOpen(false)}
             onConfirm={(buyBet, quantity) => {

@@ -33,12 +33,7 @@ import {
 } from "./buffalo-reign/playbackHelpers";
 import { BetSelectModal } from "./buffalo-reign/BetSelectModal";
 import { buildBuyScatterIntroBoard, initialBoard } from "./buffalo-reign/gridState";
-import {
-  BET_STEPS,
-  BUY_FS_START_BET,
-  getAnteMult,
-  getBuyUnitPrice,
-} from "./buffalo-reign/paytable";
+import { BET_STEPS, getAnteMult, getBuyUnitPrice } from "./buffalo-reign/paytable";
 import { setBuffaloReignConfig } from "./buffalo-reign/runtimeConfig";
 import type { BoardCell, SpinScript } from "./buffalo-reign/types";
 import { CELLS } from "./buffalo-reign/types";
@@ -55,6 +50,7 @@ import { type ReelPhase } from "./buffalo-reign/ReelCell";
 import { getBuffaloReignEngineConfigFn } from "@/functions/superadmin";
 import { BUFFALO_REIGN_GAME_ID } from "@/lib/buffalo-reign-config";
 import { freeSpinsProgress } from "./bonus/freeSpinsProgress";
+import { BUY_BONUS_FREE_SPINS } from "@/lib/buy-bonus";
 
 type Phase = ReelPhase;
 type Slot = BoardCell | null;
@@ -150,7 +146,7 @@ export function BuffaloReignSlot({
 
   const busy = phase !== "idle";
   const totalBet = +(bet * (ante ? getAnteMult() : 1)).toFixed(2);
-  const buyCost = getBuyUnitPrice(BUY_FS_START_BET, 1);
+  const buyCost = +(getBuyUnitPrice(bet, BUY_BONUS_FREE_SPINS) * BUY_BONUS_FREE_SPINS).toFixed(2);
 
   const busyRef = useRef(false);
   const skipRef = useRef(false);
@@ -319,9 +315,12 @@ export function BuffaloReignSlot({
       setWinningKeys(EMPTY_SET);
       setPhase("idle");
       setTriggerModalCount(fsCount);
+      // the announcement closes by itself so the first free spin starts automatically (a tap still skips ahead)
+      const autoClose = window.setTimeout(dismissTriggerModal, turboRef.current ? 900 : 2400);
       await waitForTriggerModal();
+      window.clearTimeout(autoClose);
     },
-    [wait, waitForTriggerModal],
+    [wait, dismissTriggerModal, waitForTriggerModal],
   );
 
   useEffect(() => {
@@ -1155,6 +1154,7 @@ export function BuffaloReignSlot({
         {buyOpen && (
           <BuyFeatureModal
             balance={balance}
+            bet={bet}
             mode={buyMode}
             onCancel={() => setBuyOpen(false)}
             onConfirm={(buyBet, quantity) => {

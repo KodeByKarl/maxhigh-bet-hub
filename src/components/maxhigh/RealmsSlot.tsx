@@ -44,7 +44,7 @@ import {
 } from "./realms/playbackHelpers";
 import { BetSelectModal } from "./realms/BetSelectModal";
 import { buildBuyScatterIntroBoard, initialBoard } from "./realms/engine/gridState";
-import { BET_STEPS, BUY_FS_START_BET } from "./realms/engine/paytable";
+import { BET_STEPS } from "./realms/engine/paytable";
 import { createEngineCtx, type BoardCell, type SpinScript } from "./realms/engine/types";
 import { WinCelebration } from "./realms/WinCelebration";
 import { FreeSpinsCongrats } from "./realms/FreeSpinsCongrats";
@@ -56,6 +56,7 @@ import { ReelGrid, type ReelVisuals } from "./realms/ReelGrid";
 import type { ReelPhase, SymbolArt } from "./realms/ReelCell";
 import { realmsCssVars, realmsTheme } from "./realms/theme";
 import { freeSpinsProgress } from "./bonus/freeSpinsProgress";
+import { BUY_BONUS_FREE_SPINS } from "@/lib/buy-bonus";
 
 type Phase = ReelPhase;
 type Slot = BoardCell | null;
@@ -171,7 +172,7 @@ function RealmsTable({ def }: { def: RealmsGameDef }) {
     [cfg, gameId],
   );
   // Panther shows the price of one spin at the starting bet (₱1, quantity 1).
-  const buyCost = +(BUY_FS_START_BET * buyPricePerSpin(1)).toFixed(2);
+  const buyCost = +(bet * buyPricePerSpin(BUY_BONUS_FREE_SPINS) * BUY_BONUS_FREE_SPINS).toFixed(2);
 
   const busyRef = useRef(false);
   const skipRef = useRef(false);
@@ -340,9 +341,12 @@ function RealmsTable({ def }: { def: RealmsGameDef }) {
       setWinningKeys(EMPTY_SET);
       setPhase("idle");
       setTriggerModalCount(fsCount);
+      // the announcement closes by itself so the first free spin starts automatically (a tap still skips ahead)
+      const autoClose = window.setTimeout(dismissTriggerModal, turboRef.current ? 900 : 2400);
       await waitForTriggerModal();
+      window.clearTimeout(autoClose);
     },
-    [audio, cells, cfg, def.board, wait, waitForTriggerModal],
+    [audio, cells, cfg, def.board, wait, dismissTriggerModal, waitForTriggerModal],
   );
 
   useEffect(() => {
@@ -1187,8 +1191,8 @@ function RealmsTable({ def }: { def: RealmsGameDef }) {
         {buyOpen && (
           <BuyFeatureModal
             balance={balance}
+            bet={bet}
             pricePerSpin={buyPricePerSpin}
-            maxQuantity={realmsBuyMaxQuantity(cfg)}
             scatterSrc={art.scatter.src}
             onCancel={() => setBuyOpen(false)}
             onConfirm={(buyBet, quantity) => {

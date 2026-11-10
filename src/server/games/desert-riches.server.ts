@@ -24,6 +24,7 @@ import {
   writeLedgerDelta,
 } from "../wallet.server";
 import { pantherBuyPricePerSpin } from "@/components/maxhigh/panther-shared/buyPricing";
+import { resolveBuyBonusSpins } from "@/lib/buy-bonus";
 
 const GAME_NAME = "Desert Riches";
 
@@ -471,10 +472,7 @@ export async function desertRichesBuyFeature(data: {
   minorUnits(data.bet);
   await assertGameWager(DESERT_RICHES_GAME_ID, data.bet);
   if (!Number.isFinite(data.bet) || data.bet <= 0) throw new Error("Invalid bet");
-  const quantity = Math.round(data.quantity);
-  if (!Number.isFinite(quantity) || quantity < 1 || quantity > 50) {
-    throw new Error("Invalid quantity");
-  }
+  const quantity = resolveBuyBonusSpins(data.quantity);
 
   const cfg = await loadEngineConfig();
   if (data.mode === "super") throw new Error("Super Buy is no longer available");

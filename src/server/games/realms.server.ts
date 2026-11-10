@@ -34,6 +34,7 @@ import {
   sumPendingWithdrawals,
   writeLedgerDelta,
 } from "../wallet.server";
+import { resolveBuyBonusSpins } from "@/lib/buy-bonus";
 
 export type RealmsSessionState = {
   sessionId: string | null;
@@ -392,11 +393,10 @@ export async function realmsBuyFeature(data: {
   if (!Number.isFinite(data.bet) || data.bet <= 0 || data.bet > BUY_FS_BET_MAX)
     throw new Error("Invalid bet");
   const cfg = await loadRealmsEngineConfig(def.id);
-  const quantity = Math.round(data.quantity);
+  const quantity = resolveBuyBonusSpins(data.quantity);
   const maxQuantity = realmsBuyMaxQuantity(cfg);
-  if (!Number.isFinite(quantity) || quantity < 1 || quantity > maxQuantity) {
-    throw new Error(`Buy 1–${maxQuantity} free spins`);
-  }
+  if (quantity > maxQuantity)
+    throw new Error(`This title allows at most ${maxQuantity} free spins per purchase`);
   await assertNoOpenFeature(user.id, data.gameId);
   const cost = +(data.bet * realmsBuyPricePerSpin(def.id, cfg, quantity) * quantity).toFixed(2);
   await assertNotInMaintenanceForBets();

@@ -1,15 +1,13 @@
-import { useState, type ReactNode } from "react";
+import type { ReactNode } from "react";
 import { motion } from "framer-motion";
-import { BUY_FS_BET_MAX, BUY_FS_BET_MIN, BUY_FS_START_BET } from "./engine/paytable";
-
-const BUY_FS_QTY_MIN = 1;
+import { BUY_BONUS_FREE_SPINS } from "@/lib/buy-bonus";
 
 export type BuyFeatureModalProps = {
+  /** The game's currently selected bet: the dialog never changes it. */
+  bet: number;
   balance: number;
   /** Price per free spin (× bet) when buying `quantity` spins. */
   pricePerSpin: (quantity: number) => number;
-  /** Most spins one purchase can buy (the title's free-spin session cap). */
-  maxQuantity: number;
   scatterSrc: string;
   onConfirm: (bet: number, quantity: number) => void;
   onCancel: () => void;
@@ -18,29 +16,16 @@ export type BuyFeatureModalProps = {
 /** Buy Bonus (Panther format): starts at bet ₱1 / qty 1. Price = bet × per-spin price; Total = Price × quantity. */
 export function BuyFeatureModal({
   balance,
+  bet,
   pricePerSpin,
-  maxQuantity,
   scatterSrc,
   onConfirm,
   onCancel,
 }: BuyFeatureModalProps) {
-  const [buyBet, setBuyBet] = useState(BUY_FS_START_BET);
-  const [quantity, setQuantity] = useState(BUY_FS_QTY_MIN);
-  const canBetMinus = buyBet > BUY_FS_BET_MIN;
-  const canBetPlus = buyBet < BUY_FS_BET_MAX;
-  const canQtyMinus = quantity > BUY_FS_QTY_MIN;
-  const canQtyPlus = quantity < maxQuantity;
-  const unitPrice = +(buyBet * pricePerSpin(quantity)).toFixed(2);
+  const quantity = BUY_BONUS_FREE_SPINS; // fixed: a purchase always awards exactly 10 free spins
+  const unitPrice = +(bet * pricePerSpin(quantity)).toFixed(2);
   const totalPrice = +(unitPrice * quantity).toFixed(2);
   const canAfford = balance >= totalPrice;
-
-  const nudgeBet = (dir: -1 | 1) => {
-    setBuyBet((b) => Math.min(BUY_FS_BET_MAX, Math.max(BUY_FS_BET_MIN, b + dir)));
-  };
-
-  const nudgeQty = (dir: -1 | 1) => {
-    setQuantity((q) => Math.min(maxQuantity, Math.max(BUY_FS_QTY_MIN, q + dir)));
-  };
 
   return (
     <motion.div
@@ -93,7 +78,7 @@ export function BuyFeatureModal({
             Buy Bonus
           </div>
           <p className="mx-auto mt-2 max-w-[280px] text-center text-[11px] font-semibold leading-snug text-yellow-200/90">
-            Click &apos;Buy &amp; Play&apos; to purchase and activate the featured game
+            Click &apos;Confirm Buy Bonus&apos; to purchase and activate the featured game
             automatically.
           </p>
 
@@ -112,32 +97,16 @@ export function BuyFeatureModal({
               />
             </div>
 
-            <Row label="Bet(₱)">
-              <Stepper
-                value={buyBet % 1 === 0 ? String(buyBet) : buyBet.toFixed(2)}
-                canMinus={canBetMinus}
-                canPlus={canBetPlus}
-                onMinus={() => nudgeBet(-1)}
-                onPlus={() => nudgeBet(1)}
-              />
+            <Row label="Current Bet">
+              <ValueBox>₱ {formatPrice(bet)}</ValueBox>
             </Row>
 
-            <Row label="Quantity">
-              <Stepper
-                value={String(quantity)}
-                canMinus={canQtyMinus}
-                canPlus={canQtyPlus}
-                onMinus={() => nudgeQty(-1)}
-                onPlus={() => nudgeQty(1)}
-              />
-            </Row>
-
-            <Row label="Price">
-              <ValueBox>₱ {formatPrice(unitPrice)}</ValueBox>
-            </Row>
-
-            <Row label="Total Price" last>
+            <Row label="Buy Bonus Price">
               <ValueBox emphasize>₱ {formatPrice(totalPrice)}</ValueBox>
+            </Row>
+
+            <Row label="Free Spins" last>
+              <ValueBox>{quantity}</ValueBox>
             </Row>
 
             {!canAfford && (
@@ -150,7 +119,7 @@ export function BuyFeatureModal({
           <button
             type="button"
             disabled={!canAfford}
-            onClick={() => onConfirm(buyBet, quantity)}
+            onClick={() => onConfirm(bet, quantity)}
             className="mt-4 w-full rounded-xl border-2 border-yellow-300/80 py-3.5 text-lg font-black uppercase tracking-wide text-white shadow-lg disabled:opacity-45 hover:brightness-110"
             style={{
               background: "linear-gradient(180deg, #86efac 0%, #22c55e 40%, #15803d 100%)",
@@ -158,7 +127,14 @@ export function BuyFeatureModal({
               boxShadow: "0 0 18px rgba(74,222,128,0.35), 0 8px 18px rgba(0,0,0,0.45)",
             }}
           >
-            Buy &amp; Play
+            Confirm Buy Bonus
+          </button>
+          <button
+            type="button"
+            onClick={onCancel}
+            className="mt-2 w-full rounded-xl border border-white/25 bg-black/35 py-2.5 text-sm font-black uppercase tracking-wider text-white/85"
+          >
+            Cancel
           </button>
         </div>
       </motion.div>
@@ -178,56 +154,6 @@ function Row({ label, children, last }: { label: string; children: ReactNode; la
       <div className="shrink-0 text-[13px] font-bold text-amber-50/95">{label}</div>
       <div className="min-w-0 flex-1">{children}</div>
     </div>
-  );
-}
-
-function Stepper({
-  value,
-  canMinus,
-  canPlus,
-  onMinus,
-  onPlus,
-}: {
-  value: string;
-  canMinus: boolean;
-  canPlus: boolean;
-  onMinus: () => void;
-  onPlus: () => void;
-}) {
-  return (
-    <div className="flex items-center justify-end gap-1.5">
-      <StepBtn ariaLabel="Decrease" disabled={!canMinus} onClick={onMinus}>
-        −
-      </StepBtn>
-      <ValueBox>{value}</ValueBox>
-      <StepBtn ariaLabel="Increase" disabled={!canPlus} onClick={onPlus}>
-        +
-      </StepBtn>
-    </div>
-  );
-}
-
-function StepBtn({
-  children,
-  disabled,
-  onClick,
-  ariaLabel,
-}: {
-  children: ReactNode;
-  disabled?: boolean;
-  onClick: () => void;
-  ariaLabel: string;
-}) {
-  return (
-    <button
-      type="button"
-      aria-label={ariaLabel}
-      disabled={disabled}
-      onClick={onClick}
-      className="grid size-8 shrink-0 place-items-center rounded-md border border-amber-500/50 bg-gradient-to-b from-amber-900/80 to-black text-base font-black text-amber-100 disabled:opacity-35 hover:brightness-110"
-    >
-      {children}
-    </button>
   );
 }
 

@@ -37,3 +37,25 @@ Also: unit `test-bonus-progress` 5 checks (1/10..10/10, actual quantity, retrigg
 
 ## Proposed next step (needs the owner's go-ahead)
 Apply the codemod to the remaining 27 template slots (mechanical, anchors verified), regression-test a sample from each visual family in the browser, run the unit suite, then stage a separate release. Nothing is merged or deployed.
+
+---
+
+## FINAL RESULT (full 100-game pass, local clone only; nothing pushed, merged or deployed)
+
+TOTAL GAMES: 100 (82 slots + 18 non-slot). Buy Bonus exists in 80 slots (29 dedicated templates, Wild Panther, 50 Realms); Coin Volcano and Fire Spike have no Buy Bonus and Ace High has none; they were left unmodified. No non-slot game has a Buy Bonus.
+
+| Check | Result |
+|---|---|
+| Fixed 10 initial free spins enforced by the server (31 server functions, quantity from the client ignored/refused) | PASS |
+| Old quantity modal / steppers removed (31 dialogs; structural test) | PASS |
+| Dialog shows only CURRENT BET, BUY BONUS PRICE, FREE SPINS 10, Confirm Buy Bonus, Cancel | PASS |
+| Dynamic pricing: debit = bet x existing calibrated per-spin price x 10 at bets 1/5/20, 80/80 games; displayed price = ledger debit | PASS |
+| Scatter intro -> announcement (auto-closes) -> automatic free spins 1/10..10/10 -> Total Bonus Win -> credit once, no manual Spin | PASS (browser, 80/80 desktop) |
+| Desktop browser flow, every applicable game (17 checks each) | 80/80 PASS |
+| Mobile (390x844) browser flow, every applicable game | 80/80 PASS |
+| API sweep: quantity refusal, duplicate purchase, open-session refusal, exactly-once wallet, replay, forced retrigger / session cap / max win | 658 checks, 0 failed |
+| Edge browser tests (insufficient balance, double click, refresh mid-bonus) on Wild Panther, Buffalo Reign, Abyssal Pearls, Golden Panther | 44/44 PASS |
+| Scope proof vs base: no pricing/RTP/wallet/DB/assets/policy files changed | 0 violations |
+| typecheck / lint / unit suite / production build | clean / 0 errors (115 pre-existing warnings) / all pass / built |
+
+Notes: the first desktop pass hit the 120 s per-game cap on 8 long Realms bonuses (timeouts, not failures); they were rerun with a 300 s cap and all passed. Edge-case browser tests were run on 4 representative games, not all 80. Physical Android devices were not tested. The live UAT (release 07d670a) is untouched.

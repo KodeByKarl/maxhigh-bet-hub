@@ -33,12 +33,7 @@ import {
 } from "./enchanted-grove/playbackHelpers";
 import { BetSelectModal } from "./enchanted-grove/BetSelectModal";
 import { buildBuyScatterIntroBoard, initialBoard } from "./enchanted-grove/gridState";
-import {
-  BET_STEPS,
-  BUY_FS_START_BET,
-  getAnteMult,
-  getBuyUnitPrice,
-} from "./enchanted-grove/paytable";
+import { BET_STEPS, getAnteMult, getBuyUnitPrice } from "./enchanted-grove/paytable";
 import { setEnchantedGroveConfig } from "./enchanted-grove/runtimeConfig";
 import type { BoardCell, SpinScript } from "./enchanted-grove/types";
 import { CELLS } from "./enchanted-grove/types";
@@ -54,6 +49,8 @@ import { themeToCssVars } from "./panther-shared/theme";
 import { type ReelPhase } from "./enchanted-grove/ReelCell";
 import { getEnchantedGroveEngineConfigFn } from "@/functions/superadmin";
 import { ENCHANTED_GROVE_GAME_ID } from "@/lib/enchanted-grove-config";
+import { freeSpinsProgress } from "./bonus/freeSpinsProgress";
+import { BUY_BONUS_FREE_SPINS } from "@/lib/buy-bonus";
 
 type Phase = ReelPhase;
 type Slot = BoardCell | null;
@@ -129,6 +126,9 @@ export function EnchantedGroveSlot({
   const [turbo, setTurbo] = useState(false);
   const [lastWin, setLastWin] = useState(0);
   const [freeSpins, setFreeSpins] = useState(0);
+  const [fsPlayed, setFsPlayed] = useState(0);
+  /** True from the confirmed purchase until the Free Spins announcement is dismissed: the HUD counter stays hidden meanwhile. */
+  const [buyPresenting, setBuyPresenting] = useState(false);
   const [inFree, setInFree] = useState(false);
   const [fsSessionWin, setFsSessionWin] = useState(0);
   const [dropTotal, setDropTotal] = useState(0);
@@ -146,7 +146,7 @@ export function EnchantedGroveSlot({
 
   const busy = phase !== "idle";
   const totalBet = +(bet * (ante ? getAnteMult() : 1)).toFixed(2);
-  const buyCost = getBuyUnitPrice(BUY_FS_START_BET, 1);
+  const buyCost = +(getBuyUnitPrice(bet, BUY_BONUS_FREE_SPINS) * BUY_BONUS_FREE_SPINS).toFixed(2);
 
   const busyRef = useRef(false);
   const skipRef = useRef(false);
@@ -315,9 +315,12 @@ export function EnchantedGroveSlot({
       setWinningKeys(EMPTY_SET);
       setPhase("idle");
       setTriggerModalCount(fsCount);
+      // the announcement closes by itself so the first free spin starts automatically (a tap still skips ahead)
+      const autoClose = window.setTimeout(dismissTriggerModal, turboRef.current ? 900 : 2400);
       await waitForTriggerModal();
+      window.clearTimeout(autoClose);
     },
-    [wait, waitForTriggerModal],
+    [wait, dismissTriggerModal, waitForTriggerModal],
   );
 
   useEffect(() => {
@@ -348,6 +351,7 @@ export function EnchantedGroveSlot({
           freeSpinsRef.current = session.freeSpinsLeft;
           fsSessionRef.current = session.fsSessionWin;
           fsSpinsPlayedRef.current = session.fsSpinsPlayed;
+          setFsPlayed(session.fsSpinsPlayed);
           if (session.bet > 0) setBet(session.bet);
           setAnte(session.ante);
           setFsPaused(false);
@@ -393,6 +397,7 @@ export function EnchantedGroveSlot({
       freeSpinsRef.current = session.freeSpinsLeft;
       fsSessionRef.current = session.fsSessionWin;
       fsSpinsPlayedRef.current = session.fsSpinsPlayed;
+      setFsPlayed(session.fsSpinsPlayed);
     },
     [],
   );
@@ -533,6 +538,7 @@ export function EnchantedGroveSlot({
   const dismissFsSummary = useCallback(() => {
     setFsSummary(null);
     fsSpinsPlayedRef.current = 0;
+    setFsPlayed(0);
     enchantedGroveAudio.endFreespins();
   }, []);
 
@@ -681,6 +687,7 @@ export function EnchantedGroveSlot({
           setLastWin(settled.session.fsSessionWin || settled.fsPayout?.amount || 0);
           fsSessionRef.current = settled.session.fsSessionWin;
           fsSpinsPlayedRef.current = settled.session.fsSpinsPlayed;
+          setFsPlayed(settled.session.fsSpinsPlayed);
 
           if (script.retriggerSpins > 0 && settled.session.inFree) {
             enchantedGroveAudio.playScatterTrigger();
@@ -802,6 +809,8 @@ export function EnchantedGroveSlot({
       }
 
       setBuyOpen(false);
+
+      setBuyPresenting(true);
       setBet(buyBet);
       try {
         const bought = await enchantedGroveBuyFeatureFn({
@@ -824,6 +833,7 @@ export function EnchantedGroveSlot({
         } catch {
           dismissTriggerModal();
         } finally {
+          setBuyPresenting(false);
           if (gen === playbackGen.current) {
             busyRef.current = false;
             if (mountedRef.current) setPhase("idle");
@@ -832,6 +842,7 @@ export function EnchantedGroveSlot({
         // First free spin starts via the auto-chain once the modal closes.
       } catch (err) {
         toast.error(err instanceof Error ? err.message : "Buy feature failed");
+        setBuyPresenting(false);
       }
     },
     [
@@ -947,6 +958,7 @@ export function EnchantedGroveSlot({
     freeSpins,
     lastWin,
     triggerModalCount,
+    buyPresenting,
     fsPaused,
     turbo,
   ]);
@@ -1052,8 +1064,13 @@ export function EnchantedGroveSlot({
             busy={busy}
             turbo={turbo}
             autoSpin={autoSpin}
-            inFree={inFree}
+            inFree={inFree && triggerModalCount == null && !buyPresenting}
             freeSpins={freeSpins}
+            freeSpinsProgress={
+              inFree && triggerModalCount == null && !buyPresenting
+                ? freeSpinsProgress(fsPlayed, freeSpins, busy)
+                : null
+            }
             freeSpinsPaused={fsPaused}
             autoRemaining={remainingAutoSpins}
             spinDisabled={!busy && !autoSpin && inFree && freeSpins === 0}
@@ -1137,6 +1154,7 @@ export function EnchantedGroveSlot({
         {buyOpen && (
           <BuyFeatureModal
             balance={balance}
+            bet={bet}
             mode={buyMode}
             onCancel={() => setBuyOpen(false)}
             onConfirm={(buyBet, quantity) => {

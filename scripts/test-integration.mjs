@@ -354,7 +354,7 @@ export async function runIntegration() {
         [featureId, buyer.id],
       );
       await denied(
-        rpc("goldenPantherBuyFeatureFn", { bet: 5, mode: "normal", quantity: 5 }, buyer),
+        rpc("goldenPantherBuyFeatureFn", { bet: 5, mode: "normal", quantity: 10 }, buyer),
       );
       const [[feature]] = await db.query(
         "SELECT status,free_spins_left FROM play_sessions WHERE id=?",
@@ -367,12 +367,23 @@ export async function runIntegration() {
       await db.query("UPDATE risk_controls SET max_single_bet=1 WHERE id='default'");
       try {
         await denied(
-          rpc("goldenPantherBuyFeatureFn", { bet: 5, mode: "normal", quantity: 5 }, other),
+          rpc("goldenPantherBuyFeatureFn", { bet: 5, mode: "normal", quantity: 10 }, other),
         );
         assert.equal(await balance(other), 100000);
       } finally {
         await db.query("UPDATE risk_controls SET max_single_bet=10000 WHERE id='default'");
       }
+    });
+    await test("Buy Bonus awards exactly 10 free spins: any other quantity is refused with no debit and no session", async () => {
+      const buyer = await user("fixed10", "player", 100000);
+      for (const quantity of [1, 5, 9, 11, 25, 50, 0, -10]) {
+        await denied(rpc("goldenPantherBuyFeatureFn", { bet: 5, mode: "normal", quantity }, buyer));
+      }
+      assert.equal(await balance(buyer), 100000);
+      const [[open]] = await db.query("SELECT COUNT(*) AS n FROM play_sessions WHERE user_id=? AND status='open'", [buyer.id]);
+      assert.equal(Number(open.n), 0);
+      const [[tx]] = await db.query("SELECT COUNT(*) AS n FROM transactions WHERE user_id=?", [buyer.id]);
+      assert.equal(Number(tx.n), 0); // the test user has no ledger rows: nothing was debited
     });
     await test("AUD-004/005 maintenance and absent financial controls fail closed", async () => {
       const bettor = await user("maintenance", "player", 100);

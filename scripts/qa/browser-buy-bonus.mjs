@@ -14,7 +14,7 @@ fs.mkdirSync(out, { recursive: true });
 const game = process.env.GAME ?? "wild-panther";
 const player = process.env.PLAYER ?? "uat_player";
 const buyBtn = new RegExp(process.env.BUYBTN ?? "buy bonus", "i");
-const confirmBtn = new RegExp(process.env.CONFIRM ?? "^yes$", "i");
+const confirmBtn = new RegExp(process.env.CONFIRM ?? "confirm buy bonus", "i");
 const require = createRequire(path.join(process.env.PW_MODULE_DIR, "package.json"));
 const { chromium } = require("playwright-core");
 const results = [];
@@ -38,7 +38,9 @@ page.on("console", (m) => { if (m.type() === "error" && !/favicon|Failed to load
 await page.goto(BASE + "/slots", { waitUntil: "networkidle" });
 await page.locator(`button:has(img[src$="/${game}.webp"])`).first().click();
 await page.waitForTimeout(900);
-await page.getByRole("button", { name: /play now/i }).click();
+fs.mkdirSync(out, { recursive: true });
+await page.screenshot({ path: path.join(out, `${game}-0-lobby.png`) });
+await page.getByRole("button", { name: /play now/i }).click({ timeout: 8000 }).catch(async (e) => { console.log("LOBBY BODY:", (await page.locator("body").innerText()).replace(/\s+/g, " ").slice(0, 300)); throw e; });
 await page.waitForSelector(".slot-deck", { timeout: 30000 }).catch(() => undefined);
 await page.waitForTimeout(2500);
 await page.screenshot({ path: path.join(out, `${game}-1-base.png`) });
@@ -60,18 +62,18 @@ const QTY = process.env.QTY ? Number(process.env.QTY) : null;
 note("Buy Bonus control shows the price from the game's configuration", price > 0, priceText.replace(/\s+/g, " "));
 await buy.click();
 await page.waitForTimeout(900);
-if (QTY) {
-  // quantity-priced dialog (Bet / Quantity / Price / Total Price): choose the purchased number of bonus spins
-  const plus = page.locator("button").filter({ hasText: /^\s*\+\s*$/ });
-  const qtyPlus = plus.nth((await plus.count()) - 1); // the last "+" in the dialog is the Quantity stepper
-  for (let k = 1; k < QTY; k++) await qtyPlus.click();
-  await page.waitForTimeout(1200);
+{
+  // the player no longer chooses a quantity: the dialog states the fixed 10 free spins and the price for them at the chosen bet
   const dialogText = await page.locator("body").innerText();
-  const tots = [...dialogText.matchAll(/total price\s*₱?\s*([\d,]+(?:\.\d+)?)/gi)];
-  const tot = tots.at(-1) ?? null;
-  if (tot) price = Number(tot[1].replace(/,/g, ""));
-  const ctx = (dialogText.match(/.{0,40}total price.{0,40}/gi) ?? []).map((x) => x.replace(/\s+/g, " ")).slice(-2).join(" || ");
-  note("dialog shows the Total Price for the chosen quantity (existing calibrated pricing)", !!tot && price > 0, `qty ${QTY}, total ${price}; ${ctx}`);
+  const stepperCount = await page.locator("button").filter({ hasText: /^\s*[+−-]\s*$/ }).count();
+  note("buy dialog has NO quantity selector and NO bet/quantity steppers", !/quantity/i.test(dialogText) && stepperCount === 0, `${stepperCount} stepper buttons`);
+  note("dialog shows CURRENT BET, BUY BONUS PRICE, FREE SPINS 10, Cancel", /current bet/i.test(dialogText) && /buy bonus price/i.test(dialogText) && /free spins\s*10/i.test(dialogText) && /cancel/i.test(dialogText), dialogText.replace(/\s+/g," ").slice(0,160));
+  note("buy dialog states the fixed 10 free spins", /(free spins\s*10\b|10\s*free spins)/i.test(dialogText), (/(.{0,25}10.{0,12}free spins|free spins.{0,12}10)/i.exec(dialogText) ?? [""])[0].replace(/\s+/g, " "));
+  const tots = [...dialogText.matchAll(/buy bonus price\s*₱?\s*([\d,]+(?:\.\d+)?)/gi)];
+  if (tots.length) {
+    price = Number(tots.at(-1)[1].replace(/,/g, ""));
+    note("dialog shows the Total Price for the 10 spins (existing calibrated pricing)", price > 0, `total ${price}`);
+  }
 }
 await page.screenshot({ path: path.join(out, `${game}-2-confirm.png`) });
 note("purchase needs an explicit confirmation (existing dialog)", (await page.getByRole("button", { name: confirmBtn }).count()) > 0);
@@ -99,7 +101,7 @@ for (let i = 0; i < 1400 && !ended; i++) {
   if (st.busy && announcementAt === null) sawBusyBeforeAnnouncement = true;
   if (i === 6 || i === 14 || i === 22) await page.screenshot({ path: path.join(out, `${game}-3-reels-${i}.png`) });
   if (st.hasModal && announcementAt === null && !st.counter) { announcementAt = tms; await page.waitForTimeout(400); await page.screenshot({ path: path.join(out, `${game}-3-announcement.png`) }); timeline.push({ tms, event: "announcement" }); }
-  if (st.hasModal && !st.counter) { await page.waitForTimeout(900); await page.locator('.fixed.inset-0[class*="z-[150]"]').first().click({ position: { x: 4, y: 4 }, timeout: 800 }).catch(() => undefined); }
+  if (st.hasModal && !st.counter) { await page.waitForTimeout(300); /* no click: the announcement must close by itself */ }
   if (st.counter && st.counter !== lastCounter) {
     lastCounter = st.counter; counterSeen.push(st.counter);
     if (firstCounterAt === null) { firstCounterAt = tms; await page.screenshot({ path: path.join(out, `${game}-4-first-free-spin.png`) }); }
@@ -114,12 +116,12 @@ for (let i = 0; i < 1400 && !ended; i++) {
 const finalBal = await balanceApi();
 note("a spin/animation phase is shown after confirming (reels spin) before the free spins are announced", sawBusyBeforeAnnouncement && announcementAt !== null && announcementAt > 1000, `announcement at ${announcementAt}ms`);
 note("the Free Spins announcement appears BEFORE the first bonus spin", announcementAt !== null && (firstCounterAt === null || announcementAt <= firstCounterAt), `announce ${announcementAt}ms, first counter ${firstCounterAt}ms`);
-note("the counter starts at 1/N (the scatter moment consumed no free spin)", counterSeen[0]?.startsWith("1/"), counterSeen.slice(0, 3).join(","));
+note("the counter starts at exactly 1/10 (the scatter moment consumed no free spin)", counterSeen[0] === "1/10", counterSeen.slice(0, 3).join(","));
 const nums = counterSeen.map((x) => x.split("/").map(Number));
 const total = nums.at(-1)?.[1] ?? 0;
 const sequential = nums.every((n, i) => i === 0 || n[0] === nums[i - 1][0] + 1 || n[0] === nums[i - 1][0]);
 note("the counter progresses without skipping (1/N ... N/N)", sequential && nums.at(-1)?.[0] === total, counterSeen.join(" "));
-note("the counter total reflects the spins actually awarded (not a hard-coded value)", QTY ? total >= QTY : total >= 1, `N=${total}${QTY ? ` (purchased ${QTY}; retriggers can only add)` : ""}`);
+note("the counter total is the 10 awarded spins (a retrigger can only add)", total >= 10, `N=${total}`);
 note("a Total Bonus Win summary is shown at the end", ended && /₱\s*[\d,]+\.\d\d|total|win/i.test(summaryText), summaryText.slice(0, 120));
 await page.waitForTimeout(1500);
 const deckAfter = await page.locator(".slot-deck").first().innerText().catch(() => "");

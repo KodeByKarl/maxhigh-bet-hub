@@ -33,7 +33,7 @@ import {
 } from "./temple-rush/playbackHelpers";
 import { BetSelectModal } from "./temple-rush/BetSelectModal";
 import { buildBuyScatterIntroBoard, initialBoard } from "./temple-rush/gridState";
-import { BET_STEPS, BUY_FS_START_BET, getAnteMult, getBuyUnitPrice } from "./temple-rush/paytable";
+import { BET_STEPS, getAnteMult, getBuyUnitPrice } from "./temple-rush/paytable";
 import { setTempleRushConfig } from "./temple-rush/runtimeConfig";
 import type { BoardCell, SpinScript } from "./temple-rush/types";
 import { CELLS } from "./temple-rush/types";
@@ -49,6 +49,8 @@ import { themeToCssVars } from "./panther-shared/theme";
 import { type ReelPhase } from "./temple-rush/ReelCell";
 import { getTempleRushEngineConfigFn } from "@/functions/superadmin";
 import { TEMPLE_RUSH_GAME_ID } from "@/lib/temple-rush-config";
+import { freeSpinsProgress } from "./bonus/freeSpinsProgress";
+import { BUY_BONUS_FREE_SPINS } from "@/lib/buy-bonus";
 
 type Phase = ReelPhase;
 type Slot = BoardCell | null;
@@ -124,6 +126,9 @@ export function TempleRushSlot({
   const [turbo, setTurbo] = useState(false);
   const [lastWin, setLastWin] = useState(0);
   const [freeSpins, setFreeSpins] = useState(0);
+  const [fsPlayed, setFsPlayed] = useState(0);
+  /** True from the confirmed purchase until the Free Spins announcement is dismissed: the HUD counter stays hidden meanwhile. */
+  const [buyPresenting, setBuyPresenting] = useState(false);
   const [inFree, setInFree] = useState(false);
   const [fsSessionWin, setFsSessionWin] = useState(0);
   const [dropTotal, setDropTotal] = useState(0);
@@ -141,7 +146,7 @@ export function TempleRushSlot({
 
   const busy = phase !== "idle";
   const totalBet = +(bet * (ante ? getAnteMult() : 1)).toFixed(2);
-  const buyCost = getBuyUnitPrice(BUY_FS_START_BET, 1);
+  const buyCost = +(getBuyUnitPrice(bet, BUY_BONUS_FREE_SPINS) * BUY_BONUS_FREE_SPINS).toFixed(2);
 
   const busyRef = useRef(false);
   const skipRef = useRef(false);
@@ -310,9 +315,12 @@ export function TempleRushSlot({
       setWinningKeys(EMPTY_SET);
       setPhase("idle");
       setTriggerModalCount(fsCount);
+      // the announcement closes by itself so the first free spin starts automatically (a tap still skips ahead)
+      const autoClose = window.setTimeout(dismissTriggerModal, turboRef.current ? 900 : 2400);
       await waitForTriggerModal();
+      window.clearTimeout(autoClose);
     },
-    [wait, waitForTriggerModal],
+    [wait, dismissTriggerModal, waitForTriggerModal],
   );
 
   useEffect(() => {
@@ -343,6 +351,7 @@ export function TempleRushSlot({
           freeSpinsRef.current = session.freeSpinsLeft;
           fsSessionRef.current = session.fsSessionWin;
           fsSpinsPlayedRef.current = session.fsSpinsPlayed;
+          setFsPlayed(session.fsSpinsPlayed);
           if (session.bet > 0) setBet(session.bet);
           setAnte(session.ante);
           setFsPaused(false);
@@ -388,6 +397,7 @@ export function TempleRushSlot({
       freeSpinsRef.current = session.freeSpinsLeft;
       fsSessionRef.current = session.fsSessionWin;
       fsSpinsPlayedRef.current = session.fsSpinsPlayed;
+      setFsPlayed(session.fsSpinsPlayed);
     },
     [],
   );
@@ -528,6 +538,7 @@ export function TempleRushSlot({
   const dismissFsSummary = useCallback(() => {
     setFsSummary(null);
     fsSpinsPlayedRef.current = 0;
+    setFsPlayed(0);
     templeRushAudio.endFreespins();
   }, []);
 
@@ -676,6 +687,7 @@ export function TempleRushSlot({
           setLastWin(settled.session.fsSessionWin || settled.fsPayout?.amount || 0);
           fsSessionRef.current = settled.session.fsSessionWin;
           fsSpinsPlayedRef.current = settled.session.fsSpinsPlayed;
+          setFsPlayed(settled.session.fsSpinsPlayed);
 
           if (script.retriggerSpins > 0 && settled.session.inFree) {
             templeRushAudio.playScatterTrigger();
@@ -797,6 +809,8 @@ export function TempleRushSlot({
       }
 
       setBuyOpen(false);
+
+      setBuyPresenting(true);
       setBet(buyBet);
       try {
         const bought = await templeRushBuyFeatureFn({
@@ -819,6 +833,7 @@ export function TempleRushSlot({
         } catch {
           dismissTriggerModal();
         } finally {
+          setBuyPresenting(false);
           if (gen === playbackGen.current) {
             busyRef.current = false;
             if (mountedRef.current) setPhase("idle");
@@ -827,6 +842,7 @@ export function TempleRushSlot({
         // First free spin starts via the auto-chain once the modal closes.
       } catch (err) {
         toast.error(err instanceof Error ? err.message : "Buy feature failed");
+        setBuyPresenting(false);
       }
     },
     [
@@ -942,6 +958,7 @@ export function TempleRushSlot({
     freeSpins,
     lastWin,
     triggerModalCount,
+    buyPresenting,
     fsPaused,
     turbo,
   ]);
@@ -1047,8 +1064,13 @@ export function TempleRushSlot({
             busy={busy}
             turbo={turbo}
             autoSpin={autoSpin}
-            inFree={inFree}
+            inFree={inFree && triggerModalCount == null && !buyPresenting}
             freeSpins={freeSpins}
+            freeSpinsProgress={
+              inFree && triggerModalCount == null && !buyPresenting
+                ? freeSpinsProgress(fsPlayed, freeSpins, busy)
+                : null
+            }
             freeSpinsPaused={fsPaused}
             autoRemaining={remainingAutoSpins}
             spinDisabled={!busy && !autoSpin && inFree && freeSpins === 0}
@@ -1132,6 +1154,7 @@ export function TempleRushSlot({
         {buyOpen && (
           <BuyFeatureModal
             balance={balance}
+            bet={bet}
             mode={buyMode}
             onCancel={() => setBuyOpen(false)}
             onConfirm={(buyBet, quantity) => {
