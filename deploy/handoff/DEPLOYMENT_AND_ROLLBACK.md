@@ -1,59 +1,69 @@
-# Deployment impact, deployment procedure and rollback - Wild Panther fix and QA tooling
+# Deployment, verification and rollback - release `release/uat-phase2`
 
-Status: **PREPARED, NOT EXECUTED.** Nothing here has been committed, pushed, built on the VPS, deployed or restarted.
-Every step marked `[APPROVAL]` needs an explicit go-ahead from the owner.
+**Status: PREPARED. NOT DEPLOYED. DEPLOYMENT IS ON HOLD** pending owner approval. Nothing here has been run against UAT, no service was restarted and no commit was pushed.
+Every step marked `[OWNER]` needs the owner (sudo password, approvals). Steps marked `[DEV]` are read-only or local.
 
-## 1. What changes at runtime
+## 1. What is being released
+Branch `release/uat-phase2` = the deployed release **2294d79** + 6 logical commits (163 files; see `RELEASE_MANIFEST.json` for the exact commit and checksums):
+1. **DB safety:** idempotent seed of the default `risk_controls` row (the original "Financial risk controls unavailable" defect; UAT already has the row from G11, the migration is a no-op there), migration preflight, destructive-script guards.
+2. **Ops tooling:** encrypted backup/restore tooling, runbooks, diagnostics (not runtime code).
+3. **Wild Panther calibration + Color Game wheel** (gameplay change, pending client acceptance).
+4. **Access restrictions - SHIPPED INACTIVE** (migration 0005, server-side game gate, client-account cap, signed grants) + Back-button handling.
+5. **QA tooling and handoff documents.**
+6. **Safe-area-aware game shell** (mobile).
+Why a separate branch: the main working branch carried a different history from the deployed release; the release branch contains *only* the identified delta on top of what is actually running (verified by a filesystem diff against `git archive 2294d79`).
 
-| Area | Change | Data impact |
+## 2. Database changes (the only schema change in this release)
+| Migration | Effect | Risk |
 |---|---|---|
-| `src/lib/wild-panther-config.ts` | Calibrated defaults (see WILD_PANTHER_REPORT.md): cluster size, dead-spin %, bomb table, pay table, retrigger rule, new `maxFsSessionSpins` ceiling | None. Code defaults only |
-| `src/components/maxhigh/wild-panther/gridState.ts`, `tumbleEngine.ts` | Tumble refills no longer spawn scatters (same rule as the calibrated Panther family) | None |
-| `src/server/games/wild-panther.server.ts` | Retriggers stop at `maxFsSessionSpins`; earned wins are never reduced | None |
-| `src/components/maxhigh/wild-panther/PaytableModal.tsx` | Rules text shows trigger, retrigger and ceiling from config | None |
-| `scripts/*`, `scripts/qa/*` | Tests and QA tooling only; not part of the runtime bundle | None |
+| `0004_seed_default_risk_controls` | `INSERT ... ON DUPLICATE KEY UPDATE id = id` | none (row exists on UAT; never overwrites configured limits) |
+| `0005_account_classes_and_entitlements` | adds `users.account_class` (default `client`; superadmin -> `admin`), tables `account_limits` (ships `enforced='no'`) and `entitlement_grants`, 5 triggers on `users` | additive; no row is altered other than the superadmin class marker; **inactive until activation** |
+No `DROP`, no `TRUNCATE`, no data rewrite. Tested on a disposable MariaDB 10.11.14 clone: upgrade from the UAT-like pre-0005 state preserved every user row byte-for-byte; 20 concurrent inserts -> exactly 2 clients; rollback restores the pre-0005 shape with identical user data (`scripts/test-restrictions-db.mjs`, 15/15).
 
-No database migration. No schema change. No change to `risk_controls`, wallet, ledger or audit code.
+### Two pre-deployment checks that could block migration 0005 `[OWNER]`
+1. **Trigger privilege.** `CREATE TRIGGER` needs the `TRIGGER` privilege for the migration account, and with binary logging enabled MariaDB additionally requires `log_bin_trust_function_creators=1` or SUPER (error 1419). Check (read-only): `SHOW VARIABLES LIKE 'log_bin%'; SHOW VARIABLES LIKE 'log_bin_trust_function_creators'; SHOW GRANTS FOR <migration account>;`. If binary logging is on and the variable is 0, **stop and ask the developer**; do not change server settings without review.
+2. **Application account grants.** The UAT app account must be able to `SELECT/INSERT/UPDATE` the two new tables. If its grants are schema-wide (`maxhigh_staging.*`) nothing is needed; if they are per-table, add grants for `account_limits` and `entitlement_grants` (reviewed SQL, `[OWNER]`). Until activation the app only *reads* them (and only when the policy is on).
 
-**Important precondition:** these are *code defaults*. A row in `game_controls` for `wild-panther` overrides them.
-UAT has zero `game_controls` rows (verified), so the fix takes effect there. Before any production deploy, run
-`SELECT game_id, enabled, LEFT(engine_config,200) FROM game_controls WHERE game_id='wild-panther';` - if an override exists it
-keeps the old numbers until it is reviewed.
+## 3. Pre-deployment gate (all must be true) `[DEV]` + `[OWNER]`
+- [ ] Owner approves deployment in writing (this document, section 7 decisions answered).
+- [ ] A fresh encrypted backup exists and its plaintext hash was verified by the isolated restore + compare (G8/G9 flow) **after** the last UAT change, and the permanent-key drill (G10) is still valid.
+- [ ] `RELEASE_MANIFEST.json` build digest matches the artifact that is about to be activated (`artifactDigest` from `deploy/release-manager.mjs`).
+- [ ] `node scripts/migrate.mjs` (read-only) on the VPS lists exactly `0004` and `0005` as pending and reports no preflight issues (`--preflight`).
+- [ ] Section 2 checks done.
+- [ ] No unresolved critical finding (none known at the time of writing; see SECURITY_AND_QA_SUMMARY.md).
+- [ ] Contractual authorization is **not** needed to deploy (restrictions ship inactive); it is needed to *activate* them.
 
-**In-flight sessions:** an open `wild-panther` free-spin session simply continues under the new rules (spins left and
-accumulated win are stored in `play_sessions`). Prefer deploying when no player has an open feature.
+## 4. Procedure `[OWNER runs privileged steps; developer prepares commands]`
+1. From the build machine: `git -c safe.directory=* checkout release/uat-phase2`; `npm ci`; `npm run typecheck`; `npm run test:unit`; `npm run build`.
+2. `node deploy/auto-update.mjs --prepare <FULL_SHA_OF_release/uat-phase2>` (separate worktree + validation manifest, read-only for the live site).
+3. Backup (section 3). Keep the previous release directory.
+4. Apply migrations through the reviewed gate: `CONFIRM_SCHEMA_MIGRATIONS=maxhigh_staging node scripts/migrate.mjs --apply` (needs the migration DB account; checksum-verified; stops on any error). **Half-applied state is not possible to get stuck in:** MariaDB DDL auto-commits, so a failure midway (typically trigger privilege, section 2) leaves the earlier statements applied and the migration unrecorded; `0005` is written to be fully re-runnable (`IF NOT EXISTS` / `CREATE OR REPLACE`), so you fix the cause and run the same command again (tested: re-running 3x is a no-op; recovery from a failure after the tables but before the triggers converges and the recovered triggers enforce). If it cannot be fixed, roll back (section 6).
+5. `node deploy/auto-update.mjs --activate <FULL_SHA>` (atomic pointer switch, candidate health must pass, previous pointer saved as `previous.json`).
+6. `[OWNER]` restart `maxhigh-uat.service` only if the activation procedure requires it.
+7. Do **not** set `MAXHIGH_POLICY_TEST_FILE` / `MAXHIGH_POLICY_TEST_OVERRIDE` anywhere (test-only hooks that refuse to start outside a disposable loopback database).
 
-**Behaviour change players will notice:** Wild Panther hits less often and pays smaller headline wins than before. That is
-the point (the old build returned many thousands of percent of the stake). Tell the client before UAT sign-off.
+## 5. Post-deployment verification (read-only unless stated)
+1. `GET /api/health` -> `ok` and the new release SHA; systemd/pm2 healthy, 0 unexpected restarts.
+2. `getAccessStatusFn` returns `lockedGames: []` (restrictions inactive) - **nothing is locked after this deployment**.
+3. Row counts unchanged for `users`, `transactions`; `SELECT COUNT(*) FROM account_limits` = 1 with `enforced='no'`; `entitlement_grants` empty.
+4. Smoke spin on `golden-panther` with `uat_player` (writes one synthetic round), ledger reconciles.
+5. UAT test plan for all 100 games (writes synthetic rounds; needs the loopback tunnel; funding already done, do not repeat): `node scripts/qa/uat-qa.mjs --run --confirm-uat --evidence <dir>`; expected 100/100 with restrictions inactive; Wild Panther included (new math). Then `uat-postcheck.mjs` and the ledger reconciliation queries (UAT_QA_PLAN.md section 8).
+6. Wild Panther spot check: Buy Bonus shows 41x the bet; a feature ends within ~25 spins.
+7. Color Game / Pro open and spin on a phone (physical Android check, see section 8 of the QA summary).
+8. Existing synthetic accounts intact: 1 superadmin + 5 players, balances and history unchanged apart from QA play.
 
-## 2. Artifact and checksum
-`deploy/handoff/ARTIFACT.json` records the SHA-256 of the build output (`.output`) computed with the repository's own
-`artifactDigest()` and the SHA-256 of the source patch `wild-panther-fix.patch`. Verify both before use:
-```powershell
-Get-FileHash deploy\handoff\wild-panther-fix.patch -Algorithm SHA256
-```
-The VPS release flow (`deploy/auto-update.mjs`) works from a **full commit SHA**, so the patch must be committed
-`[APPROVAL]` before a release can be prepared. The patch file is for review only.
+## 6. Rollback
+* **Application:** re-activate the previous release (`previous.json` pointer). The old build ignores the new tables/column.
+* **Database (only if required):** `0004` needs no rollback. For `0005`: drop the 5 triggers (`users_client_cap_bi/ai/au/ad`, `users_class_guard_bu`), drop tables `entitlement_grants` and `account_limits`, `ALTER TABLE users DROP COLUMN account_class`, and delete the `0005%` row from `_maxhigh_migrations`. Tested: user data is identical before/after. Prefer re-activating the old release and leaving the additive schema in place.
+* **Data problem suspected:** do not restore over UAT. Restore the pre-deployment backup into the isolated `maxhigh_staging_restorecheck` schema, compare, then decide with the owner.
+* Wallet integrity after any rollback: run the ledger reconciliation (balance == opening + ledger sum, `balance_after` chain unbroken, no negative balances).
+* Rollback does not reverse wins already paid; ledger rows are append-only.
 
-## 3. Procedure (after approval) `[APPROVAL]`
-1. Review `CHANGED_FILES.md`; commit only the listed files (no push yet).
-2. `npm ci && npm run typecheck && npm run test:unit` on the build machine; `npm run build`.
-3. `node deploy/auto-update.mjs --prepare <FULL_SHA>` (creates a separate worktree and validation manifest; read-only for the live site).
-4. Take a fresh encrypted backup (`recovery.py backup`, same flow as G8/G9) and keep the previous release directory.
-5. Owner approves; `node deploy/auto-update.mjs --activate <FULL_SHA>` - the migration gate is read-only, candidate health must pass, the pointer is switched atomically and the previous pointer is saved as `previous.json`.
-6. Restart `maxhigh-uat.service` only if the activation procedure requires it (owner runs sudo).
-7. Post-deploy: `/api/health` shows the new release; run `scripts/qa/uat-smoke.mjs`, then `uat-qa.mjs` for `wild-panther` through the loopback tunnel.
+## 7. Decisions needed before deployment
+1. Approve deployment of this release to private UAT, and who performs the privileged steps.
+2. Confirm the Wild Panther gameplay change with the client (hits ~20% of spins with small wins; retriggers rare).
+3. Section 2 checks (binary logging / trigger privilege, app grants).
+4. Separately, for **activation** of restrictions: the 50-game list, contractual authorization, key holder (ACCOUNT_AND_GAME_RESTRICTIONS_SPEC.md section 7).
 
-## 4. Rollback
-* **Code:** re-activate the previous release (`previous.json` pointer is written by the activation step). Because there is no
-  schema change, nothing needs to be undone in the database.
-* **Database:** none required. If an unexpected data problem is ever suspected, restore the pre-deploy encrypted backup into the
-  isolated `maxhigh_staging_restorecheck` schema first, compare, and only then decide (see UAT_RECOVERY_RUNBOOK.md and the G5-G10 evidence).
-* **Wallet integrity check after rollback:** run the ledger reconciliation queries in `deploy/diagnostics/UAT_QA_PLAN.md` section 8.
-* A rollback does **not** reverse wins already paid under either version; ledger rows are append-only.
-
-## 5. What was verified, and what was not
-Verified locally (see EVIDENCE index in the final report): unit suite, typecheck, 100-game functional/negative/idempotency/
-concurrency suite on a disposable clone, security probes, ledger reconciliation of the clone.
-Not verified: behaviour on the VPS build (it is not deployed), browser/visual rendering of the changed paytable text, and
-production data (no production access was used).
+## 8. What was and was not verified
+Verified on disposable clones: typecheck, build, unit/integration/migration suites, 100-game functional suite, restricted-mode end-to-end suite (50 available pass, 50 locked refuse), security probes, browser checks, ledger reconciliation. Not verified: the real VPS (nothing deployed), physical Android devices, trigger creation under the VPS server's binary-log settings, production data (no production access was used).
