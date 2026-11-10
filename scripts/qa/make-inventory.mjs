@@ -37,7 +37,7 @@ const lines = [
   `| Local disposable clone | ${count("local", "PASS")} | ${count("local", "FAIL")} | ${count("local", "UNTESTED")} |`,
   `| UAT (maxhigh_staging) | ${count("uat", "PASS")} | ${count("uat", "FAIL")} | ${count("uat", "UNTESTED")} |`,
   "",
-  "UAT is only claimed for games that actually ran on UAT. A game is never marked PASS without executed evidence.",
+  "UAT is only claimed for games that actually ran on UAT, and those runs were on the DEPLOYED release 2294d79, not on the release candidate (not yet deployed). A game is never marked PASS without executed evidence.",
   "",
   "| # | Game id | Title | Category | Bet range | Local | UAT |",
   "|---|---|---|---|---|---|---|",

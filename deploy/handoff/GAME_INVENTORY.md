@@ -1,13 +1,13 @@
 # MaxHigh - 100-game QA inventory
 
-Generated 2026-11-10T04:30:25.978Z from evidence files only.
+Generated 2026-11-10T05:11:41.352Z from evidence files only.
 
 | Environment | PASS | FAIL | UNTESTED |
 |---|---|---|---|
 | Local disposable clone | 100 | 0 | 0 |
-| UAT (maxhigh_staging) | 85 | 0 | 15 |
+| UAT (maxhigh_staging) | 99 | 0 | 1 |
 
-UAT is only claimed for games that actually ran on UAT. A game is never marked PASS without executed evidence.
+UAT is only claimed for games that actually ran on UAT, and those runs were on the DEPLOYED release 2294d79, not on the release candidate (not yet deployed). A game is never marked PASS without executed evidence.
 
 | # | Game id | Title | Category | Bet range | Local | UAT |
 |---|---|---|---|---|---|---|
@@ -43,24 +43,24 @@ UAT is only claimed for games that actually ran on UAT. A game is never marked P
 | 30 | honey-hive | Honey Hive | slot | 0.2-200 | PASS (15 checks) | PASS (9 checks) |
 | 31 | midnight-owl | Midnight Owl | slot | 0.2-200 | PASS (15 checks) | PASS (9 checks) |
 | 32 | ruby-raven | Ruby Raven | slot | 0.2-200 | PASS (15 checks) | PASS (9 checks) |
-| 33 | deep-bass | Deep Bass | fishing | 1-25 | PASS (27 checks) | UNTESTED |
-| 34 | dragon-fisher | Dragon Fisher | fishing | 1-25 | PASS (27 checks) | UNTESTED |
-| 35 | crab-cannon | Crab Cannon | fishing | 1-25 | PASS (27 checks) | UNTESTED |
-| 36 | shark-hunter | Shark Hunter | fishing | 1-25 | PASS (27 checks) | UNTESTED |
-| 37 | octopus-armada | Octopus Armada | fishing | 1-25 | PASS (27 checks) | UNTESTED |
-| 38 | turtle-tide | Turtle Tide | fishing | 1-25 | PASS (27 checks) | UNTESTED |
-| 39 | whale-war | Whale War | fishing | 1-25 | PASS (27 checks) | UNTESTED |
+| 33 | deep-bass | Deep Bass | fishing | 1-25 | PASS (27 checks) | PASS (21 checks) |
+| 34 | dragon-fisher | Dragon Fisher | fishing | 1-25 | PASS (27 checks) | PASS (20 checks) |
+| 35 | crab-cannon | Crab Cannon | fishing | 1-25 | PASS (27 checks) | PASS (20 checks) |
+| 36 | shark-hunter | Shark Hunter | fishing | 1-25 | PASS (27 checks) | PASS (20 checks) |
+| 37 | octopus-armada | Octopus Armada | fishing | 1-25 | PASS (27 checks) | PASS (20 checks) |
+| 38 | turtle-tide | Turtle Tide | fishing | 1-25 | PASS (27 checks) | PASS (20 checks) |
+| 39 | whale-war | Whale War | fishing | 1-25 | PASS (27 checks) | PASS (20 checks) |
 | 40 | ace-high | Ace High | cards | 1-500 | PASS (12 checks) | PASS (8 checks) |
 | 41 | baccarat | Baccarat | cards | 1-500 | PASS (13 checks) | PASS (8 checks) |
 | 42 | lucky9 | Lucky 9 | cards | 1-500 | PASS (12 checks) | PASS (8 checks) |
-| 43 | threecardpoker | Three Card Poker | cards | 1-500 | PASS (13 checks) | UNTESTED |
-| 44 | color-game | Color Game | cards | 1-500 | PASS (12 checks) | UNTESTED |
-| 45 | tongits-arena | Tongits Arena | cards | 1-500 | PASS (13 checks) | UNTESTED |
-| 46 | lucky-drop | Royal Climb | cards | 1-500 | PASS (13 checks) | UNTESTED |
-| 47 | color-game-pro | Color Game Pro | cards | 1-500 | PASS (12 checks) | UNTESTED |
+| 43 | threecardpoker | Three Card Poker | cards | 1-500 | PASS (13 checks) | PASS (11 checks) |
+| 44 | color-game | Color Game | cards | 1-500 | PASS (12 checks) | PASS (10 checks) |
+| 45 | tongits-arena | Tongits Arena | cards | 1-500 | PASS (13 checks) | PASS (11 checks) |
+| 46 | lucky-drop | Royal Climb | cards | 1-500 | PASS (13 checks) | PASS (11 checks) |
+| 47 | color-game-pro | Color Game Pro | cards | 1-500 | PASS (12 checks) | PASS (10 checks) |
 | 48 | lucky-nine-plus | Lucky Nine Plus | cards | 1-500 | PASS (12 checks) | PASS (8 checks) |
-| 49 | drop-deluxe | Deluxe Draw | cards | 1-500 | PASS (13 checks) | UNTESTED |
-| 50 | poker-showdown | Poker Showdown | cards | 1-500 | PASS (13 checks) | UNTESTED |
+| 49 | drop-deluxe | Deluxe Draw | cards | 1-500 | PASS (13 checks) | PASS (11 checks) |
+| 50 | poker-showdown | Poker Showdown | cards | 1-500 | PASS (13 checks) | PASS (11 checks) |
 | 51 | abyssal-pearls | Abyssal Pearls | slot | 0.2-100 | PASS (15 checks) | PASS (9 checks) |
 | 52 | sirens-lagoon | Siren's Lagoon | slot | 0.2-100 | PASS (15 checks) | PASS (9 checks) |
 | 53 | tidecaller-hoard | Tidecaller Hoard | slot | 0.2-100 | PASS (15 checks) | PASS (9 checks) |

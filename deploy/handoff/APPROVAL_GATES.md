@@ -2,6 +2,12 @@
 
 Nothing has been deployed, pushed, restarted or activated. UAT is unchanged (release 2294d79). Both restrictions are implemented and **inactive**.
 
+## STATUS UPDATE 2026-11-10: preflight DONE, deployment BLOCKED on artifact provenance
+* Read-only VPS preflight completed (binary logging OFF, ledger 0000-0003 match, no triggers, 0005 absent; details in DEPLOYMENT_AND_ROLLBACK.md).
+* **Deployment gate FAILED: no deployable artifact can be produced.** The project's builder only runs on Linux x64 / Ubuntu 24.04 / Node 24.22.2 and refuses Windows builds; CI requires a GitHub push (excluded). Owner options are in DEPLOYMENT_AND_ROLLBACK.md ("Owner options to unblock").
+* Migration privilege finding: a grant-then-revoke TRIGGER plan would break all user and wallet writes; apply 0005 as root via the socket instead.
+* Live UAT evidence gathered on the DEPLOYED release 2294d79: 14 previously untested games PASS (216 checks), security probes 29/29, database reconciliation PASS. UAT total now **99 games tested (Wild Panther deliberately excluded: the deployed build still has the original broken free-spin math)**. **This is not 100/100 and not the new release.**
+
 ## Gate summary
 | Gate | Status | What it needs |
 |---|---|---|

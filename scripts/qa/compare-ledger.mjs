@@ -35,8 +35,18 @@ const pre = text.split(/^== SCHEMA STATE[^\n]*\n/m)[1]?.split(/^== /m)[0].trim()
 say(pre === "" ? "OK" : "BLOCKER", pre === "" ? "0005 objects do not exist yet (clean starting point)" : `0005 objects already exist: ${pre.split("\n").join(" | ").slice(0, 160)}`);
 const trig = section("EXISTING TRIGGERS");
 say(trig.length === 0 ? "OK" : "WARN", trig.length === 0 ? "no existing triggers on the staging schema" : `${trig.length} existing trigger(s): ${trig.join(" | ").slice(0, 200)}`);
-const grants = section("GRANTS").join("\n");
-say(/ALL PRIVILEGES ON `?maxhigh_staging`?\.\*|ON `maxhigh_staging`\.\*/.test(grants) ? "OK" : "CHECK", "app/migration account grants: confirm the migration account has ALTER, CREATE, DROP, TRIGGER, INSERT, UPDATE on the staging schema and the app account can SELECT/INSERT/UPDATE the new tables");
+// Per-account privilege checks (parsed from SHOW GRANTS output).
+const grantBlock = (acct) => { const m = text.split(new RegExp("^--- '" + acct + "'@[^\\n]*\\n", "m"))[1]; return m ? m.split(/^(?:--- |== )/m)[0] : ""; };
+const has = (blk, priv) => new RegExp("GRANT [^\\n]*\\b" + priv + "\\b[^\\n]* ON `?maxhigh_staging`?\\.(\\*|`?users`?)", "i").test(blk) || /ALL PRIVILEGES ON `?maxhigh_staging`?\.\*/i.test(blk);
+const mig = grantBlock("maxhigh_stage_migrate"), app = grantBlock("maxhigh_uat_app");
+const need = ["ALTER", "CREATE", "INSERT", "UPDATE", "SELECT"];
+const missing = need.filter((p) => !has(mig, p));
+say(missing.length ? "BLOCKER" : "OK", missing.length ? `migration account lacks: ${missing.join(", ")}` : "migration account has ALTER, CREATE, INSERT, UPDATE, SELECT on the staging schema");
+if (!has(mig, "TRIGGER"))
+  say("ACTION", "migration account has NO TRIGGER privilege: 0005 would fail at its first CREATE TRIGGER. Do NOT grant TRIGGER and revoke it afterwards (tested: revoking it makes every statement that fires a trigger fail, i.e. all user writes and wallet updates). Apply 0005 as root through the local socket so the trigger DEFINER is root@localhost (no grant needed), or keep a table-scoped TRIGGER grant permanently.");
+else say("OK", "migration account already has TRIGGER (keep it while the triggers exist: the DEFINER's TRIGGER privilege is checked every time a trigger fires)");
+const appOk = ["SELECT", "INSERT", "UPDATE", "DELETE"].every((p) => has(app, p));
+say(appOk ? "OK" : "BLOCKER", appOk ? "app account has SELECT/INSERT/UPDATE/DELETE on the staging schema (covers the two new tables)" : "app account lacks required table privileges");
 console.log(out.join("\n"));
 console.log(ok ? "\nRESULT: no blocking mismatch found (review RISK/CHECK lines)." : "\nRESULT: BLOCKERS present - do not migrate.");
 process.exit(ok ? 0 : 1);
