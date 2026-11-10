@@ -115,6 +115,38 @@ await test("entitlement_grants rejects a replayed nonce", async () => {
   await assert.rejects(row("nonce-1"), /Duplicate/);
 });
 
+// ---------------------------------------------------------------- 0005 is re-runnable: no half-applied state is possible
+const statements = fs.readFileSync("drizzle/0005_account_classes_and_entitlements.sql", "utf8").split("--> statement-breakpoint").map((x) => x.trim()).filter(Boolean);
+const triggersOf = async (c) => (await c.query("SHOW TRIGGERS"))[0].map((t) => t.Trigger).sort().join(",");
+await test("executing every 0005 statement a second and third time succeeds and changes nothing (idempotent)", async () => {
+  const rr = await freshDb("restr_rerun", before);
+  await addUser(rr, "keep_a", "player", { balance: 10 }); await addUser(rr, "keep_s", "superadmin");
+  for (const s of statements) await rr.query(s);
+  const snap = await snapshot(rr), trg = await triggersOf(rr);
+  const lim = (await rr.query("SELECT max_client_accounts m, enforced e, active_clients a FROM account_limits"))[0][0];
+  for (let i = 0; i < 2; i++) for (const s of statements) await rr.query(s);
+  assert.equal(await snapshot(rr), snap);
+  assert.equal(await triggersOf(rr), trg);
+  assert.deepEqual((await rr.query("SELECT max_client_accounts m, enforced e, active_clients a FROM account_limits"))[0][0], lim);
+  assert.equal((await rr.query("SELECT COUNT(*) n FROM account_limits"))[0][0].n, 1);
+  await rr.end();
+});
+await test("a migration that failed midway (tables created, triggers missing) converges when simply re-run", async () => {
+  const mf = await freshDb("restr_midfail", before);
+  await addUser(mf, "keep_a", "player", { balance: 5 });
+  // simulate failure at the first CREATE TRIGGER: everything before it applied, nothing after
+  const firstTrigger = statements.findIndex((s) => /^CREATE OR REPLACE TRIGGER/i.test(s));
+  for (const s of statements.slice(0, firstTrigger)) await mf.query(s);
+  assert.equal(await triggersOf(mf), "");
+  const snap = await snapshot(mf);
+  for (const s of statements) await mf.query(s);                                  // the operator fixes the cause and re-runs
+  assert.equal((await triggersOf(mf)).split(",").length, 5);
+  assert.equal(await snapshot(mf), snap);
+  await mf.query("UPDATE account_limits SET enforced='yes', max_client_accounts=1 WHERE id='default'");
+  await assert.rejects(addUser(mf, "second_client"), /CLIENT_ACCOUNT_LIMIT/);     // the recovered triggers really enforce
+  await mf.end();
+});
+
 // ---------------------------------------------------------------- rollback leaves the pre-0005 schema and data intact
 await test("rollback (drop triggers, tables, column) restores the pre-0005 shape without altering user data", async () => {
   const rb = await freshDb("restr_rollback", before);

@@ -4,10 +4,11 @@
 --   active_clients is a trigger-maintained counter of client accounts that are not admin-disabled. The single row lock serialises
 --   concurrent account creation, and locking reads always see the latest committed value (no snapshot races).
 -- * entitlement_grants is an append-only record of developer-signed grants (unlock games, lift cap, authorize exempt accounts).
+-- Fully re-runnable (IF NOT EXISTS / CREATE OR REPLACE): a failure midway (e.g. trigger privilege) is fixed and simply re-run; nothing is left half-applied.
 -- Rollback: see deploy/handoff/ACCOUNT_AND_GAME_RESTRICTIONS_SPEC.md (drop triggers, tables, column). No historical data is altered.
-ALTER TABLE `users` ADD `account_class` enum('client','admin','qa') NOT NULL DEFAULT 'client';--> statement-breakpoint
+ALTER TABLE `users` ADD COLUMN IF NOT EXISTS `account_class` enum('client','admin','qa') NOT NULL DEFAULT 'client';--> statement-breakpoint
 UPDATE `users` SET `account_class` = 'admin' WHERE `role` = 'superadmin' AND `account_class` = 'client';--> statement-breakpoint
-CREATE TABLE `account_limits` (
+CREATE TABLE IF NOT EXISTS `account_limits` (
   `id` varchar(16) NOT NULL,
   `max_client_accounts` int NOT NULL DEFAULT 2,
   `enforced` enum('yes','no') NOT NULL DEFAULT 'no',
@@ -20,7 +21,7 @@ CREATE TABLE `account_limits` (
 INSERT INTO `account_limits` (`id`, `max_client_accounts`, `enforced`, `active_clients`)
 SELECT 'default', 2, 'no', COUNT(*) FROM `users` WHERE `account_class` = 'client' AND NOT (`is_locked` = 'yes' AND `locked_by` IS NOT NULL)
 ON DUPLICATE KEY UPDATE `id` = `id`;--> statement-breakpoint
-CREATE TABLE `entitlement_grants` (
+CREATE TABLE IF NOT EXISTS `entitlement_grants` (
   `id` varchar(36) NOT NULL,
   `nonce` varchar(64) NOT NULL,
   `kind` varchar(32) NOT NULL,
@@ -33,7 +34,7 @@ CREATE TABLE `entitlement_grants` (
   CONSTRAINT `entitlement_grants_id` PRIMARY KEY(`id`),
   CONSTRAINT `entitlement_grants_nonce_unique` UNIQUE(`nonce`)
 );--> statement-breakpoint
-CREATE TRIGGER `users_client_cap_bi` BEFORE INSERT ON `users` FOR EACH ROW
+CREATE OR REPLACE TRIGGER `users_client_cap_bi` BEFORE INSERT ON `users` FOR EACH ROW
 BEGIN
   DECLARE v_max INT;
   DECLARE v_enf VARCHAR(3);
@@ -45,13 +46,13 @@ BEGIN
     END IF;
   END IF;
 END;--> statement-breakpoint
-CREATE TRIGGER `users_client_cap_ai` AFTER INSERT ON `users` FOR EACH ROW
+CREATE OR REPLACE TRIGGER `users_client_cap_ai` AFTER INSERT ON `users` FOR EACH ROW
 BEGIN
   IF NEW.account_class = 'client' AND NOT (NEW.is_locked = 'yes' AND NEW.locked_by IS NOT NULL) THEN
     UPDATE `account_limits` SET `active_clients` = `active_clients` + 1 WHERE `id` = 'default';
   END IF;
 END;--> statement-breakpoint
-CREATE TRIGGER `users_class_guard_bu` BEFORE UPDATE ON `users` FOR EACH ROW
+CREATE OR REPLACE TRIGGER `users_class_guard_bu` BEFORE UPDATE ON `users` FOR EACH ROW
 BEGIN
   DECLARE v_max INT;
   DECLARE v_enf VARCHAR(3);
@@ -66,7 +67,7 @@ BEGIN
     END IF;
   END IF;
 END;--> statement-breakpoint
-CREATE TRIGGER `users_client_cap_au` AFTER UPDATE ON `users` FOR EACH ROW
+CREATE OR REPLACE TRIGGER `users_client_cap_au` AFTER UPDATE ON `users` FOR EACH ROW
 BEGIN
   DECLARE v_old INT;
   DECLARE v_new INT;
@@ -76,7 +77,7 @@ BEGIN
     UPDATE `account_limits` SET `active_clients` = `active_clients` + (v_new - v_old) WHERE `id` = 'default';
   END IF;
 END;--> statement-breakpoint
-CREATE TRIGGER `users_client_cap_ad` AFTER DELETE ON `users` FOR EACH ROW
+CREATE OR REPLACE TRIGGER `users_client_cap_ad` AFTER DELETE ON `users` FOR EACH ROW
 BEGIN
   IF OLD.account_class = 'client' AND NOT (OLD.is_locked = 'yes' AND OLD.locked_by IS NOT NULL) THEN
     UPDATE `account_limits` SET `active_clients` = `active_clients` - 1 WHERE `id` = 'default';
