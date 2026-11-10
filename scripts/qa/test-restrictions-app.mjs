@@ -146,10 +146,22 @@ try {
   note("second client account allowed", !c2.error && (await clientsNow()) === 2, c2.error);
   const c3 = await refused(() => mk("client_three"));
   note("third client account REJECTED with the approved message", c3.refused && c3.msg === REG, c3.msg);
-  const par = await Promise.allSettled(Array.from({ length: 12 }, (_, i) => mk(`race_${i}`)));
-  note("12 concurrent creations cannot bypass the cap", par.every((p) => p.status === "rejected") && (await clientsNow()) === 2, `${par.filter((p) => p.status === "fulfilled").length} created`);
+  // Regression for a connection-pool deadlock: with the grant cache COLD (> 5 s idle) every concurrent creator used to hold one pooled
+  // connection and wait for a second one. 24 callers = 4x the default pool of 6; both creation paths. A hang is reported, not endured.
+  const withTimeout = (p, ms, label) => Promise.race([p, new Promise((_, rej) => setTimeout(() => rej(new Error(label + " TIMED OUT after " + ms + "ms (pool deadlock?)")), ms))]);
+  const burst = async (label, make) => {
+    await new Promise((r) => setTimeout(r, 5800));                       // let the 5 s grant cache expire
+    const t0 = Date.now();
+    const out = await withTimeout(Promise.allSettled(Array.from({ length: 24 }, (_, i) => make(i))), 90000, label);
+    return { out, ms: Date.now() - t0 };
+  };
+  const b1 = await burst("super path", (i) => mk(`race_s_${i}`)).catch((e) => ({ error: e.message }));
+  note("24 concurrent creations (superadmin path, cold grant cache) neither deadlock nor bypass the cap", !b1.error && b1.out.every((p) => p.status === "rejected" && /temporarily unavailable/.test(String(p.reason?.message))) && (await clientsNow()) === 2, b1.error ?? `all rejected in ${b1.ms}ms`);
+  const b2 = await burst("admin path", (i) => owner.rpc("adminCreateUserFn", { username: `race_a_${i}`, password: "Client-Pass-12345", role: "player", balance: 0 })).catch((e) => ({ error: e.message }));
+  note("24 concurrent creations (admin path, cold grant cache) neither deadlock nor bypass the cap", !b2.error && b2.out.every((p) => p.status === "rejected" && /temporarily unavailable/.test(String(p.reason?.message))) && (await clientsNow()) === 2, b2.error ?? `all rejected in ${b2.ms}ms`);
+  note("the app still answers after the bursts", (await withTimeout(fetch(envC.UAT_BASE + "/api/health").then((r) => r.ok), 10000, "health").catch(() => false)) === true);
   const [[rej]] = await db.query("SELECT COUNT(*) n FROM audit_logs WHERE action='account.create_rejected'");
-  note("every rejected attempt is audited", rej.n >= 13, `${rej.n} rows`);
+  note("every rejected attempt is audited (1 + 24 + 24)", rej.n >= 49, `${rej.n} rows`);
   const adm = await owner.rpc("getAdminLimitStatusFn", undefined, { method: "GET" });
   note("admin screen shows the approved waiting message", adm.restricted === true && adm.message === ADMIN, adm.message);
   const noAdmin = await refused(() => new Client().rpc("getAdminLimitStatusFn", undefined, { method: "GET" }));

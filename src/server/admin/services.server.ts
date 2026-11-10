@@ -368,7 +368,7 @@ export async function adminCreatePlayer(data: {
         });
       }
 
-      const accountClass = await resolveNewAccountClass(username); // never from caller input
+      const accountClass = await resolveNewAccountClass(username, tx); // never from caller input; same connection as the open transaction
       if (accountClass === "client")
         await assertClientCapacity(tx, {
           actor,

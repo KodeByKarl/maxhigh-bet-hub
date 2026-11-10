@@ -127,11 +127,14 @@ type EffectiveGrants = {
 };
 
 /** Re-verifies every stored grant on load, so a row inserted straight into the database without a valid signature grants nothing. */
-async function loadEffectiveGrants(): Promise<EffectiveGrants> {
+// `executor` MUST be the caller's open transaction when called from inside one: opening a second pooled connection while holding the
+// first lets N concurrent callers (N = pool size) wait on each other forever (pool deadlock). Regression-tested.
+type Reader = Pick<ReturnType<typeof getDb>, "select">;
+async function loadEffectiveGrants(executor?: Reader): Promise<EffectiveGrants> {
   if (cache && Date.now() - cache.at < 5000) return cache.value;
   const out: EffectiveGrants = { unlocked: new Set(), maxClients: null, exempt: new Map() };
   if (policy.grantKeys.length > 0) {
-    const rows = await getDb().select().from(entitlementGrants);
+    const rows = await (executor ?? getDb()).select().from(entitlementGrants);
     for (const r of rows) {
       let g: Grant;
       try {
@@ -210,10 +213,12 @@ export const isClientLimitDbError = (e: unknown) =>
 
 type Tx = Parameters<Parameters<ReturnType<typeof getDb>["transaction"]>[0]>[0];
 
-export async function getEffectiveClientCap(): Promise<{ enforced: boolean; max: number }> {
+export async function getEffectiveClientCap(
+  executor?: Reader,
+): Promise<{ enforced: boolean; max: number }> {
   if (policy.clientAccounts.enforcement !== "on")
     return { enforced: false, max: policy.clientAccounts.maxClientAccounts };
-  const g = await loadEffectiveGrants();
+  const g = await loadEffectiveGrants(executor);
   return {
     enforced: true,
     max: Math.max(policy.clientAccounts.maxClientAccounts, g.maxClients ?? 0),
@@ -221,8 +226,11 @@ export async function getEffectiveClientCap(): Promise<{ enforced: boolean; max:
 }
 
 /** Class a NEW account gets. Always 'client' unless a verified developer grant names this exact username. Never from client input. */
-export async function resolveNewAccountClass(username: string): Promise<"client" | "admin" | "qa"> {
-  const g = await loadEffectiveGrants();
+export async function resolveNewAccountClass(
+  username: string,
+  executor?: Reader,
+): Promise<"client" | "admin" | "qa"> {
+  const g = await loadEffectiveGrants(executor);
   return g.exempt.get(username.trim().toLowerCase()) ?? "client";
 }
 
@@ -237,7 +245,7 @@ export async function assertClientCapacity(
   tx: Tx,
   ctx: { actor: { id: string; username: string } | null; attempt: string; excludeUserId?: string },
 ): Promise<void> {
-  const cap = await getEffectiveClientCap();
+  const cap = await getEffectiveClientCap(tx); // same connection as the open transaction: never a second pooled connection
   if (!cap.enforced) return;
   // The locking read of this single row serialises concurrent creators and always returns the LATEST committed counter
   // (maintained by the DB triggers), so no snapshot race and no scan-lock on the users table.
