@@ -480,7 +480,9 @@ export const accountLimits = mysqlTable("account_limits", {
   enforced: mysqlEnum("enforced", ["yes", "no"]).notNull().default("no"),
   /** Trigger-maintained: client accounts that are not admin-disabled. */
   activeClients: bigint("active_clients", { mode: "number" }).notNull().default(0),
-  updatedAt: timestamp("updated_at").notNull().default(sql`CURRENT_TIMESTAMP`),
+  updatedAt: timestamp("updated_at")
+    .notNull()
+    .default(sql`CURRENT_TIMESTAMP`),
 });
 
 /** Append-only record of developer-signed entitlement grants (unlock games, lift cap, authorize exempt accounts). */
