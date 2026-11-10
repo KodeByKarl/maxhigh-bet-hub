@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { AccountLimitNotice } from "@/components/admin/AccountLimitNotice";
 import { toast } from "sonner";
 import { adminCreateUserFn } from "@/functions/admin";
 import { useAuth } from "@/lib/auth";
@@ -56,6 +57,7 @@ export function CreateUserForm({ onCreated }: { onCreated: () => void }) {
       <p className="mt-1 text-xs text-muted-foreground">
         Username is required for sign-in. Email is optional.
       </p>
+      <AccountLimitNotice />
 
       <div className="mt-3 rounded-xl border border-violet-400/30 bg-violet-500/10 px-3 py-2.5">
         <div className="text-[10px] font-bold uppercase tracking-wider text-violet-300">

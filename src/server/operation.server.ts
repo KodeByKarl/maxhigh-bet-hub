@@ -7,6 +7,7 @@ import { transactionContext } from "./db/transaction-context.server";
 import { requireUser } from "./session";
 import { lockAccounts } from "./financial-locks.server";
 import { reserveRoundSeed } from "./provably-fair/engine.server";
+import { assertGameAccess } from "./access-policy.server";
 import { roundRandom, type RoundRandom } from "./round-random.server";
 import { lockFishingRoom } from "./fishing-state.server";
 import { signedMinorUnits } from "@/lib/money";
@@ -23,6 +24,8 @@ export async function withFinancialOperation<T>(
   gameId?: string,
 ): Promise<T> {
   const actor = await requireUser();
+  // Server-side entitlement gate: runs before any wallet write, for every role. A no-op while the policy is inactive.
+  if (gameId) await assertGameAccess(gameId, action, actor);
   const key = getRequestHeader("Idempotency-Key");
   if (!key || !/^[a-zA-Z0-9_-]{16,128}$/.test(key))
     throw new Error("A valid Idempotency-Key is required");

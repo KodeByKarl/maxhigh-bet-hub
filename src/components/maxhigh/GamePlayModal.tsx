@@ -12,6 +12,7 @@ import { realmsAssets } from "./realms/theme";
 import { GameLoadingScreen } from "./GameLoadingScreen";
 import { GameBootBoundary } from "./GameBootBoundary";
 import { GAME_LOADING_THEMES } from "@/lib/game-loading-themes";
+import { useOverlayBack } from "@/lib/useOverlayBack";
 
 type Props = {
   game: SlotGame | null;
@@ -1298,6 +1299,8 @@ export function GamePlayModal({ game, open, onOpenChange }: Props) {
   const [bootError, setBootError] = useState(false);
   const shellRef = useRef<HTMLDivElement>(null);
   const { isLoggedIn, openLogin } = useAuth();
+  // Android/browser Back closes the game first (and is absorbed while a round request is in flight).
+  useOverlayBack(open && !!game, () => onOpenChange(false), true);
 
   const handleGameReady = useCallback(() => {
     setGameReady(true);
@@ -1501,7 +1504,7 @@ export function GamePlayModal({ game, open, onOpenChange }: Props) {
       {/* Extra opaque plate in case of any subpixel gap */}
       <div className="pointer-events-none absolute inset-0 bg-[#0A0912]" aria-hidden />
 
-      <div className="absolute right-3 top-[max(0.75rem,env(safe-area-inset-top))] z-[10001] sm:right-5 sm:top-5">
+      <div className="absolute right-[max(0.75rem,env(safe-area-inset-right))] top-[max(0.75rem,env(safe-area-inset-top))] z-[10001] sm:right-5 sm:top-5">
         <button
           type="button"
           onClick={() => onOpenChange(false)}

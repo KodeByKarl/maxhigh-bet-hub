@@ -27,6 +27,8 @@ export const users = mysqlTable(
     role: mysqlEnum("role", ["player", "admin", "agent", "master_agent", "superadmin"])
       .notNull()
       .default("player"),
+    /** client = counts toward the client cap; admin = maintenance/recovery; qa = synthetic test. Never set from client input. */
+    accountClass: mysqlEnum("account_class", ["client", "admin", "qa"]).notNull().default("client"),
     isLocked: mysqlEnum("is_locked", ["yes", "no"]).notNull().default("no"),
     failedAttempts: bigint("failed_attempts", { mode: "number" }).notNull().default(0),
     lockedUntil: timestamp("locked_until"),
@@ -469,4 +471,29 @@ export const rewardEntitlements = mysqlTable("reward_entitlements", {
   amount: decimal("amount", { precision: 14, scale: 2 }).notNull(),
   claimedAt: timestamp("claimed_at"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+/** DB-layer backstop for the client-account cap (ships enforced = no). */
+export const accountLimits = mysqlTable("account_limits", {
+  id: varchar("id", { length: 16 }).primaryKey(),
+  maxClientAccounts: bigint("max_client_accounts", { mode: "number" }).notNull().default(2),
+  enforced: mysqlEnum("enforced", ["yes", "no"]).notNull().default("no"),
+  /** Trigger-maintained: client accounts that are not admin-disabled. */
+  activeClients: bigint("active_clients", { mode: "number" }).notNull().default(0),
+  updatedAt: timestamp("updated_at").notNull().default(sql`CURRENT_TIMESTAMP`),
+});
+
+/** Append-only record of developer-signed entitlement grants (unlock games, lift cap, authorize exempt accounts). */
+export const entitlementGrants = mysqlTable("entitlement_grants", {
+  id: varchar("id", { length: 36 }).primaryKey(),
+  nonce: varchar("nonce", { length: 64 }).notNull().unique(),
+  kind: varchar("kind", { length: 32 }).notNull(),
+  payload: text("payload").notNull(),
+  signature: varchar("signature", { length: 256 }).notNull(),
+  keyId: varchar("key_id", { length: 64 }).notNull(),
+  appliedBy: varchar("applied_by", { length: 36 }),
+  appliedByUsername: varchar("applied_by_username", { length: 64 }).notNull(),
+  createdAt: timestamp("created_at")
+    .notNull()
+    .default(sql`CURRENT_TIMESTAMP`),
 });

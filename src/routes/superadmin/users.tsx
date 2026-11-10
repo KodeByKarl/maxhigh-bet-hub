@@ -20,6 +20,7 @@ import { Input } from "@/components/ui/input";
 import { PasswordInput } from "@/components/ui/password-input";
 import { saGlass } from "@/components/superadmin/ui/glass";
 import { toast } from "sonner";
+import { AccountLimitNotice } from "@/components/admin/AccountLimitNotice";
 import { MoreHorizontal, Pencil, X } from "lucide-react";
 
 export const Route = createFileRoute("/superadmin/users")({
@@ -472,6 +473,7 @@ function AddPlayerModal({
             <p className="text-xs text-muted-foreground">
               Create account with system-generated or custom credentials
             </p>
+            <AccountLimitNotice />
           </div>
           <button
             type="button"

@@ -39,6 +39,13 @@ import {
 } from "../session";
 import { writeAuditLog } from "../admin/audit.server";
 import {
+  assertClientCapacity,
+  auditClientLimitRejection,
+  ClientLimitError,
+  isClientLimitDbError,
+  resolveNewAccountClass,
+} from "../access-policy.server";
+import {
   isAdminListedGame,
   isLobbyVisibleGame,
   isThumbnailOnlyGame,
@@ -338,19 +345,39 @@ export async function superCreateUser(data: {
     .limit(1);
   if (existingPublicId) throw new Error("User ID already exists");
 
+  // Account class is decided here, never by the caller: always 'client' unless a developer-signed grant names this username.
+  const accountClass = await resolveNewAccountClass(username);
+  const passwordHash = await hash(data.password, 10);
   try {
-    await db.insert(users).values({
-      id,
-      publicUserId,
-      email,
-      username,
-      passwordHash: await hash(data.password, 10),
-      balance: money(data.balance ?? 0),
-      role: data.role,
-      displayName: data.displayName?.trim() || null,
-      parentAgentId,
+    await db.transaction(async (tx) => {
+      if (accountClass === "client")
+        await assertClientCapacity(tx, {
+          actor,
+          attempt: `superCreateUser @${username} (${data.role})`,
+        });
+      await tx.insert(users).values({
+        id,
+        publicUserId,
+        email,
+        username,
+        passwordHash,
+        balance: money(data.balance ?? 0),
+        role: data.role,
+        accountClass,
+        displayName: data.displayName?.trim() || null,
+        parentAgentId,
+      });
     });
-  } catch {
+  } catch (e) {
+    if (e instanceof ClientLimitError) {
+      await auditClientLimitRejection(actor, e);
+      throw e;
+    }
+    if (isClientLimitDbError(e)) {
+      const limit = new ClientLimitError(`superCreateUser @${username} (${data.role})`);
+      await auditClientLimitRejection(actor, limit, "database");
+      throw limit;
+    }
     throw new Error("Username or User ID already exists");
   }
 

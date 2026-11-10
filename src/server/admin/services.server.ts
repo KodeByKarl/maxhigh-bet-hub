@@ -9,6 +9,13 @@ import { assertCanEditAccount } from "../auth/target-policy.server";
  */
 import { eq, desc, sql, like, or, and, inArray } from "drizzle-orm";
 import { hash } from "bcryptjs";
+import {
+  assertClientCapacity,
+  auditClientLimitRejection,
+  ClientLimitError,
+  isClientLimitDbError,
+  resolveNewAccountClass,
+} from "../access-policy.server";
 import { getDb } from "../db/client";
 import { auditLogs, liveWins, transactions, users } from "../db/schema";
 import type { PublicUser, UserRole } from "@/lib/user";
@@ -361,6 +368,12 @@ export async function adminCreatePlayer(data: {
         });
       }
 
+      const accountClass = await resolveNewAccountClass(username); // never from caller input
+      if (accountClass === "client")
+        await assertClientCapacity(tx, {
+          actor,
+          attempt: `adminCreateUser @${username} (${role})`,
+        });
       await tx.insert(users).values({
         id,
         publicUserId,
@@ -370,6 +383,7 @@ export async function adminCreatePlayer(data: {
         // Start at 0; credit via ledger below so balance + transactions stay consistent.
         balance: money(0),
         role,
+        accountClass,
         displayName: data.displayName?.trim() || null,
         parentAgentId: actor.id,
       });
@@ -389,6 +403,15 @@ export async function adminCreatePlayer(data: {
       return toPublicUser(rows[0]!);
     });
   } catch (err) {
+    if (err instanceof ClientLimitError) {
+      await auditClientLimitRejection(actor, err);
+      throw err;
+    }
+    if (isClientLimitDbError(err)) {
+      const limit = new ClientLimitError(`adminCreateUser @${username}`);
+      await auditClientLimitRejection(actor, limit, "database");
+      throw limit;
+    }
     const msg = err instanceof Error ? err.message : "";
     if (msg.includes("Insufficient balance")) {
       throw new Error(
@@ -652,16 +675,34 @@ export async function adminUnlockUser(data: { userId: string }): Promise<PublicU
   if (!user) throw new Error("User not found");
   await assertCanManageAccount(actor, user.id);
 
-  await db
-    .update(users)
-    .set({
-      isLocked: "no",
-      failedAttempts: 0,
-      lockedUntil: null,
-      unlockedAt: now,
-      unlockedBy: actor.id,
-    })
-    .where(eq(users.id, user.id));
+  try {
+    await db.transaction(async (tx) => {
+      // Re-enabling an admin-disabled client account counts as activating a client account.
+      if (user.accountClass === "client" && user.isLocked === "yes" && user.lockedBy)
+        await assertClientCapacity(tx, { actor, attempt: `unlock @${user.username}` });
+      await tx
+        .update(users)
+        .set({
+          isLocked: "no",
+          failedAttempts: 0,
+          lockedUntil: null,
+          unlockedAt: now,
+          unlockedBy: actor.id,
+        })
+        .where(eq(users.id, user.id));
+    });
+  } catch (e) {
+    if (e instanceof ClientLimitError) {
+      await auditClientLimitRejection(actor, e);
+      throw e;
+    }
+    if (isClientLimitDbError(e)) {
+      const limit = new ClientLimitError(`unlock @${user.username}`);
+      await auditClientLimitRejection(actor, limit, "database");
+      throw limit;
+    }
+    throw e;
+  }
 
   await writeAuditLog({
     actor,
