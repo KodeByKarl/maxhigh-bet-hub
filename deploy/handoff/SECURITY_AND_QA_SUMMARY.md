@@ -6,7 +6,7 @@ All results are from the clean release tree's own build, on disposable local Mar
 | Suite | Result |
 |---|---|
 | TypeScript typecheck | clean |
-| Production build | succeeds; **reproducible** (two builds from the same commit give the same digest; see manifest) |
+| Production build | succeeds; **functionally reproducible, not bit-for-bit**: independent builds of the same commit differ in only 2 of 5,359 files (`nitro.json` build timestamp; `server/index.mjs` static-asset index order/mtimes) and share an identical *stable content digest* over the other 5,357 files (manifest) |
 | Unit suite | **23/23** |
 | Migration suite (fresh, upgrade with sentinel user, preflight dirty-data, risk-row preserved, legacy feature) | **5/5**, includes "0005 ships inactive" assertions |
 | Integration suite (HTTP, fail-closed risk, idempotency, caps, rollback) | **18/18** |

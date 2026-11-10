@@ -12,6 +12,21 @@ if (!outFile || !evidenceDir) throw new Error("usage: make-release-manifest.mjs 
 const git = (...a) => execFileSync("git", ["-c", "safe.directory=*", "-c", "core.autocrlf=false", ...a], { encoding: "utf8" }).trim();
 const dirty = git("status", "--porcelain");
 if (dirty) throw new Error("release worktree is not clean:\n" + dirty.slice(0, 400));
+// Two files vary between builds of the SAME commit: nitro.json (build timestamp) and server/index.mjs (its embedded static-asset index:
+// ordering and file mtimes). The stable digest covers every other file and IS identical across independent builds (verified).
+const VOLATILE = ["nitro.json", "server/index.mjs"];
+function stableDigest(dir) {
+  const h = createHash("sha256");
+  const visit = (folder, rel) => {
+    for (const e of fs.readdirSync(folder, { withFileTypes: true }).sort((a, b) => a.name.localeCompare(b.name))) {
+      const p = path.join(folder, e.name), r = rel ? `${rel}/${e.name}` : e.name;
+      if (e.isDirectory()) visit(p, r);
+      else if (!VOLATILE.includes(r)) { h.update(r); h.update("\0"); h.update(fs.readFileSync(p)); }
+    }
+  };
+  visit(path.join(dir, ".output"), "");
+  return h.digest("hex");
+}
 const sha = (f) => createHash("sha256").update(fs.readFileSync(f)).digest("hex");
 const walk = (dir) => fs.readdirSync(dir, { withFileTypes: true }).flatMap((e) => (e.isDirectory() ? walk(path.join(dir, e.name)) : [path.join(dir, e.name)]));
 const changed = git("diff", "--name-status", `${base}..HEAD`).split("\n").filter(Boolean).map((l) => { const [s, ...p] = l.split("\t"); return { status: s, path: p.join("\t") }; });
@@ -24,6 +39,9 @@ const manifest = {
   commits: git("log", "--format=%H %s", `${base}..HEAD`).split("\n"),
   changedFiles: { total: changed.length, byStatus: changed.reduce((a, c) => ((a[c.status] = (a[c.status] ?? 0) + 1), a), {}), list: changed },
   buildDigestSha256: artifactDigest("."),
+  stableContentDigestSha256: stableDigest("."),
+  stableContentDigestNote: "SHA-256 over every .output file except nitro.json and server/index.mjs. Identical across independent builds of this commit (verified); use it to verify an artifact. The build is functionally reproducible, NOT bit-for-bit: buildDigestSha256 differs per build because of the two excluded files (timestamp; asset-index ordering/mtimes).",
+  volatileFileSha256: Object.fromEntries(VOLATILE.map((v) => [v, sha(path.join(".output", v))])),
   buildDigestNote: "Computed with deploy/release-manager.mjs artifactDigest() over .output of a build from this exact clean commit (LF-normalized worktree).",
   migrationsPending: ["0004_seed_default_risk_controls", "0005_account_classes_and_entitlements"],
   migrationChecksums: Object.fromEntries(fs.readdirSync("drizzle").filter((f) => /^000[45]_.*\.sql$/.test(f)).map((f) => [f, sha(path.join("drizzle", f))])),
