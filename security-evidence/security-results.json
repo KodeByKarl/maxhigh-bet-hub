@@ -1,5 +1,5 @@
 {
- "at": "2026-11-10T08:17:40.663Z",
+ "at": "2026-11-10T10:13:11.527Z",
  "total": 29,
  "failed": 0,
  "results": [
@@ -61,7 +61,7 @@
   {
    "name": "victim balance unchanged after attempts",
    "ok": true,
-   "detail": "99800.03 -> 99800.03"
+   "detail": "99241.99 -> 99241.99"
   },
   {
    "name": "forged session cookie refused",
