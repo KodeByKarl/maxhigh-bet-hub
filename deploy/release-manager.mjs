@@ -350,11 +350,11 @@ async function activateLocked(sha) {
         throw Error("First deploy two compatible receipt readers with compression disabled");
     }
   }
-  await run(
-    process.execPath,
-    [manifest.artifactFormat === "portable-v1" ? ".output/migrate.mjs" : "scripts/migrate.mjs"],
-    directory,
-  );
+  const migrator = manifest.artifactFormat === "portable-v1" ? ".output/migrate.mjs" : "scripts/migrate.mjs";
+  // Mandatory read-only preflight: a non-zero exit (data issue or checksum mismatch) aborts the release
+  // before the pending-migration check and before any candidate starts.
+  await run(process.execPath, [migrator, "--preflight"], directory);
+  await run(process.execPath, [migrator], directory);
   const port = Number(process.env.DEPLOY_CANDIDATE_PORT ?? 18081);
   const candidate = spawn(
     process.execPath,

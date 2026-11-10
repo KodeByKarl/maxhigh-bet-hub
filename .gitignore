@@ -49,3 +49,8 @@ audit/first-transfer/runtime/
 
 # Local QA output is never a source publication input.
 output/
+
+# age private keys / key drills (never commit)
+maxhigh-keys/
+maxhigh-uat-*.key
+*.key.age

@@ -4,6 +4,47 @@ import { createHash } from "node:crypto";
 import { pathToFileURL } from "node:url";
 import mysql from "mysql2/promise";
 
+/**
+ * Read-only data checks for migrations that add constraints. Never repairs or deletes data;
+ * returns human-readable issues so the operator can review them before any DDL runs.
+ */
+export async function preflight(connection, pendingFiles) {
+  const [[database]] = await connection.query("SELECT DATABASE() AS name");
+  const has = async (table) =>
+    (
+      await connection.query(
+        "SELECT 1 FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_SCHEMA=? AND TABLE_NAME=?",
+        [database.name, table],
+      )
+    )[0].length > 0;
+  const issues = [];
+  const pending = (prefix) => pendingFiles.some((file) => file.startsWith(prefix));
+  if (pending("0001_") && (await has("transactions")) && (await has("users"))) {
+    const [[row]] = await connection.query(
+      "SELECT COUNT(*) AS n FROM transactions t LEFT JOIN users u ON u.id=t.user_id WHERE u.id IS NULL",
+    );
+    if (Number(row.n) > 0)
+      issues.push(`0001: ${row.n} transaction(s) reference a missing user (foreign key would fail)`);
+  }
+  if (pending("0003_")) {
+    if (await has("play_sessions")) {
+      const [[row]] = await connection.query(
+        "SELECT COUNT(*) AS n FROM (SELECT 1 FROM play_sessions WHERE status='open' GROUP BY user_id, game_id HAVING COUNT(*)>1) d",
+      );
+      if (Number(row.n) > 0)
+        issues.push(`0003: ${row.n} user/game pair(s) have more than one open play session`);
+    }
+    if (await has("provably_fair_seeds")) {
+      const [[row]] = await connection.query(
+        "SELECT COUNT(*) AS n FROM (SELECT 1 FROM provably_fair_seeds WHERE status='active' GROUP BY user_id HAVING COUNT(*)>1) d",
+      );
+      if (Number(row.n) > 0)
+        issues.push(`0003: ${row.n} user(s) have more than one active provably-fair seed`);
+    }
+  }
+  return issues;
+}
+
 export async function migrate(connection, { apply = false, directory = "drizzle" } = {}) {
   await connection.query("SET time_zone = '+00:00'");
   const [[database]] = await connection.query("SELECT DATABASE() AS name");
@@ -51,6 +92,11 @@ export async function migrate(connection, { apply = false, directory = "drizzle"
       }
     }
   }
+  const preflightIssues = await preflight(connection, pending.map((x) => x.file));
+  if (preflightIssues.length)
+    throw new Error(
+      "Migration preflight failed; no schema or data was changed: " + preflightIssues.join("; "),
+    );
   const [sessionColumns] = await connection.query(
     "SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA=? AND TABLE_NAME='play_sessions'",
     [db],
@@ -128,9 +174,16 @@ if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) 
     );
   const connection = await mysql.createConnection(url);
   try {
-    const pending = await migrate(connection, { apply });
-    console.log(JSON.stringify({ apply, pending }));
-    if (!apply && pending.length) process.exitCode = 2;
+    if (process.argv.includes("--preflight")) {
+      const files = await migrate(connection, { apply: false });
+      const issues = await preflight(connection, files);
+      console.log(JSON.stringify({ pending: files, issues }));
+      if (issues.length) process.exitCode = 2;
+    } else {
+      const pending = await migrate(connection, { apply });
+      console.log(JSON.stringify({ apply, pending }));
+      if (!apply && pending.length) process.exitCode = 2;
+    }
   } finally {
     await connection.end();
   }

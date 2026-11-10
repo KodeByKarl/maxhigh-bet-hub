@@ -134,7 +134,7 @@ export async function runIntegration() {
       "INSERT INTO platform_settings(id,maintenance_mode,min_deposit,max_deposit,min_withdraw,max_withdraw) VALUES ('default','no',1,1000000,1,1000000) ON DUPLICATE KEY UPDATE maintenance_mode='no',min_withdraw=1,min_deposit=1",
     );
     await db.query(
-      "INSERT INTO risk_controls(id,max_single_bet,max_daily_payout,max_weekly_limit,auto_flag_large_wins,large_win_threshold) VALUES ('default',10000,1000000,1000000,'yes',100) ON DUPLICATE KEY UPDATE max_single_bet=10000,max_daily_payout=1000000,max_weekly_limit=1000000",
+      "INSERT INTO risk_controls(id,max_single_bet,max_daily_payout,max_weekly_limit,auto_flag_large_wins,large_win_threshold) VALUES ('default',10000,1000000,1000000,'yes',100) ON DUPLICATE KEY UPDATE max_single_bet=10000,max_daily_payout=1000000,max_weekly_limit=1000000,large_win_threshold=100",
     );
     await db.query(
       "INSERT INTO game_controls(game_id,enabled) VALUES ('golden-panther','yes') ON DUPLICATE KEY UPDATE enabled='yes',engine_config=NULL",
@@ -381,6 +381,18 @@ export async function runIntegration() {
         await denied(rpc("goldenPantherSpinFn", { bet: 1, ante: false }, bettor));
       } finally {
         await db.query("UPDATE platform_settings SET maintenance_mode='no' WHERE id='default'");
+      }
+      // Regression: a present table with the singleton row missing must also fail closed (no debit).
+      const [[savedRisk]] = await db.query("SELECT * FROM risk_controls WHERE id='default'");
+      await db.query("DELETE FROM risk_controls WHERE id='default'");
+      try {
+        const [[before]] = await db.query("SELECT COUNT(*) AS n FROM transactions WHERE user_id=?", [bettor.id]);
+        await denied(rpc("goldenPantherSpinFn", { bet: 1, ante: false }, bettor));
+        assert.equal(await balance(bettor), 100);
+        const [[after]] = await db.query("SELECT COUNT(*) AS n FROM transactions WHERE user_id=?", [bettor.id]);
+        assert.equal(after.n, before.n);
+      } finally {
+        await db.query("INSERT INTO risk_controls SET ?", [savedRisk]);
       }
       await db.query("RENAME TABLE risk_controls TO audit_risk_paused");
       try {

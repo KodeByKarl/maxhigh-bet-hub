@@ -29,6 +29,13 @@
       "when": 1794142504797,
       "tag": "0003_rapid_quentin_quire",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "5",
+      "when": 1794142600000,
+      "tag": "0004_seed_default_risk_controls",
+      "breakpoints": true
     }
   ]
 }
