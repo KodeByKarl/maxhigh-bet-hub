@@ -1,0 +1,20 @@
+{
+ "generatedUtc": "2026-11-09T19:26:03.490Z",
+ "sourceCommit": "22d37cc176a361c7bfb74809be3e49419af3afc0",
+ "branch": "uat/wild-panther-calibration",
+ "note": "UNCOMMITTED files outside this commit were NOT built into a clean worktree; the digest below is of the local working-tree build (.output).",
+ "buildDigestSha256": "c4dd9b1978bdcbc795b909c2eee7005102cd575eff84421e6a3ef534e4ff8aa6",
+ "evidence": {
+  "rtp-validation/validate-FINAL-MAIN.json": "d80ab327d5263aa952cca90a0e5b128b86742f82592871b9cc16fdd5018fd835",
+  "rtp-validation/validate-FINAL-ANTE.json": "2fc93c38e57ea3c5c052e9c9bddb3e313e621b3caca991575cdf0438cc2c7eef",
+  "wild-panther-calibration-result.json": "31d9f7ffc7b0be817856c8191ec095a5a4661a0bfae9925a4ddf8840909b7ced",
+  "colorgame-perf/colorgame-perf-after2-run1-Color-Game-Pro.json": "4c662c631f1b270f0b00cde039e7eecff6bfb71a7c86737a32125d486061332a",
+  "release-clone-100-r1/summary.json": "00b25ba52f05cf822fb0d16f3dbc909d4dfdc7fcfbe60dec1c52b98d0637ce81",
+  "release-clone-100-r2/summary.json": "77a01d9db0eed4af0913a9cc547abe5e069864cf7a179fb571064fdfafdf28cc",
+  "release-security/security-results.json": "570d60756de80df3dc1e13cff7a78e9e77f8be7519824906d7c388c9a377d633",
+  "release-browser/browser-results.json": "0ad27b0e2a91b3980273ba417993c54cca7e199df2921ebc1bab5e45e424dc9f",
+  "unit-tests-final2.txt": "80bf3295c60559b1c45af41e5a202f4d4b6ed4ed495a3282eac20cecbe8f8505",
+  "test-migrations-final.txt": "4516e728a80d86b260aab8160dbee8b8b9da34a38a45f19c714e96ac10f9a7f0",
+  "test-integration-final.txt": "ee1161b5bab6f8ed503f7574cb88a1e38f4ba01daf8beb34844d4545e57a5590"
+ }
+}
