@@ -47,6 +47,7 @@ console.log(JSON.stringify(rows));
 const distinct = new Set(rows.map((r) => r.bet));
 if (distinct.size < 3) problems.push(`only ${distinct.size} distinct bets reached`);
 if (rows.some((r) => !(r.price > 0) || !r.freeSpins10)) problems.push("a dialog lacked a price or FREE SPINS 10");
-if (new Set(rows.map((r) => r.ratio)).size !== 1) problems.push("price is not proportional to the bet: " + rows.map((r) => `${r.bet}->${r.price}`).join(", "));
+const unit = rows[0] ? rows[0].price / rows[0].bet : NaN; // displayed prices are rounded, so allow a few centavos
+if (rows.some((r) => Math.abs(r.price - r.bet * unit) > 0.05)) problems.push("price is not proportional to the bet: " + rows.map((r) => `${r.bet}->${r.price}`).join(", "));
 console.log(problems.length ? "FAIL  " + problems.join("; ") : `PASS  price follows the bet: ${rows.map((r) => `bet ${r.bet} -> price ${r.price}`).join(" | ")}`);
 process.exit(problems.length ? 1 : 0);
