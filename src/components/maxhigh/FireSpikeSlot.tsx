@@ -1,4 +1,4 @@
-import { SlotControlDeck } from "./SlotControlDeck";
+import { FireControls as SlotControlDeck } from "./fire-spike/FireControls";
 /**
  * Fire Spike slot UI — owns its own spin state machine.
  * No shared async playback from other games (CNY / Mahjong / Frontier).
@@ -7,14 +7,12 @@ import { SlotControlDeck } from "./SlotControlDeck";
  * A single runId cancels stale timers. Highlights clear on every step change + on done.
  */
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Volume2, VolumeX } from "lucide-react";
 import { toast } from "sonner";
 import { fireSpikeSpinFn, getFireSpikeEngineConfigFn } from "@/functions/api";
 import { useAuth } from "@/lib/auth";
 import { FIRE_SPIKE_GAME_ID, type FireSpikeConfig, type FsSymKind } from "@/lib/fire-spike-config";
 import { cn } from "@/lib/utils";
 import { BET_STEPS, ANIM } from "./fire-spike/animationConfig";
-import { FireBorder } from "./fire-spike/FireBorder";
 import { ReelCell, type ReelPhase } from "./fire-spike/ReelCell";
 import { getFireSpikeConfig, setFireSpikeConfig } from "./fire-spike/runtimeConfig";
 import { planFireSpikePlayback, type FsPlaybackStep } from "./fire-spike/spinPlayback";
@@ -405,7 +403,10 @@ export function FireSpikeSlot({
   }
 
   return (
-    <div className="relative flex h-full w-full flex-col overflow-hidden bg-[#120806] text-white">
+    <div
+      data-fs-shell
+      className="relative flex h-full w-full flex-col overflow-hidden bg-[#120806] text-white"
+    >
       <style>{`
         @keyframes fs-reel-scroll-kf {
           from { transform: translateY(0); }
@@ -437,21 +438,18 @@ export function FireSpikeSlot({
         }}
       />
 
-      <header className="relative z-10 flex shrink-0 flex-col items-center gap-2.5 px-3 pt-3 sm:pt-4">
-        <FireBorder rounded="trap" thickness={3} className="w-full max-w-md">
-          <div className="px-5 py-2 text-center">
-            <p className="text-[9px] font-bold uppercase tracking-[0.28em] text-orange-400/90">
-              MaxHigh · Fire Spike
-            </p>
-            <h1 className="bg-gradient-to-r from-amber-200 via-orange-300 to-red-400 bg-clip-text text-xl font-black uppercase tracking-wide text-transparent sm:text-2xl">
-              Fire Spike
-            </h1>
-          </div>
-        </FireBorder>
+      <header className="fire-spike__header">
+        <span className="fire-spike__brand">MAXHIGH</span>
+        <h1>Fire Spike</h1>
+        <span className="fire-spike__header-rule" aria-hidden="true" />
       </header>
 
-      <div className="relative z-10 mx-auto flex min-h-0 w-full max-w-[1100px] flex-1 flex-col items-center justify-center px-2 py-2 sm:px-4">
+      <div
+        data-fs-stage
+        className="relative z-10 mx-auto flex min-h-0 w-full max-w-[1100px] flex-1 flex-col items-center justify-center px-2 py-2 sm:px-4"
+      >
         <div
+          data-fs-board-wrap
           className="flex w-full flex-col items-stretch"
           style={{
             width: `min(100%, calc((100dvh - 14rem) * ${cfg.reelsCount} / ${cfg.rowsCount}))`,
@@ -462,6 +460,7 @@ export function FireSpikeSlot({
             style={{ aspectRatio: `${cfg.reelsCount} / ${cfg.rowsCount}` }}
           >
             <div
+              data-fs-frame
               className="relative size-full rounded-[0.85rem] p-[5px] shadow-[0_18px_50px_rgba(234,88,12,0.55)] sm:rounded-[1.15rem] sm:p-[8px]"
               style={{
                 background:
@@ -469,6 +468,7 @@ export function FireSpikeSlot({
               }}
             >
               <div
+                data-fs-board
                 className="relative grid size-full gap-[2px] overflow-hidden rounded-[0.55rem] p-[2px] sm:gap-1 sm:rounded-[0.8rem] sm:p-1"
                 style={{
                   background: "linear-gradient(180deg,#2a1008 0%,#120806 100%)",
@@ -535,7 +535,10 @@ export function FireSpikeSlot({
             )}
           </div>
 
-          <p className="mt-1.5 shrink-0 text-center text-[10px] font-semibold uppercase tracking-wider text-orange-200/55 sm:text-[11px]">
+          <p
+            data-fs-paylines
+            className="mt-1.5 shrink-0 text-center text-[10px] font-semibold uppercase tracking-wider text-orange-200/55 sm:text-[11px]"
+          >
             10 lines · mix ≥6 · grand 25,000×
             {busy ? " · spinning…" : ""}
           </p>
