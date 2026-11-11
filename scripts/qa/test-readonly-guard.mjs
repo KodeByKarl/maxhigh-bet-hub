@@ -8,10 +8,19 @@ import path from "node:path";
 import { createRequire } from "node:module";
 import { GUARDED_CONTEXT_OPTIONS, installReadOnlyGuard } from "./lib/readonly-guard.mjs";
 
-const { chromium } = createRequire(path.join(process.env.PW_MODULE_DIR, "package.json"))("playwright-core");
+const { chromium } = createRequire(path.join(process.env.PW_MODULE_DIR, "package.json"))(
+  "playwright-core",
+);
 const hex = (c) => c.repeat(64);
-const READ = hex("a"), BUY = hex("b"), FAKE_GET = hex("c"), UNKNOWN = hex("d");
-const idToName = new Map([[READ, "getBalanceFn"], [BUY, "goldenPantherBuyFeatureFn"], [FAKE_GET, "getFakeThingFn"]]);
+const READ = hex("a"),
+  BUY = hex("b"),
+  FAKE_GET = hex("c"),
+  UNKNOWN = hex("d");
+const idToName = new Map([
+  [READ, "getBalanceFn"],
+  [BUY, "goldenPantherBuyFeatureFn"],
+  [FAKE_GET, "getFakeThingFn"],
+]);
 const readNames = new Set(["getBalanceFn"]); // getFakeThingFn matches get* but is not a declared read, so it must be refused
 
 function startServer(log) {
@@ -20,12 +29,24 @@ function startServer(log) {
     req.on("data", (d) => (body += d));
     req.on("end", () => {
       log.push({ method: req.method, path: req.url.split("?")[0], body: body.slice(0, 60) });
-      if (req.url === "/" || req.url.startsWith("/?")) { res.setHeader("content-type", "text/html"); res.end(PAGE); return; }
-      if (req.url.startsWith("/asset.js")) { res.setHeader("content-type", "text/javascript"); res.end("window.__asset=1"); return; }
-      res.setHeader("content-type", "application/json"); res.end("{}");
+      if (req.url === "/" || req.url.startsWith("/?")) {
+        res.setHeader("content-type", "text/html");
+        res.end(PAGE);
+        return;
+      }
+      if (req.url.startsWith("/asset.js")) {
+        res.setHeader("content-type", "text/javascript");
+        res.end("window.__asset=1");
+        return;
+      }
+      res.setHeader("content-type", "application/json");
+      res.end("{}");
     });
   });
-  server.on("upgrade", (req, sock) => { log.push({ method: "UPGRADE", path: req.url, body: "" }); sock.destroy(); });
+  server.on("upgrade", (req, sock) => {
+    log.push({ method: "UPGRADE", path: req.url, body: "" });
+    sock.destroy();
+  });
   return new Promise((r) => server.listen(0, "127.0.0.1", () => r(server)));
 }
 
@@ -54,44 +75,104 @@ window.run = async (O) => {
 };
 </script>`;
 
-async function battery(guarded) {
-  const log = [], otherLog = [];
-  const app = await startServer(log), other = await startServer(otherLog);
-  const origin = `http://127.0.0.1:${app.address().port}`, otherOrigin = `http://127.0.0.1:${other.address().port}`;
+async function battery(guarded, opts = {}) {
+  const log = [],
+    otherLog = [];
+  const app = await startServer(log),
+    other = await startServer(otherLog);
+  const origin = `http://127.0.0.1:${app.address().port}`,
+    otherOrigin = `http://127.0.0.1:${other.address().port}`;
   const browser = await chromium.launch({ executablePath: process.env.PW_CHROME });
   const ctx = await browser.newContext(guarded ? GUARDED_CONTEXT_OPTIONS : {});
-  const guard = guarded ? await installReadOnlyGuard(ctx, { origins: [origin], idToName, readNames, allowThirdPartyGet: false }) : null;
+  const guard = guarded
+    ? await installReadOnlyGuard(ctx, {
+        origins: [origin],
+        idToName,
+        readNames,
+        allowThirdPartyGet: false,
+        allowWebSocketHosts: opts.allowWs ? [new URL(origin).host] : [],
+      })
+    : null;
   const page = await ctx.newPage();
   await page.goto(origin + "/");
   await page.evaluate((o) => window.run(o), otherOrigin);
   await page.waitForTimeout(500);
-  await browser.close(); app.close(); other.close();
+  await browser.close();
+  app.close();
+  other.close();
   return { log, otherLog, guard };
 }
 
 // Control: without the guard the battery must leak, or the test proves nothing.
 const control = await battery(false);
 const leakedMethods = new Set(control.log.map((e) => e.method));
-for (const m of ["POST", "PUT", "PATCH", "DELETE"]) assert.ok(leakedMethods.has(m), `control run must reach the server with ${m}; the battery cannot detect leaks otherwise`);
-assert.ok(control.otherLog.some((e) => e.method === "POST"), "control: cross-origin POST must reach the other server");
-console.log(`PASS control (no guard): ${control.log.length} requests reached the server, including ${[...leakedMethods].filter((m) => !["GET", "HEAD"].includes(m)).join(", ")}`);
+for (const m of ["POST", "PUT", "PATCH", "DELETE"])
+  assert.ok(
+    leakedMethods.has(m),
+    `control run must reach the server with ${m}; the battery cannot detect leaks otherwise`,
+  );
+assert.ok(
+  control.otherLog.some((e) => e.method === "POST"),
+  "control: cross-origin POST must reach the other server",
+);
+console.log(
+  `PASS control (no guard): ${control.log.length} requests reached the server, including ${[...leakedMethods].filter((m) => !["GET", "HEAD"].includes(m)).join(", ")}`,
+);
 
 // Guarded run: only the allowed reads may arrive at either server.
 const g = await battery(true);
 const seen = g.log.map((e) => `${e.method} ${e.path}`);
-const allowedSeen = new Set(["GET /", "GET /asset.js", `GET /_serverFn/${READ}`, "GET /favicon.ico"]);
-for (const s of seen) assert.ok(allowedSeen.has(s), `guarded run: unexpected request reached the server: ${s}`);
+const allowedSeen = new Set([
+  "GET /",
+  "GET /asset.js",
+  `GET /_serverFn/${READ}`,
+  "GET /favicon.ico",
+]);
+for (const s of seen)
+  assert.ok(allowedSeen.has(s), `guarded run: unexpected request reached the server: ${s}`);
 assert.ok(seen.includes(`GET /_serverFn/${READ}`), "the declared read function must still work");
 assert.ok(seen.includes("GET /"), "the page itself must load");
-assert.equal(g.log.filter((e) => e.method === "UPGRADE").length, 0, "no websocket may reach the server");
+assert.equal(
+  g.log.filter((e) => e.method === "UPGRADE").length,
+  0,
+  "no websocket may reach the server",
+);
 assert.equal(g.otherLog.length, 0, "nothing may reach a third-party origin");
-assert.equal(seen.filter((s) => s === `GET /_serverFn/${READ}`).length, 1, "the method-override request on the read URL must not reach the server");
+assert.equal(
+  seen.filter((s) => s === `GET /_serverFn/${READ}`).length,
+  1,
+  "the method-override request on the read URL must not reach the server",
+);
 g.guard.assertNothingMutating();
 const rep = g.guard.report();
-assert.ok(rep.blocked >= 14, `guard should have refused at least 14 requests, refused ${rep.blocked}`);
+assert.ok(
+  rep.blocked >= 14,
+  `guard should have refused at least 14 requests, refused ${rep.blocked}`,
+);
 const whys = new Set(g.guard.blocked.map((b) => b.why));
 for (const expect of ["non-GET method", "unknown server function id", "method override header"])
   assert.ok(whys.has(expect), `expected a refusal for: ${expect}`);
-assert.ok([...whys].some((w) => /not a declared read function/.test(w)), "a get*-named function that is not declared GET must be refused");
-console.log(`PASS guarded: server saw only [${[...new Set(seen)].join(", ")}]; guard refused ${rep.blocked} requests (${[...whys].join("; ")}); no mutating response observed`);
+assert.ok(
+  [...whys].some((w) => /not a declared read function/.test(w)),
+  "a get*-named function that is not declared GET must be refused",
+);
+console.log(
+  `PASS guarded: server saw only [${[...new Set(seen)].join(", ")}]; guard refused ${rep.blocked} requests (${[...whys].join("; ")}); no mutating response observed`,
+);
+// Opt-in WebSocket allowance (used only for the local harness hot-reload socket): the socket may connect, everything else stays refused.
+const w = await battery(true, { allowWs: true });
+assert.ok(
+  w.log.some((e) => e.method === "UPGRADE"),
+  "with the opt-in, the allowed host's websocket must reach the server",
+);
+assert.equal(
+  w.log.filter((e) => !["GET", "UPGRADE"].includes(e.method)).length,
+  0,
+  "with the websocket opt-in, still no mutating request may reach the server",
+);
+assert.equal(w.otherLog.length, 0, "the opt-in must not open any third-party origin");
+w.guard.assertNothingMutating();
+console.log(
+  "PASS websocket opt-in: only the allowed host's socket connects; all mutating requests still refused",
+);
 console.log("read-only guard verified");

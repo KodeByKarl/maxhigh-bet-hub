@@ -19,7 +19,8 @@ export function loadServerFnIds(ssrDir) {
   const map = new Map();
   for (const file of fs.readdirSync(ssrDir).filter((x) => x.endsWith(".mjs"))) {
     const text = fs.readFileSync(path.join(ssrDir, file), "utf8");
-    for (const m of text.matchAll(/id:\s*"([a-f0-9]{64})",\s*name:\s*"([^"]+)"/g)) map.set(m[1], m[2]);
+    for (const m of text.matchAll(/id:\s*"([a-f0-9]{64})",\s*name:\s*"([^"]+)"/g))
+      map.set(m[1], m[2]);
   }
   return map;
 }
@@ -33,7 +34,10 @@ export function readFunctionNamesFromSource(srcDir) {
       if (e.isDirectory()) walk(p);
       else if (/\.tsx?$/.test(e.name)) {
         const s = fs.readFileSync(p, "utf8");
-        for (const m of s.matchAll(/export const (\w+)\s*=\s*createServerFn\(\{\s*method:\s*"GET"/g)) names.add(m[1]);
+        for (const m of s.matchAll(
+          /export const (\w+)\s*=\s*createServerFn\(\{\s*method:\s*"GET"/g,
+        ))
+          names.add(m[1]);
       }
     }
   };
@@ -41,7 +45,10 @@ export function readFunctionNamesFromSource(srcDir) {
   return names;
 }
 
-export async function installReadOnlyGuard(context, { origins, idToName, readNames, allowThirdPartyGet = true }) {
+export async function installReadOnlyGuard(
+  context,
+  { origins, idToName, readNames, allowThirdPartyGet = true, allowWebSocketHosts = [] },
+) {
   const blocked = [];
   const allowed = { page: 0, asset: 0, readRpc: 0, thirdParty: 0 };
   const origin = (u) => new URL(u).origin;
@@ -56,7 +63,8 @@ export async function installReadOnlyGuard(context, { origins, idToName, readNam
       return route.abort("blockedbyclient");
     };
     if (method !== "GET" && method !== "HEAD") return deny("non-GET method");
-    if ("x-http-method-override" in headers || "x-method-override" in headers) return deny("method override header");
+    if ("x-http-method-override" in headers || "x-method-override" in headers)
+      return deny("method override header");
     let o;
     try {
       o = origin(url);
@@ -72,7 +80,8 @@ export async function installReadOnlyGuard(context, { origins, idToName, readNam
     if (rpc) {
       const name = idToName.get(rpc[1]);
       if (!name) return deny("unknown server function id");
-      if (!readNames.has(name) || !/^(get|list)[A-Z]/.test(name)) return deny(`server function ${name} is not a declared read function`);
+      if (!readNames.has(name) || !/^(get|list)[A-Z]/.test(name))
+        return deny(`server function ${name} is not a declared read function`);
       allowed.readRpc++;
       return route.continue();
     }
@@ -82,7 +91,13 @@ export async function installReadOnlyGuard(context, { origins, idToName, readNam
   });
   // Sockets are never needed for read-only capture.
   if (typeof context.routeWebSocket === "function") {
+    const wsHosts = new Set(allowWebSocketHosts);
     await context.routeWebSocket(/.*/, (ws) => {
+      // Opt-in only (e.g. the local dev server's hot-reload socket on the harness origin); every other socket is closed.
+      if (wsHosts.has(new URL(ws.url()).host)) {
+        ws.connectToServer();
+        return;
+      }
       blocked.push({ method: "WS", url: ws.url().slice(0, 160), why: "websocket" });
       ws.close();
     });
@@ -91,7 +106,8 @@ export async function installReadOnlyGuard(context, { origins, idToName, readNam
   const leaked = [];
   context.on("response", (res) => {
     const m = res.request().method().toUpperCase();
-    if (m !== "GET" && m !== "HEAD") leaked.push(`${m} ${res.url().slice(0, 120)} -> ${res.status()}`);
+    if (m !== "GET" && m !== "HEAD")
+      leaked.push(`${m} ${res.url().slice(0, 120)} -> ${res.status()}`);
   });
   return {
     blocked,
@@ -99,7 +115,10 @@ export async function installReadOnlyGuard(context, { origins, idToName, readNam
     leaked,
     report: () => ({ blocked: blocked.length, allowed: { ...allowed }, leaked: leaked.length }),
     assertNothingMutating() {
-      if (leaked.length) throw new Error("READ-ONLY GUARD FAILURE, a mutating request received a response: " + leaked.join("; "));
+      if (leaked.length)
+        throw new Error(
+          "READ-ONLY GUARD FAILURE, a mutating request received a response: " + leaked.join("; "),
+        );
     },
   };
 }
