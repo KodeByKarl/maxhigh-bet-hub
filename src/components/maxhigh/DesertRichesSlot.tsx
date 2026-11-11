@@ -1,4 +1,4 @@
-import { SlotControlDeck } from "./SlotControlDeck";
+import { DesertControls as SlotControlDeck } from "./desert-riches/DesertControls";
 /**
  * Desert Riches — 7×4 cluster-pay tumble slot (panther rectangle board).
  * Engine resolves spins instantly; this file plays back the animation script.
