@@ -10,7 +10,7 @@ import {
 import { motion, useReducedMotion } from "framer-motion";
 import {
   buyBonusTotal,
-  buyBonusUnitPrice,
+  buyBonusUnitPriceText,
   clampBuyBonusQuantity,
   type BuyBonusQuantitySpec,
 } from "@/lib/buy-bonus";
@@ -86,7 +86,7 @@ export function BuyBonusModal({
   );
   const [qtyText, setQtyText] = useState(String(qty));
   const mult = pricePerUnitMult(qty);
-  const unitPrice = buyBonusUnitPrice(bet, mult);
+  const unitPrice = buyBonusUnitPriceText(bet, mult);
   const price = buyBonusTotal(bet, mult, qty);
   const betIdx = betOptions ? betOptions.findIndex((b) => b === bet) : -1;
   const setQuantity = (q: number) => {
@@ -334,12 +334,12 @@ export function BuyBonusModal({
                 <div className="bb-rows">
                   <div>
                     <em>Price</em>
-                    <strong data-bb="unit-price">₱ {formatPrice(unitPrice)}</strong>
+                    <strong data-bb="unit-price">₱ {unitPrice}</strong>
                   </div>
                   <div className="bb-total-row">
                     <em>Total Price</em>
                     <strong className="bb-price" data-bb="total-price">
-                      ₱ {formatPrice(price)}
+                      ₱ {price.toFixed(2)}
                     </strong>
                   </div>
                 </div>

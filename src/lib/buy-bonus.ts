@@ -84,14 +84,64 @@ export function resolveBuyBonusQuantity(
   return n;
 }
 
-/** Total wallet deduction: identical formula on server and client so displayed and charged prices always match. */
-export function buyBonusTotal(bet: number, pricePerUnitMult: number, quantity: number): number {
-  return +(bet * pricePerUnitMult * quantity).toFixed(2);
+/**
+ * Exact decimal parsing: the shortest decimal that round-trips the number (what the player sees and the config stores),
+ * as an integer numerator over a power of ten. This avoids binary floating-point errors such as 1.005 * 100 = 100.49999999999999.
+ */
+function decimalParts(x: number): { n: bigint; k: number } {
+  if (!Number.isFinite(x) || x < 0) throw new Error("Invalid amount");
+  let t = String(x);
+  if (/e/i.test(t)) t = x.toFixed(12).replace(/0+$/, "").replace(/\.$/, "");
+  const [whole, frac = ""] = t.split(".");
+  return { n: BigInt(whole + frac), k: frac.length };
 }
 
-/** Price of a single unit at `bet` (display). */
+/** Product of non-negative factors in exact decimal arithmetic, rounded half-up to whole centavos (returned as a 2-dp number). */
+export function exactProduct2(...factors: number[]): number {
+  let num = 1n;
+  let k = 0;
+  for (const f of factors) {
+    const d = decimalParts(f);
+    num *= d.n;
+    k += d.k;
+  }
+  const den = 10n ** BigInt(k);
+  const cents = (num * 200n + den) / (2n * den); // floor((2 * num * 100 + den) / (2 * den)) = round half up
+  const whole = cents / 100n;
+  const rem = cents % 100n;
+  return Number(`${whole}.${rem.toString().padStart(2, "0")}`);
+}
+
+/** Total wallet deduction: identical formula on server and client so displayed and charged prices always match. */
+export function buyBonusTotal(bet: number, pricePerUnitMult: number, quantity: number): number {
+  return exactProduct2(bet, pricePerUnitMult, quantity);
+}
+
+/** Price of a single unit at `bet`, rounded to the centavo (numeric form). */
 export function buyBonusUnitPrice(bet: number, pricePerUnitMult: number): number {
-  return +(bet * pricePerUnitMult).toFixed(2);
+  return exactProduct2(bet, pricePerUnitMult);
+}
+
+/**
+ * Unit price for display at its true precision (at least 2 decimals, at most 6, trailing zeros trimmed beyond 2). Showing the exact unit price
+ * keeps "price x quantity = total" readable when bet x multiplier has sub-centavo digits (e.g. 6.25 x 42.5 = 265.625; 3 x 265.625 = 796.875 -> 796.88).
+ */
+export function buyBonusUnitPriceText(bet: number, pricePerUnitMult: number): string {
+  const a = decimalParts(bet);
+  const b = decimalParts(pricePerUnitMult);
+  const num = a.n * b.n;
+  const k = a.k + b.k;
+  const digits = num.toString().padStart(k + 1, "0");
+  const whole = k === 0 ? digits : digits.slice(0, digits.length - k);
+  let frac = k === 0 ? "" : digits.slice(digits.length - k);
+  if (frac.length > 6) {
+    // beyond 6 decimals: round half-up at the 6th
+    const scaled = (num * 2n * 10n ** 6n + 10n ** BigInt(k)) / (2n * 10n ** BigInt(k));
+    const sd = scaled.toString().padStart(7, "0");
+    return `${sd.slice(0, -6)}.${sd.slice(-6).replace(/0+$/, "").padEnd(2, "0")}`;
+  }
+  frac = frac.replace(/0+$/, "").padEnd(2, "0");
+  return `${whole}.${frac}`;
 }
 
 /** @deprecated kept for older call sites: use resolveBuyBonusQuantity(gameId, …). */
