@@ -149,6 +149,8 @@ function RealmsTable({ def }: { def: RealmsGameDef }) {
   const [lastWin, setLastWin] = useState(0);
   const [freeSpins, setFreeSpins] = useState(0);
   const [fsPlayed, setFsPlayed] = useState(0);
+  /** False until the stored bonus session has been read, so a paid feature that is still open can't be bypassed by an early click. */
+  const [sessionReady, setSessionReady] = useState(false);
   /** True from the confirmed purchase until the Free Spins announcement is dismissed: the HUD counter stays hidden meanwhile. */
   const [buyPresenting, setBuyPresenting] = useState(false);
   const [inFree, setInFree] = useState(false);
@@ -392,6 +394,7 @@ function RealmsTable({ def }: { def: RealmsGameDef }) {
     void getRealmsSessionFn({ data: { gameId } })
       .then((session) => {
         if (!mountedRef.current) return;
+        setSessionReady(true);
         if (!session.sessionId || session.freeSpinsLeft <= 0) {
           playSessionIdRef.current = null;
           setInFree(false);
@@ -415,6 +418,7 @@ function RealmsTable({ def }: { def: RealmsGameDef }) {
       })
       .catch((err) => {
         console.error(`[${gameId}] session load failed`, err);
+        if (mountedRef.current) setSessionReady(true);
       });
     return () => {
       mountedRef.current = false;
@@ -1132,7 +1136,7 @@ function RealmsTable({ def }: { def: RealmsGameDef }) {
             }
             freeSpinsPaused={fsPaused}
             autoRemaining={remainingAutoSpins}
-            spinDisabled={!busy && !autoSpin && inFree && freeSpins === 0}
+            spinDisabled={!sessionReady || (!busy && !autoSpin && inFree && freeSpins === 0)}
             onSpin={() => {
               if (busy) {
                 skipRef.current = true;
@@ -1168,7 +1172,9 @@ function RealmsTable({ def }: { def: RealmsGameDef }) {
               }
             }}
             buyFeature={
-              !inFree ? { price: buyCost, disabled: busy, onClick: openBuyFeature } : undefined
+              !inFree
+                ? { price: buyCost, disabled: busy || !sessionReady, onClick: openBuyFeature }
+                : undefined
             }
           />
         </div>

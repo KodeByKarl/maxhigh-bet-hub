@@ -18,9 +18,13 @@ ok("first free spin shows 1/10 both before and during the spin");
 const seen: string[] = [];
 for (let k = 1; k <= 10; k++) {
   seen.push(formatFreeSpinsProgress(freeSpinsProgress(k, 10 - k, true))!);
-  if (k < 10) assert.equal(formatFreeSpinsProgress(freeSpinsProgress(k, 10 - k, false)), `${k + 1}/10`);
+  if (k < 10)
+    assert.equal(formatFreeSpinsProgress(freeSpinsProgress(k, 10 - k, false)), `${k + 1}/10`);
 }
-assert.deepEqual(seen, Array.from({ length: 10 }, (_, i) => `${i + 1}/10`));
+assert.deepEqual(
+  seen,
+  Array.from({ length: 10 }, (_, i) => `${i + 1}/10`),
+);
 ok("progression 1/10 .. 10/10 while playing; the next spin is announced as n+1 between spins");
 
 // The scatter-trigger moment consumes NO free spin: with nothing played the counter never advances past 1.
@@ -46,4 +50,20 @@ assert.equal(freeSpinsProgress(0, 0, false), null);
 assert.equal(freeSpinsProgress(Number.NaN, Number.NaN, true), null);
 assert.equal(formatFreeSpinsProgress(null), null);
 ok("finished feature rests on N/N; empty or invalid input renders no counter");
-console.log("PASS 5 bonus-progress checks");
+// Recovery: a session re-opened from the server carries (fsSpinsPlayed, freeSpinsLeft) and must give the same n/N the live round showed.
+// Aurora example: 3 spins bought, 1 played before a reload / dropped response -> played 1, left 2 -> next spin is 2/3.
+assert.equal(formatFreeSpinsProgress(freeSpinsProgress(1, 2, false)), "2/3");
+assert.equal(formatFreeSpinsProgress(freeSpinsProgress(0, 2, false)), "1/2"); // paid, nothing played yet (interrupted purchase response)
+assert.equal(formatFreeSpinsProgress(freeSpinsProgress(5, 8, false)), "6/13"); // recovered after a +3 retrigger had settled
+assert.equal(formatFreeSpinsProgress(freeSpinsProgress(29, 1, false)), "30/30"); // last spin under the 30-spin session cap
+// the live view and the recovered view agree at every point of a 12-spin session with a retrigger on spin 5
+for (let played = 0; played < 16; played++) {
+  const left = (played < 5 ? 12 : 16) - played;
+  const live = freeSpinsProgress(played + 1, left - 1, true)!; // while spin played+1 is in flight (server already settled it)
+  const recovered = freeSpinsProgress(played, left, false)!; // page re-opened just before that spin
+  assert.equal(recovered.current, live.current);
+}
+ok(
+  "recovered sessions (reload, interrupted request, re-entry, after retrigger) show the same n/N as the live round",
+);
+console.log("PASS 6 bonus-progress checks");
