@@ -374,9 +374,9 @@ export async function runIntegration() {
         await db.query("UPDATE risk_controls SET max_single_bet=10000 WHERE id='default'");
       }
     });
-    await test("Buy Bonus awards exactly 10 free spins: any other quantity is refused with no debit and no session", async () => {
+    await test("Buy Bonus quantity is validated per game spec: out-of-range or non-integer quantity is refused with no debit and no session", async () => {
       const buyer = await user("fixed10", "player", 100000);
-      for (const quantity of [1, 5, 9, 11, 25, 50, 0, -10]) {
+      for (const quantity of [0, -10, 26, 50, 2.5, "x", null]) {
         await denied(rpc("goldenPantherBuyFeatureFn", { bet: 5, mode: "normal", quantity }, buyer));
       }
       assert.equal(await balance(buyer), 100000);
