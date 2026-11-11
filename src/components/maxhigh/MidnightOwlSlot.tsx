@@ -1,4 +1,4 @@
-import { SlotControlDeck } from "./SlotControlDeck";
+import { OwlControls } from "./midnight-owl/OwlControls";
 /**
  * Panther Peak — Sweet Bonanza layout (cluster-pay tumble slot).
  * Engine resolves spins instantly; this file plays back the animation script.
@@ -977,6 +977,7 @@ export function MidnightOwlSlot({
   return (
     <div
       className="relative flex h-full min-h-0 w-full max-w-[100vw] flex-col overflow-hidden select-none"
+      data-owl-slot
       style={themeVars}
     >
       <img
@@ -1003,30 +1004,14 @@ export function MidnightOwlSlot({
       </button>
 
       {/* Playfield — sit above Android 3-button nav (safe-area is often 0 there) */}
-      <div className="relative z-10 flex min-h-0 flex-1 flex-col px-1.5 pt-[max(0.25rem,env(safe-area-inset-top))] pb-[max(3.25rem,env(safe-area-inset-bottom))] sm:items-center sm:justify-center sm:px-3 sm:py-2 sm:pb-2">
-        <div className="mx-auto flex h-full min-h-0 w-full max-w-[840px] flex-col">
+      <div className="relative z-10 flex min-h-0 flex-1 flex-col px-1.5 pt-[max(0.25rem,env(safe-area-inset-top))] pb-[max(3.25rem,env(safe-area-inset-bottom))] sm:items-center sm:px-3 sm:py-2 sm:pb-2">
+        <div className="owl-group mx-auto flex h-full min-h-0 w-full max-w-[840px] flex-col justify-center">
           {/* Board well — hug the grid (no tall empty temple box) */}
-          <div className="relative flex min-h-0 w-full flex-1 items-center justify-center">
+          <div className="owl-stage relative flex min-h-0 w-full flex-none items-center justify-center">
             <div
-              className="relative flex max-h-full max-w-full flex-col overflow-hidden rounded-[1.25rem] p-1.5 sm:rounded-2xl sm:p-2"
-              style={{
-                width: "fit-content",
-                height: "fit-content",
-                background:
-                  "linear-gradient(180deg, var(--p-well-top) 0%, var(--p-well-bottom) 100%)",
-                boxShadow:
-                  "inset 0 0 0 1.5px var(--p-rim), inset 0 0 40px rgba(0,0,0,0.35), 0 12px 36px rgba(0,0,0,0.45)",
-              }}
+              className="relative flex max-h-full max-w-full flex-col"
+              style={{ width: "fit-content", height: "fit-content" }}
             >
-              <div
-                className="pointer-events-none absolute inset-x-0 top-0 z-0 h-16"
-                style={{
-                  background:
-                    "radial-gradient(ellipse at 50% 0%, var(--p-top-glow) 0%, transparent 70%)",
-                }}
-                aria-hidden
-              />
-
               <div className="relative z-10 flex max-h-full max-w-full items-center justify-center">
                 {showTumbleBadge && (
                   <div className="pointer-events-none absolute left-1/2 top-1 z-20 -translate-x-1/2">
@@ -1062,7 +1047,7 @@ export function MidnightOwlSlot({
           {/* Buy feature — compact on phones so the spin row stays on-screen */}
 
           {/* HUD — compact on Android so Spin sits above the system nav */}
-          <SlotControlDeck
+          <OwlControls
             gameId="midnight-owl"
             bet={totalBet}
             win={displayWin}

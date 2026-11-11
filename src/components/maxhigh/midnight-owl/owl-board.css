@@ -1,0 +1,246 @@
+/*
+ * Midnight Owl — "Celestial Eclipse / Astral Observatory" board.
+ * Midnight sapphire backing, platinum engraving, orbit rings and faceted crystal diamond tiles.
+ * Presentation only; every selector is scoped to the Midnight Owl board classes.
+ */
+.owl-observatory {
+  --owl-plat-hi: #f2f5ff;
+  --owl-plat: #aab4d2;
+  --owl-plat-lo: #5b6690;
+  --owl-sapphire-hi: #26397e;
+  --owl-sapphire: #101c4b;
+  --owl-sapphire-lo: #070d2a;
+  --owl-pad: clamp(8px, 2.6vw, 16px);
+  --owl-chamfer: clamp(12px, 3.6vw, 22px);
+  position: relative;
+  /* Board width follows the viewport but leaves room for the console beneath it. */
+  width: min(98vw, calc((100dvh - 19.5rem) * 5 / 5.3), 40rem);
+  margin-inline: auto;
+  padding: var(--owl-pad);
+  isolation: isolate;
+  filter: drop-shadow(0 12px 22px rgb(0 0 0 / 0.6)) drop-shadow(0 0 16px rgb(110 130 255 / 0.22));
+}
+/* platinum rim, then sapphire face, both with notched corners */
+.owl-observatory::before,
+.owl-observatory::after {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  clip-path: polygon(
+    var(--owl-chamfer) 0,
+    calc(100% - var(--owl-chamfer)) 0,
+    100% var(--owl-chamfer),
+    100% calc(100% - var(--owl-chamfer)),
+    calc(100% - var(--owl-chamfer)) 100%,
+    var(--owl-chamfer) 100%,
+    0 calc(100% - var(--owl-chamfer)),
+    0 var(--owl-chamfer)
+  );
+}
+.owl-observatory::before {
+  inset: 0;
+  background: linear-gradient(
+    135deg,
+    var(--owl-plat-hi) 0%,
+    var(--owl-plat) 18%,
+    var(--owl-plat-lo) 40%,
+    var(--owl-plat) 62%,
+    var(--owl-plat-hi) 82%,
+    var(--owl-plat-lo) 100%
+  );
+}
+.owl-observatory::after {
+  inset: 2.5px;
+  background:
+    radial-gradient(ellipse 70% 60% at 50% 38%, rgb(70 96 190 / 0.38), transparent 70%),
+    linear-gradient(180deg, #0c1540 0%, var(--owl-sapphire-lo) 100%);
+  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.06);
+}
+
+.owl-observatory__orbits {
+  position: absolute;
+  inset: 3px;
+  width: calc(100% - 6px);
+  height: calc(100% - 6px);
+  z-index: 0;
+  pointer-events: none;
+  fill: none;
+  stroke: rgb(196 208 245 / 0.2);
+  stroke-width: 1;
+  vector-effect: non-scaling-stroke;
+}
+.owl-observatory__orbits ellipse {
+  vector-effect: non-scaling-stroke;
+}
+.owl-observatory__orbits ellipse:nth-child(2) {
+  stroke-dasharray: 2 5;
+  stroke: rgb(196 208 245 / 0.26);
+}
+.owl-observatory__orbits circle {
+  fill: #dfe7ff;
+  stroke: none;
+  filter: drop-shadow(0 0 3px rgb(190 205 255 / 0.9));
+}
+
+/* engraved four-point star at each corner */
+.owl-observatory__star {
+  position: absolute;
+  z-index: 2;
+  width: clamp(11px, 3.4vw, 17px);
+  aspect-ratio: 1;
+  pointer-events: none;
+  background: radial-gradient(circle, #fff 0 14%, #c9d3f5 15% 40%, #7f8cbc 41% 100%);
+  clip-path: polygon(50% 0, 62% 38%, 100% 50%, 62% 62%, 50% 100%, 38% 62%, 0 50%, 38% 38%);
+  filter: drop-shadow(0 0 4px rgb(160 180 255 / 0.8));
+}
+.owl-observatory__star--tl {
+  top: calc(var(--owl-pad) * -0.15);
+  left: calc(var(--owl-pad) * -0.15);
+}
+.owl-observatory__star--tr {
+  top: calc(var(--owl-pad) * -0.15);
+  right: calc(var(--owl-pad) * -0.15);
+}
+.owl-observatory__star--bl {
+  bottom: calc(var(--owl-pad) * -0.15);
+  left: calc(var(--owl-pad) * -0.15);
+}
+.owl-observatory__star--br {
+  bottom: calc(var(--owl-pad) * -0.15);
+  right: calc(var(--owl-pad) * -0.15);
+}
+
+/* Cells are tall enough for the symbols; the diamond fills the cell so tips touch. */
+.owl-observatory__grid {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  aspect-ratio: 5 / 5.2;
+  gap: 0;
+}
+
+/* ---- crystal diamond tile ---- */
+.owl-gem {
+  position: absolute;
+  inset: 0.5%;
+  clip-path: polygon(50% 0, 100% 50%, 50% 100%, 0 50%);
+  /* platinum rim */
+  background: linear-gradient(
+    135deg,
+    #e6ecff 0%,
+    #8d99c4 24%,
+    #4a5582 50%,
+    #aab5da 74%,
+    #4a5582 100%
+  );
+}
+.owl-gem::before,
+.owl-gem::after {
+  content: "";
+  position: absolute;
+  clip-path: polygon(50% 0, 100% 50%, 50% 100%, 0 50%);
+}
+/* sapphire glass interior */
+.owl-gem::before {
+  inset: 2.6%;
+  background:
+    radial-gradient(ellipse 46% 34% at 50% 30%, rgb(92 120 225 / 0.38), transparent 72%),
+    radial-gradient(circle at 50% 54%, #16235e 0%, #0a1238 56%, #040720 100%);
+}
+/* facets + lunar highlight on the upper-left planes */
+.owl-gem::after {
+  inset: 2.6%;
+  background:
+    linear-gradient(
+      135deg,
+      rgb(226 234 255 / 0.2) 0%,
+      rgb(226 234 255 / 0.03) 30%,
+      transparent 40%
+    ),
+    linear-gradient(315deg, rgb(2 4 24 / 0.55) 0%, transparent 40%),
+    conic-gradient(
+      from 0deg at 50% 50%,
+      rgb(255 255 255 / 0.05) 0 12.5%,
+      transparent 12.5% 25%,
+      rgb(255 255 255 / 0.035) 25% 37.5%,
+      transparent 37.5% 50%,
+      rgb(255 255 255 / 0.05) 50% 62.5%,
+      transparent 62.5% 75%,
+      rgb(255 255 255 / 0.035) 75% 87.5%,
+      transparent 87.5% 100%
+    );
+}
+.owl-cell[data-lit] .owl-gem {
+  background: linear-gradient(135deg, #fff 0%, #dfd2ff 40%, #9a86ff 100%);
+  animation: owl-gem-lit 0.9s ease-in-out infinite alternate;
+}
+.owl-cell[data-lit] .owl-gem::before {
+  background:
+    radial-gradient(ellipse 60% 46% at 50% 38%, rgb(196 181 253 / 0.8), transparent 74%),
+    radial-gradient(circle at 50% 56%, #4a4fc0 0%, #231d6e 62%, #120e45 100%);
+}
+@keyframes owl-gem-lit {
+  from {
+    filter: brightness(1);
+  }
+  to {
+    filter: brightness(1.28) saturate(1.15);
+  }
+}
+
+/* ---- symbol ---- */
+.owl-sym {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  user-select: none;
+}
+.owl-sym__img {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  height: auto;
+  max-width: none;
+  translate: -50% -50%;
+  filter: drop-shadow(0 2px 4px rgb(2 4 20 / 0.7));
+}
+.owl-sym[data-kind="lollipop"] .owl-sym__img {
+  filter: drop-shadow(0 0 7px var(--p-accent)) drop-shadow(0 2px 4px rgb(2 4 20 / 0.7));
+}
+.owl-sym[data-kind="bomb"] .owl-sym__img {
+  filter: drop-shadow(0 0 7px var(--p-bomb-from)) drop-shadow(0 2px 4px rgb(2 4 20 / 0.7));
+}
+.owl-sym[data-lit] .owl-sym__img {
+  filter: brightness(1.2) saturate(1.2) drop-shadow(0 0 8px #b7a8ff);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .owl-cell[data-lit] .owl-gem {
+    animation: none;
+    filter: brightness(1.2);
+  }
+}
+
+/*
+ * The shared skin layer tags any reel grid with data-gs-board and then clips every cell to a plain diamond, paints a flat accent fill and
+ * scales the symbol image to 66%. This board draws its own crystal tile and sizes its own symbols, so opt out for Midnight Owl only.
+ */
+[data-game-view="midnight-owl"] [data-gs-board] > .owl-cell {
+  clip-path: none !important;
+  border-width: 0 !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  background: none !important;
+  background-image: none !important;
+}
+[data-game-view="midnight-owl"] [data-gs-board] > .owl-cell::after {
+  content: none !important;
+}
+[data-game-view="midnight-owl"] [data-gs-board] img.owl-sym__img {
+  scale: 1 !important;
+  translate: -50% -50% !important;
+}
+[data-game-view="midnight-owl"] [data-gs-board] {
+  gap: 0 !important;
+}

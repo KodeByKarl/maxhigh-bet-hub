@@ -2,7 +2,7 @@ import { memo } from "react";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { ANIM } from "./animationConfig";
-import { PantherIcon } from "./PantherIcon";
+import { OwlSymbol } from "./OwlSymbol";
 import type { BoardCell } from "./types";
 import { COLS } from "./types";
 
@@ -38,7 +38,7 @@ function reelCellPropsEqual(prev: ReelCellProps, next: ReelCellProps): boolean {
   return !cellPhaseRelevant(prev, prev.phase) && !cellPhaseRelevant(next, next.phase);
 }
 
-/** Soft rounded square — indigo night tile. */
+/** Faceted sapphire crystal tile (diamond) with an oversized, centred symbol. Presentation only. */
 export const ReelCell = memo(function ReelCell({
   index,
   cell,
@@ -67,24 +67,17 @@ export const ReelCell = memo(function ReelCell({
   return (
     <div
       className={cn(
-        "relative min-h-0 min-w-0 overflow-hidden rounded-2xl isolate",
-        "border-[3px] bg-[#0a0a1a]/95 shadow-[0_4px_16px_rgba(0,0,0,0.5),inset_0_0_14px_rgba(99,102,241,0.18)]",
+        "owl-cell relative isolate min-h-0 min-w-0 overflow-hidden",
         isScatter || isWinLit ? "z-[3]" : isInitialDrop || isGravityDrop ? "z-[1]" : "z-0",
         isWinLit && "scale-[1.04]",
       )}
-      style={{
-        borderColor: isWinLit
-          ? "var(--p-accent-soft)"
-          : "color-mix(in srgb, var(--p-accent) 70%, transparent)",
-        boxShadow: isWinLit
-          ? "0 0 18px var(--p-spin-shadow), inset 0 0 14px rgba(165,180,252,0.35)"
-          : undefined,
-      }}
+      data-lit={isWinLit || undefined}
     >
+      <span className="owl-gem" aria-hidden="true" />
       {cell && (
         <motion.div
           key={cell.key}
-          className="absolute inset-0 flex items-center justify-center overflow-hidden rounded-2xl will-change-transform"
+          className="absolute inset-0 will-change-transform"
           initial={
             isInitialDrop || isGravityDrop
               ? {
@@ -136,17 +129,10 @@ export const ReelCell = memo(function ReelCell({
                   : { duration: 0.22, ease: [0.22, 1, 0.36, 1] }
           }
         >
-          <div className="absolute inset-[12%] flex items-center justify-center">
-            <PantherIcon
-              kind={cell.sym.kind}
-              mult={cell.mult}
-              winLit={isWinLit}
-              className="relative z-[1] size-full"
-            />
-          </div>
+          <OwlSymbol kind={cell.sym.kind} mult={cell.mult} winLit={isWinLit} />
           {isWinLit && perPay != null && perPay > 0 && (
             <span
-              className="absolute top-[12%] left-1/2 z-[2] -translate-x-1/2 whitespace-nowrap rounded-full border border-white/90 px-1.5 py-0.5 text-[8px] font-black tabular-nums shadow-sm sm:text-[10px]"
+              className="absolute top-[2%] left-1/2 z-[40] -translate-x-1/2 whitespace-nowrap rounded-full border border-white/90 px-1.5 py-0.5 text-[8px] font-black tabular-nums shadow-sm sm:text-[10px]"
               style={{
                 background:
                   "linear-gradient(180deg, var(--p-payout-from) 0%, var(--p-payout-to) 100%)",
