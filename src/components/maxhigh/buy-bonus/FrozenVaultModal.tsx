@@ -40,6 +40,8 @@ export type FrozenVaultModalProps = {
   pricePerUnitMult: (quantity: number) => number;
   balance: number;
   feature: FrozenVaultFeature;
+  /** Optional per-game dressing for the same dialog: a skin key (CSS hook) and the heading. Defaults to Aurora's Frozen Vault. */
+  variant?: { skin: string; title: string };
   onConfirm: (bet: number, quantity: number) => void;
   onCancel: () => void;
 };
@@ -71,6 +73,7 @@ export function FrozenVaultModal({
   pricePerUnitMult,
   balance,
   feature,
+  variant,
   onConfirm,
   onCancel,
 }: FrozenVaultModalProps) {
@@ -156,6 +159,7 @@ export function FrozenVaultModal({
       className="fv-overlay"
       data-buy-bonus-modal={theme.gameId}
       data-frozen-vault=""
+      data-fv-skin={variant?.skin}
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
@@ -205,7 +209,7 @@ export function FrozenVaultModal({
               <motion.header {...rise(0.04)} className="fv-head">
                 <p className="fv-kicker">{theme.gameName}</p>
                 <h2 id={titleId} className="fv-title">
-                  Frozen Vault
+                  {variant?.title ?? "Frozen Vault"}
                 </h2>
                 <p className="fv-sub">Buy Bonus</p>
               </motion.header>

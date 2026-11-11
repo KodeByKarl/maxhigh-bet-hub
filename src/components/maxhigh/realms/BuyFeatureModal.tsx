@@ -25,7 +25,10 @@ export type BuyFeatureModalProps = {
 };
 
 /** Titles with their own Buy Bonus presentation. Same contract (quantity rules, price formula, onConfirm), different look. */
-const VAULT_GAMES = new Set(["aurora-spire"]);
+const VAULT_GAMES: Record<string, { skin: string; title: string } | undefined> = {
+  "aurora-spire": undefined,
+  "comet-carnival": { skin: "comet", title: "Cosmic Core" },
+};
 
 /** Buy Bonus: the player picks bet and quantity at the title's own calibrated per-spin price. The server prices and validates the purchase. */
 export function BuyFeatureModal({
@@ -41,7 +44,7 @@ export function BuyFeatureModal({
   onCancel,
 }: BuyFeatureModalProps) {
   const spec = getBuyBonusSpec(def.id, maxQuantity).quantity;
-  if (VAULT_GAMES.has(def.id) && cfg) {
+  if (def.id in VAULT_GAMES && cfg) {
     return (
       <FrozenVaultModal
         theme={buyBonusThemeFromRealms(def, { backdrop: backdropSrc, symbolSrc: scatterSrc })}
@@ -50,6 +53,7 @@ export function BuyFeatureModal({
         quantity={spec}
         pricePerUnitMult={pricePerSpin}
         balance={balance}
+        variant={VAULT_GAMES[def.id]}
         feature={{
           scatterName: def.scatter.name,
           bombName: def.bomb.name,

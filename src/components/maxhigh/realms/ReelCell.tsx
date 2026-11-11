@@ -145,7 +145,7 @@ export const ReelCell = memo(function ReelCell({
                   : { duration: 0.22, ease: [0.22, 1, 0.36, 1] }
           }
         >
-          <div className="absolute inset-[8%] flex items-center justify-center">
+          <div className="realms-reel-art absolute inset-[8%] flex items-center justify-center">
             <SymbolIcon
               kind={cell.sym.kind}
               src={art[cell.sym.kind].src}

@@ -1,5 +1,7 @@
 import { SlotControlDeck } from "./SlotControlDeck";
 import "./realms/abyssal-pearls.css";
+import { CosmicControls } from "./comet-carnival/CosmicControls";
+import { CometIdentity } from "./comet-carnival/CometIdentity";
 import "./realms/illustrated-reels.css";
 /**
  * Realms family slot — one component for all 50 titles (cluster-pay tumble).
@@ -242,6 +244,32 @@ function RealmsTable({ def }: { def: RealmsGameDef }) {
             </div>
           ),
           { duration: isWin ? 1500 : 1000, position: "top-center", className: "abp-toast" },
+        );
+        return;
+      }
+      if (gameId === "comet-carnival") {
+        // The debit shown at spin start is a stake transaction, not the current Bet amount: label it as an event, top of screen.
+        const isWin = label !== "bet";
+        const title =
+          label === "scatter"
+            ? "Scatter credit"
+            : label === "cap"
+              ? "Win cap"
+              : isWin
+                ? "Win credited"
+                : "Stake placed";
+        const sign = label === "bet" || delta < 0 ? "−" : "+";
+        toast.custom(
+          () => (
+            <div className="cc-toast__pill" data-kind={isWin ? "win" : "bet"} role="status">
+              <span>{title}</span>
+              <strong>
+                {sign}
+                {abs}
+              </strong>
+            </div>
+          ),
+          { duration: isWin ? 1500 : 1000, position: "top-center", className: "cc-toast" },
         );
         return;
       }
@@ -1022,6 +1050,8 @@ function RealmsTable({ def }: { def: RealmsGameDef }) {
     turbo,
   ]);
 
+  const DeckComponent = gameId === "comet-carnival" ? CosmicControls : SlotControlDeck;
+
   const displayWin = dropTotal > 0 ? dropTotal : inFree ? fsSessionWin : lastWin;
   const showTumbleBadge = tumbleStepWin > 0 && (phase === "glow" || phase === "popping");
 
@@ -1055,12 +1085,13 @@ function RealmsTable({ def }: { def: RealmsGameDef }) {
       </button>
 
       {/* Playfield — sit above Android 3-button nav (safe-area is often 0 there) */}
-      <div className="relative z-10 flex min-h-0 flex-1 flex-col px-1.5 pt-[max(0.25rem,env(safe-area-inset-top))] pb-[max(3.25rem,env(safe-area-inset-bottom))] sm:items-center sm:justify-center sm:px-3 sm:py-2 sm:pb-2">
+      <div className="realms-playfield relative z-10 flex min-h-0 flex-1 flex-col px-1.5 pt-[max(0.25rem,env(safe-area-inset-top))] pb-[max(3.25rem,env(safe-area-inset-bottom))] sm:items-center sm:justify-center sm:px-3 sm:py-2 sm:pb-2">
         <div className="mx-auto flex h-full min-h-0 w-full max-w-[840px] flex-col">
+          {gameId === "comet-carnival" && <CometIdentity name={def.name} />}
           {/* Board well — hug the grid (no tall empty temple box) */}
-          <div className="relative flex min-h-0 w-full flex-1 items-center justify-center">
+          <div className="realms-stage relative flex min-h-0 w-full flex-1 items-center justify-center">
             <div
-              className="relative flex max-h-full max-w-full flex-col overflow-hidden rounded-[1.25rem] p-1.5 sm:rounded-2xl sm:p-2"
+              className="realms-well relative flex max-h-full max-w-full flex-col overflow-hidden rounded-[1.25rem] p-1.5 sm:rounded-2xl sm:p-2"
               style={{
                 width: "fit-content",
                 height: "fit-content",
@@ -1119,7 +1150,7 @@ function RealmsTable({ def }: { def: RealmsGameDef }) {
           {/* Buy feature — compact on phones so the spin row stays on-screen */}
 
           {/* HUD — compact on Android so Spin sits above the system nav */}
-          <SlotControlDeck
+          <DeckComponent
             gameId={gameId}
             bet={totalBet}
             win={displayWin}
