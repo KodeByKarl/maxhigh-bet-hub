@@ -165,7 +165,14 @@
 /* ───────── phones, landscape ───────── */
 @media (max-height: 500px) and (orientation: landscape) {
   [data-game-view] {
-    --m-spin: 68px;
+    --m-spin: 80px;
+  }
+  /* Buy Bonus stays reachable but never outweighs Spin in a short landscape deck */
+  [data-game-view] .slot-deck__bonus {
+    min-height: 44px;
+    max-height: 52px;
+    padding-top: 3px;
+    padding-bottom: 3px;
   }
   [data-game-view] .slot-deck {
     padding-left: max(9px, env(safe-area-inset-left));

@@ -133,8 +133,21 @@ for (const v of VIEWS) {
         timeout: 20000,
       })
       .catch(() => {});
-    await page.waitForTimeout(1800);
-    const m = await page.evaluate(measure);
+    let m;
+    try {
+      await page.waitForTimeout(1800);
+      m = await page.evaluate(measure);
+    } catch (e) {
+      report.push({
+        game: g,
+        view: v.name,
+        kind: "crash",
+        spin: null,
+        issues: ["page crashed: " + String(e).slice(0, 80)],
+      });
+      await page.close().catch(() => {});
+      continue;
+    }
     const issues = [];
     if (m.sw > m.vw + 1 || m.bodySw > m.vw + 1) issues.push(`horizontal overflow ${m.sw}>${m.vw}`);
     if (m.sh > m.vh + 1) issues.push(`page scrolls vertically ${m.sh}>${m.vh}`);
