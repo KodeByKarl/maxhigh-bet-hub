@@ -1,4 +1,3 @@
-import { SlotControlDeck } from "./SlotControlDeck";
 /**
  * Panther Peak — Sweet Bonanza layout (cluster-pay tumble slot).
  * Engine resolves spins instantly; this file plays back the animation script.
@@ -44,6 +43,9 @@ import { BuyFeatureModal } from "./ruby-raven/BuyFeatureModal";
 import { PaytableModal } from "./ruby-raven/PaytableModal";
 import { AutoSpinModal, type AutoSpinOptions } from "./ruby-raven/AutoSpinModal";
 import { ReelGrid, type ReelVisuals } from "./ruby-raven/ReelGrid";
+import { RavenThrone } from "./ruby-raven/RavenThrone";
+import { RavenFrame } from "./ruby-raven/RavenFrame";
+import "./ruby-raven/raven-citadel.css";
 import { rubyRavenTheme } from "./ruby-raven/theme";
 import { themeToCssVars } from "./panther-shared/theme";
 import { type ReelPhase } from "./ruby-raven/ReelCell";
@@ -1003,29 +1005,15 @@ export function RubyRavenSlot({
       </button>
 
       {/* Playfield — sit above Android 3-button nav (safe-area is often 0 there) */}
-      <div className="relative z-10 flex min-h-0 flex-1 flex-col px-1.5 pt-[max(0.25rem,env(safe-area-inset-top))] pb-[max(3.25rem,env(safe-area-inset-bottom))] sm:items-center sm:justify-center sm:px-3 sm:py-2 sm:pb-2">
-        <div className="mx-auto flex h-full min-h-0 w-full max-w-[840px] flex-col">
+      <div className="rr-playfield relative z-10 flex min-h-0 flex-1 flex-col px-1.5 pt-[max(0.25rem,env(safe-area-inset-top))] pb-[max(3.25rem,env(safe-area-inset-bottom))] sm:items-center sm:justify-center sm:px-3 sm:py-2 sm:pb-2">
+        <div className="rr-column mx-auto flex h-full min-h-0 w-full max-w-[840px] flex-col">
           {/* Board well — hug the grid (no tall empty temple box) */}
-          <div className="relative flex min-h-0 w-full flex-1 items-center justify-center">
+          <div className="rr-stage relative flex min-h-0 w-full flex-1 items-center justify-center">
             <div
-              className="relative flex max-h-full max-w-full flex-col overflow-hidden rounded-[1.25rem] p-1.5 sm:rounded-2xl sm:p-2"
-              style={{
-                width: "fit-content",
-                height: "fit-content",
-                background:
-                  "linear-gradient(180deg, var(--p-well-top) 0%, var(--p-well-bottom) 100%)",
-                boxShadow:
-                  "inset 0 0 0 1.5px var(--p-rim), inset 0 0 40px rgba(0,0,0,0.35), 0 12px 36px rgba(0,0,0,0.45)",
-              }}
+              className="rr-well relative flex max-h-full max-w-full flex-col"
+              style={{ width: "fit-content", height: "fit-content" }}
             >
-              <div
-                className="pointer-events-none absolute inset-x-0 top-0 z-0 h-16"
-                style={{
-                  background:
-                    "radial-gradient(ellipse at 50% 0%, var(--p-top-glow) 0%, transparent 70%)",
-                }}
-                aria-hidden
-              />
+              <RavenFrame />
 
               <div className="relative z-10 flex max-h-full max-w-full items-center justify-center">
                 {showTumbleBadge && (
@@ -1062,7 +1050,7 @@ export function RubyRavenSlot({
           {/* Buy feature — compact on phones so the spin row stays on-screen */}
 
           {/* HUD — compact on Android so Spin sits above the system nav */}
-          <SlotControlDeck
+          <RavenThrone
             gameId="ruby-raven"
             bet={totalBet}
             win={displayWin}

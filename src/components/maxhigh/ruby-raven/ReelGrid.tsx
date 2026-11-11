@@ -25,7 +25,7 @@ export const ReelGrid = memo(function ReelGrid({ visuals }: ReelGridProps) {
 
   return (
     <div
-      className="mx-auto grid aspect-[6/5] max-h-[min(62dvh,34rem)] w-[min(98vw,calc(62dvh*6/5),40rem)] gap-1 sm:max-h-[min(64dvh,38rem)] sm:w-[min(96vw,calc(64dvh*6/5),44rem)] sm:gap-1.5"
+      className="rr-board mx-auto grid aspect-[6/5] gap-1 sm:gap-1.5"
       style={{
         gridTemplateColumns: `repeat(${COLS}, minmax(0, 1fr))`,
         gridTemplateRows: `repeat(${ROWS}, minmax(0, 1fr))`,

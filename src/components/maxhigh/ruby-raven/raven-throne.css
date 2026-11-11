@@ -1,0 +1,452 @@
+/* Ruby Raven: the Raven's Ruby Throne control deck. Obsidian, dark silver, ruby. Everything is scoped to .rr-*. */
+.rr-deck {
+  --rr-ruby: #e11d48;
+  --rr-ruby-l: #ff8196;
+  --rr-ruby-d: #6d0b22;
+  --rr-silver: #aeb3bf;
+  --rr-silver-d: #3b3e47;
+  --rr-ink: #fff1f3;
+  --rr-glass: linear-gradient(180deg, #1b1c23 0%, #0b0b0f 55%, #050507 100%);
+  position: relative;
+  z-index: 5;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  width: 100%;
+  max-width: 460px;
+  margin-inline: auto;
+  padding: 0 4px;
+  color: var(--rr-ink);
+  font-family: Georgia, "Times New Roman", serif;
+}
+
+/* ───────── top: Treasury plates flanking the Raven Spin seal ───────── */
+.rr-top {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  align-items: center;
+  gap: 0;
+}
+.rr-plate {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  min-width: 0;
+  height: 52px;
+  padding: 6px 34px 6px 12px;
+  background: var(--rr-glass);
+  box-shadow:
+    inset 0 0 0 1px rgb(174 179 191 / 0.5),
+    inset 0 0 0 3px #050507,
+    inset 0 -10px 18px rgb(225 29 72 / 0.14),
+    0 6px 14px rgb(0 0 0 / 0.55);
+  clip-path: polygon(10px 0, 100% 0, calc(100% - 14px) 100%, 0 100%, 0 10px);
+}
+.rr-plate--r {
+  align-items: flex-end;
+  text-align: right;
+  padding: 6px 12px 6px 34px;
+  clip-path: polygon(14px 0, 100% 0, 100% 10px, calc(100% - 10px) 100%, 0 100%);
+}
+.rr-plate span,
+.rr-bet small,
+.rr-buy small {
+  font-size: 9.5px;
+  font-weight: 700;
+  white-space: nowrap;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #e7a8b3;
+  line-height: 1.1;
+}
+.rr-plate strong {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: clamp(14px, 4.1vw, 18px);
+  font-weight: 800;
+  line-height: 1.2;
+  font-variant-numeric: tabular-nums;
+  color: #fff;
+  text-shadow: 0 1px 0 #000;
+}
+.rr-plate--r[data-winning="true"] strong {
+  color: #ffd27a;
+  text-shadow:
+    0 0 10px rgb(255 160 60 / 0.55),
+    0 1px 0 #000;
+}
+
+/* ───────── the signature Spin: raven-wing seal around a ruby ───────── */
+.rr-spin {
+  position: relative;
+  z-index: 2;
+  width: 156px;
+  height: 97px;
+  margin: -6px -32px -2px;
+  padding: 0;
+  border: 0;
+  background: none;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  filter: drop-shadow(0 8px 10px rgb(0 0 0 / 0.65)) drop-shadow(0 0 14px rgb(225 29 72 / 0.35));
+  transition:
+    transform 0.14s ease,
+    filter 0.2s ease;
+}
+.rr-seal {
+  display: block;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+.rr-gem {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: rr-breathe 3.2s ease-in-out infinite;
+}
+.rr-spin__label {
+  position: absolute;
+  inset: 0;
+  top: 8%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+}
+.rr-spin__label b {
+  font-size: 15px;
+  font-weight: 900;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #fff;
+  text-shadow:
+    0 1px 0 #5a0719,
+    0 0 8px rgb(80 0 20 / 0.9);
+}
+.rr-spin__label small {
+  margin-top: -1px;
+  font-size: 9.5px;
+  font-weight: 800;
+  color: #ffe3e8;
+  text-shadow: 0 1px 2px #000;
+}
+.rr-spin:hover:not(:disabled) {
+  filter: drop-shadow(0 8px 10px rgb(0 0 0 / 0.65)) drop-shadow(0 0 20px rgb(255 70 100 / 0.6));
+}
+.rr-spin:active:not(:disabled) {
+  transform: scale(0.94) translateY(2px);
+  filter: drop-shadow(0 3px 5px rgb(0 0 0 / 0.7)) drop-shadow(0 0 24px rgb(255 90 120 / 0.8))
+    brightness(1.12);
+}
+.rr-spin[data-state="spinning"] .rr-gem,
+.rr-spin[data-state="auto"] .rr-gem {
+  animation: rr-pulse 0.9s ease-in-out infinite;
+}
+.rr-spin[data-state="spinning"] .rr-seal {
+  animation: rr-flap 0.9s ease-in-out infinite;
+}
+.rr-spin:disabled {
+  cursor: not-allowed;
+  filter: grayscale(0.85) brightness(0.6) drop-shadow(0 6px 8px rgb(0 0 0 / 0.6));
+}
+.rr-spin:disabled .rr-gem {
+  animation: none;
+}
+.rr-spin:focus-visible,
+.rr-deck button:focus-visible {
+  outline: 2px solid #ffd1d9;
+  outline-offset: 2px;
+}
+@keyframes rr-breathe {
+  50% {
+    filter: brightness(1.22) saturate(1.1);
+  }
+}
+@keyframes rr-pulse {
+  0%,
+  100% {
+    filter: brightness(1);
+    transform: scale(1);
+  }
+  50% {
+    filter: brightness(1.45) saturate(1.2);
+    transform: scale(1.06);
+  }
+}
+@keyframes rr-flap {
+  50% {
+    transform: scaleX(1.035) translateY(-1px);
+  }
+}
+
+/* ───────── lower rail: Buy Bonus · Bet selector · utility ───────── */
+.rr-rail {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  align-items: center;
+  gap: 8px;
+}
+.rr-buy {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  justify-self: start;
+  min-width: 0;
+  height: 40px;
+  padding: 0 16px 0 9px;
+  border: 0;
+  color: #ffe3e8;
+  text-align: left;
+  background: linear-gradient(180deg, #5b0f23, #2b0610);
+  box-shadow:
+    inset 0 0 0 1px rgb(255 129 150 / 0.55),
+    inset 0 0 0 3px #12040a,
+    0 4px 10px rgb(0 0 0 / 0.5);
+  clip-path: polygon(0 0, calc(100% - 10px) 0, 100% 50%, calc(100% - 10px) 100%, 0 100%);
+  cursor: pointer;
+}
+.rr-buy span {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+.rr-buy strong {
+  font-size: 12.5px;
+  font-weight: 800;
+  line-height: 1.15;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  color: #fff;
+}
+.rr-buy:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+.rr-buy--static {
+  cursor: default;
+  background: var(--rr-glass);
+  box-shadow:
+    inset 0 0 0 1px rgb(174 179 191 / 0.35),
+    inset 0 0 0 3px #050507;
+}
+
+.rr-bet {
+  display: grid;
+  grid-template-columns: 38px minmax(84px, 1fr) 38px;
+  align-items: center;
+  height: 44px;
+  padding: 0 2px;
+  background: var(--rr-glass);
+  box-shadow:
+    inset 0 0 0 1px rgb(174 179 191 / 0.55),
+    inset 0 0 0 3px #050507,
+    0 5px 12px rgb(0 0 0 / 0.55);
+  clip-path: polygon(
+    12px 0,
+    calc(100% - 12px) 0,
+    100% 50%,
+    calc(100% - 12px) 100%,
+    12px 100%,
+    0 50%
+  );
+}
+.rr-bet > button:not(.rr-bet__value) {
+  display: grid;
+  place-items: center;
+  height: 100%;
+  border: 0;
+  background: none;
+  cursor: pointer;
+}
+.rr-bet > button:not(.rr-bet__value) i {
+  position: relative;
+  isolation: isolate;
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  font-style: normal;
+  font-size: 18px;
+  font-weight: 900;
+  line-height: 1;
+  color: #fff;
+  text-shadow: 0 1px 1px #4a0716;
+}
+.rr-bet > button:not(.rr-bet__value) i::before {
+  content: "";
+  position: absolute;
+  inset: 4px;
+  z-index: -1;
+  background: linear-gradient(135deg, #ff6b86, #a50f2f 70%);
+  box-shadow:
+    0 0 0 1.5px #0b0b0f,
+    0 0 0 2.5px rgb(174 179 191 / 0.7);
+  transform: rotate(45deg);
+}
+.rr-bet > button:not(.rr-bet__value):active:not(:disabled) i {
+  filter: brightness(1.3);
+}
+.rr-bet__value {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  background: none;
+  color: inherit;
+  min-width: 0;
+}
+button.rr-bet__value {
+  cursor: pointer;
+}
+.rr-bet__value strong {
+  font-size: 15px;
+  font-weight: 800;
+  line-height: 1.1;
+  font-variant-numeric: tabular-nums;
+  color: #fff;
+}
+.rr-bet button:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.rr-util {
+  position: relative;
+  justify-self: end;
+}
+.rr-util__toggle {
+  display: grid;
+  place-items: center;
+  width: 42px;
+  height: 40px;
+  border: 0;
+  color: var(--rr-silver);
+  background: var(--rr-glass);
+  box-shadow:
+    inset 0 0 0 1px rgb(174 179 191 / 0.5),
+    inset 0 0 0 3px #050507,
+    0 4px 10px rgb(0 0 0 / 0.5);
+  clip-path: polygon(
+    10px 0,
+    100% 0,
+    100% calc(100% - 10px),
+    calc(100% - 10px) 100%,
+    0 100%,
+    0 10px
+  );
+  cursor: pointer;
+}
+.rr-util__toggle[data-on="true"] {
+  color: #ffb3c0;
+  box-shadow:
+    inset 0 0 0 1px rgb(255 129 150 / 0.85),
+    inset 0 0 0 3px #050507,
+    inset 0 -8px 12px rgb(225 29 72 / 0.4);
+}
+.rr-util__menu {
+  position: absolute;
+  right: 0;
+  bottom: calc(100% + 8px);
+  z-index: 20;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 132px;
+  padding: 6px;
+  border-radius: 8px;
+  background: linear-gradient(180deg, #1b1c23, #08080b);
+  box-shadow:
+    0 0 0 1px rgb(174 179 191 / 0.55),
+    0 12px 28px rgb(0 0 0 / 0.7);
+  animation: rr-pop 0.14s ease-out;
+}
+.rr-util__menu button {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  height: 38px;
+  padding: 0 12px;
+  border: 0;
+  border-radius: 6px;
+  background: none;
+  color: #f3e7ea;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  cursor: pointer;
+}
+.rr-util__menu button[aria-pressed="true"] {
+  color: #ff9db0;
+  background: rgb(225 29 72 / 0.18);
+}
+.rr-util__menu button:hover {
+  background: rgb(255 255 255 / 0.07);
+}
+@keyframes rr-pop {
+  from {
+    opacity: 0;
+    transform: translateY(4px) scale(0.96);
+  }
+}
+
+@media (max-width: 380px) {
+  .rr-spin {
+    width: 140px;
+    height: 87px;
+    margin-inline: -30px;
+  }
+  .rr-plate {
+    padding-inline: 10px 24px;
+  }
+  .rr-plate--r {
+    padding-inline: 24px 10px;
+  }
+  .rr-bet {
+    grid-template-columns: 34px minmax(70px, 1fr) 34px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .rr-gem,
+  .rr-spin .rr-seal,
+  .rr-util__menu {
+    animation: none !important;
+  }
+  .rr-spin {
+    transition: none;
+  }
+}
+
+@media (min-width: 640px) {
+  .rr-deck {
+    max-width: 580px;
+    gap: 8px;
+  }
+  .rr-plate {
+    height: 60px;
+  }
+  .rr-plate strong {
+    font-size: 20px;
+  }
+  .rr-spin {
+    width: 190px;
+    height: 118px;
+    margin-inline: -40px;
+  }
+  .rr-spin__label b {
+    font-size: 18px;
+  }
+  .rr-bet {
+    height: 50px;
+    grid-template-columns: 44px minmax(110px, 1fr) 44px;
+  }
+  .rr-buy,
+  .rr-util__toggle {
+    height: 46px;
+  }
+}

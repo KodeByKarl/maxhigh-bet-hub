@@ -38,7 +38,7 @@ function reelCellPropsEqual(prev: ReelCellProps, next: ReelCellProps): boolean {
   return !cellPhaseRelevant(prev, prev.phase) && !cellPhaseRelevant(next, next.phase);
 }
 
-/** Soft gem-radius square — crimson / rose tile. */
+/** Raven Sigil Medallion: obsidian disc, silver ring, ruby inlay (styled in raven-citadel.css). */
 export const ReelCell = memo(function ReelCell({
   index,
   cell,
@@ -67,24 +67,18 @@ export const ReelCell = memo(function ReelCell({
   return (
     <div
       className={cn(
-        "relative min-h-0 min-w-0 overflow-hidden rounded-[1.15rem] isolate",
-        "border-2 bg-[#1a060c]/95 shadow-[0_4px_14px_rgba(0,0,0,0.4),inset_0_0_14px_rgba(244,63,94,0.14)]",
+        "rr-cell relative min-h-0 min-w-0 isolate",
         isScatter || isWinLit ? "z-[3]" : isInitialDrop || isGravityDrop ? "z-[1]" : "z-0",
         isWinLit && "scale-[1.03]",
       )}
-      style={{
-        borderColor: isWinLit
-          ? "var(--p-accent-soft)"
-          : "color-mix(in srgb, var(--p-accent) 60%, transparent)",
-        boxShadow: isWinLit
-          ? "0 0 18px var(--p-spin-shadow), inset 0 0 14px rgba(251,113,133,0.35)"
-          : undefined,
-      }}
+      data-win={isWinLit}
+      data-scatter={isScatter}
     >
+      <span className="rr-cell__inlay" aria-hidden="true" />
       {cell && (
         <motion.div
           key={cell.key}
-          className="absolute inset-0 flex items-center justify-center overflow-hidden rounded-[1.15rem] will-change-transform"
+          className="rr-cell__art will-change-transform"
           initial={
             isInitialDrop || isGravityDrop
               ? {
@@ -136,7 +130,7 @@ export const ReelCell = memo(function ReelCell({
                   : { duration: 0.22, ease: [0.22, 1, 0.36, 1] }
           }
         >
-          <div className="absolute inset-[4%] flex items-center justify-center">
+          <div className="flex size-full items-center justify-center">
             <PantherIcon
               kind={cell.sym.kind}
               mult={cell.mult}
