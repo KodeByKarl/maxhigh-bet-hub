@@ -12,6 +12,9 @@ import { Input } from "@/components/ui/input";
 import { getRealmsEngineConfigFn } from "@/functions/realms";
 import { saveRealmsEngineConfigFn } from "@/functions/superadmin";
 import { FAMILY_NAME, getRealmsGame, realmsDefaultConfig } from "@/lib/realms";
+import { realmsBuyMaxQuantity, realmsBuyPricePerSpin } from "@/lib/realms";
+import { buyBonusTotal } from "@/lib/buy-bonus";
+import { formatMoney } from "@/lib/currency";
 import {
   BOMB_MULTS,
   bombTablePercents,
@@ -390,27 +393,31 @@ export function RealmsConfigModal({ game, open, onOpenChange, onPatchLobby }: Pr
                       label={`Trigger ${def.scatter.name}`}
                       value={cfg.freeSpinsTriggerCount}
                       onChange={(v) => set("freeSpinsTriggerCount", v)}
+                      hint={`How many ${def.scatter.name} symbols must land in one spin to start free spins. Example: ${cfg.freeSpinsTriggerCount} means landing ${cfg.freeSpinsTriggerCount} starts the bonus.`}
                     />
                     <NumField
                       label="Free spins awarded"
                       value={cfg.freeSpinsBase}
                       onChange={(v) => set("freeSpinsBase", v)}
+                      hint={`Spins given by a normal trigger. Example: ${cfg.freeSpinsBase} means the player gets ${cfg.freeSpinsBase} free spins.`}
                     />
                     <NumField
                       label="Retrigger scatters"
                       value={cfg.freeSpinsRetriggerCount}
                       onChange={(v) => set("freeSpinsRetriggerCount", v)}
+                      hint={`Scatters needed during free spins to add more spins. Example: ${cfg.freeSpinsRetriggerCount} scatters in one spin triggers a retrigger.`}
                     />
                     <NumField
                       label="Retrigger spins"
                       value={cfg.freeSpinsRetrigger}
                       onChange={(v) => set("freeSpinsRetrigger", v)}
+                      hint={`Extra spins added by each retrigger. Example: ${cfg.freeSpinsRetrigger} adds +${cfg.freeSpinsRetrigger} spins to the counter.`}
                     />
                     <NumField
                       label="Session cap (spins)"
                       value={cfg.maxFsSessionSpins}
                       onChange={(v) => set("maxFsSessionSpins", v)}
-                      hint="Hard stop on free spins + retriggers in one feature; also the most spins one Buy can purchase."
+                      hint={`Hard stop on free spins + retriggers in one feature; also the most spins one Buy can purchase. Example: ${cfg.maxFsSessionSpins} means a bonus never runs longer than ${cfg.maxFsSessionSpins} spins and a player can buy at most ${cfg.maxFsSessionSpins} at once.`}
                     />
                   </div>
                   <div className="grid grid-cols-2 gap-3 border-t border-white/10 pt-3">
@@ -418,18 +425,22 @@ export function RealmsConfigModal({ game, open, onOpenChange, onPatchLobby }: Pr
                       label={`Buy price per spin at the standard award (other quantities follow the calibrated curve) — calibrated ${defaults.buyFeatureMult}`}
                       value={cfg.buyFeatureMult}
                       onChange={(v) => set("buyFeatureMult", v)}
+                      hint={`Price of ONE free spin as a multiple of the bet, at the standard ${def.freeSpins}-spin award. Example: at a ₱1.00 bet, ${def.freeSpins} spins cost ${formatMoney(buyBonusTotal(1, realmsBuyPricePerSpin(def.id, cfg, def.freeSpins), def.freeSpins))}. Other quantities follow the calibrated curve (see the table below).`}
                     />
                     <NumField
                       label="Ante cost (× bet)"
                       value={cfg.anteBetMult}
                       onChange={(v) => set("anteBetMult", v)}
+                      hint={`Cost of playing with Ante on. Example: ${cfg.anteBetMult} at a ₱1.00 bet charges ${formatMoney(cfg.anteBetMult)} per spin.`}
                     />
                     <NumField
                       label={`Ante scatter boost — calibrated ${defaults.anteScatterWeightMult}`}
                       value={cfg.anteScatterWeightMult}
                       onChange={(v) => set("anteScatterWeightMult", v)}
+                      hint={`How much more often scatters land with Ante on. Example: ${cfg.anteScatterWeightMult} means about ${Math.round((cfg.anteScatterWeightMult - 1) * 100)}% more often.`}
                     />
                   </div>
+                  <BuyPriceTable id={def.id} cfg={cfg} />
                   <p className="text-[11px] text-muted-foreground">
                     Calibrated values return 96% RTP. Changing pays, weights, prices or the ante
                     boost moves RTP — re-run scripts/realms/calibrate-realms.ts after deliberate
@@ -442,6 +453,54 @@ export function RealmsConfigModal({ game, open, onOpenChange, onPatchLobby }: Pr
         </div>
       </DialogContent>
     </Dialog>
+  );
+}
+
+/** Live preview of what a player pays for Buy Bonus (same formula the server charges). Display only; edit the price above. */
+function BuyPriceTable({ id, cfg }: { id: string; cfg: RealmsConfig }) {
+  const maxQty = realmsBuyMaxQuantity(cfg);
+  const bets = [1, 2, 5, 10];
+  const quantities = [1, 3, 10].filter((q) => q <= maxQty);
+  return (
+    <div className="space-y-2 border-t border-white/10 pt-3">
+      <h5 className="text-xs font-bold text-amber-300">Buy Bonus price preview</h5>
+      <p className="text-[11px] text-muted-foreground">
+        Total = bet × price per spin × quantity. The player picks any bet on the fixed bet ladder
+        (₱0.20 – ₱100, same for all games) and a quantity of 1 – {maxQty} spins; the bets shown here
+        are only examples. The wallet is charged once, at this total.
+      </p>
+      <div className="overflow-x-auto">
+        <table className="w-full text-right text-[11px] tabular-nums">
+          <thead className="text-muted-foreground">
+            <tr>
+              <th className="py-1 pr-3 text-right font-bold">Base bet</th>
+              <th className="py-1 pr-3 text-right font-bold">Quantity (spins)</th>
+              <th className="py-1 pr-3 text-right font-bold">Price per spin</th>
+              <th className="py-1 text-right font-bold">Total wallet deduction</th>
+            </tr>
+          </thead>
+          <tbody>
+            {bets.flatMap((bet) =>
+              quantities.map((q) => {
+                const perSpin = realmsBuyPricePerSpin(id, cfg, q);
+                return (
+                  <tr key={`${bet}-${q}`} className="border-t border-white/5">
+                    <td className="py-1 pr-3">{formatMoney(bet)}</td>
+                    <td className="py-1 pr-3">{q}</td>
+                    <td className="py-1 pr-3">
+                      {formatMoney(bet * perSpin)} <span className="opacity-60">({perSpin}×)</span>
+                    </td>
+                    <td className="py-1 font-bold text-foreground">
+                      {formatMoney(buyBonusTotal(bet, perSpin, q))}
+                    </td>
+                  </tr>
+                );
+              }),
+            )}
+          </tbody>
+        </table>
+      </div>
+    </div>
   );
 }
 
