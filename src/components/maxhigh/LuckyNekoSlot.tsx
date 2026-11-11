@@ -1,4 +1,4 @@
-import { SlotControlDeck } from "./SlotControlDeck";
+import { NekoControlChamber } from "./lucky-neko/NekoControlChamber";
 /**
  * Lucky Neko — 6×6 cluster-pay tumble slot (panther square lucky grid).
  * Engine resolves spins instantly; this file plays back the animation script.
@@ -975,18 +975,16 @@ export function LuckyNekoSlot({
   const themeVars = themeToCssVars(theme);
 
   return (
-    <div
-      className="relative flex h-full min-h-0 w-full max-w-[100vw] flex-col overflow-hidden select-none"
-      style={themeVars}
-    >
+    <div className="nk-root" style={themeVars}>
       <img
         src={theme.assets.backdrop}
         alt=""
-        className="absolute inset-0 size-full object-cover"
+        className="nk-backdrop"
         aria-hidden
         decoding="async"
         fetchPriority="high"
       />
+      <div className="nk-vignette" aria-hidden />
 
       <button
         type="button"
@@ -1002,125 +1000,81 @@ export function LuckyNekoSlot({
         {muted ? <VolumeX size={16} /> : <Volume2 size={16} />}
       </button>
 
-      {/* Playfield — sit above Android 3-button nav (safe-area is often 0 there) */}
-      <div className="relative z-10 flex min-h-0 flex-1 flex-col px-1.5 pt-[max(0.25rem,env(safe-area-inset-top))] pb-[max(3.25rem,env(safe-area-inset-bottom))] sm:items-center sm:justify-center sm:px-3 sm:py-2 sm:pb-2">
-        <div className="mx-auto flex h-full min-h-0 w-full max-w-[840px] flex-col">
-          {/* Board well — hug the grid (no dual-grid temple layout) */}
-          <div className="relative flex min-h-0 w-full flex-1 items-center justify-center">
-            <div
-              className="relative flex max-h-full max-w-full flex-col overflow-hidden rounded-[1.25rem] p-1.5 sm:rounded-2xl sm:p-2"
-              style={{
-                width: "fit-content",
-                height: "fit-content",
-                background:
-                  "linear-gradient(180deg, var(--p-well-top) 0%, var(--p-well-bottom) 100%)",
-                boxShadow:
-                  "inset 0 0 0 1.5px var(--p-rim), inset 0 0 40px rgba(0,0,0,0.35), 0 12px 36px rgba(0,0,0,0.45)",
-              }}
-            >
-              <div
-                className="pointer-events-none absolute inset-x-0 top-0 z-0 h-16"
-                style={{
-                  background:
-                    "radial-gradient(ellipse at 50% 0%, var(--p-top-glow) 0%, transparent 70%)",
-                }}
-                aria-hidden
-              />
-
-              <div className="relative z-10 flex max-h-full max-w-full items-center justify-center">
-                {showTumbleBadge && (
-                  <div className="pointer-events-none absolute left-1/2 top-1 z-20 -translate-x-1/2">
-                    <div
-                      className="rounded-full border-2 px-4 py-1.5 text-center shadow-[0_0_20px_var(--p-spin-shadow)]"
-                      style={{
-                        borderColor: "var(--p-tumble-border)",
-                        background:
-                          "linear-gradient(180deg, var(--p-tumble-from) 0%, var(--p-tumble-to) 100%)",
-                      }}
-                    >
-                      <div
-                        className="text-[10px] font-black uppercase tracking-[0.18em]"
-                        style={{ color: "var(--p-accent-soft)" }}
-                      >
-                        Tumble Win
-                      </div>
-                      <div
-                        className="text-lg font-black leading-none tabular-nums sm:text-xl"
-                        style={{ color: "var(--p-tumble-text)" }}
-                      >
-                        {formatMoney(tumbleStepWin, { signed: true })}
-                      </div>
-                    </div>
-                  </div>
-                )}
-
-                <ReelGrid visuals={reelVisuals} />
-              </div>
-            </div>
+      <div className="nk-page">
+        <div className="nk-stage">
+          <div className="nk-plaque" aria-hidden>
+            <i />
+            <span>Lucky Neko</span>
+            <i />
           </div>
-
-          {/* Buy feature — compact on phones so the spin row stays on-screen */}
-
-          {/* HUD — compact on Android so Spin sits above the system nav */}
-          <SlotControlDeck
-            gameId="lucky-neko"
-            bet={totalBet}
-            win={displayWin}
-            balance={balance}
-            busy={busy}
-            turbo={turbo}
-            autoSpin={autoSpin}
-            inFree={inFree && triggerModalCount == null && !buyPresenting}
-            freeSpins={freeSpins}
-            freeSpinsProgress={
-              inFree && triggerModalCount == null && !buyPresenting
-                ? freeSpinsProgress(fsPlayed, freeSpins, busy)
-                : null
-            }
-            freeSpinsPaused={fsPaused}
-            autoRemaining={remainingAutoSpins}
-            spinDisabled={!busy && !autoSpin && inFree && freeSpins === 0}
-            onSpin={() => {
-              if (busy) {
-                skipRef.current = true;
-                if (inFree || freeSpins > 0) setFsPaused(true);
-              } else if (autoSpin) {
-                setAutoSpin(false);
-                setAutoSpinConfig(null);
-              } else if (inFree || freeSpins > 0) {
-                setFsPaused(false);
-                luckyNekoAudio.playUiClick();
-                void spin(true);
-              } else {
-                luckyNekoAudio.playUiClick();
-                void spin(false);
-              }
-            }}
-            onInfo={() => {
-              luckyNekoAudio.playUiClick();
-              setInfoOpen(true);
-            }}
-            onDecreaseBet={() => nudgeBet(-1)}
-            onIncreaseBet={() => nudgeBet(1)}
-            onSelectBet={() => setBetModalOpen(true)}
-            onTurbo={() => setTurbo((v) => !v)}
-            onAuto={() => {
-              if (busy || autoSpin || inFree) {
-                setAutoSpin(false);
-                setAutoSpinConfig(null);
-                skipRef.current = true;
-                if (inFree) setFsPaused(true);
-              } else {
-                setAutoSpinModalOpen(true);
-              }
-            }}
-            buyFeature={
-              !inFree
-                ? { price: buyCost, disabled: busy, onClick: () => openBuyFeature("normal") }
-                : undefined
-            }
-          />
+          <ReelGrid visuals={reelVisuals}>
+            {showTumbleBadge && (
+              <div className="nk-tumble">
+                <small>Tumble Win</small>
+                <strong>{formatMoney(tumbleStepWin, { signed: true })}</strong>
+              </div>
+            )}
+          </ReelGrid>
         </div>
+
+        <NekoControlChamber
+          gameId="lucky-neko"
+          bet={totalBet}
+          win={displayWin}
+          balance={balance}
+          busy={busy}
+          turbo={turbo}
+          autoSpin={autoSpin}
+          inFree={inFree && triggerModalCount == null && !buyPresenting}
+          freeSpins={freeSpins}
+          freeSpinsProgress={
+            inFree && triggerModalCount == null && !buyPresenting
+              ? freeSpinsProgress(fsPlayed, freeSpins, busy)
+              : null
+          }
+          freeSpinsPaused={fsPaused}
+          autoRemaining={remainingAutoSpins}
+          spinDisabled={!busy && !autoSpin && inFree && freeSpins === 0}
+          onSpin={() => {
+            if (busy) {
+              skipRef.current = true;
+              if (inFree || freeSpins > 0) setFsPaused(true);
+            } else if (autoSpin) {
+              setAutoSpin(false);
+              setAutoSpinConfig(null);
+            } else if (inFree || freeSpins > 0) {
+              setFsPaused(false);
+              luckyNekoAudio.playUiClick();
+              void spin(true);
+            } else {
+              luckyNekoAudio.playUiClick();
+              void spin(false);
+            }
+          }}
+          onInfo={() => {
+            luckyNekoAudio.playUiClick();
+            setInfoOpen(true);
+          }}
+          onDecreaseBet={() => nudgeBet(-1)}
+          onIncreaseBet={() => nudgeBet(1)}
+          onSelectBet={() => setBetModalOpen(true)}
+          onTurbo={() => setTurbo((v) => !v)}
+          onAuto={() => {
+            if (busy || autoSpin || inFree) {
+              setAutoSpin(false);
+              setAutoSpinConfig(null);
+              skipRef.current = true;
+              if (inFree) setFsPaused(true);
+            } else {
+              setAutoSpinModalOpen(true);
+            }
+          }}
+          buyFeature={
+            !inFree
+              ? { price: buyCost, disabled: busy, onClick: () => openBuyFeature("normal") }
+              : undefined
+          }
+        />
       </div>
 
       <AnimatePresence>

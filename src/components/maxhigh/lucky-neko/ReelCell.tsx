@@ -38,7 +38,7 @@ function reelCellPropsEqual(prev: ReelCellProps, next: ReelCellProps): boolean {
   return !cellPhaseRelevant(prev, prev.phase) && !cellPhaseRelevant(next, next.phase);
 }
 
-/** Soft rounded square — lucky neko tile well. */
+/** Lacquer tile — styling lives in neko-theme.css (.nk-cell). */
 export const ReelCell = memo(function ReelCell({
   index,
   cell,
@@ -67,24 +67,16 @@ export const ReelCell = memo(function ReelCell({
   return (
     <div
       className={cn(
-        "relative min-h-0 min-w-0 overflow-hidden rounded-2xl isolate",
-        "border-[3px] bg-[#0f0a12]/95 shadow-[0_4px_16px_rgba(0,0,0,0.5),inset_0_0_14px_rgba(244,114,182,0.16)]",
+        "nk-cell",
         isScatter || isWinLit ? "z-[3]" : isInitialDrop || isGravityDrop ? "z-[1]" : "z-0",
         isWinLit && "scale-[1.04]",
       )}
-      style={{
-        borderColor: isWinLit
-          ? "var(--p-accent-soft)"
-          : "color-mix(in srgb, var(--p-accent) 70%, transparent)",
-        boxShadow: isWinLit
-          ? "0 0 18px var(--p-spin-shadow), inset 0 0 14px rgba(251,207,232,0.35)"
-          : undefined,
-      }}
+      data-lit={isWinLit ? "true" : undefined}
     >
       {cell && (
         <motion.div
           key={cell.key}
-          className="absolute inset-0 flex items-center justify-center overflow-hidden rounded-2xl will-change-transform"
+          className="absolute inset-0 flex items-center justify-center overflow-hidden rounded-[inherit] will-change-transform"
           initial={
             isInitialDrop || isGravityDrop
               ? {
@@ -136,7 +128,7 @@ export const ReelCell = memo(function ReelCell({
                   : { duration: 0.22, ease: [0.22, 1, 0.36, 1] }
           }
         >
-          <div className="absolute inset-[12%] flex items-center justify-center">
+          <div className="absolute inset-[4%] flex items-center justify-center">
             <PantherIcon
               kind={cell.sym.kind}
               mult={cell.mult}
