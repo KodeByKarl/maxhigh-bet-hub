@@ -1,0 +1,550 @@
+/* Prosperity Lion — Imperial Fortune Palace. Presentation only; every rule is scoped to this game.
+   The 4×3 board (12 cells, row-major), symbol mapping and animations are untouched. */
+[data-game-view="prosperity-lion"] {
+  container-type: size;
+  --lion-gold-hi: #fff0b0;
+  --lion-gold: #e2b552;
+  --lion-gold-lo: #a8741e;
+  --lion-gold-dk: #4a2a08;
+  --lion-red: #a31d17;
+  --lion-red-dk: #560808;
+  --lion-jade: #2aa384;
+  --lion-jade-dk: #0a3a30;
+  --lion-ink: #12090a;
+  --lion-text: #fff3d1;
+  --lion-muted: #e6c98a;
+  --lion-fret: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 14 14'%3E%3Cpath d='M1.5 12.5V1.5h11v8H5V5.5h4' fill='none' stroke='%23f0cd78' stroke-width='1' stroke-linecap='square'/%3E%3C/svg%3E");
+  --lion-engrave: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cg fill='none' stroke='%23e8c36a' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cg%3E%3Ccircle cx='86' cy='50' r='7'/%3E%3Ccircle cx='81.2' cy='68' r='7'/%3E%3Ccircle cx='68' cy='81.2' r='7'/%3E%3Ccircle cx='50' cy='86' r='7'/%3E%3Ccircle cx='32' cy='81.2' r='7'/%3E%3Ccircle cx='18.8' cy='68' r='7'/%3E%3Ccircle cx='14' cy='50' r='7'/%3E%3Ccircle cx='18.8' cy='32' r='7'/%3E%3Ccircle cx='32' cy='18.8' r='7'/%3E%3Ccircle cx='50' cy='14' r='7'/%3E%3Ccircle cx='68' cy='18.8' r='7'/%3E%3Ccircle cx='81.2' cy='32' r='7'/%3E%3C/g%3E%3Ccircle cx='50' cy='50' r='25'/%3E%3Cpath d='M36 44q5-4 10 0M54 44q5-4 10 0M45 55h10l-5 6zM50 61v4M43 66q7 5 14 0M46 34h8M50 31v9'/%3E%3C/g%3E%3C/svg%3E");
+}
+
+/* ───────── composition: board + altar form one centred group ───────── */
+[data-game-view="prosperity-lion"] > div > .relative.z-10 {
+  padding: max(50px, env(safe-area-inset-top)) max(8px, env(safe-area-inset-right))
+    max(12px, env(safe-area-inset-bottom)) max(8px, env(safe-area-inset-left));
+}
+[data-game-view="prosperity-lion"] > div > button[title] {
+  width: 44px;
+  height: 44px;
+  border: 1.5px solid var(--lion-gold) !important;
+  background: radial-gradient(circle at 35% 30%, #1d6b57, var(--lion-jade-dk)) !important;
+  color: var(--lion-gold-hi) !important;
+  box-shadow:
+    0 0 0 2px var(--lion-gold-dk),
+    0 4px 10px #0009;
+}
+[data-game-view="prosperity-lion"] [data-gs-col] {
+  max-width: 640px;
+  align-items: center;
+  justify-content: center;
+  gap: 0;
+}
+[data-game-view="prosperity-lion"] [data-gs-col]::before {
+  content: "PROSPERITY LION";
+  flex: none;
+  margin: 0 0 16px;
+  padding: 0 18px;
+  font:
+    800 clamp(16px, 5cqw, 24px) / 1.1 "Songti SC",
+    "Noto Serif",
+    Georgia,
+    serif;
+  letter-spacing: 0.28em;
+  text-indent: 0.28em;
+  background: linear-gradient(
+    180deg,
+    var(--lion-gold-hi),
+    var(--lion-gold) 55%,
+    var(--lion-gold-lo)
+  );
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  filter: drop-shadow(0 2px 0 #3b0a09) drop-shadow(0 0 10px #d6261c88);
+}
+@container (max-height: 600px) {
+  [data-game-view="prosperity-lion"] [data-gs-col]::before {
+    display: none;
+  }
+}
+[data-game-view="prosperity-lion"] [data-gs-col] > :first-child {
+  flex: 0 1 auto;
+  width: auto;
+  filter: none;
+}
+
+/* ───────── reel frame: carved red lacquer, antique gold, jade inlay ───────── */
+[data-game-view="prosperity-lion"][data-frame] [data-gs-well] {
+  --gs-band: 0px;
+  margin: 0;
+  padding: 7px;
+  border: 10px solid transparent;
+  border-radius: 16px !important;
+  clip-path: none !important;
+  overflow: visible !important;
+  background:
+    radial-gradient(ellipse at 50% 0%, #c0392b55, transparent 62%) padding-box,
+    linear-gradient(180deg, #170b0d, #0b0608) padding-box,
+    var(--lion-fret) border-box,
+    linear-gradient(120deg, #ffffff22, transparent 28%) border-box,
+    linear-gradient(180deg, #b72d20 0%, #7d130f 48%, #560808 100%) border-box !important;
+  background-size:
+    auto,
+    auto,
+    14px 14px,
+    auto,
+    auto !important;
+  background-clip: padding-box, padding-box, border-box, border-box, border-box !important;
+  box-shadow:
+    0 0 0 1.5px var(--lion-gold-dk),
+    0 0 0 3.5px var(--lion-gold),
+    0 0 0 5px var(--lion-gold-dk),
+    0 18px 38px #000a !important;
+}
+/* inner rim: gold line on the lacquer edge with a jade inlay line beside it */
+[data-game-view="prosperity-lion"][data-frame] [data-gs-well]::before {
+  inset: -1px;
+  z-index: 3;
+  border: 1.5px solid var(--lion-gold);
+  border-radius: 8px;
+  background: none;
+  opacity: 1;
+  -webkit-mask: none;
+  mask: none;
+  box-shadow:
+    0 0 0 1.5px var(--lion-jade-dk),
+    0 0 0 3px #2aa38455,
+    inset 0 0 0 1.5px #0009,
+    inset 0 10px 22px #0008;
+}
+/* gilded corner brackets + guardian crest */
+[data-game-view="prosperity-lion"][data-frame] [data-gs-well]::after {
+  inset: -9px;
+  z-index: 4;
+  background-repeat: no-repeat;
+  background-size:
+    44px 44px,
+    44px 44px,
+    44px 44px,
+    44px 44px,
+    62px 24px;
+  background-position:
+    0 0,
+    100% 0,
+    0 100%,
+    100% 100%,
+    50% -2px;
+  background-image:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 48 48'%3E%3Cg fill='none' stroke-linecap='round'%3E%3Cpath d='M3 45V17C3 9 9 3 17 3H45' stroke='%234a2a08' stroke-width='6'/%3E%3Cpath d='M3 45V17C3 9 9 3 17 3H45' stroke='%23e2b552' stroke-width='3.6'/%3E%3Cpath d='M3 45V17C3 9 9 3 17 3H45' stroke='%23fff0b0' stroke-width='1' stroke-opacity='.8'/%3E%3C/g%3E%3Ccircle cx='11' cy='11' r='6' fill='%230b3b32' stroke='%23e2b552' stroke-width='2'/%3E%3Ccircle cx='11' cy='11' r='2.2' fill='%23d6261c'/%3E%3C/svg%3E"),
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 48 48'%3E%3Cg transform='matrix(-1 0 0 1 48 0)'%3E%3Cg fill='none' stroke-linecap='round'%3E%3Cpath d='M3 45V17C3 9 9 3 17 3H45' stroke='%234a2a08' stroke-width='6'/%3E%3Cpath d='M3 45V17C3 9 9 3 17 3H45' stroke='%23e2b552' stroke-width='3.6'/%3E%3Cpath d='M3 45V17C3 9 9 3 17 3H45' stroke='%23fff0b0' stroke-width='1' stroke-opacity='.8'/%3E%3C/g%3E%3Ccircle cx='11' cy='11' r='6' fill='%230b3b32' stroke='%23e2b552' stroke-width='2'/%3E%3Ccircle cx='11' cy='11' r='2.2' fill='%23d6261c'/%3E%3C/g%3E%3C/svg%3E"),
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 48 48'%3E%3Cg transform='matrix(1 0 0 -1 0 48)'%3E%3Cg fill='none' stroke-linecap='round'%3E%3Cpath d='M3 45V17C3 9 9 3 17 3H45' stroke='%234a2a08' stroke-width='6'/%3E%3Cpath d='M3 45V17C3 9 9 3 17 3H45' stroke='%23e2b552' stroke-width='3.6'/%3E%3Cpath d='M3 45V17C3 9 9 3 17 3H45' stroke='%23fff0b0' stroke-width='1' stroke-opacity='.8'/%3E%3C/g%3E%3Ccircle cx='11' cy='11' r='6' fill='%230b3b32' stroke='%23e2b552' stroke-width='2'/%3E%3Ccircle cx='11' cy='11' r='2.2' fill='%23d6261c'/%3E%3C/g%3E%3C/svg%3E"),
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 48 48'%3E%3Cg transform='matrix(-1 0 0 -1 48 48)'%3E%3Cg fill='none' stroke-linecap='round'%3E%3Cpath d='M3 45V17C3 9 9 3 17 3H45' stroke='%234a2a08' stroke-width='6'/%3E%3Cpath d='M3 45V17C3 9 9 3 17 3H45' stroke='%23e2b552' stroke-width='3.6'/%3E%3Cpath d='M3 45V17C3 9 9 3 17 3H45' stroke='%23fff0b0' stroke-width='1' stroke-opacity='.8'/%3E%3C/g%3E%3Ccircle cx='11' cy='11' r='6' fill='%230b3b32' stroke='%23e2b552' stroke-width='2'/%3E%3Ccircle cx='11' cy='11' r='2.2' fill='%23d6261c'/%3E%3C/g%3E%3C/svg%3E"),
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 24'%3E%3Cpath d='M2 22C16 21 20 14 24 9C27 5 30 3 32 3C34 3 37 5 40 9C44 14 48 21 62 22Z' fill='%23e2b552' stroke='%234a2a08' stroke-width='1.6'/%3E%3Cpath d='M12 21C22 19 26 12 32 8C38 12 42 19 52 21' fill='none' stroke='%23fff0b0' stroke-width='1' opacity='.85'/%3E%3Ccircle cx='32' cy='13' r='4.5' fill='%23c8231a' stroke='%23fff0b0' stroke-width='1.2'/%3E%3C/svg%3E");
+}
+/* board fills the frame; 4 columns × 3 rows template is the engine's own */
+[data-game-view="prosperity-lion"] [data-gs-board] {
+  width: min(calc(100cqw - 10px - 2 * 17px), calc((100cqh - 396px) * 4 / 3), 620px) !important;
+  max-height: none !important;
+  aspect-ratio: 4 / 3;
+  gap: clamp(4px, 1.4cqw, 9px) !important;
+}
+
+/* ───────── Imperial Guardian Medallions ───────── */
+[data-game-view="prosperity-lion"][data-board] [data-gs-board] > * {
+  border: 0 !important;
+  border-radius: 50% !important;
+  background-color: #07171a !important;
+  background-image:
+    var(--lion-engrave), radial-gradient(circle at 50% 36%, #1f6a58 0%, #0f3a33 46%, #07171a 100%) !important;
+  background-size:
+    74% 74%,
+    100% 100% !important;
+  background-position: center !important;
+  background-repeat: no-repeat !important;
+  box-shadow:
+    0 4px 9px #000a,
+    0 0 0 1px #000a !important;
+}
+/* ring: carved gold annulus with a thin red-enamel inlay */
+[data-game-view="prosperity-lion"][data-board] [data-gs-board] > *::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  border-radius: 50%;
+  pointer-events: none;
+  background: conic-gradient(
+    from 200deg,
+    #9a6513,
+    #ffe9a0 12%,
+    #d49a2c 28%,
+    #fff6c8 42%,
+    #b8801f 58%,
+    #ffe08a 74%,
+    #c28a22 88%,
+    #9a6513
+  );
+  -webkit-mask: radial-gradient(farthest-side, transparent 87.5%, #000 88.5%);
+  mask: radial-gradient(farthest-side, transparent 87.5%, #000 88.5%);
+}
+[data-game-view="prosperity-lion"][data-board] [data-gs-board] > *::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  border-radius: 50%;
+  pointer-events: none;
+  background:
+    radial-gradient(farthest-side, transparent 80.5%, #c8231ab0 81.5% 83%, transparent 84.5%),
+    radial-gradient(ellipse at 30% 16%, #ffffff26, transparent 42%),
+    radial-gradient(farthest-side, transparent 66%, #00000070 90%);
+}
+/* a win lights the ring and lifts the medallion */
+[data-game-view="prosperity-lion"][data-board] [data-gs-board] > .scale-\[1\.04\] {
+  box-shadow:
+    0 0 20px #ffcf5acc,
+    0 0 0 2px #ffe9a0 !important;
+}
+[data-game-view="prosperity-lion"][data-board] [data-gs-board] > .scale-\[1\.04\]::before {
+  filter: brightness(1.25) saturate(1.2);
+}
+
+/* symbols: reclaim the transparent padding so artwork fills ~80% of the interior */
+[data-game-view="prosperity-lion"] [data-gs-board] > * > div > div.absolute {
+  inset: 7% !important;
+}
+[data-game-view="prosperity-lion"] [data-gs-board] img {
+  padding: 0 !important;
+  scale: 1;
+  object-fit: contain;
+  object-position: center;
+}
+
+/* ───────── Imperial Guardian Control Altar ───────── */
+[data-game-view="prosperity-lion"] .lion-altar {
+  position: relative;
+  flex: none;
+  width: min(100%, 520px);
+  margin-top: 18px;
+  color: var(--lion-text);
+  font-family: ui-sans-serif, system-ui, sans-serif;
+  font-variant-numeric: tabular-nums;
+}
+/* neck joining the altar to the reel frame */
+[data-game-view="prosperity-lion"] .lion-altar::before {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: -17px;
+  width: 54px;
+  height: 17px;
+  translate: -50% 0;
+  clip-path: polygon(0 0, 100% 0, 78% 100%, 22% 100%);
+  background: linear-gradient(
+    180deg,
+    var(--lion-gold-lo),
+    var(--lion-gold) 40%,
+    var(--lion-gold-dk)
+  );
+}
+[data-game-view="prosperity-lion"] .lion-altar button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 44px;
+  min-height: 44px;
+  padding: 0;
+  cursor: pointer;
+  color: inherit;
+  font: inherit;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
+}
+[data-game-view="prosperity-lion"] .lion-altar button:focus-visible {
+  outline: 2px solid var(--lion-gold-hi);
+  outline-offset: 2px;
+}
+[data-game-view="prosperity-lion"] .lion-altar button:disabled {
+  cursor: not-allowed;
+  filter: grayscale(0.8) brightness(0.7);
+}
+
+/* treasury rail */
+[data-game-view="prosperity-lion"] .lion-altar__rail {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto;
+  align-items: stretch;
+  margin: 0 8px;
+  border-radius: 10px 10px 4px 4px;
+  background: linear-gradient(180deg, #7d130f, #3b0a09);
+  box-shadow:
+    0 0 0 1.5px var(--lion-gold),
+    0 0 0 3px var(--lion-gold-dk),
+    inset 0 1px 0 #ffffff33,
+    0 8px 16px #0008;
+}
+[data-game-view="prosperity-lion"] .lion-altar__plaque {
+  margin: 0;
+  min-width: 0;
+  padding: 9px 10px 10px;
+  text-align: center;
+}
+[data-game-view="prosperity-lion"] .lion-altar__plaque + .lion-altar__plaque,
+[data-game-view="prosperity-lion"] .lion-altar__plaque + .lion-altar__bonus {
+  border-left: 1px solid #e2b55266;
+}
+[data-game-view="prosperity-lion"] .lion-altar dt {
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--lion-muted);
+  line-height: 1.3;
+}
+[data-game-view="prosperity-lion"] .lion-altar dd {
+  margin: 1px 0 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: clamp(14px, 4.2cqw, 19px);
+  font-weight: 800;
+  line-height: 1.2;
+  color: #fff;
+}
+[data-game-view="prosperity-lion"] .lion-altar [data-winning="true"] dd {
+  color: var(--lion-gold-hi);
+  text-shadow: 0 0 10px #ffc94a;
+}
+[data-game-view="prosperity-lion"] .lion-altar__bonus {
+  gap: 6px;
+  padding: 0 12px;
+  border-radius: 0 9px 3px 0;
+  background: linear-gradient(
+    180deg,
+    var(--lion-gold-hi),
+    var(--lion-gold) 45%,
+    var(--lion-gold-lo)
+  );
+  color: #3b0a09 !important;
+  text-align: left;
+  box-shadow:
+    inset 0 1px 0 #fff9,
+    inset 0 -2px 0 #0004;
+}
+[data-game-view="prosperity-lion"] .lion-altar__bonus span {
+  display: grid;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  line-height: 1.25;
+}
+[data-game-view="prosperity-lion"] .lion-altar__bonus strong {
+  font-size: clamp(13px, 3.6cqw, 16px);
+  letter-spacing: 0;
+}
+
+/* dais: bet pillar · guardian seal · utility pillar */
+[data-game-view="prosperity-lion"] .lion-altar__dais {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  align-items: center;
+  gap: clamp(6px, 2cqw, 14px);
+  margin-top: 20px;
+}
+[data-game-view="prosperity-lion"] .lion-altar__pillar {
+  position: relative;
+  display: grid;
+  min-width: 0;
+  height: 152px;
+  padding: 3px;
+  border-radius: 14px 14px 6px 6px;
+  background: linear-gradient(180deg, #1c7360, var(--lion-jade-dk) 55%, #06231d);
+  box-shadow:
+    0 0 0 1.5px var(--lion-gold),
+    0 0 0 3px var(--lion-gold-dk),
+    inset 0 1px 0 #ffffff40,
+    0 8px 14px #0008;
+}
+/* roof eave */
+[data-game-view="prosperity-lion"] .lion-altar__pillar::before {
+  content: "";
+  position: absolute;
+  left: -5px;
+  right: -5px;
+  top: -6px;
+  height: 7px;
+  border-radius: 8px 8px 1px 1px;
+  background: linear-gradient(
+    180deg,
+    var(--lion-gold-hi),
+    var(--lion-gold) 50%,
+    var(--lion-gold-lo)
+  );
+  box-shadow: 0 1px 0 var(--lion-gold-dk);
+}
+[data-game-view="prosperity-lion"] .lion-altar__pillar button {
+  border-radius: 8px;
+  background: none;
+  color: var(--lion-gold-hi);
+  transition: background-color 0.12s;
+}
+[data-game-view="prosperity-lion"] .lion-altar__pillar button:active:not(:disabled) {
+  background: #00000055;
+}
+[data-game-view="prosperity-lion"] .lion-altar__bet {
+  grid-template-rows: minmax(44px, 1fr) auto minmax(44px, 1fr);
+}
+[data-game-view="prosperity-lion"] .lion-altar__stake {
+  flex-direction: column;
+  gap: 1px;
+  padding: 7px 2px 8px !important;
+  border-block: 1px solid #e2b55280;
+  background: #0006 !important;
+  border-radius: 0 !important;
+  color: #fff !important;
+}
+[data-game-view="prosperity-lion"] .lion-altar__stake span {
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--lion-muted);
+}
+[data-game-view="prosperity-lion"] .lion-altar__stake strong {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: clamp(14px, 4.2cqw, 18px);
+  font-weight: 800;
+}
+[data-game-view="prosperity-lion"] .lion-altar__tools {
+  grid-auto-rows: 1fr;
+  align-content: stretch;
+}
+[data-game-view="prosperity-lion"] .lion-altar__tools button {
+  gap: 6px;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+[data-game-view="prosperity-lion"] .lion-altar__tools button + button {
+  border-top: 1px solid #e2b55240;
+  border-radius: 0;
+}
+[data-game-view="prosperity-lion"] .lion-altar__tools button[aria-pressed="true"] {
+  background: linear-gradient(180deg, var(--lion-gold-hi), var(--lion-gold-lo));
+  color: #3b0a09;
+}
+[data-game-view="prosperity-lion"] .lion-altar__tools button[data-stopping="true"] {
+  color: #ffb4a8;
+}
+
+/* guardian seal */
+[data-game-view="prosperity-lion"] .lion-altar__seal {
+  position: relative;
+  width: clamp(116px, 36cqw, 150px);
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: none;
+  filter: drop-shadow(0 8px 10px #000a);
+  transition:
+    transform 0.14s cubic-bezier(0.3, 1.4, 0.5, 1),
+    filter 0.2s;
+}
+[data-game-view="prosperity-lion"] .lion-altar__seal:hover:not(:disabled) {
+  filter: drop-shadow(0 8px 10px #000a) brightness(1.08);
+}
+[data-game-view="prosperity-lion"] .lion-altar__seal:active:not(:disabled) {
+  transform: scale(0.94);
+  filter: drop-shadow(0 3px 5px #000a) brightness(0.88);
+}
+[data-game-view="prosperity-lion"] .lion-altar__seal:disabled {
+  filter: grayscale(0.85) brightness(0.6) drop-shadow(0 4px 6px #000a);
+}
+[data-game-view="prosperity-lion"] .lion-altar__art {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+[data-game-view="prosperity-lion"] .lion-altar__lobes {
+  transform-origin: 60px 60px;
+}
+[data-game-view="prosperity-lion"] .lion-altar__jade {
+  animation: lion-breathe 3.2s ease-in-out infinite;
+}
+[data-game-view="prosperity-lion"] .lion-altar__seal[data-mode="busy"] .lion-altar__lobes {
+  animation: lion-turn 7s linear infinite;
+}
+[data-game-view="prosperity-lion"] .lion-altar__seal[data-mode="busy"] .lion-altar__jade,
+[data-game-view="prosperity-lion"] .lion-altar__seal[data-mode="auto"] .lion-altar__jade {
+  stroke: #ffd36b;
+  animation: none;
+}
+[data-game-view="prosperity-lion"] .lion-altar__seal[data-mode="busy"] .lion-altar__face svg {
+  animation: lion-turn 1.1s linear infinite;
+}
+[data-game-view="prosperity-lion"] .lion-altar__face {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  justify-items: center;
+  gap: 1px;
+  color: var(--lion-gold-hi);
+  text-shadow: 0 1px 2px #000b;
+  line-height: 1;
+}
+[data-game-view="prosperity-lion"] .lion-altar__face b {
+  font-size: clamp(14px, 4cqw, 17px);
+  font-weight: 900;
+  letter-spacing: 0.14em;
+  text-indent: 0.14em;
+  text-transform: uppercase;
+}
+[data-game-view="prosperity-lion"] .lion-altar__face small {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: #ffe9b0;
+}
+@keyframes lion-breathe {
+  0%,
+  100% {
+    stroke: #2aa384;
+    filter: drop-shadow(0 0 0 #2aa384);
+  }
+  50% {
+    stroke: #58e0bc;
+    filter: drop-shadow(0 0 3px #58e0bc);
+  }
+}
+@keyframes lion-turn {
+  to {
+    transform: rotate(360deg);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  [data-game-view="prosperity-lion"] .lion-altar *,
+  [data-game-view="prosperity-lion"] .lion-altar *::before {
+    animation: none !important;
+    transition: none !important;
+  }
+}
+
+/* short landscape phones: compact altar so the board keeps its room */
+@container (max-height: 520px) {
+  [data-game-view="prosperity-lion"] .lion-altar__pillar {
+    height: 124px;
+  }
+  [data-game-view="prosperity-lion"] .lion-altar__seal {
+    width: 112px;
+  }
+  [data-game-view="prosperity-lion"] [data-gs-board] {
+    width: min(calc(100cqw - 50px), calc((100cqh - 340px) * 4 / 3), 620px) !important;
+  }
+}

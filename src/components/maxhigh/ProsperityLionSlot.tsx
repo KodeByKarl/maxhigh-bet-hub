@@ -1,4 +1,4 @@
-import { SlotControlDeck } from "./SlotControlDeck";
+import { LionAltar as SlotControlDeck } from "./prosperity-lion/LionAltar";
 /**
  * Prosperity Lion — 4×3 cluster-pay tumble slot (panther rectangle board).
  * Engine resolves spins instantly; this file plays back the animation script.

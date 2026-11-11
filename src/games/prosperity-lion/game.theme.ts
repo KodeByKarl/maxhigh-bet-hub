@@ -11,7 +11,7 @@ export const skin: GameSkin = {
   board: "circle",
   atmos: "curtains",
   grade: "natural",
-  sym: "outline",
+  sym: "plain",
   mat: "flat",
   win: "sweep",
   tune: {
