@@ -14,9 +14,16 @@ for (const f of fs.readdirSync(path.join(repo, "src/functions"))) {
   if (!f.endsWith(".ts")) continue;
   const name = f.slice(0, -3);
   const src = fs.readFileSync(path.join(repo, "src/functions", f), "utf8");
-  const exports = [...src.matchAll(/export (?:const|async function|function) (\w+)/g)].map((m) => m[1]);
+  const exports = [...src.matchAll(/export (?:const|async function|function) (\w+)/g)].map(
+    (m) => m[1],
+  );
   const file = path.join(stubs, `${name}.mjs`);
-  fs.writeFileSync(file, exports.map((n) => `export const ${n} = () => Promise.reject(new Error("qa stub: ${n}"));`).join("\n") + "\nexport {};\n");
+  fs.writeFileSync(
+    file,
+    exports
+      .map((n) => `export const ${n} = () => Promise.reject(new Error("qa stub: ${n}"));`)
+      .join("\n") + "\nexport {};\n",
+  );
   fnAliases.push({ find: new RegExp(`^@/functions/${name}$`), replacement: file });
 }
 

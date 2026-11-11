@@ -15,3 +15,21 @@ createRoot(document.getElementById("root")!).render(
     <Suspense fallback={null}>{createElement(View, { gameId: id })}</Suspense>
   </div>,
 );
+
+// `?legacy=1` switches the presentation skin off (before-screenshots): the skin is attribute-driven, so removing the attributes restores
+// the original look of the unchanged game shell.
+if (new URLSearchParams(location.search).get("legacy")) {
+  const strip = () =>
+    document.querySelectorAll("[data-game-view]").forEach((el) => {
+      for (const a of [
+        "data-game-view",
+        "data-frame",
+        "data-deck",
+        "data-voice",
+        "data-spin",
+        "data-fx",
+      ])
+        el.removeAttribute(a);
+    });
+  setInterval(strip, 150);
+}

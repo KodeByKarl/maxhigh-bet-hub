@@ -16,9 +16,14 @@ export function useSkinHooks(ref: RefObject<HTMLElement | null>, motif: BuyBonus
     const tag = () => {
       const deck = root.querySelector<HTMLElement>("[data-slot-deck]");
       const col = deck?.parentElement;
-      const well = col?.firstElementChild?.firstElementChild as HTMLElement | null | undefined;
-      if (col && col.dataset.gsCol == null) col.dataset.gsCol = "";
-      if (well && well.dataset.gsWell == null) well.dataset.gsWell = "";
+      const first = col?.firstElementChild as HTMLElement | null | undefined;
+      const well = first?.firstElementChild as HTMLElement | null | undefined;
+      // Payline shells (fire-spike, coin-volcano) keep the deck in a <footer>: the "column" there starts with the deck itself, so there
+      // is no template reel well to frame. Never tag the deck, or anything containing it.
+      const isTemplateColumn = !!deck && !!first && first !== deck && !first.contains(deck);
+      if (col && isTemplateColumn && col.dataset.gsCol == null) col.dataset.gsCol = "";
+      if (well && isTemplateColumn && well !== deck && well.dataset.gsWell == null)
+        well.dataset.gsWell = "";
     };
     tag();
     let raf = 0;
