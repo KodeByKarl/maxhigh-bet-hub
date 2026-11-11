@@ -1,0 +1,373 @@
+/* Gate of Ra "Temple of the Sun": obsidian, burnished bronze, Egyptian gold. Scoped to .ra-* and [data-ra-slot]. */
+.ra-deck {
+  --ra-gold: #e3b556;
+  --ra-gold-d: #9a6a22;
+  --ra-obs: #0e0b08;
+  --ra-sand: #e9d6a8;
+  --ra-sun: clamp(104px, 30vw, 124px);
+  position: relative;
+  display: grid;
+  gap: 8px;
+  margin-top: 4px;
+  padding: 10px max(10px, env(safe-area-inset-right)) 8px max(10px, env(safe-area-inset-left));
+  color: var(--ra-sand);
+  font-family: "Inter", ui-sans-serif, system-ui, sans-serif;
+  background:
+    linear-gradient(180deg, rgb(20 15 9 / 0.9), rgb(8 6 4 / 0.96)),
+    repeating-linear-gradient(90deg, transparent 0 14px, rgb(227 181 86 / 0.04) 14px 15px);
+  border: 1px solid rgb(227 181 86 / 0.45);
+  border-top-color: rgb(227 181 86 / 0.75);
+  border-radius: 6px 6px 18px 18px;
+  box-shadow:
+    inset 0 1px 0 rgb(255 232 170 / 0.18),
+    0 -6px 22px rgb(0 0 0 / 0.5);
+  touch-action: manipulation;
+}
+.ra-deck button {
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+.ra-deck button:focus-visible {
+  outline: 3px solid #fff;
+  outline-offset: 2px;
+}
+.ra-deck button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+.ra-deck span,
+.ra-deck small {
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: rgb(233 214 168 / 0.72);
+}
+.ra-deck strong {
+  font-variant-numeric: tabular-nums;
+  font-weight: 800;
+  color: #fff2cc;
+}
+
+/* status rail */
+.ra-rail {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  padding-bottom: 8px;
+  border-bottom: 1px solid rgb(227 181 86 / 0.25);
+}
+.ra-rail__cell {
+  display: grid;
+  gap: 1px;
+  flex: 1 1 0;
+  min-width: 0;
+}
+.ra-rail__cell + .ra-rail__cell {
+  padding-left: 8px;
+  border-left: 1px solid rgb(227 181 86 / 0.25);
+}
+.ra-rail strong {
+  font-size: 14px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.ra-rail [data-winning="true"] strong {
+  color: var(--ra-gold);
+  text-shadow: 0 0 10px rgb(227 181 86 / 0.7);
+}
+.ra-buy {
+  display: grid;
+  justify-items: center;
+  align-content: center;
+  flex: 0 0 auto;
+  min-height: 44px;
+  min-width: 44px;
+  padding: 0 10px;
+  border: 1px solid var(--ra-gold);
+  border-radius: 4px 12px 4px 12px;
+  background: linear-gradient(180deg, rgb(154 106 34 / 0.55), rgb(60 38 14 / 0.8));
+}
+.ra-buy strong {
+  font-size: 12.5px;
+}
+.ra-buy--static {
+  cursor: default;
+  border-color: rgb(227 181 86 / 0.4);
+  background: rgb(255 255 255 / 0.04);
+}
+
+/* utility menu (Turbo / Auto / Info) */
+.ra-util {
+  position: relative;
+  flex: 0 0 auto;
+  z-index: 6;
+}
+.ra-util__toggle,
+.ra-util__menu button {
+  min-height: 44px;
+  min-width: 44px;
+  border: 1px solid rgb(227 181 86 / 0.5);
+  background: rgb(20 15 9 / 0.95);
+}
+.ra-util__toggle {
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+}
+.ra-util__toggle[data-on="true"] {
+  box-shadow:
+    0 0 0 2px var(--ra-gold),
+    0 0 10px rgb(227 181 86 / 0.5);
+}
+.ra-util__menu {
+  position: absolute;
+  right: 0;
+  bottom: 52px;
+  display: grid;
+  gap: 6px;
+  padding: 8px;
+  border-radius: 8px;
+  background: rgb(14 11 8 / 0.98);
+  border: 1px solid rgb(227 181 86 / 0.55);
+  box-shadow: 0 10px 28px rgb(0 0 0 / 0.65);
+}
+.ra-util__menu button {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 14px;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+.ra-util__menu button[aria-pressed="true"] {
+  border-color: var(--ra-gold);
+  box-shadow: 0 0 10px rgb(227 181 86 / 0.45);
+}
+
+/* main row: bet plate left, sun disc right */
+.ra-main {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) var(--ra-sun);
+  align-items: center;
+  gap: 12px;
+}
+.ra-bet {
+  display: grid;
+  grid-template-columns: 48px minmax(0, 1fr) 48px;
+  align-items: stretch;
+  min-height: 56px;
+  border: 1px solid var(--ra-gold-d);
+  border-radius: 4px 16px 4px 16px;
+  overflow: hidden;
+  background: linear-gradient(180deg, #3b2a14, #1c130a);
+  box-shadow:
+    inset 0 1px 0 rgb(255 232 170 / 0.2),
+    inset 0 -2px 6px rgb(0 0 0 / 0.5);
+}
+.ra-bet button,
+.ra-bet__amount {
+  display: grid;
+  place-items: center;
+  border: 0;
+  background: transparent;
+}
+.ra-bet > button:first-child {
+  border-right: 1px solid rgb(227 181 86 / 0.25);
+}
+.ra-bet > button:last-child {
+  border-left: 1px solid rgb(227 181 86 / 0.25);
+}
+.ra-bet > button:active:not(:disabled) {
+  background: rgb(227 181 86 / 0.18);
+}
+.ra-bet__amount {
+  align-content: center;
+  justify-items: center;
+  padding: 0 4px;
+  min-width: 0;
+}
+.ra-bet strong {
+  font-size: 17px;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* sun disc */
+.ra-sun {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: var(--ra-sun);
+  height: var(--ra-sun);
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  isolation: isolate;
+  transition: transform 0.14s;
+}
+.ra-sun__ring {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  border-radius: 50%;
+  background: conic-gradient(
+    from 20deg,
+    #ffe7a3,
+    #c8902f,
+    #f6d27a,
+    #8c5d1c,
+    #ffe7a3,
+    #b07a24,
+    #f6d27a,
+    #ffe7a3
+  );
+  box-shadow:
+    0 0 16px rgb(227 150 40 / 0.4),
+    0 6px 16px rgb(0 0 0 / 0.55);
+}
+.ra-sun__face {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: calc(100% - 12px);
+  height: calc(100% - 12px);
+  overflow: hidden;
+  border-radius: 50%;
+  background: radial-gradient(circle at 50% 45%, #2a1d0d, var(--ra-obs) 70%);
+  box-shadow:
+    inset 0 0 0 2px rgb(154 106 34 / 0.8),
+    inset 0 0 14px rgb(0 0 0 / 0.8);
+}
+.ra-sun__rays {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: repeating-conic-gradient(rgb(227 181 86 / 0.2) 0 5deg, transparent 5deg 15deg);
+  -webkit-mask: radial-gradient(circle, transparent 38%, #000 40%);
+  mask: radial-gradient(circle, transparent 38%, #000 40%);
+}
+.ra-sun__core {
+  position: relative;
+  display: grid;
+  justify-items: center;
+  gap: 1px;
+}
+.ra-sun__icon {
+  color: var(--ra-gold);
+  filter: drop-shadow(0 0 5px rgb(227 150 40 / 0.8));
+}
+.ra-deck .ra-sun__label {
+  font-size: 16px;
+  font-weight: 900;
+  letter-spacing: 0.16em;
+  padding-left: 0.16em;
+  color: #fff2cc;
+}
+.ra-sun small {
+  color: var(--ra-gold);
+  font-variant-numeric: tabular-nums;
+}
+.ra-sun:active:not(:disabled) {
+  transform: scale(0.94);
+}
+.ra-sun:active:not(:disabled) .ra-sun__face {
+  box-shadow:
+    inset 0 0 0 2px var(--ra-gold),
+    inset 0 0 20px rgb(227 150 40 / 0.55);
+}
+.ra-sun[data-active="true"]:not(:disabled) .ra-sun__rays {
+  animation: ra-turn 3.6s linear infinite;
+}
+.ra-sun:disabled {
+  filter: grayscale(0.85) brightness(0.6);
+}
+.ra-deck .ra-sun:focus-visible {
+  outline-offset: 5px;
+}
+@keyframes ra-turn {
+  to {
+    rotate: 360deg;
+  }
+}
+
+@media (max-width: 360px) {
+  .ra-deck {
+    --ra-sun: 96px;
+  }
+  .ra-bet {
+    grid-template-columns: 44px minmax(0, 1fr) 44px;
+  }
+}
+@media (min-width: 700px) and (min-height: 501px) {
+  .ra-deck {
+    --ra-sun: 128px;
+    max-width: 640px;
+    width: 100%;
+    margin-inline: auto;
+  }
+}
+@media (max-height: 500px) and (orientation: landscape) {
+  .ra-deck {
+    --ra-sun: 84px;
+    gap: 4px;
+    padding-block: 5px 4px;
+  }
+}
+
+/* layout: stage + deck read as one composition, centred in the free space */
+[data-ra-slot] .ra-playfield {
+  padding-bottom: max(0.25rem, env(safe-area-inset-bottom)) !important;
+}
+[data-ra-slot] .ra-playfield > div {
+  justify-content: center;
+}
+[data-ra-slot] .ra-stage {
+  flex: 0 1 auto !important;
+  padding-block: clamp(6px, 2.5dvh, 24px);
+}
+
+/* temple reel frame: obsidian well, bronze + gold double rim, lintel glow */
+[data-ra-slot] .ra-well {
+  border-radius: 6px !important;
+  background:
+    radial-gradient(ellipse at 50% 0%, rgb(227 150 40 / 0.22), transparent 65%),
+    linear-gradient(180deg, #17110a, #0a0705) !important;
+  box-shadow:
+    inset 0 0 0 1.5px #c8902f,
+    inset 0 0 0 4px #1a1209,
+    inset 0 0 0 5px rgb(227 181 86 / 0.35),
+    inset 0 0 34px rgb(0 0 0 / 0.6),
+    0 0 0 3px #4a3216,
+    0 12px 36px rgb(0 0 0 / 0.55) !important;
+  padding: 9px !important;
+}
+[data-ra-slot] .ra-well::before {
+  content: "";
+  position: absolute;
+  inset-inline: 18%;
+  top: 0;
+  z-index: 1;
+  height: 3px;
+  background: linear-gradient(90deg, transparent, #ffe7a3, transparent);
+  pointer-events: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ra-sun__rays {
+    animation: none !important;
+  }
+  .ra-sun {
+    transition: none;
+  }
+}

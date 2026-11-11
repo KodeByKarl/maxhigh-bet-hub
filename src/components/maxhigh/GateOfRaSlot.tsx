@@ -1,4 +1,4 @@
-import { SlotControlDeck } from "./SlotControlDeck";
+import { RaControls } from "./gate-of-ra/RaControls";
 /**
  * Gate of Ra — 8×3 cluster-pay tumble slot (panther rectangle board).
  * Engine resolves spins instantly; this file plays back the animation script.
@@ -975,6 +975,7 @@ export function GateOfRaSlot({
   return (
     <div
       className="relative flex h-full min-h-0 w-full max-w-[100vw] flex-col overflow-hidden select-none"
+      data-ra-slot
       style={themeVars}
     >
       <img
@@ -1001,12 +1002,12 @@ export function GateOfRaSlot({
       </button>
 
       {/* Playfield — sit above Android 3-button nav (safe-area is often 0 there) */}
-      <div className="relative z-10 flex min-h-0 flex-1 flex-col px-1.5 pt-[max(0.25rem,env(safe-area-inset-top))] pb-[max(3.25rem,env(safe-area-inset-bottom))] sm:items-center sm:justify-center sm:px-3 sm:py-2 sm:pb-2">
+      <div className="ra-playfield relative z-10 flex min-h-0 flex-1 flex-col px-1.5 pt-[max(0.25rem,env(safe-area-inset-top))] pb-[max(3.25rem,env(safe-area-inset-bottom))] sm:items-center sm:justify-center sm:px-3 sm:py-2 sm:pb-2">
         <div className="mx-auto flex h-full min-h-0 w-full max-w-[840px] flex-col">
           {/* Board well — hug the grid (no dual-grid temple layout) */}
-          <div className="relative flex min-h-0 w-full flex-1 items-center justify-center">
+          <div className="ra-stage relative flex min-h-0 w-full flex-1 items-center justify-center">
             <div
-              className="relative flex max-h-full max-w-full flex-col overflow-hidden rounded-[1.25rem] p-1.5 sm:rounded-2xl sm:p-2"
+              className="ra-well relative flex max-h-full max-w-full flex-col overflow-hidden rounded-[1.25rem] p-1.5 sm:rounded-2xl sm:p-2"
               style={{
                 width: "fit-content",
                 height: "fit-content",
@@ -1060,7 +1061,7 @@ export function GateOfRaSlot({
           {/* Buy feature — compact on phones so the spin row stays on-screen */}
 
           {/* HUD — compact on Android so Spin sits above the system nav */}
-          <SlotControlDeck
+          <RaControls
             gameId="gate-of-ra"
             bet={totalBet}
             win={displayWin}
