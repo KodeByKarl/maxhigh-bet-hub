@@ -1,4 +1,4 @@
-import { SlotControlDeck } from "./SlotControlDeck";
+import { GroveControls as SlotControlDeck } from "./enchanted-grove/GroveControls";
 /**
  * Enchanted Grove — 9×3 cluster-pay tumble slot (panther rectangle board).
  * Engine resolves spins instantly; this file plays back the animation script.

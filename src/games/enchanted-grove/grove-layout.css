@@ -1,0 +1,281 @@
+/* Enchanted Grove only. The original 27 cells, mapping and hexagonal geometry remain intact. */
+[data-game-view="enchanted-grove"] {
+  container-type: size;
+}
+[data-game-view="enchanted-grove"] > div > .relative.z-10 {
+  padding: max(48px, env(safe-area-inset-top)) max(8px, env(safe-area-inset-right))
+    max(12px, env(safe-area-inset-bottom)) max(8px, env(safe-area-inset-left));
+}
+[data-game-view="enchanted-grove"] > div > button[title] {
+  width: 44px;
+  height: 44px;
+}
+[data-game-view="enchanted-grove"] [data-gs-col] {
+  max-width: 1000px;
+  align-items: center;
+  justify-content: center;
+  gap: 18px;
+}
+[data-game-view="enchanted-grove"] [data-gs-col] > :first-child {
+  flex: 0 1 auto;
+}
+[data-game-view="enchanted-grove"] [data-gs-well] {
+  margin: 0;
+  padding: 8px;
+  border: 1px solid #65ba925c;
+  border-radius: 22px 8px 22px 8px !important;
+  background: linear-gradient(145deg, #153d31de, #062721e0) !important;
+  box-shadow:
+    inset 0 1px 0 #b5edbd30,
+    0 8px 24px #031d1b70 !important;
+}
+[data-game-view="enchanted-grove"] [data-gs-well]::before {
+  opacity: 0.18;
+}
+[data-game-view="enchanted-grove"] [data-gs-board] {
+  width: min(calc(100cqw - 36px), calc((100cqh - 306px) * 3), 900px) !important;
+  max-height: none !important;
+  aspect-ratio: 3 / 1;
+  /* The existing nine-column, three-row template and hexagonal clip paths are untouched. */
+  gap: clamp(2px, 0.6cqw, 5px) !important;
+}
+[data-game-view="enchanted-grove"] [data-gs-board] img {
+  scale: 0.88;
+  object-fit: contain;
+  object-position: center;
+}
+/* No enclosing pale panel: three status insets sit above a carved branch and emerald emblem. */
+[data-game-view="enchanted-grove"] .grove-console {
+  width: 100%;
+  max-width: 580px;
+  flex: none;
+  color: #edfbe5;
+  font-family: ui-sans-serif, system-ui, sans-serif;
+  font-variant-numeric: tabular-nums;
+}
+[data-game-view="enchanted-grove"] .grove-console button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  min-width: 44px;
+  min-height: 44px;
+  cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+[data-game-view="enchanted-grove"] .grove-console button:disabled {
+  cursor: not-allowed;
+  filter: grayscale(0.7);
+  opacity: 0.4;
+}
+[data-game-view="enchanted-grove"] .grove-console button:focus-visible {
+  outline: 2px solid #f7f2be;
+  outline-offset: 3px;
+}
+[data-game-view="enchanted-grove"] .grove-console__status-strip {
+  display: grid;
+  grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr) auto;
+  gap: 8px;
+  align-items: stretch;
+  margin-bottom: 14px;
+}
+[data-game-view="enchanted-grove"] .grove-console__meter {
+  margin: 0;
+  min-width: 0;
+  padding: 8px;
+  border-top: 1px solid #95cdb061;
+  border-bottom: 1px solid #95cdb038;
+  border-radius: 12px 4px;
+  background: #092e25e8;
+}
+[data-game-view="enchanted-grove"] .grove-console :is(dt, .grove-console__stake > span) {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #c2d6ae;
+  line-height: 1.4;
+}
+[data-game-view="enchanted-grove"] .grove-console dd {
+  margin: 2px 0 0;
+  font-size: clamp(13px, 2.8cqw, 18px);
+  font-weight: 800;
+  line-height: 1.2;
+  overflow-wrap: anywhere;
+}
+[data-game-view="enchanted-grove"] .grove-console [data-winning="true"] dd {
+  color: #c6f9a9;
+}
+[data-game-view="enchanted-grove"] .grove-console__bonus {
+  border: 1px solid #c4b674;
+  border-radius: 4px 16px;
+  padding: 6px 8px;
+  background: linear-gradient(125deg, #305e3e, #153c2d);
+  color: #f2edb6;
+  font-size: 10px;
+  font-weight: 800;
+  text-align: left;
+}
+[data-game-view="enchanted-grove"] .grove-console__bonus strong {
+  display: block;
+  font-size: 12px;
+  margin-top: 2px;
+}
+[data-game-view="enchanted-grove"] .grove-console__round {
+  align-self: center;
+  max-width: 104px;
+  color: #d1e9a9;
+  font-size: 11px;
+}
+[data-game-view="enchanted-grove"] .grove-console__actions {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) clamp(104px, 29cqw, 128px);
+  gap: 12px 14px;
+  padding: 4px 3px;
+  align-items: center;
+}
+[data-game-view="enchanted-grove"] .grove-console__bet {
+  display: grid;
+  grid-template-columns: 44px minmax(44px, 1fr) 44px;
+  border: 1px solid #9f975d;
+  border-radius: 18px 5px 18px 5px;
+  background: repeating-linear-gradient(174deg, #402e20 0 2px, #382a1e 3px 7px);
+  box-shadow:
+    inset 0 1px 0 #ffe7b523,
+    inset 0 -3px 0 #161e13a0;
+}
+[data-game-view="enchanted-grove"] .grove-console__stake {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: 0 !important;
+  min-width: 0 !important;
+  min-height: 46px;
+}
+[data-game-view="enchanted-grove"] .grove-console__stake strong {
+  font-size: 15px;
+}
+[data-game-view="enchanted-grove"] .grove-console__tools {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 5px;
+}
+[data-game-view="enchanted-grove"] .grove-console__tools button {
+  flex-direction: column;
+  gap: 1px;
+  border: 1px solid #6fa08388;
+  border-radius: 14px 4px;
+  background: #0b3026ee;
+  color: #e1f2d0;
+  font-size: 10px;
+  font-weight: 700;
+}
+[data-game-view="enchanted-grove"] .grove-console__tools button[aria-pressed="true"] {
+  background: #28613c;
+  border-color: #cce19c;
+  color: #fff3bb;
+  box-shadow: inset 0 -2px 0 #a4d38c;
+}
+[data-game-view="enchanted-grove"] .grove-console__tools button[data-stopping="true"] {
+  color: #ffe2b1;
+  border-color: #b7a05e;
+}
+[data-game-view="enchanted-grove"] .grove-console .grove-console__spin {
+  position: relative;
+  grid-column: 2;
+  justify-self: center;
+  width: 100%;
+  aspect-ratio: 1;
+  flex-direction: column;
+  gap: 5px;
+  border: 2px solid #c9bd78;
+  border-radius: 50%;
+  background: radial-gradient(ellipse at 35% 22%, #7bbd83, #1f7953 34%, #0d4938 62%, #062c26 100%);
+  color: #fff5cb;
+  box-shadow:
+    inset 0 0 0 4px #123f30,
+    inset 0 0 0 5px #c9bd7890,
+    inset 0 -10px 20px #05251d,
+    0 0 18px #7de6b42b;
+  text-shadow: 0 1px 2px #092c22;
+  font-size: 18px;
+  font-weight: 900;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  transition:
+    filter 0.18s,
+    transform 0.18s;
+}
+[data-game-view="enchanted-grove"] .grove-console__spin::before {
+  content: "";
+  position: absolute;
+  inset: 9px;
+  border: 1px solid #b5dba863;
+  border-radius: 30% 65% 30% 65%;
+  pointer-events: none;
+}
+[data-game-view="enchanted-grove"] .grove-console__spin svg {
+  position: relative;
+}
+[data-game-view="enchanted-grove"] .grove-console__spin small {
+  font-size: 10px;
+  line-height: 1;
+  letter-spacing: 0;
+  text-transform: none;
+}
+[data-game-view="enchanted-grove"] .grove-console__spin:hover:not(:disabled) {
+  filter: brightness(1.15);
+}
+[data-game-view="enchanted-grove"] .grove-console__spin:active:not(:disabled) {
+  transform: scale(0.96);
+}
+[data-game-view="enchanted-grove"] .grove-console__spin[data-active="true"] {
+  background: radial-gradient(ellipse at 50% 40%, #4d9f70, #0e5942 50%, #062e26);
+}
+[data-game-view="enchanted-grove"] .grove-console__spin[aria-busy="true"] svg {
+  animation: grove-emblem-turn 1.3s linear infinite;
+}
+[data-game-view="enchanted-grove"] .grove-console__status {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+@container (min-width: 620px) and (max-height: 500px) {
+  [data-game-view="enchanted-grove"] [data-gs-col] {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 340px;
+    gap: 22px;
+    max-width: 1200px;
+  }
+  [data-game-view="enchanted-grove"] [data-gs-board] {
+    width: min(calc(100cqw - 410px), calc((100cqh - 100px) * 3)) !important;
+  }
+}
+@keyframes grove-emblem-turn {
+  to {
+    transform: rotate(360deg);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  [data-game-view="enchanted-grove"] .grove-console__spin {
+    transition: none;
+  }
+  [data-game-view="enchanted-grove"] .grove-console__spin[aria-busy="true"] svg {
+    animation: none;
+  }
+}
+
+[data-game-view="enchanted-grove"] .grove-console__branch {
+  display: grid;
+  grid-template-rows: 48px 44px;
+  gap: 12px;
+  align-self: center;
+  min-width: 0;
+}
