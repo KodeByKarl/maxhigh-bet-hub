@@ -849,3 +849,8 @@
 .abp-toast__pill[data-kind="win"] > strong {
   color: #dcb96e;
 }
+
+/* Board well sits in the middle of the space above the deck (the shared mobile rule pins it to the bottom with margin-top:auto) */
+[data-game-view="abyssal-pearls"] [data-gs-well] {
+  margin-block: auto !important;
+}
