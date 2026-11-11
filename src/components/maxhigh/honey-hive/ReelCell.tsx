@@ -69,6 +69,8 @@ export const ReelCell = memo(function ReelCell({
 
   return (
     <div
+      data-hive-cell
+      data-winning={isWinLit}
       className={cn(
         "relative aspect-square w-full overflow-hidden isolate",
         "border-2 bg-[#1a0e04]/95 shadow-[0_4px_14px_rgba(0,0,0,0.4),inset_0_0_14px_rgba(245,158,11,0.14)]",
@@ -142,7 +144,7 @@ export const ReelCell = memo(function ReelCell({
                   : { duration: 0.22, ease: [0.22, 1, 0.36, 1] }
           }
         >
-          <div className="absolute inset-[14%] flex items-center justify-center">
+          <div data-hive-art className="absolute inset-[14%] flex items-center justify-center">
             <PantherIcon
               kind={cell.sym.kind}
               mult={cell.mult}

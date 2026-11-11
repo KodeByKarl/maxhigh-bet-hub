@@ -28,10 +28,14 @@ export const ReelGrid = memo(function ReelGrid({ visuals }: ReelGridProps) {
   const { slots, phase, winningKeys, payoutByKey, spawnedKeys, fallenKeys, fallDistance } = visuals;
 
   return (
-    <div className="flex w-full max-w-6xl items-end justify-center overflow-hidden px-0.5">
+    <div
+      data-hive-formation
+      className="flex w-full max-w-6xl items-end justify-center overflow-hidden px-0.5"
+    >
       {REEL_HEIGHTS.map((height, col) => (
         <div
           key={col}
+          data-hive-column={col}
           className={cn(
             "flex w-[21%] max-w-[9.25rem] flex-col justify-end gap-[0.35rem] overflow-visible sm:max-w-[10.25rem] sm:gap-1.5 md:max-w-[11rem] md:gap-2",
             col > 0 && "-ml-[2.8%] sm:-ml-[3.2%]",
