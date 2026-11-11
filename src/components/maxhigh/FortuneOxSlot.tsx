@@ -1,4 +1,4 @@
-import { SlotControlDeck } from "./SlotControlDeck";
+import { OxControls as SlotControlDeck } from "./fortune-ox/OxControls";
 /**
  * Fortune Ox — 5×3 cluster-pay tumble slot (panther rectangle board).
  * Engine resolves spins instantly; this file plays back the animation script.
