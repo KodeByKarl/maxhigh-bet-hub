@@ -1,4 +1,4 @@
-import { SlotControlDeck } from "./SlotControlDeck";
+import { EmberControls as SlotControlDeck } from "./ember-tiger/EmberControls";
 /**
  * Panther Peak — Sweet Bonanza layout (cluster-pay tumble slot).
  * Engine resolves spins instantly; this file plays back the animation script.

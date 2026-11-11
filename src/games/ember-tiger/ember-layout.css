@@ -1,0 +1,272 @@
+/* Ember Tiger only. The 3-4-5-4-3 column map and circular ReelCells are unchanged. */
+[data-game-view="ember-tiger"] {
+  container-type: size;
+}
+[data-game-view="ember-tiger"] > div > .relative.z-10 {
+  padding: max(48px, env(safe-area-inset-top)) max(10px, env(safe-area-inset-right))
+    max(10px, env(safe-area-inset-bottom)) max(10px, env(safe-area-inset-left));
+}
+[data-game-view="ember-tiger"] > div > button[title] {
+  width: 44px;
+  height: 44px;
+}
+[data-game-view="ember-tiger"] [data-gs-col] {
+  max-width: 800px;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+}
+[data-game-view="ember-tiger"] [data-gs-col] > :first-child {
+  flex: 0 1 auto;
+  width: auto;
+  align-items: center;
+  justify-content: center;
+}
+[data-game-view="ember-tiger"] [data-gs-well] {
+  flex: none;
+  width: fit-content;
+  height: auto;
+  margin: 0;
+  /* Reserve space around the outermost circular frames, including their win scale. */
+  padding: 4px;
+}
+[data-game-view="ember-tiger"] [data-ember-formation] {
+  --ember-gap: clamp(4px, 1cqw, 7px);
+  width: min(calc(100cqw - 48px), calc(100cqh - 344px), 500px);
+  gap: var(--ember-gap);
+  overflow: visible;
+}
+[data-game-view="ember-tiger"] [data-ember-column] {
+  flex: 1 1 0;
+  width: 0;
+  min-width: 0;
+  max-width: none;
+  gap: var(--ember-gap);
+  overflow: visible;
+}
+[data-game-view="ember-tiger"] [data-ember-column] img {
+  object-fit: contain;
+  object-position: center;
+  /* Keep the original pack's 74% / 82% sizing and circular frames. */
+}
+/* Dark forged rails, an open meter strip and a full-width claw-cut molten Spin slab. */
+[data-game-view="ember-tiger"] .ember-console {
+  display: grid;
+  gap: 8px;
+  flex: none;
+  width: 100%;
+  max-width: 520px;
+  padding: 10px 12px 8px;
+  border: 1px solid #a34d2e;
+  border-top: 2px solid #ef8852;
+  border-radius: 6px 22px 6px 22px;
+  background: linear-gradient(125deg, #30221fef, #130f0ff7 65%);
+  box-shadow:
+    inset 3px 0 0 #ff76221f,
+    0 10px 24px #08020280;
+  color: #fff1e5;
+  font-family: ui-sans-serif, system-ui, sans-serif;
+  font-variant-numeric: tabular-nums;
+}
+[data-game-view="ember-tiger"] .ember-console button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-width: 44px;
+  min-height: 44px;
+  cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+[data-game-view="ember-tiger"] .ember-console button:focus-visible {
+  outline: 2px solid #fff0d3;
+  outline-offset: 3px;
+}
+[data-game-view="ember-tiger"] .ember-console button:disabled {
+  opacity: 0.4;
+  filter: grayscale(0.7);
+  cursor: not-allowed;
+}
+[data-game-view="ember-tiger"] .ember-console__meters {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin: 0;
+  padding: 0 2px 8px;
+  border-bottom: 1px solid #a45c3d66;
+}
+[data-game-view="ember-tiger"] .ember-console__meters > div {
+  min-width: 0;
+}
+[data-game-view="ember-tiger"] .ember-console__meters > :last-child {
+  text-align: right;
+}
+[data-game-view="ember-tiger"] .ember-console :is(dt, .ember-console__stake > span) {
+  color: #dfb7a5;
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  line-height: 1.4;
+}
+[data-game-view="ember-tiger"] .ember-console dd {
+  margin: 2px 0 0;
+  font-size: clamp(15px, 3cqw, 20px);
+  font-weight: 800;
+  line-height: 1.2;
+  overflow-wrap: anywhere;
+}
+[data-game-view="ember-tiger"] .ember-console [data-winning="true"] dd {
+  color: #ffbd7d;
+}
+[data-game-view="ember-tiger"] .ember-console__wager {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 10px;
+  min-width: 0;
+}
+[data-game-view="ember-tiger"] .ember-console__bet {
+  display: grid;
+  grid-template-columns: 44px minmax(44px, 1fr) 44px;
+  align-items: center;
+  border: 1px solid #9b634b;
+  border-radius: 8px;
+  background: #0c0909;
+  min-width: 0;
+}
+[data-game-view="ember-tiger"] .ember-console__stake {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0 !important;
+  min-width: 0 !important;
+  min-height: 44px;
+}
+[data-game-view="ember-tiger"] .ember-console__stake strong {
+  font-size: 15px;
+}
+[data-game-view="ember-tiger"] .ember-console__bonus {
+  padding: 3px 10px;
+  border: 1px solid #ef8953;
+  border-radius: 8px;
+  background: linear-gradient(135deg, #703823, #351e18);
+  color: #ffe0be;
+  text-align: left;
+  font-size: 10px;
+  font-weight: 800;
+}
+[data-game-view="ember-tiger"] .ember-console__bonus strong {
+  display: block;
+  margin-top: 1px;
+  font-size: 12px;
+}
+[data-game-view="ember-tiger"] .ember-console__round {
+  align-self: center;
+  max-width: 112px;
+  font-size: 11px;
+  color: #ffb77c;
+}
+[data-game-view="ember-tiger"] .ember-console .ember-console__spin {
+  position: relative;
+  min-height: 62px;
+  border: 1px solid #ffc48c;
+  border-radius: 8px;
+  clip-path: polygon(3% 0, 100% 0, 98% 28%, 100% 28%, 98% 62%, 100% 62%, 97% 100%, 0 100%);
+  background: linear-gradient(174deg, #ffdfad, #ff9950 32%, #e75622 66%, #a32d13);
+  color: #2a0d06;
+  box-shadow:
+    inset 0 2px 0 #fff1d4,
+    inset 0 -5px 0 #5f170c70;
+  font-size: 21px;
+  font-weight: 900;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  transition:
+    filter 0.15s,
+    transform 0.15s;
+}
+[data-game-view="ember-tiger"] .ember-console__spin::before {
+  content: "";
+  position: absolute;
+  inset: 4px 5%;
+  pointer-events: none;
+  border-top: 1px solid #fff0ca77;
+  border-bottom: 1px solid #54180855;
+}
+[data-game-view="ember-tiger"] .ember-console__spin-face {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+}
+[data-game-view="ember-tiger"] .ember-console__spin:hover:not(:disabled) {
+  filter: brightness(1.12);
+}
+[data-game-view="ember-tiger"] .ember-console__spin:active:not(:disabled) {
+  transform: translateY(2px);
+}
+[data-game-view="ember-tiger"] .ember-console__spin:focus-visible {
+  outline-offset: -5px !important;
+}
+[data-game-view="ember-tiger"] .ember-console__spin[data-active="true"] {
+  background: linear-gradient(155deg, #ffc580, #e05f2a 55%, #8d210e);
+}
+[data-game-view="ember-tiger"] .ember-console__spin[aria-busy="true"] svg {
+  animation: ember-console-turn 1s linear infinite;
+}
+[data-game-view="ember-tiger"] .ember-console__tools {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+[data-game-view="ember-tiger"] .ember-console__tools button {
+  border: 1px solid #765447;
+  border-radius: 999px;
+  background: #231917;
+  font-size: 11px;
+  font-weight: 700;
+}
+[data-game-view="ember-tiger"] .ember-console__tools button[aria-pressed="true"] {
+  color: #ffbd86;
+  border-color: #ff934d;
+  background: #592c1c;
+  box-shadow: inset 0 -2px 0 #f47736;
+}
+[data-game-view="ember-tiger"] .ember-console__tools button[data-stopping="true"] {
+  color: #ffc2b0;
+  border-color: #d97154;
+}
+[data-game-view="ember-tiger"] .ember-console__status {
+  min-height: 14px;
+  text-align: center;
+  color: #d9b09a;
+  font-size: 10px;
+  line-height: 14px;
+}
+@container (min-width: 620px) and (max-height: 500px) {
+  [data-game-view="ember-tiger"] [data-gs-col] {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 340px;
+    align-items: center;
+    max-width: 1100px;
+    gap: 18px;
+  }
+  [data-game-view="ember-tiger"] [data-ember-formation] {
+    width: min(calc(100cqw - 420px), calc(100cqh - 110px), 460px);
+  }
+}
+@keyframes ember-console-turn {
+  to {
+    transform: rotate(360deg);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  [data-game-view="ember-tiger"] .ember-console__spin {
+    transition: none;
+  }
+  [data-game-view="ember-tiger"] .ember-console__spin[aria-busy="true"] svg {
+    animation: none;
+  }
+}
