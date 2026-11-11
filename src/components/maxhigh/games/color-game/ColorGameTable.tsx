@@ -425,6 +425,8 @@ export function ColorGameTable({
                 {cfg.spots.map((sp, i) => {
                   const mid = i * slice + slice / 2;
                   const darkText = sp.id === "white" || sp.id === "yellow";
+                  // Slices in the lower half of the disc would read upside-down at rest: turn their text 180deg in place.
+                  const flip = mid > 90 && mid < 270;
                   return (
                     <div
                       key={sp.id}
@@ -432,7 +434,7 @@ export function ColorGameTable({
                       style={{ transform: `rotate(${mid}deg)` }}
                     >
                       <span
-                        className="absolute left-1/2 top-[13%] -translate-x-1/2 text-[0.7rem] font-black uppercase tracking-wider sm:text-sm"
+                        className={`absolute left-1/2 top-[13%] -translate-x-1/2 text-[0.7rem] font-black uppercase tracking-wider sm:text-sm${flip ? " rotate-180" : ""}`}
                         style={{
                           color: darkText ? "#0f172a" : "#fff",
                           textShadow: darkText
@@ -443,7 +445,7 @@ export function ColorGameTable({
                         {sp.label}
                       </span>
                       <span
-                        className="absolute left-1/2 top-[24%] -translate-x-1/2 text-[0.55rem] font-bold tabular-nums opacity-80 sm:text-[0.65rem]"
+                        className={`absolute left-1/2 top-[24%] -translate-x-1/2 text-[0.55rem] font-bold tabular-nums opacity-80 sm:text-[0.65rem]${flip ? " rotate-180" : ""}`}
                         style={{ color: darkText ? "#0f172a" : "#fff" }}
                       >
                         {sp.payoutMult}×

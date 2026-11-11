@@ -215,7 +215,7 @@ export function BettingPanel({
             "relative flex min-w-0 items-center gap-1 overflow-x-auto overscroll-x-contain rounded-2xl border border-white/12 bg-gradient-to-b from-[#12243c] to-[#070e18] px-1.5 py-1.5 sm:gap-1.5 sm:px-2 sm:py-1.5",
             rail
               ? "flex-wrap justify-center overflow-visible"
-              : "flex-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden",
+              : "flex-1 flex-wrap justify-center", // wrap instead of a hidden horizontal scroll so every chip stays visible on phones
           )}
         >
           {BC_CHIP_VALUES.map((v) => (
@@ -228,14 +228,6 @@ export function BettingPanel({
               className="size-14 short-h:size-12 sm:size-12 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#e8c96a]"
             />
           ))}
-          {!rail ? (
-            <span
-              className="pointer-events-none absolute right-1.5 top-1/2 hidden -translate-y-1/2 text-sm font-bold text-[#e8c96a]/55 min-[320px]:block sm:hidden"
-              aria-hidden
-            >
-              ›
-            </span>
-          ) : null}
         </div>
         <button
           type="button"
