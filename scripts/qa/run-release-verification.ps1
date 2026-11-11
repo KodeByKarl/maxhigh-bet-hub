@@ -66,6 +66,17 @@ Log "Local, disposable loopback only. Nothing is pushed, merged or deployed by t
 $env:CLONE_ROOT_PW = 'audit-local-only'
 $env:NODE_OPTIONS = ''
 
+# Stops only leftover local test apps (built server started from .output) on the loopback test ports, so a previous run cannot collide with this one.
+function Clear-TestPorts {
+  foreach ($port in 18081, 18765, 18766) {
+    Get-NetTCPConnection -LocalPort $port -State Listen -ErrorAction SilentlyContinue | % {
+      $proc = Get-CimInstance Win32_Process -Filter "ProcessId=$($_.OwningProcess)" -ErrorAction SilentlyContinue
+      if ($proc -and $proc.CommandLine -match 'server[\\/]index\.mjs') { Stop-Process -Id $proc.ProcessId -Force -ErrorAction SilentlyContinue; Log "cleanup: stopped leftover test app on port $port (pid $($proc.ProcessId))" }
+    }
+  }
+  Start-Sleep -Seconds 2
+}
+Clear-TestPorts
 Inline 'clean-committed-tree' { $s = git status --porcelain; @{ ok = (-not $s); note = $(if ($s) { "dirty: $($s | Select -First 3)" } else { 'working tree clean at the release commit' }) } }
 Step 'typecheck'            $cmd.npm @('run', 'typecheck')
 Step 'eslint'               $cmd.npm @('run', 'lint')
@@ -79,6 +90,7 @@ Step 'game-catalog-100'     $cmd.npx @('tsx', 'scripts/ci/catalog-count.ts')
 Step 'permissions-and-game-locks-e2e' $cmd.node @('scripts/qa/test-restrictions-app.mjs') 3000
 
 # ---- disposable clone of the built app for API / Buy Bonus / security / wallet checks
+Clear-TestPorts
 # Buy Bonus / pricing / security probes need every game playable: the disposable clone app runs with the TEST-ONLY locks-off policy file
 # (lock enforcement itself is verified by the permissions-and-game-locks-e2e step above against the real release policy).
 $env:CLONE_POLICY_FILE = 'C:\Users\Keydi\maxhigh-evidence\tools\off-policy.json'

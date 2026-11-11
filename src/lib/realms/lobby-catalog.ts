@@ -19,5 +19,5 @@ export const REALMS_SLOT_GAMES: SlotGame[] = REALMS_GAMES.map((def) => ({
   maxWin: formatMult(PROFILES[def.volatility].maxWinMult),
   minBet: "₱0.20",
   maxBet: "₱100",
-  features: ["Cascading Wins", "Free Spins", "Buy Bonus", "Adjustable Qty", "Multipliers"],
+  features: ["Cascading Wins", "Free Spins", "Buy Bonus", "10 Free Spins", "Multipliers"],
 }));

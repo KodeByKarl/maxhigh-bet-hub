@@ -1,1 +1,0 @@
-PASS actual HTTP round commitment, nonce, draw count, board, payout and feature replay

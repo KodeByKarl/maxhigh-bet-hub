@@ -50,7 +50,7 @@ const baseSlotGames: SlotGame[] = [
     maxWin: "10,000x",
     minBet: "₱0.20",
     maxBet: "₱200",
-    features: ["Cascading Wins", "Free Spins", "Buy Bonus", "Adjustable Qty", "Multipliers"],
+    features: ["Cascading Wins", "Free Spins", "Buy Bonus", "10 Free Spins", "Multipliers"],
   },
   {
     ...defaults,
@@ -116,7 +116,7 @@ const baseSlotGames: SlotGame[] = [
     rtp: "96.00%",
     volatility: "High",
     maxWin: "10,000x",
-    features: ["Cascading Wins", "Free Spins", "Buy Bonus", "Adjustable Qty", "Multipliers"],
+    features: ["Cascading Wins", "Free Spins", "Buy Bonus", "10 Free Spins", "Multipliers"],
   },
   {
     ...defaults,
@@ -226,7 +226,7 @@ const baseSlotGames: SlotGame[] = [
     maxWin: "10,000x",
     minBet: "₱0.10",
     maxBet: "₱100",
-    features: ["Cascading Wins", "Free Spins", "Buy Bonus", "Adjustable Qty", "Multipliers"],
+    features: ["Cascading Wins", "Free Spins", "Buy Bonus", "10 Free Spins", "Multipliers"],
   },
   {
     ...defaults,
@@ -462,7 +462,7 @@ const baseSlotGames: SlotGame[] = [
     maxWin: "10,000x",
     minBet: "₱0.20",
     maxBet: "₱200",
-    features: ["Cascading Wins", "Free Spins", "Buy Bonus", "Adjustable Qty", "Multipliers"],
+    features: ["Cascading Wins", "Free Spins", "Buy Bonus", "10 Free Spins", "Multipliers"],
   },
 
   {
@@ -480,7 +480,7 @@ const baseSlotGames: SlotGame[] = [
     maxWin: "10,000x",
     minBet: "₱0.20",
     maxBet: "₱200",
-    features: ["Cascading Wins", "Free Spins", "Buy Bonus", "Adjustable Qty", "Multipliers"],
+    features: ["Cascading Wins", "Free Spins", "Buy Bonus", "10 Free Spins", "Multipliers"],
   },
 
   {
@@ -499,7 +499,7 @@ const baseSlotGames: SlotGame[] = [
     maxWin: "10,000x",
     minBet: "₱0.20",
     maxBet: "₱200",
-    features: ["Cascading Wins", "Free Spins", "Buy Bonus", "Adjustable Qty", "Multipliers"],
+    features: ["Cascading Wins", "Free Spins", "Buy Bonus", "10 Free Spins", "Multipliers"],
   },
 
   {
@@ -517,7 +517,7 @@ const baseSlotGames: SlotGame[] = [
     maxWin: "10,000x",
     minBet: "₱0.20",
     maxBet: "₱200",
-    features: ["Cascading Wins", "Free Spins", "Buy Bonus", "Adjustable Qty", "Multipliers"],
+    features: ["Cascading Wins", "Free Spins", "Buy Bonus", "10 Free Spins", "Multipliers"],
   },
 
   {
@@ -535,7 +535,7 @@ const baseSlotGames: SlotGame[] = [
     maxWin: "10,000x",
     minBet: "₱0.20",
     maxBet: "₱200",
-    features: ["Cascading Wins", "Free Spins", "Buy Bonus", "Adjustable Qty", "Multipliers"],
+    features: ["Cascading Wins", "Free Spins", "Buy Bonus", "10 Free Spins", "Multipliers"],
   },
 
   {
@@ -554,7 +554,7 @@ const baseSlotGames: SlotGame[] = [
     maxWin: "10,000x",
     minBet: "₱0.20",
     maxBet: "₱200",
-    features: ["Cascading Wins", "Free Spins", "Buy Bonus", "Adjustable Qty", "Multipliers"],
+    features: ["Cascading Wins", "Free Spins", "Buy Bonus", "10 Free Spins", "Multipliers"],
   },
 
   {
@@ -573,7 +573,7 @@ const baseSlotGames: SlotGame[] = [
     maxWin: "10,000x",
     minBet: "₱0.20",
     maxBet: "₱200",
-    features: ["Cascading Wins", "Free Spins", "Buy Bonus", "Adjustable Qty", "Multipliers"],
+    features: ["Cascading Wins", "Free Spins", "Buy Bonus", "10 Free Spins", "Multipliers"],
   },
 
   {
@@ -591,7 +591,7 @@ const baseSlotGames: SlotGame[] = [
     maxWin: "10,000x",
     minBet: "₱0.20",
     maxBet: "₱200",
-    features: ["Cascading Wins", "Free Spins", "Buy Bonus", "Adjustable Qty", "Multipliers"],
+    features: ["Cascading Wins", "Free Spins", "Buy Bonus", "10 Free Spins", "Multipliers"],
   },
 
   {
@@ -609,7 +609,7 @@ const baseSlotGames: SlotGame[] = [
     maxWin: "10,000x",
     minBet: "₱0.20",
     maxBet: "₱200",
-    features: ["Cascading Wins", "Free Spins", "Buy Bonus", "Adjustable Qty", "Multipliers"],
+    features: ["Cascading Wins", "Free Spins", "Buy Bonus", "10 Free Spins", "Multipliers"],
   },
 
   // Cards & fishing
