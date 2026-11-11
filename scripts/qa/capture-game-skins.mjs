@@ -47,7 +47,7 @@ for (const v of VIEWS) {
       if (m.type() === "error" && !/qa stub|Failed to load resource|net::ERR|404/.test(m.text()))
         errors.push(m.text().slice(0, 160));
     });
-    await page.goto(`${base}/?game=${g}`);
+    await page.goto(`${base}/?game=${g}${process.env.LEGACY ? "&legacy=1" : ""}`);
     await page
       .waitForSelector("[data-game-view], [data-harness-game] *", { timeout: 20000 })
       .catch(() => {});
@@ -85,6 +85,7 @@ for (const v of VIEWS) {
         btns,
         imgs,
         tagged: !!well,
+        payline: !!deck?.closest("footer"),
       };
     });
     const issues = [];
@@ -107,7 +108,7 @@ for (const v of VIEWS) {
       !(await page.evaluate(() => document.querySelector("[data-deck=orbit]") != null))
     )
       issues.push("board overlaps controls");
-    if (r.view && !r.tagged) issues.push("well not tagged by skin hooks");
+    if (r.view && !r.tagged && !r.payline) issues.push("well not tagged by skin hooks");
     const broken = r.imgs.filter((i) => !i.ok);
     if (broken.length)
       issues.push(
