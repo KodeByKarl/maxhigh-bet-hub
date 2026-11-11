@@ -62,10 +62,11 @@ export function planCoinVolcanoPlayback(
   const scale = (ms: number) => (turbo ? Math.min(ms, 60) : ms);
   const steps: McPlaybackStep[] = [];
 
-  steps.push({ type: "spinning", ms: scale(ANIM.reelSpin) });
+  // Turbo remains faster, but still gives the shuffled cards a visible entrance.
+  steps.push({ type: "spinning", ms: turbo ? 240 : ANIM.reelSpin });
   steps.push({
     type: "stopping",
-    ms: scale(ANIM.reelStagger * Math.max(0, reelsCount - 1) + ANIM.reelSettle),
+    ms: turbo ? 320 : ANIM.reelStagger * Math.max(0, reelsCount - 1) + ANIM.reelSettle,
     grid: script.grid,
   });
 

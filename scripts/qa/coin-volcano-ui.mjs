@@ -73,16 +73,21 @@ const { chromium } = await import(pw);
 const browser = await chromium.launch({ headless: true });
 const page = await browser.newPage();
 await page.addInitScript(() => {
-  window.cvMotion = [];
-  for (const event of ["animationstart", "animationend"])
-    document.addEventListener(event, (e) => {
-      if (e.animationName === "cv-reel-land" || e.animationName === "cv-reel-scroll")
-        window.cvMotion.push({
-          event,
-          animation: e.animationName,
-          cell: e.target.closest(".cv-cell")?.getAttribute("aria-label"),
-        });
-    });
+  window.cvLandings = {};
+  const sample = () => {
+    if (document.querySelector(".cv-game")?.dataset.phase === "stopping") {
+      for (const el of document.querySelectorAll(".cv-reel-land")) {
+        const key = el.closest(".cv-cell").getAttribute("aria-label");
+        const y = new DOMMatrixReadOnly(getComputedStyle(el).transform).m42;
+        const entry = window.cvLandings[key] ?? { min: Infinity, max: -Infinity };
+        entry.min = Math.min(entry.min, y);
+        entry.max = Math.max(entry.max, y);
+        window.cvLandings[key] = entry;
+      }
+    }
+    requestAnimationFrame(sample);
+  };
+  requestAnimationFrame(sample);
 });
 const errors = [];
 page.on("pageerror", (e) => errors.push(e.message));
@@ -217,8 +222,14 @@ try {
   await screenshot("spinning");
   await idle();
   assert.equal(await page.locator(".cv-wallet strong").innerText(), "₱9,999.00");
+  const fastLandings = await page.evaluate(() => Object.values(window.cvLandings));
+  assert.equal(fastLandings.length, 15);
+  assert.ok(
+    fastLandings.every((p) => p.min < -10 && p.max > -1),
+    "Turbo cards visibly drop and land",
+  );
   results.checks.push(
-    "duplicate-spin lock, busy controls, loss settlement, visible rolling motion",
+    "duplicate-spin lock, busy controls, loss settlement, visible downward shuffle and Turbo drop",
   );
   // Restore normal playback so winning states can be inspected before their real timers finish.
   await settings();
@@ -236,15 +247,11 @@ try {
     if (mode === "jackpot")
       await page.getByText("GRAND JACKPOT", { exact: true }).first().waitFor();
     if (mode === "mix") await page.locator('.cv-reward[data-mix="true"]').waitFor();
-    assert.equal(
-      await page.evaluate(
-        () =>
-          window.cvMotion.filter(
-            (m) => m.event === "animationend" && m.animation === "cv-reel-land",
-          ).length,
-      ),
-      15,
-      "all staggered normal landings finish",
+    const landings = await page.evaluate(() => Object.values(window.cvLandings));
+    assert.equal(landings.length, 15);
+    assert.ok(
+      landings.every((p) => p.min < -10 && p.max > -1),
+      "all cards travel downward from above to their final positions",
     );
     await page.waitForTimeout(400);
     await screenshot(`win-${mode}`);

@@ -576,32 +576,8 @@
   transform: rotate(calc(var(--ember-index) * 45deg));
   animation: cv-ember-flight 0.8s ease-out both;
 }
-.cv-game .cv-reel-scroll {
-  animation: cv-reel-scroll 0.22s linear infinite;
-}
-.cv-game .cv-reel-land {
-  animation: cv-reel-land 0.35s cubic-bezier(0.16, 0.75, 0.35, 1.14) both;
-}
 .cv-game .cv-symbol-pulse {
   animation: cv-symbol-win 0.55s ease-in-out 2;
-}
-@keyframes cv-reel-scroll {
-  from {
-    transform: translateY(0);
-  }
-  to {
-    transform: translateY(-50%);
-  }
-}
-@keyframes cv-reel-land {
-  from {
-    transform: translateY(-110%);
-    opacity: 0.4;
-  }
-  to {
-    transform: translateY(0);
-    opacity: 1;
-  }
 }
 @keyframes cv-symbol-win {
   50% {

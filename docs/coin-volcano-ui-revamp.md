@@ -1,6 +1,6 @@
 # Coin Volcano UI revamp
 
-Coin Volcano now uses one content-sized cabinet and console. The controller, playback planner, resolver, RNG, configuration, APIs and settlement code retain their existing behavior.
+Coin Volcano now uses one content-sized cabinet and console. The controller, resolver, RNG, configuration, APIs and settlement retain their gameplay behavior. Reel presentation uses motion-based downward shuffle and staggered drops; visual Turbo stage durations are long enough for those movements to be seen.
 
 ## Changed files
 
@@ -22,12 +22,12 @@ The existing backdrop, symbol images, audio and outcome playback are retained. T
 
 ## Rolling and rewards
 
-Each column has continuous symbol motion, with row and reel offsets in the transient strips. The final symbols come exclusively from the original playback grid. Landing timing now fits the existing playback windows:
+Each column uses Framer Motion for a continuous downward symbol shuffle, with row and reel offsets in the transient strips. Final cards drop from above the board with the same motion approach used by Abyssal Pearls, including a stagger, slight compression and eased landing. The final symbols come exclusively from the original playback grid. CSS keyframes no longer control the roll or landing.
 
-- Normal: at most 400ms delay + 300ms landing, inside the existing 820ms stopping phase for five reels.
-- Turbo: at most 14ms delay + 28ms landing, inside the existing 60ms stopping phase.
+- Normal landing: at most 370ms delay + 380ms movement, within the 820ms stopping phase.
+- Turbo: 240ms of visible shuffle followed by a 320ms stopping phase; at most 100ms delay + 180ms movement.
 
-Previously, Turbo kept up to 510ms of landing delay inside that 60ms phase, allowing cards to appear without their visible drop. The playback durations themselves were not changed.
+The previous 60ms Turbo phases were too short for a readable card drop. Only visual presentation durations were increased; no outcomes, bet calculations, reward calculations or settlement rules changed. Reduced motion uses a short fade instead of travel.
 
 Payline and Wild+Scatter keys highlight only the corresponding authoritative cells. Grand Jackpot highlights all cells only when playback supplies its jackpot flag. The reward counter animates toward the exact supplied amount; it never updates balance or calculates prizes. A short eight-ember eruption accompanies actual large wins. Reduced-motion mode disables moving effects and uses the exact counter value immediately.
 
@@ -53,9 +53,9 @@ Chromium screenshots and geometry assertions passed at:
 
 All have 15 cells, no horizontal overflow, no button overlaps, no broken image assets, and visible touch targets of at least 44px. Final symbol containers stay inside the reel surface. Screenshots were visually inspected, including portrait, landscape, landing, mix and jackpot states.
 
-The browser test also passed bet changes, Turbo and Sound controls, keyboard focus restoration, paytable access, duplicate-spin locking, busy controls, authoritative payout display and balance updates, Auto start/stop, settlement failure recovery, visibly changing rolling transforms, all 15 normal and Turbo landing completions, and reduced motion. No browser runtime errors were recorded.
+The browser test also passed bet changes, Turbo and Sound controls, keyboard focus restoration, paytable access, duplicate-spin locking, busy controls, authoritative payout display and balance updates, Auto start/stop, settlement failure recovery, visibly changing downward rolling transforms, sampled movement of all 15 cards from above the board into their final positions in normal and Turbo modes, and reduced motion. No browser runtime errors were recorded.
 
-Artifacts: `output/coin-volcano-ui/` contains viewport/state screenshots and `results.json`. `output/coin-volcano-ui-run.log` contains the browser run output. Run again with:
+Artifacts: `output/coin-volcano-ui/` contains viewport/state screenshots and `results.json`. `rolling-and-drop.webm` shows normal and Turbo card motion with mocked settlement. `output/coin-volcano-ui-run.log` contains the browser run output. Run again with:
 
 ```text
 node scripts/qa/coin-volcano-ui.mjs <installed-playwright-package-directory>

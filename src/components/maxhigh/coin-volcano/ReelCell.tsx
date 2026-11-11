@@ -1,6 +1,7 @@
 import { cn } from "@/lib/utils";
 import type { McSymKind } from "@/lib/coin-volcano-config";
 import { CoinVolcanoIcon } from "./CoinVolcanoIcon";
+import { motion, useReducedMotion } from "framer-motion";
 
 export type ReelPhase = "idle" | "spinning" | "stopping" | "win";
 
@@ -37,14 +38,14 @@ export function ReelCell({
   dimmed,
   className,
 }: ReelCellProps) {
+  const reducedMotion = useReducedMotion();
   const spinning = phase === "spinning";
   const activeGlow = (!!winning || !!mixHighlight) && !fading;
   const showRing = !!winning || !!mixHighlight || !!fading;
   const sequence = SPIN_STRIP.map((_, i) => SPIN_STRIP[(i + reel + row) % SPIN_STRIP.length]);
   const strip = [...sequence, ...sequence];
   const framePct = 100 / strip.length;
-  // Every landing must finish inside the existing playback window (60ms in Turbo).
-  const stopDelayMs = turbo ? reel * 3 + row : reel * 90 + row * 20;
+  const stopDelay = turbo ? reel * 0.02 + row * 0.01 : reel * 0.075 + row * 0.035;
 
   return (
     <div
@@ -57,12 +58,23 @@ export function ReelCell({
       {showRing && <div className="cv-cell__win-edge" data-fading={fading} aria-hidden />}
 
       {spinning ? (
-        <div
+        <motion.div
+          key={`shuffle-${spinId}`}
           className="cv-reel-scroll absolute left-0 top-0 z-[1] w-full"
+          initial={{ y: reducedMotion ? "0%" : "-50%" }}
+          animate={{ y: "0%" }}
+          transition={
+            reducedMotion
+              ? { duration: 0 }
+              : {
+                  duration: turbo ? 0.38 : 0.85 + (reel % 3) * 0.08,
+                  repeat: Infinity,
+                  ease: "linear",
+                }
+          }
           style={{
             height: `${strip.length * 100}%`,
-            filter: "blur(0.6px) saturate(1.08) brightness(1.06)",
-            animationDuration: `${turbo ? 0.25 : 0.6 + (reel % 3) * 0.06}s`,
+            filter: "saturate(1.08) brightness(1.06)",
           }}
         >
           {strip.map((sym, i) => (
@@ -74,24 +86,34 @@ export function ReelCell({
               <CoinVolcanoIcon kind={sym} framed={false} />
             </div>
           ))}
-        </div>
+        </motion.div>
       ) : (
-        <div
+        <motion.div
           key={`land-${spinId}-${reel}-${row}`}
           className={cn(
-            "absolute inset-0 z-[1] transition-[transform,filter] duration-350 ease-out",
+            "absolute inset-0 z-[1] will-change-transform",
             phase === "stopping" && "cv-reel-land",
-            activeGlow && "cv-symbol-pulse",
-            fading && "scale-100 brightness-100",
           )}
-          style={
+          initial={
             phase === "stopping"
-              ? { animationDelay: `${stopDelayMs}ms`, animationDuration: turbo ? "28ms" : "300ms" }
-              : undefined
+              ? {
+                  y: reducedMotion ? "0%" : `${-(row + 1.35) * 100}%`,
+                  opacity: 0.45,
+                  scale: reducedMotion ? 1 : 0.9,
+                }
+              : false
           }
+          animate={{ y: "0%", opacity: 1, scale: 1 }}
+          transition={{
+            duration: reducedMotion ? 0.12 : turbo ? 0.18 : 0.38,
+            delay: reducedMotion ? 0 : stopDelay,
+            ease: [0.16, 0.75, 0.35, 1.12],
+          }}
         >
-          <CoinVolcanoIcon kind={kind} framed={false} />
-        </div>
+          <div className={cn("size-full", activeGlow && "cv-symbol-pulse")}>
+            <CoinVolcanoIcon kind={kind} framed={false} />
+          </div>
+        </motion.div>
       )}
 
       {spinning ? (
