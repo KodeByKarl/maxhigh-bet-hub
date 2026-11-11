@@ -1,4 +1,4 @@
-import { SlotControlDeck } from "./SlotControlDeck";
+import { JadeControls as SlotControlDeck } from "./jade-jaguar/JadeControls";
 /**
  * Panther Peak — Sweet Bonanza layout (cluster-pay tumble slot).
  * Engine resolves spins instantly; this file plays back the animation script.
@@ -1028,7 +1028,10 @@ export function JadeJaguarSlot({
               />
 
               {/* Jade altar — compact 3×3 square */}
-              <div className="relative z-10 flex min-h-0 w-full flex-1 items-center justify-center px-2 py-3 sm:px-4 sm:py-4">
+              <div
+                data-jade-stage
+                className="relative z-10 flex min-h-0 w-full flex-1 items-center justify-center px-2 py-3 sm:px-4 sm:py-4"
+              >
                 {showTumbleBadge && (
                   <div className="pointer-events-none absolute left-1/2 top-2 z-20 -translate-x-1/2">
                     <div

@@ -25,6 +25,7 @@ export const ReelGrid = memo(function ReelGrid({ visuals }: ReelGridProps) {
 
   return (
     <div
+      data-jade-board
       className="mx-auto grid aspect-square w-full max-w-[min(92vw,22rem)] gap-2 sm:max-w-[26rem] sm:gap-2.5 md:max-w-[28rem] md:gap-3"
       style={{
         gridTemplateColumns: `repeat(${COLS}, minmax(0, 1fr))`,

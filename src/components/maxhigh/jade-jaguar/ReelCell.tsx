@@ -38,7 +38,7 @@ function reelCellPropsEqual(prev: ReelCellProps, next: ReelCellProps): boolean {
   return !cellPhaseRelevant(prev, prev.phase) && !cellPhaseRelevant(next, next.phase);
 }
 
-/** Large jade altar tile for the 3×3 board. */
+/** Jade medallion for the 3×3 board (circle, ring and symbol sizing live in jade-layout.css). */
 export const ReelCell = memo(function ReelCell({
   index,
   cell,
@@ -66,25 +66,18 @@ export const ReelCell = memo(function ReelCell({
 
   return (
     <div
+      data-jade-cell
+      data-winning={isWinLit}
       className={cn(
-        "relative min-h-0 min-w-0 overflow-hidden rounded-2xl isolate",
-        "border-[2.5px] bg-[#04140f]/95 shadow-[0_6px_18px_rgba(0,0,0,0.45),inset_0_0_18px_rgba(16,185,129,0.16)]",
+        "relative min-h-0 min-w-0 overflow-hidden rounded-full isolate",
         isScatter || isWinLit ? "z-[3]" : isInitialDrop || isGravityDrop ? "z-[1]" : "z-0",
         isWinLit && "scale-[1.03]",
       )}
-      style={{
-        borderColor: isWinLit
-          ? "var(--p-accent-soft)"
-          : "color-mix(in srgb, var(--p-accent) 65%, transparent)",
-        boxShadow: isWinLit
-          ? "0 0 22px var(--p-spin-shadow), inset 0 0 16px rgba(52,211,153,0.35)"
-          : undefined,
-      }}
     >
       {cell && (
         <motion.div
           key={cell.key}
-          className="absolute inset-0 flex items-center justify-center overflow-hidden rounded-2xl will-change-transform"
+          className="absolute inset-0 flex items-center justify-center overflow-hidden rounded-full will-change-transform"
           initial={
             isInitialDrop || isGravityDrop
               ? {
@@ -136,7 +129,7 @@ export const ReelCell = memo(function ReelCell({
                   : { duration: 0.22, ease: [0.22, 1, 0.36, 1] }
           }
         >
-          <div className="absolute inset-[8%] flex items-center justify-center">
+          <div data-jade-art className="absolute inset-0 flex items-center justify-center">
             <PantherIcon
               kind={cell.sym.kind}
               mult={cell.mult}
