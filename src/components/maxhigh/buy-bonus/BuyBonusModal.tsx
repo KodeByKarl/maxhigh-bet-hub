@@ -34,8 +34,18 @@ export type BuyBonusModalProps = {
   onCancel: () => void;
 };
 
+/** Bet field: whole numbers stay plain ("1"), fractions get cents ("0.50"). */
 function formatPrice(n: number) {
   return Number.isInteger(n) ? String(n) : n.toFixed(2);
+}
+
+/** Prices and totals: always cents + thousands separators, identical to the Buy Bonus button on the control deck (formatMoney), so
+ *  the dialog, the deck and the server charge never disagree on rounding or format (e.g. "42.50", "425.00", "1,062.50"). */
+function formatAmount(n: number) {
+  return (Number.isFinite(n) ? n : 0).toLocaleString("en-PH", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
 }
 
 /** Lift a too-dark brand colour so glows and text stay visible on the dark panel. */
@@ -334,12 +344,12 @@ export function BuyBonusModal({
                 <div className="bb-rows">
                   <div>
                     <em>Price</em>
-                    <strong data-bb="unit-price">₱ {formatPrice(unitPrice)}</strong>
+                    <strong data-bb="unit-price">₱ {formatAmount(unitPrice)}</strong>
                   </div>
                   <div className="bb-total-row">
                     <em>Total Price</em>
                     <strong className="bb-price" data-bb="total-price">
-                      ₱ {formatPrice(price)}
+                      ₱ {formatAmount(price)}
                     </strong>
                   </div>
                 </div>

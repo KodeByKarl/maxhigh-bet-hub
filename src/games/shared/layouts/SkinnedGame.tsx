@@ -3,6 +3,7 @@ import type { GameSkin } from "../themes/skin";
 import { useSkinHooks } from "../hooks/useSkinHooks";
 import "./skin-frames.css";
 import "./skin-deck.css";
+import "./skin-mobile.css";
 import "./skin-board.css";
 import "./skin-atmosphere.css";
 import "./skin-material.css";

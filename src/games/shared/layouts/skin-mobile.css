@@ -1,0 +1,198 @@
+/* Mobile-first control layer. Loaded AFTER skin-deck.css; presentation only (no gameplay, pricing or RNG).
+   Goals on phones: the Spin button is the focal point, every control is a comfortable touch target, the panel respects iOS safe
+   areas and never shifts while a spin is in flight. Each game keeps its own deck layout, Spin shape and typeface (data-deck/-spin/-voice). */
+
+[data-game-view] {
+  --m-spin: clamp(96px, 28vw, 120px);
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+[data-game-view] .slot-deck button {
+  touch-action: manipulation;
+  -webkit-user-select: none;
+  user-select: none;
+}
+[data-game-view] .slot-deck__balance strong,
+[data-game-view] .slot-deck__win strong,
+[data-game-view] .slot-deck__stake strong,
+[data-game-view] .slot-deck__bonus strong {
+  font-variant-numeric: tabular-nums;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 100%;
+}
+
+/* ───────── state language (all viewports) ───────── */
+[data-game-view] .slot-deck__spin:disabled {
+  filter: grayscale(0.7) brightness(0.7);
+  cursor: not-allowed;
+  box-shadow: none;
+}
+[data-game-view] .slot-deck__spin[data-active="true"]:not(:disabled) {
+  animation: m-spin-pulse 1.4s ease-in-out infinite;
+}
+[data-game-view] .slot-deck__spin:focus-visible,
+[data-game-view] .slot-deck button:focus-visible {
+  outline: 3px solid #fff;
+  outline-offset: 2px;
+}
+[data-game-view] .slot-deck__tools button[aria-pressed="true"] {
+  box-shadow:
+    0 0 0 2px var(--deck-accent),
+    0 0 12px color-mix(in srgb, var(--deck-accent) 60%, transparent);
+}
+[data-game-view] .slot-deck__bet button:disabled,
+[data-game-view] .slot-deck__tools button:disabled,
+[data-game-view] .slot-deck__bonus:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+@keyframes m-spin-pulse {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.04);
+  }
+}
+
+/* ───────── phones, portrait ───────── */
+@media (max-width: 600px) {
+  [data-game-view] .slot-deck {
+    padding-left: max(9px, env(safe-area-inset-left));
+    padding-right: max(9px, env(safe-area-inset-right));
+    padding-bottom: max(6px, env(safe-area-inset-bottom));
+    margin-top: 4px;
+    contain: layout style;
+  }
+  /* readable numbers */
+  [data-game-view] .slot-deck__meters strong {
+    font-size: 14px;
+  }
+  [data-game-view] .slot-deck__stake > strong {
+    font-size: 14px;
+  }
+  /* Spin: the primary focus */
+  [data-spin="circle"] .slot-deck__spin,
+  [data-spin="coin"] .slot-deck__spin,
+  [data-spin="petal"] .slot-deck__spin {
+    width: var(--m-spin);
+    height: var(--m-spin);
+  }
+  [data-spin="hex"] .slot-deck__spin {
+    width: calc(var(--m-spin) * 1.2);
+    height: var(--m-spin);
+  }
+  [data-spin="shield"] .slot-deck__spin {
+    width: calc(var(--m-spin) * 0.96);
+    height: calc(var(--m-spin) * 1.04);
+  }
+  [data-spin="lozenge"] .slot-deck__spin,
+  [data-spin="blade"] .slot-deck__spin {
+    height: 76px;
+  }
+  [data-game-view] .slot-deck__spin-face {
+    font-size: 16px;
+    font-weight: 800;
+    letter-spacing: 0.04em;
+  }
+  [data-game-view] .slot-deck__spin-face svg {
+    width: 28px;
+    height: 28px;
+  }
+  [data-deck="thumb"] .slot-deck__play {
+    grid-template-columns: calc(var(--m-spin) + 6px) minmax(0, 1fr);
+  }
+  [data-deck="thumb"] .slot-deck__spin {
+    min-height: var(--m-spin);
+  }
+  [data-deck="console"] .slot-deck__spin,
+  [data-deck="rail"] .slot-deck__spin {
+    height: 64px;
+  }
+  [data-deck="orbit"] .slot-deck__play {
+    grid-template-columns: 46px 46px minmax(0, 1fr) 46px 46px;
+    margin-top: calc(var(--m-spin) * -0.28);
+  }
+  /* comfortable touch targets */
+  [data-game-view] .slot-deck__bet > button:not(.slot-deck__stake),
+  [data-game-view] .slot-deck__tools button {
+    min-width: 46px;
+    min-height: 46px;
+  }
+  [data-game-view] .slot-deck__stake {
+    min-height: 46px;
+  }
+  [data-game-view] .slot-deck__bonus {
+    min-height: 44px;
+  }
+}
+
+/* Board sits directly above the controls (art + jackpot read above it) instead of floating in dead space.
+   margin-top:auto pushes a short/wide well to the bottom of a row-flex play area; tall wells already fill it, so they are unchanged. */
+@media (max-width: 600px) and (orientation: portrait) {
+  [data-game-view] [data-gs-well] {
+    margin-top: auto;
+    margin-bottom: 6px;
+  }
+  /* console + rail decks: Spin is always the full-width primary bar, whatever the per-game button shape */
+  [data-deck="console"][data-spin] .slot-deck__spin,
+  [data-deck="rail"][data-spin] .slot-deck__spin {
+    width: 100%;
+    max-width: none;
+    height: 68px;
+  }
+}
+
+/* ───────── very small phones (360x640, 375x667) ───────── */
+@media (max-width: 380px), (max-height: 680px) and (max-width: 600px) {
+  [data-game-view] {
+    --m-spin: clamp(88px, 26vw, 100px);
+  }
+  [data-game-view] .slot-deck__message {
+    display: none;
+  }
+  [data-game-view] .slot-deck {
+    padding-top: 6px;
+  }
+  [data-game-view] .slot-deck__meters {
+    padding-bottom: 5px;
+  }
+}
+
+/* ───────── phones, landscape ───────── */
+@media (max-height: 500px) and (orientation: landscape) {
+  [data-game-view] {
+    --m-spin: 68px;
+  }
+  [data-game-view] .slot-deck {
+    padding-left: max(9px, env(safe-area-inset-left));
+    padding-right: max(9px, env(safe-area-inset-right));
+    padding-bottom: max(3px, env(safe-area-inset-bottom));
+  }
+  [data-game-view] .slot-deck__message {
+    display: none;
+  }
+  [data-spin="circle"] .slot-deck__spin,
+  [data-spin="coin"] .slot-deck__spin,
+  [data-spin="petal"] .slot-deck__spin {
+    width: var(--m-spin);
+    height: var(--m-spin);
+  }
+  [data-game-view] .slot-deck__spin-face {
+    font-size: 12px;
+  }
+  [data-game-view] .slot-deck__bet > button:not(.slot-deck__stake),
+  [data-game-view] .slot-deck__tools button {
+    min-width: 44px;
+    min-height: 44px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  [data-game-view] .slot-deck__spin[data-active="true"] {
+    animation: none !important;
+  }
+}
