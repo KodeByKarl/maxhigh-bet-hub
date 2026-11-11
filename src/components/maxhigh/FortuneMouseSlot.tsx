@@ -1,4 +1,4 @@
-import { SlotControlDeck } from "./SlotControlDeck";
+import { MouseControls as SlotControlDeck } from "./fortune-mouse/MouseControls";
 /**
  * Fortune Mouse — 3×5 cluster-pay tumble slot (panther rectangle board).
  * Engine resolves spins instantly; this file plays back the animation script.
