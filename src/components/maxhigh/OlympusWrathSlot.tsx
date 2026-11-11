@@ -1,4 +1,4 @@
-import { SlotControlDeck } from "./SlotControlDeck";
+import { OlympusAltar as SlotControlDeck } from "./olympus-wrath/OlympusAltar";
 /**
  * Olympus Wrath — 4×8 cluster-pay tumble slot (panther rectangle board).
  * Engine resolves spins instantly; this file plays back the animation script.
