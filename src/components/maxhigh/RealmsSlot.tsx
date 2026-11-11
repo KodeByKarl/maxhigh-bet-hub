@@ -1193,6 +1193,8 @@ function RealmsTable({ def }: { def: RealmsGameDef }) {
             balance={balance}
             bet={bet}
             pricePerSpin={buyPricePerSpin}
+            def={def}
+            backdropSrc={theme.assets.backdrop}
             scatterSrc={art.scatter.src}
             onCancel={() => setBuyOpen(false)}
             onConfirm={(buyBet, quantity) => {

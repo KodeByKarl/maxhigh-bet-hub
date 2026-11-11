@@ -47,10 +47,13 @@ assert.ok(modals.length >= 31, `expected at least 31 buy dialogs, found ${modals
 for (const m of modals) {
   const s = read(m);
   assert.ok(!/nudgeQty|label="Quantity"|setQuantity/.test(s), `${m} still has a quantity selector`);
-  assert.ok(s.includes("BUY_BONUS_FREE_SPINS"), `${m} must show the fixed free-spin count`);
-  assert.ok(s.includes("Confirm Buy Bonus") && /Cancel/.test(s), `${m} must offer Confirm Buy Bonus and Cancel`);
+  assert.ok(s.includes("BUY_BONUS_FREE_SPINS") || s.includes("<BuyBonusModal"), `${m} must show the fixed free-spin count (directly or via the shared modal, asserted below)`);
+  assert.ok(s.includes("<BuyBonusModal"), `${m} must render the shared BuyBonusModal (Confirm Buy Bonus / Cancel live there)`);
   assert.ok(!/Buy &amp; Play|setBuyBet|nudgeBet|Stepper/.test(s), `${m} still has bet/quantity steppers`);
 }
+const shared = read("src/components/maxhigh/buy-bonus/BuyBonusModal.tsx");
+assert.ok(shared.includes("Confirm Buy Bonus") && /Cancel/.test(shared) && shared.includes("BUY_BONUS_FREE_SPINS"), "shared modal must offer Confirm Buy Bonus and Cancel and show the fixed spins");
+assert.ok(!/nudgeQty|label="Quantity"|setQuantity|<input|<select/.test(shared), "shared modal has no quantity/bet control");
 ok(`all ${modals.length} Buy Bonus dialogs: no quantity selector, fixed 10 free spins shown`);
 
 // ---- every template slot: counter n/N, counter hidden during the scatter intro, and the auto-chain dependency (baseline stall fix)

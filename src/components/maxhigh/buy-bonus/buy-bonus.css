@@ -1,0 +1,633 @@
+/* Shared Buy Bonus modal. Every colour comes from --bb-* variables set per game by BuyBonusModal. */
+
+.bb-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: max(0.75rem, env(safe-area-inset-top)) max(0.75rem, env(safe-area-inset-right))
+    max(0.75rem, env(safe-area-inset-bottom)) max(0.75rem, env(safe-area-inset-left));
+  background:
+    radial-gradient(ellipse at 50% 42%, color-mix(in srgb, var(--bb-a) 16%, transparent), transparent 62%),
+    rgba(3, 3, 8, 0.72);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  overflow: hidden;
+}
+
+/* three nested layers: glow (drop-shadow, never clipped) > frame (gradient rim) > card (content, scrolls if the screen is tiny) */
+.bb-glow {
+  position: relative;
+  width: min(100%, 23.5rem);
+  max-height: 100%;
+  display: flex;
+  filter: drop-shadow(0 18px 40px rgba(0, 0, 0, 0.75))
+    drop-shadow(0 0 22px color-mix(in srgb, var(--bb-a) 38%, transparent));
+}
+
+.bb-frame {
+  --bb-r: 1.6rem;
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  padding: 2px;
+  border-radius: var(--bb-r);
+  background: linear-gradient(
+    150deg,
+    var(--bb-s) 0%,
+    var(--bb-a) 28%,
+    color-mix(in srgb, var(--bb-a) 30%, var(--bb-d)) 55%,
+    var(--bb-a) 80%,
+    var(--bb-s) 100%
+  );
+}
+
+.bb-card {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  border-radius: calc(var(--bb-r) - 2px);
+  isolation: isolate;
+  color: var(--bb-text);
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--bb-d) 82%, var(--bb-a)) 0%,
+    var(--bb-d) 46%,
+    color-mix(in srgb, var(--bb-d) 70%, #000) 100%
+  );
+  scrollbar-width: none;
+}
+.bb-card::-webkit-scrollbar {
+  display: none;
+}
+
+/* frame shapes */
+.bb-shape-arch .bb-frame {
+  --bb-r: 2.2rem 2.2rem 1.2rem 1.2rem;
+}
+.bb-shape-round .bb-frame {
+  --bb-r: 1.7rem;
+}
+.bb-shape-arch .bb-card {
+  border-radius: 2.1rem 2.1rem 1.1rem 1.1rem;
+}
+.bb-shape-bevel .bb-frame,
+.bb-shape-bevel .bb-card {
+  border-radius: 0;
+  clip-path: polygon(
+    16px 0,
+    calc(100% - 16px) 0,
+    100% 16px,
+    100% calc(100% - 16px),
+    calc(100% - 16px) 100%,
+    16px 100%,
+    0 calc(100% - 16px),
+    0 16px
+  );
+}
+.bb-shape-notch .bb-frame,
+.bb-shape-notch .bb-card {
+  border-radius: 0;
+  clip-path: polygon(
+    0 12px,
+    12px 12px,
+    12px 0,
+    calc(100% - 12px) 0,
+    calc(100% - 12px) 12px,
+    100% 12px,
+    100% calc(100% - 12px),
+    calc(100% - 12px) calc(100% - 12px),
+    calc(100% - 12px) 100%,
+    12px 100%,
+    12px calc(100% - 12px),
+    0 calc(100% - 12px)
+  );
+}
+
+/* layered background art */
+.bb-art,
+.bb-tiles,
+.bb-vignette,
+.bb-particles {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+.bb-art {
+  z-index: -4;
+  background-size: cover;
+  background-position: center 30%;
+  opacity: 0.5;
+  filter: saturate(1.15) blur(1px);
+  transform: scale(1.06);
+}
+.bb-tiles {
+  z-index: -3;
+  opacity: 0.14;
+  -webkit-mask-image: linear-gradient(180deg, #000 0%, transparent 70%);
+  mask-image: linear-gradient(180deg, #000 0%, transparent 70%);
+}
+.bb-vignette {
+  z-index: -2;
+  background:
+    radial-gradient(ellipse at 50% 22%, transparent 0%, color-mix(in srgb, var(--bb-d) 55%, transparent) 70%),
+    linear-gradient(180deg, transparent 38%, color-mix(in srgb, var(--bb-d) 92%, #000) 100%);
+}
+.bb-particles {
+  z-index: -1;
+  overflow: hidden;
+}
+
+.bb-body {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 1.15rem 1.25rem 1.15rem;
+  text-align: center;
+}
+
+/* header */
+.bb-close {
+  position: absolute;
+  top: 0.35rem;
+  right: 0.35rem;
+  z-index: 3;
+  width: 2.75rem;
+  height: 2.75rem;
+  display: grid;
+  place-items: center;
+  background: none;
+  border: 0;
+  padding: 0;
+  cursor: pointer;
+  color: var(--bb-s);
+}
+.bb-close > span {
+  display: grid;
+  place-items: center;
+  width: 1.85rem;
+  height: 1.85rem;
+  border-radius: 999px;
+  font-size: 1.15rem;
+  line-height: 1;
+  font-weight: 800;
+  background: rgba(0, 0, 0, 0.55);
+  border: 1px solid color-mix(in srgb, var(--bb-a) 60%, transparent);
+  transition: background 0.15s, transform 0.15s;
+}
+.bb-close:hover > span {
+  background: color-mix(in srgb, var(--bb-a) 35%, #000);
+  transform: scale(1.08);
+}
+
+.bb-game {
+  font-size: 0.66rem;
+  font-weight: 700;
+  letter-spacing: 0.32em;
+  text-transform: uppercase;
+  color: color-mix(in srgb, var(--bb-s) 80%, transparent);
+  max-width: 78%;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.bb-title {
+  margin: 0.15rem 0 0;
+  font-size: clamp(1.7rem, 7.4vw, 2.15rem);
+  font-weight: 900;
+  line-height: 1.05;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  background: linear-gradient(180deg, #fff 0%, var(--bb-s) 55%, var(--bb-a) 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  filter: drop-shadow(0 2px 0 rgba(0, 0, 0, 0.55)) drop-shadow(0 0 14px color-mix(in srgb, var(--bb-a) 55%, transparent));
+}
+.bb-font-classic .bb-title {
+  font-family: "Cinzel", "Trajan Pro", "Palatino Linotype", "Book Antiqua", Georgia, serif;
+  letter-spacing: 0.1em;
+}
+.bb-font-bold .bb-title {
+  font-family: "Impact", "Arial Black", "Segoe UI", system-ui, sans-serif;
+  letter-spacing: 0.08em;
+  font-weight: 400;
+}
+.bb-crest {
+  display: block;
+  width: 9.5rem;
+  height: 0.9rem;
+  margin-top: 0.2rem;
+  color: var(--bb-a);
+}
+
+/* hero symbol */
+.bb-hero {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 9rem;
+  height: 8rem;
+  margin-top: 0.35rem;
+}
+.bb-rays {
+  position: absolute;
+  inset: -22%;
+  border-radius: 999px;
+  background: repeating-conic-gradient(
+    from 0deg,
+    color-mix(in srgb, var(--bb-s) 34%, transparent) 0deg 7deg,
+    transparent 7deg 22deg
+  );
+  -webkit-mask-image: radial-gradient(circle, #000 0%, transparent 68%);
+  mask-image: radial-gradient(circle, #000 0%, transparent 68%);
+  animation: bb-spin 28s linear infinite;
+}
+.bb-halo {
+  position: absolute;
+  inset: 4%;
+  border-radius: 999px;
+  background: radial-gradient(circle, color-mix(in srgb, var(--bb-s) 55%, transparent) 0%, color-mix(in srgb, var(--bb-a) 22%, transparent) 45%, transparent 72%);
+  animation: bb-breathe 3.4s ease-in-out infinite;
+}
+.bb-symbol {
+  position: relative;
+  width: 7.2rem;
+  height: 7.2rem;
+  object-fit: contain;
+  filter: drop-shadow(0 8px 14px rgba(0, 0, 0, 0.7)) drop-shadow(0 0 12px color-mix(in srgb, var(--bb-s) 55%, transparent));
+  /* some source art has a hard square edge; fade only the very rim so every symbol floats free of its box */
+  -webkit-mask-image: radial-gradient(closest-side, #000 88%, transparent 100%);
+  mask-image: radial-gradient(closest-side, #000 88%, transparent 100%);
+  animation: bb-float 3.6s ease-in-out infinite;
+  user-select: none;
+}
+
+/* fixed 10 free spins */
+.bb-spins {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.4rem;
+  margin-top: -0.2rem;
+  padding: 0.28rem 1rem 0.3rem;
+  border-radius: 999px;
+  font-weight: 900;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--bb-on-a);
+  background: linear-gradient(180deg, var(--bb-s), var(--bb-a));
+  box-shadow: 0 0 16px color-mix(in srgb, var(--bb-a) 55%, transparent), inset 0 1px 0 rgba(255, 255, 255, 0.55);
+}
+.bb-spins b {
+  font-size: 1.35rem;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+.bb-spins span {
+  font-size: 0.74rem;
+}
+
+/* price */
+.bb-price-wrap {
+  margin-top: 0.9rem;
+  width: 100%;
+}
+.bb-label {
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.26em;
+  text-transform: uppercase;
+  color: color-mix(in srgb, var(--bb-s) 85%, #fff);
+  opacity: 0.9;
+}
+.bb-price {
+  margin-top: 0.1rem;
+  font-size: clamp(2.3rem, 11vw, 3rem);
+  font-weight: 900;
+  line-height: 1.05;
+  font-variant-numeric: tabular-nums;
+  color: #fff;
+  background: linear-gradient(180deg, #ffffff 0%, var(--bb-s) 62%, var(--bb-a) 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  filter: drop-shadow(0 3px 0 rgba(0, 0, 0, 0.6)) drop-shadow(0 0 18px color-mix(in srgb, var(--bb-a) 50%, transparent));
+  overflow-wrap: anywhere;
+}
+.bb-bet {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+  margin-top: 0.55rem;
+  padding: 0.3rem 0.95rem;
+  border-radius: 999px;
+  font-size: 0.82rem;
+  background: rgba(0, 0, 0, 0.38);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--bb-a) 28%, transparent);
+}
+.bb-bet em {
+  font-style: normal;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  font-size: 0.64rem;
+  color: color-mix(in srgb, var(--bb-s) 80%, #fff);
+}
+.bb-bet strong {
+  font-weight: 900;
+  font-variant-numeric: tabular-nums;
+  color: #fff;
+}
+.bb-alert {
+  margin-top: 0.6rem;
+  padding: 0.3rem 0.8rem;
+  border-radius: 0.6rem;
+  font-size: 0.78rem;
+  font-weight: 800;
+  color: #ffe9a8;
+  background: rgba(120, 30, 20, 0.6);
+  box-shadow: inset 0 0 0 1px rgba(255, 170, 120, 0.45);
+}
+
+/* actions */
+.bb-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  width: 100%;
+  margin-top: 1rem;
+}
+.bb-confirm {
+  position: relative;
+  overflow: hidden;
+  min-height: 3.3rem;
+  padding: 0.7rem 1rem;
+  border: 0;
+  border-radius: 999px;
+  cursor: pointer;
+  font-size: 1.08rem;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--bb-on-a);
+  background: linear-gradient(
+    180deg,
+    var(--bb-s) 0%,
+    var(--bb-a) 52%,
+    color-mix(in srgb, var(--bb-a) 62%, var(--bb-d)) 100%
+  );
+  box-shadow:
+    0 0 0 2px color-mix(in srgb, var(--bb-s) 70%, #fff),
+    0 8px 20px rgba(0, 0, 0, 0.5),
+    0 0 26px color-mix(in srgb, var(--bb-a) 60%, transparent),
+    inset 0 2px 0 rgba(255, 255, 255, 0.55),
+    inset 0 -3px 0 rgba(0, 0, 0, 0.25);
+  transition: transform 0.12s, filter 0.15s;
+}
+.bb-confirm::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(105deg, transparent 38%, rgba(255, 255, 255, 0.55) 50%, transparent 62%);
+  transform: translateX(-120%);
+  animation: bb-shine 3.2s ease-in-out 0.9s infinite;
+  pointer-events: none;
+}
+.bb-confirm:hover:not(:disabled) {
+  filter: brightness(1.08);
+  transform: translateY(-1px);
+}
+.bb-confirm:active:not(:disabled) {
+  transform: translateY(1px);
+}
+.bb-confirm:disabled {
+  cursor: not-allowed;
+  filter: grayscale(0.7) brightness(0.7);
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.18);
+}
+.bb-confirm:disabled::after {
+  display: none;
+}
+.bb-cancel {
+  min-height: 2.75rem;
+  padding: 0.5rem 1rem;
+  background: none;
+  border: 0;
+  cursor: pointer;
+  font-size: 0.82rem;
+  font-weight: 800;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: color-mix(in srgb, var(--bb-s) 75%, #fff);
+  opacity: 0.85;
+  transition: opacity 0.15s;
+}
+.bb-cancel:hover {
+  opacity: 1;
+  text-decoration: underline;
+  text-underline-offset: 0.35em;
+}
+
+.bb-confirm:focus-visible,
+.bb-cancel:focus-visible,
+.bb-close:focus-visible {
+  outline: 3px solid #fff;
+  outline-offset: 2px;
+}
+
+/* particles */
+.bb-p {
+  position: absolute;
+  left: var(--x);
+  width: var(--sz);
+  height: var(--sz);
+  border-radius: 999px;
+  background: var(--bb-pc);
+  box-shadow: 0 0 calc(var(--sz) * 2.5) var(--bb-pc);
+  opacity: 0;
+  animation-duration: var(--dur);
+  animation-delay: var(--del);
+  animation-iteration-count: infinite;
+  animation-timing-function: ease-in-out;
+}
+.bb-pk-rise .bb-p {
+  bottom: -6%;
+  animation-name: bb-rise;
+}
+.bb-pk-fall .bb-p {
+  top: -6%;
+  animation-name: bb-fall;
+}
+.bb-pk-twinkle .bb-p {
+  top: var(--y);
+  animation-name: bb-twinkle;
+}
+.bb-pk-drift .bb-p {
+  top: var(--y);
+  animation-name: bb-drift;
+}
+.bb-pk-flash .bb-p {
+  top: var(--y);
+  width: calc(var(--sz) * 3);
+  height: calc(var(--sz) * 7);
+  border-radius: 0;
+  clip-path: polygon(60% 0, 8% 55%, 44% 55%, 26% 100%, 92% 40%, 56% 40%);
+  box-shadow: none;
+  animation-name: bb-flash;
+  animation-timing-function: steps(1, end);
+}
+
+@keyframes bb-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+@keyframes bb-breathe {
+  0%,
+  100% {
+    opacity: 0.75;
+    transform: scale(0.96);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.06);
+  }
+}
+@keyframes bb-float {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-5px);
+  }
+}
+@keyframes bb-shine {
+  0%,
+  55% {
+    transform: translateX(-120%);
+  }
+  100% {
+    transform: translateX(120%);
+  }
+}
+@keyframes bb-rise {
+  0% {
+    transform: translate(0, 0) scale(0.6);
+    opacity: 0;
+  }
+  15% {
+    opacity: 0.9;
+  }
+  100% {
+    transform: translate(var(--dx), -420px) scale(0.2);
+    opacity: 0;
+  }
+}
+@keyframes bb-fall {
+  0% {
+    transform: translate(0, 0);
+    opacity: 0;
+  }
+  15% {
+    opacity: 0.85;
+  }
+  100% {
+    transform: translate(var(--dx), 460px);
+    opacity: 0;
+  }
+}
+@keyframes bb-twinkle {
+  0%,
+  100% {
+    opacity: 0;
+    transform: scale(0.4);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.2);
+  }
+}
+@keyframes bb-drift {
+  0% {
+    opacity: 0;
+    transform: translate(0, 0);
+  }
+  30%,
+  70% {
+    opacity: 0.7;
+  }
+  100% {
+    opacity: 0;
+    transform: translate(var(--dx), -60px);
+  }
+}
+@keyframes bb-flash {
+  0%,
+  86%,
+  100% {
+    opacity: 0;
+  }
+  88%,
+  92% {
+    opacity: 0.95;
+  }
+  90% {
+    opacity: 0.2;
+  }
+}
+
+/* short viewports (landscape phones): tighten the hero so everything stays on screen */
+@media (max-height: 640px) {
+  .bb-hero {
+    width: 6.4rem;
+    height: 5.6rem;
+  }
+  .bb-symbol {
+    width: 5.2rem;
+    height: 5.2rem;
+  }
+  .bb-body {
+    padding-top: 0.8rem;
+    padding-bottom: 0.8rem;
+  }
+  .bb-price-wrap {
+    margin-top: 0.55rem;
+  }
+  .bb-actions {
+    margin-top: 0.7rem;
+  }
+}
+@media (max-width: 360px) {
+  .bb-body {
+    padding-left: 0.9rem;
+    padding-right: 0.9rem;
+  }
+  .bb-confirm {
+    font-size: 0.98rem;
+    letter-spacing: 0.04em;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .bb-rays,
+  .bb-halo,
+  .bb-symbol,
+  .bb-confirm::after,
+  .bb-p {
+    animation: none !important;
+  }
+  .bb-p {
+    opacity: 0.5;
+  }
+  .bb-confirm,
+  .bb-close > span {
+    transition: none;
+  }
+}
