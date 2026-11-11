@@ -1,4 +1,4 @@
-import { SlotControlDeck } from "./SlotControlDeck";
+import { MayaControls as SlotControlDeck } from "./maya-gold/MayaControls";
 /**
  * Maya Gold — 5×6 cluster-pay tumble slot (panther rectangle board).
  * Engine resolves spins instantly; this file plays back the animation script.

@@ -1,0 +1,414 @@
+/* Lost City of the Sun. Presentation only; the original 5x6 mapping and playback are unchanged. */
+[data-game-view="maya-gold"][data-deck] {
+  container-type: size;
+}
+[data-game-view="maya-gold"][data-atmos]::before {
+  opacity: 0.14;
+}
+[data-game-view="maya-gold"][data-deck] > div > .relative.z-10 {
+  padding: max(48px, env(safe-area-inset-top)) max(10px, env(safe-area-inset-right))
+    max(12px, env(safe-area-inset-bottom)) max(10px, env(safe-area-inset-left));
+}
+[data-game-view="maya-gold"][data-deck] > div > button[title] {
+  width: 44px;
+  height: 44px;
+}
+[data-game-view="maya-gold"][data-deck] [data-gs-col] {
+  max-width: 900px;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+}
+[data-game-view="maya-gold"][data-deck] [data-gs-col] > :first-child {
+  flex: 0 1 auto;
+}
+[data-game-view="maya-gold"][data-deck] [data-gs-well] {
+  margin: 0;
+  padding: 9px;
+  clip-path: none;
+  border-radius: 4px !important;
+  clip-path: polygon(
+    0 8px,
+    8px 8px,
+    8px 0,
+    calc(100% - 8px) 0,
+    calc(100% - 8px) 8px,
+    100% 8px,
+    100% calc(100% - 8px),
+    calc(100% - 8px) calc(100% - 8px),
+    calc(100% - 8px) 100%,
+    8px 100%,
+    8px calc(100% - 8px),
+    0 calc(100% - 8px)
+  );
+  background: linear-gradient(145deg, #384239, #151e1c 55%, #1a201c) !important;
+  box-shadow:
+    inset 0 0 0 1px #ad945f,
+    inset 0 0 0 4px #203d31,
+    inset 0 0 0 5px #71836b60,
+    0 10px 28px #03141070 !important;
+}
+[data-game-view="maya-gold"][data-deck] [data-gs-well]::before {
+  inset: 3px;
+  border-width: 3px;
+  opacity: 0.2;
+}
+[data-game-view="maya-gold"][data-deck] [data-gs-well]::after {
+  background: none;
+  inset: 0;
+  height: auto;
+  width: auto;
+  transform: none;
+  border-top: 2px solid #c5ab6c;
+  border-bottom: 2px solid #6c8065;
+}
+[data-game-view="maya-gold"][data-deck] [data-gs-board] {
+  width: min(calc(100cqw - 42px), calc((100cqh - 300px) * 5 / 6), 500px) !important;
+  max-height: none !important;
+  aspect-ratio: 5 / 6;
+  gap: clamp(4px, 1cqw, 7px);
+}
+[data-game-view="maya-gold"][data-deck] [data-maya-tile] {
+  border: 1px solid #386451 !important;
+  border-radius: 4px !important;
+  background: linear-gradient(155deg, #1d2a28, #101917 60%, #1b211e) !important;
+  box-shadow:
+    inset 0 1px 0 #b5c8b41a,
+    0 2px 4px #03120c70;
+}
+[data-game-view="maya-gold"][data-deck] [data-maya-tile]::before {
+  content: "";
+  position: absolute;
+  inset: 3px;
+  pointer-events: none;
+  background:
+    linear-gradient(#b59a5e, #b59a5e) left top/9px 1px no-repeat,
+    linear-gradient(#b59a5e, #b59a5e) left top/1px 7px no-repeat,
+    linear-gradient(#b59a5e, #b59a5e) right bottom/9px 1px no-repeat,
+    linear-gradient(#b59a5e, #b59a5e) right bottom/1px 7px no-repeat;
+  opacity: 0.65;
+}
+[data-game-view="maya-gold"][data-deck] [data-maya-tile][data-winning="true"] {
+  border-color: #e5cf82 !important;
+}
+[data-game-view="maya-gold"][data-deck] [data-maya-art] {
+  inset: 4%;
+}
+[data-game-view="maya-gold"][data-deck] [data-maya-tile] img {
+  scale: 1;
+  translate: none;
+  padding: 2%;
+  object-fit: contain;
+  object-position: center;
+}
+.maya-mechanism {
+  width: 100%;
+  max-width: 570px;
+  flex: none;
+  padding: 8px 12px 6px;
+  border-top: 2px solid #aa915d;
+  border-radius: 0;
+  clip-path: polygon(
+    0 0,
+    100% 0,
+    100% calc(100% - 12px),
+    calc(100% - 12px) calc(100% - 12px),
+    calc(100% - 12px) 100%,
+    12px 100%,
+    12px calc(100% - 12px),
+    0 calc(100% - 12px)
+  );
+  background: linear-gradient(120deg, #1e2923f5, #101916f5);
+  box-shadow:
+    inset 0 1px 0 #d6c08a23,
+    0 8px 24px #04110c66;
+  color: #f0e9cb;
+  font-family: ui-sans-serif, system-ui, sans-serif;
+  font-variant-numeric: tabular-nums;
+}
+.maya-mechanism button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 44px;
+  min-height: 44px;
+  gap: 5px;
+  cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+.maya-mechanism button:focus-visible {
+  outline: 2px solid #eee0ac;
+  outline-offset: 3px;
+}
+.maya-mechanism button:disabled {
+  opacity: 0.4;
+  filter: grayscale(0.7);
+  cursor: not-allowed;
+}
+.maya-mechanism__treasury {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid #758d6d40;
+}
+.maya-mechanism dl {
+  min-width: 0;
+  margin: 0;
+}
+.maya-mechanism__win {
+  text-align: right;
+}
+.maya-mechanism dt,
+.maya-mechanism__stake > span {
+  font-size: 10px;
+  line-height: 1.4;
+  font-weight: 700;
+  color: #c4c7a7;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+.maya-mechanism dd {
+  margin: 0;
+  font-size: clamp(14px, 2.8vw, 18px);
+  line-height: 1.2;
+  font-weight: 800;
+  overflow-wrap: anywhere;
+}
+.maya-mechanism__win[data-winning="true"] dd {
+  color: #efda9c;
+}
+.maya-mechanism__drive {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 112px minmax(0, 1fr);
+  grid-template-rows: 44px 44px;
+  gap: 8px 12px;
+  align-items: center;
+  margin: 10px 0;
+  padding: 6px 0;
+}
+.maya-mechanism__decrease {
+  grid-column: 1;
+  grid-row: 1;
+  justify-self: end;
+}
+.maya-mechanism__increase {
+  grid-column: 3;
+  grid-row: 1;
+  justify-self: start;
+}
+.maya-mechanism__decrease button,
+.maya-mechanism__increase button {
+  width: 54px;
+  border-top: 1px solid #a28c59;
+  border-bottom: 2px solid #0e1b15;
+  border-radius: 3px;
+  background: #3a4535;
+}
+.maya-mechanism__bet-step-label {
+  font-size: 10px;
+  font-weight: 700;
+}
+.maya-mechanism__bonus {
+  grid-column: 1;
+  grid-row: 2;
+  gap: 5px;
+  padding: 2px 5px;
+  font-size: 9px;
+  font-weight: 800;
+  color: #f4dfac;
+  text-align: left;
+  border-radius: 4px;
+  background: #4d4b2c;
+  justify-self: end;
+  width: fit-content;
+  max-width: 100%;
+}
+.maya-mechanism__bonus img {
+  width: 20px;
+  height: 20px;
+  object-fit: contain;
+}
+.maya-mechanism__bonus strong {
+  display: block;
+  font-size: 11px;
+  margin-top: 1px;
+}
+.maya-mechanism__more {
+  grid-column: 3;
+  grid-row: 2;
+  justify-self: start;
+  padding: 0 8px;
+  font-size: 10px;
+  border-radius: 4px;
+  background: #24382b;
+  color: #dbd5b5;
+}
+.maya-mechanism__more[data-active="true"] {
+  color: #f1e1a4;
+  box-shadow: inset 0 -2px 0 #b9a469;
+}
+.maya-mechanism__round {
+  grid-column: 1;
+  grid-row: 2;
+  color: #d4cda8;
+  font-size: 10px;
+}
+.maya-mechanism .maya-mechanism__spin {
+  position: relative;
+  isolation: isolate;
+  grid-column: 2;
+  grid-row: 1 / 3;
+  width: 112px;
+  height: 112px;
+  border: 2px solid #bda16a;
+  border-radius: 50%;
+  background: #254736;
+  box-shadow:
+    inset 0 0 0 3px #091a14,
+    0 4px 14px #050e0977;
+  color: #f1e4b8;
+  transition:
+    filter 0.15s,
+    transform 0.15s;
+}
+.maya-mechanism__spin::before {
+  content: "";
+  position: absolute;
+  inset: 4px;
+  border-radius: 50%;
+  z-index: -1;
+  background: repeating-conic-gradient(from 0deg, #b09a64 0 5deg, #324d39 5deg 15deg);
+}
+.maya-mechanism__spin::after {
+  content: "";
+  position: absolute;
+  inset: 14px;
+  border: 2px solid #6b805b;
+  border-radius: 50%;
+  z-index: -1;
+  background: radial-gradient(ellipse at 40% 25%, #2b3930, #0c1712 70%);
+}
+.maya-mechanism__spin-face {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: 3px;
+  font-size: 16px;
+  line-height: 1.1;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+.maya-mechanism__spin small {
+  font-size: 9px;
+  line-height: 1.1;
+  text-transform: none;
+}
+.maya-mechanism__spin:hover:not(:disabled) {
+  filter: brightness(1.15);
+}
+.maya-mechanism__spin:active:not(:disabled) {
+  transform: scale(0.97);
+}
+.maya-mechanism__spin[data-active="true"]::before {
+  animation: maya-sunstone-turn 6s linear infinite;
+}
+.maya-mechanism__spin[aria-busy="true"] svg {
+  animation: maya-sunstone-turn 1.2s linear infinite;
+}
+.maya-mechanism__readout {
+  display: flex;
+  justify-content: center;
+  border-top: 1px solid #786f4b60;
+}
+.maya-mechanism__stake {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: row;
+  gap: 10px !important;
+  min-width: 180px !important;
+  min-height: 44px;
+  width: fit-content;
+  background: linear-gradient(#2d3d31, #17291d);
+  border-radius: 3px;
+  border-top: 1px solid #647557;
+}
+.maya-mechanism__stake strong {
+  font-size: 15px;
+}
+.maya-mechanism__announcement {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+.maya-options {
+  z-index: 200;
+  min-width: 220px;
+  max-width: calc(100vw - 20px);
+  max-height: var(--radix-dropdown-menu-content-available-height);
+  overflow-y: auto;
+  padding: 6px;
+  border: 1px solid #a18d58;
+  border-radius: 5px;
+  background: #16231b;
+  color: #efe8c8;
+  box-shadow: 0 10px 30px #040d0899;
+  font-family: ui-sans-serif, system-ui, sans-serif;
+}
+.maya-options__item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 44px;
+  padding: 8px 10px;
+  border-radius: 4px;
+  font-size: 13px;
+  cursor: pointer;
+  outline: none;
+  touch-action: manipulation;
+}
+.maya-options__item[data-highlighted] {
+  background: #425039;
+  color: #fff1be;
+}
+.maya-options__state {
+  margin-left: auto;
+  color: #c5c6a3;
+  font-size: 11px;
+}
+.maya-options__item[data-state="checked"] {
+  color: #f0de9c;
+}
+@container (min-width: 640px) and (max-height: 500px) {
+  [data-game-view="maya-gold"][data-deck] [data-gs-col] {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 350px;
+    gap: 18px;
+    max-width: 1100px;
+  }
+  [data-game-view="maya-gold"][data-deck] [data-gs-board] {
+    width: min(calc(100cqw - 430px), calc((100cqh - 100px) * 5 / 6)) !important;
+  }
+}
+@keyframes maya-sunstone-turn {
+  to {
+    transform: rotate(360deg);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .maya-mechanism__spin {
+    transition: none;
+  }
+  .maya-mechanism__spin[aria-busy="true"] svg,
+  .maya-mechanism__spin[data-active="true"]::before {
+    animation: none;
+  }
+}
