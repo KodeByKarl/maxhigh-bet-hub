@@ -1,3 +1,4 @@
+import { operationIdentity } from "@/lib/operation-identity";
 /**
  * Turtle Tide client RPC bridge (createServerFn).
  */
@@ -27,19 +28,37 @@ const netBombSchema = z.object({
 });
 
 export const turtleTideFireShotFn = createServerFn({ method: "POST" })
+  .middleware([operationIdentity])
   .validator(fireSchema)
   .handler(async ({ data }) => {
-    const { turtleTideFireShot } = await import("../server/games/turtle-tide.server");
-    return JSON.parse(JSON.stringify(await turtleTideFireShot(data))) as Awaited<
-      ReturnType<typeof turtleTideFireShot>
-    >;
+    const { withFinancialOperation } = await import("../server/operation.server");
+    return withFinancialOperation(
+      "turtleTideFireShotFn",
+      data,
+      async () => {
+        const { turtleTideFireShot } = await import("../server/games/turtle-tide.server");
+        return JSON.parse(JSON.stringify(await turtleTideFireShot(data))) as Awaited<
+          ReturnType<typeof turtleTideFireShot>
+        >;
+      },
+      "turtle-tide",
+    );
   });
 
 export const turtleTideEnsureSessionFn = createServerFn({ method: "POST" })
+  .middleware([operationIdentity])
   .validator(z.object({ weaponId: z.string().optional() }))
   .handler(async ({ data }) => {
-    const { turtleTideEnsureSession } = await import("../server/games/turtle-tide.server");
-    return turtleTideEnsureSession(data);
+    const { withFinancialOperation } = await import("../server/operation.server");
+    return withFinancialOperation(
+      "turtleTideEnsureSessionFn",
+      data,
+      async () => {
+        const { turtleTideEnsureSession } = await import("../server/games/turtle-tide.server");
+        return turtleTideEnsureSession(data);
+      },
+      "turtle-tide",
+    );
   });
 
 export const getTurtleTideSessionFn = createServerFn({ method: "GET" }).handler(async () => {
@@ -53,37 +72,84 @@ export const getTurtleTideEngineConfigFn = createServerFn({ method: "GET" }).han
 });
 
 export const turtleTideSetWeaponFn = createServerFn({ method: "POST" })
+  .middleware([operationIdentity])
   .validator(weaponSchema)
   .handler(async ({ data }) => {
-    const { turtleTideSetWeapon } = await import("../server/games/turtle-tide.server");
-    return turtleTideSetWeapon(data);
+    const { withFinancialOperation } = await import("../server/operation.server");
+    return withFinancialOperation(
+      "turtleTideSetWeaponFn",
+      data,
+      async () => {
+        const { turtleTideSetWeapon } = await import("../server/games/turtle-tide.server");
+        return turtleTideSetWeapon(data);
+      },
+      "turtle-tide",
+    );
   });
 
 export const turtleTideBuyPowerUpFn = createServerFn({ method: "POST" })
+  .middleware([operationIdentity])
   .validator(powerSchema)
   .handler(async ({ data }) => {
-    const { turtleTideBuyPowerUp } = await import("../server/games/turtle-tide.server");
-    return turtleTideBuyPowerUp(data);
+    const { withFinancialOperation } = await import("../server/operation.server");
+    return withFinancialOperation(
+      "turtleTideBuyPowerUpFn",
+      data,
+      async () => {
+        const { turtleTideBuyPowerUp } = await import("../server/games/turtle-tide.server");
+        return turtleTideBuyPowerUp(data);
+      },
+      "turtle-tide",
+    );
   });
 
 export const turtleTideUseNetBombFn = createServerFn({ method: "POST" })
+  .middleware([operationIdentity])
   .validator(netBombSchema)
   .handler(async ({ data }) => {
-    const { turtleTideUseNetBomb } = await import("../server/games/turtle-tide.server");
-    return JSON.parse(JSON.stringify(await turtleTideUseNetBomb(data))) as Awaited<
-      ReturnType<typeof turtleTideUseNetBomb>
-    >;
+    const { withFinancialOperation } = await import("../server/operation.server");
+    return withFinancialOperation(
+      "turtleTideUseNetBombFn",
+      data,
+      async () => {
+        const { turtleTideUseNetBomb } = await import("../server/games/turtle-tide.server");
+        return JSON.parse(JSON.stringify(await turtleTideUseNetBomb(data))) as Awaited<
+          ReturnType<typeof turtleTideUseNetBomb>
+        >;
+      },
+      "turtle-tide",
+    );
   });
 
-export const turtleTideUseFreezeLureFn = createServerFn({ method: "POST" }).handler(async () => {
-  const { turtleTideUseFreezeLure } = await import("../server/games/turtle-tide.server");
-  return turtleTideUseFreezeLure();
-});
+export const turtleTideUseFreezeLureFn = createServerFn({ method: "POST" })
+  .middleware([operationIdentity])
+  .handler(async () => {
+    const { withFinancialOperation } = await import("../server/operation.server");
+    return withFinancialOperation(
+      "turtleTideUseFreezeLureFn",
+      null,
+      async () => {
+        const { turtleTideUseFreezeLure } = await import("../server/games/turtle-tide.server");
+        return turtleTideUseFreezeLure();
+      },
+      "turtle-tide",
+    );
+  });
 
-export const turtleTideSyncSpawnsFn = createServerFn({ method: "POST" }).handler(async () => {
-  const { turtleTideSyncSpawns } = await import("../server/games/turtle-tide.server");
-  return turtleTideSyncSpawns();
-});
+export const turtleTideSyncSpawnsFn = createServerFn({ method: "POST" })
+  .middleware([operationIdentity])
+  .handler(async () => {
+    const { withFinancialOperation } = await import("../server/operation.server");
+    return withFinancialOperation(
+      "turtleTideSyncSpawnsFn",
+      null,
+      async () => {
+        const { turtleTideSyncSpawns } = await import("../server/games/turtle-tide.server");
+        return turtleTideSyncSpawns();
+      },
+      "turtle-tide",
+    );
+  });
 
 export const turtleTideBossStatusFn = createServerFn({ method: "GET" }).handler(async () => {
   const { turtleTideBossStatus } = await import("../server/games/turtle-tide.server");
@@ -98,6 +164,7 @@ export const getTurtleTideAdminConfigFn = createServerFn({ method: "GET" }).hand
 
 /** Superadmin — persist engineConfig JSON. */
 export const saveTurtleTideAdminConfigFn = createServerFn({ method: "POST" })
+  .middleware([operationIdentity])
   .validator(z.object({ config: z.unknown() }))
   .handler(async ({ data }) => {
     const { saveTurtleTideEngineConfig } = await import("../server/superadmin/services.server");

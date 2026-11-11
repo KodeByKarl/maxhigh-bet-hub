@@ -1,3 +1,4 @@
+import { startVisiblePolling } from "@/lib/visible-poller";
 import { useEffect, useState } from "react";
 import { Flame, TrendingUp } from "lucide-react";
 import { getLiveWinsFn } from "@/functions/api";
@@ -15,6 +16,7 @@ export function LiveWinsTicker() {
   useEffect(() => {
     let cancelled = false;
     const load = async () => {
+      if (document.hidden) return;
       try {
         const rows = await getLiveWinsFn();
         if (!cancelled) setWins(rows);
@@ -22,11 +24,10 @@ export function LiveWinsTicker() {
         if (!cancelled) setWins([]);
       }
     };
-    void load();
-    const id = window.setInterval(load, 8000);
+    const stopPolling = startVisiblePolling(load, 30000);
     return () => {
       cancelled = true;
-      window.clearInterval(id);
+      stopPolling();
     };
   }, []);
 

@@ -1,3 +1,4 @@
+import { recordRoundConfig } from "../round-random.server";
 /**
  * Baccarat (Punto Banco) — server-authoritative deal + settlement.
  * Client never decides payouts. Stake debited first; credits use profit-odds helpers.
@@ -34,7 +35,7 @@ export function clearBaccaratEngineCache() {
 
 async function loadEngineConfig(): Promise<BaccaratConfig> {
   const now = Date.now();
-  if (cachedConfig && now - cachedConfig.time < 30_000) return cachedConfig.cfg;
+  if (cachedConfig && now - cachedConfig.time < 30_000) return recordRoundConfig(cachedConfig.cfg);
   const db = getDb();
   try {
     const rows = await db
@@ -45,11 +46,9 @@ async function loadEngineConfig(): Promise<BaccaratConfig> {
     const raw = rows[0]?.engineConfig;
     const cfg = normalizeBaccaratConfig(raw ? (JSON.parse(raw) as unknown) : null);
     cachedConfig = { cfg, time: now };
-    return cfg;
+    return recordRoundConfig(cfg);
   } catch {
-    const cfg = normalizeBaccaratConfig(null);
-    cachedConfig = { cfg, time: now };
-    return cfg;
+    throw new Error("Game configuration unavailable");
   }
 }
 

@@ -1,3 +1,4 @@
+import "../../native-game-controls.css";
 import { useState } from "react";
 import { type Lucky9Config } from "@/lib/lucky9-config";
 import { cn } from "@/lib/utils";
@@ -123,7 +124,11 @@ export function BettingPanel({
   ];
 
   return (
-    <div className="touch-manipulation space-y-2.5 short-h:space-y-2">
+    <div
+      className="touch-manipulation space-y-2.5 short-h:space-y-2"
+      data-game-control-root="lucky9"
+      data-native-controls="lucky9"
+    >
       {/* Segmented spot switcher */}
       <div className="grid grid-cols-3 gap-1.5 rounded-2xl border-2 border-[#c9a227]/35 bg-[#0a1f18]/95 p-1.5 short-h:gap-1 short-h:rounded-xl short-h:border short-h:p-1">
         {tabs.map((t) => (
@@ -189,6 +194,7 @@ export function BettingPanel({
           onClick={undoLast}
           className="grid h-14 w-14 shrink-0 place-items-center rounded-2xl border border-white/20 bg-white/8 text-2xl text-white/80 transition active:scale-95 disabled:opacity-30 short-h:h-12 short-h:w-12 short-h:rounded-xl short-h:text-xl"
           aria-label="Undo last chip"
+          data-control-action="secondary"
         >
           ↶
         </button>
@@ -200,6 +206,7 @@ export function BettingPanel({
           className={cn(
             "relative flex h-14 flex-1 items-center justify-center gap-2.5 overflow-hidden rounded-2xl border-2 border-[#f5e6c8]/80 bg-gradient-to-r from-[#2d6a4f] via-[#c9a227] to-[#2d6a4f] px-3 text-[#0c1008] shadow-[0_6px_22px_rgba(201,162,39,0.4)] transition active:scale-[0.99] disabled:opacity-40 short-h:h-12 short-h:rounded-xl short-h:gap-2",
           )}
+          data-control-action="primary"
         >
           <span className="grid size-9 place-items-center rounded-full bg-black/25 text-base font-black text-[#f5e6c8] short-h:size-7 short-h:text-sm">
             9
@@ -221,6 +228,7 @@ export function BettingPanel({
           }}
           className="grid h-14 min-w-14 shrink-0 place-items-center rounded-2xl border border-white/20 bg-white/8 px-1.5 text-[11px] font-extrabold tracking-wide text-white/80 transition active:scale-95 disabled:opacity-30 short-h:h-12 short-h:min-w-12 short-h:rounded-xl short-h:text-[10px]"
           aria-label="Clear all bets"
+          data-control-action="secondary"
         >
           CLEAR
         </button>

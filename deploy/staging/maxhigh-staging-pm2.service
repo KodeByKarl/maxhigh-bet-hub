@@ -1,0 +1,29 @@
+[Unit]
+Description=Isolated MaxHigh staging PM2 supervisor
+After=network.target mariadb.service
+
+[Service]
+Type=forking
+User=maxhigh-stage
+Group=maxhigh-stage
+WorkingDirectory=/var/www/maxhigh-staging
+Environment=HOME=/var/www/maxhigh-staging
+Environment=PM2_HOME=/var/www/maxhigh-staging/.pm2
+Environment=PATH=/usr/local/bin:/usr/bin:/bin
+PIDFile=/var/www/maxhigh-staging/.pm2/pm2.pid
+# Verify the installed PM2 7 path before installing this template.
+ExecStart=/usr/local/bin/pm2 resurrect
+ExecStop=/usr/local/bin/pm2 kill
+Restart=on-failure
+RestartSec=5s
+TimeoutStartSec=60s
+TimeoutStopSec=60s
+UMask=0077
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/var/www/maxhigh-staging/.pm2 /var/www/maxhigh-staging/deploy/logs
+
+[Install]
+WantedBy=multi-user.target

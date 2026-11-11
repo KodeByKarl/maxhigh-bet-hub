@@ -1,3 +1,4 @@
+import { operationIdentity } from "@/lib/operation-identity";
 /**
  * Octopus Armada client RPC bridge (createServerFn).
  */
@@ -27,19 +28,38 @@ const netBombSchema = z.object({
 });
 
 export const octopusArmadaFireShotFn = createServerFn({ method: "POST" })
+  .middleware([operationIdentity])
   .validator(fireSchema)
   .handler(async ({ data }) => {
-    const { octopusArmadaFireShot } = await import("../server/games/octopus-armada.server");
-    return JSON.parse(JSON.stringify(await octopusArmadaFireShot(data))) as Awaited<
-      ReturnType<typeof octopusArmadaFireShot>
-    >;
+    const { withFinancialOperation } = await import("../server/operation.server");
+    return withFinancialOperation(
+      "octopusArmadaFireShotFn",
+      data,
+      async () => {
+        const { octopusArmadaFireShot } = await import("../server/games/octopus-armada.server");
+        return JSON.parse(JSON.stringify(await octopusArmadaFireShot(data))) as Awaited<
+          ReturnType<typeof octopusArmadaFireShot>
+        >;
+      },
+      "octopus-armada",
+    );
   });
 
 export const octopusArmadaEnsureSessionFn = createServerFn({ method: "POST" })
+  .middleware([operationIdentity])
   .validator(z.object({ weaponId: z.string().optional() }))
   .handler(async ({ data }) => {
-    const { octopusArmadaEnsureSession } = await import("../server/games/octopus-armada.server");
-    return octopusArmadaEnsureSession(data);
+    const { withFinancialOperation } = await import("../server/operation.server");
+    return withFinancialOperation(
+      "octopusArmadaEnsureSessionFn",
+      data,
+      async () => {
+        const { octopusArmadaEnsureSession } =
+          await import("../server/games/octopus-armada.server");
+        return octopusArmadaEnsureSession(data);
+      },
+      "octopus-armada",
+    );
   });
 
 export const getOctopusArmadaSessionFn = createServerFn({ method: "GET" }).handler(async () => {
@@ -56,37 +76,85 @@ export const getOctopusArmadaEngineConfigFn = createServerFn({ method: "GET" }).
 );
 
 export const octopusArmadaSetWeaponFn = createServerFn({ method: "POST" })
+  .middleware([operationIdentity])
   .validator(weaponSchema)
   .handler(async ({ data }) => {
-    const { octopusArmadaSetWeapon } = await import("../server/games/octopus-armada.server");
-    return octopusArmadaSetWeapon(data);
+    const { withFinancialOperation } = await import("../server/operation.server");
+    return withFinancialOperation(
+      "octopusArmadaSetWeaponFn",
+      data,
+      async () => {
+        const { octopusArmadaSetWeapon } = await import("../server/games/octopus-armada.server");
+        return octopusArmadaSetWeapon(data);
+      },
+      "octopus-armada",
+    );
   });
 
 export const octopusArmadaBuyPowerUpFn = createServerFn({ method: "POST" })
+  .middleware([operationIdentity])
   .validator(powerSchema)
   .handler(async ({ data }) => {
-    const { octopusArmadaBuyPowerUp } = await import("../server/games/octopus-armada.server");
-    return octopusArmadaBuyPowerUp(data);
+    const { withFinancialOperation } = await import("../server/operation.server");
+    return withFinancialOperation(
+      "octopusArmadaBuyPowerUpFn",
+      data,
+      async () => {
+        const { octopusArmadaBuyPowerUp } = await import("../server/games/octopus-armada.server");
+        return octopusArmadaBuyPowerUp(data);
+      },
+      "octopus-armada",
+    );
   });
 
 export const octopusArmadaUseNetBombFn = createServerFn({ method: "POST" })
+  .middleware([operationIdentity])
   .validator(netBombSchema)
   .handler(async ({ data }) => {
-    const { octopusArmadaUseNetBomb } = await import("../server/games/octopus-armada.server");
-    return JSON.parse(JSON.stringify(await octopusArmadaUseNetBomb(data))) as Awaited<
-      ReturnType<typeof octopusArmadaUseNetBomb>
-    >;
+    const { withFinancialOperation } = await import("../server/operation.server");
+    return withFinancialOperation(
+      "octopusArmadaUseNetBombFn",
+      data,
+      async () => {
+        const { octopusArmadaUseNetBomb } = await import("../server/games/octopus-armada.server");
+        return JSON.parse(JSON.stringify(await octopusArmadaUseNetBomb(data))) as Awaited<
+          ReturnType<typeof octopusArmadaUseNetBomb>
+        >;
+      },
+      "octopus-armada",
+    );
   });
 
-export const octopusArmadaUseFreezeLureFn = createServerFn({ method: "POST" }).handler(async () => {
-  const { octopusArmadaUseFreezeLure } = await import("../server/games/octopus-armada.server");
-  return octopusArmadaUseFreezeLure();
-});
+export const octopusArmadaUseFreezeLureFn = createServerFn({ method: "POST" })
+  .middleware([operationIdentity])
+  .handler(async () => {
+    const { withFinancialOperation } = await import("../server/operation.server");
+    return withFinancialOperation(
+      "octopusArmadaUseFreezeLureFn",
+      null,
+      async () => {
+        const { octopusArmadaUseFreezeLure } =
+          await import("../server/games/octopus-armada.server");
+        return octopusArmadaUseFreezeLure();
+      },
+      "octopus-armada",
+    );
+  });
 
-export const octopusArmadaSyncSpawnsFn = createServerFn({ method: "POST" }).handler(async () => {
-  const { octopusArmadaSyncSpawns } = await import("../server/games/octopus-armada.server");
-  return octopusArmadaSyncSpawns();
-});
+export const octopusArmadaSyncSpawnsFn = createServerFn({ method: "POST" })
+  .middleware([operationIdentity])
+  .handler(async () => {
+    const { withFinancialOperation } = await import("../server/operation.server");
+    return withFinancialOperation(
+      "octopusArmadaSyncSpawnsFn",
+      null,
+      async () => {
+        const { octopusArmadaSyncSpawns } = await import("../server/games/octopus-armada.server");
+        return octopusArmadaSyncSpawns();
+      },
+      "octopus-armada",
+    );
+  });
 
 export const octopusArmadaBossStatusFn = createServerFn({ method: "GET" }).handler(async () => {
   const { octopusArmadaBossStatus } = await import("../server/games/octopus-armada.server");
@@ -101,6 +169,7 @@ export const getOctopusArmadaAdminConfigFn = createServerFn({ method: "GET" }).h
 
 /** Superadmin — persist engineConfig JSON. */
 export const saveOctopusArmadaAdminConfigFn = createServerFn({ method: "POST" })
+  .middleware([operationIdentity])
   .validator(z.object({ config: z.unknown() }))
   .handler(async ({ data }) => {
     const { saveOctopusArmadaEngineConfig } = await import("../server/superadmin/services.server");

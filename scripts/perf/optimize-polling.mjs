@@ -1,0 +1,8 @@
+import fs from 'node:fs';import path from 'node:path';
+let count=0;
+for(const name of ['deep-bass','dragon-fisher','crab-cannon','shark-hunter','octopus-armada','turtle-tide','whale-war']){
+ const file=fs.readdirSync('src/components/maxhigh/games/'+name).find(f=>f.endsWith('Game.tsx')),target=path.join('src/components/maxhigh/games',name,file);let text=fs.readFileSync(target,'utf8');
+ const spawn='const id = window.setInterval(() => void tick(), Math.max(400, cfg.spawnIntervalSec * 1000));\n    void tick();';if(!text.includes(spawn))throw Error('Missing spawn effect '+name);text=text.replace(spawn,'const stopPolling = startVisiblePolling(tick, Math.max(400, cfg.spawnIntervalSec * 1000));').replace('window.clearInterval(id);\n    };\n  }, [cfg]);','stopPolling();\n    };\n  }, [cfg]);');
+ const start=text.indexOf('const id = window.setInterval(() => {\n      void '),end=text.indexOf('return () => window.clearInterval(id);',start);if(start<0||end<0)throw Error('Missing boss effect '+name);
+ let block=text.slice(start,end+'return () => window.clearInterval(id);'.length);block=block.replace('const id = window.setInterval(() => {\n      void ','const stopPolling = startVisiblePolling((active) => {\n      return ').replace('.then((res) => {','.then((res) => {\n          if(!active())return;').replace('}, TIMING.bossPollMs);','}, TIMING.bossPollMs, {immediate:false});').replace('return () => window.clearInterval(id);','return stopPolling;');text=text.slice(0,start)+block+text.slice(end+'return () => window.clearInterval(id);'.length);text='import {startVisiblePolling} from "@/lib/visible-poller";\n'+text;fs.writeFileSync(target,text);count++;
+}console.log('Fishing poll subscriptions updated:',count*2);

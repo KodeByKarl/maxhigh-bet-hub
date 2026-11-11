@@ -1,4 +1,4 @@
-import { REALMS_SLOT_GAMES } from "./realms";
+import { REALMS_SLOT_GAMES } from "./realms/lobby-catalog";
 
 export type GameCategory = "slot" | "cards" | "fishing";
 
@@ -33,7 +33,7 @@ const defaults = {
 };
 
 /** MaxHigh original titles with thumbnail art */
-export const slotGames: SlotGame[] = [
+const baseSlotGames: SlotGame[] = [
   {
     ...defaults,
     id: "golden-panther",
@@ -50,7 +50,7 @@ export const slotGames: SlotGame[] = [
     maxWin: "10,000x",
     minBet: "₱0.20",
     maxBet: "₱200",
-    features: ["Cascading Wins", "Free Spins", "Buy Bonus", "Adjustable Qty", "Multipliers"],
+    features: ["Cascading Wins", "Free Spins", "Buy Bonus", "10 Free Spins", "Multipliers"],
   },
   {
     ...defaults,
@@ -116,7 +116,7 @@ export const slotGames: SlotGame[] = [
     rtp: "96.00%",
     volatility: "High",
     maxWin: "10,000x",
-    features: ["Cascading Wins", "Free Spins", "Buy Bonus", "Adjustable Qty", "Multipliers"],
+    features: ["Cascading Wins", "Free Spins", "Buy Bonus", "10 Free Spins", "Multipliers"],
   },
   {
     ...defaults,
@@ -226,7 +226,7 @@ export const slotGames: SlotGame[] = [
     maxWin: "10,000x",
     minBet: "₱0.10",
     maxBet: "₱100",
-    features: ["Cascading Wins", "Free Spins", "Buy Bonus", "Adjustable Qty", "Multipliers"],
+    features: ["Cascading Wins", "Free Spins", "Buy Bonus", "10 Free Spins", "Multipliers"],
   },
   {
     ...defaults,
@@ -462,7 +462,7 @@ export const slotGames: SlotGame[] = [
     maxWin: "10,000x",
     minBet: "₱0.20",
     maxBet: "₱200",
-    features: ["Cascading Wins", "Free Spins", "Buy Bonus", "Adjustable Qty", "Multipliers"],
+    features: ["Cascading Wins", "Free Spins", "Buy Bonus", "10 Free Spins", "Multipliers"],
   },
 
   {
@@ -480,7 +480,7 @@ export const slotGames: SlotGame[] = [
     maxWin: "10,000x",
     minBet: "₱0.20",
     maxBet: "₱200",
-    features: ["Cascading Wins", "Free Spins", "Buy Bonus", "Adjustable Qty", "Multipliers"],
+    features: ["Cascading Wins", "Free Spins", "Buy Bonus", "10 Free Spins", "Multipliers"],
   },
 
   {
@@ -499,7 +499,7 @@ export const slotGames: SlotGame[] = [
     maxWin: "10,000x",
     minBet: "₱0.20",
     maxBet: "₱200",
-    features: ["Cascading Wins", "Free Spins", "Buy Bonus", "Adjustable Qty", "Multipliers"],
+    features: ["Cascading Wins", "Free Spins", "Buy Bonus", "10 Free Spins", "Multipliers"],
   },
 
   {
@@ -517,7 +517,7 @@ export const slotGames: SlotGame[] = [
     maxWin: "10,000x",
     minBet: "₱0.20",
     maxBet: "₱200",
-    features: ["Cascading Wins", "Free Spins", "Buy Bonus", "Adjustable Qty", "Multipliers"],
+    features: ["Cascading Wins", "Free Spins", "Buy Bonus", "10 Free Spins", "Multipliers"],
   },
 
   {
@@ -535,7 +535,7 @@ export const slotGames: SlotGame[] = [
     maxWin: "10,000x",
     minBet: "₱0.20",
     maxBet: "₱200",
-    features: ["Cascading Wins", "Free Spins", "Buy Bonus", "Adjustable Qty", "Multipliers"],
+    features: ["Cascading Wins", "Free Spins", "Buy Bonus", "10 Free Spins", "Multipliers"],
   },
 
   {
@@ -554,7 +554,7 @@ export const slotGames: SlotGame[] = [
     maxWin: "10,000x",
     minBet: "₱0.20",
     maxBet: "₱200",
-    features: ["Cascading Wins", "Free Spins", "Buy Bonus", "Adjustable Qty", "Multipliers"],
+    features: ["Cascading Wins", "Free Spins", "Buy Bonus", "10 Free Spins", "Multipliers"],
   },
 
   {
@@ -573,7 +573,7 @@ export const slotGames: SlotGame[] = [
     maxWin: "10,000x",
     minBet: "₱0.20",
     maxBet: "₱200",
-    features: ["Cascading Wins", "Free Spins", "Buy Bonus", "Adjustable Qty", "Multipliers"],
+    features: ["Cascading Wins", "Free Spins", "Buy Bonus", "10 Free Spins", "Multipliers"],
   },
 
   {
@@ -591,7 +591,7 @@ export const slotGames: SlotGame[] = [
     maxWin: "10,000x",
     minBet: "₱0.20",
     maxBet: "₱200",
-    features: ["Cascading Wins", "Free Spins", "Buy Bonus", "Adjustable Qty", "Multipliers"],
+    features: ["Cascading Wins", "Free Spins", "Buy Bonus", "10 Free Spins", "Multipliers"],
   },
 
   {
@@ -609,7 +609,7 @@ export const slotGames: SlotGame[] = [
     maxWin: "10,000x",
     minBet: "₱0.20",
     maxBet: "₱200",
-    features: ["Cascading Wins", "Free Spins", "Buy Bonus", "Adjustable Qty", "Multipliers"],
+    features: ["Cascading Wins", "Free Spins", "Buy Bonus", "10 Free Spins", "Multipliers"],
   },
 
   // Cards & fishing
@@ -965,6 +965,12 @@ export const slotGames: SlotGame[] = [
   // Realms family — 50 titles generated from src/lib/realms/catalog.ts
   ...REALMS_SLOT_GAMES,
 ];
+
+/** Versioned cover URLs ensure the Home lobby fetches the distinct artwork. */
+export const slotGames: SlotGame[] = baseSlotGames.map((game) => ({
+  ...game,
+  thumb: `/games/home-v20261101/${game.id}.webp`,
+}));
 
 export function gamesByCategory(category: GameCategory) {
   return slotGames.filter((g) => g.category === category);

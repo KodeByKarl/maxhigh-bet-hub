@@ -1,3 +1,4 @@
+import { FairnessPanel } from "./FairnessPanel";
 import { useEffect, useState, type ReactNode } from "react";
 import { Settings, User, Gamepad2, Bell, Shield, Volume2, Eye, EyeOff, Save } from "lucide-react";
 import {
@@ -441,6 +442,7 @@ export function SettingsModal({ open, onOpenChange }: Props) {
             {section === "privacy" && (
               <div className="space-y-3">
                 <SectionHead title="Privacy" subtitle="Control what others can see." />
+                <FairnessPanel />
                 <Toggle
                   checked={prefs.showOnlineStatus}
                   onChange={(v) => patchPrefs({ showOnlineStatus: v })}

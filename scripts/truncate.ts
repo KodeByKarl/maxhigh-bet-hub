@@ -1,7 +1,9 @@
+import { assertDisposableTarget } from "./lib/destructive-guard";
 import { getDb } from "../src/server/db/client";
 import { sql } from "drizzle-orm";
 
 async function main() {
+  assertDisposableTarget("truncate");
   const db = getDb();
   console.log("Dropping all tables...");
   try {

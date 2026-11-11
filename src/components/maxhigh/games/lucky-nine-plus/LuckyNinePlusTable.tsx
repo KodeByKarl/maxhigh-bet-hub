@@ -1,3 +1,4 @@
+import "../../native-game-controls.css";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { luckyNinePlusDealFn, getLuckyNinePlusEngineConfigFn } from "@/functions/lucky-nine-plus";
@@ -291,7 +292,10 @@ export function LuckyNinePlusTable({
   const tWin = outcome === "tie";
 
   return (
-    <div className="relative flex h-full min-h-0 w-full flex-col overflow-hidden overscroll-none touch-manipulation text-[#e8f8ef] select-none">
+    <div
+      className="relative flex h-full min-h-0 w-full flex-col overflow-hidden overscroll-none touch-manipulation text-[#e8f8ef] select-none"
+      data-game-control-root="lucky-nine-plus"
+    >
       {/* Atmosphere */}
       <div className="pointer-events-none absolute inset-0 bg-[#020806]">
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_50%_40%,_#1a4d36_0%,_#0a1f16_45%,_#020806_100%)]" />

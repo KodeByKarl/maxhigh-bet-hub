@@ -5,6 +5,7 @@ import { newId } from "../session";
 import { writeAuditLog } from "../admin/audit.server";
 import { requirePermission } from "../auth/rbac.server";
 import { slotGames, type GameCategory } from "@/lib/games";
+import { getEffectiveLockedGames, hasFullGameConfigAccess } from "../access-policy.server";
 
 export type BulkGameControlsInput = {
   scope: "all" | "slots" | "cards" | "fishing" | "table" | "live";
@@ -202,7 +203,14 @@ export async function superBulkUpdateGameControls(input: BulkGameControlsInput):
   const rtp = +Math.max(50, Math.min(150, input.rtp)).toFixed(2);
 
   const category = catalogCategoryForScope(input.scope);
-  const targets = slotGames.filter((g) => (category ? g.category === category : true));
+  // Restricted games are skipped: a bulk action must never create or touch controls for a locked title.
+  // The client owner and the developer configure all 100 games; client administrators skip the payment-locked ones.
+  const lockedNow = hasFullGameConfigAccess(actor)
+    ? new Set<string>()
+    : await getEffectiveLockedGames();
+  const targets = slotGames.filter(
+    (g) => (category ? g.category === category : true) && !lockedNow.has(g.id),
+  );
   if (targets.length === 0) {
     throw new Error("No games in that category");
   }

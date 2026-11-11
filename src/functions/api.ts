@@ -1,3 +1,4 @@
+import { operationIdentity } from "@/lib/operation-identity";
 /**
  * Client-safe RPC bridge (createServerFn).
  * Must NOT live under src/server/** — Vite blocks that path from the client.
@@ -16,16 +17,19 @@ const loginSchema = z.object({
 });
 
 export const loginFn = createServerFn({ method: "POST" })
+  .middleware([operationIdentity])
   .validator(loginSchema)
   .handler(async ({ data }) => {
     const { loginUser } = await import("../server/services.server");
     return loginUser(data.username, data.password);
   });
 
-export const logoutFn = createServerFn({ method: "POST" }).handler(async () => {
-  const { logoutUser } = await import("../server/services.server");
-  return logoutUser();
-});
+export const logoutFn = createServerFn({ method: "POST" })
+  .middleware([operationIdentity])
+  .handler(async () => {
+    const { logoutUser } = await import("../server/services.server");
+    return logoutUser();
+  });
 
 export const getSessionFn = createServerFn({ method: "GET" }).handler(async () => {
   const { fetchSession } = await import("../server/services.server");
@@ -48,6 +52,7 @@ const updateProfileSchema = z.object({
 });
 
 export const updateProfileFn = createServerFn({ method: "POST" })
+  .middleware([operationIdentity])
   .validator(updateProfileSchema)
   .handler(async ({ data }) => {
     const { updateProfile } = await import("../server/services.server");
@@ -60,6 +65,7 @@ const changePasswordSchema = z.object({
 });
 
 export const changePasswordFn = createServerFn({ method: "POST" })
+  .middleware([operationIdentity])
   .validator(changePasswordSchema)
   .handler(async ({ data }) => {
     const { changePassword } = await import("../server/services.server");
@@ -94,10 +100,19 @@ const goldenPantherSpinSchema = z.object({
 });
 
 export const goldenPantherSpinFn = createServerFn({ method: "POST" })
+  .middleware([operationIdentity])
   .validator(goldenPantherSpinSchema)
   .handler(async ({ data }) => {
-    const { goldenPantherPaidSpin } = await import("../server/games/golden-panther.server");
-    return goldenPantherPaidSpin(data);
+    const { withFinancialOperation } = await import("../server/operation.server");
+    return withFinancialOperation(
+      "goldenPantherSpinFn",
+      data,
+      async () => {
+        const { goldenPantherPaidSpin } = await import("../server/games/golden-panther.server");
+        return goldenPantherPaidSpin(data);
+      },
+      "golden-panther",
+    );
   });
 
 const goldenPantherFreeSpinSchema = z.object({
@@ -105,10 +120,19 @@ const goldenPantherFreeSpinSchema = z.object({
 });
 
 export const goldenPantherFreeSpinFn = createServerFn({ method: "POST" })
+  .middleware([operationIdentity])
   .validator(goldenPantherFreeSpinSchema)
   .handler(async ({ data }) => {
-    const { goldenPantherFreeSpin } = await import("../server/games/golden-panther.server");
-    return goldenPantherFreeSpin(data);
+    const { withFinancialOperation } = await import("../server/operation.server");
+    return withFinancialOperation(
+      "goldenPantherFreeSpinFn",
+      data,
+      async () => {
+        const { goldenPantherFreeSpin } = await import("../server/games/golden-panther.server");
+        return goldenPantherFreeSpin(data);
+      },
+      "golden-panther",
+    );
   });
 
 const goldenPantherBuySchema = z.object({
@@ -119,10 +143,19 @@ const goldenPantherBuySchema = z.object({
 });
 
 export const goldenPantherBuyFeatureFn = createServerFn({ method: "POST" })
+  .middleware([operationIdentity])
   .validator(goldenPantherBuySchema)
   .handler(async ({ data }) => {
-    const { goldenPantherBuyFeature } = await import("../server/games/golden-panther.server");
-    return goldenPantherBuyFeature(data);
+    const { withFinancialOperation } = await import("../server/operation.server");
+    return withFinancialOperation(
+      "goldenPantherBuyFeatureFn",
+      data,
+      async () => {
+        const { goldenPantherBuyFeature } = await import("../server/games/golden-panther.server");
+        return goldenPantherBuyFeature(data);
+      },
+      "golden-panther",
+    );
   });
 
 export const getGoldenPantherSessionFn = createServerFn({ method: "GET" }).handler(async () => {
@@ -136,10 +169,19 @@ const enchantedGroveSpinSchema = z.object({
 });
 
 export const enchantedGroveSpinFn = createServerFn({ method: "POST" })
+  .middleware([operationIdentity])
   .validator(enchantedGroveSpinSchema)
   .handler(async ({ data }) => {
-    const { enchantedGrovePaidSpin } = await import("../server/games/enchanted-grove.server");
-    return enchantedGrovePaidSpin(data);
+    const { withFinancialOperation } = await import("../server/operation.server");
+    return withFinancialOperation(
+      "enchantedGroveSpinFn",
+      data,
+      async () => {
+        const { enchantedGrovePaidSpin } = await import("../server/games/enchanted-grove.server");
+        return enchantedGrovePaidSpin(data);
+      },
+      "enchanted-grove",
+    );
   });
 
 const enchantedGroveFreeSpinSchema = z.object({
@@ -147,10 +189,19 @@ const enchantedGroveFreeSpinSchema = z.object({
 });
 
 export const enchantedGroveFreeSpinFn = createServerFn({ method: "POST" })
+  .middleware([operationIdentity])
   .validator(enchantedGroveFreeSpinSchema)
   .handler(async ({ data }) => {
-    const { enchantedGroveFreeSpin } = await import("../server/games/enchanted-grove.server");
-    return enchantedGroveFreeSpin(data);
+    const { withFinancialOperation } = await import("../server/operation.server");
+    return withFinancialOperation(
+      "enchantedGroveFreeSpinFn",
+      data,
+      async () => {
+        const { enchantedGroveFreeSpin } = await import("../server/games/enchanted-grove.server");
+        return enchantedGroveFreeSpin(data);
+      },
+      "enchanted-grove",
+    );
   });
 
 const enchantedGroveBuySchema = z.object({
@@ -160,10 +211,19 @@ const enchantedGroveBuySchema = z.object({
 });
 
 export const enchantedGroveBuyFeatureFn = createServerFn({ method: "POST" })
+  .middleware([operationIdentity])
   .validator(enchantedGroveBuySchema)
   .handler(async ({ data }) => {
-    const { enchantedGroveBuyFeature } = await import("../server/games/enchanted-grove.server");
-    return enchantedGroveBuyFeature(data);
+    const { withFinancialOperation } = await import("../server/operation.server");
+    return withFinancialOperation(
+      "enchantedGroveBuyFeatureFn",
+      data,
+      async () => {
+        const { enchantedGroveBuyFeature } = await import("../server/games/enchanted-grove.server");
+        return enchantedGroveBuyFeature(data);
+      },
+      "enchanted-grove",
+    );
   });
 
 export const getEnchantedGroveSessionFn = createServerFn({ method: "GET" }).handler(async () => {
@@ -177,10 +237,19 @@ const olympusWrathSpinSchema = z.object({
 });
 
 export const olympusWrathSpinFn = createServerFn({ method: "POST" })
+  .middleware([operationIdentity])
   .validator(olympusWrathSpinSchema)
   .handler(async ({ data }) => {
-    const { olympusWrathPaidSpin } = await import("../server/games/olympus-wrath.server");
-    return olympusWrathPaidSpin(data);
+    const { withFinancialOperation } = await import("../server/operation.server");
+    return withFinancialOperation(
+      "olympusWrathSpinFn",
+      data,
+      async () => {
+        const { olympusWrathPaidSpin } = await import("../server/games/olympus-wrath.server");
+        return olympusWrathPaidSpin(data);
+      },
+      "olympus-wrath",
+    );
   });
 
 const olympusWrathFreeSpinSchema = z.object({
@@ -188,10 +257,19 @@ const olympusWrathFreeSpinSchema = z.object({
 });
 
 export const olympusWrathFreeSpinFn = createServerFn({ method: "POST" })
+  .middleware([operationIdentity])
   .validator(olympusWrathFreeSpinSchema)
   .handler(async ({ data }) => {
-    const { olympusWrathFreeSpin } = await import("../server/games/olympus-wrath.server");
-    return olympusWrathFreeSpin(data);
+    const { withFinancialOperation } = await import("../server/operation.server");
+    return withFinancialOperation(
+      "olympusWrathFreeSpinFn",
+      data,
+      async () => {
+        const { olympusWrathFreeSpin } = await import("../server/games/olympus-wrath.server");
+        return olympusWrathFreeSpin(data);
+      },
+      "olympus-wrath",
+    );
   });
 
 const olympusWrathBuySchema = z.object({
@@ -201,10 +279,19 @@ const olympusWrathBuySchema = z.object({
 });
 
 export const olympusWrathBuyFeatureFn = createServerFn({ method: "POST" })
+  .middleware([operationIdentity])
   .validator(olympusWrathBuySchema)
   .handler(async ({ data }) => {
-    const { olympusWrathBuyFeature } = await import("../server/games/olympus-wrath.server");
-    return olympusWrathBuyFeature(data);
+    const { withFinancialOperation } = await import("../server/operation.server");
+    return withFinancialOperation(
+      "olympusWrathBuyFeatureFn",
+      data,
+      async () => {
+        const { olympusWrathBuyFeature } = await import("../server/games/olympus-wrath.server");
+        return olympusWrathBuyFeature(data);
+      },
+      "olympus-wrath",
+    );
   });
 
 export const getOlympusWrathSessionFn = createServerFn({ method: "GET" }).handler(async () => {
@@ -218,10 +305,19 @@ const godlyGatesSpinSchema = z.object({
 });
 
 export const godlyGatesSpinFn = createServerFn({ method: "POST" })
+  .middleware([operationIdentity])
   .validator(godlyGatesSpinSchema)
   .handler(async ({ data }) => {
-    const { godlyGatesPaidSpin } = await import("../server/games/godly-gates.server");
-    return godlyGatesPaidSpin(data);
+    const { withFinancialOperation } = await import("../server/operation.server");
+    return withFinancialOperation(
+      "godlyGatesSpinFn",
+      data,
+      async () => {
+        const { godlyGatesPaidSpin } = await import("../server/games/godly-gates.server");
+        return godlyGatesPaidSpin(data);
+      },
+      "godly-gates",
+    );
   });
 
 const godlyGatesFreeSpinSchema = z.object({
@@ -229,10 +325,19 @@ const godlyGatesFreeSpinSchema = z.object({
 });
 
 export const godlyGatesFreeSpinFn = createServerFn({ method: "POST" })
+  .middleware([operationIdentity])
   .validator(godlyGatesFreeSpinSchema)
   .handler(async ({ data }) => {
-    const { godlyGatesFreeSpin } = await import("../server/games/godly-gates.server");
-    return godlyGatesFreeSpin(data);
+    const { withFinancialOperation } = await import("../server/operation.server");
+    return withFinancialOperation(
+      "godlyGatesFreeSpinFn",
+      data,
+      async () => {
+        const { godlyGatesFreeSpin } = await import("../server/games/godly-gates.server");
+        return godlyGatesFreeSpin(data);
+      },
+      "godly-gates",
+    );
   });
 
 const godlyGatesBuySchema = z.object({
@@ -242,10 +347,19 @@ const godlyGatesBuySchema = z.object({
 });
 
 export const godlyGatesBuyFeatureFn = createServerFn({ method: "POST" })
+  .middleware([operationIdentity])
   .validator(godlyGatesBuySchema)
   .handler(async ({ data }) => {
-    const { godlyGatesBuyFeature } = await import("../server/games/godly-gates.server");
-    return godlyGatesBuyFeature(data);
+    const { withFinancialOperation } = await import("../server/operation.server");
+    return withFinancialOperation(
+      "godlyGatesBuyFeatureFn",
+      data,
+      async () => {
+        const { godlyGatesBuyFeature } = await import("../server/games/godly-gates.server");
+        return godlyGatesBuyFeature(data);
+      },
+      "godly-gates",
+    );
   });
 
 export const getGodlyGatesSessionFn = createServerFn({ method: "GET" }).handler(async () => {
@@ -259,10 +373,19 @@ const thorThunderSpinSchema = z.object({
 });
 
 export const thorThunderSpinFn = createServerFn({ method: "POST" })
+  .middleware([operationIdentity])
   .validator(thorThunderSpinSchema)
   .handler(async ({ data }) => {
-    const { thorThunderPaidSpin } = await import("../server/games/thor-thunder.server");
-    return thorThunderPaidSpin(data);
+    const { withFinancialOperation } = await import("../server/operation.server");
+    return withFinancialOperation(
+      "thorThunderSpinFn",
+      data,
+      async () => {
+        const { thorThunderPaidSpin } = await import("../server/games/thor-thunder.server");
+        return thorThunderPaidSpin(data);
+      },
+      "thor-thunder",
+    );
   });
 
 const thorThunderFreeSpinSchema = z.object({
@@ -270,10 +393,19 @@ const thorThunderFreeSpinSchema = z.object({
 });
 
 export const thorThunderFreeSpinFn = createServerFn({ method: "POST" })
+  .middleware([operationIdentity])
   .validator(thorThunderFreeSpinSchema)
   .handler(async ({ data }) => {
-    const { thorThunderFreeSpin } = await import("../server/games/thor-thunder.server");
-    return thorThunderFreeSpin(data);
+    const { withFinancialOperation } = await import("../server/operation.server");
+    return withFinancialOperation(
+      "thorThunderFreeSpinFn",
+      data,
+      async () => {
+        const { thorThunderFreeSpin } = await import("../server/games/thor-thunder.server");
+        return thorThunderFreeSpin(data);
+      },
+      "thor-thunder",
+    );
   });
 
 const thorThunderBuySchema = z.object({
@@ -283,10 +415,19 @@ const thorThunderBuySchema = z.object({
 });
 
 export const thorThunderBuyFeatureFn = createServerFn({ method: "POST" })
+  .middleware([operationIdentity])
   .validator(thorThunderBuySchema)
   .handler(async ({ data }) => {
-    const { thorThunderBuyFeature } = await import("../server/games/thor-thunder.server");
-    return thorThunderBuyFeature(data);
+    const { withFinancialOperation } = await import("../server/operation.server");
+    return withFinancialOperation(
+      "thorThunderBuyFeatureFn",
+      data,
+      async () => {
+        const { thorThunderBuyFeature } = await import("../server/games/thor-thunder.server");
+        return thorThunderBuyFeature(data);
+      },
+      "thor-thunder",
+    );
   });
 
 export const getThorThunderSessionFn = createServerFn({ method: "GET" }).handler(async () => {
@@ -300,10 +441,19 @@ const zeusStrikeSpinSchema = z.object({
 });
 
 export const zeusStrikeSpinFn = createServerFn({ method: "POST" })
+  .middleware([operationIdentity])
   .validator(zeusStrikeSpinSchema)
   .handler(async ({ data }) => {
-    const { zeusStrikePaidSpin } = await import("../server/games/zeus-strike.server");
-    return zeusStrikePaidSpin(data);
+    const { withFinancialOperation } = await import("../server/operation.server");
+    return withFinancialOperation(
+      "zeusStrikeSpinFn",
+      data,
+      async () => {
+        const { zeusStrikePaidSpin } = await import("../server/games/zeus-strike.server");
+        return zeusStrikePaidSpin(data);
+      },
+      "zeus-strike",
+    );
   });
 
 const zeusStrikeFreeSpinSchema = z.object({
@@ -311,10 +461,19 @@ const zeusStrikeFreeSpinSchema = z.object({
 });
 
 export const zeusStrikeFreeSpinFn = createServerFn({ method: "POST" })
+  .middleware([operationIdentity])
   .validator(zeusStrikeFreeSpinSchema)
   .handler(async ({ data }) => {
-    const { zeusStrikeFreeSpin } = await import("../server/games/zeus-strike.server");
-    return zeusStrikeFreeSpin(data);
+    const { withFinancialOperation } = await import("../server/operation.server");
+    return withFinancialOperation(
+      "zeusStrikeFreeSpinFn",
+      data,
+      async () => {
+        const { zeusStrikeFreeSpin } = await import("../server/games/zeus-strike.server");
+        return zeusStrikeFreeSpin(data);
+      },
+      "zeus-strike",
+    );
   });
 
 const zeusStrikeBuySchema = z.object({
@@ -324,10 +483,19 @@ const zeusStrikeBuySchema = z.object({
 });
 
 export const zeusStrikeBuyFeatureFn = createServerFn({ method: "POST" })
+  .middleware([operationIdentity])
   .validator(zeusStrikeBuySchema)
   .handler(async ({ data }) => {
-    const { zeusStrikeBuyFeature } = await import("../server/games/zeus-strike.server");
-    return zeusStrikeBuyFeature(data);
+    const { withFinancialOperation } = await import("../server/operation.server");
+    return withFinancialOperation(
+      "zeusStrikeBuyFeatureFn",
+      data,
+      async () => {
+        const { zeusStrikeBuyFeature } = await import("../server/games/zeus-strike.server");
+        return zeusStrikeBuyFeature(data);
+      },
+      "zeus-strike",
+    );
   });
 
 export const getZeusStrikeSessionFn = createServerFn({ method: "GET" }).handler(async () => {
@@ -341,10 +509,19 @@ const gateOfRaSpinSchema = z.object({
 });
 
 export const gateOfRaSpinFn = createServerFn({ method: "POST" })
+  .middleware([operationIdentity])
   .validator(gateOfRaSpinSchema)
   .handler(async ({ data }) => {
-    const { gateOfRaPaidSpin } = await import("../server/games/gate-of-ra.server");
-    return gateOfRaPaidSpin(data);
+    const { withFinancialOperation } = await import("../server/operation.server");
+    return withFinancialOperation(
+      "gateOfRaSpinFn",
+      data,
+      async () => {
+        const { gateOfRaPaidSpin } = await import("../server/games/gate-of-ra.server");
+        return gateOfRaPaidSpin(data);
+      },
+      "gate-of-ra",
+    );
   });
 
 const gateOfRaFreeSpinSchema = z.object({
@@ -352,10 +529,19 @@ const gateOfRaFreeSpinSchema = z.object({
 });
 
 export const gateOfRaFreeSpinFn = createServerFn({ method: "POST" })
+  .middleware([operationIdentity])
   .validator(gateOfRaFreeSpinSchema)
   .handler(async ({ data }) => {
-    const { gateOfRaFreeSpin } = await import("../server/games/gate-of-ra.server");
-    return gateOfRaFreeSpin(data);
+    const { withFinancialOperation } = await import("../server/operation.server");
+    return withFinancialOperation(
+      "gateOfRaFreeSpinFn",
+      data,
+      async () => {
+        const { gateOfRaFreeSpin } = await import("../server/games/gate-of-ra.server");
+        return gateOfRaFreeSpin(data);
+      },
+      "gate-of-ra",
+    );
   });
 
 const gateOfRaBuySchema = z.object({
@@ -365,10 +551,19 @@ const gateOfRaBuySchema = z.object({
 });
 
 export const gateOfRaBuyFeatureFn = createServerFn({ method: "POST" })
+  .middleware([operationIdentity])
   .validator(gateOfRaBuySchema)
   .handler(async ({ data }) => {
-    const { gateOfRaBuyFeature } = await import("../server/games/gate-of-ra.server");
-    return gateOfRaBuyFeature(data);
+    const { withFinancialOperation } = await import("../server/operation.server");
+    return withFinancialOperation(
+      "gateOfRaBuyFeatureFn",
+      data,
+      async () => {
+        const { gateOfRaBuyFeature } = await import("../server/games/gate-of-ra.server");
+        return gateOfRaBuyFeature(data);
+      },
+      "gate-of-ra",
+    );
   });
 
 export const getGateOfRaSessionFn = createServerFn({ method: "GET" }).handler(async () => {
@@ -382,10 +577,19 @@ const desertRichesSpinSchema = z.object({
 });
 
 export const desertRichesSpinFn = createServerFn({ method: "POST" })
+  .middleware([operationIdentity])
   .validator(desertRichesSpinSchema)
   .handler(async ({ data }) => {
-    const { desertRichesPaidSpin } = await import("../server/games/desert-riches.server");
-    return desertRichesPaidSpin(data);
+    const { withFinancialOperation } = await import("../server/operation.server");
+    return withFinancialOperation(
+      "desertRichesSpinFn",
+      data,
+      async () => {
+        const { desertRichesPaidSpin } = await import("../server/games/desert-riches.server");
+        return desertRichesPaidSpin(data);
+      },
+      "desert-riches",
+    );
   });
 
 const desertRichesFreeSpinSchema = z.object({
@@ -393,10 +597,19 @@ const desertRichesFreeSpinSchema = z.object({
 });
 
 export const desertRichesFreeSpinFn = createServerFn({ method: "POST" })
+  .middleware([operationIdentity])
   .validator(desertRichesFreeSpinSchema)
   .handler(async ({ data }) => {
-    const { desertRichesFreeSpin } = await import("../server/games/desert-riches.server");
-    return desertRichesFreeSpin(data);
+    const { withFinancialOperation } = await import("../server/operation.server");
+    return withFinancialOperation(
+      "desertRichesFreeSpinFn",
+      data,
+      async () => {
+        const { desertRichesFreeSpin } = await import("../server/games/desert-riches.server");
+        return desertRichesFreeSpin(data);
+      },
+      "desert-riches",
+    );
   });
 
 const desertRichesBuySchema = z.object({
@@ -406,10 +619,19 @@ const desertRichesBuySchema = z.object({
 });
 
 export const desertRichesBuyFeatureFn = createServerFn({ method: "POST" })
+  .middleware([operationIdentity])
   .validator(desertRichesBuySchema)
   .handler(async ({ data }) => {
-    const { desertRichesBuyFeature } = await import("../server/games/desert-riches.server");
-    return desertRichesBuyFeature(data);
+    const { withFinancialOperation } = await import("../server/operation.server");
+    return withFinancialOperation(
+      "desertRichesBuyFeatureFn",
+      data,
+      async () => {
+        const { desertRichesBuyFeature } = await import("../server/games/desert-riches.server");
+        return desertRichesBuyFeature(data);
+      },
+      "desert-riches",
+    );
   });
 
 export const getDesertRichesSessionFn = createServerFn({ method: "GET" }).handler(async () => {
@@ -423,10 +645,19 @@ const pharaohFireSpinSchema = z.object({
 });
 
 export const pharaohFireSpinFn = createServerFn({ method: "POST" })
+  .middleware([operationIdentity])
   .validator(pharaohFireSpinSchema)
   .handler(async ({ data }) => {
-    const { pharaohFirePaidSpin } = await import("../server/games/pharaoh-fire.server");
-    return pharaohFirePaidSpin(data);
+    const { withFinancialOperation } = await import("../server/operation.server");
+    return withFinancialOperation(
+      "pharaohFireSpinFn",
+      data,
+      async () => {
+        const { pharaohFirePaidSpin } = await import("../server/games/pharaoh-fire.server");
+        return pharaohFirePaidSpin(data);
+      },
+      "pharaoh-fire",
+    );
   });
 
 const pharaohFireFreeSpinSchema = z.object({
@@ -434,10 +665,19 @@ const pharaohFireFreeSpinSchema = z.object({
 });
 
 export const pharaohFireFreeSpinFn = createServerFn({ method: "POST" })
+  .middleware([operationIdentity])
   .validator(pharaohFireFreeSpinSchema)
   .handler(async ({ data }) => {
-    const { pharaohFireFreeSpin } = await import("../server/games/pharaoh-fire.server");
-    return pharaohFireFreeSpin(data);
+    const { withFinancialOperation } = await import("../server/operation.server");
+    return withFinancialOperation(
+      "pharaohFireFreeSpinFn",
+      data,
+      async () => {
+        const { pharaohFireFreeSpin } = await import("../server/games/pharaoh-fire.server");
+        return pharaohFireFreeSpin(data);
+      },
+      "pharaoh-fire",
+    );
   });
 
 const pharaohFireBuySchema = z.object({
@@ -447,10 +687,19 @@ const pharaohFireBuySchema = z.object({
 });
 
 export const pharaohFireBuyFeatureFn = createServerFn({ method: "POST" })
+  .middleware([operationIdentity])
   .validator(pharaohFireBuySchema)
   .handler(async ({ data }) => {
-    const { pharaohFireBuyFeature } = await import("../server/games/pharaoh-fire.server");
-    return pharaohFireBuyFeature(data);
+    const { withFinancialOperation } = await import("../server/operation.server");
+    return withFinancialOperation(
+      "pharaohFireBuyFeatureFn",
+      data,
+      async () => {
+        const { pharaohFireBuyFeature } = await import("../server/games/pharaoh-fire.server");
+        return pharaohFireBuyFeature(data);
+      },
+      "pharaoh-fire",
+    );
   });
 
 export const getPharaohFireSessionFn = createServerFn({ method: "GET" }).handler(async () => {
@@ -464,10 +713,19 @@ const templeRushSpinSchema = z.object({
 });
 
 export const templeRushSpinFn = createServerFn({ method: "POST" })
+  .middleware([operationIdentity])
   .validator(templeRushSpinSchema)
   .handler(async ({ data }) => {
-    const { templeRushPaidSpin } = await import("../server/games/temple-rush.server");
-    return templeRushPaidSpin(data);
+    const { withFinancialOperation } = await import("../server/operation.server");
+    return withFinancialOperation(
+      "templeRushSpinFn",
+      data,
+      async () => {
+        const { templeRushPaidSpin } = await import("../server/games/temple-rush.server");
+        return templeRushPaidSpin(data);
+      },
+      "temple-rush",
+    );
   });
 
 const templeRushFreeSpinSchema = z.object({
@@ -475,10 +733,19 @@ const templeRushFreeSpinSchema = z.object({
 });
 
 export const templeRushFreeSpinFn = createServerFn({ method: "POST" })
+  .middleware([operationIdentity])
   .validator(templeRushFreeSpinSchema)
   .handler(async ({ data }) => {
-    const { templeRushFreeSpin } = await import("../server/games/temple-rush.server");
-    return templeRushFreeSpin(data);
+    const { withFinancialOperation } = await import("../server/operation.server");
+    return withFinancialOperation(
+      "templeRushFreeSpinFn",
+      data,
+      async () => {
+        const { templeRushFreeSpin } = await import("../server/games/temple-rush.server");
+        return templeRushFreeSpin(data);
+      },
+      "temple-rush",
+    );
   });
 
 const templeRushBuySchema = z.object({
@@ -488,10 +755,19 @@ const templeRushBuySchema = z.object({
 });
 
 export const templeRushBuyFeatureFn = createServerFn({ method: "POST" })
+  .middleware([operationIdentity])
   .validator(templeRushBuySchema)
   .handler(async ({ data }) => {
-    const { templeRushBuyFeature } = await import("../server/games/temple-rush.server");
-    return templeRushBuyFeature(data);
+    const { withFinancialOperation } = await import("../server/operation.server");
+    return withFinancialOperation(
+      "templeRushBuyFeatureFn",
+      data,
+      async () => {
+        const { templeRushBuyFeature } = await import("../server/games/temple-rush.server");
+        return templeRushBuyFeature(data);
+      },
+      "temple-rush",
+    );
   });
 
 export const getTempleRushSessionFn = createServerFn({ method: "GET" }).handler(async () => {
@@ -505,10 +781,19 @@ const mayaGoldSpinSchema = z.object({
 });
 
 export const mayaGoldSpinFn = createServerFn({ method: "POST" })
+  .middleware([operationIdentity])
   .validator(mayaGoldSpinSchema)
   .handler(async ({ data }) => {
-    const { mayaGoldPaidSpin } = await import("../server/games/maya-gold.server");
-    return mayaGoldPaidSpin(data);
+    const { withFinancialOperation } = await import("../server/operation.server");
+    return withFinancialOperation(
+      "mayaGoldSpinFn",
+      data,
+      async () => {
+        const { mayaGoldPaidSpin } = await import("../server/games/maya-gold.server");
+        return mayaGoldPaidSpin(data);
+      },
+      "maya-gold",
+    );
   });
 
 const mayaGoldFreeSpinSchema = z.object({
@@ -516,10 +801,19 @@ const mayaGoldFreeSpinSchema = z.object({
 });
 
 export const mayaGoldFreeSpinFn = createServerFn({ method: "POST" })
+  .middleware([operationIdentity])
   .validator(mayaGoldFreeSpinSchema)
   .handler(async ({ data }) => {
-    const { mayaGoldFreeSpin } = await import("../server/games/maya-gold.server");
-    return mayaGoldFreeSpin(data);
+    const { withFinancialOperation } = await import("../server/operation.server");
+    return withFinancialOperation(
+      "mayaGoldFreeSpinFn",
+      data,
+      async () => {
+        const { mayaGoldFreeSpin } = await import("../server/games/maya-gold.server");
+        return mayaGoldFreeSpin(data);
+      },
+      "maya-gold",
+    );
   });
 
 const mayaGoldBuySchema = z.object({
@@ -529,10 +823,19 @@ const mayaGoldBuySchema = z.object({
 });
 
 export const mayaGoldBuyFeatureFn = createServerFn({ method: "POST" })
+  .middleware([operationIdentity])
   .validator(mayaGoldBuySchema)
   .handler(async ({ data }) => {
-    const { mayaGoldBuyFeature } = await import("../server/games/maya-gold.server");
-    return mayaGoldBuyFeature(data);
+    const { withFinancialOperation } = await import("../server/operation.server");
+    return withFinancialOperation(
+      "mayaGoldBuyFeatureFn",
+      data,
+      async () => {
+        const { mayaGoldBuyFeature } = await import("../server/games/maya-gold.server");
+        return mayaGoldBuyFeature(data);
+      },
+      "maya-gold",
+    );
   });
 
 export const getMayaGoldSessionFn = createServerFn({ method: "GET" }).handler(async () => {
@@ -546,10 +849,19 @@ const cleopatraGoldSpinSchema = z.object({
 });
 
 export const cleopatraGoldSpinFn = createServerFn({ method: "POST" })
+  .middleware([operationIdentity])
   .validator(cleopatraGoldSpinSchema)
   .handler(async ({ data }) => {
-    const { cleopatraGoldPaidSpin } = await import("../server/games/cleopatra-gold.server");
-    return cleopatraGoldPaidSpin(data);
+    const { withFinancialOperation } = await import("../server/operation.server");
+    return withFinancialOperation(
+      "cleopatraGoldSpinFn",
+      data,
+      async () => {
+        const { cleopatraGoldPaidSpin } = await import("../server/games/cleopatra-gold.server");
+        return cleopatraGoldPaidSpin(data);
+      },
+      "cleopatra-gold",
+    );
   });
 
 const cleopatraGoldFreeSpinSchema = z.object({
@@ -557,10 +869,19 @@ const cleopatraGoldFreeSpinSchema = z.object({
 });
 
 export const cleopatraGoldFreeSpinFn = createServerFn({ method: "POST" })
+  .middleware([operationIdentity])
   .validator(cleopatraGoldFreeSpinSchema)
   .handler(async ({ data }) => {
-    const { cleopatraGoldFreeSpin } = await import("../server/games/cleopatra-gold.server");
-    return cleopatraGoldFreeSpin(data);
+    const { withFinancialOperation } = await import("../server/operation.server");
+    return withFinancialOperation(
+      "cleopatraGoldFreeSpinFn",
+      data,
+      async () => {
+        const { cleopatraGoldFreeSpin } = await import("../server/games/cleopatra-gold.server");
+        return cleopatraGoldFreeSpin(data);
+      },
+      "cleopatra-gold",
+    );
   });
 
 const cleopatraGoldBuySchema = z.object({
@@ -570,10 +891,19 @@ const cleopatraGoldBuySchema = z.object({
 });
 
 export const cleopatraGoldBuyFeatureFn = createServerFn({ method: "POST" })
+  .middleware([operationIdentity])
   .validator(cleopatraGoldBuySchema)
   .handler(async ({ data }) => {
-    const { cleopatraGoldBuyFeature } = await import("../server/games/cleopatra-gold.server");
-    return cleopatraGoldBuyFeature(data);
+    const { withFinancialOperation } = await import("../server/operation.server");
+    return withFinancialOperation(
+      "cleopatraGoldBuyFeatureFn",
+      data,
+      async () => {
+        const { cleopatraGoldBuyFeature } = await import("../server/games/cleopatra-gold.server");
+        return cleopatraGoldBuyFeature(data);
+      },
+      "cleopatra-gold",
+    );
   });
 
 export const getCleopatraGoldSessionFn = createServerFn({ method: "GET" }).handler(async () => {
@@ -587,10 +917,19 @@ const safariGoldSpinSchema = z.object({
 });
 
 export const safariGoldSpinFn = createServerFn({ method: "POST" })
+  .middleware([operationIdentity])
   .validator(safariGoldSpinSchema)
   .handler(async ({ data }) => {
-    const { safariGoldPaidSpin } = await import("../server/games/safari-gold.server");
-    return safariGoldPaidSpin(data);
+    const { withFinancialOperation } = await import("../server/operation.server");
+    return withFinancialOperation(
+      "safariGoldSpinFn",
+      data,
+      async () => {
+        const { safariGoldPaidSpin } = await import("../server/games/safari-gold.server");
+        return safariGoldPaidSpin(data);
+      },
+      "safari-gold",
+    );
   });
 
 const safariGoldFreeSpinSchema = z.object({
@@ -598,10 +937,19 @@ const safariGoldFreeSpinSchema = z.object({
 });
 
 export const safariGoldFreeSpinFn = createServerFn({ method: "POST" })
+  .middleware([operationIdentity])
   .validator(safariGoldFreeSpinSchema)
   .handler(async ({ data }) => {
-    const { safariGoldFreeSpin } = await import("../server/games/safari-gold.server");
-    return safariGoldFreeSpin(data);
+    const { withFinancialOperation } = await import("../server/operation.server");
+    return withFinancialOperation(
+      "safariGoldFreeSpinFn",
+      data,
+      async () => {
+        const { safariGoldFreeSpin } = await import("../server/games/safari-gold.server");
+        return safariGoldFreeSpin(data);
+      },
+      "safari-gold",
+    );
   });
 
 const safariGoldBuySchema = z.object({
@@ -611,10 +959,19 @@ const safariGoldBuySchema = z.object({
 });
 
 export const safariGoldBuyFeatureFn = createServerFn({ method: "POST" })
+  .middleware([operationIdentity])
   .validator(safariGoldBuySchema)
   .handler(async ({ data }) => {
-    const { safariGoldBuyFeature } = await import("../server/games/safari-gold.server");
-    return safariGoldBuyFeature(data);
+    const { withFinancialOperation } = await import("../server/operation.server");
+    return withFinancialOperation(
+      "safariGoldBuyFeatureFn",
+      data,
+      async () => {
+        const { safariGoldBuyFeature } = await import("../server/games/safari-gold.server");
+        return safariGoldBuyFeature(data);
+      },
+      "safari-gold",
+    );
   });
 
 export const getSafariGoldSessionFn = createServerFn({ method: "GET" }).handler(async () => {
@@ -628,10 +985,19 @@ const buffaloReignSpinSchema = z.object({
 });
 
 export const buffaloReignSpinFn = createServerFn({ method: "POST" })
+  .middleware([operationIdentity])
   .validator(buffaloReignSpinSchema)
   .handler(async ({ data }) => {
-    const { buffaloReignPaidSpin } = await import("../server/games/buffalo-reign.server");
-    return buffaloReignPaidSpin(data);
+    const { withFinancialOperation } = await import("../server/operation.server");
+    return withFinancialOperation(
+      "buffaloReignSpinFn",
+      data,
+      async () => {
+        const { buffaloReignPaidSpin } = await import("../server/games/buffalo-reign.server");
+        return buffaloReignPaidSpin(data);
+      },
+      "buffalo-reign",
+    );
   });
 
 const buffaloReignFreeSpinSchema = z.object({
@@ -639,10 +1005,19 @@ const buffaloReignFreeSpinSchema = z.object({
 });
 
 export const buffaloReignFreeSpinFn = createServerFn({ method: "POST" })
+  .middleware([operationIdentity])
   .validator(buffaloReignFreeSpinSchema)
   .handler(async ({ data }) => {
-    const { buffaloReignFreeSpin } = await import("../server/games/buffalo-reign.server");
-    return buffaloReignFreeSpin(data);
+    const { withFinancialOperation } = await import("../server/operation.server");
+    return withFinancialOperation(
+      "buffaloReignFreeSpinFn",
+      data,
+      async () => {
+        const { buffaloReignFreeSpin } = await import("../server/games/buffalo-reign.server");
+        return buffaloReignFreeSpin(data);
+      },
+      "buffalo-reign",
+    );
   });
 
 const buffaloReignBuySchema = z.object({
@@ -652,10 +1027,19 @@ const buffaloReignBuySchema = z.object({
 });
 
 export const buffaloReignBuyFeatureFn = createServerFn({ method: "POST" })
+  .middleware([operationIdentity])
   .validator(buffaloReignBuySchema)
   .handler(async ({ data }) => {
-    const { buffaloReignBuyFeature } = await import("../server/games/buffalo-reign.server");
-    return buffaloReignBuyFeature(data);
+    const { withFinancialOperation } = await import("../server/operation.server");
+    return withFinancialOperation(
+      "buffaloReignBuyFeatureFn",
+      data,
+      async () => {
+        const { buffaloReignBuyFeature } = await import("../server/games/buffalo-reign.server");
+        return buffaloReignBuyFeature(data);
+      },
+      "buffalo-reign",
+    );
   });
 
 export const getBuffaloReignSessionFn = createServerFn({ method: "GET" }).handler(async () => {
@@ -669,10 +1053,19 @@ const stampedeSpinSchema = z.object({
 });
 
 export const stampedeSpinFn = createServerFn({ method: "POST" })
+  .middleware([operationIdentity])
   .validator(stampedeSpinSchema)
   .handler(async ({ data }) => {
-    const { stampedePaidSpin } = await import("../server/games/wild-frontier-stampede.server");
-    return stampedePaidSpin({ bet: data.bet, ante: !!data.ante });
+    const { withFinancialOperation } = await import("../server/operation.server");
+    return withFinancialOperation(
+      "stampedeSpinFn",
+      data,
+      async () => {
+        const { stampedePaidSpin } = await import("../server/games/wild-frontier-stampede.server");
+        return stampedePaidSpin({ bet: data.bet, ante: !!data.ante });
+      },
+      "wild-frontier-stampede",
+    );
   });
 
 const stampedeFreeSpinSchema = z.object({
@@ -680,10 +1073,19 @@ const stampedeFreeSpinSchema = z.object({
 });
 
 export const stampedeFreeSpinFn = createServerFn({ method: "POST" })
+  .middleware([operationIdentity])
   .validator(stampedeFreeSpinSchema)
   .handler(async ({ data }) => {
-    const { stampedeFreeSpin } = await import("../server/games/wild-frontier-stampede.server");
-    return stampedeFreeSpin(data);
+    const { withFinancialOperation } = await import("../server/operation.server");
+    return withFinancialOperation(
+      "stampedeFreeSpinFn",
+      data,
+      async () => {
+        const { stampedeFreeSpin } = await import("../server/games/wild-frontier-stampede.server");
+        return stampedeFreeSpin(data);
+      },
+      "wild-frontier-stampede",
+    );
   });
 
 const stampedeBuySchema = z.object({
@@ -691,10 +1093,20 @@ const stampedeBuySchema = z.object({
 });
 
 export const stampedeBuyFeatureFn = createServerFn({ method: "POST" })
+  .middleware([operationIdentity])
   .validator(stampedeBuySchema)
   .handler(async ({ data }) => {
-    const { stampedeBuyFeature } = await import("../server/games/wild-frontier-stampede.server");
-    return stampedeBuyFeature(data);
+    const { withFinancialOperation } = await import("../server/operation.server");
+    return withFinancialOperation(
+      "stampedeBuyFeatureFn",
+      data,
+      async () => {
+        const { stampedeBuyFeature } =
+          await import("../server/games/wild-frontier-stampede.server");
+        return stampedeBuyFeature(data);
+      },
+      "wild-frontier-stampede",
+    );
   });
 
 export const getStampedeSessionFn = createServerFn({ method: "GET" }).handler(async () => {
@@ -713,10 +1125,19 @@ const prosperityLionSpinSchema = z.object({
 });
 
 export const prosperityLionSpinFn = createServerFn({ method: "POST" })
+  .middleware([operationIdentity])
   .validator(prosperityLionSpinSchema)
   .handler(async ({ data }) => {
-    const { prosperityLionPaidSpin } = await import("../server/games/prosperity-lion.server");
-    return prosperityLionPaidSpin(data);
+    const { withFinancialOperation } = await import("../server/operation.server");
+    return withFinancialOperation(
+      "prosperityLionSpinFn",
+      data,
+      async () => {
+        const { prosperityLionPaidSpin } = await import("../server/games/prosperity-lion.server");
+        return prosperityLionPaidSpin(data);
+      },
+      "prosperity-lion",
+    );
   });
 
 const prosperityLionFreeSpinSchema = z.object({
@@ -724,10 +1145,19 @@ const prosperityLionFreeSpinSchema = z.object({
 });
 
 export const prosperityLionFreeSpinFn = createServerFn({ method: "POST" })
+  .middleware([operationIdentity])
   .validator(prosperityLionFreeSpinSchema)
   .handler(async ({ data }) => {
-    const { prosperityLionFreeSpin } = await import("../server/games/prosperity-lion.server");
-    return prosperityLionFreeSpin(data);
+    const { withFinancialOperation } = await import("../server/operation.server");
+    return withFinancialOperation(
+      "prosperityLionFreeSpinFn",
+      data,
+      async () => {
+        const { prosperityLionFreeSpin } = await import("../server/games/prosperity-lion.server");
+        return prosperityLionFreeSpin(data);
+      },
+      "prosperity-lion",
+    );
   });
 
 const prosperityLionBuySchema = z.object({
@@ -737,10 +1167,19 @@ const prosperityLionBuySchema = z.object({
 });
 
 export const prosperityLionBuyFeatureFn = createServerFn({ method: "POST" })
+  .middleware([operationIdentity])
   .validator(prosperityLionBuySchema)
   .handler(async ({ data }) => {
-    const { prosperityLionBuyFeature } = await import("../server/games/prosperity-lion.server");
-    return prosperityLionBuyFeature(data);
+    const { withFinancialOperation } = await import("../server/operation.server");
+    return withFinancialOperation(
+      "prosperityLionBuyFeatureFn",
+      data,
+      async () => {
+        const { prosperityLionBuyFeature } = await import("../server/games/prosperity-lion.server");
+        return prosperityLionBuyFeature(data);
+      },
+      "prosperity-lion",
+    );
   });
 
 export const getProsperityLionSessionFn = createServerFn({ method: "GET" }).handler(async () => {
@@ -754,10 +1193,19 @@ const fortuneMouseSpinSchema = z.object({
 });
 
 export const fortuneMouseSpinFn = createServerFn({ method: "POST" })
+  .middleware([operationIdentity])
   .validator(fortuneMouseSpinSchema)
   .handler(async ({ data }) => {
-    const { fortuneMousePaidSpin } = await import("../server/games/fortune-mouse.server");
-    return fortuneMousePaidSpin(data);
+    const { withFinancialOperation } = await import("../server/operation.server");
+    return withFinancialOperation(
+      "fortuneMouseSpinFn",
+      data,
+      async () => {
+        const { fortuneMousePaidSpin } = await import("../server/games/fortune-mouse.server");
+        return fortuneMousePaidSpin(data);
+      },
+      "fortune-mouse",
+    );
   });
 
 const fortuneMouseFreeSpinSchema = z.object({
@@ -765,10 +1213,19 @@ const fortuneMouseFreeSpinSchema = z.object({
 });
 
 export const fortuneMouseFreeSpinFn = createServerFn({ method: "POST" })
+  .middleware([operationIdentity])
   .validator(fortuneMouseFreeSpinSchema)
   .handler(async ({ data }) => {
-    const { fortuneMouseFreeSpin } = await import("../server/games/fortune-mouse.server");
-    return fortuneMouseFreeSpin(data);
+    const { withFinancialOperation } = await import("../server/operation.server");
+    return withFinancialOperation(
+      "fortuneMouseFreeSpinFn",
+      data,
+      async () => {
+        const { fortuneMouseFreeSpin } = await import("../server/games/fortune-mouse.server");
+        return fortuneMouseFreeSpin(data);
+      },
+      "fortune-mouse",
+    );
   });
 
 const fortuneMouseBuySchema = z.object({
@@ -778,10 +1235,19 @@ const fortuneMouseBuySchema = z.object({
 });
 
 export const fortuneMouseBuyFeatureFn = createServerFn({ method: "POST" })
+  .middleware([operationIdentity])
   .validator(fortuneMouseBuySchema)
   .handler(async ({ data }) => {
-    const { fortuneMouseBuyFeature } = await import("../server/games/fortune-mouse.server");
-    return fortuneMouseBuyFeature(data);
+    const { withFinancialOperation } = await import("../server/operation.server");
+    return withFinancialOperation(
+      "fortuneMouseBuyFeatureFn",
+      data,
+      async () => {
+        const { fortuneMouseBuyFeature } = await import("../server/games/fortune-mouse.server");
+        return fortuneMouseBuyFeature(data);
+      },
+      "fortune-mouse",
+    );
   });
 
 export const getFortuneMouseSessionFn = createServerFn({ method: "GET" }).handler(async () => {
@@ -795,10 +1261,19 @@ const fortuneRabbitSpinSchema = z.object({
 });
 
 export const fortuneRabbitSpinFn = createServerFn({ method: "POST" })
+  .middleware([operationIdentity])
   .validator(fortuneRabbitSpinSchema)
   .handler(async ({ data }) => {
-    const { fortuneRabbitPaidSpin } = await import("../server/games/fortune-rabbit.server");
-    return fortuneRabbitPaidSpin(data);
+    const { withFinancialOperation } = await import("../server/operation.server");
+    return withFinancialOperation(
+      "fortuneRabbitSpinFn",
+      data,
+      async () => {
+        const { fortuneRabbitPaidSpin } = await import("../server/games/fortune-rabbit.server");
+        return fortuneRabbitPaidSpin(data);
+      },
+      "fortune-rabbit",
+    );
   });
 
 const fortuneRabbitFreeSpinSchema = z.object({
@@ -806,10 +1281,19 @@ const fortuneRabbitFreeSpinSchema = z.object({
 });
 
 export const fortuneRabbitFreeSpinFn = createServerFn({ method: "POST" })
+  .middleware([operationIdentity])
   .validator(fortuneRabbitFreeSpinSchema)
   .handler(async ({ data }) => {
-    const { fortuneRabbitFreeSpin } = await import("../server/games/fortune-rabbit.server");
-    return fortuneRabbitFreeSpin(data);
+    const { withFinancialOperation } = await import("../server/operation.server");
+    return withFinancialOperation(
+      "fortuneRabbitFreeSpinFn",
+      data,
+      async () => {
+        const { fortuneRabbitFreeSpin } = await import("../server/games/fortune-rabbit.server");
+        return fortuneRabbitFreeSpin(data);
+      },
+      "fortune-rabbit",
+    );
   });
 
 const fortuneRabbitBuySchema = z.object({
@@ -819,10 +1303,19 @@ const fortuneRabbitBuySchema = z.object({
 });
 
 export const fortuneRabbitBuyFeatureFn = createServerFn({ method: "POST" })
+  .middleware([operationIdentity])
   .validator(fortuneRabbitBuySchema)
   .handler(async ({ data }) => {
-    const { fortuneRabbitBuyFeature } = await import("../server/games/fortune-rabbit.server");
-    return fortuneRabbitBuyFeature(data);
+    const { withFinancialOperation } = await import("../server/operation.server");
+    return withFinancialOperation(
+      "fortuneRabbitBuyFeatureFn",
+      data,
+      async () => {
+        const { fortuneRabbitBuyFeature } = await import("../server/games/fortune-rabbit.server");
+        return fortuneRabbitBuyFeature(data);
+      },
+      "fortune-rabbit",
+    );
   });
 
 export const getFortuneRabbitSessionFn = createServerFn({ method: "GET" }).handler(async () => {
@@ -836,10 +1329,19 @@ const fortuneOxSpinSchema = z.object({
 });
 
 export const fortuneOxSpinFn = createServerFn({ method: "POST" })
+  .middleware([operationIdentity])
   .validator(fortuneOxSpinSchema)
   .handler(async ({ data }) => {
-    const { fortuneOxPaidSpin } = await import("../server/games/fortune-ox.server");
-    return fortuneOxPaidSpin(data);
+    const { withFinancialOperation } = await import("../server/operation.server");
+    return withFinancialOperation(
+      "fortuneOxSpinFn",
+      data,
+      async () => {
+        const { fortuneOxPaidSpin } = await import("../server/games/fortune-ox.server");
+        return fortuneOxPaidSpin(data);
+      },
+      "fortune-ox",
+    );
   });
 
 const fortuneOxFreeSpinSchema = z.object({
@@ -847,10 +1349,19 @@ const fortuneOxFreeSpinSchema = z.object({
 });
 
 export const fortuneOxFreeSpinFn = createServerFn({ method: "POST" })
+  .middleware([operationIdentity])
   .validator(fortuneOxFreeSpinSchema)
   .handler(async ({ data }) => {
-    const { fortuneOxFreeSpin } = await import("../server/games/fortune-ox.server");
-    return fortuneOxFreeSpin(data);
+    const { withFinancialOperation } = await import("../server/operation.server");
+    return withFinancialOperation(
+      "fortuneOxFreeSpinFn",
+      data,
+      async () => {
+        const { fortuneOxFreeSpin } = await import("../server/games/fortune-ox.server");
+        return fortuneOxFreeSpin(data);
+      },
+      "fortune-ox",
+    );
   });
 
 const fortuneOxBuySchema = z.object({
@@ -860,10 +1371,19 @@ const fortuneOxBuySchema = z.object({
 });
 
 export const fortuneOxBuyFeatureFn = createServerFn({ method: "POST" })
+  .middleware([operationIdentity])
   .validator(fortuneOxBuySchema)
   .handler(async ({ data }) => {
-    const { fortuneOxBuyFeature } = await import("../server/games/fortune-ox.server");
-    return fortuneOxBuyFeature(data);
+    const { withFinancialOperation } = await import("../server/operation.server");
+    return withFinancialOperation(
+      "fortuneOxBuyFeatureFn",
+      data,
+      async () => {
+        const { fortuneOxBuyFeature } = await import("../server/games/fortune-ox.server");
+        return fortuneOxBuyFeature(data);
+      },
+      "fortune-ox",
+    );
   });
 
 export const getFortuneOxSessionFn = createServerFn({ method: "GET" }).handler(async () => {
@@ -877,10 +1397,19 @@ const fortuneTigerSpinSchema = z.object({
 });
 
 export const fortuneTigerSpinFn = createServerFn({ method: "POST" })
+  .middleware([operationIdentity])
   .validator(fortuneTigerSpinSchema)
   .handler(async ({ data }) => {
-    const { fortuneTigerPaidSpin } = await import("../server/games/fortune-tiger.server");
-    return fortuneTigerPaidSpin(data);
+    const { withFinancialOperation } = await import("../server/operation.server");
+    return withFinancialOperation(
+      "fortuneTigerSpinFn",
+      data,
+      async () => {
+        const { fortuneTigerPaidSpin } = await import("../server/games/fortune-tiger.server");
+        return fortuneTigerPaidSpin(data);
+      },
+      "fortune-tiger",
+    );
   });
 
 const fortuneTigerFreeSpinSchema = z.object({
@@ -888,10 +1417,19 @@ const fortuneTigerFreeSpinSchema = z.object({
 });
 
 export const fortuneTigerFreeSpinFn = createServerFn({ method: "POST" })
+  .middleware([operationIdentity])
   .validator(fortuneTigerFreeSpinSchema)
   .handler(async ({ data }) => {
-    const { fortuneTigerFreeSpin } = await import("../server/games/fortune-tiger.server");
-    return fortuneTigerFreeSpin(data);
+    const { withFinancialOperation } = await import("../server/operation.server");
+    return withFinancialOperation(
+      "fortuneTigerFreeSpinFn",
+      data,
+      async () => {
+        const { fortuneTigerFreeSpin } = await import("../server/games/fortune-tiger.server");
+        return fortuneTigerFreeSpin(data);
+      },
+      "fortune-tiger",
+    );
   });
 
 const fortuneTigerBuySchema = z.object({
@@ -901,10 +1439,19 @@ const fortuneTigerBuySchema = z.object({
 });
 
 export const fortuneTigerBuyFeatureFn = createServerFn({ method: "POST" })
+  .middleware([operationIdentity])
   .validator(fortuneTigerBuySchema)
   .handler(async ({ data }) => {
-    const { fortuneTigerBuyFeature } = await import("../server/games/fortune-tiger.server");
-    return fortuneTigerBuyFeature(data);
+    const { withFinancialOperation } = await import("../server/operation.server");
+    return withFinancialOperation(
+      "fortuneTigerBuyFeatureFn",
+      data,
+      async () => {
+        const { fortuneTigerBuyFeature } = await import("../server/games/fortune-tiger.server");
+        return fortuneTigerBuyFeature(data);
+      },
+      "fortune-tiger",
+    );
   });
 
 export const getFortuneTigerSessionFn = createServerFn({ method: "GET" }).handler(async () => {
@@ -918,10 +1465,19 @@ const luckyNekoSpinSchema = z.object({
 });
 
 export const luckyNekoSpinFn = createServerFn({ method: "POST" })
+  .middleware([operationIdentity])
   .validator(luckyNekoSpinSchema)
   .handler(async ({ data }) => {
-    const { luckyNekoPaidSpin } = await import("../server/games/lucky-neko.server");
-    return luckyNekoPaidSpin(data);
+    const { withFinancialOperation } = await import("../server/operation.server");
+    return withFinancialOperation(
+      "luckyNekoSpinFn",
+      data,
+      async () => {
+        const { luckyNekoPaidSpin } = await import("../server/games/lucky-neko.server");
+        return luckyNekoPaidSpin(data);
+      },
+      "lucky-neko",
+    );
   });
 
 const luckyNekoFreeSpinSchema = z.object({
@@ -929,10 +1485,19 @@ const luckyNekoFreeSpinSchema = z.object({
 });
 
 export const luckyNekoFreeSpinFn = createServerFn({ method: "POST" })
+  .middleware([operationIdentity])
   .validator(luckyNekoFreeSpinSchema)
   .handler(async ({ data }) => {
-    const { luckyNekoFreeSpin } = await import("../server/games/lucky-neko.server");
-    return luckyNekoFreeSpin(data);
+    const { withFinancialOperation } = await import("../server/operation.server");
+    return withFinancialOperation(
+      "luckyNekoFreeSpinFn",
+      data,
+      async () => {
+        const { luckyNekoFreeSpin } = await import("../server/games/lucky-neko.server");
+        return luckyNekoFreeSpin(data);
+      },
+      "lucky-neko",
+    );
   });
 
 const luckyNekoBuySchema = z.object({
@@ -942,10 +1507,19 @@ const luckyNekoBuySchema = z.object({
 });
 
 export const luckyNekoBuyFeatureFn = createServerFn({ method: "POST" })
+  .middleware([operationIdentity])
   .validator(luckyNekoBuySchema)
   .handler(async ({ data }) => {
-    const { luckyNekoBuyFeature } = await import("../server/games/lucky-neko.server");
-    return luckyNekoBuyFeature(data);
+    const { withFinancialOperation } = await import("../server/operation.server");
+    return withFinancialOperation(
+      "luckyNekoBuyFeatureFn",
+      data,
+      async () => {
+        const { luckyNekoBuyFeature } = await import("../server/games/lucky-neko.server");
+        return luckyNekoBuyFeature(data);
+      },
+      "lucky-neko",
+    );
   });
 
 export const getLuckyNekoSessionFn = createServerFn({ method: "GET" }).handler(async () => {
@@ -959,10 +1533,19 @@ const rubyRavenSpinSchema = z.object({
 });
 
 export const rubyRavenSpinFn = createServerFn({ method: "POST" })
+  .middleware([operationIdentity])
   .validator(rubyRavenSpinSchema)
   .handler(async ({ data }) => {
-    const { rubyRavenPaidSpin } = await import("../server/games/ruby-raven.server");
-    return rubyRavenPaidSpin(data);
+    const { withFinancialOperation } = await import("../server/operation.server");
+    return withFinancialOperation(
+      "rubyRavenSpinFn",
+      data,
+      async () => {
+        const { rubyRavenPaidSpin } = await import("../server/games/ruby-raven.server");
+        return rubyRavenPaidSpin(data);
+      },
+      "ruby-raven",
+    );
   });
 
 const rubyRavenFreeSpinSchema = z.object({
@@ -970,10 +1553,19 @@ const rubyRavenFreeSpinSchema = z.object({
 });
 
 export const rubyRavenFreeSpinFn = createServerFn({ method: "POST" })
+  .middleware([operationIdentity])
   .validator(rubyRavenFreeSpinSchema)
   .handler(async ({ data }) => {
-    const { rubyRavenFreeSpin } = await import("../server/games/ruby-raven.server");
-    return rubyRavenFreeSpin(data);
+    const { withFinancialOperation } = await import("../server/operation.server");
+    return withFinancialOperation(
+      "rubyRavenFreeSpinFn",
+      data,
+      async () => {
+        const { rubyRavenFreeSpin } = await import("../server/games/ruby-raven.server");
+        return rubyRavenFreeSpin(data);
+      },
+      "ruby-raven",
+    );
   });
 
 const rubyRavenBuySchema = z.object({
@@ -983,10 +1575,19 @@ const rubyRavenBuySchema = z.object({
 });
 
 export const rubyRavenBuyFeatureFn = createServerFn({ method: "POST" })
+  .middleware([operationIdentity])
   .validator(rubyRavenBuySchema)
   .handler(async ({ data }) => {
-    const { rubyRavenBuyFeature } = await import("../server/games/ruby-raven.server");
-    return rubyRavenBuyFeature(data);
+    const { withFinancialOperation } = await import("../server/operation.server");
+    return withFinancialOperation(
+      "rubyRavenBuyFeatureFn",
+      data,
+      async () => {
+        const { rubyRavenBuyFeature } = await import("../server/games/ruby-raven.server");
+        return rubyRavenBuyFeature(data);
+      },
+      "ruby-raven",
+    );
   });
 
 export const getRubyRavenSessionFn = createServerFn({ method: "GET" }).handler(async () => {
@@ -1000,10 +1601,19 @@ const midnightOwlSpinSchema = z.object({
 });
 
 export const midnightOwlSpinFn = createServerFn({ method: "POST" })
+  .middleware([operationIdentity])
   .validator(midnightOwlSpinSchema)
   .handler(async ({ data }) => {
-    const { midnightOwlPaidSpin } = await import("../server/games/midnight-owl.server");
-    return midnightOwlPaidSpin(data);
+    const { withFinancialOperation } = await import("../server/operation.server");
+    return withFinancialOperation(
+      "midnightOwlSpinFn",
+      data,
+      async () => {
+        const { midnightOwlPaidSpin } = await import("../server/games/midnight-owl.server");
+        return midnightOwlPaidSpin(data);
+      },
+      "midnight-owl",
+    );
   });
 
 const midnightOwlFreeSpinSchema = z.object({
@@ -1011,10 +1621,19 @@ const midnightOwlFreeSpinSchema = z.object({
 });
 
 export const midnightOwlFreeSpinFn = createServerFn({ method: "POST" })
+  .middleware([operationIdentity])
   .validator(midnightOwlFreeSpinSchema)
   .handler(async ({ data }) => {
-    const { midnightOwlFreeSpin } = await import("../server/games/midnight-owl.server");
-    return midnightOwlFreeSpin(data);
+    const { withFinancialOperation } = await import("../server/operation.server");
+    return withFinancialOperation(
+      "midnightOwlFreeSpinFn",
+      data,
+      async () => {
+        const { midnightOwlFreeSpin } = await import("../server/games/midnight-owl.server");
+        return midnightOwlFreeSpin(data);
+      },
+      "midnight-owl",
+    );
   });
 
 const midnightOwlBuySchema = z.object({
@@ -1024,10 +1643,19 @@ const midnightOwlBuySchema = z.object({
 });
 
 export const midnightOwlBuyFeatureFn = createServerFn({ method: "POST" })
+  .middleware([operationIdentity])
   .validator(midnightOwlBuySchema)
   .handler(async ({ data }) => {
-    const { midnightOwlBuyFeature } = await import("../server/games/midnight-owl.server");
-    return midnightOwlBuyFeature(data);
+    const { withFinancialOperation } = await import("../server/operation.server");
+    return withFinancialOperation(
+      "midnightOwlBuyFeatureFn",
+      data,
+      async () => {
+        const { midnightOwlBuyFeature } = await import("../server/games/midnight-owl.server");
+        return midnightOwlBuyFeature(data);
+      },
+      "midnight-owl",
+    );
   });
 
 export const getMidnightOwlSessionFn = createServerFn({ method: "GET" }).handler(async () => {
@@ -1041,10 +1669,19 @@ const honeyHiveSpinSchema = z.object({
 });
 
 export const honeyHiveSpinFn = createServerFn({ method: "POST" })
+  .middleware([operationIdentity])
   .validator(honeyHiveSpinSchema)
   .handler(async ({ data }) => {
-    const { honeyHivePaidSpin } = await import("../server/games/honey-hive.server");
-    return honeyHivePaidSpin(data);
+    const { withFinancialOperation } = await import("../server/operation.server");
+    return withFinancialOperation(
+      "honeyHiveSpinFn",
+      data,
+      async () => {
+        const { honeyHivePaidSpin } = await import("../server/games/honey-hive.server");
+        return honeyHivePaidSpin(data);
+      },
+      "honey-hive",
+    );
   });
 
 const honeyHiveFreeSpinSchema = z.object({
@@ -1052,10 +1689,19 @@ const honeyHiveFreeSpinSchema = z.object({
 });
 
 export const honeyHiveFreeSpinFn = createServerFn({ method: "POST" })
+  .middleware([operationIdentity])
   .validator(honeyHiveFreeSpinSchema)
   .handler(async ({ data }) => {
-    const { honeyHiveFreeSpin } = await import("../server/games/honey-hive.server");
-    return honeyHiveFreeSpin(data);
+    const { withFinancialOperation } = await import("../server/operation.server");
+    return withFinancialOperation(
+      "honeyHiveFreeSpinFn",
+      data,
+      async () => {
+        const { honeyHiveFreeSpin } = await import("../server/games/honey-hive.server");
+        return honeyHiveFreeSpin(data);
+      },
+      "honey-hive",
+    );
   });
 
 const honeyHiveBuySchema = z.object({
@@ -1065,10 +1711,19 @@ const honeyHiveBuySchema = z.object({
 });
 
 export const honeyHiveBuyFeatureFn = createServerFn({ method: "POST" })
+  .middleware([operationIdentity])
   .validator(honeyHiveBuySchema)
   .handler(async ({ data }) => {
-    const { honeyHiveBuyFeature } = await import("../server/games/honey-hive.server");
-    return honeyHiveBuyFeature(data);
+    const { withFinancialOperation } = await import("../server/operation.server");
+    return withFinancialOperation(
+      "honeyHiveBuyFeatureFn",
+      data,
+      async () => {
+        const { honeyHiveBuyFeature } = await import("../server/games/honey-hive.server");
+        return honeyHiveBuyFeature(data);
+      },
+      "honey-hive",
+    );
   });
 
 export const getHoneyHiveSessionFn = createServerFn({ method: "GET" }).handler(async () => {
@@ -1082,10 +1737,19 @@ const solarSerpentSpinSchema = z.object({
 });
 
 export const solarSerpentSpinFn = createServerFn({ method: "POST" })
+  .middleware([operationIdentity])
   .validator(solarSerpentSpinSchema)
   .handler(async ({ data }) => {
-    const { solarSerpentPaidSpin } = await import("../server/games/solar-serpent.server");
-    return solarSerpentPaidSpin(data);
+    const { withFinancialOperation } = await import("../server/operation.server");
+    return withFinancialOperation(
+      "solarSerpentSpinFn",
+      data,
+      async () => {
+        const { solarSerpentPaidSpin } = await import("../server/games/solar-serpent.server");
+        return solarSerpentPaidSpin(data);
+      },
+      "solar-serpent",
+    );
   });
 
 const solarSerpentFreeSpinSchema = z.object({
@@ -1093,10 +1757,19 @@ const solarSerpentFreeSpinSchema = z.object({
 });
 
 export const solarSerpentFreeSpinFn = createServerFn({ method: "POST" })
+  .middleware([operationIdentity])
   .validator(solarSerpentFreeSpinSchema)
   .handler(async ({ data }) => {
-    const { solarSerpentFreeSpin } = await import("../server/games/solar-serpent.server");
-    return solarSerpentFreeSpin(data);
+    const { withFinancialOperation } = await import("../server/operation.server");
+    return withFinancialOperation(
+      "solarSerpentFreeSpinFn",
+      data,
+      async () => {
+        const { solarSerpentFreeSpin } = await import("../server/games/solar-serpent.server");
+        return solarSerpentFreeSpin(data);
+      },
+      "solar-serpent",
+    );
   });
 
 const solarSerpentBuySchema = z.object({
@@ -1106,10 +1779,19 @@ const solarSerpentBuySchema = z.object({
 });
 
 export const solarSerpentBuyFeatureFn = createServerFn({ method: "POST" })
+  .middleware([operationIdentity])
   .validator(solarSerpentBuySchema)
   .handler(async ({ data }) => {
-    const { solarSerpentBuyFeature } = await import("../server/games/solar-serpent.server");
-    return solarSerpentBuyFeature(data);
+    const { withFinancialOperation } = await import("../server/operation.server");
+    return withFinancialOperation(
+      "solarSerpentBuyFeatureFn",
+      data,
+      async () => {
+        const { solarSerpentBuyFeature } = await import("../server/games/solar-serpent.server");
+        return solarSerpentBuyFeature(data);
+      },
+      "solar-serpent",
+    );
   });
 
 export const getSolarSerpentSessionFn = createServerFn({ method: "GET" }).handler(async () => {
@@ -1123,10 +1805,19 @@ const frostFoxSpinSchema = z.object({
 });
 
 export const frostFoxSpinFn = createServerFn({ method: "POST" })
+  .middleware([operationIdentity])
   .validator(frostFoxSpinSchema)
   .handler(async ({ data }) => {
-    const { frostFoxPaidSpin } = await import("../server/games/frost-fox.server");
-    return frostFoxPaidSpin(data);
+    const { withFinancialOperation } = await import("../server/operation.server");
+    return withFinancialOperation(
+      "frostFoxSpinFn",
+      data,
+      async () => {
+        const { frostFoxPaidSpin } = await import("../server/games/frost-fox.server");
+        return frostFoxPaidSpin(data);
+      },
+      "frost-fox",
+    );
   });
 
 const frostFoxFreeSpinSchema = z.object({
@@ -1134,10 +1825,19 @@ const frostFoxFreeSpinSchema = z.object({
 });
 
 export const frostFoxFreeSpinFn = createServerFn({ method: "POST" })
+  .middleware([operationIdentity])
   .validator(frostFoxFreeSpinSchema)
   .handler(async ({ data }) => {
-    const { frostFoxFreeSpin } = await import("../server/games/frost-fox.server");
-    return frostFoxFreeSpin(data);
+    const { withFinancialOperation } = await import("../server/operation.server");
+    return withFinancialOperation(
+      "frostFoxFreeSpinFn",
+      data,
+      async () => {
+        const { frostFoxFreeSpin } = await import("../server/games/frost-fox.server");
+        return frostFoxFreeSpin(data);
+      },
+      "frost-fox",
+    );
   });
 
 const frostFoxBuySchema = z.object({
@@ -1147,10 +1847,19 @@ const frostFoxBuySchema = z.object({
 });
 
 export const frostFoxBuyFeatureFn = createServerFn({ method: "POST" })
+  .middleware([operationIdentity])
   .validator(frostFoxBuySchema)
   .handler(async ({ data }) => {
-    const { frostFoxBuyFeature } = await import("../server/games/frost-fox.server");
-    return frostFoxBuyFeature(data);
+    const { withFinancialOperation } = await import("../server/operation.server");
+    return withFinancialOperation(
+      "frostFoxBuyFeatureFn",
+      data,
+      async () => {
+        const { frostFoxBuyFeature } = await import("../server/games/frost-fox.server");
+        return frostFoxBuyFeature(data);
+      },
+      "frost-fox",
+    );
   });
 
 export const getFrostFoxSessionFn = createServerFn({ method: "GET" }).handler(async () => {
@@ -1164,10 +1873,19 @@ const coralCobraSpinSchema = z.object({
 });
 
 export const coralCobraSpinFn = createServerFn({ method: "POST" })
+  .middleware([operationIdentity])
   .validator(coralCobraSpinSchema)
   .handler(async ({ data }) => {
-    const { coralCobraPaidSpin } = await import("../server/games/coral-cobra.server");
-    return coralCobraPaidSpin(data);
+    const { withFinancialOperation } = await import("../server/operation.server");
+    return withFinancialOperation(
+      "coralCobraSpinFn",
+      data,
+      async () => {
+        const { coralCobraPaidSpin } = await import("../server/games/coral-cobra.server");
+        return coralCobraPaidSpin(data);
+      },
+      "coral-cobra",
+    );
   });
 
 const coralCobraFreeSpinSchema = z.object({
@@ -1175,10 +1893,19 @@ const coralCobraFreeSpinSchema = z.object({
 });
 
 export const coralCobraFreeSpinFn = createServerFn({ method: "POST" })
+  .middleware([operationIdentity])
   .validator(coralCobraFreeSpinSchema)
   .handler(async ({ data }) => {
-    const { coralCobraFreeSpin } = await import("../server/games/coral-cobra.server");
-    return coralCobraFreeSpin(data);
+    const { withFinancialOperation } = await import("../server/operation.server");
+    return withFinancialOperation(
+      "coralCobraFreeSpinFn",
+      data,
+      async () => {
+        const { coralCobraFreeSpin } = await import("../server/games/coral-cobra.server");
+        return coralCobraFreeSpin(data);
+      },
+      "coral-cobra",
+    );
   });
 
 const coralCobraBuySchema = z.object({
@@ -1188,10 +1915,19 @@ const coralCobraBuySchema = z.object({
 });
 
 export const coralCobraBuyFeatureFn = createServerFn({ method: "POST" })
+  .middleware([operationIdentity])
   .validator(coralCobraBuySchema)
   .handler(async ({ data }) => {
-    const { coralCobraBuyFeature } = await import("../server/games/coral-cobra.server");
-    return coralCobraBuyFeature(data);
+    const { withFinancialOperation } = await import("../server/operation.server");
+    return withFinancialOperation(
+      "coralCobraBuyFeatureFn",
+      data,
+      async () => {
+        const { coralCobraBuyFeature } = await import("../server/games/coral-cobra.server");
+        return coralCobraBuyFeature(data);
+      },
+      "coral-cobra",
+    );
   });
 
 export const getCoralCobraSessionFn = createServerFn({ method: "GET" }).handler(async () => {
@@ -1205,10 +1941,19 @@ const lotusLynxSpinSchema = z.object({
 });
 
 export const lotusLynxSpinFn = createServerFn({ method: "POST" })
+  .middleware([operationIdentity])
   .validator(lotusLynxSpinSchema)
   .handler(async ({ data }) => {
-    const { lotusLynxPaidSpin } = await import("../server/games/lotus-lynx.server");
-    return lotusLynxPaidSpin(data);
+    const { withFinancialOperation } = await import("../server/operation.server");
+    return withFinancialOperation(
+      "lotusLynxSpinFn",
+      data,
+      async () => {
+        const { lotusLynxPaidSpin } = await import("../server/games/lotus-lynx.server");
+        return lotusLynxPaidSpin(data);
+      },
+      "lotus-lynx",
+    );
   });
 
 const lotusLynxFreeSpinSchema = z.object({
@@ -1216,10 +1961,19 @@ const lotusLynxFreeSpinSchema = z.object({
 });
 
 export const lotusLynxFreeSpinFn = createServerFn({ method: "POST" })
+  .middleware([operationIdentity])
   .validator(lotusLynxFreeSpinSchema)
   .handler(async ({ data }) => {
-    const { lotusLynxFreeSpin } = await import("../server/games/lotus-lynx.server");
-    return lotusLynxFreeSpin(data);
+    const { withFinancialOperation } = await import("../server/operation.server");
+    return withFinancialOperation(
+      "lotusLynxFreeSpinFn",
+      data,
+      async () => {
+        const { lotusLynxFreeSpin } = await import("../server/games/lotus-lynx.server");
+        return lotusLynxFreeSpin(data);
+      },
+      "lotus-lynx",
+    );
   });
 
 const lotusLynxBuySchema = z.object({
@@ -1229,10 +1983,19 @@ const lotusLynxBuySchema = z.object({
 });
 
 export const lotusLynxBuyFeatureFn = createServerFn({ method: "POST" })
+  .middleware([operationIdentity])
   .validator(lotusLynxBuySchema)
   .handler(async ({ data }) => {
-    const { lotusLynxBuyFeature } = await import("../server/games/lotus-lynx.server");
-    return lotusLynxBuyFeature(data);
+    const { withFinancialOperation } = await import("../server/operation.server");
+    return withFinancialOperation(
+      "lotusLynxBuyFeatureFn",
+      data,
+      async () => {
+        const { lotusLynxBuyFeature } = await import("../server/games/lotus-lynx.server");
+        return lotusLynxBuyFeature(data);
+      },
+      "lotus-lynx",
+    );
   });
 
 export const getLotusLynxSessionFn = createServerFn({ method: "GET" }).handler(async () => {
@@ -1246,10 +2009,19 @@ const emberTigerSpinSchema = z.object({
 });
 
 export const emberTigerSpinFn = createServerFn({ method: "POST" })
+  .middleware([operationIdentity])
   .validator(emberTigerSpinSchema)
   .handler(async ({ data }) => {
-    const { emberTigerPaidSpin } = await import("../server/games/ember-tiger.server");
-    return emberTigerPaidSpin(data);
+    const { withFinancialOperation } = await import("../server/operation.server");
+    return withFinancialOperation(
+      "emberTigerSpinFn",
+      data,
+      async () => {
+        const { emberTigerPaidSpin } = await import("../server/games/ember-tiger.server");
+        return emberTigerPaidSpin(data);
+      },
+      "ember-tiger",
+    );
   });
 
 const emberTigerFreeSpinSchema = z.object({
@@ -1257,10 +2029,19 @@ const emberTigerFreeSpinSchema = z.object({
 });
 
 export const emberTigerFreeSpinFn = createServerFn({ method: "POST" })
+  .middleware([operationIdentity])
   .validator(emberTigerFreeSpinSchema)
   .handler(async ({ data }) => {
-    const { emberTigerFreeSpin } = await import("../server/games/ember-tiger.server");
-    return emberTigerFreeSpin(data);
+    const { withFinancialOperation } = await import("../server/operation.server");
+    return withFinancialOperation(
+      "emberTigerFreeSpinFn",
+      data,
+      async () => {
+        const { emberTigerFreeSpin } = await import("../server/games/ember-tiger.server");
+        return emberTigerFreeSpin(data);
+      },
+      "ember-tiger",
+    );
   });
 
 const emberTigerBuySchema = z.object({
@@ -1270,10 +2051,19 @@ const emberTigerBuySchema = z.object({
 });
 
 export const emberTigerBuyFeatureFn = createServerFn({ method: "POST" })
+  .middleware([operationIdentity])
   .validator(emberTigerBuySchema)
   .handler(async ({ data }) => {
-    const { emberTigerBuyFeature } = await import("../server/games/ember-tiger.server");
-    return emberTigerBuyFeature(data);
+    const { withFinancialOperation } = await import("../server/operation.server");
+    return withFinancialOperation(
+      "emberTigerBuyFeatureFn",
+      data,
+      async () => {
+        const { emberTigerBuyFeature } = await import("../server/games/ember-tiger.server");
+        return emberTigerBuyFeature(data);
+      },
+      "ember-tiger",
+    );
   });
 
 export const getEmberTigerSessionFn = createServerFn({ method: "GET" }).handler(async () => {
@@ -1287,10 +2077,19 @@ const jadeJaguarSpinSchema = z.object({
 });
 
 export const jadeJaguarSpinFn = createServerFn({ method: "POST" })
+  .middleware([operationIdentity])
   .validator(jadeJaguarSpinSchema)
   .handler(async ({ data }) => {
-    const { jadeJaguarPaidSpin } = await import("../server/games/jade-jaguar.server");
-    return jadeJaguarPaidSpin(data);
+    const { withFinancialOperation } = await import("../server/operation.server");
+    return withFinancialOperation(
+      "jadeJaguarSpinFn",
+      data,
+      async () => {
+        const { jadeJaguarPaidSpin } = await import("../server/games/jade-jaguar.server");
+        return jadeJaguarPaidSpin(data);
+      },
+      "jade-jaguar",
+    );
   });
 
 const jadeJaguarFreeSpinSchema = z.object({
@@ -1298,10 +2097,19 @@ const jadeJaguarFreeSpinSchema = z.object({
 });
 
 export const jadeJaguarFreeSpinFn = createServerFn({ method: "POST" })
+  .middleware([operationIdentity])
   .validator(jadeJaguarFreeSpinSchema)
   .handler(async ({ data }) => {
-    const { jadeJaguarFreeSpin } = await import("../server/games/jade-jaguar.server");
-    return jadeJaguarFreeSpin(data);
+    const { withFinancialOperation } = await import("../server/operation.server");
+    return withFinancialOperation(
+      "jadeJaguarFreeSpinFn",
+      data,
+      async () => {
+        const { jadeJaguarFreeSpin } = await import("../server/games/jade-jaguar.server");
+        return jadeJaguarFreeSpin(data);
+      },
+      "jade-jaguar",
+    );
   });
 
 const jadeJaguarBuySchema = z.object({
@@ -1311,10 +2119,19 @@ const jadeJaguarBuySchema = z.object({
 });
 
 export const jadeJaguarBuyFeatureFn = createServerFn({ method: "POST" })
+  .middleware([operationIdentity])
   .validator(jadeJaguarBuySchema)
   .handler(async ({ data }) => {
-    const { jadeJaguarBuyFeature } = await import("../server/games/jade-jaguar.server");
-    return jadeJaguarBuyFeature(data);
+    const { withFinancialOperation } = await import("../server/operation.server");
+    return withFinancialOperation(
+      "jadeJaguarBuyFeatureFn",
+      data,
+      async () => {
+        const { jadeJaguarBuyFeature } = await import("../server/games/jade-jaguar.server");
+        return jadeJaguarBuyFeature(data);
+      },
+      "jade-jaguar",
+    );
   });
 
 export const getJadeJaguarSessionFn = createServerFn({ method: "GET" }).handler(async () => {
@@ -1336,6 +2153,7 @@ const gameSessionSchema = z.object({
 
 /** Log Play Now / session open into audit_logs for precise admin tracking. */
 export const recordGameSessionFn = createServerFn({ method: "POST" })
+  .middleware([operationIdentity])
   .validator(gameSessionSchema)
   .handler(async ({ data }) => {
     const { recordGameSessionOpen } = await import("../server/services.server");
@@ -1357,10 +2175,12 @@ export const getPlatformStatsFn = createServerFn({ method: "GET" }).handler(asyn
   return fetchPlatformStats();
 });
 
-export const heartbeatFn = createServerFn({ method: "POST" }).handler(async () => {
-  const { heartbeatPresence } = await import("../server/services.server");
-  return heartbeatPresence();
-});
+export const heartbeatFn = createServerFn({ method: "POST" })
+  .middleware([operationIdentity])
+  .handler(async () => {
+    const { heartbeatPresence } = await import("../server/services.server");
+    return heartbeatPresence();
+  });
 
 export const getSupportTicketFn = createServerFn({ method: "GET" }).handler(async () => {
   const { fetchOrCreatePlayerTicket } = await import("../server/services.server");
@@ -1373,6 +2193,7 @@ const supportMsgSchema = z.object({
 });
 
 export const sendSupportMessageFn = createServerFn({ method: "POST" })
+  .middleware([operationIdentity])
   .validator(supportMsgSchema)
   .handler(async ({ data }) => {
     const { addPlayerSupportMessage } = await import("../server/services.server");
@@ -1389,6 +2210,7 @@ const ticketMessagesSchema = z.object({
 });
 
 export const getAdminTicketMessagesFn = createServerFn({ method: "POST" })
+  .middleware([operationIdentity])
   .validator(ticketMessagesSchema)
   .handler(async ({ data }) => {
     const { fetchAdminTicketMessages } = await import("../server/services.server");
@@ -1401,6 +2223,7 @@ const agentMsgSchema = z.object({
 });
 
 export const sendAdminMessageFn = createServerFn({ method: "POST" })
+  .middleware([operationIdentity])
   .validator(agentMsgSchema)
   .handler(async ({ data }) => {
     const { addAgentSupportMessage } = await import("../server/services.server");
@@ -1412,6 +2235,7 @@ const resolveTicketSchema = z.object({
 });
 
 export const resolveSupportTicketFn = createServerFn({ method: "POST" })
+  .middleware([operationIdentity])
   .validator(resolveTicketSchema)
   .handler(async ({ data }) => {
     const { resolveSupportTicket } = await import("../server/services.server");
@@ -1424,6 +2248,7 @@ const createTicketSchema = z.object({
 });
 
 export const createPlayerTicketFn = createServerFn({ method: "POST" })
+  .middleware([operationIdentity])
   .validator(createTicketSchema)
   .handler(async ({ data }) => {
     const { createPlayerTicket } = await import("../server/services.server");
@@ -1435,6 +2260,7 @@ const assignAgentSchema = z.object({
 });
 
 export const assignAgentToTicketFn = createServerFn({ method: "POST" })
+  .middleware([operationIdentity])
   .validator(assignAgentSchema)
   .handler(async ({ data }) => {
     const { assignAgentToTicket } = await import("../server/services.server");
@@ -1446,10 +2272,19 @@ const fireSpikeSpinSchema = z.object({
 });
 
 export const fireSpikeSpinFn = createServerFn({ method: "POST" })
+  .middleware([operationIdentity])
   .validator(fireSpikeSpinSchema)
   .handler(async ({ data }) => {
-    const { fireSpikePaidSpin } = await import("../server/games/fire-spike.server");
-    return fireSpikePaidSpin(data);
+    const { withFinancialOperation } = await import("../server/operation.server");
+    return withFinancialOperation(
+      "fireSpikeSpinFn",
+      data,
+      async () => {
+        const { fireSpikePaidSpin } = await import("../server/games/fire-spike.server");
+        return fireSpikePaidSpin(data);
+      },
+      "fire-spike",
+    );
   });
 
 export const getFireSpikeEngineConfigFn = createServerFn({ method: "GET" }).handler(async () => {
@@ -1462,10 +2297,19 @@ const coinVolcanoSpinSchema = z.object({
 });
 
 export const coinVolcanoSpinFn = createServerFn({ method: "POST" })
+  .middleware([operationIdentity])
   .validator(coinVolcanoSpinSchema)
   .handler(async ({ data }) => {
-    const { coinVolcanoPaidSpin } = await import("../server/games/coin-volcano.server");
-    return coinVolcanoPaidSpin(data);
+    const { withFinancialOperation } = await import("../server/operation.server");
+    return withFinancialOperation(
+      "coinVolcanoSpinFn",
+      data,
+      async () => {
+        const { coinVolcanoPaidSpin } = await import("../server/games/coin-volcano.server");
+        return coinVolcanoPaidSpin(data);
+      },
+      "coin-volcano",
+    );
   });
 
 export const getCoinVolcanoEngineConfigFn = createServerFn({ method: "GET" }).handler(async () => {
@@ -1480,30 +2324,57 @@ const aceHighDealSchema = z.object({
 });
 
 export const aceHighDealFn = createServerFn({ method: "POST" })
+  .middleware([operationIdentity])
   .validator(aceHighDealSchema)
   .handler(async ({ data }) => {
-    const { aceHighPaidDeal } = await import("../server/games/ace-high.server");
-    return JSON.parse(JSON.stringify(await aceHighPaidDeal(data))) as Awaited<
-      ReturnType<typeof aceHighPaidDeal>
-    >;
+    const { withFinancialOperation } = await import("../server/operation.server");
+    return withFinancialOperation(
+      "aceHighDealFn",
+      data,
+      async () => {
+        const { aceHighPaidDeal } = await import("../server/games/ace-high.server");
+        return JSON.parse(JSON.stringify(await aceHighPaidDeal(data))) as Awaited<
+          ReturnType<typeof aceHighPaidDeal>
+        >;
+      },
+      "ace-high",
+    );
   });
 
 export const aceHighWarFn = createServerFn({ method: "POST" })
+  .middleware([operationIdentity])
   .validator(z.object({}).optional())
   .handler(async () => {
-    const { aceHighGoToWar } = await import("../server/games/ace-high.server");
-    return JSON.parse(JSON.stringify(await aceHighGoToWar())) as Awaited<
-      ReturnType<typeof aceHighGoToWar>
-    >;
+    const { withFinancialOperation } = await import("../server/operation.server");
+    return withFinancialOperation(
+      "aceHighWarFn",
+      null,
+      async () => {
+        const { aceHighGoToWar } = await import("../server/games/ace-high.server");
+        return JSON.parse(JSON.stringify(await aceHighGoToWar())) as Awaited<
+          ReturnType<typeof aceHighGoToWar>
+        >;
+      },
+      "ace-high",
+    );
   });
 
 export const aceHighFoldFn = createServerFn({ method: "POST" })
+  .middleware([operationIdentity])
   .validator(z.object({}).optional())
   .handler(async () => {
-    const { aceHighFold } = await import("../server/games/ace-high.server");
-    return JSON.parse(JSON.stringify(await aceHighFold())) as Awaited<
-      ReturnType<typeof aceHighFold>
-    >;
+    const { withFinancialOperation } = await import("../server/operation.server");
+    return withFinancialOperation(
+      "aceHighFoldFn",
+      null,
+      async () => {
+        const { aceHighFold } = await import("../server/games/ace-high.server");
+        return JSON.parse(JSON.stringify(await aceHighFold())) as Awaited<
+          ReturnType<typeof aceHighFold>
+        >;
+      },
+      "ace-high",
+    );
   });
 
 export const getAceHighSessionFn = createServerFn({ method: "GET" }).handler(async () => {
@@ -1522,10 +2393,19 @@ const wildPantherSpinSchema = z.object({
 });
 
 export const wildPantherSpinFn = createServerFn({ method: "POST" })
+  .middleware([operationIdentity])
   .validator(wildPantherSpinSchema)
   .handler(async ({ data }) => {
-    const { wildPantherPaidSpin } = await import("../server/games/wild-panther.server");
-    return wildPantherPaidSpin(data);
+    const { withFinancialOperation } = await import("../server/operation.server");
+    return withFinancialOperation(
+      "wildPantherSpinFn",
+      data,
+      async () => {
+        const { wildPantherPaidSpin } = await import("../server/games/wild-panther.server");
+        return wildPantherPaidSpin(data);
+      },
+      "wild-panther",
+    );
   });
 
 const wildPantherFreeSpinSchema = z.object({
@@ -1533,10 +2413,19 @@ const wildPantherFreeSpinSchema = z.object({
 });
 
 export const wildPantherFreeSpinFn = createServerFn({ method: "POST" })
+  .middleware([operationIdentity])
   .validator(wildPantherFreeSpinSchema)
   .handler(async ({ data }) => {
-    const { wildPantherFreeSpin } = await import("../server/games/wild-panther.server");
-    return wildPantherFreeSpin(data);
+    const { withFinancialOperation } = await import("../server/operation.server");
+    return withFinancialOperation(
+      "wildPantherFreeSpinFn",
+      data,
+      async () => {
+        const { wildPantherFreeSpin } = await import("../server/games/wild-panther.server");
+        return wildPantherFreeSpin(data);
+      },
+      "wild-panther",
+    );
   });
 
 const wildPantherBuySchema = z.object({
@@ -1545,10 +2434,19 @@ const wildPantherBuySchema = z.object({
 });
 
 export const wildPantherBuyFeatureFn = createServerFn({ method: "POST" })
+  .middleware([operationIdentity])
   .validator(wildPantherBuySchema)
   .handler(async ({ data }) => {
-    const { wildPantherBuyFeature } = await import("../server/games/wild-panther.server");
-    return wildPantherBuyFeature(data);
+    const { withFinancialOperation } = await import("../server/operation.server");
+    return withFinancialOperation(
+      "wildPantherBuyFeatureFn",
+      data,
+      async () => {
+        const { wildPantherBuyFeature } = await import("../server/games/wild-panther.server");
+        return wildPantherBuyFeature(data);
+      },
+      "wild-panther",
+    );
   });
 
 export const getWildPantherSessionFn = createServerFn({ method: "GET" }).handler(async () => {
@@ -1599,3 +2497,11 @@ export {
   getPokerShowdownSessionFn,
   getPokerShowdownEngineConfigFn,
 } from "./poker-showdown";
+
+export { createWalletRequestFn, reviewWalletRequestFn } from "./wallet";
+export {
+  getActiveSeedPairFn,
+  updateClientSeedFn,
+  rotateProvablyFairSeedPairFn,
+  verifyProvablyFairRoundFn,
+} from "./provably-fair";

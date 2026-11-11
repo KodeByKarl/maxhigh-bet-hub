@@ -1,0 +1,18 @@
+[Unit]
+Description=MaxHigh encrypted off-host backup
+After=mariadb.service network-online.target
+Wants=network-online.target
+[Service]
+Type=oneshot
+User=root
+EnvironmentFile=/etc/maxhigh/backup.env
+ExecStart=/bin/bash /srv/maxhigh/deploy/profiles/ph-vps-2/backup.sh
+Nice=10
+IOSchedulingClass=best-effort
+IOSchedulingPriority=7
+CPUQuota=50%
+MemoryHigh=384M
+MemoryMax=512M
+Environment=GOMAXPROCS=1 GOMEMLIMIT=384MiB
+TimeoutStartSec=2h
+UMask=0077

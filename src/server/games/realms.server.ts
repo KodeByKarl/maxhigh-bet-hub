@@ -1,3 +1,7 @@
+import { recordRoundConfig } from "../round-random.server";
+import { assertNoOpenFeature } from "../feature-guard.server";
+import { minorUnits } from "@/lib/money";
+import { assertGameWager } from "../wallet.server";
 /**
  * Realms family — server-authoritative spin settlement for all 50 titles.
  * The client only receives scripts and balances; it cannot choose outcomes.
@@ -30,6 +34,7 @@ import {
   sumPendingWithdrawals,
   writeLedgerDelta,
 } from "../wallet.server";
+import { resolveBuyBonusSpins } from "@/lib/buy-bonus";
 
 export type RealmsSessionState = {
   sessionId: string | null;
@@ -70,9 +75,11 @@ export async function loadRealmsEngineConfig(gameId: string): Promise<RealmsConf
       .where(eq(gameControls.gameId, gameId))
       .limit(1);
     const raw = rows[0]?.engineConfig;
-    return normalizeRealmsGameConfig(gameId, raw ? (JSON.parse(raw) as unknown) : null);
+    return recordRoundConfig(
+      normalizeRealmsGameConfig(gameId, raw ? (JSON.parse(raw) as unknown) : null),
+    );
   } catch {
-    return normalizeRealmsGameConfig(gameId, null);
+    throw new Error("Game configuration unavailable");
   }
 }
 
@@ -148,6 +155,8 @@ export async function realmsPaidSpin(data: {
 }): Promise<RealmsSpinResult> {
   const def = requireTitle(data.gameId);
   const user = await requireUser();
+  minorUnits(data.bet);
+  await assertGameWager(data.gameId, data.bet);
   if (!Number.isFinite(data.bet) || data.bet <= 0) throw new Error("Invalid bet");
 
   const cfg = await loadRealmsEngineConfig(def.id);
@@ -216,6 +225,7 @@ export async function realmsPaidSpin(data: {
         ante: data.ante ? "yes" : "no",
         freeSpinsLeft: script.freeSpinsAwarded,
         fsSessionWin: "0.00",
+        baseCredited: money(script.totalWin),
         fsBombAcc: "0.00",
         fsSpinsPlayed: 0,
       });
@@ -297,6 +307,7 @@ export async function realmsFreeSpin(data: {
         bet,
         maxWinMult: cfg.maxWinMult,
         computedWin: finalizeFreeSpinTotal(cfg, nextWin, nextBomb),
+        alreadyCredited: Number(row.baseCredited),
         context: "free-spins-final",
       }).payout;
       let balance = Number(u.balance);
@@ -377,14 +388,16 @@ export async function realmsBuyFeature(data: {
 }): Promise<{ balance: number; session: RealmsSessionState }> {
   const def = requireTitle(data.gameId);
   const user = await requireUser();
+  minorUnits(data.bet);
+  await assertGameWager(data.gameId, data.bet);
   if (!Number.isFinite(data.bet) || data.bet <= 0 || data.bet > BUY_FS_BET_MAX)
     throw new Error("Invalid bet");
   const cfg = await loadRealmsEngineConfig(def.id);
-  const quantity = Math.round(data.quantity);
+  const quantity = resolveBuyBonusSpins(data.quantity);
   const maxQuantity = realmsBuyMaxQuantity(cfg);
-  if (!Number.isFinite(quantity) || quantity < 1 || quantity > maxQuantity) {
-    throw new Error(`Buy 1–${maxQuantity} free spins`);
-  }
+  if (quantity > maxQuantity)
+    throw new Error(`This title allows at most ${maxQuantity} free spins per purchase`);
+  await assertNoOpenFeature(user.id, data.gameId);
   const cost = +(data.bet * realmsBuyPricePerSpin(def.id, cfg, quantity) * quantity).toFixed(2);
   await assertNotInMaintenanceForBets();
 

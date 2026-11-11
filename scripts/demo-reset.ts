@@ -1,3 +1,4 @@
+import { assertDisposableTarget } from "./lib/destructive-guard";
 import "dotenv/config";
 import { sql } from "drizzle-orm";
 import { hash } from "bcryptjs";
@@ -9,6 +10,7 @@ const KEEP_USERNAME = "superadmin1";
 const KEEP_PASSWORD = "super123";
 
 async function main() {
+  assertDisposableTarget("demo-reset");
   const db = getDb();
 
   const before = await db.execute(sql`

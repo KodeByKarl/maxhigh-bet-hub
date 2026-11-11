@@ -1,0 +1,9 @@
+# Install locally on the server as staging/.env.preview; never transfer credentials.
+MYSQL_HOST=127.0.0.1
+MYSQL_PORT=3306
+MYSQL_DATABASE=maxhigh_staging
+MYSQL_USER=maxhigh_stage_preview
+MYSQL_PASSWORD=REPLACE_LOCALLY_WITH_STAGING_READ_ONLY_SECRET
+STAGING_READ_ONLY=1
+OPERATION_COMPRESSION=0
+PUBLIC_URL=http://127.0.0.1:18080

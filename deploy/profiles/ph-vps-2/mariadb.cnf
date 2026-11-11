@@ -1,0 +1,46 @@
+# Ubuntu 24.04 / MariaDB 10.11 LTS. Candidate settings, rehearse before install.
+# Install as /etc/mysql/mariadb.conf.d/60-maxhigh-ph-vps-2.cnf.
+[mariadb]
+bind-address = 127.0.0.1
+skip-name-resolve = 1
+max_connections = 30
+back_log = 50
+thread_cache_size = 8
+wait_timeout = 120
+interactive_timeout = 300
+connect_timeout = 10
+max_allowed_packet = 16M
+
+innodb_buffer_pool_size = 512M
+innodb_log_buffer_size = 16M
+innodb_flush_log_at_trx_commit = 1
+innodb_lock_wait_timeout = 10
+innodb_rollback_on_timeout = 1
+# Keep REPEATABLE-READ and foreign key enforcement; do not weaken for throughput.
+transaction_isolation = REPEATABLE-READ
+# foreign_key_checks stays ON (session variable; not a mysqld startup option).
+
+sort_buffer_size = 256K
+join_buffer_size = 256K
+read_buffer_size = 128K
+read_rnd_buffer_size = 256K
+tmp_table_size = 8M
+max_heap_table_size = 8M
+aria_pagecache_buffer_size = 32M
+key_buffer_size = 8M
+table_open_cache = 512
+table_definition_cache = 512
+performance_schema = ON
+
+slow_query_log = ON
+slow_query_log_file = /var/log/mysql/maxhigh-slow.log
+long_query_time = 0.5
+log_queries_not_using_indexes = OFF
+log_error = /var/log/mysql/maxhigh-error.log
+log_bin = /var/log/mysql/maxhigh-bin
+binlog_format = ROW
+max_binlog_size = 64M
+sync_binlog = 1
+expire_logs_days = 7
+# Seven days is a local retention window, not a hard total size cap.
+# Ship encrypted binlogs off-host and verify the recovery chain before purging.

@@ -1,3 +1,4 @@
+import { operationIdentity } from "@/lib/operation-identity";
 /**
  * Poker Showdown client RPC bridge (createServerFn).
  * Player deal / play / fold / session restore + public engine config.
@@ -16,30 +17,57 @@ const sessionSchema = z.object({
 });
 
 export const pokerShowdownDealFn = createServerFn({ method: "POST" })
+  .middleware([operationIdentity])
   .validator(dealSchema)
   .handler(async ({ data }) => {
-    const { pokerShowdownPaidDeal } = await import("../server/games/poker-showdown.server");
-    return JSON.parse(JSON.stringify(await pokerShowdownPaidDeal(data))) as Awaited<
-      ReturnType<typeof pokerShowdownPaidDeal>
-    >;
+    const { withFinancialOperation } = await import("../server/operation.server");
+    return withFinancialOperation(
+      "pokerShowdownDealFn",
+      data,
+      async () => {
+        const { pokerShowdownPaidDeal } = await import("../server/games/poker-showdown.server");
+        return JSON.parse(JSON.stringify(await pokerShowdownPaidDeal(data))) as Awaited<
+          ReturnType<typeof pokerShowdownPaidDeal>
+        >;
+      },
+      "poker-showdown",
+    );
   });
 
 export const pokerShowdownPlayFn = createServerFn({ method: "POST" })
+  .middleware([operationIdentity])
   .validator(sessionSchema)
   .handler(async ({ data }) => {
-    const { pokerShowdownPlay } = await import("../server/games/poker-showdown.server");
-    return JSON.parse(JSON.stringify(await pokerShowdownPlay(data))) as Awaited<
-      ReturnType<typeof pokerShowdownPlay>
-    >;
+    const { withFinancialOperation } = await import("../server/operation.server");
+    return withFinancialOperation(
+      "pokerShowdownPlayFn",
+      data,
+      async () => {
+        const { pokerShowdownPlay } = await import("../server/games/poker-showdown.server");
+        return JSON.parse(JSON.stringify(await pokerShowdownPlay(data))) as Awaited<
+          ReturnType<typeof pokerShowdownPlay>
+        >;
+      },
+      "poker-showdown",
+    );
   });
 
 export const pokerShowdownFoldFn = createServerFn({ method: "POST" })
+  .middleware([operationIdentity])
   .validator(sessionSchema)
   .handler(async ({ data }) => {
-    const { pokerShowdownFold } = await import("../server/games/poker-showdown.server");
-    return JSON.parse(JSON.stringify(await pokerShowdownFold(data))) as Awaited<
-      ReturnType<typeof pokerShowdownFold>
-    >;
+    const { withFinancialOperation } = await import("../server/operation.server");
+    return withFinancialOperation(
+      "pokerShowdownFoldFn",
+      data,
+      async () => {
+        const { pokerShowdownFold } = await import("../server/games/poker-showdown.server");
+        return JSON.parse(JSON.stringify(await pokerShowdownFold(data))) as Awaited<
+          ReturnType<typeof pokerShowdownFold>
+        >;
+      },
+      "poker-showdown",
+    );
   });
 
 export const getPokerShowdownSessionFn = createServerFn({ method: "GET" }).handler(async () => {

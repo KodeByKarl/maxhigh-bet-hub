@@ -1,3 +1,4 @@
+import { SlotControlDeck } from "./SlotControlDeck";
 /**
  * Fire Spike slot UI — owns its own spin state machine.
  * No shared async playback from other games (CNY / Mahjong / Frontier).
@@ -447,25 +448,6 @@ export function FireSpikeSlot({
             </h1>
           </div>
         </FireBorder>
-
-        <div className="flex w-full max-w-md items-center justify-center gap-3">
-          <FireBorder rounded="xl" thickness={2} className="min-w-[8.5rem] flex-1">
-            <div className="px-4 py-1.5 text-center">
-              <p className="text-[8px] font-black uppercase tracking-[0.2em] text-orange-400/80">
-                Balance
-              </p>
-              <p className="font-black tabular-nums text-amber-200">{formatMoney(balance)}</p>
-            </div>
-          </FireBorder>
-          <FireBorder rounded="xl" thickness={2} className="min-w-[8.5rem] flex-1">
-            <div className="px-4 py-1.5 text-center">
-              <p className="text-[8px] font-black uppercase tracking-[0.2em] text-orange-400/80">
-                Last win
-              </p>
-              <p className="font-black tabular-nums text-amber-200">{formatMoney(ui.lastWin)}</p>
-            </div>
-          </FireBorder>
-        </div>
       </header>
 
       <div className="relative z-10 mx-auto flex min-h-0 w-full max-w-[1100px] flex-1 flex-col items-center justify-center px-2 py-2 sm:px-4">
@@ -560,95 +542,35 @@ export function FireSpikeSlot({
         </div>
       </div>
 
-      <footer className="relative z-10 shrink-0 px-3 pb-3 pt-1 sm:px-4 sm:pb-4">
-        <FireBorder rounded="2xl" thickness={3} className="mx-auto w-full max-w-lg">
-          <div className="flex flex-col items-center gap-2.5 px-3 py-3 sm:px-4">
-            <div className="flex flex-wrap items-center justify-center gap-2">
-              <button
-                type="button"
-                disabled={busy}
-                onClick={() => nudgeBet(-1)}
-                className="grid size-10 place-items-center rounded-xl border border-orange-500/50 bg-[#2a1008] text-lg font-black text-orange-100 disabled:opacity-40"
-              >
-                −
-              </button>
-
-              <div className="min-w-[6rem] rounded-xl border border-amber-500/45 bg-gradient-to-b from-[#3a1608] to-[#0c0402] px-3 py-1.5 text-center">
-                <p className="text-[8px] font-black uppercase tracking-[0.2em] text-orange-400/75">
-                  Bet
-                </p>
-                <p className="text-base font-black tabular-nums text-amber-100">
-                  {formatMoney(bet)}
-                </p>
-              </div>
-
-              <button
-                type="button"
-                disabled={busy}
-                onClick={() => nudgeBet(1)}
-                className="grid size-10 place-items-center rounded-xl border border-orange-500/50 bg-[#2a1008] text-lg font-black text-orange-100 disabled:opacity-40"
-              >
-                +
-              </button>
-            </div>
-
-            <div className="flex flex-wrap items-center justify-center gap-2">
-              <button
-                type="button"
-                aria-label={muted ? "Unmute" : "Mute"}
-                onClick={() => setMuted(fireSpikeAudio.toggleMute())}
-                className="grid size-9 place-items-center rounded-xl border border-orange-600/55 bg-[#1a0a06] text-orange-200/85"
-              >
-                {muted ? <VolumeX size={16} /> : <Volume2 size={16} />}
-              </button>
-
-              <button
-                type="button"
-                onClick={() => setTurbo((t) => !t)}
-                className={cn(
-                  "rounded-xl border px-4 py-2 text-[11px] font-black uppercase tracking-wider",
-                  turbo
-                    ? "border-amber-300 bg-gradient-to-b from-orange-400 to-red-600 text-black"
-                    : "border-orange-600/55 bg-[#1a0a06] text-orange-200/85",
-                )}
-              >
-                Turbo
-              </button>
-
-              <button
-                type="button"
-                disabled={busy || balance < bet}
-                onClick={() => startSpin()}
-                className="min-w-[8.5rem] rounded-full border-2 border-amber-300/80 bg-gradient-to-b from-orange-400 via-red-600 to-red-950 px-6 py-2.5 text-sm font-black uppercase tracking-wide text-amber-50 shadow-[0_0_28px_rgba(249,115,22,0.55)] disabled:opacity-40"
-              >
-                {busy ? "…" : "Spin"}
-              </button>
-
-              <button
-                type="button"
-                onClick={() => {
-                  setAutoSpin((on) => {
-                    const next = !on;
-                    if (next) {
-                      setTimeout(() => startSpinRef.current(), 40);
-                    } else {
-                      clearAutoTimer();
-                    }
-                    return next;
-                  });
-                }}
-                className={cn(
-                  "rounded-xl border px-4 py-2 text-[11px] font-black uppercase tracking-wider",
-                  autoSpin
-                    ? "border-yellow-300 bg-gradient-to-b from-amber-400 to-orange-600 text-black"
-                    : "border-orange-600/55 bg-[#1a0a06] text-orange-200/85",
-                )}
-              >
-                Auto
-              </button>
-            </div>
-          </div>
-        </FireBorder>
+      <footer className="relative z-10 mx-auto w-full max-w-3xl shrink-0 px-2 pb-3">
+        <SlotControlDeck
+          gameId="fire-spike"
+          bet={bet}
+          win={ui.lastWin}
+          balance={balance}
+          busy={busy}
+          turbo={turbo}
+          autoSpin={autoSpin}
+          supportsSkip={false}
+          spinDisabled={busy || balance < bet}
+          muted={muted}
+          onSpin={() => startSpin()}
+          onDecreaseBet={() => nudgeBet(-1)}
+          onIncreaseBet={() => nudgeBet(1)}
+          onTurbo={() => setTurbo((t) => !t)}
+          onAuto={() => {
+            setAutoSpin((on) => {
+              const next = !on;
+              if (next) {
+                setTimeout(() => startSpinRef.current(), 40);
+              } else {
+                clearAutoTimer();
+              }
+              return next;
+            });
+          }}
+          onMute={() => setMuted(fireSpikeAudio.toggleMute())}
+        />
       </footer>
     </div>
   );

@@ -1,8 +1,8 @@
 /**
- * PM2 process file — MaxHigh app + continuous GitHub auto-updater.
+ * PM2 process file — MaxHigh app and optional revision-check watcher.
  *
  * Started by MaxHigh.bat (Windows) or deploy/install.sh (Linux).
- * Updater polls origin/main and reloads maxhigh-app on new commits.
+ * The watcher never activates releases. PH-VPS-2 starts only the application.
  */
 const path = require("node:path");
 const fs = require("node:fs");
@@ -39,7 +39,7 @@ module.exports = {
     {
       name: "maxhigh-app",
       cwd: ROOT,
-      script: ".output/server/index.mjs",
+      script: "deploy/serve.mjs",
       interpreter: "node",
       instances: 1,
       exec_mode: "fork",
@@ -47,6 +47,9 @@ module.exports = {
       max_memory_restart: "1G",
       env: {
         NODE_ENV: "production",
+        HOST: "127.0.0.1",
+        NITRO_HOST:"127.0.0.1",
+        NITRO_PORT:PORT,
         PORT,
       },
       error_file: path.join(ROOT, "deploy/logs/app-error.log"),
@@ -64,10 +67,11 @@ module.exports = {
       autorestart: true,
       env: {
         NODE_ENV: "production",
+        HOST: "127.0.0.1",
         DEPLOY_BRANCH: BRANCH,
         DEPLOY_POLL_SECONDS: POLL,
         DEPLOY_WEBHOOK_PORT: HOOK_PORT,
-        DEPLOY_WEBHOOK_ENABLED: process.env.DEPLOY_WEBHOOK_ENABLED || "1",
+        DEPLOY_WEBHOOK_ENABLED: process.env.DEPLOY_WEBHOOK_ENABLED || "0",
         DEPLOY_WEBHOOK_SECRET: process.env.DEPLOY_WEBHOOK_SECRET || "",
         DEPLOY_PM2_APP: "maxhigh-app",
         DEPLOY_REMOTE: process.env.DEPLOY_REMOTE || "origin",
@@ -79,3 +83,10 @@ module.exports = {
     },
   ],
 };
+
+if (process.env.DEPLOY_PROFILE === "ph-vps-2") {
+  const profile = require("./profiles/ph-vps-2/settings.cjs");
+  module.exports = {
+    apps: [profile(module.exports.apps.find((app) => app.name === "maxhigh-app"))],
+  };
+}

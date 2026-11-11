@@ -18,6 +18,7 @@ import { Input } from "@/components/ui/input";
 import { PasswordInput } from "@/components/ui/password-input";
 import { saGlass } from "@/components/superadmin/ui/glass";
 import { toast } from "sonner";
+import { AccountLimitNotice } from "@/components/admin/AccountLimitNotice";
 import { MoreHorizontal, X } from "lucide-react";
 
 export const Route = createFileRoute("/superadmin/admins")({
@@ -444,6 +445,7 @@ function AddAdminModal({
             <p className="text-xs text-muted-foreground">
               Create a new Agent, Master Agent, or SuperAdmin account.
             </p>
+            <AccountLimitNotice />
           </div>
           <button
             type="button"

@@ -1,3 +1,4 @@
+import "../../native-game-controls.css";
 import { useState } from "react";
 import { type ColorGameConfig, type ColorSpotId } from "@/lib/color-game-config";
 import { cn } from "@/lib/utils";
@@ -85,7 +86,11 @@ export function BettingPanel({
   const canDeal = totalWager >= cfg.minBet && !dealBusy && !disabled;
 
   return (
-    <div className="space-y-2.5 px-2 pb-[max(0.6rem,env(safe-area-inset-bottom))] pt-1">
+    <div
+      className="space-y-2.5 px-2 pb-[max(0.6rem,env(safe-area-inset-bottom))] pt-1"
+      data-game-control-root="color-game"
+      data-native-controls="color-game"
+    >
       <style>{PANEL_CSS}</style>
       <div className="grid grid-cols-3 gap-1.5 sm:grid-cols-6">
         {cfg.spots.map((sp) => {
@@ -156,6 +161,7 @@ export function BettingPanel({
           disabled={disabled || totalWager <= 0}
           onClick={undoLast}
           className="rounded-lg border border-white/20 bg-black/35 px-3 py-2 text-xs font-semibold text-white/80 disabled:opacity-40"
+          data-control-action="secondary"
         >
           Undo
         </button>
@@ -164,6 +170,7 @@ export function BettingPanel({
           disabled={disabled || totalWager <= 0}
           onClick={onClearAll}
           className="rounded-lg border border-white/20 bg-black/35 px-3 py-2 text-xs font-semibold text-white/80 disabled:opacity-40"
+          data-control-action="secondary"
         >
           Clear
         </button>
@@ -180,6 +187,7 @@ export function BettingPanel({
               ? "cg-spin-btn border-amber-100/80 bg-gradient-to-b from-amber-200 via-amber-400 to-orange-600 text-slate-900 shadow-[0_0_22px_rgba(251,191,36,.55)] active:scale-95"
               : "border-white/10 bg-slate-700 text-white/40",
           )}
+          data-control-action="primary"
         >
           {dealBusy ? "…" : "SPIN"}
         </button>

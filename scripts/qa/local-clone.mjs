@@ -27,6 +27,24 @@ async function teardown() {
   console.log("clone removed");
 }
 
+async function startApp(url, dir, policyFile) {
+  const log = fs.openSync(path.join(dir, "server.log"), "a");
+  const env = { ...process.env, NODE_ENV: "production", HOST: "127.0.0.1", NITRO_HOST: "127.0.0.1", PORT: String(APP_PORT), NITRO_PORT: String(APP_PORT), DATABASE_URL: url, RELEASE_SHA: "2294d79-localclone", OPERATION_COMPRESSION: "0" };
+  if (policyFile) { env.MAXHIGH_POLICY_TEST_FILE = policyFile; env.MAXHIGH_POLICY_TEST_OVERRIDE = "disposable-test-only"; } else { delete env.MAXHIGH_POLICY_TEST_FILE; delete env.MAXHIGH_POLICY_TEST_OVERRIDE; }
+  const child = spawn(process.execPath, [".output/server/index.mjs"], { detached: true, windowsHide: true, stdio: ["ignore", log, log], env });
+  child.unref();
+  fs.writeFileSync(state, JSON.stringify({ pid: child.pid, dir, url }));
+  for (let i = 0; i < 120; i++) { try { if ((await fetch(`http://127.0.0.1:${APP_PORT}/api/health`)).ok) break; } catch { /* starting */ } await new Promise((r) => setTimeout(r, 250)); }
+}
+
+async function restartApp() {
+  const s = JSON.parse(fs.readFileSync(state, "utf8"));
+  try { process.kill(s.pid); } catch { /* already gone */ }
+  await new Promise((r) => setTimeout(r, 800));
+  await startApp(s.url, s.dir, process.env.CLONE_POLICY_FILE);
+  console.log("app restarted" + (process.env.CLONE_POLICY_FILE ? " WITH policy file" : " without policy"));
+}
+
 async function setup() {
   if (!ROOT_PW) throw new Error("CLONE_ROOT_PW required");
   const c0 = await conn();
@@ -45,19 +63,12 @@ async function setup() {
   await c.query("INSERT INTO platform_settings(id,maintenance_mode,min_deposit,max_deposit,min_withdraw,max_withdraw) VALUES ('default','no',1,1000000,1,1000000) ON DUPLICATE KEY UPDATE id=id");
   await c.query("INSERT INTO jackpot(id,amount,enabled,display_amount) VALUES ('mega',50000,'yes',0) ON DUPLICATE KEY UPDATE id=id");
   for (const [name, role, bal, pw] of [["uat_owner", "superadmin", 0, ownerPw], ["uat_player", "player", 1000, playerPw]])
-    await c.query("INSERT INTO users(id,public_user_id,username,password_hash,balance,role,display_name) VALUES (?,?,?,?,?,?,?)", [randomUUID(), name, name, await hash(pw, 4), bal, role, name]);
+    await c.query("INSERT INTO users(id,public_user_id,username,password_hash,balance,role,display_name,account_class) VALUES (?,?,?,?,?,?,?,?)", [randomUUID(), name, name, await hash(pw, 4), bal, role, name, role === "superadmin" ? "admin" : "qa"]);
   await c.end();
   const creds = path.join(dir, "creds.txt");
   fs.writeFileSync(creds, `uat_owner\tsuperadmin\t${ownerPw}\nuat_player\tplayer\t${playerPw}\n`);
-  const log = fs.openSync(path.join(dir, "server.log"), "w");
-  const child = spawn(process.execPath, [".output/server/index.mjs"], {
-    detached: true, windowsHide: true, stdio: ["ignore", log, log],
-    env: { ...process.env, NODE_ENV: "production", HOST: "127.0.0.1", NITRO_HOST: "127.0.0.1", PORT: String(APP_PORT), NITRO_PORT: String(APP_PORT), DATABASE_URL: url, RELEASE_SHA: "2294d79-localclone", OPERATION_COMPRESSION: "0" },
-  });
-  child.unref();
-  fs.writeFileSync(state, JSON.stringify({ pid: child.pid, dir }));
-  for (let i = 0; i < 120; i++) { try { if ((await fetch(`http://127.0.0.1:${APP_PORT}/api/health`)).ok) break; } catch { /* starting */ } await new Promise((r) => setTimeout(r, 250)); }
+  await startApp(url, dir, process.env.CLONE_POLICY_FILE);
   console.log(JSON.stringify({ UAT_BASE: `http://127.0.0.1:${APP_PORT}`, UAT_CREDS_FILE: creds, UAT_QA_CREDS_FILE: path.join(dir, "qa-creds.txt"), UAT_EXPECT_RELEASE: "2294d79-localclone", serverLog: path.join(dir, "server.log") }));
 }
 
-await (process.argv[2] === "teardown" ? teardown() : setup());
+await (process.argv[2] === "teardown" ? teardown() : process.argv[2] === "restart-app" ? restartApp() : setup());

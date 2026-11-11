@@ -1,3 +1,5 @@
+import { recordRoundConfig } from "../round-random.server";
+import { withFishingRoom } from "../fishing-state.server";
 /**
  * Deep Bass — server-authoritative shot settlement + boss shared pool.
  * Client never moves money; every shot debits then optionally credits via ledger.
@@ -187,7 +189,7 @@ function lookupLiveFish(userId: string, instanceId: string): ShotTargetSnapshot 
 }
 
 /** Sync / top-up server-owned spawns for the player's open session. */
-export async function deepBassSyncSpawns() {
+async function deepBassSyncSpawnsImpl() {
   await assertGameEnabled();
   const user = await requireUser();
   const cfg = await loadEngineConfig();
@@ -220,7 +222,7 @@ function updateFishAfterShot(
 
 async function loadEngineConfig(): Promise<DeepBassConfig> {
   const now = Date.now();
-  if (cachedConfig && now - cachedConfig.time < 30_000) return cachedConfig.cfg;
+  if (cachedConfig && now - cachedConfig.time < 30_000) return recordRoundConfig(cachedConfig.cfg);
   const db = getDb();
   try {
     const rows = await db
@@ -231,11 +233,9 @@ async function loadEngineConfig(): Promise<DeepBassConfig> {
     const raw = rows[0]?.engineConfig;
     const cfg = normalizeDeepBassConfig(raw ? (JSON.parse(raw) as unknown) : null);
     cachedConfig = { cfg, time: now };
-    return cfg;
+    return recordRoundConfig(cfg);
   } catch {
-    const cfg = normalizeDeepBassConfig(null);
-    cachedConfig = { cfg, time: now };
-    return cfg;
+    throw new Error("Game configuration unavailable");
   }
 }
 
@@ -304,7 +304,7 @@ function publicBoss() {
   };
 }
 
-export async function getDeepBassOpenSession() {
+async function getDeepBassOpenSessionImpl() {
   const user = await requireUser();
   const db = getDb();
   const rows = await db
@@ -353,7 +353,7 @@ export async function getDeepBassOpenSession() {
   };
 }
 
-export async function deepBassEnsureSession(input?: { weaponId?: string }) {
+async function deepBassEnsureSessionImpl(input?: { weaponId?: string }) {
   await assertNotInMaintenanceForBets();
   await assertGameEnabled();
   const user = await requireUser();
@@ -437,10 +437,7 @@ function maybeSpawnBoss(cfg: DeepBassConfig) {
   globalBoss = createBossPool({ cfg, rng, now });
 }
 
-export async function deepBassFireShot(input: {
-  weaponId: string;
-  target: { instanceId: string };
-}) {
+async function deepBassFireShotImpl(input: { weaponId: string; target: { instanceId: string } }) {
   await assertNotInMaintenanceForBets();
   await assertGameEnabled();
   const user = await requireUser();
@@ -651,7 +648,7 @@ export async function deepBassFireShot(input: {
   };
 }
 
-export async function deepBassSetWeapon(input: { weaponId: string }) {
+async function deepBassSetWeaponImpl(input: { weaponId: string }) {
   await assertGameEnabled();
   const user = await requireUser();
   if (!isWeaponTierId(input.weaponId)) throw new Error("Invalid weapon");
@@ -675,7 +672,7 @@ export async function deepBassSetWeapon(input: { weaponId: string }) {
   return getDeepBassOpenSession();
 }
 
-export async function deepBassBuyPowerUp(input: { powerUpId: string }) {
+async function deepBassBuyPowerUpImpl(input: { powerUpId: string }) {
   await assertNotInMaintenanceForBets();
   await assertGameEnabled();
   const user = await requireUser();
@@ -734,7 +731,7 @@ export async function deepBassBuyPowerUp(input: { powerUpId: string }) {
   };
 }
 
-export async function deepBassUseNetBomb(input: {
+async function deepBassUseNetBombImpl(input: {
   weaponId: string;
   targets: { instanceId: string }[];
 }) {
@@ -833,7 +830,7 @@ export async function deepBassUseNetBomb(input: {
   };
 }
 
-export async function deepBassUseFreezeLure() {
+async function deepBassUseFreezeLureImpl() {
   const user = await requireUser();
   const cfg = await loadEngineConfig();
   const session = await loadOpenSessionRow(user.id);
@@ -864,9 +861,93 @@ export async function deepBassUseFreezeLure() {
 }
 
 /** Attempt boss spawn check for clients polling. */
-export async function deepBassBossStatus() {
+async function deepBassBossStatusImpl() {
   await requireUser();
   const cfg = await loadEngineConfig();
   maybeSpawnBoss(cfg);
   return { boss: publicBoss() };
+}
+
+export function deepBassSyncSpawns(
+  ...args: Parameters<typeof deepBassSyncSpawnsImpl>
+): ReturnType<typeof deepBassSyncSpawnsImpl> {
+  return withFishingRoom("deep-bass", captureRoom, restoreRoom, () =>
+    deepBassSyncSpawnsImpl(...args),
+  );
+}
+
+export function getDeepBassOpenSession(
+  ...args: Parameters<typeof getDeepBassOpenSessionImpl>
+): ReturnType<typeof getDeepBassOpenSessionImpl> {
+  return withFishingRoom("deep-bass", captureRoom, restoreRoom, () =>
+    getDeepBassOpenSessionImpl(...args),
+  );
+}
+
+export function deepBassEnsureSession(
+  ...args: Parameters<typeof deepBassEnsureSessionImpl>
+): ReturnType<typeof deepBassEnsureSessionImpl> {
+  return withFishingRoom("deep-bass", captureRoom, restoreRoom, () =>
+    deepBassEnsureSessionImpl(...args),
+  );
+}
+
+export function deepBassFireShot(
+  ...args: Parameters<typeof deepBassFireShotImpl>
+): ReturnType<typeof deepBassFireShotImpl> {
+  return withFishingRoom("deep-bass", captureRoom, restoreRoom, () =>
+    deepBassFireShotImpl(...args),
+  );
+}
+
+export function deepBassSetWeapon(
+  ...args: Parameters<typeof deepBassSetWeaponImpl>
+): ReturnType<typeof deepBassSetWeaponImpl> {
+  return withFishingRoom("deep-bass", captureRoom, restoreRoom, () =>
+    deepBassSetWeaponImpl(...args),
+  );
+}
+
+export function deepBassBuyPowerUp(
+  ...args: Parameters<typeof deepBassBuyPowerUpImpl>
+): ReturnType<typeof deepBassBuyPowerUpImpl> {
+  return withFishingRoom("deep-bass", captureRoom, restoreRoom, () =>
+    deepBassBuyPowerUpImpl(...args),
+  );
+}
+
+export function deepBassUseNetBomb(
+  ...args: Parameters<typeof deepBassUseNetBombImpl>
+): ReturnType<typeof deepBassUseNetBombImpl> {
+  return withFishingRoom("deep-bass", captureRoom, restoreRoom, () =>
+    deepBassUseNetBombImpl(...args),
+  );
+}
+
+export function deepBassUseFreezeLure(
+  ...args: Parameters<typeof deepBassUseFreezeLureImpl>
+): ReturnType<typeof deepBassUseFreezeLureImpl> {
+  return withFishingRoom("deep-bass", captureRoom, restoreRoom, () =>
+    deepBassUseFreezeLureImpl(...args),
+  );
+}
+
+export function deepBassBossStatus(
+  ...args: Parameters<typeof deepBassBossStatusImpl>
+): ReturnType<typeof deepBassBossStatusImpl> {
+  return withFishingRoom("deep-bass", captureRoom, restoreRoom, () =>
+    deepBassBossStatusImpl(...args),
+  );
+}
+
+function captureRoom() {
+  return { globalBoss, lastBossEndedAt, fishRegistry };
+}
+function restoreRoom(state: ReturnType<typeof captureRoom>) {
+  globalBoss = state.globalBoss ?? null;
+  lastBossEndedAt = state.lastBossEndedAt ?? 0;
+  fishRegistry.clear();
+  const now = Date.now();
+  for (const [key, fish] of state.fishRegistry ?? [])
+    if (fish.expiresAt > now) fishRegistry.set(key, fish);
 }

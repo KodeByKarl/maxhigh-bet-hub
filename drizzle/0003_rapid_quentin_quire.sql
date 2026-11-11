@@ -1,0 +1,4 @@
+ALTER TABLE `play_sessions` ADD `open_game_key` varchar(101) GENERATED ALWAYS AS (case when status = 'open' then concat(user_id, ':', game_id) else null end) VIRTUAL;--> statement-breakpoint
+ALTER TABLE `provably_fair_seeds` ADD `active_user_key` varchar(36) GENERATED ALWAYS AS (case when status = 'active' then user_id else null end) VIRTUAL;--> statement-breakpoint
+ALTER TABLE `play_sessions` ADD CONSTRAINT `play_sessions_open_game_key_unique` UNIQUE(`open_game_key`);--> statement-breakpoint
+ALTER TABLE `provably_fair_seeds` ADD CONSTRAINT `provably_fair_seeds_active_user_key_unique` UNIQUE(`active_user_key`);

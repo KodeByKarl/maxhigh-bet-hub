@@ -1,0 +1,37 @@
+[data-realms-game] .realms-reel-grid {
+  border: 1px solid color-mix(in srgb, var(--p-accent-soft) 35%, transparent);
+  border-radius: 18px;
+  padding: 6px;
+  background: color-mix(in srgb, var(--p-accent-deep) 78%, transparent);
+  backdrop-filter: blur(5px);
+  box-shadow:
+    inset 0 1px 0 #ffffff24,
+    0 12px 40px #0009;
+}
+[data-realms-game] .realms-reel-cell {
+  border-width: 1px !important;
+  border-color: color-mix(in srgb, var(--p-accent-soft) 13%, transparent) !important;
+  border-radius: 12% !important;
+  background: radial-gradient(
+    ellipse at 50% 35%,
+    color-mix(in srgb, var(--p-accent) 16%, transparent),
+    transparent 80%
+  ) !important;
+  box-shadow: inset 0 1px 0 #ffffff10 !important;
+}
+[data-realms-game] .realms-reel-cell[data-winning="true"] {
+  border-color: var(--p-accent-soft) !important;
+  background: color-mix(in srgb, var(--p-accent) 25%, transparent) !important;
+  box-shadow:
+    inset 0 0 18px var(--p-win-ring),
+    0 0 14px var(--p-spin-shadow) !important;
+}
+[data-realms-game] .realms-reel-cell img {
+  padding: 0;
+}
+@media (max-width: 480px) {
+  [data-realms-game] .realms-reel-grid {
+    border-radius: 12px;
+    padding: 4px;
+  }
+}

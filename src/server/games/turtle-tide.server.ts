@@ -1,3 +1,5 @@
+import { recordRoundConfig } from "../round-random.server";
+import { withFishingRoom } from "../fishing-state.server";
 /**
  * Turtle Tide — server-authoritative shot settlement + boss shared pool.
  * Client never moves money; every shot debits then optionally credits via ledger.
@@ -187,7 +189,7 @@ function lookupLiveFish(userId: string, instanceId: string): ShotTargetSnapshot 
 }
 
 /** Sync / top-up server-owned spawns for the player's open session. */
-export async function turtleTideSyncSpawns() {
+async function turtleTideSyncSpawnsImpl() {
   await assertGameEnabled();
   const user = await requireUser();
   const cfg = await loadEngineConfig();
@@ -220,7 +222,7 @@ function updateFishAfterShot(
 
 async function loadEngineConfig(): Promise<TurtleTideConfig> {
   const now = Date.now();
-  if (cachedConfig && now - cachedConfig.time < 30_000) return cachedConfig.cfg;
+  if (cachedConfig && now - cachedConfig.time < 30_000) return recordRoundConfig(cachedConfig.cfg);
   const db = getDb();
   try {
     const rows = await db
@@ -231,11 +233,9 @@ async function loadEngineConfig(): Promise<TurtleTideConfig> {
     const raw = rows[0]?.engineConfig;
     const cfg = normalizeTurtleTideConfig(raw ? (JSON.parse(raw) as unknown) : null);
     cachedConfig = { cfg, time: now };
-    return cfg;
+    return recordRoundConfig(cfg);
   } catch {
-    const cfg = normalizeTurtleTideConfig(null);
-    cachedConfig = { cfg, time: now };
-    return cfg;
+    throw new Error("Game configuration unavailable");
   }
 }
 
@@ -304,7 +304,7 @@ function publicBoss() {
   };
 }
 
-export async function getTurtleTideOpenSession() {
+async function getTurtleTideOpenSessionImpl() {
   const user = await requireUser();
   const db = getDb();
   const rows = await db
@@ -353,7 +353,7 @@ export async function getTurtleTideOpenSession() {
   };
 }
 
-export async function turtleTideEnsureSession(input?: { weaponId?: string }) {
+async function turtleTideEnsureSessionImpl(input?: { weaponId?: string }) {
   await assertNotInMaintenanceForBets();
   await assertGameEnabled();
   const user = await requireUser();
@@ -437,10 +437,7 @@ function maybeSpawnBoss(cfg: TurtleTideConfig) {
   globalBoss = createBossPool({ cfg, rng, now });
 }
 
-export async function turtleTideFireShot(input: {
-  weaponId: string;
-  target: { instanceId: string };
-}) {
+async function turtleTideFireShotImpl(input: { weaponId: string; target: { instanceId: string } }) {
   await assertNotInMaintenanceForBets();
   await assertGameEnabled();
   const user = await requireUser();
@@ -651,7 +648,7 @@ export async function turtleTideFireShot(input: {
   };
 }
 
-export async function turtleTideSetWeapon(input: { weaponId: string }) {
+async function turtleTideSetWeaponImpl(input: { weaponId: string }) {
   await assertGameEnabled();
   const user = await requireUser();
   if (!isWeaponTierId(input.weaponId)) throw new Error("Invalid weapon");
@@ -675,7 +672,7 @@ export async function turtleTideSetWeapon(input: { weaponId: string }) {
   return getTurtleTideOpenSession();
 }
 
-export async function turtleTideBuyPowerUp(input: { powerUpId: string }) {
+async function turtleTideBuyPowerUpImpl(input: { powerUpId: string }) {
   await assertNotInMaintenanceForBets();
   await assertGameEnabled();
   const user = await requireUser();
@@ -734,7 +731,7 @@ export async function turtleTideBuyPowerUp(input: { powerUpId: string }) {
   };
 }
 
-export async function turtleTideUseNetBomb(input: {
+async function turtleTideUseNetBombImpl(input: {
   weaponId: string;
   targets: { instanceId: string }[];
 }) {
@@ -833,7 +830,7 @@ export async function turtleTideUseNetBomb(input: {
   };
 }
 
-export async function turtleTideUseFreezeLure() {
+async function turtleTideUseFreezeLureImpl() {
   const user = await requireUser();
   const cfg = await loadEngineConfig();
   const session = await loadOpenSessionRow(user.id);
@@ -864,9 +861,93 @@ export async function turtleTideUseFreezeLure() {
 }
 
 /** Attempt boss spawn check for clients polling. */
-export async function turtleTideBossStatus() {
+async function turtleTideBossStatusImpl() {
   await requireUser();
   const cfg = await loadEngineConfig();
   maybeSpawnBoss(cfg);
   return { boss: publicBoss() };
+}
+
+export function turtleTideSyncSpawns(
+  ...args: Parameters<typeof turtleTideSyncSpawnsImpl>
+): ReturnType<typeof turtleTideSyncSpawnsImpl> {
+  return withFishingRoom("turtle-tide", captureRoom, restoreRoom, () =>
+    turtleTideSyncSpawnsImpl(...args),
+  );
+}
+
+export function getTurtleTideOpenSession(
+  ...args: Parameters<typeof getTurtleTideOpenSessionImpl>
+): ReturnType<typeof getTurtleTideOpenSessionImpl> {
+  return withFishingRoom("turtle-tide", captureRoom, restoreRoom, () =>
+    getTurtleTideOpenSessionImpl(...args),
+  );
+}
+
+export function turtleTideEnsureSession(
+  ...args: Parameters<typeof turtleTideEnsureSessionImpl>
+): ReturnType<typeof turtleTideEnsureSessionImpl> {
+  return withFishingRoom("turtle-tide", captureRoom, restoreRoom, () =>
+    turtleTideEnsureSessionImpl(...args),
+  );
+}
+
+export function turtleTideFireShot(
+  ...args: Parameters<typeof turtleTideFireShotImpl>
+): ReturnType<typeof turtleTideFireShotImpl> {
+  return withFishingRoom("turtle-tide", captureRoom, restoreRoom, () =>
+    turtleTideFireShotImpl(...args),
+  );
+}
+
+export function turtleTideSetWeapon(
+  ...args: Parameters<typeof turtleTideSetWeaponImpl>
+): ReturnType<typeof turtleTideSetWeaponImpl> {
+  return withFishingRoom("turtle-tide", captureRoom, restoreRoom, () =>
+    turtleTideSetWeaponImpl(...args),
+  );
+}
+
+export function turtleTideBuyPowerUp(
+  ...args: Parameters<typeof turtleTideBuyPowerUpImpl>
+): ReturnType<typeof turtleTideBuyPowerUpImpl> {
+  return withFishingRoom("turtle-tide", captureRoom, restoreRoom, () =>
+    turtleTideBuyPowerUpImpl(...args),
+  );
+}
+
+export function turtleTideUseNetBomb(
+  ...args: Parameters<typeof turtleTideUseNetBombImpl>
+): ReturnType<typeof turtleTideUseNetBombImpl> {
+  return withFishingRoom("turtle-tide", captureRoom, restoreRoom, () =>
+    turtleTideUseNetBombImpl(...args),
+  );
+}
+
+export function turtleTideUseFreezeLure(
+  ...args: Parameters<typeof turtleTideUseFreezeLureImpl>
+): ReturnType<typeof turtleTideUseFreezeLureImpl> {
+  return withFishingRoom("turtle-tide", captureRoom, restoreRoom, () =>
+    turtleTideUseFreezeLureImpl(...args),
+  );
+}
+
+export function turtleTideBossStatus(
+  ...args: Parameters<typeof turtleTideBossStatusImpl>
+): ReturnType<typeof turtleTideBossStatusImpl> {
+  return withFishingRoom("turtle-tide", captureRoom, restoreRoom, () =>
+    turtleTideBossStatusImpl(...args),
+  );
+}
+
+function captureRoom() {
+  return { globalBoss, lastBossEndedAt, fishRegistry };
+}
+function restoreRoom(state: ReturnType<typeof captureRoom>) {
+  globalBoss = state.globalBoss ?? null;
+  lastBossEndedAt = state.lastBossEndedAt ?? 0;
+  fishRegistry.clear();
+  const now = Date.now();
+  for (const [key, fish] of state.fishRegistry ?? [])
+    if (fish.expiresAt > now) fishRegistry.set(key, fish);
 }

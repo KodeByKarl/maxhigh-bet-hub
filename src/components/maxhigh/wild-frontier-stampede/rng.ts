@@ -1,3 +1,4 @@
+import { gameRandom, hasRoundRandom } from "@/lib/game-random";
 /** Simple seeded mulberry32 PRNG for replayable spins. */
 export type Rng = () => number;
 
@@ -17,7 +18,7 @@ export function createRng(seed: string): Rng {
 }
 
 export function newSpinSeed(prefix = "fg"): string {
-  return `${prefix}-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 9)}`;
+  return `${prefix}-${Date.now().toString(36)}-${gameRandom().toString(36).slice(2, 9)}`;
 }
 
 export function pickWeighted<T extends { weight: number }>(rng: Rng, items: T[]): T {

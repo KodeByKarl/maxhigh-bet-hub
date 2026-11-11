@@ -1,3 +1,7 @@
+import { randomBytes } from "node:crypto";
+import { admitRequest, finishRequest } from "./server/lifecycle.server";
+import { secureResponse } from "./server/security-headers.server";
+import { stagingPreviewResponse } from "./server/staging-preview.server";
 import "./lib/error-capture";
 
 import { consumeLastCapturedError } from "./lib/error-capture";
@@ -46,16 +50,43 @@ function isH3SwallowedErrorBody(body: string): boolean {
 
 export default {
   async fetch(request: Request, env: unknown, ctx: unknown) {
+    const nonce = randomBytes(18).toString("base64");
+    const preview = stagingPreviewResponse(request);
+    if (preview) return secureResponse(preview, nonce);
+    if (!admitRequest())
+      return secureResponse(
+        new Response("Service temporarily unavailable", {
+          status: 503,
+          headers: { "Retry-After": "1" },
+        }),
+        nonce,
+      );
+    const headers = new Headers(request.headers);
+    headers.set("x-maxhigh-csp-nonce", nonce);
     try {
+      // Nitro's incoming Request can use a different constructor from Node's global.
+      // Copy fields explicitly rather than coercing a cross-implementation Request to a URL.
+      request = new Request(request.url, {
+        method: request.method,
+        headers,
+        ...(request.method === "GET" || request.method === "HEAD"
+          ? {}
+          : { body: request.body, duplex: "half" }),
+      } as RequestInit);
       const handler = await getServerEntry();
       const response = await handler.fetch(request, env, ctx);
-      return await normalizeCatastrophicSsrResponse(response);
+      return secureResponse(await normalizeCatastrophicSsrResponse(response), nonce);
     } catch (error) {
       console.error(error);
-      return new Response(renderErrorPage(), {
-        status: 500,
-        headers: { "content-type": "text/html; charset=utf-8" },
-      });
+      return secureResponse(
+        new Response(renderErrorPage(), {
+          status: 500,
+          headers: { "content-type": "text/html; charset=utf-8" },
+        }),
+        nonce,
+      );
+    } finally {
+      finishRequest();
     }
   },
 };

@@ -8,6 +8,34 @@
       "when": 1786545527304,
       "tag": "0000_init-from-schema",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "5",
+      "when": 1794142132429,
+      "tag": "0001_financial_integrity",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "5",
+      "when": 1794142476621,
+      "tag": "0002_reward_entitlements",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "5",
+      "when": 1794142504797,
+      "tag": "0003_rapid_quentin_quire",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "5",
+      "when": 1794142600000,
+      "tag": "0004_seed_default_risk_controls",
+      "breakpoints": true
     }
   ]
 }

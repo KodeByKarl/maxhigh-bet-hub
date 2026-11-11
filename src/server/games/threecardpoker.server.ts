@@ -1,3 +1,4 @@
+import { recordRoundConfig } from "../round-random.server";
 /**
  * Three Card Poker — server-authoritative two-phase settlement.
  *
@@ -47,7 +48,7 @@ export function clearThreeCardPokerEngineCache() {
 
 async function loadEngineConfig(): Promise<ThreeCardPokerConfig> {
   const now = Date.now();
-  if (cachedConfig && now - cachedConfig.time < 30_000) return cachedConfig.cfg;
+  if (cachedConfig && now - cachedConfig.time < 30_000) return recordRoundConfig(cachedConfig.cfg);
   const db = getDb();
   try {
     const rows = await db
@@ -58,11 +59,9 @@ async function loadEngineConfig(): Promise<ThreeCardPokerConfig> {
     const raw = rows[0]?.engineConfig;
     const cfg = normalizeThreeCardPokerConfig(raw ? (JSON.parse(raw) as unknown) : null);
     cachedConfig = { cfg, time: now };
-    return cfg;
+    return recordRoundConfig(cfg);
   } catch {
-    const cfg = normalizeThreeCardPokerConfig(null);
-    cachedConfig = { cfg, time: now };
-    return cfg;
+    throw new Error("Game configuration unavailable");
   }
 }
 

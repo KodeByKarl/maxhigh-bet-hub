@@ -93,7 +93,7 @@ function fishingRecipe(id) {
   const P = pascal(id), c0 = camel(id);
   return { family: "fishing", fn: `${c0}FireShotFn`, free: null, weapons: null, P,
     async init(c) { const cfg = await c.rpc(`get${P}EngineConfigFn`, undefined, { method: "GET" }); this.weapons = (cfg.weapons ?? []).map((w) => [w.id, Number(w.betCost)]); return this.weapons; },
-    async target(c) { for (let i = 0; i < 8; i++) { const s = await c.rpc(`${c0}SyncSpawnsFn`, undefined); const f = s?.fish?.[0]; if (f) return f.instanceId; } throw new Error("no fish spawned after 8 syncs"); },
+    async target(c) { for (let i = 0; i < 8; i++) { const s = await c.rpc(`${c0}SyncSpawnsFn`, undefined); const f = [...(s?.fish ?? [])].sort((a, b) => b.createdAt - a.createdAt)[0]; if (f) return f.instanceId; } throw new Error("no fish spawned after 8 syncs"); },
     async prepare(c, bet, weaponId) { return { weaponId: weaponId ?? this.weapons.find(([, cost]) => cost === bet)?.[0] ?? this.weapons[0][0], target: { instanceId: await this.target(c) } }; },
     negCases: () => [["invalid-weapon", { weaponId: "cannon", target: { instanceId: "x" } }], ["unknown-fish-instance", { weaponId: "mini", target: { instanceId: "fish-forged-0000" } }],
       ["overlong-instance-id", { weaponId: "mini", target: { instanceId: "f".repeat(65) } }], ["missing-target", { weaponId: "mini" }], ["client-chosen-payout-field", { weaponId: "mini", target: { instanceId: "fish-forged-0000", payoutMult: 9999 } }]],
@@ -157,7 +157,11 @@ async function delta(c, before) {
 async function spinOnce(c, g, bet, key = randomUUID()) {
   await tidy(c, g);
   const before = await snapshot(c);
-  let res = await c.rpc(g.r.fn, await openInput(c, g, bet), { key });
+  // Fish are short-lived server-side; if the target expired between spawn and shot, take a fresh one once.
+  let res = await c.rpc(g.r.fn, await openInput(c, g, bet), { key }).catch(async (e) => {
+    if (g.r.family === "fishing" && /Unknown or expired fish/.test(e.message)) return c.rpc(g.r.fn, await openInput(c, g, bet), { key: randomUUID() });
+    throw e;
+  });
   let extra = 0, label;
   if (g.r.finish) { const fin = await g.r.finish(c, res, bet); extra = fin.extra ?? 0; label = fin.label; res = { ...fin.last, script: fin.last?.script ?? res?.script }; }
   let feature = 0;
@@ -198,8 +202,20 @@ async function refusal(c, g, label, input) {
   record({ game: g.id, phase: "negative", case: label, ok: rejected && clean, detail: rejected ? (clean ? why : "REJECTED BUT STATE CHANGED") : "NOT REJECTED" });
 }
 
+// ---------------------------------------------------------------- locked-game access check (restricted configuration)
+const LOCKED_MSG = "Game Locked. Please settle the remaining project payment to activate this game.";
+async function lockedCheck(c, g) {
+  const before = await snapshot(c);
+  let rejected = false, msg = "";
+  try { await c.rpc(g.r.fn, await openInput(c, g, r2(betsFor(g)[0]))); } catch (e) { rejected = true; msg = e.message; }
+  const d = await delta(c, before);
+  const clean = d.rows.length === 0 && r2(d.after) === r2(before.bal);
+  record({ game: g.id, phase: "locked", ok: rejected && msg === LOCKED_MSG && clean, detail: rejected ? (msg === LOCKED_MSG ? (clean ? "refused with the approved message, no wallet/ledger change" : "REFUSED BUT STATE CHANGED") : "refused with a DIFFERENT message: " + msg.slice(0, 80)) : "NOT REFUSED - locked game accepted a wager" });
+}
+
 // ---------------------------------------------------------------- phases for one game on one authenticated player
 async function testGame(c, g) {
+  if (flag("locked-check")) { await lockedCheck(c, g); return; }
   if (g.r.family === "pending") { record({ game: g.id, phase: "plan", ok: true, pending: true, detail: g.r.reason }); return; }
   if (PHASES.has("functional")) {
     for (const bet of betsFor(g)) for (let i = 0; i < ROUNDS; i++) {

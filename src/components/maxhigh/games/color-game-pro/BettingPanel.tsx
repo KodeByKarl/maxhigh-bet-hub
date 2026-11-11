@@ -1,3 +1,4 @@
+import "../../native-game-controls.css";
 import { useState } from "react";
 import { type ColorGameProConfig, type ColorSpotId } from "@/lib/color-game-pro-config";
 import { cn } from "@/lib/utils";
@@ -79,7 +80,11 @@ export function BettingPanel({
   const canDeal = totalWager >= cfg.minBet && !dealBusy && !disabled;
 
   return (
-    <div className="space-y-2.5 px-2 pb-[max(0.6rem,env(safe-area-inset-bottom))] pt-2">
+    <div
+      className="space-y-2.5 px-2 pb-[max(0.6rem,env(safe-area-inset-bottom))] pt-2"
+      data-game-control-root="color-game-pro"
+      data-native-controls="color-game-pro"
+    >
       <style>{PANEL_CSS}</style>
 
       <div className="grid grid-cols-3 gap-2 sm:grid-cols-6">
@@ -151,6 +156,7 @@ export function BettingPanel({
           disabled={disabled || totalWager <= 0}
           onClick={undoLast}
           className="pro-mini"
+          data-control-action="secondary"
         >
           Undo
         </button>
@@ -159,6 +165,7 @@ export function BettingPanel({
           disabled={disabled || totalWager <= 0}
           onClick={onClearAll}
           className="pro-mini"
+          data-control-action="secondary"
         >
           Clear
         </button>
@@ -192,6 +199,7 @@ export function BettingPanel({
             "pro-spin min-w-[7.5rem] rounded-2xl px-5 py-2.5 text-sm font-black tracking-[0.22em] uppercase",
             canDeal && "pro-spin-on",
           )}
+          data-control-action="primary"
         >
           {dealBusy ? "…" : "SPIN"}
         </button>

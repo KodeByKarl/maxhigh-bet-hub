@@ -44,7 +44,14 @@ export class Client {
     if (site === null) delete headers["Sec-Fetch-Site"];
     const payload = JSON.stringify(await toJSONAsync({ data }));
     const url = BASE + "/_serverFn/" + ids.get(name) + (method === "GET" ? "?payload=" + encodeURIComponent(payload) : "");
-    const response = await fetch(url, { method, headers, body: method === "POST" ? payload : undefined });
+    const send = () => fetch(url, { method, headers, body: method === "POST" ? payload : undefined });
+    // A pooled keep-alive socket can be stale after the app is restarted; retry once on a connection-level failure.
+    // The same Idempotency-Key is reused, so a financial call cannot be applied twice.
+    const response = await send().catch(async (e) => {
+      if (!(e instanceof TypeError)) throw e;
+      await new Promise((r) => setTimeout(r, 400));
+      return send();
+    });
     const text = await response.text();
     let decoded;
     try { decoded = fromCrossJSON(JSON.parse(text), { plugins: createDefaultSerovalPlugins() }); }
@@ -55,8 +62,8 @@ export class Client {
     if (!response.ok) throw new Error(`RPC ${name}: HTTP ${response.status}`);
     return decoded?.result;
   }
-  async login(username) {
-    const password = credentialsFor(username);
+  async login(username, passwordOverride) {
+    const password = passwordOverride ?? credentialsFor(username);
     const result = await this.rpc("loginFn", { username, password });
     if (!this.cookie) throw new Error("login returned no session cookie");
     this.who = username;

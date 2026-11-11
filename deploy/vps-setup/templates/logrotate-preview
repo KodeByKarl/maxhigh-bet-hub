@@ -1,0 +1,13 @@
+/var/www/maxhigh/staging/logs/preview-*.log {
+    su maxhigh-stage-preview maxhigh-stage-preview
+    size 10M
+    rotate 5
+    missingok
+    notifempty
+    compress
+    delaycompress
+    copytruncate
+}
+# Operational preview logs only; copytruncate can lose a line during rotation.
+# This must never match DB/binlogs/financial/audit records.
+# Existing system logrotate frequency may be daily: approve an hourly check separately.

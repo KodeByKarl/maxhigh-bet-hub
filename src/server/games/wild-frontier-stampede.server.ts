@@ -1,8 +1,9 @@
-﻿/**
+import { recordRoundConfig } from "../round-random.server";
+import { minorUnits } from "@/lib/money";
+import { assertGameWager } from "../wallet.server"; /**
  * Wild Frontier Stampede — server-authoritative spin settlement and round lifecycle.
  * Integrates with platform wallet ledger (writeLedgerDelta) and session persistence (playSessions).
  */
-
 import { and, eq } from "drizzle-orm";
 import {
   WILD_FRONTIER_STAMPEDE_GAME_ID,
@@ -33,7 +34,7 @@ let cachedConfig: { cfg: StampedeConfig; time: number } | null = null;
 async function loadEngineConfig(): Promise<StampedeConfig> {
   const now = Date.now();
   if (cachedConfig && now - cachedConfig.time < 30000) {
-    return cachedConfig.cfg;
+    return recordRoundConfig(cachedConfig.cfg);
   }
   const db = getDb();
   try {
@@ -47,11 +48,9 @@ async function loadEngineConfig(): Promise<StampedeConfig> {
       ? normalizeStampedeConfig(JSON.parse(raw) as unknown)
       : normalizeStampedeConfig(null);
     cachedConfig = { cfg, time: now };
-    return cfg;
+    return recordRoundConfig(cfg);
   } catch {
-    const cfg = normalizeStampedeConfig(null);
-    cachedConfig = { cfg, time: now };
-    return cfg;
+    throw new Error("Game configuration unavailable");
   }
 }
 
@@ -146,6 +145,8 @@ export async function stampedePaidSpin(data: {
   ante: boolean;
 }): Promise<StampedeSpinResult> {
   const user = await requireUser();
+  minorUnits(data.bet);
+  await assertGameWager(WILD_FRONTIER_STAMPEDE_GAME_ID, data.bet);
   if (!Number.isFinite(data.bet) || data.bet <= 0) throw new Error("Invalid bet amount");
 
   const cfg = await loadEngineConfig();
@@ -375,6 +376,7 @@ export async function stampedeFreeSpin(data: { sessionId: string }): Promise<Sta
         bet,
         maxWinMult: cfg.maxWinMult,
         computedWin: accumulatedWin,
+        alreadyCredited: Number(currentSession.baseCredited),
         context: "free-spins-final",
       }).payout;
       const ledger = await writeLedgerDelta(tx, {
@@ -435,6 +437,8 @@ export async function stampedeFreeSpin(data: { sessionId: string }): Promise<Sta
 
 export async function stampedeBuyFeature(data: { bet: number }): Promise<StampedeSpinResult> {
   const user = await requireUser();
+  minorUnits(data.bet);
+  await assertGameWager(WILD_FRONTIER_STAMPEDE_GAME_ID, data.bet);
   if (!Number.isFinite(data.bet) || data.bet <= 0) throw new Error("Invalid bet amount");
 
   const cfg = await loadEngineConfig();

@@ -1,3 +1,4 @@
+import { operationIdentity } from "@/lib/operation-identity";
 /**
  * Tongits Arena client RPC bridge (createServerFn).
  * Player deal / play / fold / session restore + public engine config.
@@ -16,30 +17,57 @@ const sessionSchema = z.object({
 });
 
 export const tongitsArenaDealFn = createServerFn({ method: "POST" })
+  .middleware([operationIdentity])
   .validator(dealSchema)
   .handler(async ({ data }) => {
-    const { tongitsArenaPaidDeal } = await import("../server/games/tongits-arena.server");
-    return JSON.parse(JSON.stringify(await tongitsArenaPaidDeal(data))) as Awaited<
-      ReturnType<typeof tongitsArenaPaidDeal>
-    >;
+    const { withFinancialOperation } = await import("../server/operation.server");
+    return withFinancialOperation(
+      "tongitsArenaDealFn",
+      data,
+      async () => {
+        const { tongitsArenaPaidDeal } = await import("../server/games/tongits-arena.server");
+        return JSON.parse(JSON.stringify(await tongitsArenaPaidDeal(data))) as Awaited<
+          ReturnType<typeof tongitsArenaPaidDeal>
+        >;
+      },
+      "tongits-arena",
+    );
   });
 
 export const tongitsArenaPlayFn = createServerFn({ method: "POST" })
+  .middleware([operationIdentity])
   .validator(sessionSchema)
   .handler(async ({ data }) => {
-    const { tongitsArenaPlay } = await import("../server/games/tongits-arena.server");
-    return JSON.parse(JSON.stringify(await tongitsArenaPlay(data))) as Awaited<
-      ReturnType<typeof tongitsArenaPlay>
-    >;
+    const { withFinancialOperation } = await import("../server/operation.server");
+    return withFinancialOperation(
+      "tongitsArenaPlayFn",
+      data,
+      async () => {
+        const { tongitsArenaPlay } = await import("../server/games/tongits-arena.server");
+        return JSON.parse(JSON.stringify(await tongitsArenaPlay(data))) as Awaited<
+          ReturnType<typeof tongitsArenaPlay>
+        >;
+      },
+      "tongits-arena",
+    );
   });
 
 export const tongitsArenaFoldFn = createServerFn({ method: "POST" })
+  .middleware([operationIdentity])
   .validator(sessionSchema)
   .handler(async ({ data }) => {
-    const { tongitsArenaFold } = await import("../server/games/tongits-arena.server");
-    return JSON.parse(JSON.stringify(await tongitsArenaFold(data))) as Awaited<
-      ReturnType<typeof tongitsArenaFold>
-    >;
+    const { withFinancialOperation } = await import("../server/operation.server");
+    return withFinancialOperation(
+      "tongitsArenaFoldFn",
+      data,
+      async () => {
+        const { tongitsArenaFold } = await import("../server/games/tongits-arena.server");
+        return JSON.parse(JSON.stringify(await tongitsArenaFold(data))) as Awaited<
+          ReturnType<typeof tongitsArenaFold>
+        >;
+      },
+      "tongits-arena",
+    );
   });
 
 export const getTongitsArenaSessionFn = createServerFn({ method: "GET" }).handler(async () => {

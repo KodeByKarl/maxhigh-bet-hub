@@ -35,6 +35,7 @@ export async function listCarouselSlides(opts?: {
 }): Promise<CarouselSlide[]> {
   const db = getDb();
   const includeDisabled = opts?.includeDisabled ?? false;
+  if (includeDisabled) await requirePermission("PROMOTION_MANAGE");
 
   const query = includeDisabled
     ? db.select().from(carouselSlides).orderBy(asc(carouselSlides.sortOrder))
@@ -50,6 +51,7 @@ export async function listCarouselSlides(opts?: {
 export async function createCarouselSlide(input: CreateCarouselSlideInput): Promise<CarouselSlide> {
   const actor = await requirePermission("PROMOTION_MANAGE");
   const db = getDb();
+  validateSlideUrls(input);
   const id = newId();
 
   const newSlide = {
@@ -88,6 +90,7 @@ export async function updateCarouselSlide(input: UpdateCarouselSlideInput): Prom
   const actor = await requirePermission("PROMOTION_MANAGE");
   const db = getDb();
 
+  validateSlideUrls(input);
   const [existing] = await db
     .select()
     .from(carouselSlides)
@@ -176,4 +179,13 @@ export async function reorderCarouselSlides(
   });
 
   return { ok: true };
+}
+
+function validateSlideUrls(input: { linkUrl?: string; imageUrl?: string }) {
+  for (const value of [input.linkUrl, input.imageUrl]) {
+    if (!value) continue;
+    if (value.startsWith("/") && !value.startsWith("//")) continue;
+    const url = new URL(value);
+    if (url.protocol !== "https:") throw new Error("Only site-relative or HTTPS URLs are allowed");
+  }
 }

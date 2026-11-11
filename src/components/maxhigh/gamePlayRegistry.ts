@@ -4,7 +4,7 @@
  */
 import { lazy, type ComponentType, type LazyExoticComponent } from "react";
 import { isThumbnailOnlyGame } from "@/lib/playable-games";
-import { REALMS_GAME_IDS } from "@/lib/realms";
+import { REALMS_GAME_IDS } from "@/lib/realms/identity";
 
 export type GamePlayProps = {
   gameId?: string;

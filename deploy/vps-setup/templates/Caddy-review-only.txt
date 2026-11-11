@@ -1,0 +1,13 @@
+# REVIEW ONLY: not installed, imported, or applied by any setup script.
+# Existing maxhigh.online HTTPS/TLS and production routes remain unchanged.
+# There is deliberately NO staging hostname, public reverse proxy or staging file root.
+# Future separately approved production site block may use:
+# encode zstd gzip
+# @fingerprinted path /assets/*
+# header @fingerprinted Cache-Control "public, max-age=31536000, immutable"
+# Apply immutable caching only to content-hashed public files, not every asset by name.
+# @sensitive path /api/* /_serverFn/* /admin* /superadmin*
+# header @sensitive Cache-Control "private, no-store"
+# never cache account/session/financial decisions or expose .env/.pm2/backups.
+# reverse_proxy 127.0.0.1:APPROVED_PRODUCTION_PORT
+# Keep Caddy-managed HTTPS; never replace the site with a plain-http listener.

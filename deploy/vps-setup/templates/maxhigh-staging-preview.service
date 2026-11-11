@@ -1,0 +1,37 @@
+[Unit]
+Description=MaxHigh private read-only staging preview
+After=network.target mariadb.service
+
+[Service]
+Type=simple
+User=maxhigh-stage-preview
+Group=maxhigh-stage-preview
+WorkingDirectory=/var/www/maxhigh/staging
+Environment=HOME=/var/www/maxhigh/staging
+Environment=PM2_HOME=/var/www/maxhigh/staging/.pm2
+Environment=PATH=/opt/maxhigh-node-24.22.2/bin:/usr/bin:/bin
+ExecStart=/opt/maxhigh-pm2/node_modules/.bin/pm2-runtime start /var/www/maxhigh/staging/releases/07d670abe485e06292d8c3e624e7df4824ae80eb/.output/staging/pm2.config.cjs --only maxhigh-staging-preview
+Restart=no
+TimeoutStopSec=60
+KillMode=control-group
+UMask=0077
+NoNewPrivileges=yes
+ProtectSystem=strict
+ProtectHome=yes
+PrivateTmp=yes
+ReadWritePaths=/var/www/maxhigh/staging/.pm2 /var/www/maxhigh/staging/logs
+InaccessiblePaths=-/var/www/maxhigh/.env.database
+RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6
+IPAddressDeny=any
+IPAddressAllow=localhost
+MemoryAccounting=yes
+MemoryHigh=1280M
+MemoryMax=1792M
+MemorySwapMax=128M
+CPUQuota=50%
+CPUWeight=10
+IOWeight=10
+TasksMax=128
+
+[Install]
+WantedBy=multi-user.target

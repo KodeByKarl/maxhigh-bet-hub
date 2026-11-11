@@ -1,3 +1,4 @@
+import "../../native-game-controls.css";
 import { useState } from "react";
 import { type BaccaratConfig } from "@/lib/baccarat-config";
 import { cn } from "@/lib/utils";
@@ -194,6 +195,8 @@ export function BettingPanel({
         "touch-manipulation",
         rail ? "flex h-full flex-col gap-2.5" : "space-y-2.5 short-h:space-y-2",
       )}
+      data-game-control-root="baccarat"
+      data-native-controls="baccarat"
     >
       <div className={cn("grid gap-2", rail ? "grid-cols-1" : "grid-cols-3")}>
         {mainSpots.map((id) => (
@@ -254,6 +257,7 @@ export function BettingPanel({
             ? "mt-auto h-14 w-full"
             : "h-14 w-full short-h:h-12 short-h:text-sm sm:h-12 sm:rounded-xl sm:text-sm",
         )}
+        data-control-action="primary"
       >
         DEAL
       </button>

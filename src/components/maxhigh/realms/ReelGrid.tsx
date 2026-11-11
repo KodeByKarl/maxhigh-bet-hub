@@ -33,7 +33,7 @@ export const ReelGrid = memo(function ReelGrid({ cols, rows, art, visuals }: Ree
 
   return (
     <div
-      className="mx-auto grid max-h-[min(62dvh,34rem)] w-[min(98vw,calc(62dvh*var(--board-ar)),40rem)] gap-1 sm:max-h-[min(64dvh,38rem)] sm:w-[min(96vw,calc(64dvh*var(--board-ar)),44rem)] sm:gap-1.5"
+      className="realms-reel-grid mx-auto grid max-h-[min(62dvh,34rem)] w-[min(98vw,calc(62dvh*var(--board-ar)),40rem)] gap-1 sm:max-h-[min(64dvh,38rem)] sm:w-[min(96vw,calc(64dvh*var(--board-ar)),44rem)] sm:gap-1.5"
       style={style}
     >
       {Array.from({ length: cols * rows }, (_, i) => {

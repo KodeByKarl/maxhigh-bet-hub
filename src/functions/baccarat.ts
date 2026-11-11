@@ -1,3 +1,4 @@
+import { operationIdentity } from "@/lib/operation-identity";
 /**
  * Baccarat client RPC bridge (createServerFn).
  * Player + superadmin engine config live here so Vite/TanStack picks them up.
@@ -14,12 +15,21 @@ const baccaratDealSchema = z.object({
 });
 
 export const baccaratDealFn = createServerFn({ method: "POST" })
+  .middleware([operationIdentity])
   .validator(baccaratDealSchema)
   .handler(async ({ data }) => {
-    const { baccaratPaidDeal } = await import("../server/games/baccarat.server");
-    return JSON.parse(JSON.stringify(await baccaratPaidDeal(data))) as Awaited<
-      ReturnType<typeof baccaratPaidDeal>
-    >;
+    const { withFinancialOperation } = await import("../server/operation.server");
+    return withFinancialOperation(
+      "baccaratDealFn",
+      data,
+      async () => {
+        const { baccaratPaidDeal } = await import("../server/games/baccarat.server");
+        return JSON.parse(JSON.stringify(await baccaratPaidDeal(data))) as Awaited<
+          ReturnType<typeof baccaratPaidDeal>
+        >;
+      },
+      "baccarat",
+    );
   });
 
 /** Public engine config for the live table UI. */
@@ -36,6 +46,7 @@ export const getBaccaratAdminConfigFn = createServerFn({ method: "GET" }).handle
 
 /** Superadmin — persist engineConfig JSON. */
 export const saveBaccaratAdminConfigFn = createServerFn({ method: "POST" })
+  .middleware([operationIdentity])
   .validator(z.object({ config: z.unknown() }))
   .handler(async ({ data }) => {
     const { saveBaccaratEngineConfig } = await import("../server/superadmin/services.server");

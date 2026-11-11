@@ -7,6 +7,7 @@ import type { PantherThemeColors } from "@/components/maxhigh/panther-shared/the
 import { colorsToCssVars } from "@/components/maxhigh/panther-shared/theme";
 import type { RealmsGameDef } from "@/lib/realms";
 import type { RealmsSymKind } from "@/lib/realms/schema";
+import { hasRegeneratedRealmsArt } from "@/lib/realms-art";
 
 /** Bump when regenerated art should bypass browser caches. */
 const ART_VERSION = "1";
@@ -30,6 +31,8 @@ function rgba(hex: string, alpha: number) {
 }
 
 export function realmsAssetBase(id: string) {
+  if (hasRegeneratedRealmsArt(id)) return `/images/symbols/realms/${id}-v20261102-r2`;
+  if (id === "abyssal-pearls") return "/images/symbols/realms/abyssal-pearls-v20261102";
   return `/images/symbols/realms/${id}`;
 }
 
@@ -50,7 +53,7 @@ export function realmsAssets(id: string): RealmsAssets {
   ];
   return {
     backdrop: `${base}/backdrop.webp${v}`,
-    loadingBg: `${base}/loading-bg.webp${v}`,
+    loadingBg: `${base}/${id === "abyssal-pearls" && !hasRegeneratedRealmsArt(id) ? "backdrop" : "loading-bg"}.webp${v}`,
     icons: Object.fromEntries(kinds.map((k) => [k, `${base}/${k}.webp${v}`])) as Record<
       RealmsSymKind,
       string
@@ -59,7 +62,8 @@ export function realmsAssets(id: string): RealmsAssets {
 }
 
 export function realmsColors(def: RealmsGameDef): PantherThemeColors {
-  const [primary, secondary, glow, deep] = def.palette;
+  const [primary, secondary, glow, deep] =
+    def.id === "abyssal-pearls" ? ["#80ccdf", "#5266a0", "#d4e4fb", "#091b31"] : def.palette;
   return {
     accent: primary,
     accentSoft: glow,

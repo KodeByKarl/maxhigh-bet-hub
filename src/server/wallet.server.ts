@@ -1,3 +1,7 @@
+import { minorUnits, signedMinorUnits } from "@/lib/money";
+import { manilaDayBounds } from "@/lib/business-time";
+import { gameControls, jackpot, auditLogs } from "./db/schema";
+import { slotGames } from "@/lib/games";
 /**
  * Shared wallet helpers — available balance, pending withdraw reserves, ledger writes.
  */
@@ -21,13 +25,15 @@ export async function getWeeklyUsageAndLimit(
   db: DbLike = getDb(),
   userId?: string,
 ): Promise<{ usage: number; limit: number }> {
-  try {
+  {
     const riskRows = await db
       .select()
       .from(riskControls)
       .where(eq(riskControls.id, "default"))
       .limit(1);
-    const limit = Number(riskRows[0]?.maxWeeklyLimit ?? 20000);
+    if (!riskRows[0]) throw new Error("Financial risk controls unavailable");
+    const limit = Number(riskRows[0].maxWeeklyLimit);
+    minorUnits(limit);
 
     const weekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
     const filters = [
@@ -48,13 +54,12 @@ export async function getWeeklyUsageAndLimit(
 
     const usage = Number(usageRows[0]?.total ?? 0);
     return { usage, limit };
-  } catch {
-    return { usage: 0, limit: 20000 };
   }
 }
 
 export async function assertWeeklyLimitNotExceeded(db: DbLike, userId: string, delta: number) {
-  if (delta <= 0) return;
+  delta = Math.abs(delta);
+  if (delta === 0) return;
   const { usage, limit } = await getWeeklyUsageAndLimit(db, userId);
   if (usage + delta > limit) {
     throw new Error(
@@ -103,34 +108,43 @@ export async function getAvailableBalance(userId: string): Promise<{
 }
 
 export async function getMaxSingleBet(): Promise<number> {
-  try {
-    const db = getDb();
-    const rows = await db
-      .select()
-      .from(riskControls)
-      .where(eq(riskControls.id, "default"))
-      .limit(1);
-    return Number(rows[0]?.maxSingleBet ?? 10000);
-  } catch {
-    // Table not migrated yet — safe default
-    return 10000;
-  }
+  const [risk] = await getDb()
+    .select()
+    .from(riskControls)
+    .where(eq(riskControls.id, "default"))
+    .limit(1);
+  if (!risk) throw new Error("Financial risk controls unavailable");
+  const max = Number(risk.maxSingleBet);
+  minorUnits(max);
+  return max;
 }
 
 export async function assertNotInMaintenanceForBets(db: DbLike = getDb()) {
-  try {
-    const settings = await db
-      .select()
-      .from(platformSettings)
-      .where(eq(platformSettings.id, "default"))
-      .limit(1);
-    if (settings[0]?.maintenanceMode === "yes") {
-      throw new Error("Platform is currently under scheduled maintenance. Betting is locked.");
-    }
-  } catch (err) {
-    if (err instanceof Error && err.message.includes("maintenance")) throw err;
-    // Missing platform_settings table → treat as not in maintenance
-  }
+  const [settings] = await db
+    .select()
+    .from(platformSettings)
+    .where(eq(platformSettings.id, "default"))
+    .limit(1);
+  if (!settings) throw new Error("Platform settings unavailable");
+  if (settings.maintenanceMode === "yes")
+    throw new Error("Platform is currently under scheduled maintenance. Betting is locked.");
+}
+
+export async function assertGameWager(gameId: string, bet: number) {
+  minorUnits(bet);
+  const game = slotGames.find((g) => g.id === gameId);
+  if (!game) throw new Error("Unknown game");
+  const [control] = await getDb()
+    .select()
+    .from(gameControls)
+    .where(eq(gameControls.gameId, gameId))
+    .limit(1);
+  if (control?.enabled === "no") throw new Error("Game is currently disabled");
+  const parse = (value: string) => Number(value.replace(/[^0-9.]/g, ""));
+  const min = parse(control?.minBet ?? game.minBet);
+  const max = parse(control?.maxBet ?? game.maxBet);
+  if (!Number.isFinite(min) || !Number.isFinite(max) || bet < min || bet > max)
+    throw new Error(`Bet must be between ${min} and ${max}`);
 }
 
 /**
@@ -139,10 +153,7 @@ export async function assertNotInMaintenanceForBets(db: DbLike = getDb()) {
  * so concurrent bets cannot race/overdraft; balance update + transactions insert
  * share that same transaction boundary.
  *
- * Mega jackpot contribution is intentionally NOT in this transaction: a failed
- * `UPDATE jackpot` (deadlock / lock wait / host flake) used to abort the whole
- * bet/win and toast a raw SQL error in-game. Jackpot is progressive display —
- * never block play.
+ * Jackpot contributions are written on this transaction and roll back with it.
  */
 /** Ensures bet/win pairs always get distinct, increasing timestamps. */
 let lastLedgerMs = 0;
@@ -150,33 +161,6 @@ function nextLedgerTime(): Date {
   const now = Date.now();
   lastLedgerMs = Math.max(now, lastLedgerMs + 1);
   return new Date(lastLedgerMs);
-}
-
-/**
- * Atomic mega-pool bump on a separate connection.
- * INSERT…ON DUPLICATE KEY UPDATE avoids read/modify/write races.
- */
-export async function bumpMegaJackpot(contrib: number, opts?: { insertFloor?: number }) {
-  const add = +Number(contrib).toFixed(2);
-  if (!(add > 0) || !Number.isFinite(add)) return;
-  const floor = Math.max(0, opts?.insertFloor ?? 0);
-  const initial = money(Math.max(add, floor));
-  try {
-    const db = getDb();
-    await db.execute(sql`
-      INSERT INTO jackpot (id, amount, enabled, display_amount)
-      VALUES ('mega', ${initial}, 'yes', ${money(500_000_000)})
-      ON DUPLICATE KEY UPDATE amount = ROUND(amount + ${add}, 2)
-    `);
-  } catch (err) {
-    console.error("[wallet] mega jackpot bump failed (non-fatal)", err);
-  }
-}
-
-function scheduleMegaJackpotBump(contrib: number, opts?: { insertFloor?: number }) {
-  const add = +Number(contrib).toFixed(2);
-  if (!(add > 0) || !Number.isFinite(add)) return;
-  void bumpMegaJackpot(add, opts);
 }
 
 export async function writeLedgerDelta(
@@ -199,12 +183,52 @@ export async function writeLedgerDelta(
   const user = rows[0];
   if (!user) throw new Error("User not found");
 
+  const deltaUnits = signedMinorUnits(opts.delta);
+  if (opts.type === "bet" && deltaUnits >= 0) throw new Error("Wager must debit at least one cent");
+  if (opts.type === "bet" && -opts.delta > (await getMaxSingleBet()))
+    throw new Error("Wager exceeds max single bet exposure");
   const current = Number(user.balance);
-  const next = +(current + opts.delta).toFixed(2);
+  const next = (signedMinorUnits(current) + deltaUnits) / 100;
+  if (deltaUnits < 0 && next < (await sumPendingWithdrawals(tx, opts.userId)))
+    throw new Error("Insufficient available balance");
   if (next < 0) throw new Error("Insufficient balance");
 
-  if (opts.type === "withdraw") {
+  if (opts.type === "withdraw" || opts.type === "win" || opts.type === "jackpot") {
     await assertWeeklyLimitNotExceeded(tx, opts.userId, opts.delta);
+  }
+
+  if ((opts.type === "win" || opts.type === "jackpot") && opts.delta > 0) {
+    const [risk] = await tx
+      .select()
+      .from(riskControls)
+      .where(eq(riskControls.id, "default"))
+      .limit(1);
+    if (!risk) throw new Error("Financial risk controls unavailable");
+    const { start, end } = manilaDayBounds();
+    const [usage] = await tx
+      .select({ total: sql<string>`coalesce(sum(${transactions.amount}), 0)` })
+      .from(transactions)
+      .where(
+        and(
+          eq(transactions.userId, opts.userId),
+          gte(transactions.createdAt, start),
+          sql`${transactions.createdAt} < ${end}`,
+          or(eq(transactions.type, "win"), eq(transactions.type, "jackpot")),
+        ),
+      );
+    if (Number(usage.total) + opts.delta > Number(risk.maxDailyPayout))
+      throw new Error("Daily payout limit exceeded");
+    if (risk.autoFlagLargeWins === "yes" && opts.delta >= Number(risk.largeWinThreshold))
+      await tx.insert(auditLogs).values({
+        id: newId(),
+        actorId: user.id,
+        actorUsername: user.username,
+        action: "risk.large_win",
+        summary: "Payout flagged for review",
+        targetType: "user",
+        targetId: user.id,
+        meta: JSON.stringify({ amount: opts.delta, game: opts.game }),
+      });
   }
 
   const balanceAfter = money(next);
@@ -232,12 +256,20 @@ export async function writeLedgerDelta(
       // Feed is cosmetic — do not abort a paid win over a ticker insert.
       console.error("[wallet] live_wins insert failed (non-fatal)", err);
     }
-    scheduleMegaJackpotBump(Math.max(0.01, opts.delta * 0.01));
+    await contributeJackpot(tx, Math.max(0.01, opts.delta * 0.01));
   }
 
   if (opts.type === "bet" && opts.delta < 0) {
-    scheduleMegaJackpotBump(Math.abs(opts.delta) * 0.01, { insertFloor: 10_000 });
+    await contributeJackpot(tx, Math.abs(opts.delta) * 0.01, 10_000);
   }
 
   return { balance: next };
+}
+
+async function contributeJackpot(tx: DbLike, amount: number, floor = 0) {
+  const contribution = money(amount);
+  if (Number(contribution) <= 0) return;
+  await tx.execute(
+    sql`INSERT INTO jackpot (id, amount, enabled, display_amount) VALUES ('mega', ${money(Math.max(amount, floor))}, 'yes', ${money(500_000_000)}) ON DUPLICATE KEY UPDATE amount = ROUND(amount + ${contribution}, 2)`,
+  );
 }

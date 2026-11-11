@@ -38,3 +38,19 @@ deploy/logs/
 *.njsproj
 *.sln
 *.sw?
+
+# Isolated audit runtime and release builds
+audit/remediation/runtime/
+audit/ph-vps-2/runtime/
+deploy/releases/
+audit/ubuntu-staging/runtime/
+__pycache__/
+audit/first-transfer/runtime/
+
+# Local QA output is never a source publication input.
+output/
+
+# age private keys / key drills (never commit)
+maxhigh-keys/
+maxhigh-uat-*.key
+*.key.age

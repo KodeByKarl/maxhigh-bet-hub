@@ -1,76 +1,16 @@
-# MaxHigh continuous deploy (auto-update from GitHub)
+# Reviewed releases and startup
 
-## Windows — one click
+Production startup (`MaxHigh.bat` or `deploy/install.sh`) starts an already activated release through PM2. It never pulls source, installs dependencies, builds, migrates or seeds. Provision Node, PM2, MariaDB and the TLS reverse proxy separately. Both app and webhook bind to loopback.
 
-Double-click **`MaxHigh.bat`**. It will:
+No release was deployed as part of remediation. The following commands are an operator procedure requiring separate deployment authorization:
 
-1. Install npm dependencies  
-2. Start MariaDB  
-3. DB sync + seed  
-4. Pull latest from GitHub  
-5. Build **Node server** (`nitro.preset = node-server`)  
-6. Start PM2: `maxhigh-app` + `maxhigh-updater`  
-7. Start **Caddy** → **https://maxhigh.online** → `127.0.0.1:8080`  
+1. Commit and review a full revision, preserving the lockfile. Run `node deploy/auto-update.mjs --prepare FULL_40_CHARACTER_SHA`. This creates a separate worktree and requires frozen install, typecheck, lint, unit checks and build before writing a validation manifest.
+2. Back up the intended database and rehearse restore. `node scripts/migrate.mjs` is read-only and exits unsuccessfully if migrations are pending. Review duplicates, historical feature credits, hierarchy violations and migration SQL before applying. Application requires `CONFIRM_SCHEMA_MIGRATIONS` equal to the explicit database name and `node scripts/migrate.mjs --apply`; never use `drizzle-kit push --force` against production.
+3. Obtain deployment approval, then `node deploy/auto-update.mjs --activate FULL_40_CHARACTER_SHA`. The migration gate is read-only; candidate health must pass before the pointer changes. Failed post-switch health restores the previous pointer and reloads it. Validate this procedure with real PM2 in staging before production use.
+4. Start the activated release with the platform launcher. Configure and validate `deploy/Caddyfile` separately. A launch does not install or start Caddy or the database service.
 
-### Domain checklist
+The watcher checks revision status only. It cannot activate releases. Webhooks are disabled by default (`DEPLOY_WEBHOOK_ENABLED=0`). If enabled, supply a distinct random secret of at least 32 characters and expose the loopback listener only through authenticated TLS proxying; do not open port 9090 publicly. HMAC, bounded payloads, persisted delivery replay protection and request limits are enforced. Manual checks use an Authorization Bearer header, never a URL token. Do not log secrets.
 
-| Need | Detail |
-|------|--------|
-| DNS | `maxhigh.online` (+ `www`) **A/AAAA** → this server's public IP |
-| Firewall | TCP **80** + **443** open (Let's Encrypt + HTTPS) |
-| Caddy | `caddy.exe` on PATH, or in `deploy\caddy.exe` |
-| `.env` | `CADDY_DOMAIN=maxhigh.online`, `PORT=8080`, `PUBLIC_URL=https://maxhigh.online` |
+Cloudflare zone configuration, Full (strict) TLS, origin certificates, origin firewall allowlists, trusted proxy ranges, authenticated origin access and edge cache bypass require infrastructure access. No zone changes or credential rotation were performed. Do not enable caching for authenticated pages or RPC endpoints. Keep `.env`, release pointers, webhook journal and database backups private.
 
-Config file: `deploy/Caddyfile`
-
-```bat
-MaxHigh.bat
-```
-
-Useful:
-
-```bat
-pm2 status
-pm2 logs maxhigh-caddy
-pm2 logs maxhigh-app
-```
-
-## Linux (VPS)
-
-```bash
-cd /path/to/maxhigh-bet-hub
-cp .env.example .env   # fill MySQL + optional DEPLOY_WEBHOOK_SECRET
-chmod +x deploy/install.sh
-./deploy/install.sh
-pm2 startup && pm2 save
-```
-
-## `.env` knobs
-
-```env
-PORT=8080
-DEPLOY_BRANCH=main
-DEPLOY_POLL_SECONDS=60
-DEPLOY_WEBHOOK_ENABLED=1
-DEPLOY_WEBHOOK_PORT=9090
-DEPLOY_WEBHOOK_SECRET=change-me-to-a-long-random-string
-```
-
-## GitHub webhook (optional, instant)
-
-Polling alone is enough (default every 60s). For instant deploys:
-
-1. Open port `9090`  
-2. GitHub → **Settings → Webhooks**
-   - **Payload URL:** `http://YOUR_SERVER:9090/hooks/github`
-   - **Content type:** `application/json`
-   - **Secret:** same as `DEPLOY_WEBHOOK_SECRET`
-   - **Events:** push
-
-Health: `http://localhost:9090/health`
-
-## Safety
-
-- Uses `git pull --ff-only`  
-- `.env` stays on the server (gitignored)  
-- MySQL data is never wiped by a deploy  
+Demo seeding is prohibited with NODE_ENV=production and requires ALLOW_DEMO_SEED=disposable-test-only in a disposable database. It is never part of startup or release preparation.

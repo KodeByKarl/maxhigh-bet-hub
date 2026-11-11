@@ -1,3 +1,5 @@
+import { recordRoundConfig } from "../round-random.server";
+import { withFishingRoom } from "../fishing-state.server";
 /**
  * Shark Hunter — server-authoritative shot settlement + boss shared pool.
  * Client never moves money; every shot debits then optionally credits via ledger.
@@ -187,7 +189,7 @@ function lookupLiveFish(userId: string, instanceId: string): ShotTargetSnapshot 
 }
 
 /** Sync / top-up server-owned spawns for the player's open session. */
-export async function sharkHunterSyncSpawns() {
+async function sharkHunterSyncSpawnsImpl() {
   await assertGameEnabled();
   const user = await requireUser();
   const cfg = await loadEngineConfig();
@@ -220,7 +222,7 @@ function updateFishAfterShot(
 
 async function loadEngineConfig(): Promise<SharkHunterConfig> {
   const now = Date.now();
-  if (cachedConfig && now - cachedConfig.time < 30_000) return cachedConfig.cfg;
+  if (cachedConfig && now - cachedConfig.time < 30_000) return recordRoundConfig(cachedConfig.cfg);
   const db = getDb();
   try {
     const rows = await db
@@ -231,11 +233,9 @@ async function loadEngineConfig(): Promise<SharkHunterConfig> {
     const raw = rows[0]?.engineConfig;
     const cfg = normalizeSharkHunterConfig(raw ? (JSON.parse(raw) as unknown) : null);
     cachedConfig = { cfg, time: now };
-    return cfg;
+    return recordRoundConfig(cfg);
   } catch {
-    const cfg = normalizeSharkHunterConfig(null);
-    cachedConfig = { cfg, time: now };
-    return cfg;
+    throw new Error("Game configuration unavailable");
   }
 }
 
@@ -304,7 +304,7 @@ function publicBoss() {
   };
 }
 
-export async function getSharkHunterOpenSession() {
+async function getSharkHunterOpenSessionImpl() {
   const user = await requireUser();
   const db = getDb();
   const rows = await db
@@ -353,7 +353,7 @@ export async function getSharkHunterOpenSession() {
   };
 }
 
-export async function sharkHunterEnsureSession(input?: { weaponId?: string }) {
+async function sharkHunterEnsureSessionImpl(input?: { weaponId?: string }) {
   await assertNotInMaintenanceForBets();
   await assertGameEnabled();
   const user = await requireUser();
@@ -437,7 +437,7 @@ function maybeSpawnBoss(cfg: SharkHunterConfig) {
   globalBoss = createBossPool({ cfg, rng, now });
 }
 
-export async function sharkHunterFireShot(input: {
+async function sharkHunterFireShotImpl(input: {
   weaponId: string;
   target: { instanceId: string };
 }) {
@@ -651,7 +651,7 @@ export async function sharkHunterFireShot(input: {
   };
 }
 
-export async function sharkHunterSetWeapon(input: { weaponId: string }) {
+async function sharkHunterSetWeaponImpl(input: { weaponId: string }) {
   await assertGameEnabled();
   const user = await requireUser();
   if (!isWeaponTierId(input.weaponId)) throw new Error("Invalid weapon");
@@ -675,7 +675,7 @@ export async function sharkHunterSetWeapon(input: { weaponId: string }) {
   return getSharkHunterOpenSession();
 }
 
-export async function sharkHunterBuyPowerUp(input: { powerUpId: string }) {
+async function sharkHunterBuyPowerUpImpl(input: { powerUpId: string }) {
   await assertNotInMaintenanceForBets();
   await assertGameEnabled();
   const user = await requireUser();
@@ -734,7 +734,7 @@ export async function sharkHunterBuyPowerUp(input: { powerUpId: string }) {
   };
 }
 
-export async function sharkHunterUseNetBomb(input: {
+async function sharkHunterUseNetBombImpl(input: {
   weaponId: string;
   targets: { instanceId: string }[];
 }) {
@@ -833,7 +833,7 @@ export async function sharkHunterUseNetBomb(input: {
   };
 }
 
-export async function sharkHunterUseFreezeLure() {
+async function sharkHunterUseFreezeLureImpl() {
   const user = await requireUser();
   const cfg = await loadEngineConfig();
   const session = await loadOpenSessionRow(user.id);
@@ -864,9 +864,93 @@ export async function sharkHunterUseFreezeLure() {
 }
 
 /** Attempt boss spawn check for clients polling. */
-export async function sharkHunterBossStatus() {
+async function sharkHunterBossStatusImpl() {
   await requireUser();
   const cfg = await loadEngineConfig();
   maybeSpawnBoss(cfg);
   return { boss: publicBoss() };
+}
+
+export function sharkHunterSyncSpawns(
+  ...args: Parameters<typeof sharkHunterSyncSpawnsImpl>
+): ReturnType<typeof sharkHunterSyncSpawnsImpl> {
+  return withFishingRoom("shark-hunter", captureRoom, restoreRoom, () =>
+    sharkHunterSyncSpawnsImpl(...args),
+  );
+}
+
+export function getSharkHunterOpenSession(
+  ...args: Parameters<typeof getSharkHunterOpenSessionImpl>
+): ReturnType<typeof getSharkHunterOpenSessionImpl> {
+  return withFishingRoom("shark-hunter", captureRoom, restoreRoom, () =>
+    getSharkHunterOpenSessionImpl(...args),
+  );
+}
+
+export function sharkHunterEnsureSession(
+  ...args: Parameters<typeof sharkHunterEnsureSessionImpl>
+): ReturnType<typeof sharkHunterEnsureSessionImpl> {
+  return withFishingRoom("shark-hunter", captureRoom, restoreRoom, () =>
+    sharkHunterEnsureSessionImpl(...args),
+  );
+}
+
+export function sharkHunterFireShot(
+  ...args: Parameters<typeof sharkHunterFireShotImpl>
+): ReturnType<typeof sharkHunterFireShotImpl> {
+  return withFishingRoom("shark-hunter", captureRoom, restoreRoom, () =>
+    sharkHunterFireShotImpl(...args),
+  );
+}
+
+export function sharkHunterSetWeapon(
+  ...args: Parameters<typeof sharkHunterSetWeaponImpl>
+): ReturnType<typeof sharkHunterSetWeaponImpl> {
+  return withFishingRoom("shark-hunter", captureRoom, restoreRoom, () =>
+    sharkHunterSetWeaponImpl(...args),
+  );
+}
+
+export function sharkHunterBuyPowerUp(
+  ...args: Parameters<typeof sharkHunterBuyPowerUpImpl>
+): ReturnType<typeof sharkHunterBuyPowerUpImpl> {
+  return withFishingRoom("shark-hunter", captureRoom, restoreRoom, () =>
+    sharkHunterBuyPowerUpImpl(...args),
+  );
+}
+
+export function sharkHunterUseNetBomb(
+  ...args: Parameters<typeof sharkHunterUseNetBombImpl>
+): ReturnType<typeof sharkHunterUseNetBombImpl> {
+  return withFishingRoom("shark-hunter", captureRoom, restoreRoom, () =>
+    sharkHunterUseNetBombImpl(...args),
+  );
+}
+
+export function sharkHunterUseFreezeLure(
+  ...args: Parameters<typeof sharkHunterUseFreezeLureImpl>
+): ReturnType<typeof sharkHunterUseFreezeLureImpl> {
+  return withFishingRoom("shark-hunter", captureRoom, restoreRoom, () =>
+    sharkHunterUseFreezeLureImpl(...args),
+  );
+}
+
+export function sharkHunterBossStatus(
+  ...args: Parameters<typeof sharkHunterBossStatusImpl>
+): ReturnType<typeof sharkHunterBossStatusImpl> {
+  return withFishingRoom("shark-hunter", captureRoom, restoreRoom, () =>
+    sharkHunterBossStatusImpl(...args),
+  );
+}
+
+function captureRoom() {
+  return { globalBoss, lastBossEndedAt, fishRegistry };
+}
+function restoreRoom(state: ReturnType<typeof captureRoom>) {
+  globalBoss = state.globalBoss ?? null;
+  lastBossEndedAt = state.lastBossEndedAt ?? 0;
+  fishRegistry.clear();
+  const now = Date.now();
+  for (const [key, fish] of state.fishRegistry ?? [])
+    if (fish.expiresAt > now) fishRegistry.set(key, fish);
 }

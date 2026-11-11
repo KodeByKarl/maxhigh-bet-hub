@@ -1,0 +1,10 @@
+# Verified repository administrator. Branch/ruleset enforcement is a separate
+# owner-controlled setting; this file alone does not enforce review.
+/.github/ @KodeByKarl
+/deploy/ @KodeByKarl
+/scripts/ci/ @KodeByKarl
+/scripts/migrate.mjs @KodeByKarl
+/drizzle/ @KodeByKarl
+/src/server/ @KodeByKarl
+/package.json @KodeByKarl
+/package-lock.json @KodeByKarl

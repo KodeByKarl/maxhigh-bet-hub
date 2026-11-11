@@ -1,3 +1,4 @@
+import { recordRoundConfig } from "../round-random.server";
 /**
  * Lucky Nine Plus — server-authoritative deal + settlement.
  * Client never decides payouts. Stake debited first; credits use profit-odds helpers.
@@ -35,7 +36,7 @@ export function clearLuckyNinePlusEngineCache() {
 
 async function loadEngineConfig(): Promise<LuckyNinePlusConfig> {
   const now = Date.now();
-  if (cachedConfig && now - cachedConfig.time < 30_000) return cachedConfig.cfg;
+  if (cachedConfig && now - cachedConfig.time < 30_000) return recordRoundConfig(cachedConfig.cfg);
   const db = getDb();
   try {
     const rows = await db
@@ -46,11 +47,9 @@ async function loadEngineConfig(): Promise<LuckyNinePlusConfig> {
     const raw = rows[0]?.engineConfig;
     const cfg = normalizeLuckyNinePlusConfig(raw ? (JSON.parse(raw) as unknown) : null);
     cachedConfig = { cfg, time: now };
-    return cfg;
+    return recordRoundConfig(cfg);
   } catch {
-    const cfg = normalizeLuckyNinePlusConfig(null);
-    cachedConfig = { cfg, time: now };
-    return cfg;
+    throw new Error("Game configuration unavailable");
   }
 }
 

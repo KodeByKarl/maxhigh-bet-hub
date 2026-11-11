@@ -1,3 +1,7 @@
+import { recordRoundConfig } from "../round-random.server";
+import { assertNoOpenFeature } from "../feature-guard.server";
+import { minorUnits } from "@/lib/money";
+import { assertGameWager } from "../wallet.server";
 /**
  * Lotus Lynx — server-authoritative spin settle.
  * Client only receives scripts + balances; it cannot choose win amounts.
@@ -20,6 +24,7 @@ import {
   writeLedgerDelta,
 } from "../wallet.server";
 import { pantherBuyPricePerSpin } from "@/components/maxhigh/panther-shared/buyPricing";
+import { resolveBuyBonusSpins } from "@/lib/buy-bonus";
 
 const GAME_NAME = "Lotus Lynx";
 
@@ -43,10 +48,10 @@ async function loadEngineConfig() {
       .where(eq(gameControls.gameId, LOTUS_LYNX_GAME_ID))
       .limit(1);
     const raw = rows[0]?.engineConfig;
-    if (!raw) return normalizeLotusLynxConfig(null);
-    return normalizeLotusLynxConfig(JSON.parse(raw) as unknown);
+    if (!raw) return recordRoundConfig(normalizeLotusLynxConfig(null));
+    return recordRoundConfig(normalizeLotusLynxConfig(JSON.parse(raw) as unknown));
   } catch {
-    return normalizeLotusLynxConfig(null);
+    throw new Error("Game configuration unavailable");
   }
 }
 
@@ -167,6 +172,8 @@ export async function lotusLynxPaidSpin(data: {
   ante: boolean;
 }): Promise<LotusLynxSpinResult> {
   const user = await requireUser();
+  minorUnits(data.bet);
+  await assertGameWager(LOTUS_LYNX_GAME_ID, data.bet);
   if (!Number.isFinite(data.bet) || data.bet <= 0) throw new Error("Invalid bet");
 
   const cfg = await loadEngineConfig();
@@ -274,6 +281,7 @@ export async function lotusLynxPaidSpin(data: {
         ante: data.ante ? "yes" : "no",
         freeSpinsLeft: script.freeSpinsAwarded,
         fsSessionWin: "0.00",
+        baseCredited: money(script.totalWin),
         fsBombAcc: "0.00",
         fsSpinsPlayed: 0,
       });
@@ -365,6 +373,7 @@ export async function lotusLynxFreeSpin(data: { sessionId: string }): Promise<Lo
         bet,
         maxWinMult: cfg.maxWinMult,
         computedWin: finalizeFreeSpinTotal(nextWin, nextBomb),
+        alreadyCredited: Number(row.baseCredited),
         context: "free-spins-final",
       }).payout;
       if (final > 0) {
@@ -457,11 +466,10 @@ export async function lotusLynxBuyFeature(data: {
   quantity: number;
 }): Promise<{ balance: number; session: LotusLynxSessionState }> {
   const user = await requireUser();
+  minorUnits(data.bet);
+  await assertGameWager(LOTUS_LYNX_GAME_ID, data.bet);
   if (!Number.isFinite(data.bet) || data.bet <= 0) throw new Error("Invalid bet");
-  const quantity = Math.round(data.quantity);
-  if (!Number.isFinite(quantity) || quantity < 1 || quantity > 50) {
-    throw new Error("Invalid quantity");
-  }
+  const quantity = resolveBuyBonusSpins(data.quantity);
 
   const cfg = await loadEngineConfig();
   if (data.mode === "super") throw new Error("Super Buy is no longer available");
@@ -481,7 +489,7 @@ export async function lotusLynxBuyFeature(data: {
   }
 
   await assertNotInMaintenanceForBets();
-  await closeOtherOpenSessions(user.id);
+  await assertNoOpenFeature(user.id, LOTUS_LYNX_GAME_ID);
 
   const db = getDb();
   const result = await db.transaction(async (tx) => {

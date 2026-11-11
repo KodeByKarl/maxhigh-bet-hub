@@ -1,0 +1,152 @@
+{
+ "at": "2026-11-10T10:13:11.527Z",
+ "total": 29,
+ "failed": 0,
+ "results": [
+  {
+   "name": "anonymous goldenPantherSpinFn refused",
+   "ok": true,
+   "detail": "Unauthorized — please sign in"
+  },
+  {
+   "name": "anonymous getBalanceFn refused",
+   "ok": true,
+   "detail": "Unauthorized — please sign in"
+  },
+  {
+   "name": "anonymous superAdjustBalanceFn refused",
+   "ok": true,
+   "detail": "Unauthorized — please sign in"
+  },
+  {
+   "name": "anonymous listSuperUsersFn refused",
+   "ok": true,
+   "detail": "Unauthorized — please sign in"
+  },
+  {
+   "name": "player superAdjustBalanceFn refused",
+   "ok": true,
+   "detail": "User not found"
+  },
+  {
+   "name": "player superCreateUserFn refused",
+   "ok": true,
+   "detail": "Superadmin access only"
+  },
+  {
+   "name": "player listSuperUsersFn refused",
+   "ok": true,
+   "detail": "Superadmin access only"
+  },
+  {
+   "name": "state-changing call with foreign Origin (no Sec-Fetch-Site) refused",
+   "ok": true,
+   "detail": "RPC goldenPantherSpinFn: HTTP 403, undecodable body (Forbidden)"
+  },
+  {
+   "name": "state-changing call with cross-site Sec-Fetch-Site refused",
+   "ok": true,
+   "detail": "RPC goldenPantherSpinFn: HTTP 403, undecodable body (Forbidden)"
+  },
+  {
+   "name": "player cannot adjust a real account by 50000",
+   "ok": true,
+   "detail": "Superadmin access only"
+  },
+  {
+   "name": "player cannot adjust a real account by -50000",
+   "ok": true,
+   "detail": "Superadmin access only"
+  },
+  {
+   "name": "victim balance unchanged after attempts",
+   "ok": true,
+   "detail": "99241.99 -> 99241.99"
+  },
+  {
+   "name": "forged session cookie refused",
+   "ok": true,
+   "detail": "Unauthorized — please sign in"
+  },
+  {
+   "name": "malformed bet (string) refused",
+   "ok": true,
+   "detail": "[\n  {\n    \"expected\": \"number\",\n    \"code\": \"invalid_type\",\n    \"path\": [\n      \"bet\"\n    "
+  },
+  {
+   "name": "malformed bet (NaN) refused",
+   "ok": true,
+   "detail": "[\n  {\n    \"expected\": \"number\",\n    \"code\": \"invalid_type\",\n    \"received\": \"NaN\",\n    \"pa"
+  },
+  {
+   "name": "malformed bet (Infinity) refused",
+   "ok": true,
+   "detail": "[\n  {\n    \"expected\": \"number\",\n    \"code\": \"invalid_type\",\n    \"received\": \"Infinity\",\n  "
+  },
+  {
+   "name": "malformed bet (1e309) refused",
+   "ok": true,
+   "detail": "[\n  {\n    \"expected\": \"number\",\n    \"code\": \"invalid_type\",\n    \"received\": \"Infinity\",\n  "
+  },
+  {
+   "name": "malformed bet (negative) refused",
+   "ok": true,
+   "detail": "[\n  {\n    \"origin\": \"number\",\n    \"code\": \"too_small\",\n    \"minimum\": 0,\n    \"inclusive\": "
+  },
+  {
+   "name": "malformed bet (zero) refused",
+   "ok": true,
+   "detail": "[\n  {\n    \"origin\": \"number\",\n    \"code\": \"too_small\",\n    \"minimum\": 0,\n    \"inclusive\": "
+  },
+  {
+   "name": "malformed bet (sub-cent) refused",
+   "ok": true,
+   "detail": "Amount must be a valid positive whole number of cents"
+  },
+  {
+   "name": "malformed bet (huge) refused",
+   "ok": true,
+   "detail": "[\n  {\n    \"origin\": \"number\",\n    \"code\": \"too_big\",\n    \"maximum\": 100000,\n    \"inclusive"
+  },
+  {
+   "name": "malformed bet (null) refused",
+   "ok": true,
+   "detail": "[\n  {\n    \"expected\": \"number\",\n    \"code\": \"invalid_type\",\n    \"path\": [\n      \"bet\"\n    "
+  },
+  {
+   "name": "client-supplied payout/balance fields cannot change settlement",
+   "ok": true,
+   "detail": "accepted; balance moved -1.00"
+  },
+  {
+   "name": "login with hostile string refused (\"'; DROP TABLE user\")",
+   "ok": true,
+   "detail": "[\n  {\n    \"origin\": \"string\",\n    \"code\": \"invalid_format\",\n    \"format\": \"regex\",\n    \"pa"
+  },
+  {
+   "name": "login with hostile string refused (\"<script>alert(1)</\")",
+   "ok": true,
+   "detail": "[\n  {\n    \"origin\": \"string\",\n    \"code\": \"invalid_format\",\n    \"format\": \"regex\",\n    \"pa"
+  },
+  {
+   "name": "login with hostile string refused (\"\\u0000\")",
+   "ok": true,
+   "detail": "[\n  {\n    \"origin\": \"string\",\n    \"code\": \"too_small\",\n    \"minimum\": 3,\n    \"inclusive\": "
+  },
+  {
+   "name": "login with hostile string refused (\"aaaaaaaaaaaaaaaaaa\")",
+   "ok": true,
+   "detail": "[\n  {\n    \"origin\": \"string\",\n    \"code\": \"too_big\",\n    \"maximum\": 64,\n    \"inclusive\": t"
+  },
+  {
+   "name": "same Idempotency-Key replay does not re-charge",
+   "ok": true,
+   "detail": "after first -1.00, after replay 0.00"
+  },
+  {
+   "name": "session unusable after logout",
+   "ok": true,
+   "detail": "Unauthorized — please sign in"
+  }
+ ]
+}

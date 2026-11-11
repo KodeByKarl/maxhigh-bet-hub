@@ -19,6 +19,7 @@ import {
   sumPendingWithdrawals,
   writeLedgerDelta,
 } from "../wallet.server";
+import { BUY_BONUS_FREE_SPINS } from "@/lib/buy-bonus";
 
 const GAME_NAME = "Wild Panther";
 
@@ -525,7 +526,7 @@ export async function wildPantherBuyFeature(data: {
       status: "open",
       bet: money(data.bet),
       ante,
-      freeSpinsLeft: cfg.freeSpinsBase,
+      freeSpinsLeft: BUY_BONUS_FREE_SPINS, // a purchase always awards exactly 10 (price 41x is calibrated for 10)
       fsSessionWin: "0.00",
       fsBombAcc: "0.00",
       fsSpinsPlayed: 0,

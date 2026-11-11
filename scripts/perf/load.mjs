@@ -1,0 +1,61 @@
+import assert from 'node:assert/strict';import fs from 'node:fs';import os from 'node:os';import path from 'node:path';import {spawn,execFileSync} from 'node:child_process';import {randomUUID,randomBytes,createHash} from 'node:crypto';import mysql from 'mysql2/promise';import {hash} from 'bcryptjs';import {toJSONAsync,fromCrossJSON} from 'seroval';import {createDefaultSerovalPlugins} from '@tanstack/router-core/ssr/client';import {migrate} from '../migrate.mjs';
+const phase=process.argv[2]??'baseline';if(!/^(baseline|optimized)$/.test(phase))throw Error('Expected baseline or optimized');
+const label=process.env.PERF_RUN_LABEL??'';if(label&&!/^[a-z0-9-]{1,30}$/.test(label))throw Error('Invalid performance label');const outputName=phase+(label?'-'+label:'');
+const levels=process.env.PERF_LEVELS?process.env.PERF_LEVELS.split(',').map(Number):[5,10,20,30,50];if(!levels.length||levels.some(value=>![5,10,20,30,50].includes(value)))throw Error('Invalid load level');
+const dbName='audit_phvps2_'+phase+'_'+Date.now(),base='http://127.0.0.1:18770',out=process.env.PERF_OUTPUT??'audit/ph-vps-2/evidence';fs.mkdirSync(out,{recursive:true});
+const connection={host:'127.0.0.1',port:19307,user:'root',password:'audit-local-only'};
+const db=await mysql.createConnection(connection);await db.query('CREATE DATABASE IF NOT EXISTS `'+dbName+'`');await db.changeUser({database:dbName});await migrate(db,{apply:true});
+await db.query("INSERT INTO platform_settings(id,maintenance_mode,min_deposit,max_deposit,min_withdraw,max_withdraw) VALUES ('default','no',1,1000000,1,1000000) ON DUPLICATE KEY UPDATE maintenance_mode='no'");
+await db.query("INSERT INTO risk_controls(id,max_single_bet,max_daily_payout,max_weekly_limit,auto_flag_large_wins,large_win_threshold) VALUES ('default',10000,10000000,10000000,'yes',1000000) ON DUPLICATE KEY UPDATE max_single_bet=10000");
+await db.query("INSERT IGNORE INTO jackpot(id,amount,enabled,display_amount) VALUES('mega',10000,'yes',0)");
+for(const game of ['golden-panther','fortune-ox','deep-bass'])await db.query("INSERT INTO game_controls(game_id,enabled) VALUES (?,'yes') ON DUPLICATE KEY UPDATE enabled='yes'",[game]);
+const passwordHash=await hash('Disposable-load-fixture-9!',4),prefix=randomBytes(4).toString('hex');const players=[];
+for(let i=0;i<50;i++){const id=randomUUID(),token=randomBytes(32).toString('hex'),username='perf_'+prefix+'_'+i;await db.query("INSERT INTO users(id,public_user_id,username,password_hash,balance,role) VALUES (?,?,?,?,10000,'player')",[id,username,username,passwordHash]);await db.query('INSERT INTO sessions(id,user_id,token,expires_at,last_seen_at) VALUES (?,?,?,DATE_ADD(UTC_TIMESTAMP(),INTERVAL 2 HOUR),UTC_TIMESTAMP())',[randomUUID(),id,token]);players.push({id,token,features:new Map()});}
+const ids=new Map();for(const file of fs.readdirSync('.output/server/_ssr').filter(f=>f.endsWith('.mjs'))){const text=fs.readFileSync(path.join('.output/server/_ssr',file),'utf8');for(const m of text.matchAll(/id:\s*"([a-f0-9]{64})",\s*name:\s*"([^"]+)"/g))ids.set(m[2],m[1]);}
+for(const name of ['goldenPantherSpinFn','fortuneOxSpinFn','deepBassSyncSpawnsFn','getSessionFn'])assert.ok(ids.has(name),name);
+const log=fs.openSync(out+'/'+outputName+'-server.txt','w'),telemetry=[];const app=spawn(process.execPath,['--max-old-space-size=1024','--import','./scripts/perf/probe.mjs','.output/server/index.mjs'],{windowsHide:true,env:{...process.env,NODE_ENV:'production',HOST:'127.0.0.1',PORT:'18770',DATABASE_URL:'mysql://root:audit-local-only@127.0.0.1:19307/'+dbName,...(phase==='optimized'?{DB_POOL_LIMIT:'6',DB_POOL_QUEUE_LIMIT:'30',OPERATION_COMPRESSION:'1'}:{})},stdio:['ignore',log,log,'ipc']});app.on('message',sample=>{telemetry.push(sample);});
+const hostSamples=[];let monitor=null;const stopFile=path.resolve('audit/ph-vps-2/runtime/monitor-stop-'+Date.now());if(process.env.PERF_HOST_MONITOR==='1'&&process.platform==='win32'){const pid=Number(fs.readFileSync('audit/ph-vps-2/runtime/db.pid','utf8'));monitor=spawn('powershell.exe',['-NoProfile','-NonInteractive','-ExecutionPolicy','Bypass','-File','scripts/perf/windows-metrics.ps1','-DatabasePid',String(pid),'-StopFile',stopFile],{windowsHide:true,stdio:['ignore','pipe','ignore']});monitor.stderr?.on('data',chunk=>fs.writeFileSync(out+'/'+outputName+'-host-monitor.txt',String(chunk).slice(-4096)));let pending='';monitor.stdout.on('data',chunk=>{pending+=chunk;let end;while((end=pending.indexOf('\n'))>=0){const line=pending.slice(0,end).trim();pending=pending.slice(end+1);if(line)try{hostSamples.push(JSON.parse(line));}catch{}}});}
+const latencies=[],failures=[],scenarios=[];let stopped=false,requestCount=0,duplicateChecks=0;
+const pause=ms=>new Promise(r=>setTimeout(r,ms));const percentile=(values,p)=>{const sorted=values.toSorted((a,b)=>a-b);return sorted[Math.max(0,Math.ceil(sorted.length*p)-1)]??null;};
+async function rpc(name,data,actor,key=randomUUID(),method='POST'){
+ const start=performance.now(),headers={'content-type':'application/json',accept:'application/json','x-tsr-serverFn':'true',Origin:base,'Sec-Fetch-Site':'same-origin','Idempotency-Key':key};if(actor)headers.Cookie='mh_session='+actor.token;const payload=JSON.stringify(await toJSONAsync({data}));
+ const res=await fetch(base+'/_serverFn/'+ids.get(name)+(method==='GET'?'?payload='+encodeURIComponent(payload):''),{method,headers,body:method==='POST'?payload:undefined,signal:AbortSignal.timeout(15000)});const text=await res.text();const decoded=fromCrossJSON(JSON.parse(text),{plugins:createDefaultSerovalPlugins()});requestCount++;latencies.push({at:Date.now(),name,ms:performance.now()-start,bytes:Buffer.byteLength(text)});if(decoded?.error||!res.ok)throw Error(name+': '+(decoded?.error?.message??res.status));return decoded.result;
+}
+const status=async()=>Object.fromEntries((await db.query("SHOW GLOBAL STATUS WHERE Variable_name IN ('Threads_connected','Threads_running','Max_used_connections','Innodb_row_lock_waits','Innodb_row_lock_time','Innodb_deadlocks','Questions','Innodb_buffer_pool_reads','Innodb_buffer_pool_read_requests')"))[0].map(r=>[r.Variable_name,Number(r.Value)]));
+function hostProcesses(){
+ if(process.platform==='win32'){try{return JSON.parse(execFileSync('powershell.exe',['-NoProfile','-NonInteractive','-Command',"Get-CimInstance Win32_PerfFormattedData_PerfProc_Process | Where-Object { $_.Name -like 'mariadbd*' } | Select-Object IDProcess,WorkingSetPrivate,PercentProcessorTime,IOReadBytesPersec,IOWriteBytesPersec | ConvertTo-Json -Compress"],{encoding:'utf8',windowsHide:true,timeout:10000}).trim()||'null');}catch{return null;}}
+ try{const pid=Number(fs.readFileSync(process.env.PERF_DB_PID_FILE??'audit/ph-vps-2/runtime/db.pid','utf8'));const status=fs.readFileSync('/proc/'+pid+'/status','utf8'),io=fs.readFileSync('/proc/'+pid+'/io','utf8');return {pid,rssKiB:Number(status.match(/VmRSS:\s+(\d+)/)?.[1]),io};}catch{return null;}
+}
+try{
+ let ready=false;for(let i=0;i<120;i++){try{if((await fetch(base+'/api/health')).ok){ready=true;break;}}catch{}await pause(250);}assert.ok(ready,'app readiness');
+ const assets=fs.readdirSync('.output/public/assets').filter(f=>f.endsWith('.css')||/^index-.*\.js$/.test(f));const assetMetrics=[];for(const file of assets){const response=await fetch(base+'/assets/'+file,{headers:{'Accept-Encoding':'gzip'}});assetMetrics.push({file,rawBytes:fs.statSync('.output/public/assets/'+file).size,cacheControl:response.headers.get('cache-control'),encoding:response.headers.get('content-encoding'),wireContentLength:response.headers.get('content-length')});await response.arrayBuffer();}
+ const beforeStatus=await status(),beforeProcess=hostProcesses();
+ const seconds=Number(process.env.PERF_SECONDS??10);assert.ok(seconds>=5&&seconds<=120);
+ for(const concurrency of levels){
+  const start=Date.now(),end=start+seconds*1000,before=latencies.length,beforeFailures=failures.length,snapshot=await status();
+  await Promise.all(players.slice(0,concurrency).map(async(actor,index)=>{
+   let turn=0;await pause(index*20);
+   while(Date.now()<end&&!stopped){
+    try{
+     const game=(index+turn)%2===0?'goldenPanther':'fortuneOx',state=actor.features.get(game);let name,data,method='POST';
+     if(turn%7===0){name='getSessionFn';method='GET';}
+     else if(turn%7===1){name='getLiveWinsFn';method='GET';}
+     else if(turn%7===2){name='getPlatformStatsFn';method='GET';}
+     else if(turn%11===0){name='deepBassSyncSpawnsFn';}
+     else if(state?.inFree){name=game+'FreeSpinFn';data={sessionId:state.sessionId};}
+     else{name=game+'SpinFn';data={bet:5,ante:false};}
+     const key=randomUUID(),result=await rpc(name,data,actor,key,method);if(result?.session)actor.features.set(game,result.session);
+     if(method==='POST'&&turn%4===3){const again=await rpc(name,data,actor,key,method);assert.deepEqual(again,result);duplicateChecks++;}
+    }catch(error){failures.push({at:Date.now(),message:error.message.slice(0,400)});}
+    turn++;await pause(600+((index*173+turn*271)%900));
+    const disk=fs.statfsSync('.');const last=telemetry.at(-1);if(disk.bavail*disk.bsize<2*1024**3||os.freemem()<384*1024*1024||last?.rss>1536*1024*1024){stopped=true;failures.push({at:Date.now(),message:'Safety stop: host free memory or app RSS threshold'});}
+   }
+  }));
+  const duration=(Date.now()-start)/1000,current=latencies.slice(before),samples=telemetry.filter(x=>x.type==='perf:sample'&&x.at>=start),dbStatus=await status();
+  const result={concurrency,startAt:start,endAt:Date.now(),durationSeconds:duration,requests:current.length,rps:current.length/duration,errorCount:failures.length-beforeFailures,p50Ms:percentile(current.map(x=>x.ms),.5),p95Ms:percentile(current.map(x=>x.ms),.95),p99Ms:percentile(current.map(x=>x.ms),.99),appRssPeak:Math.max(0,...samples.map(x=>x.rss)),appCpuPeakPercentOneCore:Math.max(0,...samples.map(x=>x.cpuPercent)),eventLoopP95PeakMs:Math.max(0,...samples.map(x=>x.eventLoopP95Ms)),poolQueuePeak:Math.max(0,...samples.map(x=>x.pool?.queued??0)),poolConnectionsPeak:Math.max(0,...samples.map(x=>x.pool?.total??0)),dbStatusDelta:Object.fromEntries(['Innodb_row_lock_waits','Innodb_row_lock_time','Innodb_deadlocks','Questions'].map(key=>[key,dbStatus[key]-snapshot[key]]))};scenarios.push(result);console.log(JSON.stringify(result));if(stopped)break;
+ }
+ const [ledger]=await db.query("SELECT u.id,u.balance,COALESCE(SUM(t.amount),0) AS delta FROM users u LEFT JOIN transactions t ON t.user_id=u.id WHERE u.username LIKE ? GROUP BY u.id,u.balance",['perf_'+prefix+'_%']);assert.equal(ledger.length,50);for(const row of ledger)assert.equal(Math.round(Number(row.balance)*100),1000000+Math.round(Number(row.delta)*100));
+ const [[ops]]=await db.query('SELECT COUNT(*) AS n, AVG(OCTET_LENGTH(result)+OCTET_LENGTH(proof)) AS averageBytes, MAX(OCTET_LENGTH(result)+OCTET_LENGTH(proof)) AS maximumBytes FROM financial_operations');
+ const [[open]]=await db.query("SELECT COUNT(*) AS n FROM play_sessions WHERE status='open' AND free_spins_left>0");
+ const result={phase,databaseName:dbName,host:{platform:process.platform,node:process.version,cpu:os.cpus()[0].model,logicalCpus:os.cpus().length,totalMemory:os.totalmem(),freeMemoryAtEnd:os.freemem(),vpsEquivalent:false},settings:{secondsPerScenario:seconds,v8OldSpaceMiB:1024,operationCompression:phase==='optimized',thinkTimeMs:[600,1499]},scenarios,requestCount,duplicateChecks,failures,financialConservation:'PASS: each fixture balance equals starting cents plus exact signed ledger sum',openPaidFeaturesRetained:Number(open.n),operationStorage:{count:Number(ops.n),averageBytes:Number(ops.averageBytes),maximumBytes:Number(ops.maximumBytes)},database:{before:beforeStatus,after:await status(),processBefore:beforeProcess,processAfter:hostProcesses()},assetMetrics,telemetry,hostSamples,latencies,stopped};fs.writeFileSync(out+'/'+outputName+'-load.json',JSON.stringify(result,null,2));if(failures.length||stopped)process.exitCode=1;
+}finally{if(monitor){fs.writeFileSync(stopFile,'stop');await new Promise(resolve=>{const timer=setTimeout(()=>{monitor.kill();resolve();},5000);monitor.once('exit',()=>{clearTimeout(timer);resolve();});});}if(app.connected)app.send('shutdown');else app.kill();await Promise.race([new Promise(r=>app.once('exit',r)),pause(10000).then(()=>app.kill())]);await db.end();fs.closeSync(log);}

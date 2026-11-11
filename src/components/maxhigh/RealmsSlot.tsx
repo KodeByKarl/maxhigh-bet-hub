@@ -1,3 +1,6 @@
+import { SlotControlDeck } from "./SlotControlDeck";
+import "./realms/abyssal-pearls.css";
+import "./realms/illustrated-reels.css";
 /**
  * Realms family slot — one component for all 50 titles (cluster-pay tumble).
  * The server resolves every spin; this file plays back the animation script.
@@ -41,7 +44,7 @@ import {
 } from "./realms/playbackHelpers";
 import { BetSelectModal } from "./realms/BetSelectModal";
 import { buildBuyScatterIntroBoard, initialBoard } from "./realms/engine/gridState";
-import { BET_STEPS, BUY_FS_START_BET } from "./realms/engine/paytable";
+import { BET_STEPS } from "./realms/engine/paytable";
 import { createEngineCtx, type BoardCell, type SpinScript } from "./realms/engine/types";
 import { WinCelebration } from "./realms/WinCelebration";
 import { FreeSpinsCongrats } from "./realms/FreeSpinsCongrats";
@@ -52,6 +55,8 @@ import { AutoSpinModal, type AutoSpinOptions } from "./realms/AutoSpinModal";
 import { ReelGrid, type ReelVisuals } from "./realms/ReelGrid";
 import type { ReelPhase, SymbolArt } from "./realms/ReelCell";
 import { realmsCssVars, realmsTheme } from "./realms/theme";
+import { freeSpinsProgress } from "./bonus/freeSpinsProgress";
+import { BUY_BONUS_FREE_SPINS } from "@/lib/buy-bonus";
 
 type Phase = ReelPhase;
 type Slot = BoardCell | null;
@@ -143,6 +148,9 @@ function RealmsTable({ def }: { def: RealmsGameDef }) {
   const [turbo, setTurbo] = useState(false);
   const [lastWin, setLastWin] = useState(0);
   const [freeSpins, setFreeSpins] = useState(0);
+  const [fsPlayed, setFsPlayed] = useState(0);
+  /** True from the confirmed purchase until the Free Spins announcement is dismissed: the HUD counter stays hidden meanwhile. */
+  const [buyPresenting, setBuyPresenting] = useState(false);
   const [inFree, setInFree] = useState(false);
   const [fsSessionWin, setFsSessionWin] = useState(0);
   const [dropTotal, setDropTotal] = useState(0);
@@ -164,7 +172,7 @@ function RealmsTable({ def }: { def: RealmsGameDef }) {
     [cfg, gameId],
   );
   // Panther shows the price of one spin at the starting bet (₱1, quantity 1).
-  const buyCost = +(BUY_FS_START_BET * buyPricePerSpin(1)).toFixed(2);
+  const buyCost = +(bet * buyPricePerSpin(BUY_BONUS_FREE_SPINS) * BUY_BONUS_FREE_SPINS).toFixed(2);
 
   const busyRef = useRef(false);
   const skipRef = useRef(false);
@@ -333,9 +341,12 @@ function RealmsTable({ def }: { def: RealmsGameDef }) {
       setWinningKeys(EMPTY_SET);
       setPhase("idle");
       setTriggerModalCount(fsCount);
+      // the announcement closes by itself so the first free spin starts automatically (a tap still skips ahead)
+      const autoClose = window.setTimeout(dismissTriggerModal, turboRef.current ? 900 : 2400);
       await waitForTriggerModal();
+      window.clearTimeout(autoClose);
     },
-    [audio, cells, cfg, def.board, wait, waitForTriggerModal],
+    [audio, cells, cfg, def.board, wait, dismissTriggerModal, waitForTriggerModal],
   );
 
   useEffect(() => {
@@ -370,6 +381,7 @@ function RealmsTable({ def }: { def: RealmsGameDef }) {
         freeSpinsRef.current = session.freeSpinsLeft;
         fsSessionRef.current = session.fsSessionWin;
         fsSpinsPlayedRef.current = session.fsSpinsPlayed;
+        setFsPlayed(session.fsSpinsPlayed);
         if (session.bet > 0) setBet(session.bet);
         setAnte(session.ante);
         setFsPaused(false);
@@ -413,6 +425,7 @@ function RealmsTable({ def }: { def: RealmsGameDef }) {
       freeSpinsRef.current = session.freeSpinsLeft;
       fsSessionRef.current = session.fsSessionWin;
       fsSpinsPlayedRef.current = session.fsSpinsPlayed;
+      setFsPlayed(session.fsSpinsPlayed);
     },
     [],
   );
@@ -553,6 +566,7 @@ function RealmsTable({ def }: { def: RealmsGameDef }) {
   const dismissFsSummary = useCallback(() => {
     setFsSummary(null);
     fsSpinsPlayedRef.current = 0;
+    setFsPlayed(0);
     audio.endFreespins();
   }, [audio]);
 
@@ -704,6 +718,7 @@ function RealmsTable({ def }: { def: RealmsGameDef }) {
           setLastWin(settled.session.fsSessionWin || settled.fsPayout?.amount || 0);
           fsSessionRef.current = settled.session.fsSessionWin;
           fsSpinsPlayedRef.current = settled.session.fsSpinsPlayed;
+          setFsPlayed(settled.session.fsSpinsPlayed);
 
           if (script.retriggerSpins > 0 && settled.session.inFree) {
             audio.playScatterTrigger();
@@ -822,6 +837,8 @@ function RealmsTable({ def }: { def: RealmsGameDef }) {
       }
 
       setBuyOpen(false);
+
+      setBuyPresenting(true);
       setBet(buyBet);
       try {
         const bought = await realmsBuyFeatureFn({
@@ -842,6 +859,7 @@ function RealmsTable({ def }: { def: RealmsGameDef }) {
         } catch {
           dismissTriggerModal();
         } finally {
+          setBuyPresenting(false);
           if (gen === playbackGen.current) {
             busyRef.current = false;
             if (mountedRef.current) setPhase("idle");
@@ -850,6 +868,7 @@ function RealmsTable({ def }: { def: RealmsGameDef }) {
         // First free spin starts via the auto-chain once the modal closes.
       } catch (err) {
         toast.error(err instanceof Error ? err.message : "Buy feature failed");
+        setBuyPresenting(false);
       }
     },
     [
@@ -966,6 +985,7 @@ function RealmsTable({ def }: { def: RealmsGameDef }) {
     freeSpins,
     lastWin,
     triggerModalCount,
+    buyPresenting,
     fsPaused,
     turbo,
   ]);
@@ -977,6 +997,7 @@ function RealmsTable({ def }: { def: RealmsGameDef }) {
     <div
       className="relative flex h-full min-h-0 w-full max-w-[100vw] flex-col overflow-hidden select-none"
       style={themeVars}
+      data-realms-game={gameId}
     >
       <img
         src={theme.assets.backdrop}
@@ -1064,274 +1085,64 @@ function RealmsTable({ def }: { def: RealmsGameDef }) {
           </div>
 
           {/* Buy feature — compact on phones so the spin row stays on-screen */}
-          {!inFree && (
-            <div className="mt-1 flex shrink-0 justify-center gap-1.5 sm:mt-2 sm:gap-3">
-              <button
-                type="button"
-                disabled={busy}
-                onClick={openBuyFeature}
-                className="min-h-9 rounded-xl border-2 bg-black/70 px-3 py-1.5 text-[10px] font-black uppercase tracking-wide disabled:opacity-40 sm:min-h-10 sm:px-4 sm:py-2 sm:text-[11px]"
-                style={{
-                  borderColor: "var(--p-accent)",
-                  color: "var(--p-accent-soft)",
-                }}
-              >
-                Buy FS {formatMoneyCompact(buyCost)}
-              </button>
-            </div>
-          )}
 
           {/* HUD — compact on Android so Spin sits above the system nav */}
-          <div className="mt-1 w-full min-w-0 shrink-0 sm:mt-3">
-            <div className="mb-1.5 grid grid-cols-3 gap-1 sm:mb-2 sm:gap-2">
-              <div
-                className="min-w-0 rounded-xl border bg-black/75 px-1 py-1.5 text-center sm:px-2 sm:py-2.5"
-                style={{ borderColor: "var(--p-hud-border)" }}
-              >
-                <div
-                  className="text-[9px] font-bold uppercase tracking-wider sm:text-[11px]"
-                  style={{ color: "var(--p-hud-label)" }}
-                >
-                  Bet
-                </div>
-                <div
-                  className="break-all text-[11px] font-black tabular-nums leading-tight sm:text-base"
-                  style={{ color: "var(--p-hud-value)" }}
-                >
-                  {formatMoney(totalBet)}
-                </div>
-              </div>
-              <div
-                className="min-w-0 rounded-xl border px-1 py-1.5 text-center sm:px-2 sm:py-2.5"
-                style={{
-                  borderColor: "var(--p-win-border)",
-                  background: "linear-gradient(180deg, var(--p-win-from) 0%, var(--p-win-to) 100%)",
-                }}
-              >
-                <div
-                  className="text-[9px] font-bold uppercase tracking-wider sm:text-[11px]"
-                  style={{ color: "var(--p-win-label)" }}
-                >
-                  Win
-                </div>
-                <div
-                  className="break-all text-[11px] font-black tabular-nums leading-tight sm:text-base"
-                  style={{ color: "var(--p-win-value)" }}
-                  title={displayWin > 0 ? formatMoney(displayWin) : undefined}
-                >
-                  {displayWin > 0 ? formatMoney(displayWin) : "—"}
-                </div>
-              </div>
-              <div
-                className="min-w-0 rounded-xl border bg-black/75 px-1 py-1.5 text-center sm:px-2 sm:py-2.5"
-                style={{ borderColor: "var(--p-hud-border)" }}
-              >
-                <div
-                  className="text-[9px] font-bold uppercase tracking-wider sm:text-[11px]"
-                  style={{ color: "var(--p-hud-label)" }}
-                >
-                  Balance
-                </div>
-                <div
-                  className="break-all text-[11px] font-black tabular-nums leading-tight sm:text-base"
-                  style={{ color: "var(--p-hud-value)" }}
-                  title={formatMoney(balance)}
-                >
-                  {formatMoney(balance)}
-                </div>
-              </div>
-            </div>
-
-            <div
-              className="flex min-w-0 items-center gap-1 rounded-2xl border bg-black/80 px-1 py-1.5 backdrop-blur-md sm:gap-3 sm:px-3 sm:py-2.5"
-              style={{ borderColor: "var(--p-hud-border)" }}
-            >
-              <button
-                type="button"
-                onClick={() => {
-                  audio.playUiClick();
-                  setInfoOpen(true);
-                }}
-                className="grid size-10 shrink-0 place-items-center rounded-xl border border-white/20 bg-neutral-800 text-white sm:size-11"
-                aria-label="Paytable Info"
-              >
-                <Info size={20} />
-              </button>
-
-              <div className="flex min-w-0 flex-1 items-center justify-center gap-0.5 rounded-xl border border-white/15 bg-neutral-900/90 px-0.5 py-0.5 sm:gap-1.5 sm:px-1.5 sm:py-1">
-                <button
-                  type="button"
-                  disabled={busy}
-                  onClick={() => nudgeBet(-1)}
-                  className="grid size-9 shrink-0 place-items-center rounded-lg bg-neutral-700 text-lg font-black text-white disabled:opacity-40 sm:size-10 sm:text-xl"
-                  aria-label="Decrease Bet"
-                >
-                  −
-                </button>
-                <button
-                  type="button"
-                  disabled={busy}
-                  onClick={() => setBetModalOpen(true)}
-                  className="min-w-0 flex-1 px-0.5 text-center disabled:opacity-40 sm:min-w-[4.25rem] sm:flex-none sm:px-1"
-                  aria-label="Select Bet Amount"
-                >
-                  <div className="text-[9px] font-bold uppercase tracking-wider text-white/55 sm:text-[10px]">
-                    Bet
-                  </div>
-                  <div
-                    className="truncate text-xs font-black tabular-nums sm:text-base"
-                    style={{ color: "var(--p-win-value)" }}
-                  >
-                    {formatMoney(totalBet)}
-                  </div>
-                </button>
-                <button
-                  type="button"
-                  disabled={busy}
-                  onClick={() => nudgeBet(1)}
-                  className="grid size-9 shrink-0 place-items-center rounded-lg bg-neutral-700 text-lg font-black text-white disabled:opacity-40 sm:size-10 sm:text-xl"
-                  aria-label="Increase Bet"
-                >
-                  +
-                </button>
-              </div>
-
-              <button
-                type="button"
-                onClick={() => setTurbo((v) => !v)}
-                className={cn(
-                  "grid size-10 shrink-0 place-items-center rounded-xl border sm:size-11",
-                  !turbo && "border-white/20 bg-neutral-800 text-white/70",
-                )}
-                style={
-                  turbo
-                    ? {
-                        borderColor: "var(--p-accent)",
-                        background: "color-mix(in srgb, var(--p-accent) 25%, transparent)",
-                        color: "var(--p-win-value)",
-                      }
-                    : undefined
-                }
-                aria-label="Turbo Fast Mode"
-              >
-                <FastForward size={18} />
-              </button>
-
-              <button
-                type="button"
-                disabled={!busy && !autoSpin && inFree && freeSpins === 0}
-                onClick={() => {
-                  if (busy) {
-                    skipRef.current = true;
-                    if (inFree || freeSpins > 0) setFsPaused(true);
-                  } else if (autoSpin) {
-                    setAutoSpin(false);
-                    setAutoSpinConfig(null);
-                  } else if (inFree || freeSpins > 0) {
-                    setFsPaused(false);
-                    audio.playUiClick();
-                    void spin(true);
-                  } else {
-                    audio.playUiClick();
-                    void spin(false);
-                  }
-                }}
-                className="relative grid size-14 shrink-0 place-items-center rounded-full border-[3px] active:scale-95 sm:size-16"
-                style={{
-                  borderColor: "var(--p-accent-soft)",
-                  background:
-                    "linear-gradient(180deg, var(--p-spin-from) 0%, var(--p-spin-mid) 50%, var(--p-spin-to) 100%)",
-                  color: "var(--p-accent-deep)",
-                  boxShadow: "0 6px 22px var(--p-spin-shadow)",
-                }}
-                aria-label="Spin"
-              >
-                <div className="absolute inset-1 flex items-center justify-center rounded-full bg-gradient-to-b from-neutral-900 to-black shadow-inner sm:inset-1.5">
-                  {inFree ? (
-                    <div className="flex flex-col items-center -space-y-0.5">
-                      <span
-                        className="text-xl font-black tabular-nums leading-none sm:text-2xl"
-                        style={{ color: "var(--p-win-value)" }}
-                      >
-                        {freeSpins}
-                      </span>
-                      <span
-                        className="text-[8px] font-black uppercase tracking-widest sm:text-[9px]"
-                        style={{ color: "var(--p-accent)" }}
-                      >
-                        Spins
-                      </span>
-                    </div>
-                  ) : autoSpin ? (
-                    <div className="flex flex-col items-center -space-y-0.5">
-                      <span
-                        className="text-xl font-black tabular-nums leading-none sm:text-2xl"
-                        style={{ color: "var(--p-win-value)" }}
-                      >
-                        {remainingAutoSpins === "infinity" ? "∞" : remainingAutoSpins}
-                      </span>
-                      <span
-                        className="text-[8px] font-black uppercase tracking-widest sm:text-[9px]"
-                        style={{ color: "var(--p-accent)" }}
-                      >
-                        Auto
-                      </span>
-                    </div>
-                  ) : busy ? (
-                    <RotateCw
-                      size={24}
-                      className="animate-spin sm:size-7"
-                      style={{ color: "var(--p-win-value)" }}
-                    />
-                  ) : (
-                    <RotateCw
-                      size={24}
-                      className="sm:size-7"
-                      style={{ color: "var(--p-win-value)" }}
-                    />
-                  )}
-                </div>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => {
-                  if (busy || autoSpin || inFree) {
-                    setAutoSpin(false);
-                    setAutoSpinConfig(null);
-                    skipRef.current = true;
-                    if (inFree) setFsPaused(true);
-                  } else {
-                    setAutoSpinModalOpen(true);
-                  }
-                }}
-                className={cn(
-                  "grid size-10 shrink-0 place-items-center rounded-xl border sm:size-11",
-                  busy || autoSpin || (inFree && !fsPaused)
-                    ? "border-red-500 bg-red-600 text-white shadow-[0_0_14px_rgba(239,68,68,0.85)]"
-                    : "border-white/20 bg-neutral-800 text-white/70",
-                )}
-                aria-label={busy || autoSpin || inFree ? "Stop Game" : "Auto Spin Settings"}
-              >
-                {busy || autoSpin || (inFree && !fsPaused) ? (
-                  <Square size={16} className="fill-white text-white" />
-                ) : (
-                  <RotateCcw size={18} />
-                )}
-              </button>
-            </div>
-
-            {busy && displayWin <= 0 && (
-              <p className="mt-1 hidden text-center text-[10px] font-bold uppercase tracking-[0.2em] text-amber-200/70 sm:mt-1.5 sm:block sm:text-xs">
-                Spinning…
-              </p>
-            )}
-            {!busy && displayWin <= 0 && !inFree && (
-              <p className="mt-1 hidden text-center text-[10px] font-bold uppercase tracking-[0.2em] text-amber-200/55 sm:mt-1.5 sm:block sm:text-xs">
-                Good luck
-              </p>
-            )}
-          </div>
+          <SlotControlDeck
+            gameId={gameId}
+            bet={totalBet}
+            win={displayWin}
+            balance={balance}
+            busy={busy}
+            turbo={turbo}
+            autoSpin={autoSpin}
+            inFree={inFree && triggerModalCount == null && !buyPresenting}
+            freeSpins={freeSpins}
+            freeSpinsProgress={
+              inFree && triggerModalCount == null && !buyPresenting
+                ? freeSpinsProgress(fsPlayed, freeSpins, busy)
+                : null
+            }
+            freeSpinsPaused={fsPaused}
+            autoRemaining={remainingAutoSpins}
+            spinDisabled={!busy && !autoSpin && inFree && freeSpins === 0}
+            onSpin={() => {
+              if (busy) {
+                skipRef.current = true;
+                if (inFree || freeSpins > 0) setFsPaused(true);
+              } else if (autoSpin) {
+                setAutoSpin(false);
+                setAutoSpinConfig(null);
+              } else if (inFree || freeSpins > 0) {
+                setFsPaused(false);
+                audio.playUiClick();
+                void spin(true);
+              } else {
+                audio.playUiClick();
+                void spin(false);
+              }
+            }}
+            onInfo={() => {
+              audio.playUiClick();
+              setInfoOpen(true);
+            }}
+            onDecreaseBet={() => nudgeBet(-1)}
+            onIncreaseBet={() => nudgeBet(1)}
+            onSelectBet={() => setBetModalOpen(true)}
+            onTurbo={() => setTurbo((v) => !v)}
+            onAuto={() => {
+              if (busy || autoSpin || inFree) {
+                setAutoSpin(false);
+                setAutoSpinConfig(null);
+                skipRef.current = true;
+                if (inFree) setFsPaused(true);
+              } else {
+                setAutoSpinModalOpen(true);
+              }
+            }}
+            buyFeature={
+              !inFree ? { price: buyCost, disabled: busy, onClick: openBuyFeature } : undefined
+            }
+          />
         </div>
       </div>
 
@@ -1380,8 +1191,8 @@ function RealmsTable({ def }: { def: RealmsGameDef }) {
         {buyOpen && (
           <BuyFeatureModal
             balance={balance}
+            bet={bet}
             pricePerSpin={buyPricePerSpin}
-            maxQuantity={realmsBuyMaxQuantity(cfg)}
             scatterSrc={art.scatter.src}
             onCancel={() => setBuyOpen(false)}
             onConfirm={(buyBet, quantity) => {

@@ -1,0 +1,7 @@
+[Unit]
+Description=MaxHigh resource and disk headroom checks
+[Service]
+Type=oneshot
+User=maxhigh
+WorkingDirectory=/srv/maxhigh
+ExecStart=/usr/bin/env node /srv/maxhigh/deploy/monitor.mjs

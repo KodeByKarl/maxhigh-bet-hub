@@ -32,6 +32,7 @@ import { Route as AdminAuditRouteImport } from './routes/admin/audit'
 import { Route as AdminLoginRouteImport } from './routes/admin/login'
 import { Route as AdminSupportRouteImport } from './routes/admin/support'
 import { Route as AdminUsersRouteImport } from './routes/admin/users'
+import { Route as ApiHealthRouteImport } from './routes/api/health'
 import { Route as SuperadminIndexRouteImport } from './routes/superadmin/index'
 import { Route as SuperadminAdminsRouteImport } from './routes/superadmin/admins'
 import { Route as SuperadminAuditRouteImport } from './routes/superadmin/audit'
@@ -163,6 +164,11 @@ const AdminUsersRoute = AdminUsersRouteImport.update({
   path: '/users',
   getParentRoute: () => AdminRoute,
 } as any)
+const ApiHealthRoute = ApiHealthRouteImport.update({
+  id: '/api/health',
+  path: '/api/health',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const SuperadminIndexRoute = SuperadminIndexRouteImport.update({
   id: '/',
   path: '/',
@@ -262,6 +268,7 @@ export interface FileRoutesByFullPath {
   '/admin/login': typeof AdminLoginRoute
   '/admin/support': typeof AdminSupportRoute
   '/admin/users': typeof AdminUsersRoute
+  '/api/health': typeof ApiHealthRoute
   '/superadmin/admins': typeof SuperadminAdminsRoute
   '/superadmin/audit': typeof SuperadminAuditRoute
   '/superadmin/games': typeof SuperadminGamesRoute
@@ -300,6 +307,7 @@ export interface FileRoutesByTo {
   '/admin/login': typeof AdminLoginRoute
   '/admin/support': typeof AdminSupportRoute
   '/admin/users': typeof AdminUsersRoute
+  '/api/health': typeof ApiHealthRoute
   '/superadmin/admins': typeof SuperadminAdminsRoute
   '/superadmin/audit': typeof SuperadminAuditRoute
   '/superadmin/games': typeof SuperadminGamesRoute
@@ -341,6 +349,7 @@ export interface FileRoutesById {
   '/admin/login': typeof AdminLoginRoute
   '/admin/support': typeof AdminSupportRoute
   '/admin/users': typeof AdminUsersRoute
+  '/api/health': typeof ApiHealthRoute
   '/superadmin/admins': typeof SuperadminAdminsRoute
   '/superadmin/audit': typeof SuperadminAuditRoute
   '/superadmin/games': typeof SuperadminGamesRoute
@@ -383,6 +392,7 @@ export interface FileRouteTypes {
     | '/admin/login'
     | '/admin/support'
     | '/admin/users'
+    | '/api/health'
     | '/superadmin/admins'
     | '/superadmin/audit'
     | '/superadmin/games'
@@ -421,6 +431,7 @@ export interface FileRouteTypes {
     | '/admin/login'
     | '/admin/support'
     | '/admin/users'
+    | '/api/health'
     | '/superadmin/admins'
     | '/superadmin/audit'
     | '/superadmin/games'
@@ -461,6 +472,7 @@ export interface FileRouteTypes {
     | '/admin/login'
     | '/admin/support'
     | '/admin/users'
+    | '/api/health'
     | '/superadmin/admins'
     | '/superadmin/audit'
     | '/superadmin/games'
@@ -498,6 +510,7 @@ export interface RootRouteChildren {
   SupportRoute: typeof SupportRoute
   VipRoute: typeof VipRoute
   WeeklyRaceRoute: typeof WeeklyRaceRoute
+  ApiHealthRoute: typeof ApiHealthRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -662,6 +675,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/admin/users'
       preLoaderRoute: typeof AdminUsersRouteImport
       parentRoute: typeof AdminRoute
+    }
+    '/api/health': {
+      id: '/api/health'
+      path: '/api/health'
+      fullPath: '/api/health'
+      preLoaderRoute: typeof ApiHealthRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/superadmin/': {
       id: '/superadmin/'
@@ -848,6 +868,7 @@ const rootRouteChildren: RootRouteChildren = {
   SupportRoute: SupportRoute,
   VipRoute: VipRoute,
   WeeklyRaceRoute: WeeklyRaceRoute,
+  ApiHealthRoute: ApiHealthRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

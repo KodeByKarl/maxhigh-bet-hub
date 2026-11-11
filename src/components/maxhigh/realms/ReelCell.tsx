@@ -74,11 +74,12 @@ export const ReelCell = memo(function ReelCell({
   return (
     <div
       className={cn(
-        "relative min-h-0 min-w-0 overflow-hidden rounded-[20%] isolate",
+        "realms-reel-cell relative min-h-0 min-w-0 overflow-hidden rounded-[20%] isolate",
         "border-2 shadow-[0_4px_14px_rgba(0,0,0,0.4)]",
         isScatter || isWinLit ? "z-[3]" : isInitialDrop || isGravityDrop ? "z-[1]" : "z-0",
         isWinLit && "scale-[1.03]",
       )}
+      data-winning={isWinLit}
       style={{
         borderColor: isWinLit
           ? "var(--p-accent-soft)"

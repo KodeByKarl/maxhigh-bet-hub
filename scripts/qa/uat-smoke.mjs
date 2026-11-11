@@ -8,7 +8,7 @@ const say = (k, v) => { report.push([k, v]); console.log(`${k.padEnd(34)} ${type
 
 const h = await health();
 say("health", h);
-if (!h.ok || !String(h.release).startsWith("2294d79")) throw new Error("UAT health/release unexpected - stopping");
+if (!h.ok || !String(h.release).startsWith(process.env.UAT_EXPECT_RELEASE ?? "2294d79")) throw new Error("UAT health/release unexpected - stopping");
 say("server functions in local build", knownFunctions().length);
 
 const c = new Client();

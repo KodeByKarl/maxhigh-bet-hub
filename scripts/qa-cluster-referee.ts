@@ -6,7 +6,8 @@
  *   npx tsx scripts/qa-cluster-referee.ts            (all 80)
  *   QA_SPINS=20000 npx tsx scripts/qa-cluster-referee.ts jade-jaguar
  */
-import { LOBBY_VISIBLE_GAME_IDS } from "../src/lib/playable-games";
+import { slotGames } from "../src/lib/games";
+const LOBBY_VISIBLE_GAME_IDS = slotGames.map(game => game.id);
 import { REALMS_GAMES, realmsDefaultConfig } from "../src/lib/realms";
 import { resolveSpin as resolveRealms } from "../src/components/maxhigh/realms/engine/spinResolver";
 import { createEngineCtx } from "../src/components/maxhigh/realms/engine/types";
@@ -212,7 +213,12 @@ function realmsGame(id: string): Game {
 
 const only = process.argv.slice(2);
 const SPINS = Number(process.env.QA_SPINS ?? 6000);
-const ids = [...LOBBY_VISIBLE_GAME_IDS, ...REALMS_GAMES.map((g) => g.id)].filter(
+const clusterFiles = new Set<string>();
+for (const id of LOBBY_VISIBLE_GAME_IDS) {
+  const filename = new URL(`../src/components/maxhigh/${id}/spinResolver.ts`, import.meta.url);
+  if ((await import("node:fs")).existsSync(filename) && (await import("node:fs")).readFileSync(filename,"utf8").includes("export function resolveSpin(")) clusterFiles.add(id);
+}
+const ids = [...new Set([...clusterFiles, ...REALMS_GAMES.map((g) => g.id)])].filter(
   (id) => !only.length || only.includes(id),
 );
 let bad = 0;

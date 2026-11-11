@@ -1,6 +1,8 @@
 import { lazy, Suspense, useEffect, useState } from "react";
 import { createPortal } from "react-dom";
-import { Star, Play, Heart, Share2 } from "lucide-react";
+import { Star, Play, Heart, Share2, Lock } from "lucide-react";
+import { useAccessStatus } from "@/lib/useAccessStatus";
+import { useOverlayBack } from "@/lib/useOverlayBack";
 import {
   Dialog,
   DialogContent,
@@ -12,6 +14,9 @@ import type { SlotGame } from "@/lib/games";
 import { useAuth } from "@/lib/auth";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { GameLoadingScreen } from "./GameLoadingScreen";
+import { GAME_LOADING_THEMES } from "@/lib/game-loading-themes";
+import { GameBootBoundary } from "./GameBootBoundary";
 
 const GamePlayModal = lazy(() =>
   import("./GamePlayModal").then((m) => ({ default: m.GamePlayModal })),
@@ -41,30 +46,50 @@ function Stars({ rating }: { rating: number }) {
   );
 }
 
-function PlayBootPlate() {
+function PlayBootPlate({
+  game,
+  onClose,
+  error = false,
+}: {
+  game: SlotGame;
+  onClose: () => void;
+  error?: boolean;
+}) {
   if (typeof document === "undefined") return null;
   return createPortal(
     <div
       className="fixed inset-0 z-[9998] bg-[#0A0912] animate-[loader-fade_0.28s_ease-out]"
-      aria-hidden
-    />,
+      role="dialog"
+      aria-modal="true"
+      aria-label={`Opening ${game.name}`}
+    >
+      {GAME_LOADING_THEMES[game.id] && (
+        <GameLoadingScreen game={game} error={error} onClose={onClose} />
+      )}
+    </div>,
     document.body,
   );
 }
 
 export function GameModal({ game, open, onOpenChange }: Props) {
   const [playing, setPlaying] = useState(false);
+  const [shellError, setShellError] = useState(false);
   const { requireAuth } = useAuth();
+  const access = useAccessStatus();
+  // Back closes this info dialog before leaving the page.
+  useOverlayBack(open && !playing && !!game, () => onOpenChange(false));
 
   // Prefetch the play shell while the info dialog is open.
   useEffect(() => {
     if (!open) return;
-    void import("./GamePlayModal");
+    void import("./GamePlayModal").catch(() => undefined);
   }, [open]);
 
   if (!game) return null;
 
   function handlePlay() {
+    // Display guard only; the server refuses every wager on a locked game regardless.
+    if (game && access.isLocked(game.id)) return;
     if (!requireAuth()) {
       toast.message("Log in required", {
         description: "Sign in to play MaxHigh games.",
@@ -72,6 +97,12 @@ export function GameModal({ game, open, onOpenChange }: Props) {
       return;
     }
     setPlaying(true);
+  }
+
+  function closePlay() {
+    setPlaying(false);
+    setShellError(false);
+    onOpenChange(false);
   }
 
   const stats = [
@@ -178,14 +209,24 @@ export function GameModal({ game, open, onOpenChange }: Props) {
           {/* Sticky actions — always reachable on short phones */}
           <div className="shrink-0 border-t border-border/60 bg-panel/95 px-3.5 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-2.5 backdrop-blur-md sm:px-6 sm:pb-5 sm:pt-3 max-[380px]:px-3">
             <div className="flex items-center gap-2">
-              <button
-                type="button"
-                onClick={handlePlay}
-                className="inline-flex h-11 min-w-0 flex-1 items-center justify-center gap-2 rounded-full bg-primary px-4 text-xs font-bold uppercase tracking-wider text-primary-foreground transition-colors hover:bg-primary/90 active:scale-[0.98] sm:h-12 sm:flex-none sm:px-6 sm:text-sm"
-              >
-                <Play size={15} fill="currentColor" />
-                Play Now
-              </button>
+              {game && access.isLocked(game.id) ? (
+                <div
+                  role="status"
+                  className="flex min-w-0 flex-1 items-center gap-2 rounded-2xl border border-border bg-muted px-3 py-2 text-xs font-semibold text-foreground sm:text-sm"
+                >
+                  <Lock size={16} className="shrink-0" aria-hidden />
+                  <span>{access.message}</span>
+                </div>
+              ) : (
+                <button
+                  type="button"
+                  onClick={handlePlay}
+                  className="inline-flex h-11 min-w-0 flex-1 items-center justify-center gap-2 rounded-full bg-primary px-4 text-xs font-bold uppercase tracking-wider text-primary-foreground transition-colors hover:bg-primary/90 active:scale-[0.98] sm:h-12 sm:flex-none sm:px-6 sm:text-sm"
+                >
+                  <Play size={15} fill="currentColor" />
+                  Play Now
+                </button>
+              )}
               <button
                 type="button"
                 className="grid size-11 shrink-0 place-items-center rounded-full border border-border bg-muted text-foreground hover:bg-panel-hover sm:size-12"
@@ -205,17 +246,21 @@ export function GameModal({ game, open, onOpenChange }: Props) {
         </DialogContent>
       </Dialog>
 
-      {playing ? (
-        <Suspense fallback={<PlayBootPlate />}>
-          <GamePlayModal
-            game={game}
-            open={playing}
-            onOpenChange={(next) => {
-              setPlaying(next);
-              if (!next) onOpenChange(false);
-            }}
-          />
-        </Suspense>
+      {playing && shellError ? (
+        <PlayBootPlate game={game} error onClose={closePlay} />
+      ) : playing ? (
+        <GameBootBoundary onError={() => setShellError(true)}>
+          <Suspense fallback={<PlayBootPlate game={game} onClose={closePlay} />}>
+            <GamePlayModal
+              game={game}
+              open={playing}
+              onOpenChange={(next) => {
+                setPlaying(next);
+                if (!next) onOpenChange(false);
+              }}
+            />
+          </Suspense>
+        </GameBootBoundary>
       ) : null}
     </>
   );

@@ -1,3 +1,4 @@
+import { gameRandom, hasRoundRandom } from "@/lib/game-random";
 /**
  * Realms engine types. The engine is pure: every call receives a
  * RealmsEngineCtx (config + board + rng) instead of reading module globals,
@@ -64,7 +65,7 @@ export type RealmsEngineCtx = {
   rows: number;
   cells: number;
   syms: CellSym[];
-  /** Uniform [0, 1). Math.random in play; seeded in simulation. */
+  /** Uniform [0, 1). gameRandom in play; seeded in simulation. */
   rng: () => number;
   /** Monotonic key source for animation identity. */
   nextKey: () => string;
@@ -73,11 +74,11 @@ export type RealmsEngineCtx = {
 export function createEngineCtx(
   cfg: RealmsConfig,
   board: BoardShape,
-  rng: () => number = Math.random,
+  rng: () => number = gameRandom,
 ): RealmsEngineCtx {
   let seq = 0;
   // Per-spin prefix keeps animation keys unique across spins without global state.
-  const token = Math.random().toString(36).slice(2, 8);
+  const token = gameRandom().toString(36).slice(2, 8);
   return {
     cfg,
     cols: board.cols,

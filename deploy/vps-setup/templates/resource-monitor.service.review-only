@@ -1,0 +1,16 @@
+# FUTURE REVIEW ONLY; replace the root-owned control snapshot path before installing.
+[Unit]
+Description=MaxHigh private staging resource check
+
+[Service]
+Type=oneshot
+User=root
+ExecStart=/usr/bin/python3 /REVIEWED_ROOT_CONTROL_SNAPSHOT/monitor.py --approve MONITOR
+NoNewPrivileges=yes
+ProtectHome=yes
+ProtectSystem=strict
+PrivateTmp=yes
+MemoryMax=128M
+CPUQuota=20%
+# Do not copy this sandbox unchanged if control snapshot is under /root:
+# ProtectHome would hide it. Install reviewed immutable controls under /usr/local/libexec.

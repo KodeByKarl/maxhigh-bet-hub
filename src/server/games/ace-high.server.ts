@@ -1,3 +1,4 @@
+import { recordRoundConfig } from "../round-random.server";
 /**
  * Ace High — server-authoritative 2-card deal + auto-War settlement.
  * Client never decides payouts. Stake debited first; credits use basePayoutMult (2 = even money).
@@ -34,7 +35,7 @@ export function clearAceHighEngineCache() {
 
 async function loadEngineConfig(): Promise<AceHighConfig> {
   const now = Date.now();
-  if (cachedConfig && now - cachedConfig.time < 30_000) return cachedConfig.cfg;
+  if (cachedConfig && now - cachedConfig.time < 30_000) return recordRoundConfig(cachedConfig.cfg);
   const db = getDb();
   try {
     const rows = await db
@@ -45,11 +46,9 @@ async function loadEngineConfig(): Promise<AceHighConfig> {
     const raw = rows[0]?.engineConfig;
     const cfg = normalizeAceHighConfig(raw ? (JSON.parse(raw) as unknown) : null);
     cachedConfig = { cfg, time: now };
-    return cfg;
+    return recordRoundConfig(cfg);
   } catch {
-    const cfg = normalizeAceHighConfig(null);
-    cachedConfig = { cfg, time: now };
-    return cfg;
+    throw new Error("Game configuration unavailable");
   }
 }
 

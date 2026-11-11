@@ -1,3 +1,4 @@
+import { startVisiblePolling } from "@/lib/visible-poller";
 import { useEffect, useState } from "react";
 import { Trophy, Flame, Users, Coins } from "lucide-react";
 import { getPlatformStatsFn } from "@/functions/api";
@@ -23,6 +24,7 @@ export function StatsBar() {
     let cancelled = false;
 
     const load = async () => {
+      if (document.hidden) return;
       try {
         const s = await getPlatformStatsFn();
         if (cancelled) return;
@@ -44,11 +46,10 @@ export function StatsBar() {
       }
     };
 
-    void load();
-    const id = window.setInterval(load, 8000);
+    const stopPolling = startVisiblePolling(load, 30000);
     return () => {
       cancelled = true;
-      window.clearInterval(id);
+      stopPolling();
     };
   }, []);
 

@@ -1,3 +1,4 @@
+import { operationIdentity } from "@/lib/operation-identity";
 /**
  * Three Card Poker client RPC bridge (createServerFn).
  * Player deal / play / fold / session restore + public engine config.
@@ -16,30 +17,57 @@ const sessionSchema = z.object({
 });
 
 export const threeCardPokerDealFn = createServerFn({ method: "POST" })
+  .middleware([operationIdentity])
   .validator(dealSchema)
   .handler(async ({ data }) => {
-    const { threeCardPokerPaidDeal } = await import("../server/games/threecardpoker.server");
-    return JSON.parse(JSON.stringify(await threeCardPokerPaidDeal(data))) as Awaited<
-      ReturnType<typeof threeCardPokerPaidDeal>
-    >;
+    const { withFinancialOperation } = await import("../server/operation.server");
+    return withFinancialOperation(
+      "threeCardPokerDealFn",
+      data,
+      async () => {
+        const { threeCardPokerPaidDeal } = await import("../server/games/threecardpoker.server");
+        return JSON.parse(JSON.stringify(await threeCardPokerPaidDeal(data))) as Awaited<
+          ReturnType<typeof threeCardPokerPaidDeal>
+        >;
+      },
+      "threecardpoker",
+    );
   });
 
 export const threeCardPokerPlayFn = createServerFn({ method: "POST" })
+  .middleware([operationIdentity])
   .validator(sessionSchema)
   .handler(async ({ data }) => {
-    const { threeCardPokerPlay } = await import("../server/games/threecardpoker.server");
-    return JSON.parse(JSON.stringify(await threeCardPokerPlay(data))) as Awaited<
-      ReturnType<typeof threeCardPokerPlay>
-    >;
+    const { withFinancialOperation } = await import("../server/operation.server");
+    return withFinancialOperation(
+      "threeCardPokerPlayFn",
+      data,
+      async () => {
+        const { threeCardPokerPlay } = await import("../server/games/threecardpoker.server");
+        return JSON.parse(JSON.stringify(await threeCardPokerPlay(data))) as Awaited<
+          ReturnType<typeof threeCardPokerPlay>
+        >;
+      },
+      "threecardpoker",
+    );
   });
 
 export const threeCardPokerFoldFn = createServerFn({ method: "POST" })
+  .middleware([operationIdentity])
   .validator(sessionSchema)
   .handler(async ({ data }) => {
-    const { threeCardPokerFold } = await import("../server/games/threecardpoker.server");
-    return JSON.parse(JSON.stringify(await threeCardPokerFold(data))) as Awaited<
-      ReturnType<typeof threeCardPokerFold>
-    >;
+    const { withFinancialOperation } = await import("../server/operation.server");
+    return withFinancialOperation(
+      "threeCardPokerFoldFn",
+      data,
+      async () => {
+        const { threeCardPokerFold } = await import("../server/games/threecardpoker.server");
+        return JSON.parse(JSON.stringify(await threeCardPokerFold(data))) as Awaited<
+          ReturnType<typeof threeCardPokerFold>
+        >;
+      },
+      "threecardpoker",
+    );
   });
 
 export const getThreeCardPokerSessionFn = createServerFn({ method: "GET" }).handler(async () => {

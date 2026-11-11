@@ -1,4 +1,14 @@
-import { ChevronDown, Bell, Settings, Globe, LogIn, LogOut, Menu, Wallet } from "lucide-react";
+import {
+  ChevronDown,
+  Bell,
+  Settings,
+  Globe,
+  Gift,
+  LogIn,
+  LogOut,
+  Menu,
+  Wallet,
+} from "lucide-react";
 import { useState, useEffect } from "react";
 import { Logo } from "./Logo";
 import { useAuth } from "@/lib/auth";
@@ -40,6 +50,7 @@ type Panel = "notifications" | "gifts" | "settings" | "world" | "wallet" | null;
 const profileMenu = [
   { id: "wallet" as const, label: "My Wallet", icon: Wallet },
   { id: "notifications" as const, label: "Notifications", icon: Bell },
+  { id: "gifts" as const, label: "Gifts & Rewards", icon: Gift },
   { id: "settings" as const, label: "Settings", icon: Settings },
   { id: "world" as const, label: "World", icon: Globe },
 ];
@@ -178,6 +189,7 @@ export function Navbar({ onOpenMobileMenu }: { onOpenMobileMenu?: () => void }) 
             <div className="relative">
               <button
                 type="button"
+                aria-label="Profile menu"
                 onClick={() => {
                   setWalletOpen(false);
                   setProfileOpen((v) => !v);

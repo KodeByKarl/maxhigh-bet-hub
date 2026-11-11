@@ -156,8 +156,18 @@
 }
 
 html {
+  -webkit-tap-highlight-color: transparent;
   -webkit-text-size-adjust: 100%;
   text-size-adjust: 100%;
+}
+
+button,
+a,
+[role="button"] {
+  touch-action: manipulation;
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
 }
 
 html, body {
@@ -182,6 +192,51 @@ html, body {
   .dashboard-bg {
     background-image: url("/desktopbg.jpg");
     background-attachment: fixed;
+  }
+}
+
+/* Dashboard game catalog: container-aware columns keep the card rows balanced
+   after the desktop sidebar takes its share of the viewport. */
+.game-catalog-section {
+  container-name: game-catalog;
+  container-type: inline-size;
+  width: 100%;
+}
+
+.game-card-grid {
+  --game-card-gap: 0.625rem;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--game-card-gap);
+  width: 100%;
+}
+
+.game-card {
+  flex: 0 0 calc(50% - 0.3125rem);
+  max-width: 15rem;
+  isolation: isolate;
+}
+
+@container game-catalog (min-width: 30rem) {
+  .game-card-grid {
+    --game-card-gap: 0.75rem;
+  }
+
+  .game-card {
+    flex-basis: calc(33.333333% - 0.5rem);
+  }
+}
+
+@container game-catalog (min-width: 48rem) {
+  .game-card {
+    flex-basis: calc(25% - 0.5625rem);
+  }
+}
+
+@container game-catalog (min-width: 68rem) {
+  .game-card {
+    flex-basis: calc(20% - 0.6rem);
   }
 }
 

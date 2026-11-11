@@ -1,3 +1,4 @@
+import "../native-game-controls.css";
 import { useCallback, useEffect, useId, useRef, useState } from "react";
 import { toast } from "sonner";
 import { aceHighDealFn, getAceHighEngineConfigFn } from "@/functions/api";
@@ -247,7 +248,10 @@ export function AceHighSlot({
   }
 
   return (
-    <div className="relative flex h-full min-h-0 w-full flex-col overflow-hidden overscroll-none touch-manipulation bg-[#050608] text-white select-none">
+    <div
+      className="relative flex h-full min-h-0 w-full flex-col overflow-hidden overscroll-none touch-manipulation bg-[#050608] text-white select-none"
+      data-game-control-root="ace-high"
+    >
       <div className="pointer-events-none absolute inset-0">
         <img
           src={`${AH_ASSET.board}?v=6`}
@@ -375,6 +379,7 @@ export function AceHighSlot({
               disabled={busy}
               onClick={() => void onDeal()}
               className="h-14 min-w-[5.5rem] rounded-full border border-amber-200/50 bg-gradient-to-b from-amber-300 via-amber-500 to-amber-700 px-5 text-base font-black tracking-[0.14em] text-amber-950 shadow-md active:scale-95 disabled:opacity-50 short-h:h-12 short-h:min-w-[4.75rem] short-h:text-sm"
+              data-control-action="primary"
             >
               DEAL
             </button>
@@ -387,6 +392,7 @@ export function AceHighSlot({
             disabled={busy}
             onClick={() => void onDeal()}
             className="min-w-[8.5rem] rounded-full border border-amber-200/35 bg-gradient-to-b from-amber-300 via-amber-500 to-amber-700 px-8 py-2 text-xs font-black tracking-[0.28em] text-amber-950 shadow-[0_6px_20px_rgba(245,158,11,0.3)] disabled:opacity-50"
+            data-control-action="primary"
           >
             DEAL
           </button>

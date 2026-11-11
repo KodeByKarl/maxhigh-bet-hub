@@ -1,3 +1,4 @@
+import "../../native-game-controls.css";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import {
@@ -467,7 +468,10 @@ export function TongitsArenaTable({
   const pairPlusBadge = spotBadge(spotResults.pairPlus, pairPlusOnFelt, inDecision || showResults);
 
   return (
-    <div className="relative flex h-full min-h-0 w-full flex-col overflow-hidden overscroll-none touch-manipulation text-[#f7f3e8] select-none">
+    <div
+      className="relative flex h-full min-h-0 w-full flex-col overflow-hidden overscroll-none touch-manipulation text-[#f7f3e8] select-none"
+      data-game-control-root="tongits-arena"
+    >
       {/* pit room — dark casino floor, single warm spotlight over the table */}
       <div className="pointer-events-none absolute inset-0 bg-[#040503]">
         <div
@@ -742,6 +746,7 @@ export function TongitsArenaTable({
                   onClick={() => void onFold()}
                   className="min-h-14 rounded-2xl border border-white/25 bg-[linear-gradient(180deg,#3b4453,#1b2129)] text-base font-black tracking-[0.18em] text-white/90 shadow-[inset_0_1px_0_rgba(255,255,255,0.14)] transition active:scale-[0.99] disabled:opacity-40 short-h:min-h-12 short-h:rounded-xl short-h:text-sm"
                   style={{ fontFamily: "Georgia, 'Times New Roman', serif" }}
+                  data-control-action="danger"
                 >
                   FOLD
                 </button>
@@ -756,6 +761,7 @@ export function TongitsArenaTable({
                     boxShadow:
                       "0 6px 22px rgba(201,162,39,0.4), inset 0 1px 0 rgba(255,255,255,0.6)",
                   }}
+                  data-control-action="primary"
                 >
                   PLAY ₱{lockedAnte.toFixed(0)}
                 </button>
@@ -772,6 +778,7 @@ export function TongitsArenaTable({
                 background: "linear-gradient(180deg,#f8e7b0 0%,#e8c96a 45%,#b7912f 100%)",
                 boxShadow: "0 6px 22px rgba(201,162,39,0.35), inset 0 1px 0 rgba(255,255,255,0.6)",
               }}
+              data-control-action="primary"
             >
               NEW HAND
             </button>

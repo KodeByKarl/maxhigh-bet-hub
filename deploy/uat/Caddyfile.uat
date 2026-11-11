@@ -1,0 +1,33 @@
+# /etc/caddy/Caddyfile for the UAT host only (no production site exists on this VPS).
+# Caddy 2.6.x syntax. Replace UAT_USER and PASTE_HASH with the output of `caddy hash-password`,
+# typed by the operator; the plaintext password never goes in chat or the repo.
+{
+	email admin@maxhigh.online
+}
+
+uat.maxhigh.online {
+	encode zstd gzip
+
+	basicauth /* {
+		UAT_USER PASTE_HASH
+	}
+
+	@internal path /api/health /api/metrics
+	respond @internal 404
+
+	reverse_proxy 127.0.0.1:18080 {
+		header_up X-Real-IP {client_ip}
+		header_up X-Forwarded-For {client_ip}
+	}
+
+	header {
+		Strict-Transport-Security "max-age=31536000"
+		X-Content-Type-Options nosniff
+		X-Frame-Options DENY
+		Referrer-Policy strict-origin-when-cross-origin
+		X-Robots-Tag "noindex, nofollow"
+		-Server
+	}
+	@api path /_serverFn/* /api/* /admin* /superadmin*
+	header @api Cache-Control "private, no-store"
+}

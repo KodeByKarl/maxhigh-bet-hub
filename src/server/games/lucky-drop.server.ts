@@ -1,3 +1,4 @@
+import { recordRoundConfig } from "../round-random.server";
 /**
  * Royal Climb (lucky-drop) — server-authoritative Hi-Lo ladder.
  * The shuffled deck lives only in play_sessions.feature_state; the client sees
@@ -50,7 +51,7 @@ export function clearLuckyDropEngineCache() {
 
 async function loadEngineConfig(): Promise<LuckyDropConfig> {
   const now = Date.now();
-  if (cachedConfig && now - cachedConfig.time < 30_000) return cachedConfig.cfg;
+  if (cachedConfig && now - cachedConfig.time < 30_000) return recordRoundConfig(cachedConfig.cfg);
   const db = getDb();
   try {
     const rows = await db
@@ -61,11 +62,9 @@ async function loadEngineConfig(): Promise<LuckyDropConfig> {
     const raw = rows[0]?.engineConfig;
     const cfg = normalizeLuckyDropConfig(raw ? (JSON.parse(raw) as unknown) : null);
     cachedConfig = { cfg, time: now };
-    return cfg;
+    return recordRoundConfig(cfg);
   } catch {
-    const cfg = normalizeLuckyDropConfig(null);
-    cachedConfig = { cfg, time: now };
-    return cfg;
+    throw new Error("Game configuration unavailable");
   }
 }
 

@@ -1,3 +1,4 @@
+import "../../native-game-controls.css";
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
 import {
@@ -444,7 +445,10 @@ export function LuckyDropTable({ gameName = "Royal Climb", onBalance }: Props) {
   const maxCount = 4;
 
   return (
-    <div className="relative flex h-full min-h-0 flex-col overflow-hidden bg-[#040a1c] text-white">
+    <div
+      className="relative flex h-full min-h-0 flex-col overflow-hidden bg-[#040a1c] text-white"
+      data-game-control-root="lucky-drop"
+    >
       <style>{CSS}</style>
       <Backdrop progress={progress} tone={tone} />
 
@@ -619,6 +623,7 @@ export function LuckyDropTable({ gameName = "Royal Climb", onBalance }: Props) {
                 disabled={busy || run.skipsLeft <= 0}
                 onClick={() => void onSkip()}
                 className="flex flex-col items-center rounded-2xl border border-cyan-200/30 bg-[#0a2447]/80 px-4 py-2 text-xs font-black disabled:opacity-35"
+                data-control-action="secondary"
               >
                 <span className="text-lg leading-none">⤼</span>
                 SKIP · {run.skipsLeft}
@@ -628,6 +633,7 @@ export function LuckyDropTable({ gameName = "Royal Climb", onBalance }: Props) {
                 disabled={busy || run.steps < 1}
                 onClick={() => void onCashout()}
                 className="flex-1 rounded-2xl bg-gradient-to-b from-amber-200 to-amber-500 py-2 text-sm font-black tracking-wide text-amber-950 uppercase shadow-[0_0_24px_rgba(251,191,36,.45)] disabled:from-slate-700 disabled:to-slate-700 disabled:text-white/40 disabled:shadow-none"
+                data-control-action="primary"
               >
                 Make camp · cash out
                 <span className="block text-lg tabular-nums">₱{run.payout.toFixed(2)}</span>
@@ -638,11 +644,12 @@ export function LuckyDropTable({ gameName = "Royal Climb", onBalance }: Props) {
               type="button"
               onClick={newRun}
               className="w-full rounded-2xl bg-gradient-to-b from-cyan-200 to-sky-500 py-3 text-sm font-black tracking-wide text-slate-900 uppercase"
+              data-control-action="primary"
             >
               New ascent
             </button>
           ) : (
-            <div className="space-y-2">
+            <div className="space-y-2" data-native-controls="lucky-drop">
               <div className="flex flex-wrap items-center justify-center gap-1.5">
                 {cfg.betSteps.map((v) => (
                   <button
@@ -656,6 +663,7 @@ export function LuckyDropTable({ gameName = "Royal Climb", onBalance }: Props) {
                         ? "scale-110 border-white bg-amber-300 text-amber-950"
                         : "border-cyan-100/40 bg-[#0a2447]/85 text-white",
                     )}
+                    data-control-action="secondary"
                   >
                     {v}
                   </button>
@@ -666,6 +674,7 @@ export function LuckyDropTable({ gameName = "Royal Climb", onBalance }: Props) {
                 disabled={busy}
                 onClick={() => void onStart()}
                 className="w-full rounded-2xl bg-gradient-to-b from-amber-200 to-amber-500 py-3 text-sm font-black tracking-wide text-amber-950 uppercase shadow-[0_0_24px_rgba(251,191,36,.4)] disabled:opacity-50"
+                data-control-action="primary"
               >
                 {busy ? "…" : `Begin ascent · ₱${bet}`}
               </button>

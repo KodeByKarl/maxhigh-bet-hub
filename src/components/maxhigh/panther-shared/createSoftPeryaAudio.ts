@@ -1,3 +1,4 @@
+import { gameRandom, hasRoundRandom } from "@/lib/game-random";
 /**
  * Soft “paid arcade / perya” Web Audio kit for panther-family slots.
  * Every game gets its own instrument, musical scale and spin-loop texture,
@@ -390,7 +391,7 @@ export function createSynthPeryaAudio(voice: SoftPeryaVoice): SoftPeryaAudio {
     const len = c.sampleRate * 2;
     const buf = c.createBuffer(1, len, c.sampleRate);
     const data = buf.getChannelData(0);
-    for (let i = 0; i < len; i++) data[i] = Math.random() * 2 - 1;
+    for (let i = 0; i < len; i++) data[i] = gameRandom() * 2 - 1;
     whiteBuf = buf;
     return buf;
   }
@@ -402,7 +403,7 @@ export function createSynthPeryaAudio(voice: SoftPeryaVoice): SoftPeryaAudio {
     const data = buf.getChannelData(0);
     let last = 0;
     for (let i = 0; i < len; i++) {
-      last = (last + 0.02 * (Math.random() * 2 - 1)) / 1.02;
+      last = (last + 0.02 * (gameRandom() * 2 - 1)) / 1.02;
       data[i] = last * 3.2;
     }
     pinkBuf = buf;
@@ -538,7 +539,7 @@ export function createSynthPeryaAudio(voice: SoftPeryaVoice): SoftPeryaAudio {
     src.connect(filt);
     filt.connect(g);
     g.connect(dest);
-    src.start(t, Math.random() * 1.5);
+    src.start(t, gameRandom() * 1.5);
     src.stop(t + a + o.dur + 0.03);
   }
 
@@ -589,7 +590,7 @@ export function createSynthPeryaAudio(voice: SoftPeryaVoice): SoftPeryaAudio {
     src.connect(filt);
     filt.connect(g);
     g.connect(dest);
-    src.start(t, Math.random() * 1.5);
+    src.start(t, gameRandom() * 1.5);
     const nodes: AudioScheduledSourceNode[] = [src];
     if (o.sweepRate && o.sweepDepth) {
       const lfo = c.createOscillator();
@@ -619,7 +620,7 @@ export function createSynthPeryaAudio(voice: SoftPeryaVoice): SoftPeryaAudio {
     for (let i = 0; i < count; i++) {
       playNote(
         sfxGain,
-        degFreq(Math.floor(Math.random() * 8), 2),
+        degFreq(Math.floor(gameRandom() * 8), 2),
         t + i * 0.065,
         peak,
         0.6,
@@ -673,7 +674,7 @@ export function createSynthPeryaAudio(voice: SoftPeryaVoice): SoftPeryaAudio {
 
   /** Schedules one spin-loop event at `t`; returns seconds until the next one. */
   function spinEvent(bus: GainNode, t: number, step: number): number {
-    const rand = Math.random;
+    const rand = gameRandom;
     switch (voice.spin) {
       case "roulette":
         noiseBurst(bus, t, { freq: 2600, q: 5, peak: 0.35, dur: 0.014 });
@@ -881,10 +882,10 @@ export function createSynthPeryaAudio(voice: SoftPeryaVoice): SoftPeryaAudio {
       const now = ctx.currentTime;
       if (now < ambientNext) return;
       const degrees = [0, 2, 4, 5, 7];
-      const d = degrees[Math.floor(Math.random() * degrees.length)]!;
+      const d = degrees[Math.floor(gameRandom() * degrees.length)]!;
       playNote(ambientGain, degFreq(d, -1), now + 0.02, 0.5, 1.2);
-      if (Math.random() < 0.4) playNote(ambientGain, degFreq(d + 2, -1), now + 0.37, 0.35, 1.2);
-      ambientNext = now + (2.6 + Math.random() * 2.2) / voice.tempo;
+      if (gameRandom() < 0.4) playNote(ambientGain, degFreq(d + 2, -1), now + 0.37, 0.35, 1.2);
+      ambientNext = now + (2.6 + gameRandom() * 2.2) / voice.tempo;
     }, 250);
   }
 

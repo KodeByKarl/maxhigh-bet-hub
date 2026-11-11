@@ -1,3 +1,5 @@
+import { startVisiblePolling } from "@/lib/visible-poller";
+import "../../native-game-controls.css";
 /**
  * Octopus Armada arena — continuous-fire fish hunter shell.
  * Spawns are server-owned; client only renders live fish from syncSpawns. Shots settle server-side.
@@ -178,19 +180,19 @@ export function OctopusArmadaGame({
         // keep last frame on transient sync errors
       }
     };
-    const id = window.setInterval(() => void tick(), Math.max(400, cfg.spawnIntervalSec * 1000));
-    void tick();
+    const stopPolling = startVisiblePolling(tick, Math.max(400, cfg.spawnIntervalSec * 1000));
     return () => {
       cancelled = true;
-      window.clearInterval(id);
+      stopPolling();
     };
   }, [cfg]);
 
   // Boss poll
   useEffect(() => {
-    const id = window.setInterval(() => {
-      void octopusArmadaBossStatusFn()
+    const stopPolling = startVisiblePolling((active) => {
+      return octopusArmadaBossStatusFn()
         .then((res) => {
+          if (!active()) return;
           if (res.boss?.active) {
             setBossHud({
               hitsTaken: res.boss.hitsTaken,
@@ -236,7 +238,7 @@ export function OctopusArmadaGame({
         })
         .catch(() => undefined);
     }, 4000);
-    return () => window.clearInterval(id);
+    return stopPolling;
   }, []);
 
   useEffect(() => {
@@ -509,7 +511,10 @@ export function OctopusArmadaGame({
   }
 
   return (
-    <div className="relative flex h-full min-h-0 w-full flex-col overflow-hidden bg-[#021018] text-teal-50">
+    <div
+      className="relative flex h-full min-h-0 w-full flex-col overflow-hidden bg-[#021018] text-teal-50"
+      data-game-control-root="octopus-armada"
+    >
       {/* Ocean atmosphere */}
       <div
         className="pointer-events-none absolute inset-0"
@@ -726,7 +731,10 @@ export function OctopusArmadaGame({
       </div>
 
       {/* Dock */}
-      <div className="relative z-20 space-y-2 border-t border-teal-500/20 bg-black/50 px-3 py-2 backdrop-blur-md">
+      <div
+        className="relative z-20 space-y-2 border-t border-teal-500/20 bg-black/50 px-3 py-2 backdrop-blur-md"
+        data-native-controls="octopus-armada"
+      >
         <div className="flex gap-1.5 overflow-x-auto pb-1">
           {cfg.weapons.map((w) => (
             <button
@@ -739,6 +747,8 @@ export function OctopusArmadaGame({
                   ? "border-teal-300/70 bg-teal-500/25 text-teal-50"
                   : "border-white/10 bg-white/5 text-teal-200/80 hover:bg-white/10",
               )}
+              data-control-action="weapon"
+              aria-pressed={weaponId === w.id}
             >
               <div className="font-bold">{w.label}</div>
               <div className="tabular-nums text-teal-300/80">{formatPhp(w.betCost)}/shot</div>
@@ -756,6 +766,8 @@ export function OctopusArmadaGame({
                 ? "bg-amber-500 text-amber-950"
                 : "bg-teal-600/80 text-white hover:bg-teal-500",
             )}
+            data-control-action="auto"
+            aria-pressed={autoFire}
           >
             {autoFire ? "AUTO ON" : "AUTO FIRE"}
           </button>
@@ -774,6 +786,7 @@ export function OctopusArmadaGame({
                 }
               }}
               className="inline-flex items-center gap-1.5 rounded-lg border border-white/10 bg-white/5 px-2.5 py-2 text-[11px] text-teal-100 hover:bg-white/10"
+              data-control-action="power"
             >
               {p.id === "freeze-lure" ? (
                 <Snowflake className="h-3.5 w-3.5" />

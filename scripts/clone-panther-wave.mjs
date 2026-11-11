@@ -203,7 +203,7 @@ function wireOne(g) {
     maxWin: "10,000x",
     minBet: "₱0.20",
     maxBet: "₱200",
-    features: ["Cascading Wins", "Free Spins", "Buy Bonus", "Adjustable Qty", "Multipliers"],
+    features: ["Cascading Wins", "Free Spins", "Buy Bonus", "10 Free Spins", "Multipliers"],
   },
 `,
   });
