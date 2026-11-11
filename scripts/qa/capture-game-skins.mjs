@@ -4,6 +4,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { createRequire } from "node:module";
+import { GUARDED_CONTEXT_OPTIONS, installReadOnlyGuard } from "./lib/readonly-guard.mjs";
 const out = process.argv[2] ?? "game-skin-shots";
 const which = process.argv[3] ?? "all";
 const base = process.env.HARNESS ?? "http://127.0.0.1:5198";
@@ -37,8 +38,17 @@ await probe.waitForFunction(() => window.__games);
 const all = await probe.evaluate(() => window.__games());
 const games = which === "all" ? all : which.split(",");
 const report = [];
+const guards = [];
 for (const v of VIEWS) {
-  const ctx = await browser.newContext({ ...v, serviceWorkers: "block" });
+  const ctx = await browser.newContext({ ...v, ...GUARDED_CONTEXT_OPTIONS });
+  // Read-only: only GET page/asset requests are allowed; any server function call is refused (empty id table = default deny).
+  const guard = await installReadOnlyGuard(ctx, {
+    origins: [new URL(base).origin],
+    idToName: new Map(),
+    readNames: new Set(),
+    allowWebSocketHosts: [new URL(base).host], // local harness hot-reload socket only
+  });
+  guards.push(guard);
   for (const g of games) {
     const page = await ctx.newPage();
     const errors = [];
@@ -123,17 +133,32 @@ for (const v of VIEWS) {
     report.push({ game: g, view: v.name, issues });
     await page.close();
   }
+  guard.assertNothingMutating();
   await ctx.close();
 }
+const guardReport = guards.reduce(
+  (a, g) => ({ blocked: a.blocked + g.blocked.length, leaked: a.leaked + g.leaked.length }),
+  { blocked: 0, leaked: 0 },
+);
+if (guardReport.leaked)
+  throw new Error("read-only guard leaked " + guardReport.leaked + " mutating request(s)");
 const bad = report.filter((x) => x.issues.length);
 fs.writeFileSync(
   path.join(out, "report.json"),
   JSON.stringify(
-    { games: games.length, views: VIEWS.map((v) => v.name), checked: report.length, problems: bad },
+    {
+      games: games.length,
+      views: VIEWS.map((v) => v.name),
+      checked: report.length,
+      problems: bad,
+      readOnlyGuard: guardReport,
+    },
     null,
     2,
   ),
 );
-console.log(`captured ${games.length} games x ${VIEWS.length} views; with issues: ${bad.length}`);
+console.log(
+  `captured ${games.length} games x ${VIEWS.length} views; with issues: ${bad.length}; read-only guard refused ${guardReport.blocked} requests, 0 mutating responses`,
+);
 for (const p of bad.slice(0, 40)) console.log(p.game, p.view, "|", p.issues.join("; "));
 await browser.close();

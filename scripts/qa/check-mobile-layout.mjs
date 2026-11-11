@@ -5,6 +5,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { createRequire } from "node:module";
+import { GUARDED_CONTEXT_OPTIONS, installReadOnlyGuard } from "./lib/readonly-guard.mjs";
 
 const which = process.argv[2] ?? "all";
 const viewArg =
@@ -29,7 +30,17 @@ const VIEWS = viewArg.split(",").map((s) => {
 });
 
 const browser = await chromium.launch({ headless: true, executablePath: process.env.PW_CHROME });
-const probe = await (await browser.newContext()).newPage();
+// Read-only: only GET page/asset requests are allowed; any server function call is refused (empty id table = default deny).
+const guardOpts = {
+  origins: [new URL(base).origin],
+  idToName: new Map(),
+  readNames: new Set(),
+  allowWebSocketHosts: [new URL(base).host], // local harness hot-reload socket only
+};
+const guards = [];
+const probeCtx = await browser.newContext({ ...GUARDED_CONTEXT_OPTIONS });
+guards.push(await installReadOnlyGuard(probeCtx, guardOpts));
+const probe = await probeCtx.newPage();
 await probe.goto(base);
 await probe.waitForFunction(() => window.__games);
 const allGames = await probe.evaluate(() => window.__games());
@@ -105,8 +116,9 @@ for (const v of VIEWS) {
     isMobile: v.isMobile,
     hasTouch: v.hasTouch,
     deviceScaleFactor: v.deviceScaleFactor,
-    serviceWorkers: "block",
+    ...GUARDED_CONTEXT_OPTIONS,
   });
+  guards.push(await installReadOnlyGuard(ctx, guardOpts));
   for (const g of games) {
     const page = await ctx.newPage();
     const errors = [];
@@ -182,14 +194,22 @@ for (const v of VIEWS) {
     });
     await page.close();
   }
+  guards[guards.length - 1].assertNothingMutating();
   await ctx.close();
 }
+const guardReport = guards.reduce(
+  (a, g) => ({ blocked: a.blocked + g.blocked.length, leaked: a.leaked + g.leaked.length }),
+  { blocked: 0, leaked: 0 },
+);
+if (guardReport.leaked)
+  throw new Error("read-only guard leaked " + guardReport.leaked + " mutating request(s)");
 const bad = report.filter((x) => x.issues.length);
 const summary = {
   games: games.length,
   views: VIEWS.map((v) => v.name),
   checked: report.length,
   withIssues: bad.length,
+  readOnlyGuard: guardReport,
   problems: bad,
   all: report,
 };

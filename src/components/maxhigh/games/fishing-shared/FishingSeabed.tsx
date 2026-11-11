@@ -374,13 +374,17 @@ const bones: Draw = (x, y, s, _r, rot, k) => (
   <g
     key={k}
     transform={`translate(${x} ${y}) rotate(${rot}) scale(${s})`}
-    stroke="#e5e7eb"
-    strokeWidth="7"
+    stroke="#8fa6c0"
+    strokeWidth="5"
     strokeLinecap="round"
     fill="none"
+    opacity=".55"
   >
     <path d="M-60 0 H60" stroke="rgba(0,0,0,.3)" transform="translate(3 4)" />
     <path d="M-60 0 H60" />
+    {/* skull and tail fin so the spine reads as a fish skeleton on the seabed, not a plant */}
+    <ellipse cx="-70" cy="0" rx="10" ry="8" />
+    <path d="M60 0 L76 -11 M60 0 L76 11" />
     {[-44, -26, -8, 10, 28, 46].map((o, i) => (
       <g key={o}>
         <path d={`M${o} 0 Q${o + 6} -${22 - i * 2} ${o + 14} -${28 - i * 3}`} />
@@ -521,7 +525,7 @@ const THEMES: Record<SeabedTheme, Theme> = {
     layers: [
       { draw: pebble("#35495f", "#5a7691"), count: 22, size: [0.7, 1.6] },
       { draw: rock("#26384d", "#3d5873"), count: 12, size: [1, 2.2] },
-      { draw: bones, count: 2, size: [1.2, 1.9] },
+      { draw: bones, count: 2, size: [0.65, 1.05] },
       { draw: grass("#1d4ed8", "#38bdf8"), count: 5, size: [1, 1.7] },
       { draw: starfish("#818cf8", "#c7d2fe"), count: 3, size: [0.9, 1.3] },
     ],

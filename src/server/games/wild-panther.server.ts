@@ -19,7 +19,7 @@ import {
   sumPendingWithdrawals,
   writeLedgerDelta,
 } from "../wallet.server";
-import { BUY_BONUS_FREE_SPINS } from "@/lib/buy-bonus";
+import { BUY_BONUS_FREE_SPINS, exactProduct2 } from "@/lib/buy-bonus";
 
 const GAME_NAME = "Wild Panther";
 
@@ -459,7 +459,7 @@ export async function wildPantherBuyFeature(data: {
   const cfg = await loadEngineConfig();
   if (data.mode === "super") throw new Error("Super Buy is no longer available");
   const mult = cfg.buyFeatureMult;
-  const cost = +(data.bet * mult).toFixed(2);
+  const cost = exactProduct2(data.bet, mult); // exact decimal, same arithmetic as the client display
   const maxBet = await getMaxSingleBet();
   if (cost > maxBet * Math.max(mult, 1)) {
     // buy feature can exceed single spin max; still cap at risk max * buy mult

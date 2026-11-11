@@ -729,7 +729,7 @@ export function SharkHunterGame({
         className="relative z-20 space-y-2 border-t border-teal-500/20 bg-black/50 px-3 py-2 backdrop-blur-md"
         data-native-controls="shark-hunter"
       >
-        <div className="flex gap-1.5 overflow-x-auto pb-1">
+        <div className="flex flex-wrap gap-1.5 pb-1">
           {cfg.weapons.map((w) => (
             <button
               key={w.id}
