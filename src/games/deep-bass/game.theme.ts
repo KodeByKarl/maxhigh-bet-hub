@@ -6,4 +6,13 @@ export const gameTheme: GameTheme = {
   kind: "fishing",
   motif: "ocean",
   skin: null,
+  tableSkin: {
+    motif: "ocean",
+    atmos: "mist",
+    grade: "cool",
+    voice: "techno",
+    ring: "glow",
+    accent: "#3ad1c6",
+    deep: "#041a1e",
+  },
 };

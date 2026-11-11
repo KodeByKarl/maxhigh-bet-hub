@@ -1,7 +1,17 @@
 import { DeepBassGame } from "@/components/maxhigh/games/deep-bass";
+
 import type { GamePlayProps } from "../shared/types";
 
-/** Deep Bass: a fishing game with its own bespoke UI; entry point only, no slot skin. */
+import { SkinnedTable } from "../shared/layouts/SkinnedTable";
+
+import { gameTheme } from "./game.theme";
+
+/** Deep Bass: a fishing game. Its bespoke UI is untouched; it gets an atmosphere, backdrop grade, heading typeface and frame ring. */
+
 export function GameView(props: GamePlayProps) {
-  return <DeepBassGame {...props} />;
+  return (
+    <SkinnedTable gameId="deep-bass" skin={gameTheme.tableSkin!}>
+      <DeepBassGame {...props} />
+    </SkinnedTable>
+  );
 }

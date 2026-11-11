@@ -6,4 +6,13 @@ export const gameTheme: GameTheme = {
   kind: "table",
   motif: "night",
   skin: null,
+  tableSkin: {
+    motif: "night",
+    atmos: "horizon",
+    grade: "warm",
+    voice: "engraved",
+    ring: "gold",
+    accent: "#e6b450",
+    deep: "#1a1008",
+  },
 };

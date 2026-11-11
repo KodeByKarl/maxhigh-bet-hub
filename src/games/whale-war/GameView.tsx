@@ -1,7 +1,17 @@
 import { WhaleWarGame } from "@/components/maxhigh/games/whale-war";
+
 import type { GamePlayProps } from "../shared/types";
 
-/** Whale War: a fishing game with its own bespoke UI; entry point only, no slot skin. */
+import { SkinnedTable } from "../shared/layouts/SkinnedTable";
+
+import { gameTheme } from "./game.theme";
+
+/** Whale War: a fishing game. Its bespoke UI is untouched; it gets an atmosphere, backdrop grade, heading typeface and frame ring. */
+
 export function GameView(props: GamePlayProps) {
-  return <WhaleWarGame {...props} />;
+  return (
+    <SkinnedTable gameId="whale-war" skin={gameTheme.tableSkin!}>
+      <WhaleWarGame {...props} />
+    </SkinnedTable>
+  );
 }

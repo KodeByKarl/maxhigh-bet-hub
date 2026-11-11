@@ -3,6 +3,9 @@ import type { GameSkin } from "../themes/skin";
 import { useSkinHooks } from "../hooks/useSkinHooks";
 import "./skin-frames.css";
 import "./skin-deck.css";
+import "./skin-board.css";
+import "./skin-atmosphere.css";
+import "./skin-material.css";
 import "../effects/skin-fx.css";
 
 /**
@@ -35,6 +38,12 @@ export function SkinnedGame({
       data-voice={skin.voice}
       data-spin={skin.spin}
       data-fx={skin.fx}
+      data-board={skin.board}
+      data-atmos={skin.atmos}
+      data-grade={skin.grade}
+      data-sym={skin.sym}
+      data-mat={skin.mat}
+      data-win={skin.win}
       style={style}
     >
       {children}

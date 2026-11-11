@@ -8,6 +8,12 @@ export const skin: GameSkin = {
   voice: "rounded",
   spin: "hex",
   fx: "bubbles",
+  board: "hex",
+  atmos: "aurora",
+  grade: "dream",
+  sym: "medal",
+  mat: "glass",
+  win: "ring",
   tune: {
     corner: 14,
     ornament: 0.44,

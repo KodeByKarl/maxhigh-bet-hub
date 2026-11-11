@@ -8,6 +8,12 @@ export const skin: GameSkin = {
   voice: "engraved",
   spin: "shield",
   fx: "stars",
+  board: "glass",
+  atmos: "aurora",
+  grade: "deep",
+  sym: "glow",
+  mat: "glass",
+  win: "sweep",
   tune: {
     corner: 16,
     ornament: 0.43,

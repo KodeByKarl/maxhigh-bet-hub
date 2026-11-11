@@ -8,6 +8,12 @@ export const skin: GameSkin = {
   voice: "techno",
   spin: "lozenge",
   fx: "stars",
+  board: "diamond",
+  atmos: "grid",
+  grade: "cool",
+  sym: "glow",
+  mat: "neon",
+  win: "sweep",
   tune: {
     corner: 21,
     ornament: 0.43,

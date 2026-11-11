@@ -3,15 +3,17 @@ import { motifPattern, motifTileSize } from "@/components/maxhigh/buy-bonus/patt
 import type { BuyBonusMotifId } from "@/components/maxhigh/buy-bonus/motifs";
 
 /**
- * The shared slot shell renders the reel well and the control deck without styling hooks. This marks them (attributes only, no
- * React-managed props are touched) so the skin stylesheet can reach them:  deck.parentElement = column, column's first child's
- * first child = well. Re-checked on DOM changes because a shell may mount its deck after loading.
+ * The shared slot shells render the reel well, the reel grid and the control deck without styling hooks. This marks them (attributes
+ * only; nothing React manages is touched) so the skin stylesheets can reach them:
+ *   deck.parentElement = column, column's first child's first child = well, the well's `.grid` = board (its children are the cells).
+ * Re-checked on DOM changes because a shell may mount its deck after loading.
  */
 export function useSkinHooks(ref: RefObject<HTMLElement | null>, motif: BuyBonusMotifId) {
   useLayoutEffect(() => {
     const root = ref.current;
     if (!root) return;
     root.style.setProperty("--gs-tile", motifPattern(motif, "#ffffff"));
+    root.style.setProperty("--gs-tile-faint", motifPattern(motif, "#ffffff1c"));
     root.style.setProperty("--gs-tile-size", `${motifTileSize(motif)}px`);
     const tag = () => {
       const deck = root.querySelector<HTMLElement>("[data-slot-deck]");
@@ -24,6 +26,13 @@ export function useSkinHooks(ref: RefObject<HTMLElement | null>, motif: BuyBonus
       if (col && isTemplateColumn && col.dataset.gsCol == null) col.dataset.gsCol = "";
       if (well && isTemplateColumn && well !== deck && well.dataset.gsWell == null)
         well.dataset.gsWell = "";
+      // Board: the reel grid. Template shells nest it in the well; payline shells render it directly under the root.
+      const scope = well && isTemplateColumn ? well : root;
+      const board = scope.querySelector<HTMLElement>(
+        ".grid[style*='grid-template-columns'], .grid.gap-1, .grid.gap-1\\.5",
+      );
+      if (board && !board.contains(deck) && board.dataset.gsBoard == null)
+        board.dataset.gsBoard = "";
     };
     tag();
     let raf = 0;
