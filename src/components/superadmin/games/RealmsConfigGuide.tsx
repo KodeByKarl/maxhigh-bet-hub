@@ -332,33 +332,35 @@ const GUIDE: Record<GuideKey, Topic> = {
   },
   buyPrice: {
     section: "Free spins & buy",
-    title: "Buy price per spin",
+    title: "Buy price (price for 1 spin)",
     short:
-      "The price of one bought free spin, as a multiple of the bet, at the standard award size.",
+      "What a player pays to buy a single free spin, as a multiple of the bet. Prices for 2, 3, 4… spins are calibrated from it automatically.",
     how: [
-      "A player picks a bet and a quantity of free spins. The total charged is bet × price per spin × quantity, taken once from the wallet.",
-      "The value you set is the price per spin when buying the standard award (see Free spins awarded). Other quantities follow a calibrated curve, scaled by your value: buying fewer spins costs less per spin, buying more costs a little more per spin, so the purchase stays fair at every size.",
-      "The Buy Bonus price preview table below recalculates as you type, using the same formula the server charges with.",
+      "You type the price of one spin. The editor works out every other quantity from the game's calibrated price curve, so the whole table stays consistent. The table under the field shows each quantity and updates as you type.",
+      "The wallet is charged once: bet × price per spin × number of spins. Buying more spins costs a little more per spin than buying one, because a longer bonus is worth more per spin; the curve keeps every size equally fair.",
+      "Pick a preview bet to see the amounts in pesos. Players can choose any bet on the game's fixed ladder, so the preview bets are only examples.",
     ],
     example: ({ cfg, def }) => {
-      const per = realmsBuyPricePerSpin(def.id, cfg, def.freeSpins);
-      return `Price ${cfg.buyFeatureMult}: at a ₱1.00 bet, ${def.freeSpins} spins cost ${peso(buyBonusTotal(1, per, def.freeSpins))} (${peso(per)} per spin). At a ₱5.00 bet they cost ${peso(buyBonusTotal(5, per, def.freeSpins))}.`;
+      const p1 = realmsBuyPricePerSpin(def.id, cfg, 1);
+      const p10 = realmsBuyPricePerSpin(def.id, cfg, def.freeSpins);
+      return `Price for 1 spin = ${p1}×. At a ₱5.00 bet, 1 spin costs ${peso(buyBonusTotal(5, p1, 1))}. Buying ${def.freeSpins} spins is priced at ${p10}× each: ${peso(buyBonusTotal(5, p10, def.freeSpins))} in total.`;
     },
     movesRtp: true,
     notes: [
-      "The calibrated price returns about 96%. A lower price makes buying more favourable to the player (RTP above 96%); a higher price less favourable.",
-      "This sets the price per spin, not a flat price per “bonus”. To sell a fixed bundle at one price, the buying format itself would need to change in code.",
+      "The calibrated price returns about 96%. A lower price makes buying more favourable to the player (estimated return above 96%); a higher price less favourable. The editor shows a rough estimate; re-run the calibration script to measure it.",
+      "This sets a price per spin, not a flat price per “bonus”. Selling a fixed bundle at one price would need the buying format itself to change in code.",
+      "Internally the value is stored as the price per spin at the standard award; the editor converts it for you.",
     ],
     related: ["buyTable", "fsAwarded", "sessionCap"],
   },
   buyTable: {
     section: "Free spins & buy",
     title: "Buy Bonus price preview",
-    short: "A calculator that shows what players would pay, for example bets and quantities.",
+    short: "A live table of what players would pay for each quantity of free spins.",
     how: [
-      "Total wallet deduction = base bet × price per spin × quantity.",
-      "Players can choose any bet on the game's bet ladder (₱0.20 to ₱100) and any quantity from 1 up to the session cap, so the rows shown are only examples. The bet list is the same for all games and is not set here.",
-      "The wallet is charged once, at the total shown, and the bonus then plays the purchased number of spins.",
+      "Total wallet deduction = base bet × price per spin × number of spins.",
+      "Choose a preview bet with the buttons above the table. The “standard award” row is the bonus size the game normally gives; the percentage next to each price per spin shows how much more it is than buying one spin.",
+      "Players can choose any bet on the game's bet ladder (₱0.20 to ₱100) and any quantity from 1 up to the session cap. The wallet is charged once, at the total shown.",
     ],
     example: ({ cfg, def }) => {
       const q = Math.min(3, cfg.maxFsSessionSpins || 3);
@@ -506,7 +508,7 @@ function GuideDialog({
               className="h-8 w-full rounded-md border border-white/10 bg-white/5 pl-7 pr-2 text-xs outline-none focus:border-amber-400/60"
             />
           </label>
-          <div className="min-h-0 flex-1 overflow-y-auto px-2 pb-3">
+          <div className="min-h-0 flex-1 overflow-y-auto px-2 pb-3 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
             {sections.length === 0 && (
               <p className="px-2 py-3 text-xs text-muted-foreground">No topics match.</p>
             )}
@@ -536,7 +538,7 @@ function GuideDialog({
           </div>
         </nav>
 
-        <article className="min-h-0 flex-1 overflow-y-auto px-5 py-5 md:px-8 md:py-7">
+        <article className="min-h-0 flex-1 overflow-y-auto px-5 py-5 [scrollbar-width:none] md:px-8 md:py-7 [&::-webkit-scrollbar]:hidden">
           {current && (
             <>
               <p className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
