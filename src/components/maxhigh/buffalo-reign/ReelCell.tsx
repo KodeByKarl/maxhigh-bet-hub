@@ -66,6 +66,7 @@ export const ReelCell = memo(function ReelCell({
 
   return (
     <div
+      data-winning={isWinLit}
       className={cn(
         "relative min-h-0 min-w-0 overflow-hidden rounded-lg isolate",
         "border-[3px] bg-[#0f0a12]/95 shadow-[0_4px_16px_rgba(0,0,0,0.5),inset_0_0_14px_rgba(217,119,6,0.16)]",

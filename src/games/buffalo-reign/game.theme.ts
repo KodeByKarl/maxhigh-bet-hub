@@ -6,7 +6,7 @@ export const skin: GameSkin = {
   frame: "riveted",
   deck: "orbit",
   voice: "slab",
-  spin: "shield",
+  spin: "circle",
   fx: "dust",
   board: "slab",
   atmos: "horizon",

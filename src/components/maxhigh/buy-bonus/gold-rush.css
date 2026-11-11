@@ -1,0 +1,568 @@
+/* Frontier Gold Rush: Buffalo Reign's Buy Bonus. Timber planks in a riveted bronze frame, a leather title ribbon, a gold coin, engraved
+   plaques and a posted notice. Self-contained (gr-* classes); shares nothing visual with the shared bb-* or Aurora fv-* dialogs. */
+
+.gr-overlay {
+  --gr-gold: #f6c65b;
+  --gr-gold-deep: #c58a1f;
+  --gr-bronze: #a8691f;
+  --gr-cream: #f7e8c9;
+  --gr-sand: #d8b98a;
+  --gr-ink: #2a1706;
+  --gr-timber: #3d2512;
+  --gr-leather: #2b1a0e;
+  --gr-font: "Rockwell", "Roboto Slab", Cambria, Georgia, "Times New Roman", serif;
+  position: absolute;
+  inset: 0;
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: max(0.6rem, env(safe-area-inset-top)) max(0.6rem, env(safe-area-inset-right))
+    max(0.6rem, env(safe-area-inset-bottom)) max(0.6rem, env(safe-area-inset-left));
+  background:
+    radial-gradient(ellipse 80% 50% at 50% 35%, rgb(228 115 26 / 0.28), transparent 70%),
+    rgb(14 8 3 / 0.8);
+  backdrop-filter: blur(3px);
+  -webkit-backdrop-filter: blur(3px);
+  overflow: hidden;
+  font-family: var(--gr-font);
+  font-variant-numeric: lining-nums tabular-nums;
+}
+.gr-glow {
+  position: relative;
+  width: min(100%, 24rem);
+  max-height: 100%;
+  display: flex;
+  filter: drop-shadow(0 18px 36px rgb(0 0 0 / 0.7)) drop-shadow(0 0 18px rgb(228 115 26 / 0.3));
+}
+.gr-frame {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  padding: 5px;
+  border-radius: 16px;
+  background: linear-gradient(135deg, #f3c46a, #a8691f 30%, #6b4012 55%, #e0a447 80%, #8a5513);
+}
+.gr-card {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  isolation: isolate;
+  border-radius: 11px;
+  color: var(--gr-cream);
+  background:
+    repeating-linear-gradient(
+      90deg,
+      rgb(255 220 150 / 0.045) 0 2px,
+      transparent 2px 46px,
+      rgb(0 0 0 / 0.28) 46px 48px
+    ),
+    linear-gradient(180deg, #4a2f19, #2a190b 60%, #1f1209);
+  box-shadow:
+    inset 0 0 0 2px rgb(0 0 0 / 0.5),
+    inset 0 0 26px rgb(0 0 0 / 0.5);
+}
+/* four rivets */
+.gr-card::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  background:
+    radial-gradient(circle, #ffe7a6 0 1.6px, #8a5513 2.4px, transparent 3.4px) 7px 7px / 10px 10px
+      no-repeat,
+    radial-gradient(circle, #ffe7a6 0 1.6px, #8a5513 2.4px, transparent 3.4px) calc(100% - 7px)
+      7px / 10px 10px no-repeat,
+    radial-gradient(circle, #ffe7a6 0 1.6px, #8a5513 2.4px, transparent 3.4px) 7px
+      calc(100% - 7px) / 10px 10px no-repeat,
+    radial-gradient(circle, #ffe7a6 0 1.6px, #8a5513 2.4px, transparent 3.4px) calc(100% - 7px)
+      calc(100% - 7px) / 10px 10px no-repeat;
+}
+/* embossed buffalo watermark */
+.gr-emblem {
+  position: absolute;
+  right: -14%;
+  bottom: 14%;
+  z-index: -1;
+  width: 78%;
+  opacity: 0.1;
+  filter: sepia(1) brightness(1.4) contrast(0.8);
+  pointer-events: none;
+}
+.gr-dust {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+}
+.gr-dust i {
+  position: absolute;
+  border-radius: 50%;
+  background: var(--gr-sand);
+  opacity: 0.5;
+  animation: gr-drift 7s ease-in-out infinite;
+  will-change: transform, opacity;
+}
+.gr-card :is(.gr-confirm, .gr-cancel, .gr-step button):focus-visible {
+  outline: 2px solid var(--gr-cream);
+  outline-offset: 2px;
+}
+
+.gr-body {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 16px 16px 16px;
+}
+
+/* leather ribbon title */
+.gr-head {
+  text-align: center;
+}
+.gr-kicker {
+  margin: 0;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  color: var(--gr-sand);
+}
+.gr-title {
+  position: relative;
+  margin: 6px -10px 0;
+  padding: 9px 12px 8px;
+  border: 1px solid rgb(246 198 91 / 0.6);
+  border-radius: 6px;
+  background:
+    repeating-linear-gradient(135deg, rgb(255 220 150 / 0.05) 0 3px, transparent 3px 7px),
+    linear-gradient(180deg, #6b4420, #35200f);
+  box-shadow:
+    inset 0 1px 0 rgb(255 226 160 / 0.35),
+    inset 0 0 0 3px rgb(33 20 9 / 0.55),
+    0 4px 10px rgb(0 0 0 / 0.5);
+  color: var(--gr-gold);
+  font-size: 23px;
+  font-weight: 800;
+  line-height: 1.05;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  text-shadow: 0 2px 0 rgb(0 0 0 / 0.7);
+}
+.gr-sub {
+  margin: 8px 0 0;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  color: #e4731a;
+}
+
+/* hero: the gold coin and the spin count */
+.gr-hero {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+}
+.gr-coin {
+  position: relative;
+  width: 92px;
+  height: 92px;
+  flex: none;
+}
+.gr-coin__rim,
+.gr-coin__face {
+  position: absolute;
+  border-radius: 50%;
+}
+.gr-coin__rim {
+  inset: 0;
+  background: conic-gradient(#f6c65b, #8a5513 22%, #e0a447 45%, #5e380c 68%, #f6c65b);
+  box-shadow: 0 5px 12px rgb(0 0 0 / 0.6);
+  animation: gr-turn 14s linear infinite;
+}
+.gr-coin__face {
+  inset: 5px;
+  display: grid;
+  place-items: center;
+  background: radial-gradient(circle at 34% 26%, #fff0bd 0, #f6c65b 26%, #c98a26 62%, #8a5513 100%);
+  box-shadow:
+    inset 0 0 0 3px #7a4a12,
+    inset 0 0 0 4.5px rgb(255 232 160 / 0.7),
+    inset 0 -7px 10px rgb(70 36 4 / 0.5);
+}
+.gr-coin__face::before {
+  content: "";
+  position: absolute;
+  inset: 8px;
+  border: 1.5px dashed rgb(110 66 14 / 0.55);
+  border-radius: 50%;
+}
+.gr-coin__face img {
+  position: relative;
+  width: 62%;
+  height: 62%;
+  object-fit: contain;
+  filter: drop-shadow(0 2px 2px rgb(60 30 4 / 0.6));
+}
+.gr-count {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  line-height: 1;
+}
+.gr-count b {
+  font-size: 52px;
+  font-weight: 800;
+  color: var(--gr-gold);
+  text-shadow:
+    0 2px 0 rgb(0 0 0 / 0.7),
+    0 0 18px rgb(246 198 91 / 0.45);
+}
+.gr-count span {
+  margin-top: 4px;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--gr-cream);
+}
+
+/* engraved plaques */
+.gr-plank,
+.gr-ledger {
+  display: flex;
+  flex-direction: column;
+  padding: 2px 12px;
+  border: 1px solid rgb(246 198 91 / 0.35);
+  border-radius: 8px;
+  background: linear-gradient(180deg, rgb(20 11 5 / 0.8), rgb(43 26 14 / 0.65));
+  box-shadow: inset 0 2px 6px rgb(0 0 0 / 0.55);
+}
+.gr-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  min-height: 38px;
+}
+.gr-row + .gr-row {
+  border-top: 1px dashed rgb(246 198 91 / 0.25);
+}
+.gr-label {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--gr-sand);
+}
+.gr-val {
+  font-size: 14px;
+  font-weight: 800;
+  text-align: right;
+}
+.gr-val--soft {
+  color: var(--gr-sand);
+  font-weight: 700;
+}
+.gr-row--total {
+  min-height: 48px;
+}
+.gr-total {
+  font-size: 25px;
+  font-weight: 800;
+  color: var(--gr-gold);
+  text-shadow:
+    0 2px 0 rgb(0 0 0 / 0.7),
+    0 0 14px rgb(246 198 91 / 0.45);
+}
+.gr-row--bal {
+  min-height: 32px;
+}
+.gr-row--bal .gr-label,
+.gr-row--bal .gr-val {
+  font-size: 12px;
+}
+
+/* carved steppers */
+.gr-step {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 2px;
+  border: 1px solid rgb(246 198 91 / 0.35);
+  border-radius: 9px;
+  background: rgb(14 8 3 / 0.7);
+}
+.gr-step button {
+  width: 44px;
+  height: 36px;
+  border: 1px solid rgb(224 164 71 / 0.55);
+  border-radius: 7px;
+  background: linear-gradient(180deg, #6a4222, #3d2512);
+  color: var(--gr-cream);
+  font-family: inherit;
+  font-size: 20px;
+  line-height: 1;
+  box-shadow:
+    inset 0 1px 0 rgb(255 226 160 / 0.28),
+    0 2px 0 rgb(0 0 0 / 0.45);
+  cursor: pointer;
+  transition:
+    transform 0.1s ease,
+    border-color 0.15s ease;
+}
+.gr-step button:hover:not(:disabled) {
+  border-color: var(--gr-gold);
+}
+.gr-step button:active:not(:disabled) {
+  transform: translateY(2px);
+  box-shadow: inset 0 2px 5px rgb(0 0 0 / 0.5);
+}
+.gr-step button:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+.gr-step output {
+  min-width: 74px;
+  text-align: center;
+  font-size: 14px;
+  font-weight: 800;
+}
+
+/* posted notice: the rules, on sandy paper */
+.gr-notice {
+  margin: 0;
+  padding: 10px 12px 10px 14px;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  border: 1px dashed rgb(90 52 10 / 0.7);
+  border-radius: 4px;
+  background: linear-gradient(180deg, #e3c898, #cfae78);
+  box-shadow:
+    inset 0 0 14px rgb(120 70 10 / 0.35),
+    0 2px 6px rgb(0 0 0 / 0.4);
+  color: var(--gr-ink);
+}
+.gr-notice li {
+  position: relative;
+  padding-left: 14px;
+  font-size: 11.5px;
+  font-weight: 600;
+  line-height: 1.35;
+}
+.gr-notice li::before {
+  content: "";
+  position: absolute;
+  left: 1px;
+  top: 0.45em;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, #f6c65b, #8a5513);
+}
+
+.gr-alert {
+  padding: 8px 12px;
+  border: 1px solid rgb(240 120 100 / 0.6);
+  border-radius: 6px;
+  background: rgb(110 25 20 / 0.5);
+  color: #ffd6cc;
+  font-size: 12.5px;
+  font-weight: 700;
+  text-align: center;
+}
+
+/* actions (pinned to the bottom on short screens) */
+.gr-actions {
+  position: sticky;
+  bottom: -16px;
+  z-index: 3;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 2px -16px -16px;
+  padding: 10px 16px 16px;
+  background: linear-gradient(180deg, transparent 0, #1f1209 14px);
+}
+.gr-confirm {
+  position: relative;
+  overflow: hidden;
+  min-height: 52px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 0 18px;
+  border: 1px solid #fff0bd;
+  border-radius: 10px;
+  background:
+    linear-gradient(160deg, rgb(255 255 255 / 0.5), transparent 38%),
+    linear-gradient(180deg, #f6c65b, #c58a1f 70%, #a8691f);
+  color: var(--gr-ink);
+  font-family: inherit;
+  font-size: 15px;
+  font-weight: 900;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  text-shadow: 0 1px 0 rgb(255 232 160 / 0.7);
+  box-shadow:
+    inset 0 0 0 3px rgb(120 70 10 / 0.35),
+    0 3px 0 #6b4012,
+    0 8px 16px rgb(0 0 0 / 0.45);
+  cursor: pointer;
+  transition:
+    transform 0.1s ease,
+    box-shadow 0.15s ease,
+    filter 0.2s ease;
+}
+.gr-confirm small {
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: rgb(42 23 6 / 0.2);
+}
+.gr-confirm::after {
+  content: "";
+  position: absolute;
+  inset: 0 auto 0 -40%;
+  width: 36%;
+  pointer-events: none;
+  background: linear-gradient(100deg, transparent, rgb(255 255 255 / 0.55), transparent);
+  transform: skewX(-18deg);
+  animation: gr-glint 5s ease-in-out infinite;
+}
+.gr-confirm:hover:not(:disabled) {
+  filter: brightness(1.07);
+}
+.gr-confirm:active:not(:disabled) {
+  transform: translateY(3px);
+  box-shadow:
+    inset 0 0 0 3px rgb(120 70 10 / 0.35),
+    0 0 0 #6b4012,
+    0 3px 8px rgb(0 0 0 / 0.45);
+}
+.gr-confirm:disabled {
+  cursor: not-allowed;
+  filter: grayscale(0.9) brightness(0.6);
+  box-shadow: none;
+}
+.gr-confirm:disabled::after {
+  animation: none;
+  opacity: 0;
+}
+.gr-cancel {
+  min-height: 46px;
+  border: 1px solid rgb(224 164 71 / 0.55);
+  border-radius: 10px;
+  background: linear-gradient(180deg, #4a2f19, #2b1a0e);
+  color: var(--gr-cream);
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  box-shadow: inset 0 1px 0 rgb(255 226 160 / 0.2);
+  cursor: pointer;
+  transition: border-color 0.15s ease;
+}
+.gr-cancel:hover {
+  border-color: var(--gr-gold);
+}
+
+@keyframes gr-turn {
+  to {
+    transform: rotate(360deg);
+  }
+}
+@keyframes gr-drift {
+  0%,
+  100% {
+    transform: translateY(0);
+    opacity: 0.2;
+  }
+  50% {
+    transform: translateY(-12px);
+    opacity: 0.65;
+  }
+}
+@keyframes gr-glint {
+  0%,
+  60% {
+    transform: translateX(0) skewX(-18deg);
+  }
+  100% {
+    transform: translateX(900%) skewX(-18deg);
+  }
+}
+
+@media (max-height: 700px) {
+  .gr-body {
+    gap: 7px;
+    padding: 12px 14px;
+  }
+  .gr-actions {
+    bottom: -12px;
+    margin: 2px -14px -12px;
+    padding: 8px 14px 12px;
+  }
+  .gr-title {
+    font-size: 19px;
+    padding: 7px 10px 6px;
+  }
+  .gr-coin {
+    width: 70px;
+    height: 70px;
+  }
+  .gr-count b {
+    font-size: 40px;
+  }
+  .gr-row {
+    min-height: 34px;
+  }
+  .gr-confirm {
+    min-height: 48px;
+  }
+  .gr-cancel {
+    min-height: 44px;
+  }
+  .gr-notice li {
+    font-size: 11px;
+  }
+}
+@media (max-width: 340px) {
+  .gr-label {
+    font-size: 10px;
+    letter-spacing: 0.05em;
+  }
+  .gr-step output {
+    min-width: 54px;
+  }
+  .gr-title {
+    font-size: 17px;
+    letter-spacing: 0.06em;
+  }
+  .gr-hero {
+    gap: 10px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .gr-coin__rim,
+  .gr-dust i,
+  .gr-confirm::after {
+    animation: none !important;
+  }
+  .gr-dust i {
+    opacity: 0.35;
+  }
+}

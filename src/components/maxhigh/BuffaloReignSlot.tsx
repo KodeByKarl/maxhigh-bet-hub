@@ -195,55 +195,22 @@ export function BuffaloReignSlot({
   /** Overlay toast — never inserts into HUD (avoids layout jump). */
   const notifyCashflow = useCallback((delta: number, label: "bet" | "win" | "scatter" | "cap") => {
     const abs = formatMoney(Math.abs(delta));
-    if (label === "bet") {
-      toast.custom(
-        () => (
-          <div
-            className="rounded-2xl border px-4 py-2.5 text-center shadow-[0_10px_28px_rgba(0,0,0,0.45)]"
-            style={{
-              borderColor: "rgba(217,119,6,0.55)",
-              background: "linear-gradient(135deg, rgba(17,24,39,0.96), rgba(76,24,2,0.92))",
-              color: "#eec28f",
-            }}
-          >
-            <div className="text-[10px] font-black uppercase tracking-[0.18em] opacity-80">Bet</div>
-            <div className="text-sm font-black tabular-nums">−{abs}</div>
-          </div>
-        ),
-        { duration: 1800 },
-      );
-      return;
-    }
-    const isWin = label === "win" || label === "scatter";
-    const title = label === "scatter" ? "Scatter" : label === "cap" ? "Cap" : "Win";
-    const prefix = delta < 0 ? "−" : "+";
+    // Compact single-line pill at the top (never over the reels or controls); the toast wrapper is made transparent by `.bf-toast`
+    // in buffalo-ui.css so no dark box shows around the pill. Display only: amounts come from the settled spin.
+    const isWin = label !== "bet";
+    const title = label === "scatter" ? "Scatter" : label === "cap" ? "Cap" : isWin ? "Win" : "Bet";
+    const sign = label === "bet" || delta < 0 ? "−" : "+";
     toast.custom(
       () => (
-        <div
-          className="rounded-2xl border px-4 py-2.5 text-center shadow-[0_10px_28px_rgba(0,0,0,0.45)]"
-          style={{
-            borderColor: isWin ? "rgba(217,119,6,0.65)" : "rgba(217,119,6,0.55)",
-            background: isWin
-              ? "linear-gradient(135deg, #D97706 0%, rgb(87,30,2) 55%, #111827 100%)"
-              : "linear-gradient(135deg, rgba(17,24,39,0.96), rgba(76,24,2,0.92))",
-            color: isWin ? "#f9ebda" : "#eec28f",
-          }}
-        >
-          <div
-            className="text-[10px] font-black uppercase tracking-[0.18em]"
-            style={{
-              color: isWin ? "rgba(253,242,248,0.85)" : "rgba(251,207,232,0.85)",
-            }}
-          >
-            {title}
-          </div>
-          <div className="text-sm font-black tabular-nums">
-            {prefix}
+        <div className="bf-toast__pill" data-kind={isWin ? "win" : "bet"} role="status">
+          <span>{title}</span>
+          <strong>
+            {sign}
             {abs}
-          </div>
+          </strong>
         </div>
       ),
-      { duration: 1800 },
+      { duration: isWin ? 1500 : 1000, position: "top-center", className: "bf-toast" },
     );
   }, []);
 

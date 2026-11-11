@@ -121,7 +121,14 @@ for (const t of themes) {
 // the old generic modal must be gone from every game wrapper
 for (const d of dirs) {
   const src = fs.readFileSync(path.join(componentsDir, d, "BuyFeatureModal.tsx"), "utf8");
-  check(src.includes("BuyBonusModal"), `${d}: uses the shared BuyBonusModal`);
+  // Games with their own presentation of the same purchase contract (quantity rules, lib/buy-bonus price formula, onConfirm(bet, qty)).
+  const ownModal: Record<string, string> = { "buffalo-reign": "GoldRushModal" };
+  const modal = ownModal[d] ?? "BuyBonusModal";
+  check(
+    src.includes(modal),
+    ownModal[d] ? `${d}: uses its own ${modal}` : `${d}: uses the shared BuyBonusModal`,
+  );
+  if (ownModal[d]) check(src.includes("getBuyBonusSpec") && src.includes("getBuyUnitPrice"), `${d}: own modal still uses the shared quantity spec and the game's price function`);
   check(!/from-amber|border-amber-600/.test(src), `${d}: no legacy form markup`);
   check(!src.includes("BUY_BONUS_FREE_SPINS") || d === "wild-panther", `${d}: no global fixed-10 constant`);
 }

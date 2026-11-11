@@ -42,7 +42,7 @@ export function FreeSpinsCongrats({
         transition={{ type: "spring", stiffness: 280, damping: 18 }}
         className="relative w-full max-w-[560px] rounded-[1.75rem] p-[10px]"
         style={{
-          background: "linear-gradient(135deg, #FDE68A 0%, #D97706 50%, #064E3B 100%)",
+          background: "linear-gradient(135deg, #f3c46a 0%, #a8691f 50%, #5e380c 100%)",
           boxShadow: "0 20px 50px rgba(0,0,0,0.85)",
         }}
       >
@@ -65,7 +65,7 @@ export function FreeSpinsCongrats({
         <div
           className="relative overflow-visible rounded-[1.35rem] px-4 py-7 text-center sm:px-6"
           style={{
-            background: "linear-gradient(180deg, #064E3B 0%, #022014 100%)",
+            background: "linear-gradient(180deg, #3d2512 0%, #1f1209 100%)",
             boxShadow: "inset 0 0 40px rgba(0,0,0,0.5)",
           }}
         >
@@ -76,17 +76,17 @@ export function FreeSpinsCongrats({
               textShadow: "0 3px 0 #78350F, 0 6px 12px rgba(0,0,0,0.6)",
             }}
           >
-            Congratulations
+            Gold Strike!
           </div>
 
           <div
-            className="relative mt-1 font-black uppercase tracking-[0.12em] text-emerald-200"
+            className="relative mt-1 font-black uppercase tracking-[0.12em] text-amber-200"
             style={{
               fontSize: "clamp(0.95rem, 3.8vw, 1.2rem)",
               textShadow: "0 2px 6px rgba(0,0,0,0.6)",
             }}
           >
-            You Have Won
+            Frontier Bonus Paid
           </div>
 
           {/* Amount pill — wide + fluid type so big totals never clip */}
@@ -94,7 +94,7 @@ export function FreeSpinsCongrats({
             <div
               className="relative w-full rounded-full border-2 border-amber-300 px-4 py-3.5 sm:px-8 sm:py-4 shadow-xl"
               style={{
-                background: "linear-gradient(180deg, #D97706 0%, #78350F 100%)",
+                background: "linear-gradient(180deg, #c58a1f 0%, #5e380c 100%)",
                 boxShadow: "0 8px 24px rgba(0,0,0,0.6), inset 0 3px 10px rgba(255,255,255,0.25)",
               }}
             >
@@ -119,7 +119,7 @@ export function FreeSpinsCongrats({
               <div className="flex flex-wrap items-center justify-center gap-x-2 gap-y-1 text-[11px] font-black tabular-nums text-white/95 sm:text-[12px]">
                 <span className="text-yellow-300">₱{baseEarn.toFixed(2)}</span>
                 <span className="text-white/60">×</span>
-                <span className="text-sky-300">{appliedMult}x</span>
+                <span className="text-amber-200">{appliedMult}x</span>
                 <span className="text-white/60">=</span>
                 <span className="text-yellow-300">₱{amount.toFixed(2)}</span>
               </div>
@@ -131,7 +131,7 @@ export function FreeSpinsCongrats({
               className="text-white"
               style={{
                 fontSize: "clamp(0.95rem, 3.5vw, 1.15rem)",
-                WebkitTextStroke: "1.5px #2563eb",
+                WebkitTextStroke: "1.5px #6b4012",
                 paintOrder: "stroke fill",
               }}
             >
@@ -141,7 +141,7 @@ export function FreeSpinsCongrats({
               className="text-yellow-300"
               style={{
                 fontSize: "clamp(1.25rem, 5vw, 1.65rem)",
-                textShadow: "0 2px 0 #6b21a8",
+                textShadow: "0 2px 0 #5e380c",
               }}
             >
               {spinsPlayed}
@@ -150,7 +150,7 @@ export function FreeSpinsCongrats({
               className="text-white"
               style={{
                 fontSize: "clamp(0.95rem, 3.5vw, 1.15rem)",
-                WebkitTextStroke: "1.5px #2563eb",
+                WebkitTextStroke: "1.5px #6b4012",
                 paintOrder: "stroke fill",
               }}
             >

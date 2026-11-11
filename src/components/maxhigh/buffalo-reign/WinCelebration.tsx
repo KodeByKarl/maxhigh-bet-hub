@@ -92,7 +92,7 @@ export function WinCelebration({
             }}
             className="absolute text-lg sm:text-2xl"
             style={{
-              color: i % 2 === 0 ? "#F472B6" : "#FBCFE8",
+              color: i % 2 === 0 ? "#f6c65b" : "#fde9b0",
               filter:
                 i % 2 === 0
                   ? "drop-shadow(0 0 10px rgba(244,114,182,0.9))"
@@ -123,7 +123,7 @@ export function WinCelebration({
               transition={{ delay: 0.08 + i * 0.05, type: "spring", stiffness: 420 }}
               style={{
                 fontSize: i === 1 ? "2.15rem" : "1.35rem",
-                color: i === 1 ? "#FBCFE8" : "#F472B6",
+                color: i === 1 ? "#fde9b0" : "#f6c65b",
                 filter: "drop-shadow(0 0 12px rgba(244,114,182,0.9))",
               }}
             >
@@ -154,9 +154,9 @@ export function WinCelebration({
                 style={{
                   fontSize: "clamp(1.85rem, 8.5vw, 3.1rem)",
                   color: LETTER_COLORS[i % LETTER_COLORS.length],
-                  WebkitTextStroke: "0.1em #831843",
+                  WebkitTextStroke: "0.1em #5e380c",
                   paintOrder: "stroke fill",
-                  textShadow: "0 0.08em 0 #9D174D, 0 0.16em 0.22em rgba(0,0,0,0.45)",
+                  textShadow: "0 0.08em 0 #7a4a12, 0 0.16em 0.22em rgba(0,0,0,0.45)",
                 }}
               >
                 {ch}
@@ -172,7 +172,7 @@ export function WinCelebration({
             transition={{ delay: 0.08, type: "spring", stiffness: 380 }}
             className="relative z-[3] mb-3 w-full max-w-[260px] rounded-[1.25rem] p-[5px]"
             style={{
-              background: "linear-gradient(135deg, #FDF2F8 0%, #F472B6 45%, #831843 100%)",
+              background: "linear-gradient(135deg, #fff6dc 0%, #f6c65b 45%, #5e380c 100%)",
               boxShadow: "0 12px 32px rgba(0,0,0,0.65)",
             }}
           >
@@ -180,12 +180,12 @@ export function WinCelebration({
               className="rounded-[1rem] border-2 px-4 py-3 text-center"
               style={{
                 borderColor: "rgba(251,207,232,0.8)",
-                background: "linear-gradient(180deg, #BE185D 0%, #831843 100%)",
+                background: "linear-gradient(180deg, #a8691f 0%, #5e380c 100%)",
               }}
             >
               <div
                 className="text-[12px] font-black uppercase tracking-wide"
-                style={{ color: "#FDF2F8" }}
+                style={{ color: "#fff6dc" }}
               >
                 Total Multiplier
               </div>
@@ -193,9 +193,9 @@ export function WinCelebration({
                 className="mt-1 font-black tabular-nums leading-none"
                 style={{
                   fontSize: "clamp(2.6rem, 12vw, 3.6rem)",
-                  color: "#FBCFE8",
-                  textShadow: "0 3px 0 #831843, 0 6px 10px rgba(0,0,0,0.45)",
-                  WebkitTextStroke: "1px #9D174D",
+                  color: "#fde9b0",
+                  textShadow: "0 3px 0 #5e380c, 0 6px 10px rgba(0,0,0,0.45)",
+                  WebkitTextStroke: "1px #7a4a12",
                 }}
               >
                 {bankedMult > 0 ? `${bankedMult}x` : "1x"}
@@ -226,7 +226,7 @@ export function WinCelebration({
                 <div className="text-[8px] font-black uppercase tracking-wider text-pink-200/90">
                   Total Earn
                 </div>
-                <div className="truncate font-black tabular-nums text-base text-[#FBCFE8] sm:text-lg">
+                <div className="truncate font-black tabular-nums text-base text-[#fde9b0] sm:text-lg">
                   ₱{shownEarn.toFixed(2)}
                 </div>
               </div>
@@ -235,7 +235,7 @@ export function WinCelebration({
                 <div className="text-[8px] font-black uppercase tracking-wider text-rose-200/90">
                   Multiplier
                 </div>
-                <div className="font-black tabular-nums text-base text-[#F9A8D4] sm:text-lg">
+                <div className="font-black tabular-nums text-base text-[#f3d189] sm:text-lg">
                   {shownMult}x
                 </div>
               </div>
@@ -244,7 +244,7 @@ export function WinCelebration({
                 <div className="text-[8px] font-black uppercase tracking-wider text-pink-100/90">
                   Total
                 </div>
-                <div className="truncate font-black tabular-nums text-base text-[#FBCFE8] sm:text-lg">
+                <div className="truncate font-black tabular-nums text-base text-[#fde9b0] sm:text-lg">
                   ₱{amount.toFixed(2)}
                 </div>
               </div>
@@ -257,7 +257,7 @@ export function WinCelebration({
             className="relative mx-auto w-full rounded-full px-6 py-5 sm:px-10 sm:py-6"
             style={{
               background:
-                "linear-gradient(180deg, #FDF2F8 0%, #FBCFE8 22%, #F472B6 55%, #831843 100%)",
+                "linear-gradient(180deg, #fff6dc 0%, #fde9b0 22%, #f6c65b 55%, #5e380c 100%)",
               boxShadow:
                 "0 10px 32px rgba(244,114,182,0.55), inset 0 3px 10px rgba(255,255,255,0.45), inset 0 -4px 10px rgba(131,24,67,0.35)",
               border: "4px solid rgba(253,242,248,0.85)",
@@ -277,8 +277,8 @@ export function WinCelebration({
               className="relative text-center font-black tabular-nums leading-none"
               style={{
                 fontSize: "clamp(2.25rem, 11vw, 3.75rem)",
-                color: "#FDF2F8",
-                textShadow: "0 3px 0 #831843, 0 7px 16px rgba(17,24,39,0.55)",
+                color: "#fff6dc",
+                textShadow: "0 3px 0 #5e380c, 0 7px 16px rgba(17,24,39,0.55)",
                 WebkitTextStroke: "1.5px rgba(131,24,67,0.45)",
               }}
             >

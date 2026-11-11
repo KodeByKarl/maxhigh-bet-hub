@@ -35,9 +35,8 @@ export function FreeSpinsTriggerModal({ count = 10, onClose }: Props) {
         transition={{ type: "spring", stiffness: 320, damping: 22 }}
         className="relative w-full max-w-[22rem] overflow-hidden rounded-[1.35rem] sm:max-w-md"
         style={{
-          background:
-            "linear-gradient(165deg, var(--p-accent-deep) 0%, color-mix(in srgb, var(--p-accent-deep) 70%, black) 42%, #0A0704 100%)",
-          border: "2px solid var(--p-menu-accent)",
+          background: "linear-gradient(165deg, #4a2f19 0%, #2b1a0e 45%, #140b05 100%)",
+          border: "2px solid #e0a447",
           boxShadow:
             "0 0 0 1px color-mix(in srgb, var(--p-accent-soft) 35%, transparent), 0 24px 60px rgba(0,0,0,0.75), 0 0 48px var(--p-spin-shadow)",
         }}
@@ -56,7 +55,7 @@ export function FreeSpinsTriggerModal({ count = 10, onClose }: Props) {
             className="relative text-[10px] font-bold uppercase tracking-[0.38em] sm:text-[11px]"
             style={{ color: "color-mix(in srgb, var(--p-accent-soft) 70%, transparent)" }}
           >
-            Feature Unlocked
+            Bonus Unlocked
           </p>
 
           <motion.div
@@ -106,7 +105,7 @@ export function FreeSpinsTriggerModal({ count = 10, onClose }: Props) {
             className="relative mt-2 text-xs font-semibold uppercase tracking-[0.2em] sm:text-sm"
             style={{ color: "color-mix(in srgb, var(--p-hud-value) 75%, transparent)" }}
           >
-            {count} scatters unlocked
+            The gold rush begins
           </p>
 
           <div className="relative mx-auto mt-5 max-w-[16rem]">
@@ -114,8 +113,7 @@ export function FreeSpinsTriggerModal({ count = 10, onClose }: Props) {
               className="rounded-xl border px-4 py-3.5"
               style={{
                 borderColor: "color-mix(in srgb, var(--p-accent-soft) 50%, transparent)",
-                background:
-                  "linear-gradient(180deg, var(--p-tumble-from) 0%, var(--p-tumble-to) 55%, var(--p-accent-deep) 100%)",
+                background: "linear-gradient(180deg, #c58a1f 0%, #5e380c 55%, #2b1a0e 100%)",
                 boxShadow:
                   "inset 0 1px 0 color-mix(in srgb, var(--p-accent-soft) 35%, transparent), 0 10px 28px rgba(0,0,0,0.45)",
               }}
@@ -154,9 +152,9 @@ export function FreeSpinsTriggerModal({ count = 10, onClose }: Props) {
             className="relative mt-5 w-full rounded-lg border py-2.5 text-sm font-black uppercase tracking-wider transition active:scale-[0.98]"
             style={{
               borderColor: "color-mix(in srgb, var(--p-accent) 60%, transparent)",
-              background: "linear-gradient(180deg, var(--p-spin-from) 0%, var(--p-spin-to) 100%)",
-              color: "var(--p-accent-deep)",
-              boxShadow: "0 0 20px var(--p-spin-shadow)",
+              background: "linear-gradient(180deg, #f6c65b 0%, #c58a1f 70%, #a8691f 100%)",
+              color: "#2a1706",
+              boxShadow: "0 0 20px rgba(246,198,91,0.45)",
             }}
           >
             Start Spins
