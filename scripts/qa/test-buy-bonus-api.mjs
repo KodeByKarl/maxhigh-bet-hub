@@ -1,5 +1,6 @@
 // API-level Buy Bonus verification against a LOOPBACK disposable clone (never the live UAT). Two parts:
-//  A) SWEEP over every slot with a buy flow: quantity other than 10 refused (nothing debited), a concurrent duplicate purchase yields exactly ONE
+//  A) SWEEP over every slot with a buy flow: out-of-spec quantities refused (nothing debited), quantity 1 at bet 1 charges exactly the client
+//     reference price on the 29 template slots (42.50) and awards exactly 1 free spin, played at the base bet, a concurrent duplicate purchase yields exactly ONE
 //     session and ONE debit, the session starts with exactly 10 free spins, a second purchase while open is refused, the bonus is played out to
 //     the end, the payout is credited ONCE (wallet = start - price + payout), and replaying a finished session changes nothing.
 //  B) FORCED scenarios on three representatives (config forced through game_controls.engine_config, restored afterwards):
@@ -80,12 +81,29 @@ for (const meta of games) {
   try {
     // leave nothing open from an earlier game
     if ((await openCount()) > 0) await q("UPDATE play_sessions SET status='closed', free_spins_left=0 WHERE user_id=? AND status='open'", [userId]);
-    // 1) any quantity other than 10 is refused and costs nothing
+    // 1) out-of-spec quantities are refused and cost nothing (Wild Panther keeps its locked 10 and takes no quantity)
     let s0 = await seqNow(), b0 = await bal();
     const bad = [];
-    for (const qty of g.kind === "wild-panther" ? [] : [1, 5, 9, 11, 25, 50]) { const m = await refusedBy(() => g.buy(qty)); if (m === null || !/exactly 10/i.test(m)) bad.push(`${qty}:${m ?? "ACCEPTED"}`); }
-    note(`${label} quantities other than 10 are refused by the server with the fixed-spin message`, bad.length === 0, bad.join(" | "));
+    for (const qty of g.kind === "wild-panther" ? [] : [0, 2.5, 26]) { const m = await refusedBy(() => g.buy(qty)); if (m === null || !/quantit|at most|from 1 to|invalid/i.test(m)) bad.push(`${qty}:${m ?? "ACCEPTED"}`); }
+    note(`${label} out-of-spec quantities (0, 2.5, 26) are refused by the server`, bad.length === 0, bad.join(" | "));
     note(`${label} refused quantities cost nothing and open no session`, (await bal()) === b0 && (await openCount()) === 0 && (await rows(s0)).length === 0);
+    // 1b) client reference: bet 1, quantity 1 -> price 42.50 (template slots), wallet debited by exactly the price, exactly 1 free spin at the base bet
+    if (g.kind === "template") {
+      s0 = await seqNow(); b0 = await bal();
+      const one = await g.buy(1);
+      const r1 = await rows(s0);
+      const d1 = r1.filter((r) => Number(r.amount) < 0);
+      note(`${label} client example: bet 1 x quantity 1 charges exactly 42.50 (one ledger debit)`, d1.length === 1 && Math.abs(Number(d1[0].amount) + 42.5) < 0.0001 && Math.abs((await bal()) - (b0 - 42.5)) < 0.0001, d1.map((r) => r.amount).join(","));
+      note(`${label} quantity 1 awards exactly 1 free spin on the base bet ${g.bet}`, one.session?.freeSpinsLeft === 1 && Number(one.session?.bet) === g.bet, `left ${one.session?.freeSpinsLeft}, bet ${one.session?.bet}`);
+      await playOut(g, one.session);
+    } else if (g.kind === "realms") {
+      s0 = await seqNow(); b0 = await bal();
+      const one = await g.buy(1);
+      const d1 = (await rows(s0)).filter((r) => Number(r.amount) < 0);
+      note(`${label} quantity 1 is purchasable: one debit equal to the wallet change, 1 free spin, base bet kept`, d1.length === 1 && Math.abs((await bal()) - (b0 + Number(d1[0].amount))) < 0.0001 && one.session?.freeSpinsLeft === 1 && Number(one.session?.bet) === g.bet, `debit ${d1[0]?.amount}, left ${one.session?.freeSpinsLeft}`);
+      await playOut(g, one.session);
+    }
+    if ((await openCount()) > 0) await q("UPDATE play_sessions SET status='closed', free_spins_left=0 WHERE user_id=? AND status='open'", [userId]);
     // 2) concurrent duplicate purchase: exactly one wins
     s0 = await seqNow(); b0 = await bal();
     const dup = await Promise.allSettled([g.buy(10), g.buy(10), g.buy(10)]);

@@ -1,5 +1,6 @@
 import { BuyBonusModal } from "@/components/maxhigh/buy-bonus/BuyBonusModal";
 import { buyBonusThemeFromPanther } from "@/components/maxhigh/buy-bonus/theme";
+import { getBuyBonusSpec } from "@/lib/buy-bonus";
 import { ICON_SRC } from "./paytable";
 
 export type BuyFeatureModalProps = {
@@ -23,10 +24,11 @@ export function BuyFeatureModal({ bet, cost, balance, onConfirm, onCancel }: Buy
     <BuyBonusModal
       theme={buyBonusThemeFromPanther("wild-panther", WILD_PANTHER_BUY_THEME, ICON_SRC.lollipop)}
       bet={bet}
-      price={cost}
+      quantity={getBuyBonusSpec("wild-panther").quantity}
+      pricePerUnitMult={() => cost / bet / 10}
       balance={balance}
       onCancel={onCancel}
-      onConfirm={onConfirm}
+      onConfirm={() => onConfirm()}
     />
   );
 }

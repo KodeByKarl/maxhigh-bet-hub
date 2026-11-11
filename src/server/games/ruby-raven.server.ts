@@ -24,7 +24,7 @@ import {
   writeLedgerDelta,
 } from "../wallet.server";
 import { pantherBuyPricePerSpin } from "@/components/maxhigh/panther-shared/buyPricing";
-import { resolveBuyBonusSpins } from "@/lib/buy-bonus";
+import { buyBonusTotal, resolveBuyBonusQuantity } from "@/lib/buy-bonus";
 
 const GAME_NAME = "Ruby Raven";
 
@@ -469,7 +469,7 @@ export async function rubyRavenBuyFeature(data: {
   minorUnits(data.bet);
   await assertGameWager(RUBY_RAVEN_GAME_ID, data.bet);
   if (!Number.isFinite(data.bet) || data.bet <= 0) throw new Error("Invalid bet");
-  const quantity = resolveBuyBonusSpins(data.quantity);
+  const quantity = resolveBuyBonusQuantity(RUBY_RAVEN_GAME_ID, data.quantity);
 
   const cfg = await loadEngineConfig();
   if (data.mode === "super") throw new Error("Super Buy is no longer available");
@@ -483,7 +483,7 @@ export async function rubyRavenBuyFeature(data: {
     cfg.freeSpinsBase,
     quantity,
   );
-  const cost = +(data.bet * mult * quantity).toFixed(2);
+  const cost = buyBonusTotal(data.bet, mult, quantity);
   if (data.bet > 100_000) {
     throw new Error("Buy feature bet too large");
   }

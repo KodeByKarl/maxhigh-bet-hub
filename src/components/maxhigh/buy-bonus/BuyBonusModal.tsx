@@ -1,6 +1,19 @@
-import { useEffect, useId, useMemo, useRef, type CSSProperties, type KeyboardEvent } from "react";
+import {
+  useEffect,
+  useId,
+  useMemo,
+  useRef,
+  useState,
+  type CSSProperties,
+  type KeyboardEvent,
+} from "react";
 import { motion, useReducedMotion } from "framer-motion";
-import { BUY_BONUS_FREE_SPINS } from "@/lib/buy-bonus";
+import {
+  buyBonusTotal,
+  buyBonusUnitPrice,
+  clampBuyBonusQuantity,
+  type BuyBonusQuantitySpec,
+} from "@/lib/buy-bonus";
 import { BUY_BONUS_MOTIFS, type BuyBonusMotif } from "./motifs";
 import { motifPattern, motifTileSize } from "./patterns";
 import { luminance, readableOn, type BuyBonusTheme } from "./theme";
@@ -8,12 +21,16 @@ import "./buy-bonus.css";
 
 export type BuyBonusModalProps = {
   theme: BuyBonusTheme;
-  /** The game's currently selected bet (display only: the dialog never changes it). */
+  /** The game's currently selected bet: the starting bet of the dialog. */
   bet: number;
-  /** The game's own calibrated Buy Bonus price for the fixed 10 free spins at this bet (display only; the server prices the purchase). */
-  price: number;
+  /** Bets the player may pick inside the dialog (the game's own bet ladder). Omitted: the bet is shown, not changeable. */
+  betOptions?: readonly number[];
+  /** The game's quantity rule (from lib/buy-bonus). A locked spec shows the fixed amount and no selector. */
+  quantity: BuyBonusQuantitySpec;
+  /** The game's own price per unit as a multiple of the bet at a given quantity (display only: the server prices the purchase). */
+  pricePerUnitMult: (quantity: number) => number;
   balance: number;
-  onConfirm: () => void;
+  onConfirm: (bet: number, quantity: number) => void;
   onCancel: () => void;
 };
 
@@ -55,12 +72,28 @@ const FOCUSABLE = "button:not([disabled]), [href], [tabindex]:not([tabindex='-1'
  */
 export function BuyBonusModal({
   theme,
-  bet,
-  price,
+  bet: initialBet,
+  betOptions,
+  quantity: qtySpec,
+  pricePerUnitMult,
   balance,
   onConfirm,
   onCancel,
 }: BuyBonusModalProps) {
+  const [bet, setBet] = useState(initialBet);
+  const [qty, setQty] = useState(() =>
+    clampBuyBonusQuantity(qtySpec, qtySpec.mode === "range" ? qtySpec.initial : qtySpec.value),
+  );
+  const [qtyText, setQtyText] = useState(String(qty));
+  const mult = pricePerUnitMult(qty);
+  const unitPrice = buyBonusUnitPrice(bet, mult);
+  const price = buyBonusTotal(bet, mult, qty);
+  const betIdx = betOptions ? betOptions.findIndex((b) => b === bet) : -1;
+  const setQuantity = (q: number) => {
+    const next = clampBuyBonusQuantity(qtySpec, q);
+    setQty(next);
+    setQtyText(String(next));
+  };
   const motif = BUY_BONUS_MOTIFS[theme.motif];
   const reduce = useReducedMotion();
   const canAfford = balance >= price;
@@ -228,16 +261,87 @@ export function BuyBonusModal({
               </motion.div>
 
               <motion.div {...rise(0.22)} className="bb-spins" id={descId}>
-                <b>{BUY_BONUS_FREE_SPINS}</b>
-                <span>Free Spins</span>
+                <b>{qty}</b>
+                <span>{qty === 1 ? "Free Spin" : "Free Spins"}</span>
               </motion.div>
 
-              <motion.div {...rise(0.28)} className="bb-price-wrap">
-                <div className="bb-label">Buy Bonus Price</div>
-                <div className="bb-price">₱ {formatPrice(price)}</div>
-                <div className="bb-bet">
-                  <em>Current Bet</em>
-                  <strong>₱ {formatPrice(bet)}</strong>
+              <motion.div {...rise(0.26)} className="bb-fields">
+                <div className="bb-field">
+                  <span className="bb-label">Bet (₱)</span>
+                  {betOptions && betOptions.length > 1 ? (
+                    <div className="bb-stepper" data-bb="bet">
+                      <button
+                        type="button"
+                        aria-label="Lower bet"
+                        disabled={betIdx <= 0}
+                        onClick={() => setBet(betOptions[Math.max(0, betIdx - 1)]!)}
+                      >
+                        −
+                      </button>
+                      <output aria-live="polite">{formatPrice(bet)}</output>
+                      <button
+                        type="button"
+                        aria-label="Raise bet"
+                        disabled={betIdx < 0 || betIdx >= betOptions.length - 1}
+                        onClick={() => setBet(betOptions[betIdx + 1]!)}
+                      >
+                        +
+                      </button>
+                    </div>
+                  ) : (
+                    <strong className="bb-static">{formatPrice(bet)}</strong>
+                  )}
+                </div>
+                <div className="bb-field">
+                  <span className="bb-label">Quantity</span>
+                  {qtySpec.mode === "range" ? (
+                    <div className="bb-stepper" data-bb="quantity">
+                      <button
+                        type="button"
+                        aria-label="Decrease quantity"
+                        disabled={qty <= qtySpec.min}
+                        onClick={() => setQuantity(qty - 1)}
+                      >
+                        −
+                      </button>
+                      <input
+                        inputMode="numeric"
+                        aria-label="Quantity"
+                        value={qtyText}
+                        onChange={(e) => {
+                          const t = e.target.value.replace(/\D/g, "").slice(0, 3);
+                          setQtyText(t);
+                          if (t) setQty(clampBuyBonusQuantity(qtySpec, Number(t)));
+                        }}
+                        onBlur={() => setQuantity(Number(qtyText) || qtySpec.min)}
+                      />
+                      <button
+                        type="button"
+                        aria-label="Increase quantity"
+                        disabled={qty >= qtySpec.max}
+                        onClick={() => setQuantity(qty + 1)}
+                      >
+                        +
+                      </button>
+                    </div>
+                  ) : (
+                    <strong className="bb-static">{qty}</strong>
+                  )}
+                </div>
+              </motion.div>
+
+              <motion.div {...rise(0.3)} className="bb-price-wrap">
+                <div className="bb-rows">
+                  <div>
+                    <em>Price</em>
+                    <strong data-bb="unit-price">₱ {formatPrice(unitPrice)}</strong>
+                  </div>
+                  <div className="bb-total-row">
+                    <em>Total Price</em>
+                    <strong className="bb-price" data-bb="total-price">
+                      ₱ {formatPrice(price)}
+                    </strong>
+                  </div>
                 </div>
                 {!canAfford && (
                   <div className="bb-alert" role="alert">
@@ -252,9 +356,9 @@ export function BuyBonusModal({
                   type="button"
                   className="bb-confirm"
                   disabled={!canAfford}
-                  onClick={onConfirm}
+                  onClick={() => onConfirm(bet, qty)}
                 >
-                  Confirm Buy Bonus
+                  Buy &amp; Play
                 </button>
                 <button ref={cancelRef} type="button" className="bb-cancel" onClick={onCancel}>
                   Cancel

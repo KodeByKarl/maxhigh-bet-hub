@@ -1,5 +1,5 @@
-// Buy Bonus modal UI regression: all 80 per-game theme configurations render through the ONE shared modal, show the fixed 10 free
-// spins and no quantity control, reference artwork that exists, and stay readable. Pure UI: no pricing/RTP/payout code is touched here.
+// Buy Bonus modal UI regression: all 80 per-game theme configurations render through the ONE shared modal with the client's reference
+// fields (Bet, Quantity, Price, Total Price, Buy & Play), reference artwork that exists, and stay readable. Pure UI: no pricing/RTP/payout code is touched here.
 import "./lib/stub-css";
 import fs from "node:fs";
 import path from "node:path";
@@ -16,7 +16,7 @@ import {
 } from "../src/components/maxhigh/buy-bonus/theme";
 import { REALMS_GAMES } from "../src/lib/realms/catalog";
 import { realmsAssets } from "../src/components/maxhigh/realms/theme";
-import { BUY_BONUS_FREE_SPINS } from "../src/lib/buy-bonus";
+import { BUY_BONUS_DEFAULT_SPEC, buyBonusTotal } from "../src/lib/buy-bonus";
 
 // ES imports are all *loaded* before any runs, so the CSS stub is installed above and the modal is imported after it.
 const { BuyBonusModal } = await import("../src/components/maxhigh/buy-bonus/BuyBonusModal");
@@ -31,7 +31,7 @@ function check(ok: boolean, msg: string) {
 }
 const fileExists = (src: string) => fs.existsSync(path.join(root, "public", src.split("?")[0]));
 
-check(BUY_BONUS_FREE_SPINS === 10, "fixed free spins is 10");
+check(BUY_BONUS_DEFAULT_SPEC.quantity.mode === "range", "default spec is a quantity range");
 
 const themes: BuyBonusTheme[] = [];
 
@@ -87,16 +87,22 @@ for (const t of themes) {
   check(!seen.has(sig), `${tag}: visual identity is unique (clashes with ${seen.get(sig)})`);
   seen.set(sig, tag);
 
-  const props = { theme: t, bet: 5, price: 1234.5, balance: 5000, onConfirm: () => {}, onCancel: () => {} };
+  const props = { theme: t, bet: 5, betOptions: [1, 5, 10], quantity: BUY_BONUS_DEFAULT_SPEC.quantity, pricePerUnitMult: () => 42.5, balance: 5000, onConfirm: () => {}, onCancel: () => {} };
   const html = renderToStaticMarkup(createElement(BuyBonusModal, props));
   check(html.includes('role="dialog"') && html.includes('aria-modal="true"'), `${tag}: dialog semantics`);
   check(/aria-labelledby="[^"]+"/.test(html), `${tag}: labelled dialog`);
-  for (const s of ["Buy Bonus", "Buy Bonus Price", "Current Bet", "Free Spins", "Confirm Buy Bonus", "Cancel"]) {
+  for (const s of ["Buy Bonus", "Bet (₱)", "Quantity", "Price", "Total Price", "Free Spin", "Buy &amp; Play", "Cancel"]) {
     check(html.includes(s), `${tag}: shows "${s}"`);
   }
-  check(html.includes("<b>10</b>"), `${tag}: shows the fixed 10 free spins`);
-  check(html.includes("₱ 1234.50") && html.includes("₱ 5<"), `${tag}: shows price and bet`);
-  check(!/quantity|<input|<select|type="number"/i.test(html), `${tag}: no quantity/input control`);
+  // client reference: bet 1, quantity 1, price 42.50, total 42.50 (here at bet 5: 212.50)
+  check(html.includes("₱ 212.50"), `${tag}: unit price and total at bet 5, quantity 1`);
+  check(html.includes('data-bb="quantity"') && html.includes('aria-label="Quantity"'), `${tag}: quantity selector`);
+  check(html.includes('data-bb="bet"'), `${tag}: bet selector`);
+  const ref = renderToStaticMarkup(createElement(BuyBonusModal, { ...props, bet: 1 }));
+  check(ref.includes('data-bb="total-price">₱ 42.50') && ref.includes('data-bb="unit-price">₱ 42.50'), `${tag}: client example, bet 1 x qty 1 = 42.50`);
+  check(buyBonusTotal(1, 42.5, 1) === 42.5, "buyBonusTotal client example");
+  const locked = renderToStaticMarkup(createElement(BuyBonusModal, { ...props, quantity: { mode: "locked", value: 10 } as const }));
+  check(!locked.includes('data-bb="quantity"') && locked.includes("<b>10</b>"), `${tag}: locked spec shows fixed quantity, no selector`);
   check(html.includes(t.gameName.replace(/'/g, "&#x27;")), `${tag}: shows the game name`);
   check(html.includes(t.symbolSrc), `${tag}: featured symbol rendered`);
   check(!/disabled=""[^>]*class="bb-confirm"|class="bb-confirm"[^>]*disabled=""/.test(html), `${tag}: confirm enabled when affordable`);
@@ -116,8 +122,8 @@ for (const t of themes) {
 for (const d of dirs) {
   const src = fs.readFileSync(path.join(componentsDir, d, "BuyFeatureModal.tsx"), "utf8");
   check(src.includes("BuyBonusModal"), `${d}: uses the shared BuyBonusModal`);
-  check(!/Quantity|from-amber|border-amber-600/.test(src), `${d}: no legacy form markup`);
-  check(!/BUY_FS_QTY_MIN\s*=\s*[2-9]/.test(src), `${d}: no quantity range widening`);
+  check(!/from-amber|border-amber-600/.test(src), `${d}: no legacy form markup`);
+  check(!src.includes("BUY_BONUS_FREE_SPINS") || d === "wild-panther", `${d}: no global fixed-10 constant`);
 }
 
 console.log(`buy-bonus-modal: min confirm-label contrast ${minRatio.toFixed(2)}`);

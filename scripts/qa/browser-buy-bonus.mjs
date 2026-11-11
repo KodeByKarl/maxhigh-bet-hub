@@ -14,11 +14,12 @@ fs.mkdirSync(out, { recursive: true });
 const game = process.env.GAME ?? "wild-panther";
 const player = process.env.PLAYER ?? "uat_player";
 const buyBtn = new RegExp(process.env.BUYBTN ?? "buy bonus", "i");
-const confirmBtn = new RegExp(process.env.CONFIRM ?? "confirm buy bonus", "i");
+const confirmBtn = new RegExp(process.env.CONFIRM ?? "buy (&|&amp;|and) play", "i");
 const require = createRequire(path.join(process.env.PW_MODULE_DIR, "package.json"));
 const { chromium } = require("playwright-core");
 const results = [];
 const note = (name, ok, detail = "") => { results.push({ name, ok, detail }); console.log(`${ok ? "PASS" : "FAIL"}  [${game}] ${name}${detail ? "  - " + String(detail).slice(0, 180) : ""}`); };
+const moneyAny = (t) => Number((/₱\s*([\d,]+(?:\.\d+)?)/.exec(t ?? "") ?? [])[1]?.replace(/,/g, "") ?? NaN);
 const money = (t) => Number((/₱\s*([\d,]+\.\d\d)/.exec(t ?? "") ?? [])[1]?.replace(/,/g, "") ?? NaN);
 
 const c = new Client(); await c.login(player);
@@ -58,21 +59,32 @@ for (let k = 0; k < 150; k++) {
 const buy = page.getByRole("button", { name: buyBtn }).first();
 const priceText = await buy.innerText();
 let price = money(priceText);
-const QTY = process.env.QTY ? Number(process.env.QTY) : null;
+const QTY = process.env.QTY ? Number(process.env.QTY) : 10;
 note("Buy Bonus control shows the price from the game's configuration", price > 0, priceText.replace(/\s+/g, " "));
 await buy.click();
 await page.waitForTimeout(900);
 {
-  // the player no longer chooses a quantity: the dialog states the fixed 10 free spins and the price for them at the chosen bet
-  const dialogText = await page.locator("body").innerText();
-  const stepperCount = await page.locator("button").filter({ hasText: /^\s*[+−-]\s*$/ }).count();
-  note("buy dialog has NO quantity selector and NO bet/quantity steppers", !/quantity/i.test(dialogText) && stepperCount === 0, `${stepperCount} stepper buttons`);
-  note("dialog shows CURRENT BET, BUY BONUS PRICE, FREE SPINS 10, Cancel", /current bet/i.test(dialogText) && /buy bonus price/i.test(dialogText) && /free spins\s*10/i.test(dialogText) && /cancel/i.test(dialogText), dialogText.replace(/\s+/g," ").slice(0,160));
-  note("buy dialog states the fixed 10 free spins", /(free spins\s*10\b|10\s*free spins)/i.test(dialogText), (/(.{0,25}10.{0,12}free spins|free spins.{0,12}10)/i.exec(dialogText) ?? [""])[0].replace(/\s+/g, " "));
-  const tots = [...dialogText.matchAll(/buy bonus price\s*₱?\s*([\d,]+(?:\.\d+)?)/gi)];
+  // client reference dialog: Bet, Quantity, Price, Total Price, Buy & Play (+ Cancel). Wild Panther keeps its locked 10 (no selector).
+  const dlg = page.locator("[data-buy-bonus-modal]").first();
+  const locked = (await dlg.locator('[data-bb="quantity"]').count()) === 0;
+  globalThis.locked0 = locked;
+  const text0 = await dlg.innerText();
+  note("dialog shows Bet, Quantity, Price, Total Price, Buy & Play, Cancel", /bet \(₱\)/i.test(text0) && /quantity/i.test(text0) && /price/i.test(text0) && /total price/i.test(text0) && /buy\s*&\s*play/i.test(text0) && /cancel/i.test(text0), text0.replace(/\s+/g, " ").slice(0, 160));
+  if (!locked) {
+    const unit0 = moneyAny(await dlg.locator('[data-bb="unit-price"]').innerText());
+    note("Total Price follows Price x Quantity (initial quantity)", Math.abs(moneyAny(await dlg.locator('[data-bb="total-price"]').innerText()) - unit0 * Number(await dlg.locator('input[aria-label="Quantity"]').inputValue())) < 0.011);
+    await dlg.locator('input[aria-label="Quantity"]').fill(String(QTY));
+    await dlg.locator('input[aria-label="Quantity"]').blur();
+    await page.waitForTimeout(300);
+    const unit = moneyAny(await dlg.locator('[data-bb="unit-price"]').innerText());
+    const tot = moneyAny(await dlg.locator('[data-bb="total-price"]').innerText());
+    note(`quantity ${QTY}: Total Price = Price x ${QTY}`, Math.abs(tot - unit * QTY) < 0.02 + QTY * 0.005, `unit ${unit}, total ${tot}`);
+  } else note("locked-spec game: fixed quantity shown, no selector", /10/.test(text0));
+  const dialogText = await dlg.innerText();
+  const tots = [...dialogText.matchAll(/total price\s*₱?\s*([\d,]+(?:\.\d+)?)/gi)];
   if (tots.length) {
     price = Number(tots.at(-1)[1].replace(/,/g, ""));
-    note("dialog shows the Total Price for the 10 spins (existing calibrated pricing)", price > 0, `total ${price}`);
+    note("dialog shows the Total Price that will be debited", price > 0, `total ${price}`);
   }
 }
 await page.screenshot({ path: path.join(out, `${game}-2-confirm.png`) });
@@ -116,12 +128,13 @@ for (let i = 0; i < 1400 && !ended; i++) {
 const finalBal = await balanceApi();
 note("a spin/animation phase is shown after confirming (reels spin) before the free spins are announced", sawBusyBeforeAnnouncement && announcementAt !== null && announcementAt > 1000, `announcement at ${announcementAt}ms`);
 note("the Free Spins announcement appears BEFORE the first bonus spin", announcementAt !== null && (firstCounterAt === null || announcementAt <= firstCounterAt), `announce ${announcementAt}ms, first counter ${firstCounterAt}ms`);
-note("the counter starts at exactly 1/10 (the scatter moment consumed no free spin)", counterSeen[0] === "1/10", counterSeen.slice(0, 3).join(","));
+const N0 = (await page.evaluate(() => 0), globalThis.locked0 ? 10 : QTY);
+note(`the counter starts at exactly 1/${N0} (the scatter moment consumed no free spin)`, counterSeen[0] === `1/${N0}`, counterSeen.slice(0, 3).join(","));
 const nums = counterSeen.map((x) => x.split("/").map(Number));
 const total = nums.at(-1)?.[1] ?? 0;
 const sequential = nums.every((n, i) => i === 0 || n[0] === nums[i - 1][0] + 1 || n[0] === nums[i - 1][0]);
 note("the counter progresses without skipping (1/N ... N/N)", sequential && nums.at(-1)?.[0] === total, counterSeen.join(" "));
-note("the counter total is the 10 awarded spins (a retrigger can only add)", total >= 10, `N=${total}`);
+note(`the counter total is the ${N0} purchased spins (a retrigger can only add)`, total >= N0, `N=${total}`);
 note("a Total Bonus Win summary is shown at the end", ended && /₱\s*[\d,]+\.\d\d|total|win/i.test(summaryText), summaryText.slice(0, 120));
 await page.waitForTimeout(1500);
 const deckAfter = await page.locator(".slot-deck").first().innerText().catch(() => "");

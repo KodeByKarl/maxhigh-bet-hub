@@ -50,7 +50,7 @@ import { type ReelPhase } from "./prosperity-lion/ReelCell";
 import { getProsperityLionEngineConfigFn } from "@/functions/superadmin";
 import { PROSPERITY_LION_GAME_ID } from "@/lib/prosperity-lion-config";
 import { freeSpinsProgress } from "./bonus/freeSpinsProgress";
-import { BUY_BONUS_FREE_SPINS } from "@/lib/buy-bonus";
+import { BUY_BONUS_DEFAULT_QUANTITY, buyBonusTotal } from "@/lib/buy-bonus";
 
 type Phase = ReelPhase;
 type Slot = BoardCell | null;
@@ -146,7 +146,11 @@ export function ProsperityLionSlot({
 
   const busy = phase !== "idle";
   const totalBet = +(bet * (ante ? getAnteMult() : 1)).toFixed(2);
-  const buyCost = +(getBuyUnitPrice(bet, BUY_BONUS_FREE_SPINS) * BUY_BONUS_FREE_SPINS).toFixed(2);
+  const buyCost = buyBonusTotal(
+    bet,
+    getBuyUnitPrice(1, BUY_BONUS_DEFAULT_QUANTITY),
+    BUY_BONUS_DEFAULT_QUANTITY,
+  );
 
   const busyRef = useRef(false);
   const skipRef = useRef(false);

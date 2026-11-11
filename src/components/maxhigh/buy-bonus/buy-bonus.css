@@ -631,3 +631,100 @@
     transition: none;
   }
 }
+
+/* quantity / bet / price rows (client reference: Bet, Quantity, Price, Total Price) */
+.bb-fields {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.6rem;
+  width: 100%;
+  margin-top: 0.8rem;
+}
+.bb-field {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.3rem;
+  min-width: 0;
+}
+.bb-static {
+  font-size: 1.25rem;
+  font-weight: 900;
+  color: #fff;
+  font-variant-numeric: tabular-nums;
+}
+.bb-stepper {
+  display: inline-flex;
+  align-items: stretch;
+  width: 100%;
+  max-width: 9.5rem;
+  border-radius: 0.75rem;
+  background: rgba(0, 0, 0, 0.42);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--bb-a) 38%, transparent);
+  overflow: hidden;
+}
+.bb-stepper button {
+  flex: 0 0 2.4rem;
+  min-height: 2.4rem;
+  border: 0;
+  background: color-mix(in srgb, var(--bb-a) 22%, transparent);
+  color: #fff;
+  font-size: 1.25rem;
+  font-weight: 900;
+  cursor: pointer;
+}
+.bb-stepper button:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+.bb-stepper input,
+.bb-stepper output {
+  flex: 1 1 auto;
+  min-width: 0;
+  width: 100%;
+  text-align: center;
+  background: transparent;
+  border: 0;
+  color: #fff;
+  font-size: 1.1rem;
+  font-weight: 900;
+  font-variant-numeric: tabular-nums;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.bb-rows {
+  display: grid;
+  gap: 0.35rem;
+  width: 100%;
+}
+.bb-rows > div {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.6rem;
+  padding: 0.25rem 0.9rem;
+  border-radius: 0.6rem;
+  background: rgba(0, 0, 0, 0.32);
+}
+.bb-rows em {
+  font-style: normal;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  font-size: 0.66rem;
+  color: color-mix(in srgb, var(--bb-s) 85%, #fff);
+}
+.bb-rows strong {
+  font-weight: 900;
+  color: #fff;
+  font-variant-numeric: tabular-nums;
+}
+.bb-total-row {
+  flex-direction: column;
+  align-items: center !important;
+  background: transparent !important;
+}
+.bb-total-row .bb-price {
+  margin-top: 0;
+}

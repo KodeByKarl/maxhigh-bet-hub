@@ -1,45 +1,47 @@
 import { BuyBonusModal } from "@/components/maxhigh/buy-bonus/BuyBonusModal";
 import { buyBonusThemeFromRealms } from "@/components/maxhigh/buy-bonus/theme";
-import { BUY_BONUS_FREE_SPINS } from "@/lib/buy-bonus";
+import { getBuyBonusSpec } from "@/lib/buy-bonus";
 import type { RealmsGameDef } from "@/lib/realms/catalog";
+import { BET_STEPS } from "./engine/paytable";
 
 export type BuyFeatureModalProps = {
   /** The Realms title being played: supplies its name, world and palette. */
   def: RealmsGameDef;
-  /** The game's currently selected bet: the dialog never changes it. */
+  /** The game's currently selected bet: where the dialog starts (the player may pick another from the bet ladder). */
   bet: number;
   balance: number;
   /** Price per free spin (× bet) when buying `quantity` spins. */
   pricePerSpin: (quantity: number) => number;
+  /** The title's live per-purchase cap (server-enforced as well). */
+  maxQuantity: number;
   backdropSrc: string;
   scatterSrc: string;
   onConfirm: (bet: number, quantity: number) => void;
   onCancel: () => void;
 };
 
-/** Buy Bonus: always exactly 10 free spins at the title's own calibrated price. Presentation lives in the shared BuyBonusModal. */
+/** Buy Bonus: the player picks bet and quantity at the title's own calibrated per-spin price. The server prices and validates the purchase. */
 export function BuyFeatureModal({
   def,
   balance,
   bet,
   pricePerSpin,
+  maxQuantity,
   backdropSrc,
   scatterSrc,
   onConfirm,
   onCancel,
 }: BuyFeatureModalProps) {
-  const quantity = BUY_BONUS_FREE_SPINS; // fixed: a purchase always awards exactly 10 free spins
-  const unitPrice = +(bet * pricePerSpin(quantity)).toFixed(2);
-  const totalPrice = +(unitPrice * quantity).toFixed(2);
-
   return (
     <BuyBonusModal
       theme={buyBonusThemeFromRealms(def, { backdrop: backdropSrc, symbolSrc: scatterSrc })}
       bet={bet}
-      price={totalPrice}
+      betOptions={BET_STEPS}
+      quantity={getBuyBonusSpec(def.id, maxQuantity).quantity}
+      pricePerUnitMult={pricePerSpin}
       balance={balance}
       onCancel={onCancel}
-      onConfirm={() => onConfirm(bet, quantity)}
+      onConfirm={onConfirm}
     />
   );
 }

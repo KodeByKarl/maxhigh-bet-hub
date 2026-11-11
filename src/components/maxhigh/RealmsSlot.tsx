@@ -56,7 +56,7 @@ import { ReelGrid, type ReelVisuals } from "./realms/ReelGrid";
 import type { ReelPhase, SymbolArt } from "./realms/ReelCell";
 import { realmsCssVars, realmsTheme } from "./realms/theme";
 import { freeSpinsProgress } from "./bonus/freeSpinsProgress";
-import { BUY_BONUS_FREE_SPINS } from "@/lib/buy-bonus";
+import { BUY_BONUS_DEFAULT_QUANTITY, buyBonusTotal } from "@/lib/buy-bonus";
 
 type Phase = ReelPhase;
 type Slot = BoardCell | null;
@@ -172,7 +172,11 @@ function RealmsTable({ def }: { def: RealmsGameDef }) {
     [cfg, gameId],
   );
   // Panther shows the price of one spin at the starting bet (₱1, quantity 1).
-  const buyCost = +(bet * buyPricePerSpin(BUY_BONUS_FREE_SPINS) * BUY_BONUS_FREE_SPINS).toFixed(2);
+  const buyCost = buyBonusTotal(
+    bet,
+    buyPricePerSpin(BUY_BONUS_DEFAULT_QUANTITY),
+    BUY_BONUS_DEFAULT_QUANTITY,
+  );
 
   const busyRef = useRef(false);
   const skipRef = useRef(false);
@@ -830,7 +834,7 @@ function RealmsTable({ def }: { def: RealmsGameDef }) {
   const buyFeature = useCallback(
     async (buyBet: number, quantity: number) => {
       if (busyRef.current || phase !== "idle") return;
-      const cost = +(buyBet * buyPricePerSpin(quantity) * quantity).toFixed(2);
+      const cost = buyBonusTotal(buyBet, buyPricePerSpin(quantity), quantity);
       if (balance < cost) {
         toast.error("Insufficient balance");
         return;
@@ -1193,6 +1197,7 @@ function RealmsTable({ def }: { def: RealmsGameDef }) {
             balance={balance}
             bet={bet}
             pricePerSpin={buyPricePerSpin}
+            maxQuantity={realmsBuyMaxQuantity(cfg)}
             def={def}
             backdropSrc={theme.assets.backdrop}
             scatterSrc={art.scatter.src}
