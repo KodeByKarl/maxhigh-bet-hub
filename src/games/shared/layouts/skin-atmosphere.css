@@ -1,0 +1,162 @@
+/* Background compositions drawn over the game's own artwork. One compositor-only layer (::before): static gradients, or one slow
+   transform. Colours come from the game's theme variables (--p-*). Used by slot games ([data-game-view]) and table/fishing games
+   ([data-table-view]); both wrappers are position:relative; overflow:hidden. */
+[data-atmos]:not([data-atmos="none"])::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+}
+
+/* godrays: light shafts fanning from above, swaying slowly */
+[data-atmos="godrays"]::before {
+  inset: -30% -30% 0 -30%;
+  background: repeating-conic-gradient(from 190deg at 50% -8%, color-mix(in srgb, var(--p-accent-soft, #fff) 34%, transparent) 0 3.5deg, transparent 3.5deg 13deg);
+  -webkit-mask-image: radial-gradient(ellipse 70% 80% at 50% 0, #000 0, transparent 75%);
+  mask-image: radial-gradient(ellipse 70% 80% at 50% 0, #000 0, transparent 75%);
+  transform-origin: 50% 0;
+  animation: gs-sway 16s ease-in-out infinite alternate;
+  will-change: transform;
+}
+/* spotlight: a pool of light behind the board, dark edges */
+[data-atmos="spotlight"]::before {
+  background:
+    radial-gradient(ellipse 62% 44% at 50% 36%, color-mix(in srgb, var(--p-accent-soft, #fff) 20%, transparent), transparent 72%),
+    radial-gradient(ellipse 100% 100% at 50% 50%, transparent 55%, rgba(0, 0, 0, 0.5) 100%);
+}
+/* horizon: warm glow rising from the bottom edge, breathing */
+[data-atmos="horizon"]::before {
+  background: linear-gradient(0deg, color-mix(in srgb, var(--p-accent, #fa0) 58%, transparent) 0, color-mix(in srgb, var(--p-accent, #fa0) 18%, transparent) 26%, transparent 46%);
+  animation: gs-breathe 6s ease-in-out infinite alternate;
+}
+/* mist: two soft banks drifting in opposite directions */
+[data-atmos="mist"]::before {
+  inset: 0 -25%;
+  background:
+    radial-gradient(ellipse 46% 16% at 24% 62%, rgba(255, 255, 255, 0.34), transparent 70%),
+    radial-gradient(ellipse 52% 14% at 74% 80%, rgba(255, 255, 255, 0.3), transparent 70%),
+    radial-gradient(ellipse 38% 12% at 52% 30%, rgba(255, 255, 255, 0.24), transparent 70%);
+  animation: gs-drift 30s ease-in-out infinite alternate;
+  will-change: transform;
+}
+/* curtains: heavy side drapes framing the centre */
+[data-atmos="curtains"]::before {
+  background:
+    linear-gradient(90deg, color-mix(in srgb, var(--p-accent-deep, #200) 92%, #000) 0, color-mix(in srgb, var(--p-accent-deep, #200) 60%, transparent) 9%, transparent 24%, transparent 76%, color-mix(in srgb, var(--p-accent-deep, #200) 60%, transparent) 91%, color-mix(in srgb, var(--p-accent-deep, #200) 92%, #000) 100%),
+    repeating-linear-gradient(90deg, rgba(0, 0, 0, 0.14) 0 6px, transparent 6px 18px);
+  -webkit-mask-image: linear-gradient(90deg, #000 0, #000 22%, transparent 34%, transparent 66%, #000 78%, #000 100%);
+  mask-image: linear-gradient(90deg, #000 0, #000 22%, transparent 34%, transparent 66%, #000 78%, #000 100%);
+}
+/* iris: concentric rings pulsing out from the board */
+[data-atmos="iris"]::before {
+  background: repeating-radial-gradient(circle at 50% 40%, transparent 0 54px, color-mix(in srgb, var(--p-accent-soft, #fff) 30%, transparent) 55px 57px);
+  -webkit-mask-image: radial-gradient(circle at 50% 40%, #000 0, transparent 70%);
+  mask-image: radial-gradient(circle at 50% 40%, #000 0, transparent 70%);
+  animation: gs-breathe 8s ease-in-out infinite alternate;
+}
+/* aurora: soft diagonal ribbons high in the frame */
+[data-atmos="aurora"]::before {
+  background:
+    linear-gradient(112deg, transparent 18%, color-mix(in srgb, var(--p-accent, #4fc) 40%, transparent) 30%, transparent 44%),
+    linear-gradient(118deg, transparent 40%, color-mix(in srgb, var(--p-accent-soft, #c8f) 32%, transparent) 52%, transparent 64%);
+  -webkit-mask-image: linear-gradient(180deg, #000 0, transparent 62%);
+  mask-image: linear-gradient(180deg, #000 0, transparent 62%);
+  animation: gs-breathe 10s ease-in-out infinite alternate;
+}
+/* grid: a perspective floor of fine lines */
+[data-atmos="grid"]::before {
+  inset: 48% 0 0 0;
+  background:
+    repeating-linear-gradient(90deg, color-mix(in srgb, var(--p-accent, #4cf) 30%, transparent) 0 1px, transparent 1px 44px),
+    repeating-linear-gradient(0deg, color-mix(in srgb, var(--p-accent, #4cf) 30%, transparent) 0 1px, transparent 1px 34px);
+  transform: perspective(380px) rotateX(58deg);
+  transform-origin: 50% 0;
+  -webkit-mask-image: linear-gradient(180deg, transparent 0, #000 40%);
+  mask-image: linear-gradient(180deg, transparent 0, #000 40%);
+}
+/* rain: slanted streaks falling */
+[data-atmos="rain"]::before {
+  inset: -20% 0;
+  background: repeating-linear-gradient(104deg, rgba(210, 232, 255, 0.34) 0 1px, transparent 1px 30px);
+  animation: gs-rain 1.4s linear infinite;
+  will-change: transform;
+}
+/* sunburst: a slowly turning fan of rays behind the board */
+[data-atmos="sunburst"]::before {
+  inset: -50%;
+  background: repeating-conic-gradient(from 0deg at 50% 46%, color-mix(in srgb, var(--p-accent-soft, #fff) 26%, transparent) 0 5deg, transparent 5deg 15deg);
+  -webkit-mask-image: radial-gradient(circle at 50% 46%, #000 0, transparent 50%);
+  mask-image: radial-gradient(circle at 50% 46%, #000 0, transparent 50%);
+  animation: gs-spin 90s linear infinite;
+  will-change: transform;
+}
+
+@keyframes gs-sway {
+  from {
+    transform: rotate(-3deg);
+  }
+  to {
+    transform: rotate(3deg);
+  }
+}
+@keyframes gs-breathe {
+  from {
+    opacity: 0.55;
+  }
+  to {
+    opacity: 1;
+  }
+}
+@keyframes gs-drift {
+  from {
+    transform: translateX(-7%);
+  }
+  to {
+    transform: translateX(7%);
+  }
+}
+@keyframes gs-rain {
+  from {
+    transform: translate(0, -34px);
+  }
+  to {
+    transform: translate(-8px, 0);
+  }
+}
+@keyframes gs-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* ───────── backdrop grade (slot games: the artwork image) ───────── */
+[data-game-view][data-grade="warm"] > :first-child > img.object-cover {
+  filter: sepia(0.35) saturate(1.2) brightness(0.95);
+}
+[data-game-view][data-grade="cool"] > :first-child > img.object-cover {
+  filter: hue-rotate(-14deg) saturate(1.1) brightness(0.95) contrast(1.05);
+}
+[data-game-view][data-grade="noir"] > :first-child > img.object-cover {
+  filter: grayscale(0.7) contrast(1.15) brightness(0.8);
+}
+[data-game-view][data-grade="dream"] > :first-child > img.object-cover {
+  filter: blur(1.5px) saturate(1.25) brightness(1.05);
+  transform: scale(1.03);
+}
+[data-game-view][data-grade="deep"] > :first-child > img.object-cover {
+  filter: saturate(1.2) contrast(1.12) brightness(0.78);
+}
+
+@media (max-width: 600px) {
+  [data-atmos="godrays"]::before,
+  [data-atmos="mist"]::before,
+  [data-atmos="sunburst"]::before {
+    opacity: 0.8;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  [data-atmos]::before {
+    animation: none !important;
+  }
+}
