@@ -1222,6 +1222,7 @@ function RealmsTable({ def }: { def: RealmsGameDef }) {
             bet={bet}
             pricePerSpin={buyPricePerSpin}
             maxQuantity={realmsBuyMaxQuantity(cfg)}
+            cfg={cfg}
             def={def}
             backdropSrc={theme.assets.backdrop}
             scatterSrc={art.scatter.src}

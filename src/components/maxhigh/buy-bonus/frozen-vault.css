@@ -1,0 +1,564 @@
+/* Frozen Vault: Aurora Spire's Buy Bonus. Chamfered ice-crystal card, emerald aurora light, silver Nordic accents, frosted panels.
+   Self-contained (fv-* classes); does not reuse the shared bb-* look. */
+
+@property --fv-ang {
+  syntax: "<angle>";
+  inherits: false;
+  initial-value: 0deg;
+}
+
+.fv-overlay {
+  --fv-emerald: #34d399;
+  --fv-mint: #a7f3d0;
+  --fv-ice: #eafffa;
+  --fv-silver: #c7d6de;
+  --fv-cyan: #67e8f9;
+  --fv-violet: #9a8cf8;
+  --fv-night: #03120f;
+  --fv-cut: 20px;
+  position: absolute;
+  inset: 0;
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: max(0.6rem, env(safe-area-inset-top)) max(0.6rem, env(safe-area-inset-right))
+    max(0.6rem, env(safe-area-inset-bottom)) max(0.6rem, env(safe-area-inset-left));
+  background:
+    radial-gradient(ellipse 80% 50% at 50% 30%, rgb(52 211 153 / 0.2), transparent 70%),
+    rgb(2 10 8 / 0.78);
+  backdrop-filter: blur(5px);
+  -webkit-backdrop-filter: blur(5px);
+  overflow: hidden;
+  font-family: "Inter", ui-sans-serif, system-ui, sans-serif;
+}
+
+/* glow (drop-shadow, never clipped) > frame (silver-emerald rim) > card (content) */
+.fv-glow {
+  position: relative;
+  width: min(100%, 24rem);
+  max-height: 100%;
+  display: flex;
+  filter: drop-shadow(0 18px 38px rgb(0 0 0 / 0.7)) drop-shadow(0 0 20px rgb(52 211 153 / 0.35));
+}
+.fv-frame,
+.fv-card {
+  clip-path: polygon(
+    var(--fv-cut) 0,
+    calc(100% - var(--fv-cut)) 0,
+    100% var(--fv-cut),
+    100% calc(100% - var(--fv-cut)),
+    calc(100% - var(--fv-cut)) 100%,
+    var(--fv-cut) 100%,
+    0 calc(100% - var(--fv-cut)),
+    0 var(--fv-cut)
+  );
+}
+.fv-frame {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  padding: 1.5px;
+  background: conic-gradient(
+    from var(--fv-ang),
+    var(--fv-ice),
+    var(--fv-emerald) 22%,
+    var(--fv-silver) 42%,
+    var(--fv-violet) 62%,
+    var(--fv-emerald) 82%,
+    var(--fv-ice)
+  );
+  animation: fv-spin 14s linear infinite;
+}
+.fv-card {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  isolation: isolate;
+  color: var(--fv-ice);
+  background: linear-gradient(180deg, #0a2a24 0%, #051a16 55%, #03100d 100%);
+  /* the card's own corners are cut 1.5px deeper so the frame reads as a hairline rim */
+  clip-path: polygon(
+    calc(var(--fv-cut) - 1px) 0,
+    calc(100% - var(--fv-cut) + 1px) 0,
+    100% calc(var(--fv-cut) - 1px),
+    100% calc(100% - var(--fv-cut) + 1px),
+    calc(100% - var(--fv-cut) + 1px) 100%,
+    calc(var(--fv-cut) - 1px) 100%,
+    0 calc(100% - var(--fv-cut) + 1px),
+    0 calc(var(--fv-cut) - 1px)
+  );
+}
+
+/* layers */
+.fv-art {
+  position: absolute;
+  inset: 0;
+  z-index: -3;
+  background-size: cover;
+  background-position: center top;
+  opacity: 0.5;
+  filter: blur(2px) saturate(1.1);
+}
+.fv-frost {
+  position: absolute;
+  inset: 0;
+  z-index: -2;
+  pointer-events: none;
+  background:
+    linear-gradient(135deg, rgb(234 255 250 / 0.14) 0%, transparent 28%),
+    linear-gradient(315deg, rgb(103 232 249 / 0.1) 0%, transparent 30%),
+    radial-gradient(ellipse 90% 40% at 50% 0%, rgb(52 211 153 / 0.28), transparent 70%),
+    linear-gradient(180deg, rgb(4 26 22 / 0.55), rgb(3 16 13 / 0.92) 60%);
+}
+.fv-shards {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+}
+.fv-shards i {
+  position: absolute;
+  background: linear-gradient(160deg, var(--fv-ice), var(--fv-cyan) 60%, transparent);
+  clip-path: polygon(50% 0, 100% 40%, 50% 100%, 0 40%);
+  opacity: 0.55;
+  animation: fv-float 6s ease-in-out infinite;
+  will-change: transform, opacity;
+}
+
+.fv-confirm:focus-visible,
+.fv-cancel:focus-visible,
+.fv-step button:focus-visible {
+  outline: 2px solid var(--fv-ice);
+  outline-offset: 2px;
+}
+
+.fv-body {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 18px 16px 16px;
+}
+
+/* header */
+.fv-head {
+  text-align: center;
+}
+.fv-kicker {
+  margin: 0;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  color: var(--fv-silver);
+}
+.fv-title {
+  margin: 2px 0 0;
+  font-size: 28px;
+  font-weight: 800;
+  line-height: 1.05;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  background: linear-gradient(180deg, #fff 10%, var(--fv-mint) 55%, var(--fv-emerald));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  filter: drop-shadow(0 0 10px rgb(52 211 153 / 0.45));
+}
+.fv-sub {
+  margin: 4px 0 0;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--fv-emerald);
+}
+
+/* hero: faceted gem framing the trigger symbol, spin count beside it */
+.fv-hero {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+}
+.fv-gem {
+  position: relative;
+  width: 92px;
+  height: 104px;
+  flex: none;
+}
+.fv-gem__ring,
+.fv-gem__face {
+  position: absolute;
+  clip-path: polygon(50% 0, 100% 22%, 100% 78%, 50% 100%, 0 78%, 0 22%);
+}
+.fv-gem__ring {
+  inset: 0;
+  background: conic-gradient(
+    from var(--fv-ang),
+    var(--fv-mint),
+    var(--fv-cyan) 25%,
+    var(--fv-violet) 50%,
+    var(--fv-emerald) 75%,
+    var(--fv-mint)
+  );
+  animation: fv-spin 6s linear infinite;
+}
+.fv-gem__face {
+  inset: 3px;
+  display: grid;
+  place-items: center;
+  background:
+    linear-gradient(160deg, rgb(234 255 250 / 0.3), transparent 40%),
+    linear-gradient(180deg, #0d4a3d, #052019);
+}
+.fv-gem__face img {
+  width: 78%;
+  height: 78%;
+  object-fit: contain;
+  filter: drop-shadow(0 2px 6px rgb(52 211 153 / 0.6));
+}
+.fv-count {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  line-height: 1;
+}
+.fv-count b {
+  font-size: 52px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  color: #fff;
+  text-shadow: 0 0 18px rgb(52 211 153 / 0.7);
+}
+.fv-count span {
+  margin-top: 4px;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--fv-mint);
+}
+
+/* frosted panels */
+.fv-panel {
+  display: flex;
+  flex-direction: column;
+  padding: 4px 12px;
+  border: 1px solid rgb(199 214 222 / 0.28);
+  border-radius: 12px;
+  background: linear-gradient(180deg, rgb(199 214 222 / 0.1), rgb(167 243 208 / 0.05));
+  box-shadow: inset 0 1px 0 rgb(234 255 250 / 0.14);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+}
+.fv-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  min-height: 38px;
+}
+.fv-row + .fv-row {
+  border-top: 1px solid rgb(199 214 222 / 0.14);
+}
+.fv-label {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--fv-silver);
+}
+.fv-val {
+  font-size: 14px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+.fv-val--soft {
+  color: var(--fv-silver);
+  font-weight: 600;
+}
+.fv-row--total {
+  min-height: 46px;
+}
+.fv-total {
+  font-size: 24px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  color: var(--fv-mint);
+  text-shadow: 0 0 14px rgb(52 211 153 / 0.55);
+}
+.fv-row--bal {
+  min-height: 32px;
+}
+.fv-row--bal .fv-label,
+.fv-row--bal .fv-val {
+  font-size: 12px;
+}
+
+/* steppers */
+.fv-step {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  padding: 2px;
+  border: 1px solid rgb(167 243 208 / 0.3);
+  border-radius: 10px;
+  background: rgb(3 18 15 / 0.6);
+}
+.fv-step button {
+  width: 44px;
+  height: 36px;
+  border: 0;
+  border-radius: 8px;
+  background: linear-gradient(180deg, rgb(167 243 208 / 0.22), rgb(52 211 153 / 0.1));
+  color: var(--fv-ice);
+  font-size: 20px;
+  line-height: 1;
+  cursor: pointer;
+  transition:
+    background 0.15s ease,
+    transform 0.1s ease;
+}
+.fv-step button:hover:not(:disabled) {
+  background: linear-gradient(180deg, rgb(167 243 208 / 0.4), rgb(52 211 153 / 0.2));
+}
+.fv-step button:active:not(:disabled) {
+  transform: scale(0.94);
+}
+.fv-step button:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+.fv-step output {
+  min-width: 74px;
+  text-align: center;
+  font-size: 14px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+
+/* rules */
+.fv-rules {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.fv-rules li {
+  position: relative;
+  padding-left: 14px;
+  font-size: 11.5px;
+  line-height: 1.35;
+  color: rgb(234 255 250 / 0.78);
+}
+.fv-rules li::before {
+  content: "";
+  position: absolute;
+  left: 2px;
+  top: 0.5em;
+  width: 6px;
+  height: 6px;
+  background: var(--fv-emerald);
+  clip-path: polygon(50% 0, 100% 50%, 50% 100%, 0 50%);
+}
+
+/* states */
+.fv-alert {
+  padding: 8px 12px;
+  border: 1px solid rgb(248 113 113 / 0.55);
+  border-radius: 10px;
+  background: rgb(127 29 29 / 0.35);
+  color: #fecaca;
+  font-size: 12.5px;
+  font-weight: 600;
+  text-align: center;
+}
+
+/* actions */
+.fv-actions {
+  position: sticky;
+  bottom: -16px;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 2px -16px -16px;
+  padding: 10px 16px 16px;
+  background: linear-gradient(180deg, transparent 0, #03100d 14px);
+}
+.fv-confirm {
+  position: relative;
+  overflow: hidden;
+  min-height: 52px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 0 18px;
+  border: 0;
+  border-radius: 12px;
+  background:
+    linear-gradient(160deg, rgb(255 255 255 / 0.55), transparent 38%),
+    linear-gradient(180deg, #8ef0c4 0%, #34d399 55%, #16a37a 100%);
+  color: #032019;
+  font-size: 15px;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.7),
+    0 6px 18px rgb(52 211 153 / 0.35);
+  cursor: pointer;
+  transition:
+    transform 0.1s ease,
+    box-shadow 0.2s ease,
+    filter 0.2s ease;
+}
+.fv-confirm small {
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: rgb(3 32 25 / 0.18);
+  font-variant-numeric: tabular-nums;
+}
+.fv-confirm::after {
+  content: "";
+  position: absolute;
+  inset: 0 auto 0 -40%;
+  width: 40%;
+  pointer-events: none;
+  background: linear-gradient(100deg, transparent, rgb(255 255 255 / 0.55), transparent);
+  transform: skewX(-18deg);
+  animation: fv-glint 4.5s ease-in-out infinite;
+}
+.fv-confirm:hover:not(:disabled) {
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.8),
+    0 8px 24px rgb(52 211 153 / 0.55);
+}
+.fv-confirm:active:not(:disabled) {
+  transform: scale(0.98);
+}
+.fv-confirm:disabled {
+  cursor: not-allowed;
+  filter: grayscale(0.9) brightness(0.6);
+  box-shadow: none;
+}
+.fv-confirm:disabled::after {
+  animation: none;
+  opacity: 0;
+}
+.fv-cancel {
+  min-height: 46px;
+  border: 1px solid rgb(199 214 222 / 0.4);
+  border-radius: 12px;
+  background: rgb(199 214 222 / 0.08);
+  color: var(--fv-ice);
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition:
+    background 0.15s ease,
+    border-color 0.15s ease;
+}
+.fv-cancel:hover {
+  background: rgb(199 214 222 / 0.16);
+  border-color: rgb(199 214 222 / 0.7);
+}
+
+@keyframes fv-spin {
+  to {
+    --fv-ang: 360deg;
+  }
+}
+@keyframes fv-float {
+  0%,
+  100% {
+    transform: translateY(0) rotate(0deg);
+    opacity: 0.25;
+  }
+  50% {
+    transform: translateY(-10px) rotate(12deg);
+    opacity: 0.7;
+  }
+}
+@keyframes fv-glint {
+  0%,
+  60% {
+    transform: translateX(0) skewX(-18deg);
+  }
+  100% {
+    transform: translateX(900%) skewX(-18deg);
+  }
+}
+
+/* short screens: tighten so the actions stay on-screen without much scrolling */
+@media (max-height: 700px) {
+  .fv-body {
+    gap: 7px;
+    padding: 12px 14px 12px;
+  }
+  .fv-actions {
+    bottom: -12px;
+    margin: 2px -14px -12px;
+    padding: 8px 14px 12px;
+  }
+  .fv-confirm {
+    min-height: 48px;
+  }
+  .fv-cancel {
+    min-height: 44px;
+  }
+  .fv-title {
+    font-size: 23px;
+  }
+  .fv-gem {
+    width: 70px;
+    height: 80px;
+  }
+  .fv-count b {
+    font-size: 40px;
+  }
+  .fv-row {
+    min-height: 34px;
+  }
+  .fv-rules li {
+    font-size: 11px;
+  }
+}
+@media (max-width: 340px) {
+  .fv-label {
+    font-size: 10px;
+    letter-spacing: 0.05em;
+  }
+  .fv-step output {
+    min-width: 54px;
+  }
+  .fv-hero {
+    gap: 10px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .fv-frame,
+  .fv-gem__ring,
+  .fv-shards i,
+  .fv-confirm::after {
+    animation: none !important;
+  }
+  .fv-shards i {
+    opacity: 0.4;
+  }
+}

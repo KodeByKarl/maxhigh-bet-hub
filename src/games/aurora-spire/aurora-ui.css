@@ -1,0 +1,1042 @@
+/* Aurora Spire: Northern Lights / Nordic crystal presentation (reel board, control deck, crystal Spin).
+   Presentation only. Every rule is scoped to this game's wrapper, so no other title is affected; gameplay, RNG, pricing and state are
+   untouched. !important appears only where the shared skin shells set inline styles or !important themselves.
+
+   Identity (deliberately unlike Abyssal Pearls): chamfered ice-crystal cells, a tall faceted-gem Spin docked to the right of a
+   2-row control grid, and a full-width "Frozen Vault" bar for Buy Bonus. */
+
+@property --au-ang {
+  syntax: "<angle>";
+  inherits: false;
+  initial-value: 0deg;
+}
+
+[data-game-view="aurora-spire"] {
+  --au-night: #03120f;
+  --au-deep: #04201a;
+  --au-emerald: #34d399;
+  --au-jade: #0f8f6a;
+  --au-mint: #a7f3d0;
+  --au-ice: #eafffa;
+  --au-silver: #c7d6de;
+  --au-cyan: #67e8f9;
+  --au-violet: #9a8cf8;
+  --au-ctl: 44px;
+  --au-gap: 6px;
+  /* vertical space the board must leave for: top strip + control deck + bottom safe padding */
+  --au-chrome: 318px;
+  --au-board-h: calc(100dvh - var(--au-chrome));
+  --au-spin-w: 86px;
+}
+
+/* ───────── playfield: reserve a top strip for the shell's close/mute buttons so the board never sits under them ───────── */
+[data-game-view="aurora-spire"] [data-gs-col] {
+  padding-top: 40px;
+  gap: 8px;
+  justify-content: center;
+}
+[data-game-view="aurora-spire"] [data-gs-col] > :first-child {
+  flex: 1 1 0;
+  min-height: 0;
+  /* the board is sized from the space that is actually left over, so it fits at every viewport height */
+  container-type: size;
+}
+
+/* ───────── reel well: slim frost frame with an aurora-tinted rim ───────── */
+[data-game-view="aurora-spire"] [data-gs-well] {
+  --gs-band: 2px;
+  border-radius: 18px !important;
+  padding: 5px !important;
+  background:
+    radial-gradient(110% 55% at 50% 0%, rgb(103 232 249 / 0.14), transparent 62%),
+    radial-gradient(90% 50% at 50% 100%, rgb(52 211 153 / 0.16), transparent 68%),
+    linear-gradient(180deg, rgb(7 34 29 / 0.82), rgb(3 16 13 / 0.92)) !important;
+  box-shadow:
+    inset 0 1px 0 rgb(234 255 250 / 0.3),
+    inset 0 0 0 1px rgb(167 243 208 / 0.16),
+    inset 0 -30px 50px rgb(1 10 8 / 0.5),
+    0 14px 36px rgb(0 8 6 / 0.55),
+    0 0 30px rgb(52 211 153 / 0.14) !important;
+  backdrop-filter: blur(3px);
+}
+[data-game-view="aurora-spire"] [data-gs-well]::before {
+  opacity: 0.9;
+  background: linear-gradient(
+    160deg,
+    var(--au-ice),
+    var(--au-mint) 22%,
+    var(--au-emerald) 46%,
+    var(--au-violet) 72%,
+    var(--au-silver)
+  );
+  -webkit-mask:
+    linear-gradient(#000 0 0) border-box,
+    linear-gradient(#000 0 0) padding-box;
+  -webkit-mask-composite: xor;
+  mask:
+    linear-gradient(#000 0 0) border-box,
+    linear-gradient(#000 0 0) padding-box;
+  mask-composite: exclude;
+  border-radius: inherit;
+}
+/* four tiny crystal studs in the corners */
+[data-game-view="aurora-spire"] [data-gs-well]::after {
+  border-radius: inherit;
+  background:
+    conic-gradient(from 45deg, var(--au-ice), var(--au-emerald), var(--au-ice)) 6px 6px / 8px 8px
+      no-repeat,
+    conic-gradient(from 45deg, var(--au-ice), var(--au-emerald), var(--au-ice)) calc(100% - 6px)
+      6px / 8px 8px no-repeat,
+    conic-gradient(from 45deg, var(--au-ice), var(--au-emerald), var(--au-ice)) 6px
+      calc(100% - 6px) / 8px 8px no-repeat,
+    conic-gradient(from 45deg, var(--au-ice), var(--au-emerald), var(--au-ice)) calc(100% - 6px)
+      calc(100% - 6px) / 8px 8px no-repeat;
+  -webkit-mask: none;
+  mask: none;
+  clip-path: none;
+  inset: 0;
+  width: auto;
+  height: auto;
+  transform: none;
+  opacity: 0.85;
+}
+
+/* ───────── reel board: tight grid of translucent ice crystals ───────── */
+[data-game-view="aurora-spire"] [data-gs-board] {
+  position: relative;
+  /* width always comes from the viewport (never a clamped height), so the 4×6 grid keeps square cells and stays centred */
+  width: min(
+    calc(100vw - 30px),
+    calc(var(--au-board-h) * var(--board-ar, 0.6667)),
+    34rem
+  ) !important;
+  width: min(
+    calc(100cqw - 12px),
+    calc((100cqh - 12px) * var(--board-ar, 0.6667)),
+    34rem
+  ) !important;
+  max-height: none !important;
+  gap: 3px !important;
+  padding: 0;
+  margin-inline: auto;
+}
+
+[data-game-view="aurora-spire"] [data-gs-board] > .realms-reel-cell {
+  position: relative;
+  isolation: isolate;
+  border: 0 !important;
+  border-radius: 0 !important;
+  /* chamfered crystal corners (the 1px frost edge is the cell background showing around ::before) */
+  clip-path: polygon(14% 0, 86% 0, 100% 14%, 100% 86%, 86% 100%, 14% 100%, 0 86%, 0 14%) !important;
+  box-shadow: none !important;
+  background-color: transparent !important;
+  background-image: linear-gradient(
+    150deg,
+    rgb(234 255 250 / 0.55),
+    rgb(103 232 249 / 0.16) 38%,
+    rgb(52 211 153 / 0.3) 70%,
+    rgb(167 243 208 / 0.42)
+  ) !important;
+  background-size: 100% 100% !important;
+  background-repeat: no-repeat !important;
+  scale: 1;
+  transition: filter 0.25s ease;
+}
+/* glass body */
+[data-game-view="aurora-spire"] [data-gs-board] > .realms-reel-cell::before {
+  content: "";
+  position: absolute;
+  inset: 1px;
+  z-index: 0;
+  pointer-events: none;
+  clip-path: polygon(14% 0, 86% 0, 100% 14%, 100% 86%, 86% 100%, 14% 100%, 0 86%, 0 14%);
+  background:
+    /* upper-left facet catching light */
+    linear-gradient(
+      135deg,
+      rgb(234 255 250 / 0.2) 0%,
+      rgb(234 255 250 / 0.04) 34%,
+      transparent 35%
+    ),
+    /* lower-right facet in shade */ linear-gradient(315deg, rgb(2 12 10 / 0.5) 0%, transparent 42%),
+    radial-gradient(ellipse 85% 70% at 50% 40%, rgb(52 211 153 / 0.2), transparent 75%),
+    linear-gradient(180deg, rgb(10 52 44 / 0.78), rgb(5 28 24 / 0.9));
+}
+/* faint aurora reflection across the glass, kept off the symbol */
+[data-game-view="aurora-spire"] [data-gs-board] > .realms-reel-cell::after {
+  content: "";
+  position: absolute;
+  inset: 1px;
+  z-index: 0;
+  pointer-events: none;
+  clip-path: polygon(14% 0, 86% 0, 100% 14%, 100% 86%, 86% 100%, 14% 100%, 0 86%, 0 14%);
+  background: linear-gradient(
+    118deg,
+    transparent 40%,
+    rgb(167 243 208 / 0.13) 50%,
+    rgb(154 140 248 / 0.1) 58%,
+    transparent 68%
+  );
+  animation: none !important;
+  opacity: 1 !important;
+}
+/* symbols: bigger, centred, crisp; a depth shadow instead of a card outline */
+[data-game-view="aurora-spire"] [data-gs-board] img {
+  scale: 1.04;
+  padding: 0;
+  object-fit: contain;
+  filter: drop-shadow(0 2px 3px rgb(0 10 8 / 0.55));
+}
+[data-game-view="aurora-spire"] [data-gs-board] > .realms-reel-cell[data-winning="true"] {
+  background-image: linear-gradient(
+    135deg,
+    var(--au-ice),
+    var(--au-mint) 40%,
+    var(--au-emerald)
+  ) !important;
+  filter: brightness(1.12) saturate(1.1);
+}
+[data-game-view="aurora-spire"] [data-gs-board] > .realms-reel-cell[data-winning="true"]::before {
+  background:
+    linear-gradient(135deg, rgb(234 255 250 / 0.34) 0%, transparent 45%),
+    radial-gradient(ellipse 80% 70% at 50% 45%, rgb(167 243 208 / 0.5), transparent 78%),
+    linear-gradient(180deg, rgb(16 96 78 / 0.82), rgb(8 54 45 / 0.9));
+}
+
+/* a slow aurora curtain drifts across the whole board (one element, transform + opacity only) */
+[data-game-view="aurora-spire"] [data-gs-board]::after {
+  content: "";
+  position: absolute;
+  inset: -8% -30%;
+  z-index: 4;
+  pointer-events: none;
+  background: linear-gradient(
+    100deg,
+    transparent 36%,
+    rgb(103 232 249 / 0.1) 44%,
+    rgb(52 211 153 / 0.16) 50%,
+    rgb(154 140 248 / 0.1) 56%,
+    transparent 64%
+  );
+  mix-blend-mode: screen;
+  animation: au-curtain 11s ease-in-out infinite alternate;
+  will-change: transform;
+}
+
+/* ───────── control deck: one compact frosted panel ───────── */
+[data-game-view="aurora-spire"] .slot-deck[data-slot-deck="aurora-spire"] {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) var(--au-spin-w);
+  grid-template-areas:
+    "bal   win    spin"
+    "bet   bet    spin"
+    "tools tools  spin"
+    "vault vault  vault"
+    "msg   msg    msg";
+  gap: var(--au-gap);
+  width: min(calc(100vw - 30px), 34rem);
+  max-width: none;
+  margin-inline: auto;
+  padding: 8px;
+  border: 0;
+  border-radius: 18px;
+  background:
+    radial-gradient(90% 90% at 100% 40%, rgb(52 211 153 / 0.18), transparent 62%),
+    linear-gradient(180deg, rgb(9 40 34 / 0.88), rgb(3 16 13 / 0.95));
+  box-shadow:
+    inset 0 1px 0 rgb(234 255 250 / 0.26),
+    inset 0 0 0 1px rgb(167 243 208 / 0.2),
+    0 12px 30px rgb(0 8 6 / 0.5);
+  backdrop-filter: blur(4px);
+  color: var(--au-ice);
+  --deck-accent: var(--au-mint);
+  --deck-ink: var(--au-ice);
+  --deck-line: rgb(167 243 208 / 0.22);
+  font-family: "Inter", ui-sans-serif, system-ui, sans-serif;
+}
+/* meters/play wrappers dissolve so every control sits on the one grid */
+[data-game-view="aurora-spire"]
+  [data-slot-deck="aurora-spire"]
+  :is(.slot-deck__meters, .slot-deck__play) {
+  display: contents;
+}
+[data-game-view="aurora-spire"] [data-slot-deck="aurora-spire"] .slot-deck__balance {
+  grid-area: bal;
+}
+[data-game-view="aurora-spire"] [data-slot-deck="aurora-spire"] .slot-deck__win {
+  grid-area: win;
+}
+[data-game-view="aurora-spire"]
+  [data-slot-deck="aurora-spire"]
+  :is(.slot-deck__bonus, .slot-deck__round) {
+  grid-area: vault;
+}
+[data-game-view="aurora-spire"] [data-slot-deck="aurora-spire"] .slot-deck__bet {
+  grid-area: bet;
+}
+[data-game-view="aurora-spire"] [data-slot-deck="aurora-spire"] .slot-deck__tools {
+  grid-area: tools;
+}
+[data-game-view="aurora-spire"] [data-slot-deck="aurora-spire"] .slot-deck__spin {
+  grid-area: spin;
+}
+[data-game-view="aurora-spire"] [data-slot-deck="aurora-spire"] .slot-deck__message {
+  grid-area: msg;
+}
+
+/* readouts: Balance and Last win, side by side, label over value */
+[data-game-view="aurora-spire"]
+  [data-slot-deck="aurora-spire"]
+  :is(.slot-deck__balance, .slot-deck__win) {
+  min-width: 0;
+  min-height: 40px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 1px;
+  padding: 3px 10px;
+  border: 0;
+  border-left: 2px solid rgb(52 211 153 / 0.7);
+  border-radius: 4px 12px 12px 4px;
+  background: linear-gradient(90deg, rgb(52 211 153 / 0.14), rgb(7 30 26 / 0.3));
+}
+[data-game-view="aurora-spire"] [data-slot-deck="aurora-spire"] .slot-deck__win {
+  border-left-color: rgb(154 140 248 / 0.8);
+  background: linear-gradient(90deg, rgb(154 140 248 / 0.16), rgb(7 30 26 / 0.3));
+  align-items: flex-start;
+  text-align: left;
+}
+[data-game-view="aurora-spire"]
+  [data-slot-deck="aurora-spire"]
+  :is(.slot-deck__balance, .slot-deck__win)
+  > span {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--au-mint);
+  opacity: 0.85;
+}
+[data-game-view="aurora-spire"]
+  [data-slot-deck="aurora-spire"]
+  :is(.slot-deck__balance, .slot-deck__win)
+  strong {
+  font-size: 15px;
+  font-weight: 800;
+  line-height: 1.15;
+  font-variant-numeric: tabular-nums;
+  color: var(--au-ice);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+[data-game-view="aurora-spire"]
+  [data-slot-deck="aurora-spire"]
+  :is(.slot-deck__balance, .slot-deck__win)
+  strong {
+  background: none !important;
+  box-shadow: none !important;
+}
+[data-game-view="aurora-spire"]
+  [data-slot-deck="aurora-spire"]
+  .slot-deck__win[data-winning="true"]
+  strong {
+  color: #fff;
+  text-shadow: 0 0 10px rgb(167 243 208 / 0.85);
+}
+
+/* bet stepper: − [ Bet ₱5.00 ] + as one rail */
+[data-game-view="aurora-spire"] [data-slot-deck="aurora-spire"] .slot-deck__bet {
+  display: grid;
+  grid-template-columns: var(--au-ctl) minmax(0, 1fr) var(--au-ctl);
+  gap: 4px;
+  width: 100%;
+  padding: 0;
+  border: 0 !important;
+  background: none !important;
+  box-shadow: none !important;
+}
+[data-game-view="aurora-spire"]
+  [data-slot-deck="aurora-spire"]
+  :is(.slot-deck__bet > button, .slot-deck__tools button) {
+  min-height: var(--au-ctl);
+  height: var(--au-ctl);
+  min-width: 44px;
+  padding: 0 6px;
+  border: 1px solid rgb(167 243 208 / 0.24);
+  border-radius: 12px;
+  background: linear-gradient(180deg, rgb(167 243 208 / 0.12), rgb(7 32 27 / 0.6));
+  color: var(--au-ice);
+  box-shadow: inset 0 1px 0 rgb(234 255 250 / 0.14);
+  transition:
+    border-color 0.18s ease,
+    box-shadow 0.18s ease,
+    transform 0.12s ease;
+}
+[data-game-view="aurora-spire"]
+  [data-slot-deck="aurora-spire"]
+  .slot-deck__bet
+  > .slot-deck__stake {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  min-width: 0;
+}
+[data-game-view="aurora-spire"] [data-slot-deck="aurora-spire"] .slot-deck__stake > span {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--au-mint);
+}
+[data-game-view="aurora-spire"] [data-slot-deck="aurora-spire"] .slot-deck__stake > strong {
+  font-size: 16px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+[data-game-view="aurora-spire"]
+  [data-slot-deck="aurora-spire"]
+  :is(.slot-deck__bet > button, .slot-deck__tools button, .slot-deck__bonus):hover:not(:disabled) {
+  border-color: rgb(167 243 208 / 0.65);
+  box-shadow:
+    inset 0 1px 0 rgb(234 255 250 / 0.2),
+    0 0 12px rgb(52 211 153 / 0.35);
+}
+[data-game-view="aurora-spire"]
+  [data-slot-deck="aurora-spire"]
+  :is(.slot-deck__bet > button, .slot-deck__tools button, .slot-deck__bonus):active:not(:disabled) {
+  transform: scale(0.97);
+}
+[data-game-view="aurora-spire"]
+  [data-slot-deck="aurora-spire"]
+  :is(.slot-deck__bet > button, .slot-deck__tools button, .slot-deck__bonus):focus-visible {
+  outline: 2px solid var(--au-ice);
+  outline-offset: 2px;
+}
+[data-game-view="aurora-spire"]
+  [data-slot-deck="aurora-spire"]
+  :is(.slot-deck__bet > button, .slot-deck__tools button):disabled {
+  opacity: 0.45;
+}
+
+/* tools: Turbo | Auto | Info on one aligned row */
+[data-game-view="aurora-spire"] [data-slot-deck="aurora-spire"] .slot-deck__tools {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 4px;
+  width: 100%;
+}
+[data-game-view="aurora-spire"] [data-slot-deck="aurora-spire"] .slot-deck__tools button {
+  grid-column: auto !important;
+  grid-row: auto !important;
+  width: 100%;
+  display: inline-flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+[data-game-view="aurora-spire"] [data-slot-deck="aurora-spire"] .slot-deck__tools button svg {
+  width: 16px;
+  height: 16px;
+  flex: none;
+}
+[data-game-view="aurora-spire"]
+  [data-slot-deck="aurora-spire"]
+  .slot-deck__tools
+  button[aria-pressed="true"] {
+  background: linear-gradient(180deg, var(--au-mint), var(--au-emerald));
+  color: #04201a;
+  border-color: var(--au-ice);
+  box-shadow: 0 0 14px rgb(52 211 153 / 0.55);
+}
+[data-game-view="aurora-spire"]
+  [data-slot-deck="aurora-spire"]
+  .slot-deck__tools
+  button[data-stopping="true"] {
+  background: linear-gradient(180deg, #a63a46, #6e2030);
+  color: #ffe3e0;
+  border-color: #f0959b;
+}
+
+/* ───────── Buy Bonus: the "Frozen Vault" bar ───────── */
+[data-game-view="aurora-spire"] [data-slot-deck="aurora-spire"] .slot-deck__bonus,
+[data-game-view="aurora-spire"] [data-slot-deck="aurora-spire"] .slot-deck__round {
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  min-width: 0;
+  min-height: var(--au-ctl);
+  padding: 0 12px;
+  border: 1px solid rgb(199 214 222 / 0.5);
+  border-radius: 12px;
+  background:
+    linear-gradient(
+      100deg,
+      rgb(199 214 222 / 0.16),
+      rgb(52 211 153 / 0.2) 50%,
+      rgb(199 214 222 / 0.12)
+    ),
+    linear-gradient(180deg, rgb(10 48 41 / 0.9), rgb(4 24 20 / 0.95));
+  color: var(--au-ice);
+  box-shadow: inset 0 1px 0 rgb(234 255 250 / 0.2);
+  transition:
+    border-color 0.18s ease,
+    box-shadow 0.18s ease,
+    transform 0.12s ease;
+}
+[data-game-view="aurora-spire"] [data-slot-deck="aurora-spire"] .slot-deck__bonus > svg,
+[data-game-view="aurora-spire"] [data-slot-deck="aurora-spire"] .slot-deck__round > svg {
+  flex: none;
+  width: 18px;
+  height: 18px;
+  color: var(--au-mint);
+}
+[data-game-view="aurora-spire"] [data-slot-deck="aurora-spire"] .slot-deck__bonus > span {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--au-ice);
+  white-space: nowrap;
+}
+[data-game-view="aurora-spire"] [data-slot-deck="aurora-spire"] .slot-deck__bonus strong {
+  font-size: 14px;
+  letter-spacing: 0.02em;
+  font-variant-numeric: tabular-nums;
+  color: var(--au-mint);
+}
+/* vault glyph: a snowflake replaces the shared moon */
+[data-game-view="aurora-spire"]
+  [data-slot-deck="aurora-spire"]
+  :is(.slot-deck__bonus, .slot-deck__round)
+  > svg {
+  display: none;
+}
+[data-game-view="aurora-spire"]
+  [data-slot-deck="aurora-spire"]
+  :is(.slot-deck__bonus, .slot-deck__round)::before {
+  content: "";
+  flex: none;
+  width: 20px;
+  height: 20px;
+  background: var(--au-mint);
+  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M12 2v20M4.2 7l15.6 10M19.8 7L4.2 17M9 3.5l3 2.5 3-2.5M9 20.5l3-2.5 3 2.5'/%3E%3C/svg%3E")
+    center / contain no-repeat;
+  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M12 2v20M4.2 7l15.6 10M19.8 7L4.2 17M9 3.5l3 2.5 3-2.5M9 20.5l3-2.5 3 2.5'/%3E%3C/svg%3E")
+    center / contain no-repeat;
+}
+/* in a Free Spins round the vault bar already carries the n/N counter, so the gem keeps just its label */
+[data-game-view="aurora-spire"]
+  [data-slot-deck="aurora-spire"]:has(.slot-deck__round [data-fs-counter])
+  .slot-deck__spin-face
+  small {
+  display: none;
+}
+/* a slow glint sweeping the vault bar (transform only) */
+[data-game-view="aurora-spire"] [data-slot-deck="aurora-spire"] .slot-deck__bonus::after {
+  content: "";
+  position: absolute;
+  inset: 0 auto 0 -40%;
+  width: 40%;
+  pointer-events: none;
+  background: linear-gradient(100deg, transparent, rgb(234 255 250 / 0.28), transparent);
+  transform: translateX(0) skewX(-18deg);
+  animation: au-glint 5.5s ease-in-out infinite;
+}
+[data-game-view="aurora-spire"] [data-slot-deck="aurora-spire"] .slot-deck__bonus:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+[data-game-view="aurora-spire"] [data-slot-deck="aurora-spire"] .slot-deck__bonus:disabled::after {
+  animation: none;
+  opacity: 0;
+}
+[data-game-view="aurora-spire"] [data-slot-deck="aurora-spire"] .slot-deck__round {
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+[data-game-view="aurora-spire"] [data-slot-deck="aurora-spire"] .slot-deck__round strong {
+  margin-left: auto;
+  color: var(--au-mint);
+}
+
+[data-game-view="aurora-spire"] [data-slot-deck="aurora-spire"] .slot-deck__message {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  text-align: center;
+  font-size: 11px;
+  line-height: 1.2;
+  color: var(--au-mint);
+  opacity: 0.8;
+}
+
+/* ───────── Spin: a tall faceted crystal ───────── */
+[data-game-view="aurora-spire"] .slot-deck[data-slot-deck="aurora-spire"] .slot-deck__spin {
+  position: relative;
+  isolation: isolate;
+  align-self: stretch;
+  justify-self: center;
+  width: calc(var(--au-spin-w) - 8px);
+  height: auto;
+  min-height: 112px;
+  margin: 0;
+  padding: 0;
+  clip-path: none;
+  border: 0 !important;
+  border-radius: 0;
+  background: transparent !important;
+  box-shadow: none !important;
+  color: #04201a;
+  animation: none;
+  transition:
+    transform 0.16s ease,
+    filter 0.2s ease;
+  -webkit-tap-highlight-color: transparent;
+}
+/* aurora energy ring: a conic gradient clipped to a slightly larger gem; its angle (not the element) rotates while spinning */
+[data-game-view="aurora-spire"] [data-slot-deck="aurora-spire"] .slot-deck__spin::before {
+  content: "";
+  position: absolute;
+  inset: -3px;
+  z-index: -1;
+  pointer-events: none;
+  clip-path: polygon(50% 0, 100% 22%, 100% 78%, 50% 100%, 0 78%, 0 22%);
+  background: conic-gradient(
+    from var(--au-ang),
+    var(--au-mint),
+    var(--au-cyan) 25%,
+    var(--au-violet) 50%,
+    var(--au-emerald) 75%,
+    var(--au-mint)
+  );
+  opacity: 0.55;
+  transition: opacity 0.25s ease;
+}
+/* breathing halo behind the gem (never clipped: the button itself has no clip-path) */
+[data-game-view="aurora-spire"] [data-slot-deck="aurora-spire"] .slot-deck__spin::after {
+  content: "";
+  position: absolute;
+  inset: -12px -10px;
+  z-index: -2;
+  pointer-events: none;
+  background: radial-gradient(
+    ellipse 55% 50% at 50% 50%,
+    rgb(52 211 153 / 0.5),
+    rgb(103 232 249 / 0.16) 55%,
+    transparent 75%
+  );
+  animation: au-breathe 4.6s ease-in-out infinite;
+  will-change: transform, opacity;
+}
+/* the gem face */
+[data-game-view="aurora-spire"] [data-slot-deck="aurora-spire"] .slot-deck__spin-face {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  padding: 0;
+  clip-path: polygon(50% 0, 100% 22%, 100% 78%, 50% 100%, 0 78%, 0 22%);
+  background:
+    /* top-left bright facet */
+    linear-gradient(160deg, rgb(255 255 255 / 0.85) 0%, rgb(255 255 255 / 0) 38%),
+    /* centre ridge: the crystal's vertical edge */
+    linear-gradient(90deg, transparent 49%, rgb(255 255 255 / 0.55) 50%, transparent 51%),
+    /* lower facet shading */ linear-gradient(0deg, rgb(4 90 66 / 0.55), transparent 45%),
+    linear-gradient(180deg, #d8fff1 0%, #8ef0c4 42%, #34d399 78%, #16a37a 100%);
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 900;
+  line-height: 1;
+  letter-spacing: 0.1em;
+  text-align: center;
+  text-transform: uppercase;
+  text-shadow: 0 1px 0 rgb(255 255 255 / 0.6);
+}
+[data-game-view="aurora-spire"] [data-slot-deck="aurora-spire"] .slot-deck__spin-face > span {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+[data-game-view="aurora-spire"] [data-slot-deck="aurora-spire"] .slot-deck__spin-face small {
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.03em;
+  max-width: 70px;
+  line-height: 1.15;
+  white-space: normal;
+}
+[data-game-view="aurora-spire"] [data-slot-deck="aurora-spire"] .slot-deck__spin-face > svg {
+  width: 24px;
+  height: 24px;
+  filter: drop-shadow(0 1px 0 rgb(255 255 255 / 0.5));
+}
+/* idle glyph: a cut crystal replaces the shared moon icon (the busy/auto icons stay) */
+[data-game-view="aurora-spire"]
+  [data-slot-deck="aurora-spire"]
+  .slot-deck__spin-face
+  > svg.lucide-moon {
+  display: none;
+}
+[data-game-view="aurora-spire"]
+  [data-slot-deck="aurora-spire"]
+  .slot-deck__spin-face:has(> svg.lucide-moon)
+  > span::before {
+  content: "";
+  display: block;
+  width: 26px;
+  height: 26px;
+  margin-bottom: 3px;
+  background: linear-gradient(160deg, #0b6b52, #04201a);
+  filter: drop-shadow(0 1px 0 rgb(255 255 255 / 0.55));
+  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill-rule='evenodd' d='M12 1.5l5 6.5-5 14.5L7 8zM12 4.6L9.4 8H14.6zM12 19.4L15.3 9.6H8.7z'/%3E%3C/svg%3E")
+    center / contain no-repeat;
+  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill-rule='evenodd' d='M12 1.5l5 6.5-5 14.5L7 8zM12 4.6L9.4 8H14.6zM12 19.4L15.3 9.6H8.7z'/%3E%3C/svg%3E")
+    center / contain no-repeat;
+}
+/* idle shimmer: a bright band glides across the facets, then rests */
+[data-game-view="aurora-spire"] [data-slot-deck="aurora-spire"] .slot-deck__spin-face::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(115deg, transparent 38%, rgb(255 255 255 / 0.7) 50%, transparent 62%)
+    0 0 / 280% 100%;
+  background-position: 130% 0;
+  animation: au-shimmer 6s ease-in-out infinite;
+}
+/* press ripple: GameView sets data-ripple for a moment on pointerdown */
+[data-game-view="aurora-spire"] [data-slot-deck="aurora-spire"] .slot-deck__spin-face::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0;
+  background: radial-gradient(circle at 50% 50%, rgb(255 255 255 / 0.95), transparent 62%);
+}
+[data-game-view="aurora-spire"]
+  [data-slot-deck="aurora-spire"]
+  .slot-deck__spin[data-ripple]
+  .slot-deck__spin-face::after {
+  animation: au-press 0.5s ease-out 1;
+}
+
+/* hover / focus: brighter ring + lift */
+[data-game-view="aurora-spire"]
+  [data-slot-deck="aurora-spire"]
+  .slot-deck__spin:hover:not(:disabled),
+[data-game-view="aurora-spire"] [data-slot-deck="aurora-spire"] .slot-deck__spin:focus-visible {
+  transform: translateY(-2px);
+}
+[data-game-view="aurora-spire"]
+  [data-slot-deck="aurora-spire"]
+  .slot-deck__spin:hover:not(:disabled)::before,
+[data-game-view="aurora-spire"]
+  [data-slot-deck="aurora-spire"]
+  .slot-deck__spin:focus-visible::before {
+  opacity: 1;
+}
+[data-game-view="aurora-spire"] [data-slot-deck="aurora-spire"] .slot-deck__spin:focus-visible {
+  outline: 2px solid var(--au-ice);
+  outline-offset: 5px;
+}
+/* press */
+[data-game-view="aurora-spire"]
+  [data-slot-deck="aurora-spire"]
+  .slot-deck__spin:active:not(:disabled) {
+  transform: translateY(1px) scale(0.95);
+  transition-duration: 0.07s;
+}
+
+/* spinning / auto: the energy ring orbits the gem and the halo quickens */
+[data-game-view="aurora-spire"]
+  [data-slot-deck="aurora-spire"]
+  .slot-deck__spin[data-active="true"]::before {
+  opacity: 1;
+  animation: au-orbit 1.6s linear infinite;
+}
+[data-game-view="aurora-spire"]
+  [data-slot-deck="aurora-spire"]
+  .slot-deck__spin[data-active="true"]::after {
+  animation: au-breathe-fast 1.2s ease-in-out infinite;
+}
+[data-game-view="aurora-spire"]
+  [data-slot-deck="aurora-spire"]
+  .slot-deck__spin[data-active="true"]
+  .slot-deck__spin-face::before {
+  animation: none;
+  opacity: 0;
+}
+/* brief win illumination: plays once when the existing "winning" state appears on the win meter */
+[data-game-view="aurora-spire"]
+  [data-slot-deck="aurora-spire"]:has(.slot-deck__win[data-winning="true"])
+  .slot-deck__spin:not(:disabled):not([data-active="true"])::after {
+  animation: au-win-halo 1.4s ease-out 1;
+}
+[data-game-view="aurora-spire"]
+  [data-slot-deck="aurora-spire"]:has(.slot-deck__win[data-winning="true"])
+  .slot-deck__spin:not(:disabled):not([data-active="true"])::before {
+  opacity: 1;
+  animation: au-orbit 1.4s ease-out 1;
+}
+/* disabled: clearly unavailable, no misleading motion */
+[data-game-view="aurora-spire"] [data-slot-deck="aurora-spire"] .slot-deck__spin:disabled {
+  filter: grayscale(0.9) brightness(0.65);
+  cursor: not-allowed;
+  transform: none;
+}
+[data-game-view="aurora-spire"] [data-slot-deck="aurora-spire"] .slot-deck__spin:disabled::before,
+[data-game-view="aurora-spire"] [data-slot-deck="aurora-spire"] .slot-deck__spin:disabled::after,
+[data-game-view="aurora-spire"]
+  [data-slot-deck="aurora-spire"]
+  .slot-deck__spin:disabled
+  .slot-deck__spin-face::before {
+  animation: none;
+  opacity: 0;
+}
+[data-game-view="aurora-spire"] [data-slot-deck="aurora-spire"] .slot-deck__spin:disabled::before {
+  opacity: 0.25;
+}
+
+/* ───────── keyframes ───────── */
+@keyframes au-curtain {
+  from {
+    transform: translateX(-14%);
+    opacity: 0.55;
+  }
+  to {
+    transform: translateX(14%);
+    opacity: 1;
+  }
+}
+@keyframes au-glint {
+  0%,
+  62% {
+    transform: translateX(0) skewX(-18deg);
+  }
+  100% {
+    transform: translateX(520%) skewX(-18deg);
+  }
+}
+@keyframes au-breathe {
+  0%,
+  100% {
+    opacity: 0.5;
+    transform: scale(0.96);
+  }
+  50% {
+    opacity: 0.95;
+    transform: scale(1.07);
+  }
+}
+@keyframes au-breathe-fast {
+  0%,
+  100% {
+    opacity: 0.7;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.14);
+  }
+}
+@keyframes au-orbit {
+  to {
+    --au-ang: 360deg;
+  }
+}
+@keyframes au-shimmer {
+  0%,
+  55% {
+    background-position: 130% 0;
+  }
+  85%,
+  100% {
+    background-position: -30% 0;
+  }
+}
+@keyframes au-press {
+  0% {
+    opacity: 0.9;
+    transform: scale(0.6);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(1.4);
+  }
+}
+@keyframes au-win-halo {
+  0% {
+    opacity: 0.6;
+    transform: scale(1);
+  }
+  35% {
+    opacity: 1;
+    transform: scale(1.3);
+  }
+  100% {
+    opacity: 0.6;
+    transform: scale(1);
+  }
+}
+
+/* ───────── responsive ───────── */
+@media (max-width: 360px) {
+  [data-game-view="aurora-spire"] {
+    --au-spin-w: 78px;
+    --au-gap: 5px;
+  }
+  [data-game-view="aurora-spire"]
+    [data-slot-deck="aurora-spire"]
+    :is(.slot-deck__balance, .slot-deck__win) {
+    padding: 3px 7px;
+  }
+  [data-game-view="aurora-spire"]
+    [data-slot-deck="aurora-spire"]
+    :is(.slot-deck__balance, .slot-deck__win)
+    strong {
+    font-size: 13px;
+  }
+  [data-game-view="aurora-spire"]
+    [data-slot-deck="aurora-spire"]
+    :is(.slot-deck__balance, .slot-deck__win)
+    > span {
+    font-size: 9.5px;
+    letter-spacing: 0.08em;
+  }
+  [data-game-view="aurora-spire"] [data-slot-deck="aurora-spire"] .slot-deck__tools button {
+    gap: 3px;
+    font-size: 10px;
+  }
+  [data-game-view="aurora-spire"] [data-slot-deck="aurora-spire"] .slot-deck__bonus > span {
+    font-size: 10px;
+    letter-spacing: 0.08em;
+  }
+}
+/* short phones: tighter chrome so the board and the deck never overlap */
+@media (max-height: 740px) and (max-width: 600px) {
+  [data-game-view="aurora-spire"] {
+    --au-chrome: 296px;
+  }
+  [data-game-view="aurora-spire"] [data-gs-col] {
+    padding-top: 34px;
+  }
+  [data-game-view="aurora-spire"] [data-slot-deck="aurora-spire"] .slot-deck__spin {
+    min-height: 104px;
+  }
+}
+/* short phones: slimmer readouts and a tighter top strip hand the height back to the board */
+@media (max-height: 700px) and (max-width: 600px) {
+  [data-game-view="aurora-spire"] [data-gs-col] {
+    padding-top: 30px;
+    gap: 6px;
+  }
+  [data-game-view="aurora-spire"]
+    [data-slot-deck="aurora-spire"]
+    :is(.slot-deck__balance, .slot-deck__win) {
+    min-height: 34px;
+    padding-block: 1px;
+  }
+  [data-game-view="aurora-spire"] [data-slot-deck="aurora-spire"] .slot-deck__spin {
+    min-height: 100px;
+  }
+}
+/* very short phones: drop the status line so the board keeps its size */
+@media (max-height: 640px) and (max-width: 600px) {
+  [data-game-view="aurora-spire"] [data-slot-deck="aurora-spire"] .slot-deck__message {
+    display: none;
+  }
+}
+
+/* tablet / desktop: same grid, deck width follows the board so the two read as one unit */
+@media (min-width: 601px) {
+  [data-game-view="aurora-spire"] {
+    --au-chrome: 262px;
+    --au-board-w: min(34rem, calc((100dvh - var(--au-chrome)) * 0.6667));
+    --au-spin-w: 96px;
+  }
+  [data-game-view="aurora-spire"] [data-gs-col] {
+    padding-top: 12px;
+  }
+  [data-game-view="aurora-spire"] .slot-deck[data-slot-deck="aurora-spire"] {
+    width: clamp(23rem, var(--au-board-w), 34rem);
+  }
+}
+/* landscape phones: board on the left at full height, the control panel docked on the right */
+@media (max-height: 500px) and (orientation: landscape) {
+  [data-game-view="aurora-spire"] {
+    --au-spin-w: 80px;
+  }
+  [data-game-view="aurora-spire"] [data-gs-col] {
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    gap: 14px;
+    padding-top: 4px;
+  }
+  [data-game-view="aurora-spire"] [data-gs-col] > :first-child {
+    flex: none;
+    height: 100%;
+    /* as wide as a full-height 4x6 board, so board and panel sit together in the middle of the screen */
+    width: calc((100dvh - 20px) * 0.6667);
+    max-width: calc(100vw - 22rem - 40px);
+  }
+  [data-game-view="aurora-spire"] .slot-deck[data-slot-deck="aurora-spire"] {
+    flex: none;
+    width: min(46vw, 22rem);
+    margin: 0;
+  }
+  [data-game-view="aurora-spire"] [data-slot-deck="aurora-spire"] .slot-deck__spin {
+    min-height: 96px;
+  }
+  [data-game-view="aurora-spire"] [data-slot-deck="aurora-spire"] .slot-deck__message {
+    display: none;
+  }
+}
+
+/* ───────── reduced motion: keep the look, drop the movement ───────── */
+@media (prefers-reduced-motion: reduce) {
+  [data-game-view="aurora-spire"] [data-gs-board]::after,
+  [data-game-view="aurora-spire"] [data-slot-deck="aurora-spire"] .slot-deck__spin,
+  [data-game-view="aurora-spire"] [data-slot-deck="aurora-spire"] .slot-deck__spin::before,
+  [data-game-view="aurora-spire"] [data-slot-deck="aurora-spire"] .slot-deck__spin::after,
+  [data-game-view="aurora-spire"] [data-slot-deck="aurora-spire"] .slot-deck__spin-face::before,
+  [data-game-view="aurora-spire"] [data-slot-deck="aurora-spire"] .slot-deck__spin-face::after,
+  [data-game-view="aurora-spire"] [data-slot-deck="aurora-spire"] .slot-deck__bonus::after {
+    animation: none !important;
+    transition: none !important;
+  }
+  [data-game-view="aurora-spire"]
+    [data-slot-deck="aurora-spire"]
+    .slot-deck__spin:hover:not(:disabled) {
+    transform: none;
+  }
+  /* a static bright ring still tells spinning from idle */
+  [data-game-view="aurora-spire"]
+    [data-slot-deck="aurora-spire"]
+    .slot-deck__spin[data-active="true"]::before {
+    opacity: 1;
+  }
+}
