@@ -222,6 +222,27 @@ function RealmsTable({ def }: { def: RealmsGameDef }) {
   const notifyCashflow = useCallback(
     (delta: number, label: "bet" | "win" | "scatter" | "cap") => {
       const abs = formatMoney(Math.abs(delta));
+      if (gameId === "abyssal-pearls") {
+        // Abyssal Pearls: a small single-line pill at the top (never over the reels or controls); the toast wrapper is made
+        // transparent by `.abp-toast` in abyssal-ui.css so no dark box shows around the pill.
+        const isWin = label !== "bet";
+        const title =
+          label === "scatter" ? "Scatter" : label === "cap" ? "Cap" : isWin ? "Win" : "Bet";
+        const sign = label === "bet" || delta < 0 ? "−" : "+";
+        toast.custom(
+          () => (
+            <div className="abp-toast__pill" data-kind={isWin ? "win" : "bet"} role="status">
+              <span>{title}</span>
+              <strong>
+                {sign}
+                {abs}
+              </strong>
+            </div>
+          ),
+          { duration: isWin ? 1500 : 1000, position: "top-center", className: "abp-toast" },
+        );
+        return;
+      }
       if (label === "bet") {
         toast.custom(
           () => (
@@ -270,7 +291,7 @@ function RealmsTable({ def }: { def: RealmsGameDef }) {
         { duration: 1800 },
       );
     },
-    [theme],
+    [theme, gameId],
   );
 
   /** Abortable wait — respects turbo + skipRef + playback generation / unmount. */
@@ -557,6 +578,9 @@ function RealmsTable({ def }: { def: RealmsGameDef }) {
   const showTotalWin = useCallback(
     (amount: number, opts?: { baseEarn?: number; multiplier?: number }) => {
       if (amount <= 0) return;
+      // Abyssal Pearls: the full-screen overlay is for Big Win and above (8x bet, the same tier boundary WinCelebration uses).
+      // Smaller wins are shown by the compact top toast and the Last Win meter only. Presentation only; payouts are unaffected.
+      if (gameId === "abyssal-pearls" && amount < bet * 8) return;
       setWinPopup({
         amount,
         baseEarn: opts?.baseEarn ?? amount,
@@ -564,7 +588,7 @@ function RealmsTable({ def }: { def: RealmsGameDef }) {
       });
       schedule(() => setWinPopup(null), ANIM.winPopupHold);
     },
-    [schedule],
+    [schedule, gameId, bet],
   );
 
   const dismissFsSummary = useCallback(() => {

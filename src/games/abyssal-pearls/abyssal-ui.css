@@ -1,0 +1,851 @@
+/* Abyssal Pearls — premium underwater presentation (reel board, control deck, pearl Spin).
+   Presentation only: every rule is scoped to this game's wrapper, so no other title is affected. Gameplay, RNG, pricing and state
+   are untouched. Overrides carry !important only where the shared shells set inline styles or !important themselves. */
+
+[data-game-view="abyssal-pearls"] {
+  --ab-abyss: #04132a;
+  --ab-deep: #071e3a;
+  --ab-teal: #0d5a72;
+  --ab-turq: #2cb8c6;
+  --ab-aqua: #84e6f0;
+  --ab-pearl: #f3fcff;
+  --ab-gold: #dcb96e;
+  --ab-ink: #052a44;
+  --ab-spin: clamp(92px, 27vw, 116px);
+  --ab-ctl: 46px;
+}
+
+/* ───────── reel well: one symmetric sculpted-glass frame ───────── */
+[data-game-view="abyssal-pearls"] [data-gs-well] {
+  --gs-band: 3px;
+  border-radius: 22px !important;
+  padding: 6px !important;
+  background:
+    radial-gradient(120% 70% at 50% 0%, rgb(44 184 198 / 0.22), transparent 62%),
+    linear-gradient(180deg, rgb(7 34 62 / 0.78), rgb(3 14 32 / 0.9)) !important;
+  box-shadow:
+    inset 0 1px 0 rgb(243 252 255 / 0.28),
+    inset 0 0 0 1px rgb(132 230 240 / 0.18),
+    inset 0 -24px 48px rgb(1 8 22 / 0.55),
+    0 14px 38px rgb(0 6 20 / 0.55),
+    0 0 36px rgb(44 184 198 / 0.14) !important;
+  backdrop-filter: blur(3px);
+}
+/* pearl-and-gold rim (replaces the shared motif ornament band with a clean ring) */
+[data-game-view="abyssal-pearls"] [data-gs-well]::before {
+  opacity: 0.85;
+  background: linear-gradient(
+    135deg,
+    var(--ab-pearl),
+    var(--ab-aqua) 28%,
+    var(--ab-turq) 52%,
+    var(--ab-gold) 78%,
+    var(--ab-pearl)
+  );
+  -webkit-mask:
+    linear-gradient(#000 0 0) border-box,
+    linear-gradient(#000 0 0) padding-box;
+  -webkit-mask-composite: xor;
+  mask:
+    linear-gradient(#000 0 0) border-box,
+    linear-gradient(#000 0 0) padding-box;
+  mask-composite: exclude;
+  border-radius: inherit;
+}
+/* four small corner pearls + bioluminescent edge glow */
+[data-game-view="abyssal-pearls"] [data-gs-well]::after {
+  border-radius: inherit;
+  background:
+    radial-gradient(circle at 35% 30%, #fff 0 18%, var(--ab-aqua) 45%, transparent 72%) 7px 7px /
+      11px 11px no-repeat,
+    radial-gradient(circle at 35% 30%, #fff 0 18%, var(--ab-aqua) 45%, transparent 72%)
+      calc(100% - 7px) 7px / 11px 11px no-repeat,
+    radial-gradient(circle at 35% 30%, #fff 0 18%, var(--ab-aqua) 45%, transparent 72%) 7px
+      calc(100% - 7px) / 11px 11px no-repeat,
+    radial-gradient(circle at 35% 30%, #fff 0 18%, var(--ab-aqua) 45%, transparent 72%)
+      calc(100% - 7px) calc(100% - 7px) / 11px 11px no-repeat,
+    linear-gradient(
+      180deg,
+      rgb(132 230 240 / 0.12),
+      transparent 18%,
+      transparent 82%,
+      rgb(44 184 198 / 0.14)
+    );
+}
+
+/* ───────── reel board: seamless rounded-rectangle water cells ───────── */
+[data-game-view="abyssal-pearls"] [data-gs-board] {
+  position: relative;
+  /* full 6×5 board always fits: width from the viewport, never from a clamped height (keeps square cells) */
+  width: min(
+    calc(100vw - 34px),
+    calc(var(--ab-board-h, 54dvh) * var(--board-ar)),
+    40rem
+  ) !important;
+  max-height: none !important;
+  gap: 3px !important;
+  padding: 3px;
+  margin-inline: auto;
+  border-radius: 16px;
+  background: linear-gradient(180deg, rgb(3 18 38 / 0.55), rgb(2 10 26 / 0.7));
+  box-shadow: inset 0 0 0 1px rgb(132 230 240 / 0.1);
+}
+/* slow caustic light drifting over the whole board (one cheap element, opacity only) */
+[data-game-view="abyssal-pearls"] [data-gs-board]::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 4;
+  pointer-events: none;
+  border-radius: inherit;
+  background:
+    radial-gradient(ellipse 55% 38% at 22% 14%, rgb(160 245 255 / 0.18), transparent 70%),
+    radial-gradient(ellipse 50% 34% at 78% 62%, rgb(110 210 235 / 0.14), transparent 70%),
+    radial-gradient(ellipse 40% 28% at 40% 92%, rgb(190 250 255 / 0.12), transparent 70%);
+  animation: abp-caustic 9s ease-in-out infinite alternate;
+  will-change: opacity;
+}
+
+[data-game-view="abyssal-pearls"] [data-gs-board] > .realms-reel-cell {
+  position: relative;
+  border-width: 1px !important;
+  border-style: solid;
+  border-color: rgb(150 235 245 / 0.12) !important;
+  border-radius: 13% !important;
+  background-color: rgb(8 40 70 / 0.34) !important;
+  background-image:
+    linear-gradient(165deg, rgb(190 245 255 / 0.1), transparent 46%),
+    linear-gradient(0deg, rgb(2 14 34 / 0.38), transparent 60%) !important;
+  background-size: 100% 100% !important;
+  background-repeat: no-repeat !important;
+  box-shadow:
+    inset 0 1px 0 rgb(220 250 255 / 0.14),
+    inset 0 0 14px rgb(44 184 198 / 0.08) !important;
+}
+/* soft light pool inside each cell, under the symbol */
+[data-game-view="abyssal-pearls"] [data-gs-board] > .realms-reel-cell::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: radial-gradient(ellipse 80% 60% at 30% 14%, rgb(160 245 255 / 0.2), transparent 70%);
+}
+/* symbols: centred, fully visible, crisp; a small depth shadow instead of a card outline */
+[data-game-view="abyssal-pearls"] [data-gs-board] img {
+  scale: 1;
+  padding: 0;
+  object-fit: contain;
+  filter: drop-shadow(0 2px 3px rgb(0 12 30 / 0.5));
+}
+[data-game-view="abyssal-pearls"] [data-gs-board] > .realms-reel-cell[data-winning="true"] {
+  border-color: rgb(243 252 255 / 0.85) !important;
+  background-color: rgb(44 184 198 / 0.3) !important;
+  box-shadow:
+    inset 0 0 18px rgb(132 230 240 / 0.45),
+    0 0 14px rgb(132 230 240 / 0.6) !important;
+}
+
+/* ───────── control deck: submerged glass console ───────── */
+[data-game-view="abyssal-pearls"] .slot-deck[data-slot-deck="abyssal-pearls"] {
+  width: 100%;
+  max-width: 42rem;
+  margin-inline: auto;
+  padding: 10px 12px 8px;
+  border: 0;
+  border-radius: 22px;
+  background:
+    radial-gradient(90% 120% at 50% 100%, rgb(44 184 198 / 0.16), transparent 65%),
+    linear-gradient(180deg, rgb(8 36 66 / 0.86), rgb(3 14 32 / 0.94));
+  box-shadow:
+    inset 0 1px 0 rgb(243 252 255 / 0.24),
+    inset 0 0 0 1px rgb(132 230 240 / 0.2),
+    0 12px 32px rgb(0 6 20 / 0.5);
+  backdrop-filter: blur(4px);
+  color: var(--ab-pearl);
+  --deck-accent: var(--ab-aqua);
+  --deck-ink: var(--ab-pearl);
+  --deck-line: rgb(132 230 240 / 0.24);
+}
+[data-game-view="abyssal-pearls"] [data-slot-deck="abyssal-pearls"] .slot-deck__meters {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  padding: 0 0 10px;
+  border-bottom: 1px solid rgb(132 230 240 / 0.16);
+}
+/* Balance, Last win and Buy bonus share one chip shape and height */
+[data-game-view="abyssal-pearls"]
+  [data-slot-deck="abyssal-pearls"]
+  :is(.slot-deck__balance, .slot-deck__win, .slot-deck__bonus, .slot-deck__round) {
+  min-height: var(--ab-ctl);
+  justify-content: center;
+  padding: 5px 10px;
+  border: 1px solid rgb(132 230 240 / 0.2);
+  border-radius: 14px;
+  background: linear-gradient(180deg, rgb(132 230 240 / 0.1), rgb(7 30 58 / 0.5));
+  box-shadow: inset 0 1px 0 rgb(243 252 255 / 0.12);
+}
+[data-game-view="abyssal-pearls"] [data-slot-deck="abyssal-pearls"] .slot-deck__win {
+  align-items: center;
+  text-align: center;
+}
+[data-game-view="abyssal-pearls"] [data-slot-deck="abyssal-pearls"] .slot-deck__bonus {
+  justify-self: stretch;
+  width: 100%;
+  min-width: 0;
+  gap: 6px;
+  color: var(--ab-pearl);
+  border-color: rgb(220 185 110 / 0.5);
+  background: linear-gradient(180deg, rgb(220 185 110 / 0.18), rgb(7 30 58 / 0.55));
+}
+[data-game-view="abyssal-pearls"] [data-slot-deck="abyssal-pearls"] .slot-deck__bonus > span {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+[data-game-view="abyssal-pearls"] [data-slot-deck="abyssal-pearls"] .slot-deck__bonus strong {
+  color: var(--ab-gold);
+}
+/* readable labels */
+[data-game-view="abyssal-pearls"]
+  [data-slot-deck="abyssal-pearls"]
+  :is(
+    .slot-deck__balance > span,
+    .slot-deck__win > span,
+    .slot-deck__bonus span,
+    .slot-deck__stake > span
+  ) {
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  color: var(--ab-aqua);
+  opacity: 0.9;
+}
+[data-game-view="abyssal-pearls"]
+  [data-slot-deck="abyssal-pearls"]
+  :is(.slot-deck__balance strong, .slot-deck__win strong, .slot-deck__stake strong) {
+  color: var(--ab-pearl);
+}
+[data-game-view="abyssal-pearls"]
+  [data-slot-deck="abyssal-pearls"]
+  .slot-deck__win[data-winning="true"]
+  strong {
+  color: var(--ab-gold);
+}
+
+/* play row: Bet | Spin (centre) | Tools — symmetrical about the pearl */
+[data-game-view="abyssal-pearls"] [data-slot-deck="abyssal-pearls"] .slot-deck__play {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) var(--ab-spin) minmax(0, 1fr);
+  grid-template-rows: auto;
+  align-items: center;
+  gap: 12px;
+  padding-top: 12px;
+}
+[data-game-view="abyssal-pearls"] [data-slot-deck="abyssal-pearls"] .slot-deck__bet {
+  grid-column: 1;
+  grid-row: 1;
+  justify-self: end;
+  width: 100%;
+  max-width: 230px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-template-areas:
+    "stake stake"
+    "minus plus";
+  gap: 4px;
+  border: 0;
+  background: none;
+}
+[data-game-view="abyssal-pearls"] [data-slot-deck="abyssal-pearls"] .slot-deck__bet > :first-child {
+  grid-area: minus;
+}
+[data-game-view="abyssal-pearls"] [data-slot-deck="abyssal-pearls"] .slot-deck__bet > :last-child {
+  grid-area: plus;
+}
+[data-game-view="abyssal-pearls"]
+  [data-slot-deck="abyssal-pearls"]
+  .slot-deck__bet
+  > .slot-deck__stake {
+  grid-area: stake;
+  width: 100%;
+  min-width: 0;
+}
+[data-game-view="abyssal-pearls"]
+  [data-slot-deck="abyssal-pearls"]
+  :is(
+    .slot-deck__stake,
+    .slot-deck__bet > button:not(.slot-deck__stake),
+    .slot-deck__tools button
+  ) {
+  min-height: var(--ab-ctl);
+  height: var(--ab-ctl);
+  min-width: 44px;
+  border: 1px solid rgb(132 230 240 / 0.22);
+  border-radius: 14px;
+  background: linear-gradient(180deg, rgb(132 230 240 / 0.12), rgb(7 30 58 / 0.55));
+  color: var(--ab-pearl);
+  box-shadow: inset 0 1px 0 rgb(243 252 255 / 0.12);
+  transition:
+    border-color 0.18s,
+    box-shadow 0.18s,
+    transform 0.18s;
+}
+[data-game-view="abyssal-pearls"]
+  [data-slot-deck="abyssal-pearls"]
+  .slot-deck__bet
+  > button:not(.slot-deck__stake) {
+  width: 100%;
+}
+[data-game-view="abyssal-pearls"]
+  [data-slot-deck="abyssal-pearls"]
+  :is(
+    .slot-deck__bet > button:not(.slot-deck__stake),
+    .slot-deck__tools button,
+    .slot-deck__bonus,
+    button.slot-deck__stake
+  ):hover:not(:disabled) {
+  border-color: rgb(132 230 240 / 0.6);
+  box-shadow:
+    inset 0 1px 0 rgb(243 252 255 / 0.2),
+    0 0 12px rgb(44 184 198 / 0.35);
+}
+[data-game-view="abyssal-pearls"] [data-slot-deck="abyssal-pearls"] .slot-deck__tools {
+  grid-column: 3;
+  grid-row: 1;
+  justify-self: start;
+  width: 100%;
+  max-width: 230px;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 4px;
+}
+[data-game-view="abyssal-pearls"] [data-slot-deck="abyssal-pearls"] .slot-deck__tools button {
+  width: 100%;
+  flex: none;
+  font-size: 10px;
+  letter-spacing: 0.04em;
+}
+[data-game-view="abyssal-pearls"]
+  [data-slot-deck="abyssal-pearls"]
+  .slot-deck__tools
+  button[aria-pressed="true"] {
+  background: linear-gradient(180deg, var(--ab-aqua), var(--ab-turq));
+  color: var(--ab-ink);
+  border-color: var(--ab-pearl);
+  box-shadow: 0 0 14px rgb(132 230 240 / 0.55);
+}
+[data-game-view="abyssal-pearls"]
+  [data-slot-deck="abyssal-pearls"]
+  .slot-deck__tools
+  button[data-stopping="true"] {
+  background: linear-gradient(180deg, #a63a46, #6e2030);
+  color: #ffe3e0;
+  border-color: #f0959b;
+}
+[data-game-view="abyssal-pearls"] [data-slot-deck="abyssal-pearls"] .slot-deck__message {
+  color: var(--ab-aqua);
+  font-size: 10px;
+  opacity: 0.8;
+  margin-top: 8px;
+}
+
+/* ───────── Spin: a luminous pearl ───────── */
+[data-game-view="abyssal-pearls"] .slot-deck[data-slot-deck="abyssal-pearls"] .slot-deck__spin {
+  grid-column: 2;
+  grid-row: 1;
+  justify-self: center;
+  align-self: center;
+  position: relative;
+  isolation: isolate;
+  width: var(--ab-spin);
+  height: var(--ab-spin);
+  min-height: 0;
+  padding: 0;
+  clip-path: none;
+  border: 0;
+  border-radius: 50%;
+  color: var(--ab-ink);
+  text-shadow: 0 1px 0 rgb(255 255 255 / 0.55);
+  background:
+    radial-gradient(circle at 34% 26%, #fff 0 9%, transparent 30%),
+    radial-gradient(circle at 50% 55%, #f3fcff 0%, #cdf3f7 46%, #86d6e2 82%, #4fb4c6 100%);
+  box-shadow:
+    inset 0 -6px 12px rgb(13 90 114 / 0.38),
+    inset 0 3px 5px rgb(255 255 255 / 0.9),
+    0 0 0 3px rgb(4 19 42 / 0.92),
+    0 0 0 4.5px rgb(132 230 240 / 0.75),
+    0 8px 22px rgb(0 8 24 / 0.55);
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease,
+    filter 0.2s ease;
+  animation: none;
+}
+/* idle breathing halo (behind the pearl) */
+[data-game-view="abyssal-pearls"] [data-slot-deck="abyssal-pearls"] .slot-deck__spin::after {
+  content: "";
+  position: absolute;
+  inset: -14px;
+  z-index: -1;
+  border-radius: 50%;
+  pointer-events: none;
+  background: radial-gradient(
+    circle,
+    rgb(132 230 240 / 0.5),
+    rgb(44 184 198 / 0.18) 48%,
+    transparent 70%
+  );
+  animation: abp-breathe 4.4s ease-in-out infinite;
+  will-change: transform, opacity;
+}
+/* aquatic energy ring (only while spinning / auto) */
+[data-game-view="abyssal-pearls"] [data-slot-deck="abyssal-pearls"] .slot-deck__spin::before {
+  content: "";
+  position: absolute;
+  inset: -7px;
+  z-index: -1;
+  border-radius: 50%;
+  pointer-events: none;
+  opacity: 0;
+  background: conic-gradient(
+    from 0deg,
+    transparent 0 8%,
+    var(--ab-aqua) 30%,
+    var(--ab-pearl) 42%,
+    transparent 62%,
+    var(--ab-turq) 85%,
+    transparent 100%
+  );
+  -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 4px), #000 calc(100% - 3px));
+  mask: radial-gradient(farthest-side, transparent calc(100% - 4px), #000 calc(100% - 3px));
+  transition: opacity 0.25s ease;
+  will-change: transform, opacity;
+}
+[data-game-view="abyssal-pearls"]
+  [data-slot-deck="abyssal-pearls"]
+  .slot-deck__spin[data-active="true"]::before {
+  opacity: 1;
+  animation: abp-ring 1.5s linear infinite;
+}
+[data-game-view="abyssal-pearls"]
+  [data-slot-deck="abyssal-pearls"]
+  .slot-deck__spin[data-active="true"]::after {
+  animation: abp-breathe-fast 1.2s ease-in-out infinite;
+}
+/* hover / focus: bioluminescent edge + lift */
+[data-game-view="abyssal-pearls"]
+  [data-slot-deck="abyssal-pearls"]
+  .slot-deck__spin:hover:not(:disabled),
+[data-game-view="abyssal-pearls"] [data-slot-deck="abyssal-pearls"] .slot-deck__spin:focus-visible {
+  transform: translateY(-2px);
+  filter: none;
+  box-shadow:
+    inset 0 -6px 12px rgb(13 90 114 / 0.32),
+    inset 0 3px 5px rgb(255 255 255 / 0.95),
+    0 0 0 3px rgb(4 19 42 / 0.92),
+    0 0 0 5px var(--ab-aqua),
+    0 0 22px rgb(132 230 240 / 0.7),
+    0 10px 26px rgb(0 8 24 / 0.55);
+}
+[data-game-view="abyssal-pearls"] [data-slot-deck="abyssal-pearls"] .slot-deck__spin:focus-visible {
+  outline: 2px solid var(--ab-pearl);
+  outline-offset: 6px;
+}
+/* press */
+[data-game-view="abyssal-pearls"]
+  [data-slot-deck="abyssal-pearls"]
+  .slot-deck__spin:active:not(:disabled) {
+  transform: translateY(1px) scale(0.95);
+  transition-duration: 0.08s;
+}
+/* active (spinning / auto): the shared pulse is replaced by the ring; the pearl stays calm */
+[data-game-view="abyssal-pearls"]
+  [data-slot-deck="abyssal-pearls"]
+  .slot-deck__spin[data-active="true"]:not(:disabled) {
+  animation: none;
+  box-shadow:
+    inset 0 -6px 12px rgb(13 90 114 / 0.4),
+    inset 0 3px 5px rgb(255 255 255 / 0.85),
+    0 0 0 3px rgb(4 19 42 / 0.92),
+    0 0 0 4.5px var(--ab-turq),
+    0 8px 22px rgb(0 8 24 / 0.55);
+}
+/* face: icon + label, centred in the pearl */
+[data-game-view="abyssal-pearls"] [data-slot-deck="abyssal-pearls"] .slot-deck__spin-face {
+  position: static;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  padding: 0;
+  font-size: 15px;
+  font-weight: 900;
+  line-height: 1;
+  letter-spacing: 0.06em;
+  text-align: center;
+  font-family: inherit;
+}
+[data-game-view="abyssal-pearls"] [data-slot-deck="abyssal-pearls"] .slot-deck__spin-face > span {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+[data-game-view="abyssal-pearls"] [data-slot-deck="abyssal-pearls"] .slot-deck__spin-face small {
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+}
+[data-game-view="abyssal-pearls"] [data-slot-deck="abyssal-pearls"] .slot-deck__spin-face svg {
+  width: 26px;
+  height: 26px;
+}
+/* press ripple (class toggled by GameView's pointerdown handler) */
+[data-game-view="abyssal-pearls"] [data-slot-deck="abyssal-pearls"] .slot-deck__spin-face::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  border: 2px solid rgb(255 255 255 / 0.9);
+  opacity: 0;
+  pointer-events: none;
+}
+[data-game-view="abyssal-pearls"]
+  [data-slot-deck="abyssal-pearls"]
+  .slot-deck__spin[data-ripple]
+  .slot-deck__spin-face::before {
+  animation: abp-ripple 0.6s ease-out 1;
+}
+/* win shimmer: plays once when the existing "winning" state appears on the win meter */
+[data-game-view="abyssal-pearls"] [data-slot-deck="abyssal-pearls"] .slot-deck__spin-face::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  pointer-events: none;
+  opacity: 0;
+  background: linear-gradient(115deg, transparent 32%, rgb(255 255 255 / 0.95) 50%, transparent 68%)
+    0 0 / 260% 100%;
+}
+[data-game-view="abyssal-pearls"]
+  [data-slot-deck="abyssal-pearls"]:has(.slot-deck__win[data-winning="true"])
+  .slot-deck__spin:not(:disabled)
+  .slot-deck__spin-face::after {
+  animation: abp-shimmer 1.3s ease-out 1;
+}
+[data-game-view="abyssal-pearls"]
+  [data-slot-deck="abyssal-pearls"]:has(.slot-deck__win[data-winning="true"])
+  .slot-deck__spin:not(:disabled)::after {
+  animation: abp-win-halo 1.3s ease-out 1;
+}
+/* disabled: clearly unavailable, no misleading motion */
+[data-game-view="abyssal-pearls"] [data-slot-deck="abyssal-pearls"] .slot-deck__spin:disabled {
+  filter: grayscale(0.85) brightness(0.7);
+  box-shadow:
+    0 0 0 3px rgb(4 19 42 / 0.92),
+    0 0 0 4.5px rgb(132 150 165 / 0.5);
+  cursor: not-allowed;
+  transform: none;
+}
+[data-game-view="abyssal-pearls"]
+  [data-slot-deck="abyssal-pearls"]
+  .slot-deck__spin:disabled::before,
+[data-game-view="abyssal-pearls"]
+  [data-slot-deck="abyssal-pearls"]
+  .slot-deck__spin:disabled::after,
+[data-game-view="abyssal-pearls"]
+  [data-slot-deck="abyssal-pearls"]
+  .slot-deck__spin:disabled
+  .slot-deck__spin-face::after {
+  animation: none;
+  opacity: 0;
+}
+
+/* ───────── keyframes (transform / opacity only) ───────── */
+@keyframes abp-breathe {
+  0%,
+  100% {
+    opacity: 0.55;
+    transform: scale(0.96);
+  }
+  50% {
+    opacity: 0.95;
+    transform: scale(1.07);
+  }
+}
+@keyframes abp-breathe-fast {
+  0%,
+  100% {
+    opacity: 0.7;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.12);
+  }
+}
+@keyframes abp-ring {
+  to {
+    transform: rotate(360deg);
+  }
+}
+@keyframes abp-ripple {
+  0% {
+    opacity: 0.9;
+    transform: scale(0.7);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(1.55);
+  }
+}
+@keyframes abp-shimmer {
+  0% {
+    opacity: 1;
+    background-position: 130% 0;
+  }
+  100% {
+    opacity: 0;
+    background-position: -30% 0;
+  }
+}
+@keyframes abp-win-halo {
+  0% {
+    opacity: 0.6;
+    transform: scale(1);
+  }
+  35% {
+    opacity: 1;
+    transform: scale(1.22);
+  }
+  100% {
+    opacity: 0.6;
+    transform: scale(1);
+  }
+}
+@keyframes abp-caustic {
+  from {
+    opacity: 0.45;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* ───────── responsive ───────── */
+@media (max-width: 600px) {
+  [data-game-view="abyssal-pearls"] .slot-deck[data-slot-deck="abyssal-pearls"] {
+    padding: 8px 8px max(6px, env(safe-area-inset-bottom));
+    border-radius: 20px;
+  }
+  [data-game-view="abyssal-pearls"] [data-slot-deck="abyssal-pearls"] .slot-deck__meters {
+    gap: 6px;
+    padding-bottom: 8px;
+  }
+  [data-game-view="abyssal-pearls"]
+    [data-slot-deck="abyssal-pearls"]
+    :is(.slot-deck__balance, .slot-deck__win, .slot-deck__bonus, .slot-deck__round) {
+    padding: 4px 7px;
+  }
+  [data-game-view="abyssal-pearls"] [data-slot-deck="abyssal-pearls"] .slot-deck__play {
+    gap: 8px;
+    padding-top: 9px;
+  }
+}
+@media (max-width: 360px) {
+  [data-game-view="abyssal-pearls"] {
+    --ab-spin: 88px;
+  }
+  [data-game-view="abyssal-pearls"] [data-slot-deck="abyssal-pearls"] .slot-deck__meters {
+    gap: 4px;
+  }
+  [data-game-view="abyssal-pearls"]
+    [data-slot-deck="abyssal-pearls"]
+    :is(.slot-deck__balance, .slot-deck__win, .slot-deck__bonus) {
+    padding: 4px 5px;
+  }
+  [data-game-view="abyssal-pearls"]
+    [data-slot-deck="abyssal-pearls"]
+    :is(.slot-deck__balance strong, .slot-deck__win strong) {
+    font-size: 12px;
+  }
+  [data-game-view="abyssal-pearls"]
+    [data-slot-deck="abyssal-pearls"]
+    :is(.slot-deck__balance > span, .slot-deck__win > span, .slot-deck__bonus span) {
+    font-size: 9px;
+    letter-spacing: 0.06em;
+  }
+  [data-game-view="abyssal-pearls"] [data-slot-deck="abyssal-pearls"] .slot-deck__bonus svg {
+    display: none;
+  }
+  [data-game-view="abyssal-pearls"] [data-slot-deck="abyssal-pearls"] .slot-deck__spin-face svg {
+    width: 22px;
+    height: 22px;
+  }
+  [data-game-view="abyssal-pearls"] [data-slot-deck="abyssal-pearls"] .slot-deck__spin-face {
+    font-size: 13px;
+  }
+}
+/* short screens: tighter chrome so the board and Spin never overlap */
+@media (max-height: 700px) and (max-width: 600px) {
+  [data-game-view="abyssal-pearls"] {
+    --ab-board-h: 46dvh;
+    --ab-ctl: 44px;
+  }
+}
+@media (min-width: 601px) {
+  [data-game-view="abyssal-pearls"] {
+    --ab-spin: 112px;
+    --ab-board-h: 56dvh;
+  }
+  [data-game-view="abyssal-pearls"] [data-slot-deck="abyssal-pearls"] .slot-deck__tools {
+    display: flex;
+    flex-wrap: nowrap;
+    gap: 6px;
+    max-width: none;
+  }
+  [data-game-view="abyssal-pearls"] [data-slot-deck="abyssal-pearls"] .slot-deck__tools button {
+    flex: 1 1 0;
+    min-width: 48px;
+  }
+  [data-game-view="abyssal-pearls"] [data-slot-deck="abyssal-pearls"] .slot-deck__bet {
+    max-width: none;
+    grid-template-columns: 52px minmax(0, 1fr) 52px;
+    grid-template-areas: "minus stake plus";
+  }
+}
+
+/* landscape phones: compact two-row deck (meters over one play row) so the board never overlaps the controls */
+@media (max-height: 500px) and (orientation: landscape) {
+  [data-game-view="abyssal-pearls"] {
+    --ab-board-h: 50dvh;
+    --ab-spin: 68px;
+    --ab-ctl: 44px;
+  }
+  [data-game-view="abyssal-pearls"] .slot-deck[data-slot-deck="abyssal-pearls"] {
+    padding: 6px 10px max(6px, env(safe-area-inset-bottom));
+    border-radius: 18px;
+  }
+  [data-game-view="abyssal-pearls"] [data-slot-deck="abyssal-pearls"] .slot-deck__meters {
+    padding-bottom: 6px;
+  }
+  [data-game-view="abyssal-pearls"] [data-slot-deck="abyssal-pearls"] .slot-deck__play {
+    padding-top: 6px;
+    gap: 10px;
+  }
+  [data-game-view="abyssal-pearls"] [data-slot-deck="abyssal-pearls"] .slot-deck__bet {
+    grid-template-columns: 44px minmax(0, 1fr) 44px;
+    grid-template-areas: "minus stake plus";
+    max-width: 260px;
+  }
+  [data-game-view="abyssal-pearls"] [data-slot-deck="abyssal-pearls"] .slot-deck__tools {
+    display: flex;
+    flex-wrap: nowrap;
+    gap: 4px;
+    max-width: 260px;
+  }
+  [data-game-view="abyssal-pearls"] [data-slot-deck="abyssal-pearls"] .slot-deck__tools button {
+    flex: 1 1 0;
+    min-width: 44px;
+  }
+  [data-game-view="abyssal-pearls"] [data-slot-deck="abyssal-pearls"] .slot-deck__spin-face svg {
+    width: 20px;
+    height: 20px;
+  }
+  [data-game-view="abyssal-pearls"] [data-slot-deck="abyssal-pearls"] .slot-deck__spin-face {
+    font-size: 11px;
+  }
+}
+
+/* ───────── reduced motion: keep the look, drop the movement ───────── */
+@media (prefers-reduced-motion: reduce) {
+  [data-game-view="abyssal-pearls"] [data-gs-board]::after,
+  [data-game-view="abyssal-pearls"] [data-slot-deck="abyssal-pearls"] .slot-deck__spin,
+  [data-game-view="abyssal-pearls"] [data-slot-deck="abyssal-pearls"] .slot-deck__spin::before,
+  [data-game-view="abyssal-pearls"] [data-slot-deck="abyssal-pearls"] .slot-deck__spin::after,
+  [data-game-view="abyssal-pearls"] [data-slot-deck="abyssal-pearls"] .slot-deck__spin-face::before,
+  [data-game-view="abyssal-pearls"] [data-slot-deck="abyssal-pearls"] .slot-deck__spin-face::after {
+    animation: none !important;
+    transition: none !important;
+  }
+  [data-game-view="abyssal-pearls"]
+    [data-slot-deck="abyssal-pearls"]
+    .slot-deck__spin:hover:not(:disabled) {
+    transform: none;
+  }
+  /* a static ring still tells spinning from idle */
+  [data-game-view="abyssal-pearls"]
+    [data-slot-deck="abyssal-pearls"]
+    .slot-deck__spin[data-active="true"]::before {
+    opacity: 1;
+  }
+}
+
+/* odd tool out (Info) spans the row so the 2×2 tool grid stays balanced */
+[data-game-view="abyssal-pearls"]
+  [data-slot-deck="abyssal-pearls"]
+  .slot-deck__tools
+  > button:last-child:nth-child(odd) {
+  grid-column: 1 / -1;
+}
+@media (max-width: 600px) {
+  /* deck edges line up with the board well */
+  [data-game-view="abyssal-pearls"] .slot-deck[data-slot-deck="abyssal-pearls"] {
+    width: calc(100% - 8px);
+  }
+}
+@media (min-width: 601px) {
+  [data-game-view="abyssal-pearls"]
+    [data-slot-deck="abyssal-pearls"]
+    .slot-deck__tools
+    > button:last-child:nth-child(odd) {
+    grid-column: auto;
+  }
+}
+
+/* ───────── cashflow toast: compact pill, no dark wrapper box ───────── */
+.toaster [data-sonner-toast].abp-toast {
+  display: flex !important;
+  justify-content: center;
+  padding: 0 !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  pointer-events: none;
+}
+.abp-toast__pill {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 6px;
+  padding: 4px 12px;
+  border: 1px solid rgb(132 230 240 / 0.6);
+  border-radius: 999px;
+  background: linear-gradient(180deg, rgb(8 40 70 / 0.94), rgb(3 16 36 / 0.94));
+  color: #f3fcff;
+  font-size: 12px;
+  line-height: 1.2;
+  box-shadow: 0 4px 14px rgb(0 8 24 / 0.45);
+  white-space: nowrap;
+}
+.abp-toast__pill > span {
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #84e6f0;
+}
+.abp-toast__pill > strong {
+  font-weight: 900;
+  font-variant-numeric: tabular-nums;
+}
+.abp-toast__pill[data-kind="win"] {
+  border-color: rgb(220 185 110 / 0.85);
+  background: linear-gradient(180deg, rgb(13 90 114 / 0.95), rgb(5 30 58 / 0.95));
+}
+.abp-toast__pill[data-kind="win"] > strong {
+  color: #dcb96e;
+}

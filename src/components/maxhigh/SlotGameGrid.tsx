@@ -25,10 +25,12 @@ export function SlotGameGrid({
   const { t } = useTranslation();
   const { games: catalog } = useCatalogGames();
   const source = games ?? (useCatalog ? catalog : catalog);
-  const filtered = category ? source.filter((g) => g.category === category) : source;
+  const access = useAccessStatus();
+  // Locked games are hidden from the lobby entirely (the server still enforces the lock on every wager).
+  const visible = source.filter((g) => !access.isLocked(g.id));
+  const filtered = category ? visible.filter((g) => g.category === category) : visible;
   const list = typeof limit === "number" ? filtered.slice(0, limit) : filtered;
   const [selected, setSelected] = useState<SlotGame | null>(null);
-  const access = useAccessStatus();
 
   return (
     <section className="game-catalog-section flex flex-col gap-4">
