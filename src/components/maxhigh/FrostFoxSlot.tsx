@@ -1,4 +1,4 @@
-import { SlotControlDeck } from "./SlotControlDeck";
+import { FrostControls as SlotControlDeck } from "./frost-fox/FrostControls";
 /**
  * Panther Peak — Sweet Bonanza layout (cluster-pay tumble slot).
  * Engine resolves spins instantly; this file plays back the animation script.

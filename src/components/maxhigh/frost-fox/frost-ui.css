@@ -1,0 +1,348 @@
+/* Frozen Crystal Citadel. Bottom-aligned 4-5-6-5-4 columns and column-major mapping are unchanged. */
+[data-game-view="frost-fox"][data-deck] {
+  container-type: size;
+}
+[data-game-view="frost-fox"][data-deck] > div > .relative.z-10 {
+  padding: max(48px, env(safe-area-inset-top)) max(10px, env(safe-area-inset-right))
+    max(12px, env(safe-area-inset-bottom)) max(10px, env(safe-area-inset-left));
+}
+[data-game-view="frost-fox"][data-deck] > div > button[title] {
+  width: 44px;
+  height: 44px;
+}
+[data-game-view="frost-fox"][data-deck] [data-gs-col] {
+  max-width: 820px;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+}
+[data-game-view="frost-fox"][data-deck] [data-gs-col] > :first-child {
+  flex: 0 1 auto;
+  width: auto;
+  align-items: center;
+  justify-content: center;
+}
+[data-game-view="frost-fox"][data-deck] [data-gs-well] {
+  flex: none;
+  width: fit-content;
+  height: auto;
+  margin: 0;
+  padding: 5px;
+  clip-path: none;
+  border-radius: 7px 22px 7px 22px !important;
+  background: linear-gradient(145deg, #16394bdf, #050e20e8) !important;
+  box-shadow:
+    inset 0 0 0 1px #96dce480,
+    inset 0 0 0 4px #0c1c2d,
+    0 12px 30px #02081580 !important;
+}
+[data-game-view="frost-fox"][data-deck] [data-gs-well]::before {
+  opacity: 0.16;
+}
+[data-game-view="frost-fox"][data-deck] [data-gs-well]::after {
+  inset: 4px;
+  border-top: 2px solid #b4f3f485;
+  border-bottom: 2px solid #679bae66;
+  border-radius: 4px 16px;
+  background: none;
+}
+[data-game-view="frost-fox"][data-deck] [data-frost-formation] {
+  --frost-gap: clamp(4px, 1cqw, 7px);
+  width: min(calc(100cqw - 48px), calc((100cqh - 300px) * 5 / 6), 490px);
+  align-items: end;
+  gap: var(--frost-gap);
+  overflow: visible;
+}
+[data-game-view="frost-fox"][data-deck] [data-frost-column] {
+  flex: 1 1 0;
+  width: 0;
+  min-width: 0;
+  max-width: none;
+  justify-content: end;
+  gap: var(--frost-gap);
+  overflow: visible;
+}
+[data-game-view="frost-fox"][data-deck] [data-frost-column] img {
+  padding: 4%;
+  object-fit: contain;
+  object-position: center;
+}
+.frost-console {
+  width: 100%;
+  max-width: 560px;
+  flex: none;
+  padding: 9px 10px 8px;
+  border-top: 1px solid #a4e8ed8c;
+  border-bottom: 1px solid #527b96;
+  border-radius: 5px 20px 5px 20px;
+  background: linear-gradient(140deg, #0d2235f5, #060d20f5);
+  box-shadow: inset 0 1px 0 #d4f9ff26;
+  color: #e8f6ff;
+  font-family: ui-sans-serif, system-ui, sans-serif;
+  font-variant-numeric: tabular-nums;
+}
+.frost-console button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 44px;
+  min-height: 44px;
+  gap: 5px;
+  cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+.frost-console button:focus-visible {
+  outline: 2px solid #e1fcff;
+  outline-offset: 3px;
+}
+.frost-console button:disabled {
+  opacity: 0.4;
+  filter: grayscale(0.7);
+  cursor: not-allowed;
+}
+.frost-console__status {
+  display: grid;
+  grid-template-columns: minmax(0, 1.15fr) minmax(0, 0.85fr) auto;
+  align-items: center;
+  gap: 8px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #79b4ce38;
+}
+.frost-console dl {
+  margin: 0;
+  min-width: 0;
+}
+.frost-console dt,
+.frost-console__stake > span {
+  font-size: 10px;
+  line-height: 1.4;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #b9cddc;
+}
+.frost-console dd {
+  margin: 1px 0 0;
+  font-size: clamp(13px, 2.8vw, 18px);
+  line-height: 1.2;
+  font-weight: 800;
+  overflow-wrap: anywhere;
+}
+.frost-console__win[data-winning="true"] dd {
+  color: #b5f6fa;
+}
+.frost-console__bonus {
+  padding: 4px 7px;
+  border-radius: 3px 12px;
+  background: #184153;
+  color: #e5fbff;
+  font-size: 10px;
+  font-weight: 800;
+  text-align: left;
+}
+.frost-console__bonus img {
+  width: 22px;
+  height: 22px;
+  object-fit: contain;
+}
+.frost-console__bonus strong {
+  display: block;
+  margin-top: 1px;
+  font-size: 12px;
+}
+.frost-console__round {
+  max-width: 108px;
+  color: #c2ebf5;
+  font-size: 10px;
+}
+.frost-console__main {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 118px;
+  align-items: center;
+  gap: 14px;
+  padding: 10px 0 4px;
+}
+.frost-console__left {
+  display: grid;
+  grid-template-rows: 48px 44px;
+  gap: 8px;
+  min-width: 0;
+}
+.frost-console__bet {
+  display: grid;
+  grid-template-columns: 44px minmax(44px, 1fr) 44px;
+  align-items: center;
+  border: 1px solid #829eaf;
+  border-radius: 5px 12px;
+  background: linear-gradient(150deg, #1c384b, #0a1a2e);
+  box-shadow: inset 0 1px 0 #e0fbff38;
+}
+.frost-console__stake {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  min-width: 0 !important;
+  min-height: 44px;
+  gap: 0;
+}
+.frost-console__stake strong {
+  font-size: 16px;
+}
+.frost-console__extras {
+  display: flex;
+  justify-content: flex-start;
+}
+.frost-console__more {
+  gap: 7px !important;
+  padding: 0 12px;
+  border-radius: 8px 3px;
+  background: #14273a;
+  color: #cfebf4;
+  font-size: 11px;
+}
+.frost-console__more[data-active="true"] {
+  color: #c5fcff;
+  box-shadow: inset 0 -2px 0 #81cbd7;
+}
+.frost-console .frost-console__spin {
+  position: relative;
+  isolation: isolate;
+  width: 118px;
+  height: 116px;
+  border: 0;
+  clip-path: polygon(50% 0, 94% 23%, 94% 77%, 50% 100%, 6% 77%, 6% 23%);
+  background: linear-gradient(135deg, #efffff, #58cbeb 38%, #54889e 70%, #c2fbff);
+  color: #effdff;
+  filter: drop-shadow(0 3px 6px #3db9dc44);
+  transition:
+    filter 0.18s,
+    transform 0.18s;
+}
+.frost-console__spin::before {
+  content: "";
+  position: absolute;
+  inset: 3px;
+  z-index: -1;
+  clip-path: inherit;
+  background: radial-gradient(ellipse at 50% 28%, #23485f, #09172e 65%);
+}
+.frost-console__spin::after {
+  content: "";
+  position: absolute;
+  inset: 9px;
+  z-index: -1;
+  clip-path: inherit;
+  background: linear-gradient(145deg, #bff9ff2b, transparent 45%, #73e0ef24);
+}
+.frost-console__spin-face {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: 3px;
+  font-size: 16px;
+  font-weight: 900;
+  line-height: 1.1;
+  text-transform: uppercase;
+}
+.frost-console__spin small {
+  font-size: 9px;
+  line-height: 1.1;
+  text-transform: none;
+}
+.frost-console__spin:hover:not(:disabled) {
+  filter: brightness(1.2);
+}
+.frost-console__spin:active:not(:disabled) {
+  transform: translateY(2px);
+}
+.frost-console__spin:focus-visible {
+  filter: brightness(1.25);
+  outline-offset: -10px !important;
+}
+.frost-console__spin[aria-busy="true"] svg {
+  animation: frost-core-turn 1.3s linear infinite;
+}
+.frost-console__spin[data-active="true"]::after {
+  animation: frost-core-pulse 1.4s ease-in-out infinite alternate;
+}
+.frost-console__announcement {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+.frost-options {
+  z-index: 200;
+  min-width: 220px;
+  max-width: calc(100vw - 20px);
+  max-height: var(--radix-dropdown-menu-content-available-height);
+  overflow-y: auto;
+  padding: 6px;
+  border: 1px solid #8ac9db;
+  border-radius: 6px 18px;
+  background: #0b1a30;
+  color: #e5f7ff;
+  box-shadow: 0 10px 30px #02081299;
+  font-family: ui-sans-serif, system-ui, sans-serif;
+}
+.frost-options__item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 44px;
+  padding: 8px 10px;
+  border-radius: 6px;
+  font-size: 13px;
+  cursor: pointer;
+  outline: none;
+  touch-action: manipulation;
+}
+.frost-options__item[data-highlighted] {
+  background: #1e465b;
+  color: #f1fcff;
+}
+.frost-options__state {
+  margin-left: auto;
+  color: #afcbd9;
+  font-size: 11px;
+}
+.frost-options__item[data-state="checked"] {
+  color: #b7f7ff;
+}
+@container (min-width: 640px) and (max-height: 500px) {
+  [data-game-view="frost-fox"][data-deck] [data-gs-col] {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 350px;
+    gap: 18px;
+    max-width: 1100px;
+  }
+  [data-game-view="frost-fox"][data-deck] [data-frost-formation] {
+    width: min(calc(100cqw - 430px), calc((100cqh - 110px) * 5 / 6), 460px);
+  }
+}
+@keyframes frost-core-turn {
+  to {
+    transform: rotate(360deg);
+  }
+}
+@keyframes frost-core-pulse {
+  to {
+    opacity: 0.45;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .frost-console__spin {
+    transition: none;
+  }
+  .frost-console__spin[aria-busy="true"] svg,
+  .frost-console__spin[data-active="true"]::after {
+    animation: none;
+  }
+}
