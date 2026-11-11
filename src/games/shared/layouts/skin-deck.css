@@ -502,3 +502,33 @@
     height: 64px;
   }
 }
+
+/* ───────── safety: legacy oval cabinets ─────────
+   Ten Realms titles ship a legacy `border-radius: 50%` deck. Under the new layouts an oval cuts through the controls, so those
+   decks become soft rounded panels (every other legacy finish is kept). */
+[data-game-view] [data-slot-deck="cinder-crown"],
+[data-game-view] [data-slot-deck="magma-anvil"],
+[data-game-view] [data-slot-deck="obsidian-oracle"],
+[data-game-view] [data-slot-deck="salamander-sun"],
+[data-game-view] [data-slot-deck="ashfall-citadel"] {
+  border-radius: 22px;
+}
+
+/* phone legibility: the original deck labels are 8-9px */
+@media (max-width: 600px) {
+  [data-game-view] .slot-deck__balance > span,
+  [data-game-view] .slot-deck__win > span,
+  [data-game-view] .slot-deck__stake > span,
+  [data-game-view] .slot-deck__bonus span {
+    font-size: 10px;
+  }
+  [data-game-view] .slot-deck__bonus strong {
+    font-size: 11px;
+  }
+  [data-game-view] .slot-deck__message {
+    font-size: 10px;
+  }
+  [data-game-view] .slot-deck__tools button {
+    font-size: 10px;
+  }
+}
