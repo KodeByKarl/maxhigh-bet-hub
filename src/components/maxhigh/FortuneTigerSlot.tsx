@@ -1,4 +1,4 @@
-import { SlotControlDeck } from "./SlotControlDeck";
+import { TigerControls as SlotControlDeck } from "./fortune-tiger/TigerControls";
 /**
  * Fortune Tiger — 4×5 cluster-pay tumble slot (panther rectangle board).
  * Engine resolves spins instantly; this file plays back the animation script.
