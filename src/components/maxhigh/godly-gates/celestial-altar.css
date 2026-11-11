@@ -1,0 +1,341 @@
+/* Godly Gates "Celestial Throne": midnight sapphire, royal indigo, antique gold. Scoped to .gg-* and [data-realms-gg]. */
+.gg-altar {
+  --gg-core: clamp(100px, 29vw, 116px);
+  --gg-gold: #d9b45f;
+  --gg-gold-hi: #f7e3a1;
+  --gg-gold-lo: #8a6a28;
+  --gg-sky: #8fb8ff;
+  --gg-night: #070d24;
+  --gg-indigo: #1a1f5c;
+  position: relative;
+  display: grid;
+  gap: 8px;
+  margin-top: 6px;
+  padding: 8px max(10px, env(safe-area-inset-right)) 8px max(10px, env(safe-area-inset-left));
+  color: #eef3ff;
+  font-family: "Inter", ui-sans-serif, system-ui, sans-serif;
+  /* stepped altar: carved stone with a gold lintel */
+  background: linear-gradient(180deg, rgb(20 26 80 / 0.86), rgb(7 10 34 / 0.96));
+  border-top: 2px solid var(--gg-gold);
+  box-shadow:
+    inset 0 1px 0 rgb(247 227 161 / 0.35),
+    0 -10px 28px rgb(4 6 24 / 0.55);
+  border-radius: 16px 16px 0 0;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  touch-action: manipulation;
+}
+.gg-altar button {
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+.gg-altar button:focus-visible {
+  outline: 3px solid #fff;
+  outline-offset: 2px;
+}
+.gg-altar button:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+.gg-altar span,
+.gg-altar small {
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: rgb(143 184 255 / 0.85);
+}
+.gg-altar strong {
+  font-variant-numeric: tabular-nums;
+  font-weight: 800;
+}
+
+/* thin dark-glass status strip */
+.gg-status {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 4px 12px;
+  border-radius: 999px;
+  background: rgb(4 7 22 / 0.7);
+  border: 1px solid rgb(217 180 95 / 0.35);
+}
+.gg-status > div {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  min-width: 0;
+}
+.gg-status strong {
+  font-size: 14px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.gg-status [data-winning="true"] strong {
+  color: var(--gg-gold-hi);
+  text-shadow: 0 0 10px rgb(217 180 95 / 0.7);
+}
+
+/* main row: bet wing | spin core | feature wing */
+.gg-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) var(--gg-core) minmax(0, 1fr);
+  align-items: center;
+  gap: 8px;
+}
+.gg-wing {
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+}
+
+.gg-bet,
+.gg-step button,
+.gg-buy,
+.gg-opts__toggle,
+.gg-opts__menu button {
+  min-height: 44px;
+  min-width: 44px;
+  border: 1px solid rgb(217 180 95 / 0.4);
+  border-radius: 12px;
+  background: linear-gradient(180deg, rgb(40 52 130 / 0.55), rgb(10 14 48 / 0.8));
+}
+.gg-bet {
+  display: grid;
+  align-content: center;
+  justify-items: center;
+  padding: 0 6px;
+}
+.gg-bet strong,
+.gg-buy strong {
+  font-size: 14px;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.gg-step {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+}
+.gg-step button {
+  display: grid;
+  place-items: center;
+  color: var(--gg-gold-hi);
+}
+
+/* feature wing */
+.gg-buy {
+  display: grid;
+  align-content: center;
+  justify-items: center;
+  padding: 0 6px;
+  border-color: var(--gg-gold);
+  background: linear-gradient(135deg, rgb(217 180 95 / 0.32), rgb(60 40 140 / 0.65));
+}
+.gg-buy span {
+  color: var(--gg-gold-hi);
+}
+.gg-buy--static {
+  cursor: default;
+  border-color: rgb(217 180 95 / 0.3);
+  background: rgb(255 255 255 / 0.04);
+}
+.gg-opts {
+  position: relative;
+  z-index: 6;
+}
+.gg-opts__toggle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  width: 100%;
+}
+.gg-opts__toggle[data-on="true"] {
+  box-shadow:
+    0 0 0 2px var(--gg-sky),
+    0 0 12px rgb(143 184 255 / 0.6);
+}
+.gg-opts__menu {
+  position: absolute;
+  right: 0;
+  bottom: 52px;
+  display: grid;
+  gap: 6px;
+  padding: 8px;
+  border-radius: 16px;
+  background: rgb(7 10 34 / 0.97);
+  border: 1px solid rgb(217 180 95 / 0.55);
+  box-shadow: 0 10px 28px rgb(0 0 0 / 0.6);
+}
+.gg-opts__menu button {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 14px;
+  font-size: 13px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+.gg-opts__menu button[aria-pressed="true"] {
+  border-color: var(--gg-sky);
+  box-shadow: 0 0 10px rgb(143 184 255 / 0.55);
+}
+
+/* octagonal Spin Core */
+.gg-core {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: var(--gg-core);
+  height: var(--gg-core);
+  padding: 0;
+  border: 0;
+  background: transparent;
+  isolation: isolate;
+  transition: transform 0.14s;
+  filter: drop-shadow(0 6px 12px rgb(0 0 0 / 0.55)) drop-shadow(0 0 12px rgb(143 184 255 / 0.3));
+}
+.gg-core__ring,
+.gg-core__face {
+  clip-path: polygon(30% 0, 70% 0, 100% 30%, 100% 70%, 70% 100%, 30% 100%, 0 70%, 0 30%);
+}
+.gg-core__ring {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: linear-gradient(145deg, var(--gg-gold-hi), var(--gg-gold) 40%, var(--gg-gold-lo) 70%, var(--gg-gold-hi));
+}
+.gg-core__face {
+  display: grid;
+  place-items: center;
+  align-content: center;
+  gap: 1px;
+  width: calc(100% - 12px);
+  height: calc(100% - 12px);
+  background:
+    radial-gradient(circle at 34% 24%, rgb(180 210 255 / 0.28), transparent 42%),
+    radial-gradient(circle at 50% 62%, #1d3aa0, var(--gg-night) 78%);
+  box-shadow: inset 0 0 20px rgb(143 184 255 / 0.25);
+}
+.gg-core__star {
+  color: var(--gg-gold-hi);
+  filter: drop-shadow(0 0 5px rgb(143 184 255 / 0.9));
+}
+.gg-core__star[data-spin="true"] {
+  animation: gg-turn 1.4s linear infinite;
+}
+.gg-core .gg-core__label {
+  font-size: 17px;
+  font-weight: 900;
+  letter-spacing: 0.16em;
+  padding-left: 0.16em;
+  color: #f4f8ff;
+}
+.gg-core small {
+  color: var(--gg-gold-hi);
+  font-variant-numeric: tabular-nums;
+}
+.gg-core:active:not(:disabled) {
+  transform: scale(0.94);
+}
+.gg-core:active:not(:disabled) .gg-core__face {
+  box-shadow: inset 0 0 26px rgb(143 184 255 / 0.7);
+}
+.gg-core[data-active="true"]:not(:disabled) .gg-core__face {
+  box-shadow: inset 0 0 22px rgb(143 184 255 / 0.5);
+  animation: gg-pulse 1.6s ease-in-out infinite;
+}
+.gg-core:disabled {
+  filter: grayscale(0.85) brightness(0.6);
+}
+.gg-altar .gg-core:focus-visible {
+  outline-offset: 6px;
+}
+@keyframes gg-turn {
+  to {
+    rotate: 360deg;
+  }
+}
+@keyframes gg-pulse {
+  50% {
+    filter: brightness(1.18);
+  }
+}
+
+@media (max-width: 360px) {
+  .gg-altar {
+    --gg-core: 92px;
+  }
+  .gg-row {
+    gap: 6px;
+  }
+  .gg-core .gg-core__label {
+    font-size: 15px;
+  }
+}
+@media (min-width: 700px) and (min-height: 501px) {
+  .gg-altar {
+    --gg-core: 120px;
+    max-width: 640px;
+    width: 100%;
+    margin-inline: auto;
+    border-radius: 20px;
+  }
+}
+@media (max-height: 500px) and (orientation: landscape) {
+  .gg-altar {
+    --gg-core: 84px;
+    margin-top: 2px;
+    padding-block: 4px;
+    gap: 4px;
+  }
+}
+
+/* layout: reel board and altar read as one centred composition over the sky backdrop */
+[data-realms-gg] .gg-playfield {
+  padding-bottom: max(0.25rem, env(safe-area-inset-bottom)) !important;
+}
+[data-realms-gg] .gg-playfield > div {
+  justify-content: center;
+}
+[data-realms-gg] .gg-stage {
+  flex: 0 1 auto !important;
+  padding-block: clamp(8px, 3dvh, 28px);
+}
+
+/* celestial reel frame: even gold frame + sapphire inset, hairline inner rule, no glow over symbols */
+[data-realms-gg] .gg-well {
+  padding: 8px !important;
+  border-radius: 18px !important;
+  background: linear-gradient(180deg, #131a5a 0%, #070b2a 100%) !important;
+  box-shadow:
+    0 0 0 2px #d9b45f,
+    0 0 0 4px #1a1f5c,
+    0 0 0 5px rgb(247 227 161 / 0.55),
+    0 14px 32px rgb(0 0 0 / 0.55) !important;
+}
+[data-realms-gg] .gg-well::after {
+  content: "";
+  position: absolute;
+  inset: 3px;
+  border-radius: 14px;
+  border: 1px solid rgb(143 184 255 / 0.35);
+  pointer-events: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .gg-core__star,
+  .gg-core__face {
+    animation: none !important;
+  }
+  .gg-core {
+    transition: none;
+  }
+}
