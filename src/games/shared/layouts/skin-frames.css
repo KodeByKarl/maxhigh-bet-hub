@@ -1,0 +1,223 @@
+/* Reel-well frames. Eight silhouettes; each game picks one (data-frame) and tunes --gs-corner / --gs-orn.
+   Colours come from the game's own theme variables (--p-*), set by the game shell. */
+[data-game-view] {
+  position: relative;
+  overflow: hidden;
+}
+
+/* every frame: ornament band cut from the world's motif tile, drawn only in the frame's border ring */
+[data-game-view] [data-gs-well] {
+  position: relative;
+  --gs-band: 9px;
+}
+[data-game-view] [data-gs-well]::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  pointer-events: none;
+  border: var(--gs-band) solid transparent;
+  background: var(--p-accent-soft, #fff);
+  opacity: var(--gs-orn, 0.5);
+  -webkit-mask:
+    var(--gs-tile) 0 0 / var(--gs-tile-size, 44px) var(--gs-tile-size, 44px),
+    linear-gradient(#000 0 0) border-box,
+    linear-gradient(#000 0 0) padding-box;
+  -webkit-mask-composite: source-in, xor;
+  mask:
+    var(--gs-tile) 0 0 / var(--gs-tile-size, 44px) var(--gs-tile-size, 44px),
+    linear-gradient(#000 0 0) border-box,
+    linear-gradient(#000 0 0) padding-box;
+  mask-composite: intersect, exclude;
+}
+[data-game-view] [data-gs-well]::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  pointer-events: none;
+}
+/* soft outer shadow survives clip-path frames on the container around the well */
+[data-game-view] [data-gs-col] > :first-child {
+  filter: drop-shadow(0 10px 18px rgba(0, 0, 0, 0.45));
+}
+
+/* ARCH: temple arch with a keystone */
+[data-frame="arch"] [data-gs-well] {
+  border-radius: calc(var(--gs-corner) * 2.6) calc(var(--gs-corner) * 2.6) 10px 10px !important;
+  box-shadow:
+    inset 0 0 0 2px var(--p-rim),
+    inset 0 0 0 7px rgba(0, 0, 0, 0.4),
+    inset 0 0 0 8px var(--p-rim),
+    inset 0 0 40px rgba(0, 0, 0, 0.35) !important;
+}
+[data-frame="arch"] [data-gs-well]::after {
+  inset: 0 auto auto 50%;
+  width: 34px;
+  height: 15px;
+  transform: translateX(-50%);
+  background: linear-gradient(180deg, var(--p-accent-soft), var(--p-accent));
+  clip-path: polygon(0 0, 100% 0, 50% 100%);
+}
+
+/* BEVEL: chamfered metal plate */
+[data-frame="bevel"] [data-gs-well] {
+  border-radius: 0 !important;
+  clip-path: polygon(
+    var(--gs-corner) 0,
+    calc(100% - var(--gs-corner)) 0,
+    100% var(--gs-corner),
+    100% calc(100% - var(--gs-corner)),
+    calc(100% - var(--gs-corner)) 100%,
+    var(--gs-corner) 100%,
+    0 calc(100% - var(--gs-corner)),
+    0 var(--gs-corner)
+  );
+  box-shadow:
+    inset 0 0 0 3px var(--p-accent),
+    inset 0 0 0 5px rgba(0, 0, 0, 0.45),
+    inset 0 0 36px rgba(0, 0, 0, 0.35) !important;
+}
+[data-frame="bevel"] [data-gs-well]::after {
+  background:
+    linear-gradient(135deg, var(--p-accent-soft) 0 12px, transparent 12px) top left / 40% 100% no-repeat,
+    linear-gradient(-45deg, var(--p-accent-soft) 0 12px, transparent 12px) bottom right / 40% 100% no-repeat;
+  opacity: 0.55;
+}
+
+/* ZIGGURAT: stepped corners, triple inner rings */
+[data-frame="ziggurat"] [data-gs-well] {
+  border-radius: 0 !important;
+  clip-path: polygon(
+    0 calc(var(--gs-corner) + 10px),
+    6px calc(var(--gs-corner) + 10px),
+    6px calc(var(--gs-corner) + 3px),
+    12px calc(var(--gs-corner) + 3px),
+    12px 10px,
+    calc(var(--gs-corner) + 6px) 10px,
+    calc(var(--gs-corner) + 6px) 0,
+    calc(100% - var(--gs-corner) - 6px) 0,
+    calc(100% - var(--gs-corner) - 6px) 10px,
+    calc(100% - 12px) 10px,
+    calc(100% - 12px) calc(var(--gs-corner) + 3px),
+    calc(100% - 6px) calc(var(--gs-corner) + 3px),
+    calc(100% - 6px) calc(var(--gs-corner) + 10px),
+    100% calc(var(--gs-corner) + 10px),
+    100% calc(100% - var(--gs-corner) - 10px),
+    calc(100% - 6px) calc(100% - var(--gs-corner) - 10px),
+    calc(100% - 6px) calc(100% - var(--gs-corner) - 3px),
+    calc(100% - 12px) calc(100% - var(--gs-corner) - 3px),
+    calc(100% - 12px) calc(100% - 10px),
+    calc(100% - var(--gs-corner) - 6px) calc(100% - 10px),
+    calc(100% - var(--gs-corner) - 6px) 100%,
+    calc(var(--gs-corner) + 6px) 100%,
+    calc(var(--gs-corner) + 6px) calc(100% - 10px),
+    12px calc(100% - 10px),
+    12px calc(100% - var(--gs-corner) - 3px),
+    6px calc(100% - var(--gs-corner) - 3px),
+    6px calc(100% - var(--gs-corner) - 10px),
+    0 calc(100% - var(--gs-corner) - 10px)
+  );
+  box-shadow:
+    inset 0 0 0 2px var(--p-rim),
+    inset 0 0 0 5px rgba(0, 0, 0, 0.4),
+    inset 0 0 0 6px var(--p-rim),
+    inset 0 0 0 9px rgba(0, 0, 0, 0.3),
+    inset 0 0 0 10px var(--p-rim),
+    inset 0 0 36px rgba(0, 0, 0, 0.35) !important;
+}
+
+/* SCROLL: rolled parchment ends */
+[data-frame="scroll"] [data-gs-well] {
+  border-radius: 6px !important;
+  box-shadow:
+    inset 0 0 0 2px var(--p-rim),
+    inset 0 0 44px rgba(0, 0, 0, 0.4),
+    0 0 0 1px rgba(0, 0, 0, 0.4) !important;
+}
+[data-frame="scroll"] [data-gs-well]::after {
+  background:
+    linear-gradient(180deg, var(--p-accent-soft), var(--p-accent) 55%, rgba(0, 0, 0, 0.55)) top / 100% 11px no-repeat,
+    linear-gradient(0deg, var(--p-accent-soft), var(--p-accent) 55%, rgba(0, 0, 0, 0.55)) bottom / 100% 11px no-repeat;
+  border-radius: 6px;
+}
+
+/* GEM: faceted, two opposite corners cut deep */
+[data-frame="gem"] [data-gs-well] {
+  border-radius: 0 !important;
+  clip-path: polygon(
+    calc(var(--gs-corner) * 1.5) 0,
+    100% 0,
+    100% calc(100% - var(--gs-corner) * 1.5),
+    calc(100% - var(--gs-corner) * 1.5) 100%,
+    0 100%,
+    0 calc(var(--gs-corner) * 1.5)
+  );
+  box-shadow:
+    inset 0 0 0 2px var(--p-accent),
+    inset 0 0 0 4px rgba(0, 0, 0, 0.4),
+    inset 0 0 40px rgba(0, 0, 0, 0.3) !important;
+}
+[data-frame="gem"] [data-gs-well]::after {
+  background:
+    linear-gradient(135deg, transparent 49.4%, rgba(255, 255, 255, 0.2) 50%, transparent 50.6%) 0 0 / 46% 100% no-repeat,
+    linear-gradient(135deg, transparent 49.4%, rgba(255, 255, 255, 0.12) 50%, transparent 50.6%) 100% 0 / 70% 100% no-repeat;
+}
+
+/* RIVETED: bolted plate */
+[data-frame="riveted"] [data-gs-well] {
+  border-radius: 8px !important;
+  box-shadow:
+    inset 0 0 0 3px var(--p-accent),
+    inset 0 0 0 4px rgba(0, 0, 0, 0.5),
+    inset 0 0 0 7px rgba(0, 0, 0, 0.18),
+    inset 0 0 36px rgba(0, 0, 0, 0.35) !important;
+}
+[data-frame="riveted"] [data-gs-well]::after {
+  background:
+    radial-gradient(circle, var(--p-accent-soft) 0 2px, rgba(0, 0, 0, 0.5) 2.6px, transparent 3.4px) 0 3px / 22px 12px repeat-x,
+    radial-gradient(circle, var(--p-accent-soft) 0 2px, rgba(0, 0, 0, 0.5) 2.6px, transparent 3.4px) 0 calc(100% - 3px) / 22px 12px repeat-x;
+}
+
+/* PETAL: organic leaf-cut corners with a living glow */
+[data-frame="petal"] [data-gs-well] {
+  border-radius: calc(var(--gs-corner) * 2.2) 8px calc(var(--gs-corner) * 2.2) 8px !important;
+  box-shadow:
+    inset 0 0 0 2px var(--p-rim),
+    inset 0 0 26px color-mix(in srgb, var(--p-accent) 28%, transparent),
+    inset 0 0 50px rgba(0, 0, 0, 0.35) !important;
+}
+[data-frame="petal"] [data-gs-well]::after {
+  background:
+    radial-gradient(circle at 0 0, color-mix(in srgb, var(--p-accent-soft) 55%, transparent), transparent 34%),
+    radial-gradient(circle at 100% 100%, color-mix(in srgb, var(--p-accent-soft) 55%, transparent), transparent 34%);
+}
+
+/* RUNE: concave carved corners */
+[data-frame="rune"] [data-gs-well] {
+  border-radius: 6px !important;
+  -webkit-mask:
+    radial-gradient(circle var(--gs-corner) at 0 0, #0000 97%, #000) 0 0 / 51% 51% no-repeat,
+    radial-gradient(circle var(--gs-corner) at 100% 0, #0000 97%, #000) 100% 0 / 51% 51% no-repeat,
+    radial-gradient(circle var(--gs-corner) at 100% 100%, #0000 97%, #000) 100% 100% / 51% 51% no-repeat,
+    radial-gradient(circle var(--gs-corner) at 0 100%, #0000 97%, #000) 0 100% / 51% 51% no-repeat;
+  mask:
+    radial-gradient(circle var(--gs-corner) at 0 0, #0000 97%, #000) 0 0 / 51% 51% no-repeat,
+    radial-gradient(circle var(--gs-corner) at 100% 0, #0000 97%, #000) 100% 0 / 51% 51% no-repeat,
+    radial-gradient(circle var(--gs-corner) at 100% 100%, #0000 97%, #000) 100% 100% / 51% 51% no-repeat,
+    radial-gradient(circle var(--gs-corner) at 0 100%, #0000 97%, #000) 0 100% / 51% 51% no-repeat;
+  box-shadow:
+    inset 0 0 0 2px var(--p-accent),
+    inset 0 0 0 5px rgba(0, 0, 0, 0.4),
+    inset 0 0 0 6px var(--p-rim),
+    inset 0 0 36px rgba(0, 0, 0, 0.35) !important;
+}
+
+@media (max-width: 600px) {
+  [data-game-view] [data-gs-well] {
+    --gs-band: 6px;
+  }
+  [data-frame="ziggurat"] [data-gs-well] {
+    --gs-corner: 8px;
+  }
+}

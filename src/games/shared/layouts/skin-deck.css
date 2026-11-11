@@ -1,0 +1,504 @@
+/* Control-panel identity: typeface voice, Spin button shape and five layouts (dock, thumb, orbit, console, rail).
+   Scoped to [data-game-view]; it only re-arranges and re-shapes the existing deck, behaviour and labels are untouched. */
+
+/* ───────── voices ───────── */
+[data-voice="engraved"] .slot-deck {
+  font-family: "Cinzel", "Trajan Pro", "Palatino Linotype", "Book Antiqua", Georgia, serif;
+}
+[data-voice="impact"] .slot-deck {
+  font-family: "Impact", "Haettenschweiler", "Arial Narrow Bold", "Arial Black", sans-serif;
+  letter-spacing: 0.02em;
+}
+[data-voice="rounded"] .slot-deck {
+  font-family: ui-rounded, "Nunito", "Varela Round", "Segoe UI", system-ui, sans-serif;
+}
+[data-voice="techno"] .slot-deck {
+  font-family: "Bahnschrift", "DIN Alternate", "Segoe UI Variable Display", "Segoe UI", system-ui, sans-serif;
+  letter-spacing: 0.05em;
+}
+[data-voice="slab"] .slot-deck {
+  font-family: "Rockwell", "Roboto Slab", "Cambria", Georgia, serif;
+}
+[data-voice] .slot-deck strong,
+[data-voice] .slot-deck__spin-face {
+  font-family: inherit;
+}
+
+/* ───────── spin button shapes ───────── */
+[data-game-view] .slot-deck__spin {
+  justify-self: center;
+  align-self: center;
+}
+[data-spin="circle"] .slot-deck__spin,
+[data-spin="coin"] .slot-deck__spin,
+[data-spin="petal"] .slot-deck__spin {
+  width: var(--gs-spin, 92px);
+  height: var(--gs-spin, 92px);
+  min-height: 0;
+  padding: 0;
+  clip-path: none;
+}
+[data-spin="circle"] .slot-deck__spin,
+[data-spin="coin"] .slot-deck__spin {
+  border-radius: 50%;
+}
+[data-spin="coin"] .slot-deck__spin {
+  box-shadow:
+    inset 0 0 0 4px var(--deck-accent),
+    inset 0 0 0 6px rgba(0, 0, 0, 0.35),
+    inset 0 0 0 7px var(--deck-ink),
+    0 6px 16px rgba(0, 0, 0, 0.4);
+}
+[data-spin="petal"] .slot-deck__spin {
+  border-radius: 50% 6px 50% 6px;
+}
+[data-spin="hex"] .slot-deck__spin {
+  width: calc(var(--gs-spin, 92px) * 1.3);
+  height: var(--gs-spin, 92px);
+  min-height: 0;
+  border-radius: 0;
+  clip-path: polygon(25% 0, 75% 0, 100% 50%, 75% 100%, 25% 100%, 0 50%);
+}
+[data-spin="shield"] .slot-deck__spin {
+  width: var(--gs-spin, 92px);
+  height: calc(var(--gs-spin, 92px) * 1.1);
+  min-height: 0;
+  border-radius: 0;
+  clip-path: polygon(0 0, 100% 0, 100% 62%, 50% 100%, 0 62%);
+  padding-bottom: 12px;
+}
+[data-spin="lozenge"] .slot-deck__spin {
+  width: 150px;
+  max-width: 100%;
+  height: 64px;
+  min-height: 0;
+  border-radius: 999px;
+  clip-path: none;
+}
+[data-spin="blade"] .slot-deck__spin {
+  width: 150px;
+  max-width: 100%;
+  height: 66px;
+  min-height: 0;
+  border-radius: 0;
+  clip-path: polygon(10% 0, 100% 0, 90% 100%, 0 100%);
+}
+[data-spin] .slot-deck__spin:focus-visible {
+  outline: none;
+  filter: drop-shadow(0 0 2px #fff) drop-shadow(0 0 5px #fff);
+}
+[data-spin] .slot-deck__spin-face {
+  padding: 0;
+  justify-content: center;
+}
+
+/* ───────── layouts: desktop and tablet ───────── */
+
+/* orbit: Spin crowns the panel, meters sit beneath */
+[data-deck="orbit"] .slot-deck {
+  display: flex;
+  flex-direction: column;
+  margin-top: 18px;
+}
+[data-deck="orbit"] .slot-deck__play {
+  order: 1;
+  margin-top: -30px;
+  padding-top: 0;
+}
+[data-deck="orbit"] .slot-deck__meters {
+  order: 2;
+  border-bottom: 0;
+  border-top: 1px solid var(--deck-line);
+  margin-top: 8px;
+  padding: 8px 0 0;
+}
+[data-deck="orbit"] .slot-deck__message {
+  order: 3;
+}
+[data-deck="orbit"] .slot-deck__spin {
+  box-shadow:
+    0 0 0 5px var(--deck-surface),
+    0 0 0 6px var(--deck-line),
+    0 10px 22px rgba(0, 0, 0, 0.45),
+    inset 0 2px 0 #fff6;
+}
+
+/* thumb: big Spin at the far edge where a thumb rests, meters and bet stacked beside it */
+[data-deck="thumb"] .slot-deck {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto;
+  grid-template-areas:
+    "bal win spin"
+    "bet bet spin"
+    "tools bonus spin"
+    "msg msg msg";
+  gap: 8px 16px;
+}
+[data-deck="thumb"] .slot-deck__meters,
+[data-deck="thumb"] .slot-deck__play {
+  display: contents;
+}
+[data-deck="thumb"] .slot-deck__balance {
+  grid-area: bal;
+}
+[data-deck="thumb"] .slot-deck__win {
+  grid-area: win;
+  text-align: left;
+}
+[data-deck="thumb"] .slot-deck__bonus,
+[data-deck="thumb"] .slot-deck__round {
+  grid-area: bonus;
+  justify-self: end;
+}
+[data-deck="thumb"] .slot-deck__bet {
+  grid-area: bet;
+  width: 100%;
+  justify-content: space-between;
+}
+[data-deck="thumb"] .slot-deck__tools {
+  grid-area: tools;
+  justify-content: flex-start;
+}
+[data-deck="thumb"] .slot-deck__spin {
+  grid-area: spin;
+  margin: 0 8px;
+}
+[data-deck="thumb"] .slot-deck__message {
+  grid-area: msg;
+  margin-top: 0;
+}
+
+/* console: Spin is a wide bar under the controls */
+[data-deck="console"] .slot-deck {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto;
+  grid-template-areas:
+    "bal win bonus"
+    "bet bet tools"
+    "spin spin spin"
+    "msg msg msg";
+  gap: 8px 14px;
+}
+[data-deck="console"] .slot-deck__meters,
+[data-deck="console"] .slot-deck__play {
+  display: contents;
+}
+[data-deck="console"] .slot-deck__balance {
+  grid-area: bal;
+}
+[data-deck="console"] .slot-deck__win {
+  grid-area: win;
+}
+[data-deck="console"] .slot-deck__bonus,
+[data-deck="console"] .slot-deck__round {
+  grid-area: bonus;
+}
+[data-deck="console"] .slot-deck__bet {
+  grid-area: bet;
+  width: 100%;
+  justify-content: space-between;
+}
+[data-deck="console"] .slot-deck__tools {
+  grid-area: tools;
+}
+[data-deck="console"] .slot-deck__spin {
+  grid-area: spin;
+  width: min(100%, 420px);
+  height: 56px;
+  min-height: 0;
+  border-radius: 999px;
+  clip-path: none;
+}
+[data-deck="console"][data-spin="blade"] .slot-deck__spin {
+  border-radius: 0;
+  clip-path: polygon(3% 0, 100% 0, 97% 100%, 0 100%);
+}
+[data-deck="console"][data-spin="hex"] .slot-deck__spin,
+[data-deck="console"][data-spin="shield"] .slot-deck__spin {
+  border-radius: 0;
+  clip-path: polygon(4% 0, 96% 0, 100% 50%, 96% 100%, 4% 100%, 0 50%);
+  padding: 0;
+}
+[data-deck="console"] .slot-deck__spin-face {
+  flex-direction: row;
+  gap: 10px;
+}
+[data-deck="console"] .slot-deck__message {
+  grid-area: msg;
+  margin-top: 0;
+}
+
+/* rail: one slim row */
+[data-deck="rail"] .slot-deck {
+  display: grid;
+  grid-template-columns: auto auto minmax(0, 1fr) auto auto;
+  grid-template-areas:
+    "bal win bonus spin tools"
+    "bet bet bet bet bet"
+    "msg msg msg msg msg";
+  align-items: center;
+  gap: 8px 16px;
+  padding-top: 8px;
+}
+[data-deck="rail"] .slot-deck__meters,
+[data-deck="rail"] .slot-deck__play {
+  display: contents;
+}
+[data-deck="rail"] .slot-deck__balance {
+  grid-area: bal;
+}
+[data-deck="rail"] .slot-deck__win {
+  grid-area: win;
+  text-align: left;
+}
+[data-deck="rail"] .slot-deck__bonus,
+[data-deck="rail"] .slot-deck__round {
+  grid-area: bonus;
+  justify-self: start;
+}
+[data-deck="rail"] .slot-deck__bet {
+  grid-area: bet;
+  width: 100%;
+  justify-content: space-between;
+}
+[data-deck="rail"] .slot-deck__tools {
+  grid-area: tools;
+}
+[data-deck="rail"] .slot-deck__spin {
+  grid-area: spin;
+}
+[data-deck="rail"] .slot-deck__message {
+  grid-area: msg;
+  margin-top: 0;
+}
+@media (min-width: 901px) {
+  [data-deck="rail"] .slot-deck {
+    grid-template-columns: auto auto auto minmax(0, 1fr) auto auto;
+    grid-template-areas:
+      "bal win bonus bet spin tools"
+      "msg msg msg msg msg msg";
+  }
+  [data-deck="rail"] .slot-deck__bet {
+    width: auto;
+    justify-self: center;
+  }
+}
+
+/* ───────── layouts: phones ───────── */
+@media (max-width: 600px) {
+  /* the desktop areas are meaningless once the meter row is its own 3-column grid again */
+  [data-deck] .slot-deck__balance,
+  [data-deck] .slot-deck__win,
+  [data-deck] .slot-deck__bonus,
+  [data-deck] .slot-deck__round {
+    grid-area: auto;
+    justify-self: auto;
+    text-align: inherit;
+  }
+  [data-deck] .slot-deck__win {
+    text-align: center;
+  }
+  [data-deck] .slot-deck__meters {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    border-bottom: 1px solid var(--deck-line);
+    border-top: 0;
+    margin-top: 0;
+    padding: 0 0 7px;
+  }
+  /* every phone layout keeps the meter row on top and every control at least 44px */
+  [data-spin="circle"] .slot-deck__spin,
+  [data-spin="coin"] .slot-deck__spin,
+  [data-spin="petal"] .slot-deck__spin {
+    width: min(var(--gs-spin, 92px), 96px);
+    height: min(var(--gs-spin, 92px), 96px);
+  }
+  [data-spin="hex"] .slot-deck__spin {
+    width: 118px;
+    height: 90px;
+  }
+  [data-spin="shield"] .slot-deck__spin {
+    width: 92px;
+    height: 100px;
+  }
+  [data-spin="lozenge"] .slot-deck__spin,
+  [data-spin="blade"] .slot-deck__spin {
+    width: 100%;
+    max-width: none;
+    height: 72px;
+  }
+  [data-deck="thumb"] .slot-deck__spin {
+    height: 100%;
+    min-height: 96px;
+  }
+
+  /* thumb: Spin on the LEFT (left-handed / one-thumb reach), bet and tools to its right */
+  [data-deck="thumb"] .slot-deck {
+    display: block;
+    padding: 9px 9px 4px;
+  }
+  [data-deck="thumb"] .slot-deck__meters {
+    display: grid;
+  }
+  [data-deck="thumb"] .slot-deck__play {
+    display: grid;
+    grid-template-columns: 122px minmax(0, 1fr);
+    gap: 8px;
+    padding-top: 8px;
+  }
+  [data-deck="thumb"] .slot-deck__spin {
+    grid-area: auto;
+    grid-column: 1;
+    grid-row: 1 / span 2;
+    margin: 0;
+  }
+  [data-deck="thumb"] .slot-deck__bet {
+    grid-area: auto;
+    grid-column: 2;
+    grid-row: 1;
+  }
+  [data-deck="thumb"] .slot-deck__tools {
+    grid-area: auto;
+    grid-column: 2;
+    grid-row: 2;
+  }
+  [data-deck="thumb"] .slot-deck__message {
+    margin-top: 5px;
+  }
+
+  /* orbit: bet bar across the top, then tools | SPIN | tools */
+  [data-deck="orbit"] .slot-deck {
+    margin-top: 16px;
+  }
+  [data-deck="orbit"] .slot-deck__play {
+    display: grid;
+    grid-template-columns: 44px 44px minmax(0, 1fr) 44px 44px;
+    gap: 6px;
+    margin-top: -26px;
+    align-items: center;
+  }
+  [data-deck="orbit"] .slot-deck__bet {
+    grid-column: 1 / -1;
+    grid-row: 2;
+    width: 100%;
+  }
+  [data-deck="orbit"] .slot-deck__tools {
+    display: contents;
+  }
+  [data-deck="orbit"] .slot-deck__spin {
+    grid-column: 3;
+    grid-row: 1;
+  }
+  [data-deck="orbit"] .slot-deck__turbo {
+    grid-column: 1;
+    grid-row: 1;
+  }
+  [data-deck="orbit"] .slot-deck__auto {
+    grid-column: 2;
+    grid-row: 1;
+  }
+  [data-deck="orbit"] .slot-deck__info:first-of-type {
+    grid-column: 4;
+    grid-row: 1;
+  }
+  [data-deck="orbit"] .slot-deck__info:last-of-type:not(:first-of-type) {
+    grid-column: 5;
+    grid-row: 1;
+  }
+  [data-deck="orbit"] .slot-deck__tools button {
+    width: 44px;
+    height: 44px;
+  }
+
+  /* console: bet and tools share a row, Spin is a full-width bar */
+  [data-deck="console"] .slot-deck {
+    display: block;
+    padding: 9px 9px 4px;
+  }
+  [data-deck="console"] .slot-deck__meters {
+    display: grid;
+  }
+  [data-deck="console"] .slot-deck__play {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 7px;
+    padding-top: 8px;
+  }
+  [data-deck="console"] .slot-deck__bet {
+    grid-area: auto;
+    grid-column: 1;
+    grid-row: 1;
+  }
+  [data-deck="console"] .slot-deck__tools {
+    grid-area: auto;
+    grid-column: 2;
+    grid-row: 1;
+  }
+  [data-deck="console"] .slot-deck__tools button:not(.slot-deck__info) span {
+    display: none;
+  }
+  [data-deck="console"] .slot-deck__spin {
+    grid-area: auto;
+    grid-column: 1 / -1;
+    grid-row: 2;
+    width: 100%;
+    height: 56px;
+  }
+  [data-deck="console"] .slot-deck__spin-face {
+    flex-direction: row;
+  }
+
+  /* rail: bet and Spin on one row, tools as an equal-width strip below */
+  [data-deck="rail"] .slot-deck {
+    display: block;
+    padding: 9px 9px 4px;
+  }
+  [data-deck="rail"] .slot-deck__meters {
+    display: grid;
+  }
+  [data-deck="rail"] .slot-deck__play {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(112px, 0.62fr);
+    gap: 7px;
+    padding-top: 8px;
+  }
+  [data-deck="rail"] .slot-deck__bet {
+    grid-area: auto;
+    grid-column: 1;
+    grid-row: 1;
+  }
+  [data-deck="rail"] .slot-deck__spin {
+    grid-area: auto;
+    grid-column: 2;
+    grid-row: 1;
+    width: 100%;
+    max-width: none;
+    height: 56px;
+    border-radius: 999px;
+    clip-path: none;
+    padding: 0;
+  }
+  [data-deck="rail"] .slot-deck__tools {
+    grid-area: auto;
+    grid-column: 1 / -1;
+    grid-row: 2;
+    justify-content: stretch;
+  }
+  [data-deck="rail"] .slot-deck__tools button {
+    flex: 1;
+    flex-direction: row;
+    gap: 6px;
+    width: auto;
+  }
+}
+@media (max-height: 520px) and (min-width: 601px) {
+  [data-deck="orbit"] .slot-deck__play {
+    margin-top: -16px;
+  }
+  [data-spin="circle"] .slot-deck__spin,
+  [data-spin="coin"] .slot-deck__spin,
+  [data-spin="petal"] .slot-deck__spin {
+    width: 64px;
+    height: 64px;
+  }
+}
