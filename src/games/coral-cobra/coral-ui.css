@@ -1,0 +1,307 @@
+/* Coral Cobra presentation only. Container units follow the game modal, not the viewport. */
+[data-game-view="coral-cobra"][data-deck] {
+  container-type: size;
+  --lagoon-ink: #e5fffa;
+  --lagoon-line: #a0f5e74d;
+}
+[data-game-view="coral-cobra"][data-deck] > div > .relative.z-10 {
+  padding: max(8px, env(safe-area-inset-top)) max(8px, env(safe-area-inset-right))
+    max(8px, env(safe-area-inset-bottom)) max(8px, env(safe-area-inset-left));
+}
+[data-game-view="coral-cobra"][data-deck] [data-gs-col] {
+  max-width: 680px;
+  gap: 8px;
+  justify-content: center;
+}
+[data-game-view="coral-cobra"][data-deck] [data-gs-col] > :first-child {
+  align-items: center;
+  justify-content: center;
+  filter: none;
+  flex: 0 1 auto;
+}
+[data-game-view="coral-cobra"][data-deck] [data-gs-well] {
+  width: fit-content;
+  height: fit-content;
+  flex: none;
+  margin: 0;
+  padding: 6px;
+  border: 1px solid #a5f7e832;
+  border-radius: 20px !important;
+  clip-path: none;
+  background: linear-gradient(160deg, #053e4970, #03263250) !important;
+  box-shadow: 0 12px 30px #001e3540 !important;
+}
+[data-game-view="coral-cobra"][data-deck] [data-gs-well]::before,
+[data-game-view="coral-cobra"][data-deck] [data-gs-well]::after {
+  display: none;
+}
+[data-game-view="coral-cobra"][data-deck] [data-gs-board] {
+  width: min(calc(100cqw - 40px), calc(100cqh - 244px), 480px) !important;
+  height: auto !important;
+  aspect-ratio: 1;
+  gap: clamp(4px, 1cqw, 7px) !important;
+}
+[data-game-view="coral-cobra"][data-deck] [data-gs-board] > * {
+  clip-path: none;
+  border-radius: 20% 14% 22% 14% !important;
+  border: 1px solid #b7ffed38 !important;
+  background: linear-gradient(145deg, #d7fff51c, #08647430 45%, #022c403b) !important;
+  box-shadow: inset 0 1px 0 #e2fff52b !important;
+}
+[data-game-view="coral-cobra"][data-deck] [data-gs-board] > .scale-\[1\.03\] {
+  border-color: #c5fff1 !important;
+  box-shadow: 0 0 12px #6afceba0 !important;
+}
+[data-game-view="coral-cobra"][data-deck] [data-gs-board] img {
+  object-fit: contain;
+  padding: 9%;
+  scale: 1;
+  border-radius: 0;
+  background: none;
+  box-shadow: none;
+}
+/* The section is a transparent layout scaffold; individual controls float over the artwork. */
+[data-game-view="coral-cobra"][data-deck] .slot-deck {
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+  width: 100%;
+  max-width: 520px;
+  align-self: center;
+  align-items: stretch;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: none !important;
+  box-shadow: none !important;
+  backdrop-filter: none;
+  color: var(--lagoon-ink);
+  --deck-accent: #8cf3df;
+}
+[data-game-view="coral-cobra"][data-deck] .slot-deck::before,
+[data-game-view="coral-cobra"][data-deck] .slot-deck::after {
+  display: none;
+}
+[data-game-view="coral-cobra"][data-deck] .slot-deck__meters {
+  display: grid;
+  grid-template-columns: minmax(0, 1.25fr) minmax(0, 0.75fr) auto;
+  gap: 8px;
+  padding: 0;
+  border: 0;
+}
+[data-game-view="coral-cobra"][data-deck] .slot-deck__meters > * {
+  grid-area: auto;
+}
+[data-game-view="coral-cobra"][data-deck] :is(.slot-deck__balance, .slot-deck__win) {
+  padding: 4px 2px;
+  text-shadow: 0 2px 5px #002b39;
+}
+[data-game-view="coral-cobra"][data-deck] .slot-deck__meters strong {
+  font-size: clamp(13px, 2.4cqw, 18px);
+}
+[data-game-view="coral-cobra"][data-deck] :is(.slot-deck__meters, .slot-deck__stake) span {
+  font-size: 10px;
+  opacity: 1;
+  letter-spacing: 0.06em;
+}
+[data-game-view="coral-cobra"][data-deck] .slot-deck__bonus {
+  min-height: 44px;
+  padding: 5px 9px;
+  border: 1px solid var(--lagoon-line);
+  border-radius: 14px 8px 14px 8px;
+  background: #063e4be8;
+  gap: 5px;
+}
+[data-game-view="coral-cobra"][data-deck] .slot-deck__bonus svg {
+  width: 16px;
+}
+[data-game-view="coral-cobra"][data-deck] .slot-deck__play {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(116px, 0.85fr);
+  gap: 9px 12px;
+  padding: 0;
+  margin: 0;
+}
+[data-game-view="coral-cobra"][data-deck] .slot-deck__bet {
+  grid-area: 1 / 1;
+  width: 100%;
+  justify-content: space-between;
+  border: 1px solid var(--lagoon-line);
+  border-radius: 18px;
+  background: #043744ed !important;
+  padding: 0;
+}
+[data-game-view="coral-cobra"][data-deck] .slot-deck__bet > button:not(.slot-deck__stake) {
+  width: 44px;
+  min-width: 44px;
+  height: 48px;
+  min-height: 44px;
+}
+[data-game-view="coral-cobra"][data-deck] .slot-deck__stake {
+  min-width: 0;
+  min-height: 48px;
+  flex: 1;
+}
+[data-game-view="coral-cobra"][data-deck] .slot-deck__stake strong {
+  font-size: 14px;
+}
+[data-game-view="coral-cobra"][data-deck] .slot-deck__spin {
+  grid-area: 1 / 2;
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  width: 100%;
+  height: 58px;
+  min-height: 58px;
+  max-width: none;
+  border-radius: 23px 15px 25px 13px !important;
+  clip-path: none;
+  border: 1px solid #c6fff0 !important;
+  background: linear-gradient(
+    160deg,
+    #edfff8 0%,
+    #9beedc 24%,
+    #39bcb7 60%,
+    #167f95 100%
+  ) !important;
+  color: #033a48 !important;
+  box-shadow:
+    inset 0 2px 0 #ffffffb0,
+    inset 0 -4px 8px #02536a55,
+    0 5px 18px #001b3455 !important;
+  animation: none;
+  transition:
+    filter 0.18s,
+    transform 0.18s;
+}
+[data-game-view="coral-cobra"][data-deck] .slot-deck__spin::before {
+  content: "";
+  position: absolute;
+  inset: -80% -40%;
+  background: linear-gradient(110deg, transparent 40%, #ffffff65 50%, transparent 60%);
+  animation: coral-shimmer 6s ease-in-out infinite;
+  pointer-events: none;
+  z-index: -1;
+}
+[data-game-view="coral-cobra"][data-deck] .slot-deck__spin-face {
+  flex-direction: row;
+  gap: 6px;
+  padding: 4px;
+  font-size: 16px;
+  text-shadow: 0 1px 0 #ffffff70;
+}
+[data-game-view="coral-cobra"][data-deck] .slot-deck__spin-face svg {
+  width: 20px;
+  height: 20px;
+}
+[data-game-view="coral-cobra"][data-deck] .slot-deck__spin:hover:not(:disabled) {
+  filter: brightness(1.12);
+}
+[data-game-view="coral-cobra"][data-deck] .slot-deck__spin:active:not(:disabled) {
+  transform: translateY(2px);
+  background: radial-gradient(ellipse, #ecfff9, #52cec3 65%, #187f96) !important;
+}
+[data-game-view="coral-cobra"][data-deck] .slot-deck__spin[data-active="true"]:not(:disabled) {
+  animation: coral-energy 1.4s ease-in-out infinite;
+}
+[data-game-view="coral-cobra"][data-deck]
+  .slot-deck:has(.slot-deck__win[data-winning="true"])
+  .slot-deck__spin:not([data-active="true"]) {
+  animation: coral-energy 0.65s ease-out 2;
+}
+[data-game-view="coral-cobra"][data-deck] .slot-deck__spin:disabled {
+  opacity: 0.45;
+  filter: grayscale(0.8);
+}
+[data-game-view="coral-cobra"][data-deck] .slot-deck__tools {
+  grid-area: 2 / 1 / 3 / -1;
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  margin: 0;
+}
+[data-game-view="coral-cobra"][data-deck] .slot-deck__tools button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  flex-direction: row;
+  width: auto;
+  min-width: 44px;
+  min-height: 44px;
+  padding: 0 12px;
+  border: 1px solid var(--lagoon-line);
+  border-radius: 999px;
+  background: #053945e8 !important;
+  color: var(--lagoon-ink);
+}
+[data-game-view="coral-cobra"][data-deck] .slot-deck__tools button[aria-pressed="true"] {
+  background: #126c71 !important;
+  color: #fff;
+}
+[data-game-view="coral-cobra"][data-deck] .slot-deck__tools button[data-stopping="true"] {
+  background: #743a46 !important;
+  border-color: #ffb3aa;
+}
+[data-game-view="coral-cobra"][data-deck] .slot-deck__tools button span {
+  display: inline;
+  font-size: 11px;
+}
+[data-game-view="coral-cobra"][data-deck] .slot-deck__info::after {
+  content: "Info";
+  font-size: 11px;
+}
+[data-game-view="coral-cobra"][data-deck] .slot-deck button:focus-visible {
+  outline: 2px solid #f0fff9;
+  outline-offset: 3px;
+}
+[data-game-view="coral-cobra"][data-deck] .slot-deck__message {
+  display: block;
+  height: 14px;
+  padding: 0;
+  margin: 0;
+  font-size: 10px;
+  color: #d0f8ef;
+  text-align: center;
+  text-shadow: 0 1px 4px #001e30;
+}
+@keyframes coral-shimmer {
+  0%,
+  65% {
+    transform: translateX(-60%);
+  }
+  100% {
+    transform: translateX(60%);
+  }
+}
+@keyframes coral-energy {
+  50% {
+    filter: brightness(1.2);
+    box-shadow:
+      inset 0 0 12px #effff8,
+      0 0 20px #75f7df99;
+  }
+}
+/* Short landscape uses a side dock, leaving all five rows visible. */
+@container (min-width: 520px) and (max-height: 500px) {
+  [data-game-view="coral-cobra"][data-deck] [data-gs-col] {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(270px, 0.9fr);
+    align-items: center;
+    max-width: 900px;
+    gap: 14px;
+  }
+  [data-game-view="coral-cobra"][data-deck] [data-gs-board] {
+    width: min(calc(52cqw - 42px), calc(100cqh - 50px), 390px) !important;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  [data-game-view="coral-cobra"][data-deck] .slot-deck__spin,
+  [data-game-view="coral-cobra"][data-deck] .slot-deck__spin::before,
+  [data-game-view="coral-cobra"][data-deck] .slot-deck__spinning {
+    animation: none !important;
+    transition: none !important;
+  }
+}
