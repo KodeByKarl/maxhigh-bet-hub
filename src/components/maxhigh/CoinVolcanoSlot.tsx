@@ -1,4 +1,4 @@
-import { SlotControlDeck } from "./SlotControlDeck";
+import { CoinVolcanoView, type VolcanoUi } from "./coin-volcano/CoinVolcanoView";
 /**
  * Coin Volcano slot UI — owns its own spin state machine.
  * No shared async playback from other games (CNY / Mahjong / Frontier).
@@ -7,7 +7,6 @@ import { SlotControlDeck } from "./SlotControlDeck";
  * A single runId cancels stale timers. Highlights clear on every step change + on done.
  */
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Volume2, VolumeX } from "lucide-react";
 import { toast } from "sonner";
 import { coinVolcanoSpinFn, getCoinVolcanoEngineConfigFn } from "@/functions/api";
 import { useAuth } from "@/lib/auth";
@@ -16,14 +15,11 @@ import {
   type CoinVolcanoConfig,
   type McSymKind,
 } from "@/lib/coin-volcano-config";
-import { cn } from "@/lib/utils";
 import { BET_STEPS, ANIM } from "./coin-volcano/animationConfig";
-import { MoneyBorder } from "./coin-volcano/MoneyBorder";
-import { ReelCell, type ReelPhase } from "./coin-volcano/ReelCell";
 import { getCoinVolcanoConfig, setCoinVolcanoConfig } from "./coin-volcano/runtimeConfig";
 import { planCoinVolcanoPlayback, type McPlaybackStep } from "./coin-volcano/spinPlayback";
 import { coinVolcanoAudio } from "./coin-volcano/audio";
-import { cellKey, type McGrid } from "./coin-volcano/types";
+import { type McGrid } from "./coin-volcano/types";
 
 function idleGrid(): McGrid {
   const cfg = getCoinVolcanoConfig();
@@ -33,26 +29,7 @@ function idleGrid(): McGrid {
   );
 }
 
-function formatMoney(n: number) {
-  return `₱${n.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-}
-
-type UiSnap = {
-  phase: ReelPhase;
-  grid: McGrid;
-  winKeys: string[];
-  mixKeys: string[];
-  banner: string | null;
-  popup: number | null;
-  jackpot: boolean;
-  /** Soft fade-out of win ring / banner (not a hard cut). */
-  fading: boolean;
-  lastWin: number;
-  spinId: number;
-  locked: boolean;
-};
-
-const INITIAL_UI = (): UiSnap => ({
+const INITIAL_UI = (): VolcanoUi => ({
   phase: "idle",
   grid: idleGrid(),
   winKeys: [],
@@ -82,7 +59,7 @@ export function CoinVolcanoSlot({
   const [turbo, setTurbo] = useState(false);
   const [muted, setMuted] = useState(() => coinVolcanoAudio.isMuted);
   const [cfgSnap, setCfgSnap] = useState<CoinVolcanoConfig>(() => getCoinVolcanoConfig());
-  const [ui, setUi] = useState<UiSnap>(INITIAL_UI);
+  const [ui, setUi] = useState<VolcanoUi>(INITIAL_UI);
 
   const runIdRef = useRef(0);
   const lockedRef = useRef(false);
@@ -394,9 +371,6 @@ export function CoinVolcanoSlot({
   const cfg = cfgSnap;
   const stepIdx = BET_STEPS.findIndex((s) => s >= bet);
   const busy = ui.locked;
-  const winKeySet = new Set(ui.winKeys);
-  const mixKeySet = new Set(ui.mixKeys);
-
   function nudgeBet(dir: -1 | 1) {
     if (dir < 0) {
       const idx = Math.max(0, (stepIdx <= 0 ? 0 : stepIdx) - 1);
@@ -410,180 +384,30 @@ export function CoinVolcanoSlot({
   }
 
   return (
-    <div className="relative flex h-full w-full flex-col overflow-hidden bg-[#120806] text-white">
-      <style>{`
-        @keyframes fs-reel-scroll-kf {
-          from { transform: translateY(0); }
-          to { transform: translateY(-50%); }
-        }
-        @keyframes fs-reel-land-kf {
-          from { transform: translateY(-120%); opacity: 0.35; }
-          to { transform: translateY(0); opacity: 1; }
-        }
-        @keyframes fs-win-pulse-kf {
-          0%, 100% { transform: scale(1); filter: brightness(1); }
-          50% { transform: scale(1.06); filter: brightness(1.2); }
-        }
-        .fs-reel-scroll { animation: fs-reel-scroll-kf 0.22s linear infinite; }
-        .fs-reel-land { animation: fs-reel-land-kf 0.35s ease-out both; }
-        .fs-win-pulse { animation: fs-win-pulse-kf 0.5s ease-in-out 2; }
-      `}</style>
-      <div
-        className="pointer-events-none absolute inset-0 bg-cover bg-center bg-no-repeat"
-        style={{
-          backgroundImage: "url(/images/symbols/coin-volcano/backdrop-v20261012-unique.webp)",
-        }}
-      />
-      <div
-        className="pointer-events-none absolute inset-0"
-        style={{
-          background:
-            "radial-gradient(ellipse at 50% 42%, rgba(12,4,2,0.22) 0%, rgba(8,2,1,0.58) 58%, rgba(0,0,0,0.78) 100%)",
-        }}
-      />
-
-      <header className="relative z-10 flex shrink-0 flex-col items-center gap-2.5 px-3 pt-3 sm:pt-4">
-        <MoneyBorder rounded="trap" thickness={3} className="w-full max-w-md">
-          <div className="px-5 py-2 text-center">
-            <p className="text-[9px] font-bold uppercase tracking-[0.28em] text-orange-400/90">
-              MaxHigh · Coin Volcano
-            </p>
-            <h1 className="bg-gradient-to-r from-amber-200 via-orange-300 to-red-400 bg-clip-text text-xl font-black uppercase tracking-wide text-transparent sm:text-2xl">
-              Coin Volcano
-            </h1>
-          </div>
-        </MoneyBorder>
-      </header>
-
-      <div className="relative z-10 mx-auto flex min-h-0 w-full max-w-[1100px] flex-1 flex-col items-center justify-center px-2 py-2 sm:px-4">
-        <div
-          className="flex h-full min-h-0 max-h-full w-full flex-col items-stretch"
-          style={{
-            width: `min(100%, calc((100dvh - 11rem) * ${cfg.reelsCount} / ${cfg.rowsCount}))`,
-          }}
-        >
-          <div className="relative min-h-0 w-full flex-1 overflow-hidden">
-            <div
-              className="relative mx-auto size-full max-h-full"
-              style={{
-                aspectRatio: `${cfg.reelsCount} / ${cfg.rowsCount}`,
-                width: "100%",
-                height: "auto",
-                maxHeight: "100%",
-              }}
-            >
-              <div
-                className="relative size-full rounded-[0.85rem] p-[5px] shadow-[0_18px_50px_rgba(234,88,12,0.55)] sm:rounded-[1.15rem] sm:p-[8px]"
-                style={{
-                  background:
-                    "linear-gradient(145deg,#fdba74 0%,#f97316 28%,#c2410c 62%,#7c2d12 100%)",
-                }}
-              >
-                <div
-                  className="relative grid size-full gap-[2px] overflow-hidden rounded-[0.55rem] p-[2px] sm:gap-1 sm:rounded-[0.8rem] sm:p-1"
-                  style={{
-                    background: "linear-gradient(180deg,#2a1008 0%,#120806 100%)",
-                    gridTemplateColumns: `repeat(${cfg.reelsCount}, minmax(0, 1fr))`,
-                    gridTemplateRows: `repeat(${cfg.rowsCount}, minmax(0, 1fr))`,
-                    boxShadow: "inset 0 0 28px rgba(0,0,0,0.45)",
-                  }}
-                >
-                  {Array.from({ length: cfg.rowsCount }, (_, row) =>
-                    Array.from({ length: cfg.reelsCount }, (_, reel) => {
-                      const kind = ui.grid[reel]?.[row] ?? "bar";
-                      const key = cellKey(reel, row);
-                      return (
-                        <div
-                          key={`${reel}-${row}`}
-                          className="relative min-h-0 min-w-0 overflow-hidden"
-                          style={{ gridColumn: reel + 1, gridRow: row + 1 }}
-                        >
-                          <ReelCell
-                            kind={kind}
-                            phase={ui.phase}
-                            reel={reel}
-                            row={row}
-                            spinId={ui.spinId}
-                            winning={winKeySet.has(key)}
-                            mixHighlight={mixKeySet.has(key)}
-                            fading={ui.fading && (winKeySet.has(key) || mixKeySet.has(key))}
-                            dimmed={
-                              (winKeySet.size > 0 || mixKeySet.size > 0) &&
-                              !winKeySet.has(key) &&
-                              !mixKeySet.has(key) &&
-                              !ui.fading
-                            }
-                            className="!aspect-auto h-full w-full"
-                          />
-                        </div>
-                      );
-                    }),
-                  ).flat()}
-                </div>
-              </div>
-
-              {(ui.banner || ui.popup != null) && (
-                <div className="pointer-events-none absolute inset-x-0 top-2 z-30 flex justify-center sm:top-3">
-                  <div
-                    className={cn(
-                      "rounded-full border px-4 py-1.5 text-center text-sm font-black uppercase shadow-lg transition-opacity duration-350 ease-out",
-                      ui.fading ? "opacity-0" : "opacity-100",
-                      ui.jackpot
-                        ? "animate-pulse border-yellow-200 bg-gradient-to-r from-yellow-400 via-orange-500 to-red-600 text-black"
-                        : "border-orange-400/70 bg-gradient-to-b from-red-800 to-[#1a0804] text-amber-100",
-                    )}
-                  >
-                    {ui.banner}
-                    {ui.popup != null && (
-                      <span className="ml-2 tabular-nums text-white">{formatMoney(ui.popup)}</span>
-                    )}
-                  </div>
-                </div>
-              )}
-
-              {ui.jackpot && (
-                <div className="pointer-events-none absolute inset-0 z-20 animate-pulse rounded-[0.85rem] bg-gradient-to-b from-yellow-400/30 via-orange-500/20 to-transparent sm:rounded-[1.15rem]" />
-              )}
-            </div>
-          </div>
-
-          <p className="mt-1.5 shrink-0 text-center text-[10px] font-semibold uppercase tracking-wider text-orange-200/55 sm:text-[11px]">
-            10 lines · mix ≥6 · grand 25,000×
-            {busy ? " · spinning…" : ""}
-          </p>
-        </div>
-      </div>
-
-      <footer className="relative z-10 mx-auto w-full max-w-3xl shrink-0 px-2 pb-3">
-        <SlotControlDeck
-          gameId="coin-volcano"
-          bet={bet}
-          win={ui.lastWin}
-          balance={balance}
-          busy={busy}
-          turbo={turbo}
-          autoSpin={autoSpin}
-          supportsSkip={false}
-          spinDisabled={busy || balance < bet}
-          muted={muted}
-          onSpin={() => startSpin()}
-          onDecreaseBet={() => nudgeBet(-1)}
-          onIncreaseBet={() => nudgeBet(1)}
-          onTurbo={() => setTurbo((t) => !t)}
-          onAuto={() => {
-            setAutoSpin((on) => {
-              const next = !on;
-              if (next) {
-                setTimeout(() => startSpinRef.current(), 40);
-              } else {
-                clearAutoTimer();
-              }
-              return next;
-            });
-          }}
-          onMute={() => setMuted(coinVolcanoAudio.toggleMute())}
-        />
-      </footer>
-    </div>
+    <CoinVolcanoView
+      cfg={cfg}
+      ui={ui}
+      bet={bet}
+      balance={balance}
+      turbo={turbo}
+      autoSpin={autoSpin}
+      muted={muted}
+      onSpin={() => startSpin()}
+      onDecreaseBet={() => nudgeBet(-1)}
+      onIncreaseBet={() => nudgeBet(1)}
+      onTurbo={() => setTurbo((t) => !t)}
+      onAuto={() => {
+        setAutoSpin((on) => {
+          const next = !on;
+          if (next) {
+            setTimeout(() => startSpinRef.current(), 40);
+          } else {
+            clearAutoTimer();
+          }
+          return next;
+        });
+      }}
+      onMute={() => setMuted(coinVolcanoAudio.toggleMute())}
+    />
   );
 }

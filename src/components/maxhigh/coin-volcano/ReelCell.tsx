@@ -12,6 +12,7 @@ type ReelCellProps = {
   reel: number;
   row: number;
   spinId: number;
+  turbo?: boolean;
   winning?: boolean;
   mixHighlight?: boolean;
   /** Win/mix ring is fading out (keep painted, opacity → 0). */
@@ -29,6 +30,7 @@ export function ReelCell({
   reel,
   row,
   spinId,
+  turbo = false,
   winning,
   mixHighlight,
   fading,
@@ -38,44 +40,29 @@ export function ReelCell({
   const spinning = phase === "spinning";
   const activeGlow = (!!winning || !!mixHighlight) && !fading;
   const showRing = !!winning || !!mixHighlight || !!fading;
-  const strip = [...SPIN_STRIP, ...SPIN_STRIP];
+  const sequence = SPIN_STRIP.map((_, i) => SPIN_STRIP[(i + reel + row) % SPIN_STRIP.length]);
+  const strip = [...sequence, ...sequence];
   const framePct = 100 / strip.length;
-  const stopDelayMs = reel * 110 + row * 35;
+  // Every landing must finish inside the existing playback window (60ms in Turbo).
+  const stopDelayMs = turbo ? reel * 3 + row : reel * 90 + row * 20;
 
   return (
     <div
-      className={cn(
-        "relative h-full min-h-0 w-full overflow-hidden rounded-[6px]",
-        "border border-orange-600/50 bg-gradient-to-b from-[#6b2a12] to-[#140806]",
-        "shadow-[inset_0_1px_0_rgba(255,210,140,0.2),inset_0_-2px_8px_rgba(0,0,0,0.35)]",
-        "transition-[opacity,border-color,box-shadow] duration-350 ease-out",
-        dimmed && !activeGlow && !fading && "opacity-35",
-        fading && "opacity-100",
-        activeGlow && "z-10 border-yellow-300 shadow-[0_0_18px_rgba(250,204,21,0.85)]",
-        fading && "z-10 border-orange-600/50 shadow-none",
-        className,
-      )}
+      className={cn("cv-cell", className)}
+      data-winning={activeGlow}
+      data-dimmed={dimmed && !activeGlow && !fading}
+      data-fading={fading}
+      aria-label={`Reel ${reel + 1}, row ${row + 1}: ${kind}`}
     >
-      <div className="pointer-events-none absolute inset-[1px] z-[2] rounded-[5px] border border-amber-200/20" />
-      <div className="pointer-events-none absolute inset-[3px] z-[2] rounded-[4px] border border-orange-900/40" />
-
-      {showRing ? (
-        <div
-          className={cn(
-            "pointer-events-none absolute inset-0 z-[5] rounded-[6px] ring-[3px] ring-yellow-300",
-            "transition-opacity duration-350 ease-out",
-            fading ? "opacity-0" : "opacity-100",
-          )}
-        />
-      ) : null}
+      {showRing && <div className="cv-cell__win-edge" data-fading={fading} aria-hidden />}
 
       {spinning ? (
         <div
-          className="fs-reel-scroll absolute left-0 top-0 z-[1] w-full"
+          className="cv-reel-scroll absolute left-0 top-0 z-[1] w-full"
           style={{
             height: `${strip.length * 100}%`,
-            filter: "blur(2px) saturate(1.08) brightness(1.06)",
-            animationDuration: `${0.18 + (reel % 3) * 0.03}s`,
+            filter: "blur(0.6px) saturate(1.08) brightness(1.06)",
+            animationDuration: `${turbo ? 0.25 : 0.6 + (reel % 3) * 0.06}s`,
           }}
         >
           {strip.map((sym, i) => (
@@ -84,7 +71,7 @@ export function ReelCell({
               className="relative w-full"
               style={{ height: `${framePct}%` }}
             >
-              <CoinVolcanoIcon kind={sym} framed />
+              <CoinVolcanoIcon kind={sym} framed={false} />
             </div>
           ))}
         </div>
@@ -93,13 +80,17 @@ export function ReelCell({
           key={`land-${spinId}-${reel}-${row}`}
           className={cn(
             "absolute inset-0 z-[1] transition-[transform,filter] duration-350 ease-out",
-            phase === "stopping" && "fs-reel-land",
-            activeGlow && "fs-win-pulse",
+            phase === "stopping" && "cv-reel-land",
+            activeGlow && "cv-symbol-pulse",
             fading && "scale-100 brightness-100",
           )}
-          style={phase === "stopping" ? { animationDelay: `${stopDelayMs}ms` } : undefined}
+          style={
+            phase === "stopping"
+              ? { animationDelay: `${stopDelayMs}ms`, animationDuration: turbo ? "28ms" : "300ms" }
+              : undefined
+          }
         >
-          <CoinVolcanoIcon kind={kind} />
+          <CoinVolcanoIcon kind={kind} framed={false} />
         </div>
       )}
 
