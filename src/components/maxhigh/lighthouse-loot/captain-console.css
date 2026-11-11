@@ -1,0 +1,485 @@
+/* Lighthouse Loot: the Captain's Treasure Deck. Brass, polished timber, deep navy. Scoped to .cx-* and [data-realms-game="lighthouse-loot"]. */
+:root {
+  --cx-brass: #c9a24f;
+  --cx-brass-l: #f0d58a;
+  --cx-brass-d: #6f5420;
+  --cx-navy: #07182b;
+  --cx-navy-2: #0d2a47;
+  --cx-wood: #1c120a;
+  --cx-ink: #f4e6c4;
+}
+
+/* ───────── composition: board and console form one cluster in the free space ───────── */
+[data-realms-game="lighthouse-loot"] .realms-playfield {
+  padding-bottom: max(0.25rem, env(safe-area-inset-bottom)) !important;
+}
+[data-realms-game="lighthouse-loot"] .realms-playfield > div {
+  justify-content: center;
+}
+[data-realms-game="lighthouse-loot"] .realms-stage {
+  flex: 0 1 auto !important;
+  padding-block: clamp(8px, 3dvh, 30px);
+}
+
+/* captain's navigation board: polished timber backing, brass rim, corner studs */
+[data-realms-game="lighthouse-loot"] .realms-stage > .realms-well {
+  padding: 8px !important;
+  border-radius: 14px !important;
+  background:
+    repeating-linear-gradient(92deg, rgb(255 255 255 / 0.035) 0 2px, transparent 2px 9px),
+    linear-gradient(180deg, #2a1a0e, var(--cx-wood)) !important;
+  box-shadow:
+    inset 0 0 0 2px var(--cx-brass),
+    inset 0 0 0 4px #2b1d0c,
+    inset 0 0 0 5px rgb(240 213 138 / 0.5),
+    inset 0 0 24px rgb(0 0 0 / 0.6),
+    0 14px 36px rgb(0 0 0 / 0.6) !important;
+}
+[data-realms-game="lighthouse-loot"] .realms-stage > .realms-well::before,
+[data-realms-game="lighthouse-loot"] .realms-stage > .realms-well::after {
+  content: "";
+  position: absolute;
+  z-index: 4;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, var(--cx-brass-l), var(--cx-brass-d));
+  box-shadow: 0 1px 2px rgb(0 0 0 / 0.7);
+  top: 6px;
+  left: 6px;
+  pointer-events: none;
+}
+[data-realms-game="lighthouse-loot"] .realms-stage > .realms-well::after {
+  top: auto;
+  left: auto;
+  right: 6px;
+  bottom: 6px;
+}
+[data-realms-game="lighthouse-loot"] .realms-reel-grid {
+  border: 0;
+  padding: 0;
+  background: transparent;
+  box-shadow: none;
+  backdrop-filter: none;
+  gap: 3px !important;
+  width: min(calc(100vw - 38px), calc(58dvh * var(--board-ar)), 44rem) !important;
+  max-height: none !important;
+  border-radius: 8px;
+}
+
+/* medallion cells: brass ring, ocean-glass interior, faint compass engraving; the art may breathe past the ring */
+[data-realms-game="lighthouse-loot"] .realms-reel-grid > .realms-reel-cell {
+  overflow: visible !important;
+  border: 0 !important;
+  border-radius: 50% !important;
+  background:
+    repeating-conic-gradient(
+      from 0deg,
+      rgb(240 213 138 / 0.09) 0 1.5deg,
+      transparent 1.5deg 22.5deg
+    ),
+    radial-gradient(circle at 50% 38%, #174567, var(--cx-navy) 78%) !important;
+  box-shadow:
+    inset 0 0 0 2px var(--cx-brass),
+    inset 0 0 0 3px rgb(0 0 0 / 0.55),
+    inset 0 -6px 12px rgb(0 0 0 / 0.5),
+    0 2px 4px rgb(0 0 0 / 0.55) !important;
+}
+[data-realms-game="lighthouse-loot"] .realms-reel-grid > .realms-reel-cell[data-winning="true"] {
+  background:
+    radial-gradient(circle at 50% 50%, rgb(255 214 120 / 0.55), rgb(180 83 9 / 0.2) 70%),
+    var(--cx-navy) !important;
+  box-shadow:
+    inset 0 0 0 2px var(--cx-brass-l),
+    0 0 14px rgb(251 191 36 / 0.65) !important;
+}
+/* symbol artwork: ~92% of the cell (was ~77%), still centred and aspect-preserving */
+[data-realms-game="lighthouse-loot"] .realms-reel-art {
+  inset: 0 !important;
+  border-radius: 0 !important;
+  overflow: visible !important;
+}
+[data-realms-game="lighthouse-loot"] .realms-reel-art img {
+  padding: 4% !important;
+}
+
+/* ───────── console ───────── */
+.cx-deck {
+  --cx-core: clamp(98px, 29vw, 116px);
+  display: grid;
+  gap: 8px;
+  margin-top: 6px;
+  padding: 8px max(10px, env(safe-area-inset-right)) 6px max(10px, env(safe-area-inset-left));
+  color: var(--cx-ink);
+  font-family: "Inter", ui-sans-serif, system-ui, sans-serif;
+  touch-action: manipulation;
+}
+.cx-deck button {
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+.cx-deck button:focus-visible {
+  outline: 3px solid #fff;
+  outline-offset: 2px;
+}
+.cx-deck button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+.cx-deck span,
+.cx-deck small {
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: rgb(240 213 138 / 0.78);
+}
+.cx-deck strong {
+  font-variant-numeric: tabular-nums;
+  font-weight: 800;
+}
+
+/* instrument strip */
+.cx-strip {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: 10px;
+  padding: 7px 16px;
+  border-radius: 12px;
+  background: linear-gradient(180deg, var(--cx-navy-2), var(--cx-navy));
+  box-shadow:
+    inset 0 0 0 1.5px var(--cx-brass),
+    inset 0 0 0 3px rgb(0 0 0 / 0.5),
+    0 6px 14px rgb(0 0 0 / 0.45);
+}
+.cx-strip > div {
+  display: grid;
+  gap: 1px;
+  min-width: 0;
+}
+.cx-strip > div:last-child {
+  text-align: right;
+}
+.cx-strip strong {
+  font-size: 16px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.cx-strip [data-winning="true"] strong {
+  color: var(--cx-brass-l);
+  text-shadow: 0 0 12px rgb(251 191 36 / 0.7);
+}
+.cx-strip__rose {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: conic-gradient(
+    from 45deg,
+    var(--cx-brass) 0 12%,
+    transparent 12% 25%,
+    var(--cx-brass) 25% 37%,
+    transparent 37% 50%,
+    var(--cx-brass) 50% 62%,
+    transparent 62% 75%,
+    var(--cx-brass) 75% 87%,
+    transparent 87%
+  );
+  -webkit-mask: radial-gradient(circle, transparent 3px, #000 4px, #000 10px, transparent 11px);
+  mask: radial-gradient(circle, transparent 3px, #000 4px, #000 10px, transparent 11px);
+  opacity: 0.85;
+}
+
+/* helm row */
+.cx-helm {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) var(--cx-core) minmax(0, 1fr);
+  align-items: center;
+  gap: 10px;
+}
+
+/* bet throttle: vertical brass rail */
+.cx-throttle {
+  justify-self: start;
+  width: min(100%, 88px);
+  display: grid;
+  grid-template-rows: 44px auto 44px;
+  border-radius: 16px;
+  background: linear-gradient(90deg, #1d130a, #2c1c0f 50%, #1d130a);
+  box-shadow:
+    inset 0 0 0 1.5px var(--cx-brass),
+    0 4px 10px rgb(0 0 0 / 0.5);
+  overflow: hidden;
+}
+.cx-throttle > button,
+.cx-throttle__value {
+  display: grid;
+  place-items: center;
+  min-width: 44px;
+  min-height: 44px;
+  border: 0;
+  background: transparent;
+}
+.cx-throttle > button:active:not(:disabled) {
+  background: rgb(240 213 138 / 0.18);
+}
+.cx-throttle__value {
+  align-content: center;
+  gap: 0;
+  min-height: 40px;
+  padding: 3px 4px;
+  background: var(--cx-navy);
+  box-shadow:
+    inset 0 1px 0 rgb(240 213 138 / 0.4),
+    inset 0 -1px 0 rgb(240 213 138 / 0.4);
+}
+.cx-throttle__value strong {
+  font-size: 14px;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* compass spin */
+.cx-compass {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: var(--cx-core);
+  height: var(--cx-core);
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  isolation: isolate;
+  transition: transform 0.14s;
+}
+.cx-compass__ring {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  border-radius: 50%;
+  background:
+    repeating-conic-gradient(from 0deg, rgb(0 0 0 / 0.55) 0 1deg, transparent 1deg 10deg),
+    conic-gradient(
+      from 20deg,
+      var(--cx-brass-l),
+      var(--cx-brass-d),
+      var(--cx-brass),
+      #fff2c4,
+      var(--cx-brass-d),
+      var(--cx-brass-l)
+    );
+  box-shadow:
+    0 0 0 2px rgb(0 0 0 / 0.5),
+    0 8px 18px rgb(0 0 0 / 0.6);
+}
+.cx-compass__face {
+  position: relative;
+  display: grid;
+  place-items: center;
+  align-content: center;
+  gap: 1px;
+  width: calc(100% - 16px);
+  height: calc(100% - 16px);
+  border-radius: 50%;
+  overflow: hidden;
+  background: radial-gradient(circle at 50% 35%, #174567, var(--cx-navy) 80%);
+  box-shadow:
+    inset 0 0 0 1.5px rgb(0 0 0 / 0.6),
+    inset 0 0 16px rgb(0 0 0 / 0.6);
+}
+/* lighthouse beam sweeping the face */
+.cx-compass__beam {
+  position: absolute;
+  inset: -50%;
+  background: conic-gradient(from 0deg, rgb(255 224 140 / 0.38), transparent 40deg, transparent);
+  animation: cx-sweep 7s linear infinite;
+  pointer-events: none;
+}
+.cx-compass__icon {
+  position: relative;
+  color: var(--cx-brass-l);
+}
+.cx-compass .cx-compass__label {
+  position: relative;
+  font-size: 17px;
+  font-weight: 900;
+  letter-spacing: 0.14em;
+  padding-left: 0.14em;
+  color: #fff2c4;
+  text-shadow: 0 1px 3px rgb(0 0 0 / 0.8);
+}
+.cx-compass small {
+  position: relative;
+  color: var(--cx-brass-l);
+  font-variant-numeric: tabular-nums;
+}
+.cx-compass:active:not(:disabled) {
+  transform: scale(0.94);
+}
+.cx-compass:active:not(:disabled) .cx-compass__face {
+  box-shadow:
+    inset 0 0 0 1.5px var(--cx-brass-l),
+    inset 0 0 20px rgb(251 191 36 / 0.5);
+}
+.cx-compass[data-active="true"]:not(:disabled) .cx-compass__beam {
+  animation-duration: 1s;
+}
+.cx-compass[data-active="true"]:not(:disabled) .cx-compass__ring {
+  animation: cx-sweep 4s linear infinite;
+}
+.cx-compass:disabled {
+  filter: grayscale(0.8) brightness(0.6);
+}
+.cx-compass:disabled .cx-compass__beam {
+  animation: none;
+  opacity: 0;
+}
+.cx-deck .cx-compass:focus-visible {
+  outline-offset: 6px;
+}
+@keyframes cx-sweep {
+  to {
+    rotate: 360deg;
+  }
+}
+
+/* right: buy bonus + helm menu */
+.cx-side {
+  justify-self: end;
+  width: min(100%, 104px);
+  display: grid;
+  gap: 6px;
+}
+.cx-buy,
+.cx-util__toggle {
+  display: grid;
+  justify-items: center;
+  align-content: center;
+  gap: 0;
+  min-height: 44px;
+  width: 100%;
+  padding: 3px 6px;
+  border: 0;
+  border-radius: 14px;
+  box-shadow:
+    inset 0 0 0 1.5px var(--cx-brass),
+    0 3px 8px rgb(0 0 0 / 0.45);
+}
+.cx-buy {
+  background: linear-gradient(180deg, #8a5a14, #4d300a);
+  color: #fff2c4;
+}
+.cx-buy svg {
+  color: var(--cx-brass-l);
+}
+.cx-buy strong {
+  font-size: 14px;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.cx-buy--static {
+  background: var(--cx-navy);
+  cursor: default;
+}
+.cx-util {
+  position: relative;
+}
+.cx-util__toggle {
+  grid-auto-flow: column;
+  gap: 6px;
+  justify-content: center;
+  background: var(--cx-navy);
+}
+.cx-util__toggle[data-on="true"] {
+  box-shadow:
+    inset 0 0 0 1.5px var(--cx-brass-l),
+    0 0 12px rgb(251 191 36 / 0.5);
+}
+.cx-util__menu {
+  position: absolute;
+  right: 0;
+  bottom: 52px;
+  z-index: 8;
+  display: grid;
+  gap: 6px;
+  padding: 8px;
+  border-radius: 16px;
+  background: linear-gradient(180deg, #2a1a0e, var(--cx-wood));
+  box-shadow:
+    inset 0 0 0 1.5px var(--cx-brass),
+    0 12px 28px rgb(0 0 0 / 0.65);
+}
+.cx-util__menu button {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  min-width: 120px;
+  padding: 0 14px;
+  border: 0;
+  border-radius: 12px;
+  background: var(--cx-navy);
+  box-shadow: inset 0 0 0 1px rgb(240 213 138 / 0.35);
+  font-size: 13px;
+  font-weight: 700;
+}
+.cx-util__menu button[aria-pressed="true"] {
+  box-shadow:
+    inset 0 0 0 1.5px var(--cx-brass-l),
+    0 0 10px rgb(251 191 36 / 0.5);
+}
+
+@media (max-width: 360px) {
+  .cx-deck {
+    --cx-core: 92px;
+  }
+  .cx-helm {
+    gap: 6px;
+  }
+  .cx-throttle {
+    width: 78px;
+  }
+  .cx-side {
+    width: 92px;
+  }
+  .cx-compass .cx-compass__label {
+    font-size: 15px;
+  }
+}
+@media (min-width: 700px) and (min-height: 501px) {
+  .cx-deck {
+    --cx-core: 122px;
+    max-width: 620px;
+    width: 100%;
+    margin-inline: auto;
+  }
+}
+@media (max-height: 500px) and (orientation: landscape) {
+  .cx-deck {
+    --cx-core: 84px;
+    gap: 4px;
+    margin-top: 2px;
+  }
+  .cx-strip {
+    padding-block: 3px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cx-compass__beam,
+  .cx-compass__ring {
+    animation: none !important;
+  }
+  .cx-compass {
+    transition: none;
+  }
+}

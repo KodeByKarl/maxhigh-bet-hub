@@ -1,6 +1,7 @@
 import { SlotControlDeck } from "./SlotControlDeck";
 import "./realms/abyssal-pearls.css";
 import { CosmicControls } from "./comet-carnival/CosmicControls";
+import { CaptainConsole } from "./lighthouse-loot/CaptainConsole";
 import { CometIdentity } from "./comet-carnival/CometIdentity";
 import "./realms/illustrated-reels.css";
 /**
@@ -1050,7 +1051,12 @@ function RealmsTable({ def }: { def: RealmsGameDef }) {
     turbo,
   ]);
 
-  const DeckComponent = gameId === "comet-carnival" ? CosmicControls : SlotControlDeck;
+  const DeckComponent =
+    gameId === "comet-carnival"
+      ? CosmicControls
+      : gameId === "lighthouse-loot"
+        ? CaptainConsole
+        : SlotControlDeck;
 
   const displayWin = dropTotal > 0 ? dropTotal : inFree ? fsSessionWin : lastWin;
   const showTumbleBadge = tumbleStepWin > 0 && (phase === "glow" || phase === "popping");
