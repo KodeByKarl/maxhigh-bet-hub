@@ -1,0 +1,345 @@
+/* Golden Panther — Royal Predator Command Deck (scoped to .pcd). */
+.pcd {
+  --pcd-gold: #e8c97a;
+  --pcd-gold-hi: #fff0c0;
+  --pcd-gold-lo: #a67c2e;
+  --pcd-bronze: #6b4a1c;
+  --pcd-onyx: #0b0a09;
+  --pcd-onyx-2: #17140f;
+  --pcd-amber: #f2a93b;
+  position: relative;
+  flex: 0 0 auto;
+  width: min(100%, 480px);
+  margin: 6px auto 0;
+  padding: 6px 8px 8px;
+  color: var(--pcd-gold-hi);
+  font-family: inherit;
+  border-radius: 18px 18px 26px 26px;
+  background:
+    linear-gradient(180deg, #ffffff0d, transparent 30%),
+    repeating-linear-gradient(115deg, #ffffff05 0 2px, transparent 2px 7px),
+    linear-gradient(180deg, var(--pcd-onyx-2), var(--pcd-onyx));
+  box-shadow:
+    inset 0 0 0 1px var(--pcd-bronze),
+    inset 0 1px 0 #f3d78a66,
+    0 8px 20px #000a;
+}
+.pcd button {
+  font: inherit;
+  cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+.pcd button:disabled {
+  cursor: not-allowed;
+  opacity: 0.42;
+}
+.pcd button:focus-visible {
+  outline: 2px solid var(--pcd-gold-hi);
+  outline-offset: 2px;
+}
+
+/* Status strip */
+.pcd__strip {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 0 6px 5px;
+  margin-bottom: 6px;
+  border-bottom: 1px solid #a67c2e55;
+}
+.pcd__meter {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  max-width: calc(50% - 6px);
+}
+.pcd__meter--win {
+  text-align: right;
+}
+.pcd__meter span,
+.pcd__bet-value span,
+.pcd__bonus span {
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: #c9a45a;
+  line-height: 1.2;
+}
+.pcd__meter strong {
+  font-size: clamp(14px, 4vw, 17px);
+  font-variant-numeric: tabular-nums;
+  line-height: 1.25;
+  overflow-wrap: anywhere;
+}
+.pcd__meter--win[data-winning="true"] strong {
+  color: var(--pcd-amber);
+}
+
+/* Three-part deck */
+.pcd__deck {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 84px minmax(0, 1fr);
+  gap: 4px;
+  align-items: center;
+}
+.pcd__wing {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
+/* Bet selector — engraved gold */
+.pcd__bet {
+  display: grid;
+  grid-template-columns: 30px minmax(0, 1fr) 30px;
+  align-items: stretch;
+  min-height: 44px;
+  border-radius: 12px;
+  background: #050403;
+  box-shadow:
+    inset 0 2px 5px #000,
+    inset 0 0 0 1px #8a6a2c;
+}
+.pcd__bet button {
+  border: 0;
+  background: transparent;
+  color: var(--pcd-gold);
+  display: grid;
+  place-content: center;
+  min-width: 0;
+  min-height: 44px;
+}
+.pcd__bet button:first-child {
+  border-radius: 12px 0 0 12px;
+}
+.pcd__bet button:last-child {
+  border-radius: 0 12px 12px 0;
+}
+.pcd__bet button:not(:disabled):active {
+  background: #e8c97a22;
+}
+.pcd__bet-value {
+  text-align: center;
+  gap: 0;
+}
+.pcd__bet-value strong {
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+  color: var(--pcd-gold-hi);
+  overflow-wrap: anywhere;
+  line-height: 1.2;
+}
+
+/* Small keys */
+.pcd__key {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  min-height: 34px;
+  min-width: 44px;
+  padding: 0 10px;
+  border-radius: 10px;
+  border: 1px solid #8a6a2c;
+  background: linear-gradient(180deg, #2a2216, #120f0a);
+  color: var(--pcd-gold);
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  box-shadow: inset 0 1px 0 #ffffff14;
+}
+.pcd__key:not(:disabled):active {
+  transform: translateY(1px);
+  box-shadow: inset 0 2px 4px #000;
+}
+.pcd__key--turbo i {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: #4a3d24;
+}
+.pcd__key--turbo[aria-pressed="true"] {
+  color: var(--pcd-gold-hi);
+  border-color: var(--pcd-amber);
+}
+.pcd__key--turbo[aria-pressed="true"] i {
+  background: var(--pcd-amber);
+  box-shadow: 0 0 5px var(--pcd-amber);
+}
+.pcd__key--stop {
+  flex: 1;
+  color: #ffd9c4;
+  border-color: #b85a32;
+  background: linear-gradient(180deg, #4a1d12, #25100a);
+}
+.pcd__key--info {
+  padding: 0;
+  flex: 0 0 44px;
+}
+.pcd__utils {
+  display: flex;
+  gap: 6px;
+}
+.pcd__utils .pcd__key:first-child {
+  flex: 1;
+}
+
+/* Buy bonus plaque */
+.pcd__bonus {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  padding: 3px 8px;
+  border-radius: 12px;
+  border: 1px solid var(--pcd-gold-hi);
+  background: linear-gradient(180deg, #f6dc92, #c9993f 58%, #9a6f25);
+  color: #2a1b05;
+  box-shadow:
+    inset 0 1px 0 #fff6d799,
+    0 2px 6px #0008;
+}
+.pcd__bonus span {
+  color: #4a3208;
+}
+.pcd__bonus strong {
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.2;
+}
+.pcd__bonus:not(:disabled):active {
+  transform: translateY(1px);
+}
+.pcd__bonus--status {
+  background: #050403;
+  border-color: #8a6a2c;
+  color: var(--pcd-gold-hi);
+  box-shadow: inset 0 2px 5px #000;
+}
+.pcd__bonus--status span {
+  color: #c9a45a;
+}
+
+/* Panther medallion */
+.pcd__core {
+  display: grid;
+  place-items: center;
+}
+.pcd__medallion {
+  position: relative;
+  width: 84px;
+  height: 84px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--pcd-gold-hi);
+  filter: drop-shadow(0 4px 6px #000c);
+  transition: transform 90ms ease;
+}
+.pcd__medallion:not(:disabled):active {
+  transform: scale(0.95);
+}
+.pcd__ring {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+.pcd__ring circle {
+  fill: none;
+}
+.pcd__ring-outer {
+  stroke: var(--pcd-gold);
+  stroke-width: 5;
+  fill: #0b0a09 !important;
+}
+.pcd__ring-ticks {
+  stroke: var(--pcd-bronze);
+  stroke-width: 3;
+  stroke-dasharray: 1.4 3.2;
+}
+.pcd__ring-inner {
+  stroke: var(--pcd-gold-lo);
+  stroke-width: 1.2;
+  fill: #0e0c09 !important;
+}
+.pcd__claws path {
+  stroke: var(--pcd-gold-lo);
+  stroke-width: 1.6;
+  stroke-linecap: round;
+  opacity: 0.7;
+}
+.pcd__face {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1px;
+  text-align: center;
+}
+.pcd__face b {
+  font-size: 11px;
+  font-weight: 900;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  line-height: 1.1;
+}
+.pcd__face small {
+  font-size: 8px;
+  letter-spacing: 0.04em;
+  color: #c9a45a;
+  line-height: 1.1;
+  max-width: 54px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.pcd__medallion[data-mode="spin"] .pcd__face,
+.pcd__medallion[data-mode="free"] .pcd__face {
+  color: var(--pcd-gold);
+}
+.pcd__medallion[data-mode="skip"] .pcd__face {
+  color: var(--pcd-amber);
+}
+.pcd__medallion[data-mode="skip"] .pcd__ring-outer {
+  stroke: var(--pcd-amber);
+}
+.pcd__medallion[data-mode="skip"] .pcd__ring-ticks {
+  stroke: var(--pcd-amber);
+  animation: pcd-turn 6s linear infinite;
+  transform-origin: 50% 50%;
+}
+.pcd__medallion[data-mode="stop-auto"] .pcd__face {
+  color: #ffb08a;
+}
+.pcd__medallion[data-mode="stop-auto"] .pcd__ring-outer {
+  stroke: #c0623a;
+}
+@keyframes pcd-turn {
+  to {
+    transform: rotate(360deg);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .pcd__medallion[data-mode="skip"] .pcd__ring-ticks {
+    animation: none;
+  }
+  .pcd__medallion {
+    transition: none;
+  }
+}
+
+@media (max-width: 360px) {
+  .pcd__key span {
+    letter-spacing: 0.04em;
+  }
+}

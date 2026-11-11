@@ -1,4 +1,4 @@
-import { SlotControlDeck } from "./SlotControlDeck";
+import { PantherCommandDeck } from "./golden-panther/PantherCommandDeck";
 /**
  * Panther Peak — Sweet Bonanza layout (cluster-pay tumble slot).
  * Engine resolves spins instantly; this file plays back the animation script.
@@ -1077,7 +1077,7 @@ export function GoldenPantherSlot({
           {/* Buy feature — compact on phones so the spin row stays on-screen */}
 
           {/* HUD — compact on Android so Spin sits above the system nav */}
-          <SlotControlDeck
+          <PantherCommandDeck
             gameId="golden-panther"
             bet={totalBet}
             win={displayWin}
