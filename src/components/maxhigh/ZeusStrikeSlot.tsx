@@ -1,4 +1,5 @@
-import { SlotControlDeck } from "./SlotControlDeck";
+import { ZeusControls as SlotControlDeck } from "./zeus-strike/ZeusControls";
+import { TempleFrame } from "./zeus-strike/TempleFrame";
 /**
  * Zeus Strike — 3×7 cluster-pay tumble slot (panther rectangle board).
  * Engine resolves spins instantly; this file plays back the animation script.
@@ -1005,26 +1006,7 @@ export function ZeusStrikeSlot({
         <div className="mx-auto flex h-full min-h-0 w-full max-w-[840px] flex-col">
           {/* Board well — hug the grid (no dual-grid temple layout) */}
           <div className="relative flex min-h-0 w-full flex-1 items-center justify-center">
-            <div
-              className="relative flex max-h-full max-w-full flex-col overflow-hidden rounded-[1.25rem] p-1.5 sm:rounded-2xl sm:p-2"
-              style={{
-                width: "fit-content",
-                height: "fit-content",
-                background:
-                  "linear-gradient(180deg, var(--p-well-top) 0%, var(--p-well-bottom) 100%)",
-                boxShadow:
-                  "inset 0 0 0 1.5px var(--p-rim), inset 0 0 40px rgba(0,0,0,0.35), 0 12px 36px rgba(0,0,0,0.45)",
-              }}
-            >
-              <div
-                className="pointer-events-none absolute inset-x-0 top-0 z-0 h-16"
-                style={{
-                  background:
-                    "radial-gradient(ellipse at 50% 0%, var(--p-top-glow) 0%, transparent 70%)",
-                }}
-                aria-hidden
-              />
-
+            <TempleFrame>
               <div className="relative z-10 flex max-h-full max-w-full items-center justify-center">
                 {showTumbleBadge && (
                   <div className="pointer-events-none absolute left-1/2 top-1 z-20 -translate-x-1/2">
@@ -1054,7 +1036,7 @@ export function ZeusStrikeSlot({
 
                 <ReelGrid visuals={reelVisuals} />
               </div>
-            </div>
+            </TempleFrame>
           </div>
 
           {/* Buy feature — compact on phones so the spin row stays on-screen */}

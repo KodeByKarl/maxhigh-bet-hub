@@ -1,0 +1,1005 @@
+/* Zeus Strike only — "Throne of Thunder". Presentation layer: the 3×7 geometry, symbol mapping, cell order and animations are untouched.
+   This file sizes the board, builds the Temple of Zeus frame, draws the Olympian relic cells and styles the Thunder Altar.
+   Every rule is scoped to this game. */
+[data-game-view="zeus-strike"] {
+  container-type: size;
+  --zs-top: 38px;
+  --zs-bot: 46px;
+  --zs-deck: 182px;
+  --zs-gable: clamp(26px, 8.2cqw, 44px);
+  --zs-band: 15px;
+  --zs-ped: calc(var(--zs-gable) + var(--zs-band));
+  --zs-base: 16px;
+  --zs-pil: clamp(24px, 9cqw, 74px);
+  --zs-pad: 6px;
+  --zs-gap: clamp(3px, 1.1cqw, 6px);
+  --zs-gold-hi: #fff2b8;
+  --zs-gold: #d3a43a;
+  --zs-gold-lo: #6d4a12;
+  --zs-ivory: #f4f0e4;
+  --zs-bolt: #7dd3fc;
+  --zs-night: #0a1226;
+  --zs-serif: "Cinzel", "Trajan Pro", "Palatino Linotype", "Book Antiqua", Georgia, serif;
+  --zs-fork: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 54 150'%3E%3Cpath d='M30 0 22 46 36 50 14 100 26 104 8 150 44 84 30 80 46 40 34 36 40 0Z' fill='%23e8f6ff' stroke='%237dd3fc' stroke-width='3' stroke-linejoin='round'/%3E%3C/svg%3E");
+  --zs-meander: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M0 7.5H1V.5H11V5H4V3H8' fill='none' stroke='%23e0b84e' stroke-width='1' stroke-linecap='square'/%3E%3C/svg%3E");
+}
+@property --zs-a {
+  syntax: "<angle>";
+  inherits: false;
+  initial-value: 0deg;
+}
+
+/* ───────── playfield ───────── */
+[data-game-view="zeus-strike"] > div > .relative.z-10 {
+  padding: max(var(--zs-top), env(safe-area-inset-top)) max(4px, env(safe-area-inset-right))
+    max(var(--zs-bot), env(safe-area-inset-bottom)) max(4px, env(safe-area-inset-left));
+}
+[data-game-view="zeus-strike"] > div > button[title] {
+  width: 32px;
+  height: 32px;
+  top: 4px;
+  right: 6px;
+}
+[data-game-view="zeus-strike"] [data-gs-col] {
+  max-width: 640px;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+[data-game-view="zeus-strike"] [data-gs-col] > :first-child {
+  flex: 1 1 0;
+  width: 100%;
+  min-height: 0;
+  align-items: center;
+  justify-content: center;
+}
+/* the backdrop stays the hero: gentle contrast lift, vignette and a divine pool of light behind the temple */
+[data-game-view="zeus-strike"] > div > img.object-cover {
+  object-position: 50% 28%;
+  filter: saturate(1.12) contrast(1.06) brightness(0.92);
+}
+[data-game-view="zeus-strike"] > div::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  background:
+    radial-gradient(ellipse 70% 46% at 50% 42%, rgba(125, 211, 252, 0.2), transparent 70%),
+    radial-gradient(ellipse 120% 90% at 50% 46%, transparent 52%, rgba(2, 6, 20, 0.62) 100%),
+    linear-gradient(0deg, rgba(2, 6, 20, 0.7), transparent 30%);
+}
+
+/* ───────── Temple of Zeus frame ───────── */
+[data-game-view="zeus-strike"] [data-gs-well].zs-temple {
+  flex: none;
+  width: fit-content;
+  height: auto;
+  margin: 0 !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  background: none !important;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+}
+[data-game-view="zeus-strike"] [data-gs-well].zs-temple::before,
+[data-game-view="zeus-strike"] [data-gs-well].zs-temple::after {
+  content: none !important;
+}
+[data-game-view="zeus-strike"] [data-gs-col] > :first-child:has(> .zs-temple) {
+  filter: drop-shadow(0 14px 22px rgba(0, 0, 0, 0.55))
+    drop-shadow(0 0 26px rgba(125, 211, 252, 0.22));
+}
+.zs-pediment {
+  position: relative;
+  height: var(--zs-ped);
+  display: flex;
+  flex-direction: column;
+  margin: 0 calc(var(--zs-pil) * -0.14);
+}
+.zs-pediment__gable {
+  display: block;
+  width: 100%;
+  height: var(--zs-gable);
+  flex: none;
+}
+.zs-pediment__crest {
+  position: absolute;
+  left: 50%;
+  top: calc(var(--zs-gable) * 0.26);
+  width: calc(var(--zs-gable) * 0.46);
+  height: calc(var(--zs-gable) * 0.62);
+  translate: -50% 0;
+  filter: drop-shadow(0 0 5px rgba(125, 211, 252, 0.95));
+  animation: zs-crest 3.4s ease-in-out infinite;
+}
+.zs-pediment__title {
+  flex: none;
+  height: var(--zs-band);
+  display: grid;
+  place-items: center;
+  font: 800 clamp(7px, 2.1cqw, 10px) / 1 var(--zs-serif);
+  letter-spacing: 0.34em;
+  text-indent: 0.34em;
+  text-transform: uppercase;
+  color: var(--zs-gold-hi);
+  text-shadow:
+    0 1px 0 #3b2606,
+    0 0 6px rgba(255, 226, 122, 0.45);
+  background:
+    linear-gradient(180deg, rgba(255, 242, 184, 0.9), rgba(211, 164, 58, 0.9) 22%, transparent 24%),
+    linear-gradient(180deg, #232f50, #0d1530);
+  border-bottom: 2px solid var(--zs-gold-lo);
+  box-shadow: 0 1px 0 var(--zs-gold);
+}
+.zs-bolt-fill {
+  fill: url(#zs-bolt-grad);
+  stroke: #fff6c8;
+  stroke-width: 1;
+  stroke-linejoin: round;
+}
+@keyframes zs-crest {
+  0%,
+  100% {
+    filter: drop-shadow(0 0 3px rgba(125, 211, 252, 0.7));
+  }
+  50% {
+    filter: drop-shadow(0 0 9px rgba(190, 235, 255, 1));
+  }
+}
+
+.zs-hall {
+  position: relative;
+  display: flex;
+  align-items: stretch;
+  gap: 0;
+}
+/* a pool of lightning-lit air behind the whole temple */
+.zs-hall::before {
+  content: "";
+  position: absolute;
+  inset: -8% -30%;
+  z-index: -1;
+  pointer-events: none;
+  background: radial-gradient(ellipse at 50% 50%, rgba(125, 211, 252, 0.28), transparent 64%);
+}
+.zs-chamber {
+  position: relative;
+  flex: none;
+  padding: var(--zs-pad);
+  border-left: 2px solid var(--zs-gold-lo);
+  border-right: 2px solid var(--zs-gold-lo);
+  background:
+    radial-gradient(ellipse 90% 40% at 50% 0%, rgba(125, 211, 252, 0.22), transparent 70%),
+    radial-gradient(ellipse 90% 40% at 50% 100%, rgba(125, 211, 252, 0.14), transparent 70%),
+    linear-gradient(180deg, #0c1530, #050a18 50%, #0a1226);
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 226, 122, 0.55),
+    inset 0 0 22px rgba(56, 160, 230, 0.4),
+    inset 0 10px 18px rgba(0, 0, 0, 0.55);
+}
+[data-game-view="zeus-strike"] [data-zs-board] {
+  --zs-board-w: min(
+    calc(100cqw - 2 * var(--zs-pil) - 2 * var(--zs-pad) - 12px),
+    calc(
+      (
+          100cqh - var(--zs-top) - var(--zs-bot) - var(--zs-ped) - var(--zs-base) - var(--zs-deck) -
+            10px - 2 * var(--zs-pad)
+        ) *
+        3 / 7
+    ),
+    470px
+  );
+  width: var(--zs-board-w);
+  max-width: none;
+  max-height: none;
+  gap: var(--zs-gap);
+}
+[data-game-view="zeus-strike"] [data-zs-board]::before {
+  content: none;
+}
+
+/* pillars */
+.zs-pillar {
+  position: relative;
+  flex: none;
+  width: var(--zs-pil);
+  display: flex;
+  flex-direction: column;
+  filter: drop-shadow(0 0 0.5px #000) drop-shadow(0 4px 5px rgba(0, 0, 0, 0.5));
+}
+.zs-pillar i {
+  display: block;
+}
+.zs-pillar__cap {
+  flex: none;
+  height: clamp(10px, 3.4cqw, 20px);
+  margin: 0 calc(var(--zs-pil) * -0.04);
+  background:
+    repeating-linear-gradient(90deg, rgba(60, 36, 4, 0.55) 0 2px, transparent 2px 6px) bottom / 100%
+      35% no-repeat,
+    linear-gradient(180deg, transparent 0 55%, rgba(0, 0, 0, 0.35) 55% 60%, transparent 60%),
+    linear-gradient(180deg, var(--zs-gold-hi), var(--zs-gold) 35%, var(--zs-gold-lo));
+  border-radius: 2px 2px 0 0;
+  box-shadow: 0 2px 0 #2a1b05;
+}
+.zs-pillar__shaft {
+  position: relative;
+  flex: 1 1 0;
+  margin: 0 12%;
+  background:
+    /* astragal rings: gold bands near the capital and plinth */
+    linear-gradient(
+        180deg,
+        var(--zs-gold) 0 2px,
+        transparent 2px 6px,
+        var(--zs-gold-lo) 6px 7px,
+        transparent 7px
+      )
+      top / 100% 8px no-repeat,
+    linear-gradient(
+        0deg,
+        var(--zs-gold) 0 2px,
+        transparent 2px 6px,
+        var(--zs-gold-lo) 6px 7px,
+        transparent 7px
+      )
+      bottom / 100% 8px no-repeat,
+    /* flutes */
+    repeating-linear-gradient(
+        90deg,
+        rgba(30, 44, 86, 0.5) 0 1.5px,
+        rgba(255, 255, 255, 0.45) 1.5px 3px,
+        transparent 3px 6px
+      ),
+    /* marble body with a faint blue cast and a warm key light */
+    linear-gradient(
+        90deg,
+        #5d6a8c 0,
+        #c3cadc 14%,
+        #f4f2ea 36%,
+        #dedcd2 58%,
+        #9aa3bb 82%,
+        #566080 100%
+      );
+  box-shadow:
+    inset 0 14px 12px -6px rgba(10, 18, 44, 0.65),
+    inset 0 -14px 12px -6px rgba(10, 18, 44, 0.55);
+}
+/* faint lightning glow rising through the marble */
+.zs-pillar__shaft::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    linear-gradient(90deg, transparent 38%, rgba(125, 211, 252, 0.55) 50%, transparent 62%),
+    linear-gradient(
+      180deg,
+      rgba(125, 211, 252, 0.35),
+      transparent 40%,
+      transparent 70%,
+      rgba(125, 211, 252, 0.3)
+    );
+  mix-blend-mode: soft-light;
+  animation: zs-vein 4.2s ease-in-out infinite;
+}
+@keyframes zs-vein {
+  0%,
+  100% {
+    opacity: 0.25;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+.zs-pillar__base {
+  flex: none;
+  height: clamp(10px, 3.4cqw, 20px);
+  margin: 0 calc(var(--zs-pil) * -0.04);
+  background:
+    linear-gradient(180deg, rgba(0, 0, 0, 0.3), transparent 40%),
+    linear-gradient(180deg, var(--zs-gold-lo), var(--zs-gold) 60%, var(--zs-gold-hi));
+  border-radius: 0 0 2px 2px;
+  box-shadow: 0 -2px 0 #2a1b05;
+}
+.zs-pillar--l .zs-pillar__shaft {
+  margin-right: 6%;
+}
+.zs-pillar--r .zs-pillar__shaft {
+  margin-left: 6%;
+}
+
+/* stylobate: stepped stone foundation carrying a meander band */
+.zs-stylobate {
+  position: relative;
+  height: var(--zs-base);
+  margin: 0 calc(var(--zs-pil) * -0.14);
+}
+.zs-stylobate i {
+  position: absolute;
+  left: 0;
+  right: 0;
+  display: block;
+}
+.zs-stylobate i:first-child {
+  top: 0;
+  height: 9px;
+  background:
+    var(--zs-meander) center / 12px 8px repeat-x,
+    linear-gradient(180deg, #33406a, #151d38);
+  border-top: 2px solid var(--zs-gold);
+  box-shadow: inset 0 -1px 0 #000;
+}
+.zs-stylobate i:last-child {
+  top: 9px;
+  left: 2.5%;
+  right: 2.5%;
+  height: 7px;
+  background: linear-gradient(180deg, #8d96aa, #4b5470);
+  border-bottom: 2px solid #1c2440;
+}
+
+/* ───────── Olympian relic cells ───────── */
+.zs-cell {
+  --zs-c: 7px;
+  border: 0;
+  background: none;
+  border-radius: 0;
+  box-shadow: none;
+}
+.zs-cell__rim,
+.zs-cell__face {
+  position: absolute;
+  pointer-events: none;
+  clip-path: polygon(
+    var(--c) 0,
+    calc(100% - var(--c)) 0,
+    100% var(--c),
+    100% calc(100% - var(--c)),
+    calc(100% - var(--c)) 100%,
+    var(--c) 100%,
+    0 calc(100% - var(--c)),
+    0 var(--c)
+  );
+}
+.zs-cell__rim {
+  --c: var(--zs-c);
+  inset: 0;
+  background: conic-gradient(
+    from 210deg,
+    var(--zs-gold-hi),
+    var(--zs-gold) 14%,
+    var(--zs-gold-lo) 30%,
+    #e6c25e 48%,
+    #fff3c4 54%,
+    #a47a25 68%,
+    var(--zs-gold-lo) 82%,
+    var(--zs-gold-hi)
+  );
+}
+.zs-cell__face {
+  --c: calc(var(--zs-c) - 1px);
+  inset: 1.5px;
+  background:
+    radial-gradient(ellipse 80% 55% at 50% 22%, rgba(150, 190, 255, 0.3), transparent 70%),
+    repeating-linear-gradient(
+      118deg,
+      transparent 0 11px,
+      rgba(200, 220, 255, 0.07) 11px 12px,
+      transparent 12px 27px
+    ),
+    linear-gradient(165deg, #2c3d66, #17234a 52%, #0c142c);
+  box-shadow:
+    inset 0 0 10px rgba(0, 0, 0, 0.6),
+    inset 0 1px 0 rgba(255, 255, 255, 0.18);
+}
+.zs-cell[data-scatter="true"] .zs-cell__face {
+  background:
+    radial-gradient(circle at 50% 50%, rgba(255, 226, 122, 0.42), transparent 66%),
+    linear-gradient(165deg, #3a3f6a, #1a2150 52%, #0c142c);
+}
+.zs-cell[data-winning="true"] {
+  filter: drop-shadow(0 0 6px var(--zs-bolt)) drop-shadow(0 0 12px rgba(125, 211, 252, 0.55));
+}
+.zs-cell[data-winning="true"] .zs-cell__rim {
+  background: linear-gradient(135deg, #ffffff, #b9e6ff 40%, #fff2b8 70%, #ffffff);
+}
+.zs-cell[data-winning="true"] .zs-cell__face {
+  background:
+    radial-gradient(ellipse 80% 60% at 50% 35%, rgba(220, 240, 255, 0.55), transparent 72%),
+    linear-gradient(165deg, #3f68b8, #21397a 55%, #132150);
+}
+
+/* Symbol art: assets are alpha-trimmed and already centred (checked per file), so the old 12% inset + 6% padding + shrink were
+   the only reason the glyphs read at ~60% of the cell. The art now fills the relic face. */
+[data-game-view="zeus-strike"] [data-zs-art] {
+  inset: 4%;
+}
+[data-game-view="zeus-strike"] [data-zs-art] > div {
+  overflow: visible;
+}
+[data-game-view="zeus-strike"] [data-zs-art] img {
+  padding: 0 !important;
+  scale: 1 !important;
+  translate: 0 0 !important;
+  filter: drop-shadow(0 2px 2px rgba(0, 0, 0, 0.6)) !important;
+}
+[data-game-view="zeus-strike"] [data-zs-art] img[alt="bomb"] {
+  scale: 1.1 !important;
+}
+[data-game-view="zeus-strike"] [data-zs-cell][data-winning="true"] [data-zs-art] img {
+  filter: drop-shadow(0 0 5px rgba(160, 220, 255, 0.9)) brightness(1.12) saturate(1.1) !important;
+}
+
+/* ───────── Olympian Thunder Altar ───────── */
+[data-game-view="zeus-strike"] .zs-altar {
+  --zs-spin: 114px;
+  position: relative;
+  isolation: isolate;
+  flex: none;
+  width: 100%;
+  max-width: 620px;
+  display: grid;
+  gap: 5px;
+  padding: 10px 8px 5px;
+  color: var(--zs-ivory);
+  font-family: ui-sans-serif, system-ui, sans-serif;
+  font-variant-numeric: tabular-nums;
+}
+/* altar plate: a gabled marble slab rising to a peak behind the Spin; gold lip + dark stone */
+[data-game-view="zeus-strike"] .zs-altar::before,
+[data-game-view="zeus-strike"] .zs-altar::after {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  pointer-events: none;
+  --pk: calc(var(--zs-spin) * 0.62);
+  clip-path: polygon(
+    0 16px,
+    calc(50% - var(--pk)) 16px,
+    50% 0,
+    calc(50% + var(--pk)) 16px,
+    100% 16px,
+    100% 100%,
+    0 100%
+  );
+}
+[data-game-view="zeus-strike"] .zs-altar::before {
+  inset: 0;
+  background: linear-gradient(180deg, var(--zs-gold-hi), var(--zs-gold) 30%, var(--zs-gold-lo));
+}
+[data-game-view="zeus-strike"] .zs-altar::after {
+  inset: 2px 2px 0;
+  background:
+    var(--zs-meander) 0 22px / 12px 8px repeat-x,
+    radial-gradient(ellipse 50% 70% at 50% 0%, rgba(125, 211, 252, 0.22), transparent 80%),
+    linear-gradient(180deg, #1c2748, #0e1631 60%, #080e22);
+  opacity: 1;
+}
+.zs-altar__row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) var(--zs-spin) minmax(0, 1fr);
+  align-items: center;
+  gap: 8px;
+  margin-top: 4px;
+}
+.zs-side {
+  display: grid;
+  gap: 5px;
+  min-width: 0;
+}
+.zs-altar button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: inherit;
+  font: inherit;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+.zs-altar button:focus-visible {
+  outline: 2px solid #fff6d2;
+  outline-offset: 2px;
+}
+.zs-altar button:disabled {
+  opacity: 0.5;
+  filter: grayscale(0.6);
+  cursor: not-allowed;
+}
+
+/* Divine Treasury plaques */
+.zs-plaque {
+  --zs-c: 6px;
+  position: relative;
+  min-width: 0;
+  height: 42px;
+  margin: 0;
+  display: grid;
+  place-content: center;
+  text-align: center;
+  padding: 0 6px;
+  clip-path: polygon(
+    var(--zs-c) 0,
+    calc(100% - var(--zs-c)) 0,
+    100% var(--zs-c),
+    100% calc(100% - var(--zs-c)),
+    calc(100% - var(--zs-c)) 100%,
+    var(--zs-c) 100%,
+    0 calc(100% - var(--zs-c)),
+    0 var(--zs-c)
+  );
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.1), transparent 45%),
+    linear-gradient(180deg, #1b2547, #0b1229);
+  box-shadow: inset 0 0 0 1.5px var(--zs-gold-lo);
+}
+.zs-plaque dt {
+  margin: 0;
+  font: 700 8.5px / 1 var(--zs-serif);
+  letter-spacing: 0.2em;
+  text-indent: 0.2em;
+  text-transform: uppercase;
+  color: #e0b84e;
+}
+.zs-plaque dd {
+  margin: 3px 0 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font: 800 15px / 1.1 var(--zs-serif);
+  color: var(--zs-ivory);
+  text-shadow: 0 1px 0 rgba(0, 0, 0, 0.6);
+}
+.zs-plaque[data-winning="true"] {
+  background:
+    radial-gradient(ellipse 80% 90% at 50% 50%, rgba(125, 211, 252, 0.4), transparent 75%),
+    linear-gradient(180deg, #1b2c58, #0b1229);
+  box-shadow: inset 0 0 0 1.5px #bde8ff;
+}
+.zs-plaque[data-winning="true"] dd {
+  color: #fff6c8;
+  text-shadow: 0 0 8px rgba(125, 211, 252, 0.9);
+}
+
+/* Olympian bet selector: bronze stops either side of an engraved value slot */
+.zs-bet {
+  display: grid;
+  grid-template-columns: 30px minmax(0, 1fr) 30px;
+  height: 52px;
+  gap: 3px;
+}
+.zs-bet__step {
+  --zs-c: 7px;
+  min-width: 30px;
+  min-height: 44px;
+  align-self: center;
+  height: 100%;
+  clip-path: polygon(
+    var(--zs-c) 0,
+    calc(100% - var(--zs-c)) 0,
+    100% var(--zs-c),
+    100% calc(100% - var(--zs-c)),
+    calc(100% - var(--zs-c)) 100%,
+    var(--zs-c) 100%,
+    0 calc(100% - var(--zs-c)),
+    0 var(--zs-c)
+  );
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.35), transparent 45%),
+    linear-gradient(180deg, #e0b457, #a8742a 55%, #6d4513);
+  color: #2a1704 !important;
+  box-shadow: inset 0 0 0 1.5px rgba(255, 238, 170, 0.65);
+  transition: filter 0.12s;
+}
+.zs-bet__step:active:not(:disabled) {
+  filter: brightness(0.82);
+  translate: 0 1px;
+}
+.zs-bet__value {
+  min-width: 0;
+  flex-direction: column;
+  gap: 2px;
+  background:
+    var(--zs-meander) center 2px / 12px 8px repeat-x,
+    var(--zs-meander) center calc(100% - 2px) / 12px 8px repeat-x,
+    linear-gradient(180deg, #060b1b, #101a38);
+  box-shadow:
+    inset 0 0 0 1.5px var(--zs-gold-lo),
+    inset 0 4px 8px rgba(0, 0, 0, 0.6);
+  opacity: 1;
+}
+.zs-bet__value span {
+  font: 700 8px / 1 var(--zs-serif);
+  letter-spacing: 0.22em;
+  text-indent: 0.22em;
+  text-transform: uppercase;
+  color: #e0b84e;
+}
+.zs-bet__value strong {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font: 800 13px / 1.1 var(--zs-serif);
+  color: var(--zs-ivory);
+}
+
+/* Buy Bonus: a gold-sealed tablet */
+.zs-buy {
+  --zs-c: 8px;
+  height: 52px;
+  min-width: 0;
+  flex-direction: column;
+  gap: 2px;
+  padding: 0 6px;
+  clip-path: polygon(
+    var(--zs-c) 0,
+    calc(100% - var(--zs-c)) 0,
+    100% var(--zs-c),
+    100% calc(100% - var(--zs-c)),
+    calc(100% - var(--zs-c)) 100%,
+    var(--zs-c) 100%,
+    0 calc(100% - var(--zs-c)),
+    0 var(--zs-c)
+  );
+  background:
+    radial-gradient(ellipse 90% 70% at 50% 0%, rgba(255, 226, 122, 0.4), transparent 70%),
+    linear-gradient(180deg, #2a3a6e, #121c3f);
+  box-shadow:
+    inset 0 0 0 2px var(--zs-gold),
+    inset 0 0 0 3px rgba(0, 0, 0, 0.5);
+}
+.zs-buy--idle {
+  visibility: hidden;
+}
+.zs-buy span {
+  font: 800 9px / 1 var(--zs-serif);
+  letter-spacing: 0.16em;
+  text-indent: 0.16em;
+  text-transform: uppercase;
+  color: #fff2b8;
+}
+.zs-buy strong {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font: 800 14px / 1.1 var(--zs-serif);
+  color: #ffffff;
+  text-shadow: 0 0 8px rgba(125, 211, 252, 0.7);
+}
+.zs-buy:active:not(:disabled) {
+  filter: brightness(1.25);
+}
+
+/* ───── Signature Spin: pediment-shaped thunder altar ───── */
+.zs-spin {
+  --zs-shape: polygon(50% 0, 100% 27%, 100% 100%, 0 100%, 0 27%);
+  position: relative;
+  width: var(--zs-spin);
+  height: calc(var(--zs-spin) - 2px);
+  padding: 0;
+  border: 0;
+  background: none;
+  filter: drop-shadow(0 6px 6px rgba(0, 0, 0, 0.6)) drop-shadow(0 0 10px rgba(125, 211, 252, 0.35));
+  transition:
+    translate 0.1s,
+    filter 0.15s;
+}
+.zs-spin::before {
+  content: "";
+  position: absolute;
+  inset: -26% -40% -16%;
+  z-index: -1;
+  pointer-events: none;
+  background: radial-gradient(
+    ellipse 50% 52% at 50% 52%,
+    rgba(125, 211, 252, 0.7),
+    transparent 72%
+  );
+  animation: zs-aura 2.6s ease-in-out infinite;
+}
+.zs-spin[data-active="true"]::before {
+  animation-duration: 0.7s;
+}
+.zs-spin:disabled::before {
+  animation: none;
+  opacity: 0.2;
+}
+@keyframes zs-aura {
+  0%,
+  100% {
+    opacity: 0.55;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+.zs-spin > span,
+.zs-spin > svg {
+  position: absolute;
+  pointer-events: none;
+}
+/* two stylobate steps the altar stands on */
+.zs-spin__steps {
+  left: -7px;
+  right: -7px;
+  bottom: -5px;
+  height: 12px;
+  background: linear-gradient(180deg, #98a1b6, #4a5370);
+  border-bottom: 2px solid #1c2440;
+  box-shadow: 0 -2px 0 var(--zs-gold);
+}
+.zs-spin__rim,
+.zs-spin__arc,
+.zs-spin__face {
+  clip-path: var(--zs-shape);
+}
+.zs-spin__rim {
+  inset: 0;
+  background: conic-gradient(
+    from 160deg,
+    var(--zs-gold-hi),
+    var(--zs-gold) 16%,
+    var(--zs-gold-lo) 32%,
+    #e6c25e 46%,
+    #fff3c4 52%,
+    #a47a25 66%,
+    var(--zs-gold-lo) 82%,
+    var(--zs-gold-hi)
+  );
+}
+/* lightning energy channel: an arc of white-blue current circling the rim while active */
+.zs-spin__arc {
+  inset: 0;
+  opacity: 0;
+  background: conic-gradient(
+    from var(--zs-a),
+    transparent 0 62%,
+    rgba(125, 211, 252, 0.85) 76%,
+    #ffffff 84%,
+    transparent 92%
+  );
+}
+.zs-spin__face {
+  inset: 3px;
+  background:
+    radial-gradient(ellipse 70% 50% at 50% 40%, rgba(125, 211, 252, 0.5), transparent 75%),
+    repeating-linear-gradient(
+      118deg,
+      transparent 0 10px,
+      rgba(200, 220, 255, 0.07) 10px 11px,
+      transparent 11px 24px
+    ),
+    linear-gradient(170deg, #2e4172, #16224a 55%, #0a1230);
+  box-shadow: inset 0 0 14px rgba(0, 0, 0, 0.6);
+}
+.zs-spin__bolt {
+  left: 50%;
+  top: 22%;
+  width: 42%;
+  height: 54%;
+  translate: -50% 0;
+  overflow: visible;
+  filter: drop-shadow(0 0 4px rgba(125, 211, 252, 0.95)) drop-shadow(0 1px 0 rgba(60, 35, 5, 0.9));
+  animation: zs-bolt-idle 2.6s ease-in-out infinite;
+}
+.zs-spin__label {
+  left: 0;
+  right: 0;
+  bottom: 6px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1px;
+  font: 800 16px / 1 var(--zs-serif);
+  letter-spacing: 0.2em;
+  text-indent: 0.2em;
+  text-transform: uppercase;
+  color: var(--zs-gold-hi);
+  text-shadow:
+    0 1px 0 #2f1d04,
+    0 0 8px rgba(255, 226, 122, 0.55);
+}
+.zs-spin__label small {
+  font:
+    700 8.5px / 1 ui-sans-serif,
+    system-ui,
+    sans-serif;
+  letter-spacing: 0.08em;
+  text-indent: 0;
+  color: #bfe9ff;
+  text-shadow: none;
+}
+.zs-spin:hover:not(:disabled) {
+  filter: drop-shadow(0 6px 6px rgba(0, 0, 0, 0.6)) drop-shadow(0 0 16px rgba(125, 211, 252, 0.7));
+}
+.zs-spin:active:not(:disabled) {
+  translate: 0 2px;
+}
+.zs-spin:active:not(:disabled) .zs-spin__face {
+  background:
+    radial-gradient(ellipse 70% 60% at 50% 40%, rgba(200, 235, 255, 0.85), transparent 78%),
+    linear-gradient(170deg, #3b5494, #1b2a5a 55%, #0a1230);
+}
+.zs-spin:active:not(:disabled) .zs-spin__bolt {
+  filter: drop-shadow(0 0 10px #fff) drop-shadow(0 0 16px rgba(125, 211, 252, 1));
+  animation: none;
+}
+.zs-spin[data-active="true"] .zs-spin__arc {
+  opacity: 1;
+  animation: zs-arc 0.9s linear infinite;
+}
+.zs-spin[data-active="true"] .zs-spin__bolt {
+  animation: zs-bolt-spin 0.5s steps(2, end) infinite;
+}
+.zs-spin:disabled {
+  opacity: 0.55;
+  filter: grayscale(0.7) drop-shadow(0 4px 4px rgba(0, 0, 0, 0.5));
+}
+.zs-spin:disabled .zs-spin__bolt {
+  animation: none;
+}
+@keyframes zs-bolt-idle {
+  0%,
+  100% {
+    filter: drop-shadow(0 0 3px rgba(125, 211, 252, 0.7)) drop-shadow(0 1px 0 rgba(60, 35, 5, 0.9));
+  }
+  50% {
+    filter: drop-shadow(0 0 9px rgba(190, 235, 255, 1)) drop-shadow(0 1px 0 rgba(60, 35, 5, 0.9));
+  }
+}
+@keyframes zs-bolt-spin {
+  0% {
+    filter: drop-shadow(0 0 12px #fff) drop-shadow(0 0 18px #38bdf8);
+  }
+  100% {
+    filter: drop-shadow(0 0 5px #7dd3fc) drop-shadow(0 1px 0 rgba(60, 35, 5, 0.9));
+  }
+}
+@keyframes zs-arc {
+  to {
+    --zs-a: 360deg;
+  }
+}
+
+/* Secondary controls: slim carved rail at the foot of the altar */
+.zs-tools {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+}
+.zs-tools button {
+  --zs-c: 6px;
+  flex: 1 1 0;
+  max-width: 150px;
+  min-height: 44px;
+  gap: 6px;
+  padding: 0 8px;
+  clip-path: polygon(
+    var(--zs-c) 0,
+    calc(100% - var(--zs-c)) 0,
+    100% var(--zs-c),
+    100% calc(100% - var(--zs-c)),
+    calc(100% - var(--zs-c)) 100%,
+    var(--zs-c) 100%,
+    0 calc(100% - var(--zs-c)),
+    0 var(--zs-c)
+  );
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.08), transparent 50%),
+    linear-gradient(180deg, #1b2547, #0b1229);
+  box-shadow: inset 0 0 0 1.5px var(--zs-gold-lo);
+  font: 700 10.5px / 1 var(--zs-serif);
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: #d7dcec;
+}
+.zs-tools button svg {
+  color: #e0b84e;
+  flex: none;
+}
+.zs-tools button[data-on="true"] {
+  background:
+    radial-gradient(ellipse 80% 100% at 50% 50%, rgba(125, 211, 252, 0.4), transparent 80%),
+    linear-gradient(180deg, #1b2c58, #0b1229);
+  box-shadow: inset 0 0 0 1.5px #bde8ff;
+  color: #fff;
+}
+.zs-tools button[data-on="true"] svg {
+  color: #bde8ff;
+}
+.zs-sr {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+/* wide screens: forked lightning in the sky either side of the temple (decorative, behind the playfield) */
+@container (min-width: 600px) {
+  [data-game-view="zeus-strike"] > div::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    pointer-events: none;
+    background:
+      var(--zs-fork) 9% 14% / 54px 150px no-repeat,
+      var(--zs-fork) 91% 22% / 54px 150px no-repeat;
+    animation: zs-fork 6s steps(1, end) infinite;
+  }
+}
+@keyframes zs-fork {
+  0%,
+  62%,
+  70%,
+  100% {
+    opacity: 0.12;
+  }
+  64%,
+  68% {
+    opacity: 0.95;
+  }
+}
+
+/* ───────── small phones / short viewports ───────── */
+@container (max-width: 360px) {
+  [data-game-view="zeus-strike"] .zs-altar {
+    --zs-spin: 100px;
+  }
+  .zs-plaque dd,
+  .zs-bet__value strong,
+  .zs-buy strong {
+    font-size: 13px;
+  }
+  .zs-bet {
+    grid-template-columns: 26px minmax(0, 1fr) 26px;
+  }
+  .zs-bet__step {
+    min-width: 26px;
+  }
+}
+/* short viewports (small phones, landscape): compact altar so the reels keep their height */
+@container (max-height: 760px) {
+  [data-game-view="zeus-strike"] > div {
+    --zs-top: 34px;
+    --zs-bot: 40px;
+    --zs-deck: 150px;
+  }
+  [data-game-view="zeus-strike"] .zs-altar {
+    --zs-spin: 86px;
+    padding-top: 8px;
+  }
+  .zs-plaque {
+    height: 34px;
+  }
+  .zs-plaque dd {
+    font-size: 13px;
+  }
+  .zs-bet,
+  .zs-buy {
+    height: 44px;
+  }
+  .zs-bet__step {
+    min-height: 40px;
+  }
+  .zs-tools button {
+    min-height: 40px;
+  }
+  .zs-spin__label {
+    font-size: 13px;
+    bottom: 5px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .zs-pediment__crest,
+  .zs-spin__bolt,
+  .zs-spin__arc {
+    animation: none !important;
+  }
+}

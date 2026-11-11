@@ -19,13 +19,14 @@ type ReelGridProps = {
   visuals: ReelVisuals;
 };
 
-/** 3×7 board — fill available play space. */
+/** 3×7 board — sizing, gaps and the relic cells are styled by games/zeus-strike/zeus-layout.css. */
 export const ReelGrid = memo(function ReelGrid({ visuals }: ReelGridProps) {
   const { slots, phase, winningKeys, payoutByKey, spawnedKeys, fallenKeys, fallDistance } = visuals;
 
   return (
     <div
-      className="mx-auto grid aspect-[3/7] max-h-[min(62dvh,34rem)] w-[min(98vw,calc(62dvh*3/7),38rem)] gap-1.5 sm:max-h-[min(64dvh,38rem)] sm:w-[min(96vw,calc(64dvh*3/7),38rem)] sm:gap-2"
+      data-zs-board
+      className="zs-board mx-auto grid aspect-[3/7]"
       style={{
         gridTemplateColumns: `repeat(${COLS}, minmax(0, 1fr))`,
         gridTemplateRows: `repeat(${ROWS}, minmax(0, 1fr))`,
