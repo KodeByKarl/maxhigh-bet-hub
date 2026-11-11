@@ -1,0 +1,320 @@
+/* Fortune Rabbit "Moonlit Fortune": midnight violet, rose gold, amethyst. Scoped to .mf-* and [data-realms-fr]. */
+.mf-deck {
+  --mf-core: clamp(96px, 28vw, 112px);
+  --mf-rose: #e9b7a3;
+  --mf-rose-d: #b9786a;
+  --mf-ame: #a77be0;
+  --mf-night: #120a22;
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) var(--mf-core) minmax(0, 1fr);
+  align-items: center;
+  gap: 10px;
+  margin-top: 6px;
+  padding: 12px max(10px, env(safe-area-inset-right)) 8px max(10px, env(safe-area-inset-left));
+  border-radius: 28px 28px 0 0;
+  color: #f6e9f0;
+  font-family: "Inter", ui-sans-serif, system-ui, sans-serif;
+  background: linear-gradient(180deg, rgb(28 14 52 / 0.82), rgb(14 7 28 / 0.94));
+  border-top: 1px solid rgb(233 183 163 / 0.4);
+  box-shadow: 0 -10px 30px rgb(10 4 24 / 0.55);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  touch-action: manipulation;
+}
+.mf-deck button {
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+.mf-deck button:focus-visible {
+  outline: 3px solid #fff;
+  outline-offset: 2px;
+}
+.mf-deck button:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+.mf-deck span,
+.mf-deck small {
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: rgb(233 183 163 / 0.8);
+}
+.mf-deck strong {
+  font-variant-numeric: tabular-nums;
+  font-weight: 800;
+}
+
+/* status rail: slim vertical rose-gold line with the two readouts */
+.mf-rail {
+  display: grid;
+  gap: 10px;
+  min-width: 0;
+  padding-left: 10px;
+  border-left: 2px solid var(--mf-rose);
+}
+.mf-rail > div:not(.mf-util) {
+  display: grid;
+  gap: 1px;
+  min-width: 0;
+}
+.mf-rail strong {
+  font-size: 15px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.mf-rail [data-winning="true"] strong {
+  color: #ffd7c4;
+  text-shadow: 0 0 12px rgb(233 183 163 / 0.8);
+}
+
+/* lunar medallion */
+.mf-moon {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: var(--mf-core);
+  height: var(--mf-core);
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  isolation: isolate;
+  transition: transform 0.14s;
+}
+.mf-moon__ring {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  border-radius: 50%;
+  background: conic-gradient(
+    from 0deg,
+    #f7d3c2,
+    var(--mf-rose-d),
+    #fff1e8,
+    var(--mf-rose),
+    #8f5a52,
+    #f7d3c2
+  );
+  box-shadow:
+    0 0 18px rgb(167 123 224 / 0.45),
+    0 6px 18px rgb(0 0 0 / 0.5);
+  animation: mf-turn 14s linear infinite;
+}
+.mf-moon__face {
+  display: grid;
+  place-items: center;
+  align-content: center;
+  gap: 1px;
+  width: calc(100% - 11px);
+  height: calc(100% - 11px);
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at 32% 24%, rgb(255 255 255 / 0.2), transparent 40%),
+    radial-gradient(circle at 50% 60%, #4a2a86, var(--mf-night) 75%);
+  box-shadow:
+    inset 0 0 0 1px rgb(233 183 163 / 0.35),
+    inset 0 -10px 18px rgb(167 123 224 / 0.25);
+}
+.mf-moon__icon {
+  color: #ffe9dc;
+  filter: drop-shadow(0 0 6px rgb(233 183 163 / 0.9));
+  animation: mf-glow 3.2s ease-in-out infinite;
+}
+.mf-moon .mf-moon__label {
+  font-size: 17px;
+  font-weight: 900;
+  letter-spacing: 0.16em;
+  padding-left: 0.16em;
+  color: #fff1e8;
+}
+.mf-moon small {
+  color: #ffd7c4;
+  font-variant-numeric: tabular-nums;
+}
+.mf-moon:active:not(:disabled) {
+  transform: scale(0.93);
+}
+.mf-moon:active:not(:disabled) .mf-moon__face {
+  box-shadow:
+    inset 0 0 22px rgb(167 123 224 / 0.8),
+    0 0 20px rgb(233 183 163 / 0.7);
+}
+.mf-moon[data-active="true"]:not(:disabled) .mf-moon__ring {
+  animation-duration: 1.2s;
+}
+.mf-moon[data-active="true"]:not(:disabled) .mf-moon__icon {
+  animation: mf-turn 1.2s linear infinite;
+}
+.mf-moon:disabled {
+  filter: grayscale(0.85) brightness(0.6);
+}
+.mf-moon:disabled .mf-moon__ring,
+.mf-moon:disabled .mf-moon__icon {
+  animation: none;
+}
+.mf-deck .mf-moon:focus-visible {
+  outline-offset: 6px;
+}
+@keyframes mf-turn {
+  to {
+    rotate: 360deg;
+  }
+}
+@keyframes mf-glow {
+  50% {
+    opacity: 0.6;
+  }
+}
+
+/* right: bet + buy */
+.mf-right {
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+}
+.mf-bet {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+}
+.mf-bet button,
+.mf-bet__amount,
+.mf-buy,
+.mf-util__toggle,
+.mf-util__menu button {
+  min-height: 44px;
+  min-width: 44px;
+  border: 1px solid rgb(233 183 163 / 0.28);
+  border-radius: 14px;
+  background: rgb(255 255 255 / 0.05);
+}
+.mf-bet button {
+  display: grid;
+  place-items: center;
+}
+.mf-bet .mf-bet__amount {
+  grid-column: 1 / -1;
+  display: grid;
+  align-content: center;
+  justify-items: center;
+  padding: 0 6px;
+}
+.mf-bet strong,
+.mf-buy strong {
+  font-size: 14px;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.mf-buy {
+  display: grid;
+  align-content: center;
+  justify-items: center;
+  padding: 0 6px;
+  border-color: rgb(233 183 163 / 0.65);
+  background: linear-gradient(135deg, rgb(185 120 106 / 0.45), rgb(74 42 134 / 0.6));
+}
+.mf-buy--static {
+  cursor: default;
+  background: rgb(255 255 255 / 0.04);
+  border-color: rgb(233 183 163 / 0.28);
+}
+
+/* utility menu (Turbo / Auto / Info) */
+.mf-util {
+  position: relative;
+  z-index: 6;
+}
+.mf-util__toggle {
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: rgb(20 10 38 / 0.94);
+  border-color: rgb(233 183 163 / 0.6);
+}
+.mf-util__toggle[data-on="true"] {
+  box-shadow:
+    0 0 0 2px var(--mf-ame),
+    0 0 12px rgb(167 123 224 / 0.6);
+}
+.mf-util__menu {
+  position: absolute;
+  left: 0;
+  bottom: 52px;
+  display: grid;
+  gap: 6px;
+  padding: 8px;
+  border-radius: 18px;
+  background: rgb(20 10 38 / 0.97);
+  border: 1px solid rgb(233 183 163 / 0.4);
+  box-shadow: 0 10px 28px rgb(0 0 0 / 0.6);
+}
+.mf-util__menu button {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 14px;
+  font-size: 13px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+.mf-util__menu button[aria-pressed="true"] {
+  border-color: var(--mf-ame);
+  box-shadow: 0 0 10px rgb(167 123 224 / 0.55);
+}
+
+@media (max-width: 360px) {
+  .mf-deck {
+    --mf-core: 92px;
+    gap: 6px;
+  }
+  .mf-moon .mf-moon__label {
+    font-size: 15px;
+  }
+}
+@media (min-width: 700px) and (min-height: 501px) {
+  .mf-deck {
+    --mf-core: 118px;
+    max-width: 640px;
+    width: 100%;
+    margin-inline: auto;
+    border-radius: 28px;
+  }
+}
+@media (max-height: 500px) and (orientation: landscape) {
+  .mf-deck {
+    --mf-core: 84px;
+    margin-top: 2px;
+    padding-block: 6px 4px;
+  }
+}
+
+/* layout: board and deck read as one composition, centred in the free space (no bottom-pinned board, no dead bottom padding) */
+[data-realms-fr] .fr-playfield {
+  padding-bottom: max(0.25rem, env(safe-area-inset-bottom)) !important;
+}
+[data-realms-fr] .fr-playfield > div {
+  justify-content: center;
+}
+[data-realms-fr] .fr-stage {
+  flex: 0 1 auto !important;
+  padding-block: clamp(8px, 3dvh, 28px);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mf-moon__ring,
+  .mf-moon__icon {
+    animation: none !important;
+  }
+  .mf-moon {
+    transition: none;
+  }
+}
