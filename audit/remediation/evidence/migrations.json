@@ -1,0 +1,46 @@
+[
+  {
+    "database": "audit_remediation_fresh",
+    "mode": "fresh",
+    "applied": [
+      "0000_init-from-schema.sql",
+      "0001_financial_integrity.sql",
+      "0002_reward_entitlements.sql",
+      "0003_rapid_quentin_quire.sql",
+      "0004_seed_default_risk_controls.sql",
+      "0005_account_classes_and_entitlements.sql",
+      "0006_staff_accounts_only_cap.sql"
+    ],
+    "foreignKeys": 14,
+    "passed": true
+  },
+  {
+    "database": "audit_remediation_upgrade",
+    "mode": "upgrade",
+    "applied": [
+      "0001_financial_integrity.sql",
+      "0002_reward_entitlements.sql",
+      "0003_rapid_quentin_quire.sql",
+      "0004_seed_default_risk_controls.sql",
+      "0005_account_classes_and_entitlements.sql",
+      "0006_staff_accounts_only_cap.sql"
+    ],
+    "foreignKeys": 14,
+    "passed": true
+  },
+  {
+    "database": "audit_remediation_legacy_feature",
+    "mode": "legacy feature upgrade safely blocked",
+    "passed": true
+  },
+  {
+    "database": "audit_remediation_preflight_dirty",
+    "mode": "dirty data blocked by preflight",
+    "passed": true
+  },
+  {
+    "database": "audit_remediation_risk_preserved",
+    "mode": "configured risk row preserved",
+    "passed": true
+  }
+]

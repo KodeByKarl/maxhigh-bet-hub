@@ -1,0 +1,29 @@
+➜ Listening on: http://127.0.0.1:18766/
+[Deep Bass] Suspicious catch rejected {
+  userId: '1ec56540-7dd5-441f-85b1-488376a84451',
+  instanceId: 'fish-spawn-a1-805627263',
+  reason: 'unknown_instance'
+}
+➜ Listening on: http://127.0.0.1:18766/
+[POOL_CAP_CLAMP] computed win exceeded round pool — upstream math/RTP bug {
+  gameId: 'golden-panther',
+  gameName: 'Panther Peak',
+  context: 'free-spins-final',
+  bet: 5,
+  maxWinMult: 10,
+  computedWin: 2015,
+  remainingPool: 40,
+  payout: 40,
+  excess: 1975
+}
+[POOL_CAP_CLAMP] computed win exceeded round pool — upstream math/RTP bug {
+  gameId: 'golden-panther',
+  gameName: 'Panther Peak',
+  context: 'free-spins-final',
+  bet: 5,
+  maxWinMult: 10,
+  computedWin: 1000,
+  remainingPool: 40,
+  payout: 40,
+  excess: 960
+}

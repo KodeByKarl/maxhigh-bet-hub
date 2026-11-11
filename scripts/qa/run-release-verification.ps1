@@ -79,6 +79,10 @@ Step 'game-catalog-100'     $cmd.npx @('tsx', 'scripts/ci/catalog-count.ts')
 Step 'permissions-and-game-locks-e2e' $cmd.node @('scripts/qa/test-restrictions-app.mjs') 3000
 
 # ---- disposable clone of the built app for API / Buy Bonus / security / wallet checks
+# Buy Bonus / pricing / security probes need every game playable: the disposable clone app runs with the TEST-ONLY locks-off policy file
+# (lock enforcement itself is verified by the permissions-and-game-locks-e2e step above against the real release policy).
+$env:CLONE_POLICY_FILE = 'C:\Users\Keydi\maxhigh-evidence\tools\off-policy.json'
+$env:SEC_PLAYER = 'uat_player'
 Step 'clone-setup' $cmd.node @('scripts/qa/local-clone.mjs', 'setup')
 $setupOut = Get-Content "$Evidence\step-$('{0:00}' -f $steps.Count)-clone-setup.txt" -Raw -ErrorAction SilentlyContinue
 $m = [regex]::Match($setupOut, '"UAT_CREDS_FILE":"([^"]+)"')

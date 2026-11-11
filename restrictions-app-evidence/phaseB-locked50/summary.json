@@ -1,0 +1,42 @@
+{
+  "finishedUtc": "2026-11-11T00:01:31.233Z",
+  "games": 50,
+  "gamesWithPassingFunctionalRound": 0,
+  "pendingRecipes": [],
+  "checks": 50,
+  "failed": 0,
+  "byPhase": {
+    "locked": {
+      "total": 50,
+      "failed": 0
+    }
+  },
+  "balances": [
+    {
+      "player": "uat_player",
+      "start": 96310.5,
+      "end": 96310.5
+    },
+    {
+      "player": "uat_player2",
+      "start": 95461.29,
+      "end": 95461.29
+    },
+    {
+      "player": "uat_player3",
+      "start": 96330.02,
+      "end": 96330.02
+    },
+    {
+      "player": "uat_player4",
+      "start": 98700.71,
+      "end": 98700.71
+    },
+    {
+      "player": "uat_player5",
+      "start": 96423.69,
+      "end": 96423.69
+    }
+  ],
+  "failures": []
+}

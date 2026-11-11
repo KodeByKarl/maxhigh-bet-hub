@@ -1,0 +1,69 @@
+{
+ "version": 1,
+ "environment": "uat",
+ "gameLocks": {
+  "enforcement": "on",
+  "lockedGames": [
+   "constellation-keep",
+   "cinder-crown",
+   "magma-anvil",
+   "obsidian-oracle",
+   "salamander-sun",
+   "ashfall-citadel",
+   "glacier-glyphs",
+   "northwind-narwhal",
+   "snowglobe-sorcery",
+   "frostbound-fjord",
+   "polar-prism",
+   "orchid-oasis",
+   "firefly-hollow",
+   "canopy-kingdom",
+   "monsoon-grove",
+   "hummingbird-haven",
+   "babylon-gardens",
+   "persian-peacock",
+   "celtic-clover-court",
+   "shogun-sakura",
+   "longship-raiders",
+   "clockwork-cache",
+   "brass-zeppelin",
+   "tesla-tower",
+   "gearspring-gala",
+   "steamforge-express",
+   "alchemist-atelier",
+   "crystal-grimoire",
+   "tarot-twilight",
+   "potion-parlor",
+   "hexbound-library",
+   "cosmic-koi",
+   "saturn-rings",
+   "rocket-rendezvous",
+   "asteroid-miners",
+   "nebula-nomads",
+   "stag-spirit-glade",
+   "tortoise-treasury",
+   "crane-pavilion",
+   "thunderbird-totem",
+   "monarch-meadow",
+   "octopus-armada",
+   "turtle-tide",
+   "whale-war",
+   "tongits-arena",
+   "lucky-drop",
+   "color-game-pro",
+   "lucky-nine-plus",
+   "drop-deluxe",
+   "poker-showdown"
+  ]
+ },
+ "clientAccounts": {
+  "enforcement": "on",
+  "maxClientAccounts": 2
+ },
+ "grantKeys": [
+  {
+   "id": "test-key-1",
+   "publicKeyPem": "-----BEGIN PUBLIC KEY-----\nMCowBQYDK2VwAyEAXg4OoQF3pjIGkHB5ohv4+2DA7DiNR8OO/5HiLtu9u5s=\n-----END PUBLIC KEY-----\n"
+  }
+ ]
+}

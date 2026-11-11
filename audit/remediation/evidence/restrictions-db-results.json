@@ -1,0 +1,79 @@
+{
+ "at": "2026-11-11T00:01:15.014Z",
+ "total": 18,
+ "failed": 0,
+ "results": [
+  {
+   "name": "0005 applies on a pre-0005 database with users, preserving every existing user row byte-for-byte",
+   "ok": true
+  },
+  {
+   "name": "superadmin classified admin, players default to client (QA classification is an explicit developer step)",
+   "ok": true
+  },
+  {
+   "name": "restrictions ship INACTIVE: enforced = no, max = 2, trigger does not block inserts",
+   "ok": true
+  },
+  {
+   "name": "account_class cannot be changed without the developer session flag",
+   "ok": true
+  },
+  {
+   "name": "developer classification step (session flag) marks the 5 synthetic players qa without touching any other column",
+   "ok": true
+  },
+  {
+   "name": "when enforced: first and second client accounts are allowed, the third is rejected",
+   "ok": true
+  },
+  {
+   "name": "ordinary PLAYER accounts are never limited and never counted, even when the staff cap is full",
+   "ok": true
+  },
+  {
+   "name": "promoting a player to a staff role is refused while the staff cap is full, and the role stays unchanged",
+   "ok": true
+  },
+  {
+   "name": "existing admin and qa accounts keep working (rows intact, balances untouched) while the cap is enforced",
+   "ok": true
+  },
+  {
+   "name": "a disabled (admin-locked) client frees a slot; re-enabling it when full is rejected",
+   "ok": true
+  },
+  {
+   "name": "lifting the cap (limit raised by a developer step) allows another client",
+   "ok": true
+  },
+  {
+   "name": "trigger-maintained counter equals the real number of active client accounts after inserts, locks, unlocks and deletes",
+   "ok": true
+  },
+  {
+   "name": "20 concurrent client creations on separate connections -> exactly 2 succeed, the rest are rejected by the cap",
+   "ok": true
+  },
+  {
+   "name": "0006 on a 0005 database: recount excludes players, nothing else changes, still inactive",
+   "ok": true
+  },
+  {
+   "name": "entitlement_grants rejects a replayed nonce",
+   "ok": true
+  },
+  {
+   "name": "executing every 0005 statement a second and third time succeeds and changes nothing (idempotent)",
+   "ok": true
+  },
+  {
+   "name": "a migration that failed midway (tables created, triggers missing) converges when simply re-run",
+   "ok": true
+  },
+  {
+   "name": "rollback (drop triggers, tables, column) restores the pre-0005 shape without altering user data",
+   "ok": true
+  }
+ ]
+}

@@ -1,0 +1,97 @@
+[
+  {
+    "name": "AUD-001 actual server-function role/target matrix",
+    "status": "PASSED",
+    "ms": 153
+  },
+  {
+    "name": "AUD-030/013 anonymous/cross-user seeds, concurrent rotation and uniqueness",
+    "status": "PASSED",
+    "ms": 41
+  },
+  {
+    "name": "AUD-002/026 concurrent transfer conservation, durable retry and key mismatch",
+    "status": "PASSED",
+    "ms": 28
+  },
+  {
+    "name": "AUD-006/024 concurrent reservations and once-only withdrawal approval",
+    "status": "PASSED",
+    "ms": 46
+  },
+  {
+    "name": "AUD-004 weekly cap rejects approval atomically and preserves reservation",
+    "status": "PASSED",
+    "ms": 17
+  },
+  {
+    "name": "AUD-033 durable fishing room survives restart, enforces ownership and rolls back failure",
+    "status": "PASSED",
+    "ms": 401
+  },
+  {
+    "name": "AUD-012 actual paid HTTP round replays from committed seed and stored receipt",
+    "status": "PASSED",
+    "ms": 1079
+  },
+  {
+    "name": "AUD-007/008 disabled games and fractional zero-cost wagers reject without debit",
+    "status": "PASSED",
+    "ms": 15
+  },
+  {
+    "name": "AUD-003/008 existing paid feature survives rejected buy and exposure limits apply",
+    "status": "PASSED",
+    "ms": 23
+  },
+  {
+    "name": "Buy Bonus awards exactly 10 free spins: any other quantity is refused with no debit and no session",
+    "status": "PASSED",
+    "ms": 37
+  },
+  {
+    "name": "AUD-004/005 maintenance and absent financial controls fail closed",
+    "status": "PASSED",
+    "ms": 48
+  },
+  {
+    "name": "AUD-004/025/036 actual feature settlement honors combined cap, risk limit and rollback",
+    "status": "PASSED",
+    "ms": 29
+  },
+  {
+    "name": "AUD-032 jackpot awards claim pool once across different superadmins",
+    "status": "PASSED",
+    "ms": 43
+  },
+  {
+    "name": "AUD-011 reward ownership and concurrent durable redemption",
+    "status": "PASSED",
+    "ms": 19
+  },
+  {
+    "name": "AUD-015 support scope and resolved conversation retention",
+    "status": "PASSED",
+    "ms": 19
+  },
+  {
+    "name": "AUD-010 persisted carousel CRUD and permission boundary",
+    "status": "PASSED",
+    "ms": 40
+  },
+  {
+    "name": "AUD-014 login cooldown is bounded and does not revoke existing sessions",
+    "status": "PASSED",
+    "ms": 32
+  },
+  {
+    "name": "AUD-016/029 password reset revokes sessions and never exposes password hashes in audit",
+    "status": "PASSED",
+    "ms": 52
+  },
+  {
+    "name": "AUD-017 sensitive RPC responses use no-store and CSP and cross-site requests reject",
+    "status": "PASSED",
+    "ms": 26
+  }
+]

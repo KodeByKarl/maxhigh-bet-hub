@@ -1,0 +1,58 @@
+{
+  "finishedUtc": "2026-11-11T00:01:25.614Z",
+  "games": 100,
+  "gamesWithPassingFunctionalRound": 100,
+  "pendingRecipes": [],
+  "checks": 927,
+  "failed": 0,
+  "byPhase": {
+    "functional": {
+      "total": 317,
+      "failed": 0
+    },
+    "negative": {
+      "total": 500,
+      "failed": 0
+    },
+    "idempotency": {
+      "total": 100,
+      "failed": 0
+    },
+    "recovery": {
+      "total": 5,
+      "failed": 0
+    },
+    "concurrency": {
+      "total": 5,
+      "failed": 0
+    }
+  },
+  "balances": [
+    {
+      "player": "uat_player",
+      "start": 100000,
+      "end": 97373.17
+    },
+    {
+      "player": "uat_player2",
+      "start": 100000,
+      "end": 97165.88
+    },
+    {
+      "player": "uat_player3",
+      "start": 100000,
+      "end": 96981.91
+    },
+    {
+      "player": "uat_player4",
+      "start": 100000,
+      "end": 99451.1
+    },
+    {
+      "player": "uat_player5",
+      "start": 100000,
+      "end": 97861.19
+    }
+  ],
+  "failures": []
+}

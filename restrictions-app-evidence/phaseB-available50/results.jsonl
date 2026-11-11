@@ -1,0 +1,465 @@
+{"game":"golden-panther","phase":"functional","bet":0.2,"ok":true,"checks":{"balanceArithmetic":true,"betRowsEqualWager":true,"noNegativeBalance":true,"resultBalanceMatches":true,"onlyKnownRowTypes":true,"winRowsMatchResult":true},"win":0,"feature":0,"newRows":1,"detail":""}
+{"game":"godly-gates","phase":"functional","bet":0.2,"ok":true,"checks":{"balanceArithmetic":true,"betRowsEqualWager":true,"noNegativeBalance":true,"resultBalanceMatches":true,"onlyKnownRowTypes":true,"winRowsMatchResult":true},"win":0,"feature":0,"newRows":1,"detail":""}
+{"game":"olympus-wrath","phase":"functional","bet":0.2,"ok":true,"checks":{"balanceArithmetic":true,"betRowsEqualWager":true,"noNegativeBalance":true,"resultBalanceMatches":true,"onlyKnownRowTypes":true,"winRowsMatchResult":true},"win":0.23,"feature":0,"newRows":2,"detail":""}
+{"game":"buffalo-reign","phase":"functional","bet":0.2,"ok":true,"checks":{"balanceArithmetic":true,"betRowsEqualWager":true,"noNegativeBalance":true,"resultBalanceMatches":true,"onlyKnownRowTypes":true,"winRowsMatchResult":true},"win":0.44,"feature":0,"newRows":2,"detail":""}
+{"game":"enchanted-grove","phase":"functional","bet":0.2,"ok":true,"checks":{"balanceArithmetic":true,"betRowsEqualWager":true,"noNegativeBalance":true,"resultBalanceMatches":true,"onlyKnownRowTypes":true,"winRowsMatchResult":true},"win":0.2,"feature":0,"newRows":2,"detail":""}
+{"game":"golden-panther","phase":"functional","bet":1,"ok":true,"checks":{"balanceArithmetic":true,"betRowsEqualWager":true,"noNegativeBalance":true,"resultBalanceMatches":true,"onlyKnownRowTypes":true,"winRowsMatchResult":true},"win":0,"feature":0,"newRows":1,"detail":""}
+{"game":"godly-gates","phase":"functional","bet":1,"ok":true,"checks":{"balanceArithmetic":true,"betRowsEqualWager":true,"noNegativeBalance":true,"resultBalanceMatches":true,"onlyKnownRowTypes":true,"winRowsMatchResult":true},"win":0,"feature":0,"newRows":1,"detail":""}
+{"game":"olympus-wrath","phase":"functional","bet":1,"ok":true,"checks":{"balanceArithmetic":true,"betRowsEqualWager":true,"noNegativeBalance":true,"resultBalanceMatches":true,"onlyKnownRowTypes":true,"winRowsMatchResult":true},"win":0,"feature":0,"newRows":1,"detail":""}
+{"game":"buffalo-reign","phase":"functional","bet":1,"ok":true,"checks":{"balanceArithmetic":true,"betRowsEqualWager":true,"noNegativeBalance":true,"resultBalanceMatches":true,"onlyKnownRowTypes":true,"winRowsMatchResult":true},"win":4.8,"feature":0,"newRows":2,"detail":""}
+{"game":"enchanted-grove","phase":"functional","bet":1,"ok":true,"checks":{"balanceArithmetic":true,"betRowsEqualWager":true,"noNegativeBalance":true,"resultBalanceMatches":true,"onlyKnownRowTypes":true,"winRowsMatchResult":true},"win":0,"feature":0,"newRows":1,"detail":""}
+{"game":"golden-panther","phase":"functional","bet":200,"ok":true,"checks":{"balanceArithmetic":true,"betRowsEqualWager":true,"noNegativeBalance":true,"resultBalanceMatches":true,"onlyKnownRowTypes":true,"winRowsMatchResult":true},"win":0,"feature":0,"newRows":1,"detail":""}
+{"game":"godly-gates","phase":"functional","bet":100,"ok":true,"checks":{"balanceArithmetic":true,"betRowsEqualWager":true,"noNegativeBalance":true,"resultBalanceMatches":true,"onlyKnownRowTypes":true,"winRowsMatchResult":true},"win":0,"feature":0,"newRows":1,"detail":""}
+{"game":"golden-panther","phase":"negative","case":"zero","ok":true,"detail":"[\n  {\n    \"origin\": \"number\",\n    \"code\": \"too_small\",\n    \"minimum\": 0,\n    \"in"}
+{"game":"olympus-wrath","phase":"functional","bet":100,"ok":true,"checks":{"balanceArithmetic":true,"betRowsEqualWager":true,"noNegativeBalance":true,"resultBalanceMatches":true,"onlyKnownRowTypes":true,"winRowsMatchResult":true},"win":0,"feature":0,"newRows":1,"detail":""}
+{"game":"godly-gates","phase":"negative","case":"zero","ok":true,"detail":"[\n  {\n    \"origin\": \"number\",\n    \"code\": \"too_small\",\n    \"minimum\": 0,\n    \"in"}
+{"game":"golden-panther","phase":"negative","case":"negative","ok":true,"detail":"[\n  {\n    \"origin\": \"number\",\n    \"code\": \"too_small\",\n    \"minimum\": 0,\n    \"in"}
+{"game":"olympus-wrath","phase":"negative","case":"zero","ok":true,"detail":"[\n  {\n    \"origin\": \"number\",\n    \"code\": \"too_small\",\n    \"minimum\": 0,\n    \"in"}
+{"game":"godly-gates","phase":"negative","case":"negative","ok":true,"detail":"[\n  {\n    \"origin\": \"number\",\n    \"code\": \"too_small\",\n    \"minimum\": 0,\n    \"in"}
+{"game":"buffalo-reign","phase":"functional","bet":100,"ok":true,"checks":{"balanceArithmetic":true,"betRowsEqualWager":true,"noNegativeBalance":true,"resultBalanceMatches":true,"onlyKnownRowTypes":true,"winRowsMatchResult":true},"win":0,"feature":0,"newRows":1,"detail":""}
+{"game":"golden-panther","phase":"negative","case":"fraction-of-a-cent","ok":true,"detail":"Amount must be a valid positive whole number of cents"}
+{"game":"olympus-wrath","phase":"negative","case":"negative","ok":true,"detail":"[\n  {\n    \"origin\": \"number\",\n    \"code\": \"too_small\",\n    \"minimum\": 0,\n    \"in"}
+{"game":"buffalo-reign","phase":"negative","case":"zero","ok":true,"detail":"[\n  {\n    \"origin\": \"number\",\n    \"code\": \"too_small\",\n    \"minimum\": 0,\n    \"in"}
+{"game":"godly-gates","phase":"negative","case":"fraction-of-a-cent","ok":true,"detail":"Amount must be a valid positive whole number of cents"}
+{"game":"enchanted-grove","phase":"functional","bet":100,"ok":true,"checks":{"balanceArithmetic":true,"betRowsEqualWager":true,"noNegativeBalance":true,"resultBalanceMatches":true,"onlyKnownRowTypes":true,"winRowsMatchResult":true},"win":0,"feature":0,"newRows":1,"detail":""}
+{"game":"golden-panther","phase":"negative","case":"above-game-max","ok":true,"detail":"Bet must be between 0.2 and 200"}
+{"game":"buffalo-reign","phase":"negative","case":"negative","ok":true,"detail":"[\n  {\n    \"origin\": \"number\",\n    \"code\": \"too_small\",\n    \"minimum\": 0,\n    \"in"}
+{"game":"olympus-wrath","phase":"negative","case":"fraction-of-a-cent","ok":true,"detail":"Amount must be a valid positive whole number of cents"}
+{"game":"enchanted-grove","phase":"negative","case":"zero","ok":true,"detail":"[\n  {\n    \"origin\": \"number\",\n    \"code\": \"too_small\",\n    \"minimum\": 0,\n    \"in"}
+{"game":"godly-gates","phase":"negative","case":"above-game-max","ok":true,"detail":"Bet must be between 0.2 and 100"}
+{"game":"buffalo-reign","phase":"negative","case":"fraction-of-a-cent","ok":true,"detail":"Amount must be a valid positive whole number of cents"}
+{"game":"enchanted-grove","phase":"negative","case":"negative","ok":true,"detail":"[\n  {\n    \"origin\": \"number\",\n    \"code\": \"too_small\",\n    \"minimum\": 0,\n    \"in"}
+{"game":"olympus-wrath","phase":"negative","case":"above-game-max","ok":true,"detail":"Bet must be between 0.2 and 100"}
+{"game":"golden-panther","phase":"negative","case":"below-game-min","ok":true,"detail":"Bet must be between 0.2 and 200"}
+{"game":"enchanted-grove","phase":"negative","case":"fraction-of-a-cent","ok":true,"detail":"Amount must be a valid positive whole number of cents"}
+{"game":"godly-gates","phase":"negative","case":"below-game-min","ok":true,"detail":"Bet must be between 0.2 and 100"}
+{"game":"buffalo-reign","phase":"negative","case":"above-game-max","ok":true,"detail":"Bet must be between 0.2 and 100"}
+{"game":"olympus-wrath","phase":"negative","case":"below-game-min","ok":true,"detail":"Bet must be between 0.2 and 100"}
+{"game":"enchanted-grove","phase":"negative","case":"above-game-max","ok":true,"detail":"Bet must be between 0.2 and 100"}
+{"game":"buffalo-reign","phase":"negative","case":"below-game-min","ok":true,"detail":"Bet must be between 0.2 and 100"}
+{"game":"enchanted-grove","phase":"negative","case":"below-game-min","ok":true,"detail":"Bet must be between 0.2 and 100"}
+{"game":"golden-panther","phase":"idempotency","ok":true,"detail":"bet rows after same-key replay: 1"}
+{"game":"godly-gates","phase":"idempotency","ok":true,"detail":"bet rows after same-key replay: 1"}
+{"game":"olympus-wrath","phase":"idempotency","ok":true,"detail":"bet rows after same-key replay: 1"}
+{"game":"fire-spike","phase":"functional","bet":0.1,"ok":true,"checks":{"balanceArithmetic":true,"betRowsEqualWager":true,"noNegativeBalance":true,"resultBalanceMatches":true,"onlyKnownRowTypes":true,"winRowsMatchResult":true},"win":0,"feature":0,"newRows":1,"detail":""}
+{"game":"buffalo-reign","phase":"idempotency","ok":true,"detail":"bet rows after same-key replay: 1"}
+{"game":"fortune-ox","phase":"functional","bet":0.1,"ok":true,"checks":{"balanceArithmetic":true,"betRowsEqualWager":true,"noNegativeBalance":true,"resultBalanceMatches":true,"onlyKnownRowTypes":true,"winRowsMatchResult":true},"win":0,"feature":0,"newRows":1,"detail":""}
+{"game":"fortune-tiger","phase":"functional","bet":0.1,"ok":true,"checks":{"balanceArithmetic":true,"betRowsEqualWager":true,"noNegativeBalance":true,"resultBalanceMatches":true,"onlyKnownRowTypes":true,"winRowsMatchResult":true},"win":0,"feature":0,"newRows":1,"detail":""}
+{"game":"fire-spike","phase":"functional","bet":1,"ok":true,"checks":{"balanceArithmetic":true,"betRowsEqualWager":true,"noNegativeBalance":true,"resultBalanceMatches":true,"onlyKnownRowTypes":true,"winRowsMatchResult":true},"win":0.7,"feature":0,"newRows":2,"detail":""}
+{"game":"cleopatra-gold","phase":"functional","bet":0.2,"ok":true,"checks":{"balanceArithmetic":true,"betRowsEqualWager":true,"noNegativeBalance":true,"resultBalanceMatches":true,"onlyKnownRowTypes":true,"winRowsMatchResult":true},"win":0,"feature":0,"newRows":1,"detail":""}
+{"game":"enchanted-grove","phase":"idempotency","ok":true,"detail":"bet rows after same-key replay: 1"}
+{"game":"fortune-ox","phase":"functional","bet":1,"ok":true,"checks":{"balanceArithmetic":true,"betRowsEqualWager":true,"noNegativeBalance":true,"resultBalanceMatches":true,"onlyKnownRowTypes":true,"winRowsMatchResult":true},"win":1.45,"feature":0,"newRows":2,"detail":""}
+{"game":"fortune-tiger","phase":"functional","bet":1,"ok":true,"checks":{"balanceArithmetic":true,"betRowsEqualWager":true,"noNegativeBalance":true,"resultBalanceMatches":true,"onlyKnownRowTypes":true,"winRowsMatchResult":true},"win":0,"feature":0,"newRows":1,"detail":""}
+{"game":"fire-spike","phase":"functional","bet":50,"ok":true,"checks":{"balanceArithmetic":true,"betRowsEqualWager":true,"noNegativeBalance":true,"resultBalanceMatches":true,"onlyKnownRowTypes":true,"winRowsMatchResult":true},"win":470,"feature":0,"newRows":2,"detail":""}
+{"game":"cleopatra-gold","phase":"functional","bet":1,"ok":true,"checks":{"balanceArithmetic":true,"betRowsEqualWager":true,"noNegativeBalance":true,"resultBalanceMatches":true,"onlyKnownRowTypes":true,"winRowsMatchResult":true},"win":0,"feature":0,"newRows":1,"detail":""}
+{"game":"fire-spike","phase":"negative","case":"zero","ok":true,"detail":"[\n  {\n    \"origin\": \"number\",\n    \"code\": \"too_small\",\n    \"minimum\": 0,\n    \"in"}
+{"game":"fire-spike","phase":"negative","case":"negative","ok":true,"detail":"[\n  {\n    \"origin\": \"number\",\n    \"code\": \"too_small\",\n    \"minimum\": 0,\n    \"in"}
+{"game":"fortune-rabbit","phase":"functional","bet":0.1,"ok":true,"checks":{"balanceArithmetic":true,"betRowsEqualWager":true,"noNegativeBalance":true,"resultBalanceMatches":true,"onlyKnownRowTypes":true,"winRowsMatchResult":true},"win":0.14,"feature":0,"newRows":2,"detail":""}
+{"game":"fire-spike","phase":"negative","case":"fraction-of-a-cent","ok":true,"detail":"Amount must be a valid positive whole number of cents"}
+{"game":"fortune-ox","phase":"functional","bet":100,"ok":true,"checks":{"balanceArithmetic":true,"betRowsEqualWager":true,"noNegativeBalance":true,"resultBalanceMatches":true,"onlyKnownRowTypes":true,"winRowsMatchResult":true},"win":0,"feature":0,"newRows":1,"detail":""}
+{"game":"fortune-ox","phase":"negative","case":"zero","ok":true,"detail":"[\n  {\n    \"origin\": \"number\",\n    \"code\": \"too_small\",\n    \"minimum\": 0,\n    \"in"}
+{"game":"fortune-tiger","phase":"functional","bet":100,"ok":true,"checks":{"balanceArithmetic":true,"betRowsEqualWager":true,"noNegativeBalance":true,"resultBalanceMatches":true,"onlyKnownRowTypes":true,"winRowsMatchResult":true},"win":0,"feature":0,"newRows":1,"detail":""}
+{"game":"fortune-ox","phase":"negative","case":"negative","ok":true,"detail":"[\n  {\n    \"origin\": \"number\",\n    \"code\": \"too_small\",\n    \"minimum\": 0,\n    \"in"}
+{"game":"cleopatra-gold","phase":"functional","bet":100,"ok":true,"checks":{"balanceArithmetic":true,"betRowsEqualWager":true,"noNegativeBalance":true,"resultBalanceMatches":true,"onlyKnownRowTypes":true,"winRowsMatchResult":true},"win":0,"feature":0,"newRows":1,"detail":""}
+{"game":"fortune-tiger","phase":"negative","case":"zero","ok":true,"detail":"[\n  {\n    \"origin\": \"number\",\n    \"code\": \"too_small\",\n    \"minimum\": 0,\n    \"in"}
+{"game":"fortune-ox","phase":"negative","case":"fraction-of-a-cent","ok":true,"detail":"Amount must be a valid positive whole number of cents"}
+{"game":"cleopatra-gold","phase":"negative","case":"zero","ok":true,"detail":"[\n  {\n    \"origin\": \"number\",\n    \"code\": \"too_small\",\n    \"minimum\": 0,\n    \"in"}
+{"game":"fortune-tiger","phase":"negative","case":"negative","ok":true,"detail":"[\n  {\n    \"origin\": \"number\",\n    \"code\": \"too_small\",\n    \"minimum\": 0,\n    \"in"}
+{"game":"fortune-rabbit","phase":"functional","bet":1,"ok":true,"checks":{"balanceArithmetic":true,"betRowsEqualWager":true,"noNegativeBalance":true,"resultBalanceMatches":true,"onlyKnownRowTypes":true,"winRowsMatchResult":true},"win":0,"feature":0,"newRows":1,"detail":""}
+{"game":"fire-spike","phase":"negative","case":"above-game-max","ok":true,"detail":"Bet must be between 0.1 and 50"}
+{"game":"cleopatra-gold","phase":"negative","case":"negative","ok":true,"detail":"[\n  {\n    \"origin\": \"number\",\n    \"code\": \"too_small\",\n    \"minimum\": 0,\n    \"in"}
+{"game":"fortune-tiger","phase":"negative","case":"fraction-of-a-cent","ok":true,"detail":"Amount must be a valid positive whole number of cents"}
+{"game":"fortune-ox","phase":"negative","case":"above-game-max","ok":true,"detail":"Bet must be between 0.1 and 100"}
+{"game":"cleopatra-gold","phase":"negative","case":"fraction-of-a-cent","ok":true,"detail":"Amount must be a valid positive whole number of cents"}
+{"game":"fortune-rabbit","phase":"functional","bet":100,"ok":true,"checks":{"balanceArithmetic":true,"betRowsEqualWager":true,"noNegativeBalance":true,"resultBalanceMatches":true,"onlyKnownRowTypes":true,"winRowsMatchResult":true},"win":0,"feature":0,"newRows":1,"detail":""}
+{"game":"fire-spike","phase":"negative","case":"below-game-min","ok":true,"detail":"Bet must be between 0.1 and 50"}
+{"game":"fortune-tiger","phase":"negative","case":"above-game-max","ok":true,"detail":"Bet must be between 0.1 and 100"}
+{"game":"fortune-rabbit","phase":"negative","case":"zero","ok":true,"detail":"[\n  {\n    \"origin\": \"number\",\n    \"code\": \"too_small\",\n    \"minimum\": 0,\n    \"in"}
+{"game":"fortune-ox","phase":"negative","case":"below-game-min","ok":true,"detail":"Bet must be between 0.1 and 100"}
+{"game":"cleopatra-gold","phase":"negative","case":"above-game-max","ok":true,"detail":"Bet must be between 0.2 and 100"}
+{"game":"fortune-rabbit","phase":"negative","case":"negative","ok":true,"detail":"[\n  {\n    \"origin\": \"number\",\n    \"code\": \"too_small\",\n    \"minimum\": 0,\n    \"in"}
+{"game":"fortune-tiger","phase":"negative","case":"below-game-min","ok":true,"detail":"Bet must be between 0.1 and 100"}
+{"game":"fortune-rabbit","phase":"negative","case":"fraction-of-a-cent","ok":true,"detail":"Amount must be a valid positive whole number of cents"}
+{"game":"fire-spike","phase":"idempotency","ok":true,"detail":"bet rows after same-key replay: 1"}
+{"game":"cleopatra-gold","phase":"negative","case":"below-game-min","ok":true,"detail":"Bet must be between 0.2 and 100"}
+{"game":"fortune-rabbit","phase":"negative","case":"above-game-max","ok":true,"detail":"Bet must be between 0.1 and 100"}
+{"game":"fortune-ox","phase":"idempotency","ok":true,"detail":"bet rows after same-key replay: 1"}
+{"game":"lucky-neko","phase":"functional","bet":0.1,"ok":true,"checks":{"balanceArithmetic":true,"betRowsEqualWager":true,"noNegativeBalance":true,"resultBalanceMatches":true,"onlyKnownRowTypes":true,"winRowsMatchResult":true},"win":0,"feature":0,"newRows":1,"detail":""}
+{"game":"fortune-rabbit","phase":"negative","case":"below-game-min","ok":true,"detail":"Bet must be between 0.1 and 100"}
+{"game":"fortune-tiger","phase":"idempotency","ok":true,"detail":"bet rows after same-key replay: 1"}
+{"game":"fortune-mouse","phase":"functional","bet":0.1,"ok":true,"checks":{"balanceArithmetic":true,"betRowsEqualWager":true,"noNegativeBalance":true,"resultBalanceMatches":true,"onlyKnownRowTypes":true,"winRowsMatchResult":true},"win":0,"feature":0,"newRows":1,"detail":""}
+{"game":"cleopatra-gold","phase":"idempotency","ok":true,"detail":"bet rows after same-key replay: 1"}
+{"game":"lucky-neko","phase":"functional","bet":1,"ok":true,"checks":{"balanceArithmetic":true,"betRowsEqualWager":true,"noNegativeBalance":true,"resultBalanceMatches":true,"onlyKnownRowTypes":true,"winRowsMatchResult":true},"win":0,"feature":0,"newRows":1,"detail":""}
+{"game":"prosperity-lion","phase":"functional","bet":0.1,"ok":true,"checks":{"balanceArithmetic":true,"betRowsEqualWager":true,"noNegativeBalance":true,"resultBalanceMatches":true,"onlyKnownRowTypes":true,"winRowsMatchResult":true},"win":0,"feature":0,"newRows":1,"detail":""}
+{"game":"fortune-mouse","phase":"functional","bet":1,"ok":true,"checks":{"balanceArithmetic":true,"betRowsEqualWager":true,"noNegativeBalance":true,"resultBalanceMatches":true,"onlyKnownRowTypes":true,"winRowsMatchResult":true},"win":0,"feature":0,"newRows":1,"detail":""}
+{"game":"zeus-strike","phase":"functional","bet":0.2,"ok":true,"checks":{"balanceArithmetic":true,"betRowsEqualWager":true,"noNegativeBalance":true,"resultBalanceMatches":true,"onlyKnownRowTypes":true,"winRowsMatchResult":true},"win":0,"feature":0,"newRows":1,"detail":""}
+{"game":"lucky-neko","phase":"functional","bet":100,"ok":true,"checks":{"balanceArithmetic":true,"betRowsEqualWager":true,"noNegativeBalance":true,"resultBalanceMatches":true,"onlyKnownRowTypes":true,"winRowsMatchResult":true},"win":0,"feature":0,"newRows":1,"detail":""}
+{"game":"fortune-rabbit","phase":"idempotency","ok":true,"detail":"bet rows after same-key replay: 1"}
+{"game":"lucky-neko","phase":"negative","case":"zero","ok":true,"detail":"[\n  {\n    \"origin\": \"number\",\n    \"code\": \"too_small\",\n    \"minimum\": 0,\n    \"in"}
+{"game":"prosperity-lion","phase":"functional","bet":1,"ok":true,"checks":{"balanceArithmetic":true,"betRowsEqualWager":true,"noNegativeBalance":true,"resultBalanceMatches":true,"onlyKnownRowTypes":true,"winRowsMatchResult":true},"win":0,"feature":0,"newRows":1,"detail":""}
+{"game":"lucky-neko","phase":"negative","case":"negative","ok":true,"detail":"[\n  {\n    \"origin\": \"number\",\n    \"code\": \"too_small\",\n    \"minimum\": 0,\n    \"in"}
+{"game":"fortune-mouse","phase":"functional","bet":100,"ok":true,"checks":{"balanceArithmetic":true,"betRowsEqualWager":true,"noNegativeBalance":true,"resultBalanceMatches":true,"onlyKnownRowTypes":true,"winRowsMatchResult":true},"win":0,"feature":0,"newRows":1,"detail":""}
+{"game":"fortune-mouse","phase":"negative","case":"zero","ok":true,"detail":"[\n  {\n    \"origin\": \"number\",\n    \"code\": \"too_small\",\n    \"minimum\": 0,\n    \"in"}
+{"game":"lucky-neko","phase":"negative","case":"fraction-of-a-cent","ok":true,"detail":"Amount must be a valid positive whole number of cents"}
+{"game":"fortune-mouse","phase":"negative","case":"negative","ok":true,"detail":"[\n  {\n    \"origin\": \"number\",\n    \"code\": \"too_small\",\n    \"minimum\": 0,\n    \"in"}
+{"game":"zeus-strike","phase":"functional","bet":1,"ok":true,"checks":{"balanceArithmetic":true,"betRowsEqualWager":true,"noNegativeBalance":true,"resultBalanceMatches":true,"onlyKnownRowTypes":true,"winRowsMatchResult":true},"win":0.65,"feature":0,"newRows":2,"detail":""}
+{"game":"coin-volcano","phase":"functional","bet":0.1,"ok":true,"checks":{"balanceArithmetic":true,"betRowsEqualWager":true,"noNegativeBalance":true,"resultBalanceMatches":true,"onlyKnownRowTypes":true,"winRowsMatchResult":true},"win":0,"feature":0,"newRows":1,"detail":""}
+{"game":"fortune-mouse","phase":"negative","case":"fraction-of-a-cent","ok":true,"detail":"Amount must be a valid positive whole number of cents"}
+{"game":"prosperity-lion","phase":"functional","bet":100,"ok":true,"checks":{"balanceArithmetic":true,"betRowsEqualWager":true,"noNegativeBalance":true,"resultBalanceMatches":true,"onlyKnownRowTypes":true,"winRowsMatchResult":true},"win":0,"feature":0,"newRows":1,"detail":""}
+{"game":"lucky-neko","phase":"negative","case":"above-game-max","ok":true,"detail":"Bet must be between 0.1 and 100"}
+{"game":"prosperity-lion","phase":"negative","case":"zero","ok":true,"detail":"[\n  {\n    \"origin\": \"number\",\n    \"code\": \"too_small\",\n    \"minimum\": 0,\n    \"in"}
+{"game":"zeus-strike","phase":"functional","bet":100,"ok":true,"checks":{"balanceArithmetic":true,"betRowsEqualWager":true,"noNegativeBalance":true,"resultBalanceMatches":true,"onlyKnownRowTypes":true,"winRowsMatchResult":true},"win":0,"feature":0,"newRows":1,"detail":""}
+{"game":"prosperity-lion","phase":"negative","case":"negative","ok":true,"detail":"[\n  {\n    \"origin\": \"number\",\n    \"code\": \"too_small\",\n    \"minimum\": 0,\n    \"in"}
+{"game":"coin-volcano","phase":"functional","bet":1,"ok":true,"checks":{"balanceArithmetic":true,"betRowsEqualWager":true,"noNegativeBalance":true,"resultBalanceMatches":true,"onlyKnownRowTypes":true,"winRowsMatchResult":true},"win":0,"feature":0,"newRows":1,"detail":""}
+{"game":"zeus-strike","phase":"negative","case":"zero","ok":true,"detail":"[\n  {\n    \"origin\": \"number\",\n    \"code\": \"too_small\",\n    \"minimum\": 0,\n    \"in"}
+{"game":"fortune-mouse","phase":"negative","case":"above-game-max","ok":true,"detail":"Bet must be between 0.1 and 100"}
+{"game":"prosperity-lion","phase":"negative","case":"fraction-of-a-cent","ok":true,"detail":"Amount must be a valid positive whole number of cents"}
+{"game":"lucky-neko","phase":"negative","case":"below-game-min","ok":true,"detail":"Bet must be between 0.1 and 100"}
+{"game":"zeus-strike","phase":"negative","case":"negative","ok":true,"detail":"[\n  {\n    \"origin\": \"number\",\n    \"code\": \"too_small\",\n    \"minimum\": 0,\n    \"in"}
+{"game":"zeus-strike","phase":"negative","case":"fraction-of-a-cent","ok":true,"detail":"Amount must be a valid positive whole number of cents"}
+{"game":"coin-volcano","phase":"functional","bet":50,"ok":true,"checks":{"balanceArithmetic":true,"betRowsEqualWager":true,"noNegativeBalance":true,"resultBalanceMatches":true,"onlyKnownRowTypes":true,"winRowsMatchResult":true},"win":0,"feature":0,"newRows":1,"detail":""}
+{"game":"fortune-mouse","phase":"negative","case":"below-game-min","ok":true,"detail":"Bet must be between 0.1 and 100"}
+{"game":"prosperity-lion","phase":"negative","case":"above-game-max","ok":true,"detail":"Bet must be between 0.1 and 100"}
+{"game":"coin-volcano","phase":"negative","case":"zero","ok":true,"detail":"[\n  {\n    \"origin\": \"number\",\n    \"code\": \"too_small\",\n    \"minimum\": 0,\n    \"in"}
+{"game":"coin-volcano","phase":"negative","case":"negative","ok":true,"detail":"[\n  {\n    \"origin\": \"number\",\n    \"code\": \"too_small\",\n    \"minimum\": 0,\n    \"in"}
+{"game":"zeus-strike","phase":"negative","case":"above-game-max","ok":true,"detail":"Bet must be between 0.2 and 100"}
+{"game":"prosperity-lion","phase":"negative","case":"below-game-min","ok":true,"detail":"Bet must be between 0.1 and 100"}
+{"game":"coin-volcano","phase":"negative","case":"fraction-of-a-cent","ok":true,"detail":"Amount must be a valid positive whole number of cents"}
+{"game":"lucky-neko","phase":"idempotency","ok":true,"detail":"bet rows after same-key replay: 1"}
+{"game":"zeus-strike","phase":"negative","case":"below-game-min","ok":true,"detail":"Bet must be between 0.2 and 100"}
+{"game":"fortune-mouse","phase":"idempotency","ok":true,"detail":"bet rows after same-key replay: 1"}
+{"game":"coin-volcano","phase":"negative","case":"above-game-max","ok":true,"detail":"Bet must be between 0.1 and 50"}
+{"game":"thor-thunder","phase":"functional","bet":0.2,"ok":true,"checks":{"balanceArithmetic":true,"betRowsEqualWager":true,"noNegativeBalance":true,"resultBalanceMatches":true,"onlyKnownRowTypes":true,"winRowsMatchResult":true},"win":0,"feature":0,"newRows":1,"detail":""}
+{"game":"prosperity-lion","phase":"idempotency","ok":true,"detail":"bet rows after same-key replay: 1"}
+{"game":"maya-gold","phase":"functional","bet":0.2,"ok":true,"checks":{"balanceArithmetic":true,"betRowsEqualWager":true,"noNegativeBalance":true,"resultBalanceMatches":true,"onlyKnownRowTypes":true,"winRowsMatchResult":true},"win":0,"feature":0,"newRows":1,"detail":""}
+{"game":"coin-volcano","phase":"negative","case":"below-game-min","ok":true,"detail":"Bet must be between 0.1 and 50"}
+{"game":"thor-thunder","phase":"functional","bet":1,"ok":true,"checks":{"balanceArithmetic":true,"betRowsEqualWager":true,"noNegativeBalance":true,"resultBalanceMatches":true,"onlyKnownRowTypes":true,"winRowsMatchResult":true},"win":0,"feature":0,"newRows":1,"detail":""}
+{"game":"zeus-strike","phase":"idempotency","ok":true,"detail":"bet rows after same-key replay: 1"}
+{"game":"temple-rush","phase":"functional","bet":0.2,"ok":true,"checks":{"balanceArithmetic":true,"betRowsEqualWager":true,"noNegativeBalance":true,"resultBalanceMatches":true,"onlyKnownRowTypes":true,"winRowsMatchResult":true},"win":0,"feature":0,"newRows":1,"detail":""}
+{"game":"maya-gold","phase":"functional","bet":1,"ok":true,"checks":{"balanceArithmetic":true,"betRowsEqualWager":true,"noNegativeBalance":true,"resultBalanceMatches":true,"onlyKnownRowTypes":true,"winRowsMatchResult":true},"win":0,"feature":0,"newRows":1,"detail":""}
+{"game":"thor-thunder","phase":"functional","bet":100,"ok":true,"checks":{"balanceArithmetic":true,"betRowsEqualWager":true,"noNegativeBalance":true,"resultBalanceMatches":true,"onlyKnownRowTypes":true,"winRowsMatchResult":true},"win":0,"feature":0,"newRows":1,"detail":""}
+{"game":"pharaoh-fire","phase":"functional","bet":0.2,"ok":true,"checks":{"balanceArithmetic":true,"betRowsEqualWager":true,"noNegativeBalance":true,"resultBalanceMatches":true,"onlyKnownRowTypes":true,"winRowsMatchResult":true},"win":0,"feature":0,"newRows":1,"detail":""}
+{"game":"thor-thunder","phase":"negative","case":"zero","ok":true,"detail":"[\n  {\n    \"origin\": \"number\",\n    \"code\": \"too_small\",\n    \"minimum\": 0,\n    \"in"}
+{"game":"coin-volcano","phase":"idempotency","ok":true,"detail":"bet rows after same-key replay: 1"}
+{"game":"temple-rush","phase":"functional","bet":1,"ok":true,"checks":{"balanceArithmetic":true,"betRowsEqualWager":true,"noNegativeBalance":true,"resultBalanceMatches":true,"onlyKnownRowTypes":true,"winRowsMatchResult":true},"win":0,"feature":0,"newRows":1,"detail":""}
+{"game":"thor-thunder","phase":"negative","case":"negative","ok":true,"detail":"[\n  {\n    \"origin\": \"number\",\n    \"code\": \"too_small\",\n    \"minimum\": 0,\n    \"in"}
+{"game":"maya-gold","phase":"functional","bet":200,"ok":true,"checks":{"balanceArithmetic":true,"betRowsEqualWager":true,"noNegativeBalance":true,"resultBalanceMatches":true,"onlyKnownRowTypes":true,"winRowsMatchResult":true},"win":0,"feature":0,"newRows":1,"detail":""}
+{"game":"thor-thunder","phase":"negative","case":"fraction-of-a-cent","ok":true,"detail":"Amount must be a valid positive whole number of cents"}
+{"game":"pharaoh-fire","phase":"functional","bet":1,"ok":true,"checks":{"balanceArithmetic":true,"betRowsEqualWager":true,"noNegativeBalance":true,"resultBalanceMatches":true,"onlyKnownRowTypes":true,"winRowsMatchResult":true},"win":0,"feature":0,"newRows":1,"detail":""}
+{"game":"maya-gold","phase":"negative","case":"zero","ok":true,"detail":"[\n  {\n    \"origin\": \"number\",\n    \"code\": \"too_small\",\n    \"minimum\": 0,\n    \"in"}
+{"game":"safari-gold","phase":"functional","bet":0.2,"ok":true,"checks":{"balanceArithmetic":true,"betRowsEqualWager":true,"noNegativeBalance":true,"resultBalanceMatches":true,"onlyKnownRowTypes":true,"winRowsMatchResult":true},"win":0,"feature":0,"newRows":1,"detail":""}
+{"game":"maya-gold","phase":"negative","case":"negative","ok":true,"detail":"[\n  {\n    \"origin\": \"number\",\n    \"code\": \"too_small\",\n    \"minimum\": 0,\n    \"in"}
+{"game":"temple-rush","phase":"functional","bet":200,"ok":true,"checks":{"balanceArithmetic":true,"betRowsEqualWager":true,"noNegativeBalance":true,"resultBalanceMatches":true,"onlyKnownRowTypes":true,"winRowsMatchResult":true},"win":0,"feature":0,"newRows":1,"detail":""}
+{"game":"maya-gold","phase":"negative","case":"fraction-of-a-cent","ok":true,"detail":"Amount must be a valid positive whole number of cents"}
+{"game":"thor-thunder","phase":"negative","case":"above-game-max","ok":true,"detail":"Bet must be between 0.2 and 100"}
+{"game":"temple-rush","phase":"negative","case":"zero","ok":true,"detail":"[\n  {\n    \"origin\": \"number\",\n    \"code\": \"too_small\",\n    \"minimum\": 0,\n    \"in"}
+{"game":"pharaoh-fire","phase":"functional","bet":100,"ok":true,"checks":{"balanceArithmetic":true,"betRowsEqualWager":true,"noNegativeBalance":true,"resultBalanceMatches":true,"onlyKnownRowTypes":true,"winRowsMatchResult":true},"win":0,"feature":0,"newRows":1,"detail":""}
+{"game":"temple-rush","phase":"negative","case":"negative","ok":true,"detail":"[\n  {\n    \"origin\": \"number\",\n    \"code\": \"too_small\",\n    \"minimum\": 0,\n    \"in"}
+{"game":"pharaoh-fire","phase":"negative","case":"zero","ok":true,"detail":"[\n  {\n    \"origin\": \"number\",\n    \"code\": \"too_small\",\n    \"minimum\": 0,\n    \"in"}
+{"game":"safari-gold","phase":"functional","bet":1,"ok":true,"checks":{"balanceArithmetic":true,"betRowsEqualWager":true,"noNegativeBalance":true,"resultBalanceMatches":true,"onlyKnownRowTypes":true,"winRowsMatchResult":true},"win":0,"feature":0,"newRows":1,"detail":""}
+{"game":"maya-gold","phase":"negative","case":"above-game-max","ok":true,"detail":"Bet must be between 0.2 and 200"}
+{"game":"temple-rush","phase":"negative","case":"fraction-of-a-cent","ok":true,"detail":"Amount must be a valid positive whole number of cents"}
+{"game":"thor-thunder","phase":"negative","case":"below-game-min","ok":true,"detail":"Bet must be between 0.2 and 100"}
+{"game":"pharaoh-fire","phase":"negative","case":"negative","ok":true,"detail":"[\n  {\n    \"origin\": \"number\",\n    \"code\": \"too_small\",\n    \"minimum\": 0,\n    \"in"}
+{"game":"pharaoh-fire","phase":"negative","case":"fraction-of-a-cent","ok":true,"detail":"Amount must be a valid positive whole number of cents"}
+{"game":"safari-gold","phase":"functional","bet":100,"ok":true,"checks":{"balanceArithmetic":true,"betRowsEqualWager":true,"noNegativeBalance":true,"resultBalanceMatches":true,"onlyKnownRowTypes":true,"winRowsMatchResult":true},"win":0,"feature":0,"newRows":1,"detail":""}
+{"game":"maya-gold","phase":"negative","case":"below-game-min","ok":true,"detail":"Bet must be between 0.2 and 200"}
+{"game":"temple-rush","phase":"negative","case":"above-game-max","ok":true,"detail":"Bet must be between 0.2 and 200"}
+{"game":"safari-gold","phase":"negative","case":"zero","ok":true,"detail":"[\n  {\n    \"origin\": \"number\",\n    \"code\": \"too_small\",\n    \"minimum\": 0,\n    \"in"}
+{"game":"pharaoh-fire","phase":"negative","case":"above-game-max","ok":true,"detail":"Bet must be between 0.2 and 100"}
+{"game":"safari-gold","phase":"negative","case":"negative","ok":true,"detail":"[\n  {\n    \"origin\": \"number\",\n    \"code\": \"too_small\",\n    \"minimum\": 0,\n    \"in"}
+{"game":"temple-rush","phase":"negative","case":"below-game-min","ok":true,"detail":"Bet must be between 0.2 and 200"}
+{"game":"safari-gold","phase":"negative","case":"fraction-of-a-cent","ok":true,"detail":"Amount must be a valid positive whole number of cents"}
+{"game":"thor-thunder","phase":"idempotency","ok":true,"detail":"bet rows after same-key replay: 1"}
+{"game":"pharaoh-fire","phase":"negative","case":"below-game-min","ok":true,"detail":"Bet must be between 0.2 and 100"}
+{"game":"maya-gold","phase":"idempotency","ok":true,"detail":"bet rows after same-key replay: 1"}
+{"game":"safari-gold","phase":"negative","case":"above-game-max","ok":true,"detail":"Bet must be between 0.2 and 100"}
+{"game":"desert-riches","phase":"functional","bet":0.25,"ok":true,"checks":{"balanceArithmetic":true,"betRowsEqualWager":true,"noNegativeBalance":true,"resultBalanceMatches":true,"onlyKnownRowTypes":true,"winRowsMatchResult":true},"win":0,"feature":0,"newRows":1,"detail":""}
+{"game":"gate-of-ra","phase":"functional","bet":0.2,"ok":true,"checks":{"balanceArithmetic":true,"betRowsEqualWager":true,"noNegativeBalance":true,"resultBalanceMatches":true,"onlyKnownRowTypes":true,"winRowsMatchResult":true},"win":0,"feature":0,"newRows":1,"detail":""}
+{"game":"temple-rush","phase":"idempotency","ok":true,"detail":"bet rows after same-key replay: 1"}
+{"game":"safari-gold","phase":"negative","case":"below-game-min","ok":true,"detail":"Bet must be between 0.2 and 100"}
+{"game":"desert-riches","phase":"functional","bet":1,"ok":true,"checks":{"balanceArithmetic":true,"betRowsEqualWager":true,"noNegativeBalance":true,"resultBalanceMatches":true,"onlyKnownRowTypes":true,"winRowsMatchResult":true},"win":0,"feature":0,"newRows":1,"detail":""}
+{"game":"gate-of-ra","phase":"functional","bet":1,"ok":true,"checks":{"balanceArithmetic":true,"betRowsEqualWager":true,"noNegativeBalance":true,"resultBalanceMatches":true,"onlyKnownRowTypes":true,"winRowsMatchResult":true},"win":0,"feature":0,"newRows":1,"detail":""}
+{"game":"pharaoh-fire","phase":"idempotency","ok":true,"detail":"bet rows after same-key replay: 1"}
+{"game":"wild-panther","phase":"functional","bet":0.2,"ok":true,"checks":{"balanceArithmetic":true,"betRowsEqualWager":true,"noNegativeBalance":true,"resultBalanceMatches":true,"onlyKnownRowTypes":true,"winRowsMatchResult":true},"win":0,"feature":0,"newRows":1,"detail":""}
+{"game":"desert-riches","phase":"functional","bet":35,"ok":true,"checks":{"balanceArithmetic":true,"betRowsEqualWager":true,"noNegativeBalance":true,"resultBalanceMatches":true,"onlyKnownRowTypes":true,"winRowsMatchResult":true},"win":0,"feature":0,"newRows":1,"detail":""}
+{"game":"gate-of-ra","phase":"functional","bet":100,"ok":true,"checks":{"balanceArithmetic":true,"betRowsEqualWager":true,"noNegativeBalance":true,"resultBalanceMatches":true,"onlyKnownRowTypes":true,"winRowsMatchResult":true},"win":0,"feature":0,"newRows":1,"detail":""}
+{"game":"desert-riches","phase":"negative","case":"zero","ok":true,"detail":"[\n  {\n    \"origin\": \"number\",\n    \"code\": \"too_small\",\n    \"minimum\": 0,\n    \"in"}
+{"game":"ember-tiger","phase":"functional","bet":0.2,"ok":true,"checks":{"balanceArithmetic":true,"betRowsEqualWager":true,"noNegativeBalance":true,"resultBalanceMatches":true,"onlyKnownRowTypes":true,"winRowsMatchResult":true},"win":0,"feature":0,"newRows":1,"detail":""}
+{"game":"gate-of-ra","phase":"negative","case":"zero","ok":true,"detail":"[\n  {\n    \"origin\": \"number\",\n    \"code\": \"too_small\",\n    \"minimum\": 0,\n    \"in"}
+{"game":"desert-riches","phase":"negative","case":"negative","ok":true,"detail":"[\n  {\n    \"origin\": \"number\",\n    \"code\": \"too_small\",\n    \"minimum\": 0,\n    \"in"}
+{"game":"wild-panther","phase":"functional","bet":1,"ok":true,"checks":{"balanceArithmetic":true,"betRowsEqualWager":true,"noNegativeBalance":true,"resultBalanceMatches":true,"onlyKnownRowTypes":true,"winRowsMatchResult":true},"win":0,"feature":0,"newRows":1,"detail":""}
+{"game":"safari-gold","phase":"idempotency","ok":true,"detail":"bet rows after same-key replay: 1"}
+{"game":"gate-of-ra","phase":"negative","case":"negative","ok":true,"detail":"[\n  {\n    \"origin\": \"number\",\n    \"code\": \"too_small\",\n    \"minimum\": 0,\n    \"in"}
+{"game":"desert-riches","phase":"negative","case":"fraction-of-a-cent","ok":true,"detail":"Amount must be a valid positive whole number of cents"}
+{"game":"gate-of-ra","phase":"negative","case":"fraction-of-a-cent","ok":true,"detail":"Amount must be a valid positive whole number of cents"}
+{"game":"ember-tiger","phase":"functional","bet":1,"ok":true,"checks":{"balanceArithmetic":true,"betRowsEqualWager":true,"noNegativeBalance":true,"resultBalanceMatches":true,"onlyKnownRowTypes":true,"winRowsMatchResult":true},"win":0,"feature":0,"newRows":1,"detail":""}
+{"game":"wild-panther","phase":"functional","bet":200,"ok":true,"checks":{"balanceArithmetic":true,"betRowsEqualWager":true,"noNegativeBalance":true,"resultBalanceMatches":true,"onlyKnownRowTypes":true,"winRowsMatchResult":true},"win":0,"feature":0,"newRows":1,"detail":""}
+{"game":"jade-jaguar","phase":"functional","bet":0.2,"ok":true,"checks":{"balanceArithmetic":true,"betRowsEqualWager":true,"noNegativeBalance":true,"resultBalanceMatches":true,"onlyKnownRowTypes":true,"winRowsMatchResult":true},"win":0,"feature":0,"newRows":1,"detail":""}
+{"game":"wild-panther","phase":"negative","case":"zero","ok":true,"detail":"[\n  {\n    \"origin\": \"number\",\n    \"code\": \"too_small\",\n    \"minimum\": 0,\n    \"in"}
+{"game":"desert-riches","phase":"negative","case":"above-game-max","ok":true,"detail":"Bet must be between 0.25 and 35"}
+{"game":"gate-of-ra","phase":"negative","case":"above-game-max","ok":true,"detail":"Bet must be between 0.2 and 100"}
+{"game":"wild-panther","phase":"negative","case":"negative","ok":true,"detail":"[\n  {\n    \"origin\": \"number\",\n    \"code\": \"too_small\",\n    \"minimum\": 0,\n    \"in"}
+{"game":"ember-tiger","phase":"functional","bet":200,"ok":true,"checks":{"balanceArithmetic":true,"betRowsEqualWager":true,"noNegativeBalance":true,"resultBalanceMatches":true,"onlyKnownRowTypes":true,"winRowsMatchResult":true},"win":130,"feature":0,"newRows":2,"detail":""}
+{"game":"wild-panther","phase":"negative","case":"fraction-of-a-cent","ok":true,"detail":"Amount must be a valid positive whole number of cents"}
+{"game":"jade-jaguar","phase":"functional","bet":1,"ok":true,"checks":{"balanceArithmetic":true,"betRowsEqualWager":true,"noNegativeBalance":true,"resultBalanceMatches":true,"onlyKnownRowTypes":true,"winRowsMatchResult":true},"win":0,"feature":0,"newRows":1,"detail":""}
+{"game":"ember-tiger","phase":"negative","case":"zero","ok":true,"detail":"[\n  {\n    \"origin\": \"number\",\n    \"code\": \"too_small\",\n    \"minimum\": 0,\n    \"in"}
+{"game":"desert-riches","phase":"negative","case":"below-game-min","ok":true,"detail":"Bet must be between 0.25 and 35"}
+{"game":"gate-of-ra","phase":"negative","case":"below-game-min","ok":true,"detail":"Bet must be between 0.2 and 100"}
+{"game":"ember-tiger","phase":"negative","case":"negative","ok":true,"detail":"[\n  {\n    \"origin\": \"number\",\n    \"code\": \"too_small\",\n    \"minimum\": 0,\n    \"in"}
+{"game":"wild-panther","phase":"negative","case":"above-game-max","ok":true,"detail":"Bet must be between 0.2 and 200"}
+{"game":"ember-tiger","phase":"negative","case":"fraction-of-a-cent","ok":true,"detail":"Amount must be a valid positive whole number of cents"}
+{"game":"jade-jaguar","phase":"functional","bet":200,"ok":true,"checks":{"balanceArithmetic":true,"betRowsEqualWager":true,"noNegativeBalance":true,"resultBalanceMatches":true,"onlyKnownRowTypes":true,"winRowsMatchResult":true},"win":0,"feature":0,"newRows":1,"detail":""}
+{"game":"jade-jaguar","phase":"negative","case":"zero","ok":true,"detail":"[\n  {\n    \"origin\": \"number\",\n    \"code\": \"too_small\",\n    \"minimum\": 0,\n    \"in"}
+{"game":"wild-panther","phase":"negative","case":"below-game-min","ok":true,"detail":"Bet must be between 0.2 and 200"}
+{"game":"jade-jaguar","phase":"negative","case":"negative","ok":true,"detail":"[\n  {\n    \"origin\": \"number\",\n    \"code\": \"too_small\",\n    \"minimum\": 0,\n    \"in"}
+{"game":"ember-tiger","phase":"negative","case":"above-game-max","ok":true,"detail":"Bet must be between 0.2 and 200"}
+{"game":"desert-riches","phase":"idempotency","ok":true,"detail":"bet rows after same-key replay: 1"}
+{"game":"gate-of-ra","phase":"idempotency","ok":true,"detail":"bet rows after same-key replay: 1"}
+{"game":"jade-jaguar","phase":"negative","case":"fraction-of-a-cent","ok":true,"detail":"Amount must be a valid positive whole number of cents"}
+{"game":"ember-tiger","phase":"negative","case":"below-game-min","ok":true,"detail":"Bet must be between 0.2 and 200"}
+{"game":"lotus-lynx","phase":"functional","bet":0.2,"ok":true,"checks":{"balanceArithmetic":true,"betRowsEqualWager":true,"noNegativeBalance":true,"resultBalanceMatches":true,"onlyKnownRowTypes":true,"winRowsMatchResult":true},"win":0,"feature":0,"newRows":1,"detail":""}
+{"game":"coral-cobra","phase":"functional","bet":0.2,"ok":true,"checks":{"balanceArithmetic":true,"betRowsEqualWager":true,"noNegativeBalance":true,"resultBalanceMatches":true,"onlyKnownRowTypes":true,"winRowsMatchResult":true},"win":0,"feature":0,"newRows":1,"detail":""}
+{"game":"jade-jaguar","phase":"negative","case":"above-game-max","ok":true,"detail":"Bet must be between 0.2 and 200"}
+{"game":"wild-panther","phase":"idempotency","ok":true,"detail":"bet rows after same-key replay: 1"}
+{"game":"lotus-lynx","phase":"functional","bet":1,"ok":true,"checks":{"balanceArithmetic":true,"betRowsEqualWager":true,"noNegativeBalance":true,"resultBalanceMatches":true,"onlyKnownRowTypes":true,"winRowsMatchResult":true},"win":0,"feature":0,"newRows":1,"detail":""}
+{"game":"jade-jaguar","phase":"negative","case":"below-game-min","ok":true,"detail":"Bet must be between 0.2 and 200"}
+{"game":"coral-cobra","phase":"functional","bet":1,"ok":true,"checks":{"balanceArithmetic":true,"betRowsEqualWager":true,"noNegativeBalance":true,"resultBalanceMatches":true,"onlyKnownRowTypes":true,"winRowsMatchResult":true},"win":0,"feature":0,"newRows":1,"detail":""}
+{"game":"ember-tiger","phase":"idempotency","ok":true,"detail":"bet rows after same-key replay: 1"}
+{"game":"frost-fox","phase":"functional","bet":0.2,"ok":true,"checks":{"balanceArithmetic":true,"betRowsEqualWager":true,"noNegativeBalance":true,"resultBalanceMatches":true,"onlyKnownRowTypes":true,"winRowsMatchResult":true},"win":0.51,"feature":0,"newRows":2,"detail":""}
+{"game":"lotus-lynx","phase":"functional","bet":200,"ok":true,"checks":{"balanceArithmetic":true,"betRowsEqualWager":true,"noNegativeBalance":true,"resultBalanceMatches":true,"onlyKnownRowTypes":true,"winRowsMatchResult":true},"win":0,"feature":0,"newRows":1,"detail":""}
+{"game":"lotus-lynx","phase":"negative","case":"zero","ok":true,"detail":"[\n  {\n    \"origin\": \"number\",\n    \"code\": \"too_small\",\n    \"minimum\": 0,\n    \"in"}
+{"game":"coral-cobra","phase":"functional","bet":200,"ok":true,"checks":{"balanceArithmetic":true,"betRowsEqualWager":true,"noNegativeBalance":true,"resultBalanceMatches":true,"onlyKnownRowTypes":true,"winRowsMatchResult":true},"win":0,"feature":0,"newRows":1,"detail":""}
+{"game":"lotus-lynx","phase":"negative","case":"negative","ok":true,"detail":"[\n  {\n    \"origin\": \"number\",\n    \"code\": \"too_small\",\n    \"minimum\": 0,\n    \"in"}
+{"game":"coral-cobra","phase":"negative","case":"zero","ok":true,"detail":"[\n  {\n    \"origin\": \"number\",\n    \"code\": \"too_small\",\n    \"minimum\": 0,\n    \"in"}
+{"game":"honey-hive","phase":"functional","bet":0.2,"ok":true,"checks":{"balanceArithmetic":true,"betRowsEqualWager":true,"noNegativeBalance":true,"resultBalanceMatches":true,"onlyKnownRowTypes":true,"winRowsMatchResult":true},"win":0,"feature":0,"newRows":1,"detail":""}
+{"game":"lotus-lynx","phase":"negative","case":"fraction-of-a-cent","ok":true,"detail":"Amount must be a valid positive whole number of cents"}
+{"game":"coral-cobra","phase":"negative","case":"negative","ok":true,"detail":"[\n  {\n    \"origin\": \"number\",\n    \"code\": \"too_small\",\n    \"minimum\": 0,\n    \"in"}
+{"game":"frost-fox","phase":"functional","bet":1,"ok":true,"checks":{"balanceArithmetic":true,"betRowsEqualWager":true,"noNegativeBalance":true,"resultBalanceMatches":true,"onlyKnownRowTypes":true,"winRowsMatchResult":true},"win":0,"feature":0,"newRows":1,"detail":""}
+{"game":"jade-jaguar","phase":"idempotency","ok":true,"detail":"bet rows after same-key replay: 1"}
+{"game":"coral-cobra","phase":"negative","case":"fraction-of-a-cent","ok":true,"detail":"Amount must be a valid positive whole number of cents"}
+{"game":"honey-hive","phase":"functional","bet":1,"ok":true,"checks":{"balanceArithmetic":true,"betRowsEqualWager":true,"noNegativeBalance":true,"resultBalanceMatches":true,"onlyKnownRowTypes":true,"winRowsMatchResult":true},"win":0,"feature":0,"newRows":1,"detail":""}
+{"game":"lotus-lynx","phase":"negative","case":"above-game-max","ok":true,"detail":"Bet must be between 0.2 and 200"}
+{"game":"frost-fox","phase":"functional","bet":200,"ok":true,"checks":{"balanceArithmetic":true,"betRowsEqualWager":true,"noNegativeBalance":true,"resultBalanceMatches":true,"onlyKnownRowTypes":true,"winRowsMatchResult":true},"win":0,"feature":0,"newRows":1,"detail":""}
+{"game":"solar-serpent","phase":"functional","bet":0.2,"ok":true,"checks":{"balanceArithmetic":true,"betRowsEqualWager":true,"noNegativeBalance":true,"resultBalanceMatches":true,"onlyKnownRowTypes":true,"winRowsMatchResult":true},"win":0,"feature":0,"newRows":1,"detail":""}
+{"game":"frost-fox","phase":"negative","case":"zero","ok":true,"detail":"[\n  {\n    \"origin\": \"number\",\n    \"code\": \"too_small\",\n    \"minimum\": 0,\n    \"in"}
+{"game":"coral-cobra","phase":"negative","case":"above-game-max","ok":true,"detail":"Bet must be between 0.2 and 200"}
+{"game":"frost-fox","phase":"negative","case":"negative","ok":true,"detail":"[\n  {\n    \"origin\": \"number\",\n    \"code\": \"too_small\",\n    \"minimum\": 0,\n    \"in"}
+{"game":"honey-hive","phase":"functional","bet":200,"ok":true,"checks":{"balanceArithmetic":true,"betRowsEqualWager":true,"noNegativeBalance":true,"resultBalanceMatches":true,"onlyKnownRowTypes":true,"winRowsMatchResult":true},"win":0,"feature":0,"newRows":1,"detail":""}
+{"game":"lotus-lynx","phase":"negative","case":"below-game-min","ok":true,"detail":"Bet must be between 0.2 and 200"}
+{"game":"frost-fox","phase":"negative","case":"fraction-of-a-cent","ok":true,"detail":"Amount must be a valid positive whole number of cents"}
+{"game":"honey-hive","phase":"negative","case":"zero","ok":true,"detail":"[\n  {\n    \"origin\": \"number\",\n    \"code\": \"too_small\",\n    \"minimum\": 0,\n    \"in"}
+{"game":"solar-serpent","phase":"functional","bet":1,"ok":true,"checks":{"balanceArithmetic":true,"betRowsEqualWager":true,"noNegativeBalance":true,"resultBalanceMatches":true,"onlyKnownRowTypes":true,"winRowsMatchResult":true},"win":0,"feature":0,"newRows":1,"detail":""}
+{"game":"coral-cobra","phase":"negative","case":"below-game-min","ok":true,"detail":"Bet must be between 0.2 and 200"}
+{"game":"honey-hive","phase":"negative","case":"negative","ok":true,"detail":"[\n  {\n    \"origin\": \"number\",\n    \"code\": \"too_small\",\n    \"minimum\": 0,\n    \"in"}
+{"game":"frost-fox","phase":"negative","case":"above-game-max","ok":true,"detail":"Bet must be between 0.2 and 200"}
+{"game":"honey-hive","phase":"negative","case":"fraction-of-a-cent","ok":true,"detail":"Amount must be a valid positive whole number of cents"}
+{"game":"solar-serpent","phase":"functional","bet":200,"ok":true,"checks":{"balanceArithmetic":true,"betRowsEqualWager":true,"noNegativeBalance":true,"resultBalanceMatches":true,"onlyKnownRowTypes":true,"winRowsMatchResult":true},"win":0,"feature":0,"newRows":1,"detail":""}
+{"game":"frost-fox","phase":"negative","case":"below-game-min","ok":true,"detail":"Bet must be between 0.2 and 200"}
+{"game":"lotus-lynx","phase":"idempotency","ok":true,"detail":"bet rows after same-key replay: 1"}
+{"game":"solar-serpent","phase":"negative","case":"zero","ok":true,"detail":"[\n  {\n    \"origin\": \"number\",\n    \"code\": \"too_small\",\n    \"minimum\": 0,\n    \"in"}
+{"game":"honey-hive","phase":"negative","case":"above-game-max","ok":true,"detail":"Bet must be between 0.2 and 200"}
+{"game":"coral-cobra","phase":"idempotency","ok":true,"detail":"bet rows after same-key replay: 1"}
+{"game":"solar-serpent","phase":"negative","case":"negative","ok":true,"detail":"[\n  {\n    \"origin\": \"number\",\n    \"code\": \"too_small\",\n    \"minimum\": 0,\n    \"in"}
+{"game":"solar-serpent","phase":"negative","case":"fraction-of-a-cent","ok":true,"detail":"Amount must be a valid positive whole number of cents"}
+{"game":"midnight-owl","phase":"functional","bet":0.2,"ok":true,"checks":{"balanceArithmetic":true,"betRowsEqualWager":true,"noNegativeBalance":true,"resultBalanceMatches":true,"onlyKnownRowTypes":true,"winRowsMatchResult":true},"win":1.08,"feature":0,"newRows":2,"detail":""}
+{"game":"honey-hive","phase":"negative","case":"below-game-min","ok":true,"detail":"Bet must be between 0.2 and 200"}
+{"game":"ruby-raven","phase":"functional","bet":0.2,"ok":true,"checks":{"balanceArithmetic":true,"betRowsEqualWager":true,"noNegativeBalance":true,"resultBalanceMatches":true,"onlyKnownRowTypes":true,"winRowsMatchResult":true},"win":0,"feature":0,"newRows":1,"detail":""}
+{"game":"solar-serpent","phase":"negative","case":"above-game-max","ok":true,"detail":"Bet must be between 0.2 and 200"}
+{"game":"frost-fox","phase":"idempotency","ok":true,"detail":"bet rows after same-key replay: 1"}
+{"game":"midnight-owl","phase":"functional","bet":1,"ok":true,"checks":{"balanceArithmetic":true,"betRowsEqualWager":true,"noNegativeBalance":true,"resultBalanceMatches":true,"onlyKnownRowTypes":true,"winRowsMatchResult":true},"win":0,"feature":0,"newRows":1,"detail":""}
+{"game":"ruby-raven","phase":"functional","bet":1,"ok":true,"checks":{"balanceArithmetic":true,"betRowsEqualWager":true,"noNegativeBalance":true,"resultBalanceMatches":true,"onlyKnownRowTypes":true,"winRowsMatchResult":true},"win":0,"feature":0,"newRows":1,"detail":""}
+{"game":"solar-serpent","phase":"negative","case":"below-game-min","ok":true,"detail":"Bet must be between 0.2 and 200"}
+{"game":"honey-hive","phase":"idempotency","ok":true,"detail":"bet rows after same-key replay: 1"}
+{"game":"midnight-owl","phase":"functional","bet":200,"ok":true,"checks":{"balanceArithmetic":true,"betRowsEqualWager":true,"noNegativeBalance":true,"resultBalanceMatches":true,"onlyKnownRowTypes":true,"winRowsMatchResult":true},"win":0,"feature":0,"newRows":1,"detail":""}
+{"game":"ruby-raven","phase":"functional","bet":200,"ok":true,"checks":{"balanceArithmetic":true,"betRowsEqualWager":true,"noNegativeBalance":true,"resultBalanceMatches":true,"onlyKnownRowTypes":true,"winRowsMatchResult":true},"win":0,"feature":0,"newRows":1,"detail":""}
+{"game":"midnight-owl","phase":"negative","case":"zero","ok":true,"detail":"[\n  {\n    \"origin\": \"number\",\n    \"code\": \"too_small\",\n    \"minimum\": 0,\n    \"in"}
+{"game":"ruby-raven","phase":"negative","case":"zero","ok":true,"detail":"[\n  {\n    \"origin\": \"number\",\n    \"code\": \"too_small\",\n    \"minimum\": 0,\n    \"in"}
+{"game":"midnight-owl","phase":"negative","case":"negative","ok":true,"detail":"[\n  {\n    \"origin\": \"number\",\n    \"code\": \"too_small\",\n    \"minimum\": 0,\n    \"in"}
+{"game":"deep-bass","phase":"functional","bet":0.1,"ok":true,"checks":{"balanceArithmetic":true,"betRowsEqualWager":true,"noNegativeBalance":true,"resultBalanceMatches":true,"onlyKnownRowTypes":true},"win":0,"feature":0,"newRows":1,"detail":""}
+{"game":"ruby-raven","phase":"negative","case":"negative","ok":true,"detail":"[\n  {\n    \"origin\": \"number\",\n    \"code\": \"too_small\",\n    \"minimum\": 0,\n    \"in"}
+{"game":"midnight-owl","phase":"negative","case":"fraction-of-a-cent","ok":true,"detail":"Amount must be a valid positive whole number of cents"}
+{"game":"solar-serpent","phase":"idempotency","ok":true,"detail":"bet rows after same-key replay: 1"}
+{"game":"ruby-raven","phase":"negative","case":"fraction-of-a-cent","ok":true,"detail":"Amount must be a valid positive whole number of cents"}
+{"game":"crab-cannon","phase":"functional","bet":0.1,"ok":true,"checks":{"balanceArithmetic":true,"betRowsEqualWager":true,"noNegativeBalance":true,"resultBalanceMatches":true,"onlyKnownRowTypes":true},"win":0,"feature":0,"newRows":1,"detail":""}
+{"game":"midnight-owl","phase":"negative","case":"above-game-max","ok":true,"detail":"Bet must be between 0.2 and 200"}
+{"game":"deep-bass","phase":"functional","bet":0.5,"ok":true,"checks":{"balanceArithmetic":true,"betRowsEqualWager":true,"noNegativeBalance":true,"resultBalanceMatches":true,"onlyKnownRowTypes":true},"win":0,"feature":0,"newRows":1,"detail":""}
+{"game":"ruby-raven","phase":"negative","case":"above-game-max","ok":true,"detail":"Bet must be between 0.2 and 200"}
+{"game":"midnight-owl","phase":"negative","case":"below-game-min","ok":true,"detail":"Bet must be between 0.2 and 200"}
+{"game":"dragon-fisher","phase":"functional","bet":0.1,"ok":true,"checks":{"balanceArithmetic":true,"betRowsEqualWager":true,"noNegativeBalance":true,"resultBalanceMatches":true,"onlyKnownRowTypes":true},"win":0.12,"feature":0,"newRows":2,"detail":""}
+{"game":"ruby-raven","phase":"negative","case":"below-game-min","ok":true,"detail":"Bet must be between 0.2 and 200"}
+{"game":"crab-cannon","phase":"functional","bet":0.5,"ok":true,"checks":{"balanceArithmetic":true,"betRowsEqualWager":true,"noNegativeBalance":true,"resultBalanceMatches":true,"onlyKnownRowTypes":true},"win":0,"feature":0,"newRows":1,"detail":""}
+{"game":"deep-bass","phase":"functional","bet":1,"ok":true,"checks":{"balanceArithmetic":true,"betRowsEqualWager":true,"noNegativeBalance":true,"resultBalanceMatches":true,"onlyKnownRowTypes":true},"win":0,"feature":0,"newRows":1,"detail":""}
+{"game":"midnight-owl","phase":"idempotency","ok":true,"detail":"bet rows after same-key replay: 1"}
+{"game":"dragon-fisher","phase":"functional","bet":0.5,"ok":true,"checks":{"balanceArithmetic":true,"betRowsEqualWager":true,"noNegativeBalance":true,"resultBalanceMatches":true,"onlyKnownRowTypes":true},"win":0,"feature":0,"newRows":1,"detail":""}
+{"game":"ruby-raven","phase":"idempotency","ok":true,"detail":"bet rows after same-key replay: 1"}
+{"game":"crab-cannon","phase":"functional","bet":1,"ok":true,"checks":{"balanceArithmetic":true,"betRowsEqualWager":true,"noNegativeBalance":true,"resultBalanceMatches":true,"onlyKnownRowTypes":true},"win":1.85,"feature":0,"newRows":2,"detail":""}
+{"game":"deep-bass","phase":"functional","bet":2,"ok":true,"checks":{"balanceArithmetic":true,"betRowsEqualWager":true,"noNegativeBalance":true,"resultBalanceMatches":true,"onlyKnownRowTypes":true},"win":0,"feature":0,"newRows":1,"detail":""}
+{"game":"ace-high","phase":"functional","bet":1,"ok":true,"checks":{"balanceArithmetic":true,"betRowsEqualWager":true,"noNegativeBalance":true,"resultBalanceMatches":true,"onlyKnownRowTypes":true},"win":2,"feature":0,"newRows":2,"detail":""}
+{"game":"shark-hunter","phase":"functional","bet":0.1,"ok":true,"checks":{"balanceArithmetic":true,"betRowsEqualWager":true,"noNegativeBalance":true,"resultBalanceMatches":true,"onlyKnownRowTypes":true},"win":0,"feature":0,"newRows":1,"detail":""}
+{"game":"dragon-fisher","phase":"functional","bet":1,"ok":true,"checks":{"balanceArithmetic":true,"betRowsEqualWager":true,"noNegativeBalance":true,"resultBalanceMatches":true,"onlyKnownRowTypes":true},"win":0,"feature":0,"newRows":1,"detail":""}
+{"game":"crab-cannon","phase":"functional","bet":2,"ok":true,"checks":{"balanceArithmetic":true,"betRowsEqualWager":true,"noNegativeBalance":true,"resultBalanceMatches":true,"onlyKnownRowTypes":true},"win":0,"feature":0,"newRows":1,"detail":""}
+{"game":"ace-high","phase":"functional","bet":500,"ok":true,"checks":{"balanceArithmetic":true,"betRowsEqualWager":true,"noNegativeBalance":true,"resultBalanceMatches":true,"onlyKnownRowTypes":true},"win":0,"feature":0,"newRows":1,"detail":""}
+{"game":"deep-bass","phase":"functional","bet":5,"ok":true,"checks":{"balanceArithmetic":true,"betRowsEqualWager":true,"noNegativeBalance":true,"resultBalanceMatches":true,"onlyKnownRowTypes":true},"win":0,"feature":0,"newRows":1,"detail":""}
+{"game":"ace-high","phase":"negative","case":"zero","ok":true,"detail":"[\n  {\n    \"origin\": \"number\",\n    \"code\": \"too_small\",\n    \"minimum\": 0,\n    \"in"}
+{"game":"ace-high","phase":"negative","case":"negative","ok":true,"detail":"[\n  {\n    \"origin\": \"number\",\n    \"code\": \"too_small\",\n    \"minimum\": 0,\n    \"in"}
+{"game":"ace-high","phase":"negative","case":"fraction-of-a-cent","ok":true,"detail":"Amount must be a valid positive whole number of cents"}
+{"game":"shark-hunter","phase":"functional","bet":0.5,"ok":true,"checks":{"balanceArithmetic":true,"betRowsEqualWager":true,"noNegativeBalance":true,"resultBalanceMatches":true,"onlyKnownRowTypes":true},"win":0,"feature":0,"newRows":1,"detail":""}
+{"game":"dragon-fisher","phase":"functional","bet":2,"ok":true,"checks":{"balanceArithmetic":true,"betRowsEqualWager":true,"noNegativeBalance":true,"resultBalanceMatches":true,"onlyKnownRowTypes":true},"win":14.62,"feature":0,"newRows":2,"detail":""}
+{"game":"crab-cannon","phase":"functional","bet":5,"ok":true,"checks":{"balanceArithmetic":true,"betRowsEqualWager":true,"noNegativeBalance":true,"resultBalanceMatches":true,"onlyKnownRowTypes":true},"win":0,"feature":0,"newRows":1,"detail":""}
+{"game":"ace-high","phase":"negative","case":"above-game-max","ok":true,"detail":"Base bet must be between ₱1 and ₱500"}
+{"game":"deep-bass","phase":"functional","bet":10,"ok":true,"checks":{"balanceArithmetic":true,"betRowsEqualWager":true,"noNegativeBalance":true,"resultBalanceMatches":true,"onlyKnownRowTypes":true},"win":0,"feature":0,"newRows":1,"detail":""}
+{"game":"shark-hunter","phase":"functional","bet":1,"ok":true,"checks":{"balanceArithmetic":true,"betRowsEqualWager":true,"noNegativeBalance":true,"resultBalanceMatches":true,"onlyKnownRowTypes":true},"win":5.32,"feature":0,"newRows":2,"detail":""}
+{"game":"ace-high","phase":"negative","case":"below-game-min","ok":true,"detail":"Base bet must be between ₱1 and ₱500"}
+{"game":"dragon-fisher","phase":"functional","bet":5,"ok":true,"checks":{"balanceArithmetic":true,"betRowsEqualWager":true,"noNegativeBalance":true,"resultBalanceMatches":true,"onlyKnownRowTypes":true},"win":0,"feature":0,"newRows":1,"detail":""}
+{"game":"crab-cannon","phase":"functional","bet":10,"ok":true,"checks":{"balanceArithmetic":true,"betRowsEqualWager":true,"noNegativeBalance":true,"resultBalanceMatches":true,"onlyKnownRowTypes":true},"win":25.2,"feature":0,"newRows":2,"detail":""}
+{"game":"deep-bass","phase":"functional","bet":25,"ok":true,"checks":{"balanceArithmetic":true,"betRowsEqualWager":true,"noNegativeBalance":true,"resultBalanceMatches":true,"onlyKnownRowTypes":true},"win":0,"feature":0,"newRows":1,"detail":""}
+{"game":"deep-bass","phase":"negative","case":"invalid-weapon","ok":true,"detail":"[\n  {\n    \"code\": \"invalid_value\",\n    \"values\": [\n      \"mini\",\n      \"half\",\n "}
+{"game":"shark-hunter","phase":"functional","bet":2,"ok":true,"checks":{"balanceArithmetic":true,"betRowsEqualWager":true,"noNegativeBalance":true,"resultBalanceMatches":true,"onlyKnownRowTypes":true},"win":0,"feature":0,"newRows":1,"detail":""}
+{"game":"ace-high","phase":"idempotency","ok":true,"detail":"bet rows after same-key replay: 1"}
+{"game":"dragon-fisher","phase":"functional","bet":10,"ok":true,"checks":{"balanceArithmetic":true,"betRowsEqualWager":true,"noNegativeBalance":true,"resultBalanceMatches":true,"onlyKnownRowTypes":true},"win":0,"feature":0,"newRows":1,"detail":""}
+{"game":"crab-cannon","phase":"functional","bet":25,"ok":true,"checks":{"balanceArithmetic":true,"betRowsEqualWager":true,"noNegativeBalance":true,"resultBalanceMatches":true,"onlyKnownRowTypes":true},"win":0,"feature":0,"newRows":1,"detail":""}
+{"game":"deep-bass","phase":"negative","case":"unknown-fish-instance","ok":true,"detail":"Unknown or expired fish"}
+{"game":"crab-cannon","phase":"negative","case":"invalid-weapon","ok":true,"detail":"[\n  {\n    \"code\": \"invalid_value\",\n    \"values\": [\n      \"mini\",\n      \"half\",\n "}
+{"game":"deep-bass","phase":"negative","case":"overlong-instance-id","ok":true,"detail":"[\n  {\n    \"origin\": \"string\",\n    \"code\": \"too_big\",\n    \"maximum\": 64,\n    \"inc"}
+{"game":"abyssal-pearls","phase":"functional","bet":0.2,"ok":true,"checks":{"balanceArithmetic":true,"betRowsEqualWager":true,"noNegativeBalance":true,"resultBalanceMatches":true,"onlyKnownRowTypes":true,"winRowsMatchResult":true},"win":0,"feature":0,"newRows":1,"detail":""}
+{"game":"deep-bass","phase":"negative","case":"missing-target","ok":true,"detail":"[\n  {\n    \"expected\": \"object\",\n    \"code\": \"invalid_type\",\n    \"path\": [\n      "}
+{"game":"shark-hunter","phase":"functional","bet":5,"ok":true,"checks":{"balanceArithmetic":true,"betRowsEqualWager":true,"noNegativeBalance":true,"resultBalanceMatches":true,"onlyKnownRowTypes":true},"win":0,"feature":0,"newRows":1,"detail":""}
+{"game":"crab-cannon","phase":"negative","case":"unknown-fish-instance","ok":true,"detail":"Unknown or expired fish"}
+{"game":"dragon-fisher","phase":"functional","bet":25,"ok":true,"checks":{"balanceArithmetic":true,"betRowsEqualWager":true,"noNegativeBalance":true,"resultBalanceMatches":true,"onlyKnownRowTypes":true},"win":0,"feature":0,"newRows":1,"detail":""}
+{"game":"crab-cannon","phase":"negative","case":"overlong-instance-id","ok":true,"detail":"[\n  {\n    \"origin\": \"string\",\n    \"code\": \"too_big\",\n    \"maximum\": 64,\n    \"inc"}
+{"game":"dragon-fisher","phase":"negative","case":"invalid-weapon","ok":true,"detail":"[\n  {\n    \"code\": \"invalid_value\",\n    \"values\": [\n      \"mini\",\n      \"half\",\n "}
+{"game":"abyssal-pearls","phase":"functional","bet":1,"ok":true,"checks":{"balanceArithmetic":true,"betRowsEqualWager":true,"noNegativeBalance":true,"resultBalanceMatches":true,"onlyKnownRowTypes":true,"winRowsMatchResult":true},"win":1.85,"feature":0,"newRows":2,"detail":""}
+{"game":"crab-cannon","phase":"negative","case":"missing-target","ok":true,"detail":"[\n  {\n    \"expected\": \"object\",\n    \"code\": \"invalid_type\",\n    \"path\": [\n      "}
+{"game":"deep-bass","phase":"negative","case":"client-chosen-payout-field","ok":true,"detail":"Unknown or expired fish"}
+{"game":"dragon-fisher","phase":"negative","case":"unknown-fish-instance","ok":true,"detail":"Unknown or expired fish"}
+{"game":"dragon-fisher","phase":"negative","case":"overlong-instance-id","ok":true,"detail":"[\n  {\n    \"origin\": \"string\",\n    \"code\": \"too_big\",\n    \"maximum\": 64,\n    \"inc"}
+{"game":"abyssal-pearls","phase":"functional","bet":100,"ok":true,"checks":{"balanceArithmetic":true,"betRowsEqualWager":true,"noNegativeBalance":true,"resultBalanceMatches":true,"onlyKnownRowTypes":true,"winRowsMatchResult":true},"win":0,"feature":0,"newRows":1,"detail":""}
+{"game":"crab-cannon","phase":"negative","case":"client-chosen-payout-field","ok":true,"detail":"Unknown or expired fish"}
+{"game":"dragon-fisher","phase":"negative","case":"missing-target","ok":true,"detail":"[\n  {\n    \"expected\": \"object\",\n    \"code\": \"invalid_type\",\n    \"path\": [\n      "}
+{"game":"abyssal-pearls","phase":"negative","case":"zero","ok":true,"detail":"[\n  {\n    \"origin\": \"number\",\n    \"code\": \"too_small\",\n    \"minimum\": 0,\n    \"in"}
+{"game":"shark-hunter","phase":"functional","bet":10,"ok":true,"checks":{"balanceArithmetic":true,"betRowsEqualWager":true,"noNegativeBalance":true,"resultBalanceMatches":true,"onlyKnownRowTypes":true},"win":0,"feature":0,"newRows":1,"detail":""}
+{"game":"abyssal-pearls","phase":"negative","case":"negative","ok":true,"detail":"[\n  {\n    \"origin\": \"number\",\n    \"code\": \"too_small\",\n    \"minimum\": 0,\n    \"in"}
+{"game":"abyssal-pearls","phase":"negative","case":"fraction-of-a-cent","ok":true,"detail":"Amount must be a valid positive whole number of cents"}
+{"game":"dragon-fisher","phase":"negative","case":"client-chosen-payout-field","ok":true,"detail":"Unknown or expired fish"}
+{"game":"abyssal-pearls","phase":"negative","case":"above-game-max","ok":true,"detail":"Bet must be between 0.2 and 100"}
+{"game":"deep-bass","phase":"idempotency","ok":true,"detail":"bet rows after same-key replay: 1"}
+{"game":"crab-cannon","phase":"idempotency","ok":true,"detail":"bet rows after same-key replay: 1"}
+{"game":"shark-hunter","phase":"functional","bet":25,"ok":true,"checks":{"balanceArithmetic":true,"betRowsEqualWager":true,"noNegativeBalance":true,"resultBalanceMatches":true,"onlyKnownRowTypes":true},"win":0,"feature":0,"newRows":1,"detail":""}
+{"game":"shark-hunter","phase":"negative","case":"invalid-weapon","ok":true,"detail":"[\n  {\n    \"code\": \"invalid_value\",\n    \"values\": [\n      \"mini\",\n      \"half\",\n "}
+{"game":"abyssal-pearls","phase":"negative","case":"below-game-min","ok":true,"detail":"Bet must be between 0.2 and 100"}
+{"game":"baccarat","phase":"functional","bet":1,"ok":true,"checks":{"balanceArithmetic":true,"betRowsEqualWager":true,"noNegativeBalance":true,"resultBalanceMatches":true,"onlyKnownRowTypes":true},"win":2,"feature":0,"newRows":2,"detail":""}
+{"game":"dragon-fisher","phase":"idempotency","ok":true,"detail":"bet rows after same-key replay: 1"}
+{"game":"shark-hunter","phase":"negative","case":"unknown-fish-instance","ok":true,"detail":"Unknown or expired fish"}
+{"game":"shark-hunter","phase":"negative","case":"overlong-instance-id","ok":true,"detail":"[\n  {\n    \"origin\": \"string\",\n    \"code\": \"too_big\",\n    \"maximum\": 64,\n    \"inc"}
+{"game":"threecardpoker","phase":"functional","bet":1,"ok":true,"checks":{"balanceArithmetic":true,"betRowsEqualWager":true,"noNegativeBalance":true,"resultBalanceMatches":true,"onlyKnownRowTypes":true},"win":0,"feature":0,"newRows":2,"detail":""}
+{"game":"shark-hunter","phase":"negative","case":"missing-target","ok":true,"detail":"[\n  {\n    \"expected\": \"object\",\n    \"code\": \"invalid_type\",\n    \"path\": [\n      "}
+{"game":"baccarat","phase":"functional","bet":500,"ok":true,"checks":{"balanceArithmetic":true,"betRowsEqualWager":true,"noNegativeBalance":true,"resultBalanceMatches":true,"onlyKnownRowTypes":true},"win":1000,"feature":0,"newRows":2,"detail":""}
+{"game":"lucky9","phase":"functional","bet":1,"ok":true,"checks":{"balanceArithmetic":true,"betRowsEqualWager":true,"noNegativeBalance":true,"resultBalanceMatches":true,"onlyKnownRowTypes":true},"win":0,"feature":0,"newRows":1,"detail":""}
+{"game":"abyssal-pearls","phase":"idempotency","ok":true,"detail":"bet rows after same-key replay: 1"}
+{"game":"shark-hunter","phase":"negative","case":"client-chosen-payout-field","ok":true,"detail":"Unknown or expired fish"}
+{"game":"baccarat","phase":"negative","case":"zero","ok":true,"detail":"Place at least one bet"}
+{"game":"baccarat","phase":"negative","case":"negative","ok":true,"detail":"[\n  {\n    \"origin\": \"number\",\n    \"code\": \"too_small\",\n    \"minimum\": 0,\n    \"in"}
+{"game":"lucky9","phase":"functional","bet":500,"ok":true,"checks":{"balanceArithmetic":true,"betRowsEqualWager":true,"noNegativeBalance":true,"resultBalanceMatches":true,"onlyKnownRowTypes":true},"win":500,"feature":0,"newRows":2,"detail":""}
+{"game":"threecardpoker","phase":"functional","bet":500,"ok":true,"checks":{"balanceArithmetic":true,"betRowsEqualWager":true,"noNegativeBalance":true,"resultBalanceMatches":true,"onlyKnownRowTypes":true},"win":0,"feature":0,"newRows":1,"detail":""}
+{"game":"baccarat","phase":"negative","case":"fraction-of-a-cent","ok":true,"detail":"Amount must be a valid positive whole number of cents"}
+{"game":"threecardpoker","phase":"negative","case":"zero","ok":true,"detail":"[\n  {\n    \"origin\": \"number\",\n    \"code\": \"too_small\",\n    \"minimum\": 0.01,\n    "}
+{"game":"starfall-sanctum","phase":"functional","bet":0.2,"ok":true,"checks":{"balanceArithmetic":true,"betRowsEqualWager":true,"noNegativeBalance":true,"resultBalanceMatches":true,"onlyKnownRowTypes":true,"winRowsMatchResult":true},"win":2.15,"feature":0,"newRows":2,"detail":""}
+{"game":"threecardpoker","phase":"negative","case":"negative","ok":true,"detail":"[\n  {\n    \"origin\": \"number\",\n    \"code\": \"too_small\",\n    \"minimum\": 0.01,\n    "}
+{"game":"lucky9","phase":"negative","case":"zero","ok":true,"detail":"Place at least one bet"}
+{"game":"baccarat","phase":"negative","case":"above-game-max","ok":true,"detail":"Player bet must be between ₱1 and ₱500"}
+{"game":"threecardpoker","phase":"negative","case":"fraction-of-a-cent","ok":true,"detail":"[\n  {\n    \"origin\": \"number\",\n    \"code\": \"too_small\",\n    \"minimum\": 0.01,\n    "}
+{"game":"lucky9","phase":"negative","case":"negative","ok":true,"detail":"[\n  {\n    \"origin\": \"number\",\n    \"code\": \"too_small\",\n    \"minimum\": 0,\n    \"in"}
+{"game":"starfall-sanctum","phase":"functional","bet":1,"ok":true,"checks":{"balanceArithmetic":true,"betRowsEqualWager":true,"noNegativeBalance":true,"resultBalanceMatches":true,"onlyKnownRowTypes":true,"winRowsMatchResult":true},"win":0,"feature":0,"newRows":1,"detail":""}
+{"game":"lucky9","phase":"negative","case":"fraction-of-a-cent","ok":true,"detail":"Amount must be a valid positive whole number of cents"}
+{"game":"shark-hunter","phase":"idempotency","ok":true,"detail":"bet rows after same-key replay: 1"}
+{"game":"baccarat","phase":"negative","case":"below-game-min","ok":true,"detail":"Player bet must be between ₱1 and ₱500"}
+{"game":"threecardpoker","phase":"negative","case":"above-game-max","ok":true,"detail":"Ante bet must be between ₱1 and ₱500"}
+{"game":"lucky9","phase":"negative","case":"above-game-max","ok":true,"detail":"Player bet must be between ₱1 and ₱500"}
+{"game":"color-game","phase":"functional","bet":1,"ok":true,"checks":{"balanceArithmetic":true,"betRowsEqualWager":true,"noNegativeBalance":true,"resultBalanceMatches":true,"onlyKnownRowTypes":true},"win":0,"feature":0,"newRows":1,"detail":""}
+{"game":"starfall-sanctum","phase":"functional","bet":100,"ok":true,"checks":{"balanceArithmetic":true,"betRowsEqualWager":true,"noNegativeBalance":true,"resultBalanceMatches":true,"onlyKnownRowTypes":true,"winRowsMatchResult":true},"win":0,"feature":0,"newRows":1,"detail":""}
+{"game":"starfall-sanctum","phase":"negative","case":"zero","ok":true,"detail":"[\n  {\n    \"origin\": \"number\",\n    \"code\": \"too_small\",\n    \"minimum\": 0,\n    \"in"}
+{"game":"threecardpoker","phase":"negative","case":"below-game-min","ok":true,"detail":"Ante bet must be between ₱1 and ₱500"}
+{"game":"lucky9","phase":"negative","case":"below-game-min","ok":true,"detail":"Player bet must be between ₱1 and ₱500"}
+{"game":"starfall-sanctum","phase":"negative","case":"negative","ok":true,"detail":"[\n  {\n    \"origin\": \"number\",\n    \"code\": \"too_small\",\n    \"minimum\": 0,\n    \"in"}
+{"game":"color-game","phase":"functional","bet":500,"ok":true,"checks":{"balanceArithmetic":true,"betRowsEqualWager":true,"noNegativeBalance":true,"resultBalanceMatches":true,"onlyKnownRowTypes":true},"win":0,"feature":0,"newRows":1,"detail":""}
+{"game":"baccarat","phase":"idempotency","ok":true,"detail":"bet rows after same-key replay: 1"}
+{"game":"starfall-sanctum","phase":"negative","case":"fraction-of-a-cent","ok":true,"detail":"Amount must be a valid positive whole number of cents"}
+{"game":"color-game","phase":"negative","case":"zero","ok":true,"detail":"Place at least one color bet"}
+{"game":"color-game","phase":"negative","case":"negative","ok":true,"detail":"[\n  {\n    \"origin\": \"number\",\n    \"code\": \"too_small\",\n    \"minimum\": 0,\n    \"in"}
+{"game":"sirens-lagoon","phase":"functional","bet":0.2,"ok":true,"checks":{"balanceArithmetic":true,"betRowsEqualWager":true,"noNegativeBalance":true,"resultBalanceMatches":true,"onlyKnownRowTypes":true,"winRowsMatchResult":true},"win":1.85,"feature":0,"newRows":2,"detail":""}
+{"game":"starfall-sanctum","phase":"negative","case":"above-game-max","ok":true,"detail":"Bet must be between 0.2 and 100"}
+{"game":"lucky9","phase":"idempotency","ok":true,"detail":"bet rows after same-key replay: 1"}
+{"game":"color-game","phase":"negative","case":"fraction-of-a-cent","ok":true,"detail":"Place at least one color bet"}
+{"game":"sirens-lagoon","phase":"functional","bet":1,"ok":true,"checks":{"balanceArithmetic":true,"betRowsEqualWager":true,"noNegativeBalance":true,"resultBalanceMatches":true,"onlyKnownRowTypes":true,"winRowsMatchResult":true},"win":0,"feature":0,"newRows":1,"detail":""}
+{"game":"starfall-sanctum","phase":"negative","case":"below-game-min","ok":true,"detail":"Bet must be between 0.2 and 100"}
+{"game":"tidecaller-hoard","phase":"functional","bet":0.2,"ok":true,"checks":{"balanceArithmetic":true,"betRowsEqualWager":true,"noNegativeBalance":true,"resultBalanceMatches":true,"onlyKnownRowTypes":true,"winRowsMatchResult":true},"win":0,"feature":0,"newRows":1,"detail":""}
+{"game":"color-game","phase":"negative","case":"above-game-max","ok":true,"detail":"Red bet must be between ₱1 and ₱500"}
+{"game":"sirens-lagoon","phase":"functional","bet":100,"ok":true,"checks":{"balanceArithmetic":true,"betRowsEqualWager":true,"noNegativeBalance":true,"resultBalanceMatches":true,"onlyKnownRowTypes":true,"winRowsMatchResult":true},"win":0,"feature":0,"newRows":1,"detail":""}
+{"game":"sirens-lagoon","phase":"negative","case":"zero","ok":true,"detail":"[\n  {\n    \"origin\": \"number\",\n    \"code\": \"too_small\",\n    \"minimum\": 0,\n    \"in"}
+{"game":"tidecaller-hoard","phase":"functional","bet":1,"ok":true,"checks":{"balanceArithmetic":true,"betRowsEqualWager":true,"noNegativeBalance":true,"resultBalanceMatches":true,"onlyKnownRowTypes":true,"winRowsMatchResult":true},"win":0,"feature":0,"newRows":1,"detail":""}
+{"game":"sirens-lagoon","phase":"negative","case":"negative","ok":true,"detail":"[\n  {\n    \"origin\": \"number\",\n    \"code\": \"too_small\",\n    \"minimum\": 0,\n    \"in"}
+{"game":"color-game","phase":"negative","case":"below-game-min","ok":true,"detail":"Red bet must be between ₱1 and ₱500"}
+{"game":"starfall-sanctum","phase":"idempotency","ok":true,"detail":"bet rows after same-key replay: 1"}
+{"game":"sirens-lagoon","phase":"negative","case":"fraction-of-a-cent","ok":true,"detail":"Amount must be a valid positive whole number of cents"}
+{"game":"threecardpoker","phase":"recovery","ok":true,"detail":"session recoverable=true second deal blocked=true"}
+{"game":"threecardpoker","phase":"idempotency","ok":true,"detail":"bet rows after same-key replay: 1"}
+{"game":"tidecaller-hoard","phase":"functional","bet":100,"ok":true,"checks":{"balanceArithmetic":true,"betRowsEqualWager":true,"noNegativeBalance":true,"resultBalanceMatches":true,"onlyKnownRowTypes":true,"winRowsMatchResult":true},"win":0,"feature":0,"newRows":1,"detail":""}
+{"game":"tidecaller-hoard","phase":"negative","case":"zero","ok":true,"detail":"[\n  {\n    \"origin\": \"number\",\n    \"code\": \"too_small\",\n    \"minimum\": 0,\n    \"in"}
+{"game":"sirens-lagoon","phase":"negative","case":"above-game-max","ok":true,"detail":"Bet must be between 0.2 and 100"}
+{"game":"color-game","phase":"idempotency","ok":true,"detail":"bet rows after same-key replay: 1"}
+{"game":"lighthouse-loot","phase":"functional","bet":0.2,"ok":true,"checks":{"balanceArithmetic":true,"betRowsEqualWager":true,"noNegativeBalance":true,"resultBalanceMatches":true,"onlyKnownRowTypes":true,"winRowsMatchResult":true},"win":0,"feature":0,"newRows":1,"detail":""}
+{"game":"tidecaller-hoard","phase":"negative","case":"negative","ok":true,"detail":"[\n  {\n    \"origin\": \"number\",\n    \"code\": \"too_small\",\n    \"minimum\": 0,\n    \"in"}
+{"game":"sirens-lagoon","phase":"negative","case":"below-game-min","ok":true,"detail":"Bet must be between 0.2 and 100"}
+{"game":"tidecaller-hoard","phase":"negative","case":"fraction-of-a-cent","ok":true,"detail":"Amount must be a valid positive whole number of cents"}
+{"game":"moonjelly-bay","phase":"functional","bet":0.2,"ok":true,"checks":{"balanceArithmetic":true,"betRowsEqualWager":true,"noNegativeBalance":true,"resultBalanceMatches":true,"onlyKnownRowTypes":true,"winRowsMatchResult":true},"win":0,"feature":0,"newRows":1,"detail":""}
+{"game":"lighthouse-loot","phase":"functional","bet":1,"ok":true,"checks":{"balanceArithmetic":true,"betRowsEqualWager":true,"noNegativeBalance":true,"resultBalanceMatches":true,"onlyKnownRowTypes":true,"winRowsMatchResult":true},"win":0.96,"feature":0,"newRows":2,"detail":""}
+{"game":"tidecaller-hoard","phase":"negative","case":"above-game-max","ok":true,"detail":"Bet must be between 0.2 and 100"}
+{"game":"moonjelly-bay","phase":"functional","bet":1,"ok":true,"checks":{"balanceArithmetic":true,"betRowsEqualWager":true,"noNegativeBalance":true,"resultBalanceMatches":true,"onlyKnownRowTypes":true,"winRowsMatchResult":true},"win":0,"feature":0,"newRows":1,"detail":""}
+{"game":"sirens-lagoon","phase":"idempotency","ok":true,"detail":"bet rows after same-key replay: 1"}
+{"game":"lighthouse-loot","phase":"functional","bet":100,"ok":true,"checks":{"balanceArithmetic":true,"betRowsEqualWager":true,"noNegativeBalance":true,"resultBalanceMatches":true,"onlyKnownRowTypes":true,"winRowsMatchResult":true},"win":0,"feature":0,"newRows":1,"detail":""}
+{"game":"tidecaller-hoard","phase":"negative","case":"below-game-min","ok":true,"detail":"Bet must be between 0.2 and 100"}
+{"game":"lighthouse-loot","phase":"negative","case":"zero","ok":true,"detail":"[\n  {\n    \"origin\": \"number\",\n    \"code\": \"too_small\",\n    \"minimum\": 0,\n    \"in"}
+{"game":"moonjelly-bay","phase":"functional","bet":100,"ok":true,"checks":{"balanceArithmetic":true,"betRowsEqualWager":true,"noNegativeBalance":true,"resultBalanceMatches":true,"onlyKnownRowTypes":true,"winRowsMatchResult":true},"win":0,"feature":0,"newRows":1,"detail":""}
+{"game":"lighthouse-loot","phase":"negative","case":"negative","ok":true,"detail":"[\n  {\n    \"origin\": \"number\",\n    \"code\": \"too_small\",\n    \"minimum\": 0,\n    \"in"}
+{"game":"moonjelly-bay","phase":"negative","case":"zero","ok":true,"detail":"[\n  {\n    \"origin\": \"number\",\n    \"code\": \"too_small\",\n    \"minimum\": 0,\n    \"in"}
+{"game":"aurora-spire","phase":"functional","bet":0.2,"ok":true,"checks":{"balanceArithmetic":true,"betRowsEqualWager":true,"noNegativeBalance":true,"resultBalanceMatches":true,"onlyKnownRowTypes":true,"winRowsMatchResult":true},"win":0.4,"feature":0,"newRows":2,"detail":""}
+{"game":"lighthouse-loot","phase":"negative","case":"fraction-of-a-cent","ok":true,"detail":"Amount must be a valid positive whole number of cents"}
+{"game":"moonjelly-bay","phase":"negative","case":"negative","ok":true,"detail":"[\n  {\n    \"origin\": \"number\",\n    \"code\": \"too_small\",\n    \"minimum\": 0,\n    \"in"}
+{"game":"moonjelly-bay","phase":"negative","case":"fraction-of-a-cent","ok":true,"detail":"Amount must be a valid positive whole number of cents"}
+{"game":"aurora-spire","phase":"functional","bet":1,"ok":true,"checks":{"balanceArithmetic":true,"betRowsEqualWager":true,"noNegativeBalance":true,"resultBalanceMatches":true,"onlyKnownRowTypes":true,"winRowsMatchResult":true},"win":0.42,"feature":0,"newRows":2,"detail":""}
+{"game":"lighthouse-loot","phase":"negative","case":"above-game-max","ok":true,"detail":"Bet must be between 0.2 and 100"}
+{"game":"tidecaller-hoard","phase":"idempotency","ok":true,"detail":"bet rows after same-key replay: 1"}
+{"game":"moonjelly-bay","phase":"negative","case":"above-game-max","ok":true,"detail":"Bet must be between 0.2 and 100"}
+{"game":"aurora-spire","phase":"functional","bet":100,"ok":true,"checks":{"balanceArithmetic":true,"betRowsEqualWager":true,"noNegativeBalance":true,"resultBalanceMatches":true,"onlyKnownRowTypes":true,"winRowsMatchResult":true},"win":0,"feature":0,"newRows":1,"detail":""}
+{"game":"lighthouse-loot","phase":"negative","case":"below-game-min","ok":true,"detail":"Bet must be between 0.2 and 100"}
+{"game":"aurora-spire","phase":"negative","case":"zero","ok":true,"detail":"[\n  {\n    \"origin\": \"number\",\n    \"code\": \"too_small\",\n    \"minimum\": 0,\n    \"in"}
+{"game":"comet-carnival","phase":"functional","bet":0.2,"ok":true,"checks":{"balanceArithmetic":true,"betRowsEqualWager":true,"noNegativeBalance":true,"resultBalanceMatches":true,"onlyKnownRowTypes":true,"winRowsMatchResult":true},"win":0,"feature":0,"newRows":1,"detail":""}
+{"game":"moonjelly-bay","phase":"negative","case":"below-game-min","ok":true,"detail":"Bet must be between 0.2 and 100"}
+{"game":"aurora-spire","phase":"negative","case":"negative","ok":true,"detail":"[\n  {\n    \"origin\": \"number\",\n    \"code\": \"too_small\",\n    \"minimum\": 0,\n    \"in"}
+{"game":"aurora-spire","phase":"negative","case":"fraction-of-a-cent","ok":true,"detail":"Amount must be a valid positive whole number of cents"}
+{"game":"comet-carnival","phase":"functional","bet":1,"ok":true,"checks":{"balanceArithmetic":true,"betRowsEqualWager":true,"noNegativeBalance":true,"resultBalanceMatches":true,"onlyKnownRowTypes":true,"winRowsMatchResult":true},"win":0,"feature":0,"newRows":1,"detail":""}
+{"game":"lighthouse-loot","phase":"idempotency","ok":true,"detail":"bet rows after same-key replay: 1"}
+{"game":"aurora-spire","phase":"negative","case":"above-game-max","ok":true,"detail":"Bet must be between 0.2 and 100"}
+{"game":"moonjelly-bay","phase":"idempotency","ok":true,"detail":"bet rows after same-key replay: 1"}
+{"game":"comet-carnival","phase":"functional","bet":100,"ok":true,"checks":{"balanceArithmetic":true,"betRowsEqualWager":true,"noNegativeBalance":true,"resultBalanceMatches":true,"onlyKnownRowTypes":true,"winRowsMatchResult":true},"win":240,"feature":0,"newRows":2,"detail":""}
+{"game":"moonwell-mysteries","phase":"functional","bet":0.2,"ok":true,"checks":{"balanceArithmetic":true,"betRowsEqualWager":true,"noNegativeBalance":true,"resultBalanceMatches":true,"onlyKnownRowTypes":true,"winRowsMatchResult":true},"win":0,"feature":0,"newRows":1,"detail":""}
+{"game":"aurora-spire","phase":"negative","case":"below-game-min","ok":true,"detail":"Bet must be between 0.2 and 100"}
+{"game":"comet-carnival","phase":"negative","case":"zero","ok":true,"detail":"[\n  {\n    \"origin\": \"number\",\n    \"code\": \"too_small\",\n    \"minimum\": 0,\n    \"in"}
+{"game":"comet-carnival","phase":"negative","case":"negative","ok":true,"detail":"[\n  {\n    \"origin\": \"number\",\n    \"code\": \"too_small\",\n    \"minimum\": 0,\n    \"in"}
+{"game":"moonwell-mysteries","phase":"functional","bet":1,"ok":true,"checks":{"balanceArithmetic":true,"betRowsEqualWager":true,"noNegativeBalance":true,"resultBalanceMatches":true,"onlyKnownRowTypes":true,"winRowsMatchResult":true},"win":0,"feature":0,"newRows":1,"detail":""}
+{"game":"comet-carnival","phase":"negative","case":"fraction-of-a-cent","ok":true,"detail":"Amount must be a valid positive whole number of cents"}
+{"game":"aurora-spire","phase":"idempotency","ok":true,"detail":"bet rows after same-key replay: 1"}
+{"game":"comet-carnival","phase":"negative","case":"above-game-max","ok":true,"detail":"Bet must be between 0.2 and 100"}
+{"game":"moonwell-mysteries","phase":"functional","bet":100,"ok":true,"checks":{"balanceArithmetic":true,"betRowsEqualWager":true,"noNegativeBalance":true,"resultBalanceMatches":true,"onlyKnownRowTypes":true,"winRowsMatchResult":true},"win":0,"feature":0,"newRows":1,"detail":""}
+{"game":"comet-carnival","phase":"negative","case":"below-game-min","ok":true,"detail":"Bet must be between 0.2 and 100"}
+{"game":"moonwell-mysteries","phase":"negative","case":"zero","ok":true,"detail":"[\n  {\n    \"origin\": \"number\",\n    \"code\": \"too_small\",\n    \"minimum\": 0,\n    \"in"}
+{"game":"moonwell-mysteries","phase":"negative","case":"negative","ok":true,"detail":"[\n  {\n    \"origin\": \"number\",\n    \"code\": \"too_small\",\n    \"minimum\": 0,\n    \"in"}
+{"game":"moonwell-mysteries","phase":"negative","case":"fraction-of-a-cent","ok":true,"detail":"Amount must be a valid positive whole number of cents"}
+{"game":"comet-carnival","phase":"idempotency","ok":true,"detail":"bet rows after same-key replay: 1"}
+{"game":"moonwell-mysteries","phase":"negative","case":"above-game-max","ok":true,"detail":"Bet must be between 0.2 and 100"}
+{"game":"moonwell-mysteries","phase":"negative","case":"below-game-min","ok":true,"detail":"Bet must be between 0.2 and 100"}
+{"game":"moonwell-mysteries","phase":"idempotency","ok":true,"detail":"bet rows after same-key replay: 1"}
+{"game":"color-game","phase":"concurrency","ok":true,"detail":"parallel spins ok=2/2 bet rows=2 arithmetic=true"}
+{"game":"golden-panther","phase":"concurrency","ok":true,"detail":"parallel spins ok=2/2 bet rows=2 arithmetic=true"}
+{"game":"desert-riches","phase":"concurrency","ok":true,"detail":"parallel spins ok=2/2 bet rows=2 arithmetic=true"}
