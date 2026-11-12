@@ -66,6 +66,8 @@ export const ReelCell = memo(function ReelCell({
 
   return (
     <div
+      data-temple-tile
+      data-winning={isWinLit}
       className={cn(
         "relative min-h-0 min-w-0 overflow-hidden rounded-lg isolate",
         "border-[3px] bg-[#0f0a12]/95 shadow-[0_4px_16px_rgba(0,0,0,0.5),inset_0_0_14px_rgba(251,146,60,0.16)]",
@@ -136,7 +138,7 @@ export const ReelCell = memo(function ReelCell({
                   : { duration: 0.22, ease: [0.22, 1, 0.36, 1] }
           }
         >
-          <div className="absolute inset-[12%] flex items-center justify-center">
+          <div data-temple-art className="absolute inset-[12%] flex items-center justify-center">
             <PantherIcon
               kind={cell.sym.kind}
               mult={cell.mult}

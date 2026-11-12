@@ -1,4 +1,4 @@
-import { SlotControlDeck } from "./SlotControlDeck";
+import { TempleMechanism as SlotControlDeck } from "./temple-rush/TempleMechanism";
 /**
  * Temple Rush — 4×7 cluster-pay tumble slot (panther rectangle board).
  * Engine resolves spins instantly; this file plays back the animation script.

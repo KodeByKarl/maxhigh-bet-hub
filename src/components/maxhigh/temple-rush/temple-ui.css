@@ -1,0 +1,433 @@
+/* Temple Rush: a sandstone gateway and explorer's mechanical altar. */
+[data-game-view="temple-rush"][data-deck] {
+  container-type: size;
+}
+[data-game-view="temple-rush"][data-deck] > div > div.relative.z-10 {
+  padding: max(48px, env(safe-area-inset-top)) max(12px, env(safe-area-inset-right))
+    max(12px, env(safe-area-inset-bottom)) max(12px, env(safe-area-inset-left));
+}
+[data-game-view="temple-rush"][data-deck] > div > button[title] {
+  width: 44px;
+  height: 44px;
+}
+[data-game-view="temple-rush"][data-deck] [data-gs-col] {
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+}
+[data-game-view="temple-rush"][data-deck] [data-gs-col] > :first-child {
+  flex: 0 1 auto;
+}
+[data-game-view="temple-rush"][data-deck] [data-gs-board] {
+  width: min(calc(100cqw - 52px), calc((100cqh - 280px) * 4 / 7), 380px) !important;
+  max-height: none !important;
+  gap: 4px !important;
+}
+[data-game-view="temple-rush"][data-deck] [data-gs-well] {
+  margin: 18px 0 0;
+  padding: 8px !important;
+  overflow: visible;
+  mask: none !important;
+  clip-path: none !important;
+  border-radius: 2px !important;
+  background: linear-gradient(
+    90deg,
+    #555b3b 0,
+    #b29a6d 3px,
+    #293b2b 6px,
+    #111c19 8px,
+    #111c19 calc(100% - 8px),
+    #384532 calc(100% - 6px),
+    #9a8255 calc(100% - 3px),
+    #4c583c
+  ) !important;
+  box-shadow:
+    0 12px 26px #0008,
+    inset 0 -3px 0 #a28b60 !important;
+}
+[data-game-view="temple-rush"][data-deck] [data-gs-well]::before {
+  inset: -15px -5px auto;
+  height: 20px;
+  border: 0;
+  opacity: 1;
+  mask: none;
+  clip-path: polygon(
+    0 40%,
+    12% 40%,
+    12% 15%,
+    35% 15%,
+    35% 0,
+    65% 0,
+    65% 15%,
+    88% 15%,
+    88% 40%,
+    100% 40%,
+    100% 100%,
+    0 100%
+  );
+  background:
+    repeating-linear-gradient(
+      90deg,
+      transparent 0 28px,
+      #263b2d99 29px 31px,
+      transparent 32px 48px
+    ),
+    linear-gradient(#b3a17a, #706f4b 45%, #333c29 46%, #8a835a 90%, #273526);
+  box-shadow: inset 0 -2px 0 #b29b6b;
+}
+[data-game-view="temple-rush"][data-deck] [data-gs-well]::after {
+  inset: -17px auto auto 50%;
+  width: 18px;
+  height: 18px;
+  transform: translateX(-50%) rotate(45deg);
+  background: linear-gradient(135deg, #7eb58b, #1d6d48 49%, #154f36 50%, #598e50);
+  border: 2px solid #bba16a;
+  box-shadow:
+    0 0 0 3px #3a4931,
+    0 2px 12px #67b17433;
+}
+[data-game-view="temple-rush"][data-deck] [data-temple-tile] {
+  border-width: 1px !important;
+  border-color: #a5905a77 !important;
+  border-radius: 2px !important;
+  clip-path: polygon(5% 0, 95% 0, 100% 5%, 100% 95%, 95% 100%, 5% 100%, 0 95%, 0 5%);
+  background:
+    linear-gradient(135deg, #8e95652b, transparent 30%),
+    linear-gradient(155deg, #20372b, #0c1b18 75%) !important;
+  box-shadow:
+    inset 0 1px 0 #e0cc8c33,
+    inset 0 -2px 0 #0006 !important;
+}
+[data-game-view="temple-rush"][data-deck] [data-temple-tile]::before {
+  content: "";
+  position: absolute;
+  inset: 2px;
+  pointer-events: none;
+  opacity: 0.5;
+  background:
+    linear-gradient(#94a56b, #94a56b) left top/9px 1px no-repeat,
+    linear-gradient(#94a56b, #94a56b) left top/1px 9px no-repeat,
+    linear-gradient(#ac965e, #ac965e) right bottom/9px 1px no-repeat,
+    linear-gradient(#ac965e, #ac965e) right bottom/1px 9px no-repeat;
+}
+[data-game-view="temple-rush"][data-deck] [data-temple-tile][data-winning="true"] {
+  border-color: #d7db9c !important;
+  background: radial-gradient(ellipse, #66744a, #183e2b) !important;
+}
+[data-game-view="temple-rush"][data-deck] [data-temple-art] {
+  inset: 2%;
+}
+[data-game-view="temple-rush"][data-deck] [data-temple-art] img {
+  padding: 0;
+  scale: 1;
+  translate: none;
+}
+.temple-mechanism {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 112px minmax(0, 1fr);
+  grid-template-rows: 104px 44px;
+  align-items: center;
+  gap: 6px 8px;
+  width: 100%;
+  max-width: 440px;
+  flex: none;
+  padding: 6px 12px 10px;
+  color: #f4e8c8;
+  font-family: ui-sans-serif, system-ui, sans-serif;
+  font-variant-numeric: tabular-nums;
+  border-radius: 2px 2px 12px 4px;
+  border-top: 2px solid #a99368;
+  background: linear-gradient(155deg, #53583aee, #303d2eee 40%, #252e25f5);
+  box-shadow:
+    inset 0 -3px 0 #111d18,
+    inset 3px 0 0 #ac936455,
+    inset -3px 0 0 #ac936455,
+    0 12px 22px #0007;
+}
+.temple-mechanism button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 44px;
+  min-height: 44px;
+  cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+.temple-mechanism button:focus-visible {
+  outline: 2px solid #c3e7a9;
+  outline-offset: 3px;
+}
+.temple-mechanism button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  filter: grayscale(0.6);
+}
+.temple-mechanism__treasury {
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+  min-width: 0;
+}
+.temple-mechanism__treasury dl {
+  min-width: 0;
+  margin: 0;
+}
+.temple-mechanism__treasury dt {
+  color: #c2c3a1;
+  font-size: 9px;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+.temple-mechanism__treasury dd {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 800;
+  line-height: 1.4;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.temple-mechanism__treasury dl[data-winning="true"] dd {
+  color: #d0efac;
+}
+.temple-mechanism .temple-mechanism__spin {
+  position: relative;
+  isolation: isolate;
+  width: 112px;
+  height: 104px;
+  border: 2px solid #c3ab7a;
+  border-radius: 21px 9px 23px 10px;
+  background: linear-gradient(135deg, #b1a47d, #676c4a 42%, #334433 43%, #827a54);
+  box-shadow:
+    0 4px 0 #142b20,
+    inset 0 1px 0 #e9d6a6,
+    0 6px 12px #0006;
+  color: #fcf0c8;
+  transition:
+    transform 0.15s,
+    filter 0.15s;
+}
+.temple-mechanism__spin::before {
+  content: "";
+  position: absolute;
+  inset: 12px 16px;
+  z-index: -1;
+  border-radius: 50%;
+  border: 2px solid #b59b63;
+  background: radial-gradient(ellipse at 40% 25%, #3e6044, #10291d 75%);
+  box-shadow:
+    inset 0 0 0 3px #172e21,
+    0 0 0 3px #5b6443;
+}
+.temple-mechanism__spin:hover {
+  filter: brightness(1.15);
+}
+.temple-mechanism__spin:active {
+  transform: translateY(2px) rotate(-1deg);
+  box-shadow: inset 0 2px 5px #0007;
+}
+.temple-mechanism__carving {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  fill: #e0ca8c;
+  opacity: 0.75;
+}
+.temple-mechanism__carving .temple-mechanism__gem {
+  fill: #ace29b;
+  stroke: #dbe8b3;
+  stroke-width: 1;
+}
+.temple-mechanism__face {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 1px;
+  z-index: 1;
+}
+.temple-mechanism__face strong {
+  font-size: 16px;
+  font-weight: 900;
+  text-transform: uppercase;
+  text-shadow: 0 2px 3px #0009;
+  line-height: 1.2;
+}
+.temple-mechanism__face small {
+  font-size: 9px;
+  color: #d2dfb5;
+}
+.temple-mechanism__spin[aria-busy="true"] .temple-mechanism__face > svg {
+  animation: temple-turn 0.85s linear infinite;
+}
+.temple-mechanism__spin[data-active="true"]::before {
+  box-shadow:
+    inset 0 0 0 3px #4c8552,
+    0 0 14px #92c87855;
+}
+.temple-mechanism__feature {
+  display: flex;
+  justify-content: center;
+  min-width: 0;
+}
+.temple-mechanism__bonus {
+  flex-direction: column;
+  gap: 3px;
+  width: 100%;
+  padding: 7px 3px;
+  color: #edd6a1;
+  border-bottom: 1px solid #ac985966;
+}
+.temple-mechanism__bonus > svg {
+  color: #c0d5a1;
+}
+.temple-mechanism__bonus > span {
+  font-size: 10px;
+  font-weight: 700;
+}
+.temple-mechanism__bonus > strong {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-size: 13px;
+  font-weight: 800;
+}
+.temple-mechanism__round {
+  font-size: 11px;
+  text-align: center;
+  color: #d6dcbb;
+}
+.temple-mechanism__rail {
+  display: flex;
+  grid-column: 1 / -1;
+  align-items: center;
+  gap: 8px;
+  padding-top: 0;
+}
+.temple-mechanism__bet {
+  display: grid;
+  grid-template-columns: 44px minmax(0, 1fr) 44px;
+  align-items: center;
+  flex: 1;
+  min-width: 0;
+  background: #152b21;
+  border-radius: 4px;
+  box-shadow: inset 0 1px 3px #0006;
+}
+.temple-mechanism__bet > button:first-child {
+  border-right: 1px solid #a798682f;
+  color: #d0ba7d;
+}
+.temple-mechanism__bet > button:last-child {
+  border-left: 1px solid #a798682f;
+  color: #d0ba7d;
+}
+.temple-mechanism__stake {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-width: 0;
+  gap: 0;
+}
+.temple-mechanism__stake span {
+  font-size: 9px;
+  color: #bac4a7;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+.temple-mechanism__stake strong {
+  font-size: 13px;
+  line-height: 1.2;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.temple-mechanism__more {
+  gap: 4px;
+  width: 64px;
+  color: #d3d4b6;
+  font-size: 10px;
+}
+.temple-mechanism__more[data-active="true"] {
+  color: #c0f5ab;
+}
+.temple-mechanism__announcement {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+.temple-options {
+  z-index: 200;
+  min-width: 210px;
+  padding: 6px;
+  border: 1px solid #9e9167;
+  border-radius: 4px;
+  background: #253729;
+  color: #f4e6c2;
+  box-shadow: 0 12px 30px #0009;
+  font-family: ui-sans-serif, system-ui, sans-serif;
+}
+.temple-options__item {
+  display: flex;
+  align-items: center;
+  min-height: 44px;
+  gap: 10px;
+  padding: 8px 10px;
+  border-radius: 3px;
+  font-size: 13px;
+  cursor: pointer;
+  outline: none;
+}
+.temple-options__item[data-highlighted] {
+  background: #4c6040;
+}
+.temple-options__state {
+  margin-left: auto;
+  font-size: 11px;
+  color: #c2d5a6;
+}
+@container (max-width:380px) {
+  .temple-mechanism {
+    grid-template-columns: minmax(0, 1fr) 104px minmax(0, 1fr);
+    column-gap: 6px;
+    padding-inline: 8px;
+  }
+  .temple-mechanism .temple-mechanism__spin {
+    width: 104px;
+  }
+  .temple-mechanism__treasury dd {
+    font-size: 12px;
+  }
+}
+@container (min-width:640px) and (max-height:500px) {
+  [data-game-view="temple-rush"][data-deck] [data-gs-col] {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 360px;
+    gap: 24px;
+    max-width: 1000px;
+  }
+  [data-game-view="temple-rush"][data-deck] [data-gs-board] {
+    width: min(calc(100cqw - 430px), calc((100cqh - 110px) * 4 / 7)) !important;
+  }
+}
+@keyframes temple-turn {
+  to {
+    transform: rotate(360deg);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .temple-mechanism__spin {
+    transition: none;
+  }
+  .temple-mechanism__spin[aria-busy="true"] .temple-mechanism__face > svg {
+    animation: none;
+  }
+}
