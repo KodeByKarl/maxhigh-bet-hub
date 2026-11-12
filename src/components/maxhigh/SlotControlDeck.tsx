@@ -19,6 +19,7 @@ import { SLOT_CONTROL_SKINS } from "@/lib/slot-control-skins";
 import { formatMoney } from "@/lib/currency";
 import "./slot-control-deck.css";
 import "./slot-control-realms.css";
+import { SirensConsole } from "@/games/sirens-lagoon/SirensConsole";
 
 export type SlotControlDeckProps = {
   gameId: string;
@@ -51,7 +52,7 @@ export type SlotControlDeckProps = {
 
 const MOTIFS = { flower: Flower2, flame: Flame, sun: Sun, bolt: Zap, paw: PawPrint, moon: Moon };
 
-export function SlotControlDeck({
+function StandardSlotControlDeck({
   gameId,
   bet,
   win,
@@ -258,5 +259,14 @@ export function SlotControlDeck({
                 : "Choose your bet, then spin"}
       </div>
     </section>
+  );
+}
+
+/** Keep every other game's existing deck unchanged. Realms gameplay retains all callbacks. */
+export function SlotControlDeck(props: SlotControlDeckProps) {
+  return props.gameId === "sirens-lagoon" ? (
+    <SirensConsole {...props} />
+  ) : (
+    <StandardSlotControlDeck {...props} />
   );
 }
