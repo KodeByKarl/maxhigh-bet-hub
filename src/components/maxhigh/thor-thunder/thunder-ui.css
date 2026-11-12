@@ -1,0 +1,503 @@
+/* Thor Thunder: forged rune plates and a Mjolnir command mechanism. */
+[data-game-view="thor-thunder"][data-deck] {
+  container-type: size;
+}
+[data-game-view="thor-thunder"][data-deck]::before {
+  background:
+    radial-gradient(ellipse 65% 30% at 50% 30%, #5cabd718, transparent 72%),
+    linear-gradient(180deg, #05142428, transparent 65%, #030e1a28);
+}
+[data-game-view="thor-thunder"][data-deck] > div > div.relative.z-10 {
+  padding: max(48px, env(safe-area-inset-top)) max(12px, env(safe-area-inset-right))
+    max(12px, env(safe-area-inset-bottom)) max(12px, env(safe-area-inset-left));
+}
+[data-game-view="thor-thunder"][data-deck] > div > button[title] {
+  width: 44px;
+  height: 44px;
+}
+[data-game-view="thor-thunder"][data-deck] > div > img {
+  object-position: 50% 42%;
+}
+.thunder-crest {
+  position: absolute;
+  z-index: 20;
+  pointer-events: none;
+  top: max(54px, env(safe-area-inset-top));
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  white-space: nowrap;
+  color: #e3f1ff;
+  text-shadow: 0 2px 8px #0009;
+}
+.thunder-crest > svg {
+  width: 32px;
+  height: 36px;
+  stroke: #aac9e0;
+  stroke-width: 1.4;
+  fill: #213949;
+}
+.thunder-crest > svg > path:last-child {
+  fill: #a4e4ff;
+  stroke: none;
+}
+.thunder-crest > span {
+  font-family: ui-serif, Georgia, serif;
+  font-size: 19px;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+.thunder-crest small {
+  display: block;
+  font-family: ui-sans-serif, system-ui, sans-serif;
+  font-size: 8px;
+  text-align: center;
+  letter-spacing: 0.3em;
+  color: #91b7cf;
+}
+[data-game-view="thor-thunder"][data-deck] [data-gs-col] {
+  align-items: center;
+  justify-content: flex-start;
+  padding-top: 64px;
+  gap: 14px;
+}
+[data-game-view="thor-thunder"][data-deck] [data-gs-col] > :first-child {
+  flex: 0 1 auto;
+}
+[data-game-view="thor-thunder"][data-deck] [data-gs-board] {
+  width: min(calc(100cqw - 44px), calc((100cqh - 350px) * 7 / 5), 720px) !important;
+  max-height: none !important;
+  gap: 3px !important;
+}
+[data-game-view="thor-thunder"][data-deck] [data-gs-well] {
+  margin: 0;
+  padding: 7px !important;
+  overflow: visible;
+  mask: none !important;
+  clip-path: none !important;
+  border-radius: 2px !important;
+  background: linear-gradient(
+    90deg,
+    #829aa9,
+    #263e50 3px,
+    #102333 6px,
+    #0a1722 calc(100% - 6px),
+    #294452 calc(100% - 3px),
+    #9aaab2
+  ) !important;
+  box-shadow:
+    0 12px 30px #0008,
+    inset 0 1px 0 #b7ced5,
+    inset 0 -2px 0 #688498 !important;
+}
+[data-game-view="thor-thunder"][data-deck] [data-gs-well]::before {
+  inset: -6px -3px;
+  border: 0;
+  opacity: 1;
+  mask: none;
+  background:
+    linear-gradient(135deg, #d1e0e5, #4d6a7c) left top/28px 7px no-repeat,
+    linear-gradient(135deg, #d1e0e5, #4d6a7c) right top/28px 7px no-repeat,
+    linear-gradient(#a3bac4, #374f63) left bottom/28px 7px no-repeat,
+    linear-gradient(#a3bac4, #374f63) right bottom/28px 7px no-repeat;
+}
+[data-game-view="thor-thunder"][data-deck] [data-gs-well]::after {
+  inset: -7px auto auto 50%;
+  width: 46px;
+  height: 13px;
+  transform: translateX(-50%);
+  background: linear-gradient(
+    90deg,
+    #829eac,
+    #d3e9f1 20%,
+    #548cb0 21%,
+    #233f55 40%,
+    #ade8ff 50%,
+    #233f55 60%,
+    #548cb0 79%,
+    #d3e9f1 80%,
+    #829eac
+  );
+  clip-path: polygon(
+    10% 0,
+    90% 0,
+    100% 35%,
+    100% 75%,
+    68% 75%,
+    60% 100%,
+    40% 100%,
+    32% 75%,
+    0 75%,
+    0 35%
+  );
+}
+[data-game-view="thor-thunder"][data-deck] [data-thunder-tile] {
+  clip-path: polygon(9% 0, 91% 0, 100% 9%, 100% 91%, 91% 100%, 9% 100%, 0 91%, 0 9%);
+  border-radius: 1px !important;
+  border-width: 1px !important;
+  border-color: #718ca16b !important;
+  background:
+    radial-gradient(ellipse at 50% 20%, #39587655, transparent 70%),
+    linear-gradient(145deg, #1e3448, #0a1724 80%) !important;
+  box-shadow:
+    inset 0 1px 0 #b5d5e52b,
+    inset 0 -1px 0 #0008 !important;
+}
+[data-game-view="thor-thunder"][data-deck] [data-thunder-tile]::before {
+  content: "";
+  position: absolute;
+  inset: 3px;
+  pointer-events: none;
+  background:
+    linear-gradient(120deg, transparent 40%, #82b9d455 41% 49%, transparent 50%) left bottom/9px
+      12px no-repeat,
+    linear-gradient(60deg, transparent 40%, #82b9d455 41% 49%, transparent 50%) right top/9px 12px
+      no-repeat;
+}
+[data-game-view="thor-thunder"][data-deck] [data-thunder-tile][data-winning="true"] {
+  border-color: #adebff !important;
+  background: radial-gradient(ellipse, #3c6a8a, #122b43) !important;
+}
+[data-game-view="thor-thunder"][data-deck] [data-thunder-art] {
+  inset: 2%;
+}
+[data-game-view="thor-thunder"][data-deck] [data-thunder-tile] > div {
+  border-radius: 1px;
+}
+[data-game-view="thor-thunder"][data-deck] [data-thunder-art] img {
+  padding: 0;
+  scale: 1;
+  translate: none;
+}
+.thunder-command {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  flex: none;
+  width: 100%;
+  max-width: 560px;
+  padding: 0 4px 2px;
+  color: #e5f2fc;
+  font-family: ui-sans-serif, system-ui, sans-serif;
+  font-variant-numeric: tabular-nums;
+}
+.thunder-command button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 44px;
+  min-height: 44px;
+  cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+.thunder-command button:focus-visible {
+  outline: 2px solid #b0e9ff;
+  outline-offset: 3px;
+}
+.thunder-command button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  filter: grayscale(0.7);
+}
+.thunder-command__treasury {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 7px 10px;
+  border-block: 1px solid #7e9bae66;
+  background: linear-gradient(90deg, #102637eb, #1f3c4bcc, #102637eb);
+}
+.thunder-command__treasury dl {
+  min-width: 0;
+  margin: 0;
+}
+.thunder-command__treasury dl:last-child {
+  text-align: right;
+}
+.thunder-command__treasury dt {
+  font-size: 9px;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: #abc2d0;
+}
+.thunder-command__treasury dd {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 800;
+  line-height: 1.3;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.thunder-command__treasury dl[data-winning="true"] dd {
+  color: #bcefff;
+}
+.thunder-command__rune {
+  font-size: 24px;
+  color: #80b7ce;
+  font-family: ui-serif, Georgia, serif;
+}
+.thunder-command__rail {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.thunder-command__bet {
+  display: grid;
+  grid-template-columns: 44px minmax(0, 1fr) 44px;
+  align-items: center;
+  flex: 1;
+  min-width: 0;
+  background: #10283b;
+  border-radius: 3px;
+  border-inline: 2px solid #728da1;
+  box-shadow:
+    inset 0 1px 0 #7798b440,
+    inset 0 -2px 0 #0007;
+}
+.thunder-command__bet > button:first-child {
+  border-right: 1px solid #91bed52c;
+}
+.thunder-command__bet > button:last-child {
+  border-left: 1px solid #91bed52c;
+}
+.thunder-command__stake {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0;
+  min-width: 0;
+}
+.thunder-command__stake span {
+  font-size: 9px;
+  color: #a9c6d7;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+.thunder-command__stake strong {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-size: 14px;
+  line-height: 1.2;
+}
+.thunder-command__more {
+  gap: 3px;
+  width: 64px;
+  color: #b4d3e4;
+  font-size: 10px;
+}
+.thunder-command__more[data-active="true"] {
+  color: #b2eaff;
+}
+.thunder-command__activation {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 88px;
+  align-items: start;
+  gap: 12px;
+}
+.thunder-command .thunder-command__spin {
+  position: relative;
+  isolation: isolate;
+  height: 112px;
+  width: 100%;
+  max-width: 340px;
+  justify-self: center;
+  clip-path: polygon(
+    5% 0,
+    95% 0,
+    100% 10%,
+    100% 54%,
+    95% 64%,
+    61% 64%,
+    61% 96%,
+    57% 100%,
+    43% 100%,
+    39% 96%,
+    39% 64%,
+    5% 64%,
+    0 54%,
+    0 10%
+  );
+  color: #f0faff;
+  background: linear-gradient(135deg, #b8d0dc, #718a9c 30%, #284659 31%, #537184 65%, #9cb8c8);
+  transition:
+    filter 0.15s,
+    transform 0.15s;
+}
+.thunder-command__spin::before {
+  content: "";
+  position: absolute;
+  inset: 3px 5px auto;
+  height: 61%;
+  z-index: -1;
+  clip-path: polygon(4% 0, 96% 0, 100% 12%, 100% 85%, 96% 100%, 4% 100%, 0 85%, 0 12%);
+  background:
+    radial-gradient(ellipse at 50% 50%, #4c98bd66, transparent 60%),
+    linear-gradient(#27495f, #102a41 70%);
+  box-shadow:
+    inset 0 2px 0 #d2edf899,
+    inset 0 -2px 0 #091c30;
+}
+.thunder-command__spin:hover {
+  filter: brightness(1.15);
+}
+.thunder-command__spin:active {
+  transform: translateY(2px) rotate(1deg);
+}
+.thunder-command .thunder-command__spin:focus-visible {
+  outline: none;
+  background: #b0e9ff;
+}
+.thunder-command__engraving {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  stroke: #b0d8ed;
+  stroke-width: 1.5;
+  pointer-events: none;
+  opacity: 0.7;
+}
+.thunder-command__engraving .thunder-command__bolt {
+  fill: #76d3fb;
+  stroke: none;
+  opacity: 0.25;
+}
+.thunder-command__face {
+  position: absolute;
+  top: 4px;
+  left: 20%;
+  right: 20%;
+  height: 58%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: 0;
+  z-index: 1;
+}
+.thunder-command__face strong {
+  font-size: 19px;
+  line-height: 1.15;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.09em;
+  text-shadow: 0 2px 4px #061a2e;
+}
+.thunder-command__face small {
+  font-size: 9px;
+  line-height: 1.1;
+  color: #c4e9fa;
+}
+.thunder-command__spin[aria-busy="true"] .thunder-command__face > svg {
+  animation: thunder-turn 0.8s linear infinite;
+}
+.thunder-command__spin[data-active="true"]::before {
+  background:
+    radial-gradient(ellipse at 50% 50%, #65c8f477, transparent 70%),
+    linear-gradient(#335d77, #0d304c);
+}
+.thunder-command__bonus {
+  flex-direction: column;
+  gap: 4px;
+  height: 72px;
+  background: linear-gradient(145deg, #305065bb, #152d40dd);
+  color: #c9eafa;
+  border-top: 1px solid #95b9cd88;
+  border-bottom: 1px solid #95b9cd33;
+  border-radius: 2px 2px 8px 2px;
+}
+.thunder-command__bonus > span {
+  font-size: 10px;
+  font-weight: 700;
+}
+.thunder-command__bonus > strong {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-size: 13px;
+}
+.thunder-command__round {
+  padding-top: 16px;
+  font-size: 11px;
+  text-align: center;
+}
+.thunder-command__announcement {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+.thunder-options {
+  z-index: 200;
+  min-width: 210px;
+  padding: 6px;
+  border: 1px solid #87aabd;
+  border-radius: 4px;
+  background: #102d41;
+  color: #e4f4ff;
+  box-shadow: 0 12px 30px #0009;
+  font-family: ui-sans-serif, system-ui, sans-serif;
+}
+.thunder-options__item {
+  display: flex;
+  align-items: center;
+  min-height: 44px;
+  gap: 10px;
+  padding: 8px 10px;
+  border-radius: 3px;
+  font-size: 13px;
+  cursor: pointer;
+  outline: none;
+}
+.thunder-options__item[data-highlighted] {
+  background: #31556b;
+}
+.thunder-options__state {
+  margin-left: auto;
+  font-size: 11px;
+  color: #b2daef;
+}
+@container (max-height:700px) {
+  [data-game-view="thor-thunder"][data-deck] [data-gs-col] {
+    padding-top: 64px;
+  }
+}
+@container (min-width:640px) and (max-height:500px) {
+  .thunder-crest {
+    top: 8px;
+  }
+  [data-game-view="thor-thunder"][data-deck] [data-gs-col] {
+    padding-top: 0;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 340px;
+    max-width: 1150px;
+    gap: 20px;
+  }
+  [data-game-view="thor-thunder"][data-deck] [data-gs-board] {
+    width: min(calc(100cqw - 410px), calc((100cqh - 100px) * 7 / 5)) !important;
+  }
+}
+@keyframes thunder-turn {
+  to {
+    transform: rotate(360deg);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .thunder-command__spin {
+    transition: none;
+  }
+  .thunder-command__spin[aria-busy="true"] .thunder-command__face > svg {
+    animation: none;
+  }
+}

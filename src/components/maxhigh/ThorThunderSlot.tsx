@@ -1,4 +1,4 @@
-import { SlotControlDeck } from "./SlotControlDeck";
+import { ThunderCommand as SlotControlDeck } from "./thor-thunder/ThunderCommand";
 /**
  * Thor Thunder — 7×5 cluster-pay tumble slot (panther rectangle board).
  * Engine resolves spins instantly; this file plays back the animation script.
