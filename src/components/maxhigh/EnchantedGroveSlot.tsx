@@ -194,53 +194,24 @@ export function EnchantedGroveSlot({
 
   /** Overlay toast — never inserts into HUD (avoids layout jump). */
   const notifyCashflow = useCallback((delta: number, label: "bet" | "win" | "scatter" | "cap") => {
-    const abs = formatMoney(Math.abs(delta));
-    if (label === "bet") {
-      toast.custom(
-        () => (
-          <div
-            className="rounded-2xl border px-4 py-2.5 text-center shadow-[0_10px_28px_rgba(0,0,0,0.45)]"
-            style={{
-              borderColor: "rgba(52,211,153,0.55)",
-              background: "linear-gradient(135deg, rgba(17,24,39,0.96), rgba(18,42,38,0.92))",
-              color: "#a4ebd1",
-            }}
-          >
-            <div className="text-[10px] font-black uppercase tracking-[0.18em] opacity-80">Bet</div>
-            <div className="text-sm font-black tabular-nums">−{abs}</div>
-          </div>
-        ),
-        { duration: 1800 },
-      );
-      return;
-    }
-    const isWin = label === "win" || label === "scatter";
-    const title = label === "scatter" ? "Scatter" : label === "cap" ? "Cap" : "Win";
-    const prefix = delta < 0 ? "−" : "+";
     toast.custom(
       () => (
-        <div
-          className="rounded-2xl border px-4 py-2.5 text-center shadow-[0_10px_28px_rgba(0,0,0,0.45)]"
-          style={{
-            borderColor: isWin ? "rgba(52,211,153,0.65)" : "rgba(52,211,153,0.55)",
-            background: isWin
-              ? "linear-gradient(135deg, #34D399 0%, rgb(21,53,46) 55%, #111827 100%)"
-              : "linear-gradient(135deg, rgba(17,24,39,0.96), rgba(18,42,38,0.92))",
-            color: isWin ? "#e1f8f0" : "#a4ebd1",
-          }}
-        >
-          <div
-            className="text-[10px] font-black uppercase tracking-[0.18em]"
-            style={{
-              color: isWin ? "rgba(253,242,248,0.85)" : "rgba(251,207,232,0.85)",
-            }}
-          >
-            {title}
+        <div className="grove-notice" data-kind={label}>
+          <span aria-hidden="true">❧</span>
+          <div>
+            <small>
+              {
+                { bet: "Wager placed", win: "Grove blessing", scatter: "Scatter", cap: "Win cap" }[
+                  label
+                ]
+              }
+            </small>
+            <strong>
+              {delta < 0 ? "−" : "+"}
+              {formatMoney(Math.abs(delta))}
+            </strong>
           </div>
-          <div className="text-sm font-black tabular-nums">
-            {prefix}
-            {abs}
-          </div>
+          <span aria-hidden="true">❧</span>
         </div>
       ),
       { duration: 1800 },
@@ -1056,6 +1027,16 @@ export function EnchantedGroveSlot({
               </div>
             </div>
           </div>
+
+          <header className="grove-heading">
+            <span className="grove-heading__eyebrow">THE WILDERWOOD COLLECTION</span>
+            <h1>
+              Enchanted <em>Grove</em>
+            </h1>
+            <span className="grove-heading__flourish" aria-hidden="true">
+              ✧ ─── ❧ ─── ✧
+            </span>
+          </header>
 
           {/* Buy feature — compact on phones so the spin row stays on-screen */}
 

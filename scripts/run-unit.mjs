@@ -4,6 +4,7 @@ import { spawn } from 'node:child_process';
 const output=process.env.TEST_OUTPUT??'output/unit-tests';fs.mkdirSync(output,{recursive:true});
 const jobs=['pool-cap','risk-controls','golden-panther','wild-panther','staging-preview','buffalo-reign','fire-spike','fortune-ox','ace-high','baccarat','threecardpoker','lucky9','lucky-nine-plus','deep-bass','gentle-audio','security-regressions','ph-vps2','destructive-guard','bonus-progress','buy-bonus-spec','buy-bonus-modal','aurora-bonus-lifecycle','buffalo-bonus-lifecycle','game-folders'].map(name=>({name,file:`scripts/test-${name}.ts`}));
 for(const name of ['game-audit','realms-family','realms-engine-parity','cluster-referee','payline-referee'])jobs.push({name,file:`scripts/qa-${name}.ts`});
+jobs.push({name:'access-policy',file:'scripts/test-access-policy.ts'});
 const results=[];
 async function worker(){while(jobs.length){const job=jobs.shift();const start=Date.now();const log=fs.openSync(path.join(output,job.name+'.txt'),'w');
  const timeoutMs=job.name==='cluster-referee'?600000:240000; // Full 80-game referee needs shared-runner CPU headroom; retain a bounded timeout.

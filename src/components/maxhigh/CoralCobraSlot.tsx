@@ -195,53 +195,21 @@ export function CoralCobraSlot({
 
   /** Overlay toast — never inserts into HUD (avoids layout jump). */
   const notifyCashflow = useCallback((delta: number, label: "bet" | "win" | "scatter" | "cap") => {
-    const abs = formatMoney(Math.abs(delta));
-    if (label === "bet") {
-      toast.custom(
-        () => (
-          <div
-            className="rounded-2xl border px-4 py-2.5 text-center shadow-[0_10px_28px_rgba(0,0,0,0.45)]"
-            style={{
-              borderColor: "rgba(251,113,133,0.55)",
-              background: "linear-gradient(135deg, rgba(76,5,25,0.96), rgba(4,47,46,0.96))",
-              color: "#FDA4AF",
-            }}
-          >
-            <div className="text-[10px] font-black uppercase tracking-[0.18em] text-rose-200/80">
-              Bet
-            </div>
-            <div className="text-sm font-black tabular-nums">−{abs}</div>
-          </div>
-        ),
-        { duration: 1800 },
-      );
-      return;
-    }
-    const isWin = label === "win" || label === "scatter";
-    const title = label === "scatter" ? "Scatter" : label === "cap" ? "Cap" : "Win";
-    const prefix = delta < 0 ? "−" : "+";
+    const title = { bet: "Bet", win: "Win", scatter: "Scatter", cap: "Cap" }[label];
     toast.custom(
       () => (
-        <div
-          className="rounded-2xl border px-4 py-2.5 text-center shadow-[0_10px_28px_rgba(0,0,0,0.45)]"
-          style={{
-            borderColor: isWin ? "rgba(94,234,212,0.65)" : "rgba(251,113,133,0.55)",
-            background: isWin
-              ? "linear-gradient(135deg, #0D9488 0%, #134E4A 55%, #4C0519 100%)"
-              : "linear-gradient(135deg, rgba(76,5,25,0.96), rgba(4,47,46,0.96))",
-            color: isWin ? "#99F6E4" : "#FDA4AF",
-          }}
-        >
-          <div
-            className="text-[10px] font-black uppercase tracking-[0.18em]"
-            style={{ color: isWin ? "rgba(153,246,228,0.85)" : "rgba(254,205,211,0.85)" }}
-          >
-            {title}
+        <div className="coral-cashflow" data-kind={label}>
+          <span className="coral-cashflow__emblem" aria-hidden="true">
+            {label === "bet" ? "−" : "✦"}
+          </span>
+          <div className="coral-cashflow__copy">
+            <div className="coral-cashflow__label">{title}</div>
+            <div className="coral-cashflow__amount">
+              {delta < 0 ? "−" : "+"}
+              {formatMoney(Math.abs(delta))}
+            </div>
           </div>
-          <div className="text-sm font-black tabular-nums">
-            {prefix}
-            {abs}
-          </div>
+          <span className="coral-cashflow__bubbles" aria-hidden="true" />
         </div>
       ),
       { duration: 1800 },

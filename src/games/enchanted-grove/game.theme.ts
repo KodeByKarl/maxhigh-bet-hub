@@ -9,7 +9,7 @@ export const skin: GameSkin = {
   spin: "petal",
   fx: "motes",
   board: "hex",
-  atmos: "godrays",
+  atmos: "spotlight",
   grade: "dream",
   sym: "glow",
   mat: "flat",

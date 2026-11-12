@@ -53,7 +53,7 @@ function visit(folder) {
   }
 }
 visit('public');
-if (assets.length !== 3987) throw Error('Expected all 3,987 original public assets');
+if (assets.length !== 3989) throw Error('Expected all 3,989 original public assets');
 const catalog = spawnSync(process.execPath, ['--import', 'tsx', 'scripts/ci/catalog-count.ts'], { encoding: 'utf8' });
 if (catalog.status !== 0 || catalog.stdout.trim() !== '100') throw Error('All 100 playable mappings are required');
 const output = path.resolve('audit/ubuntu-staging/runtime/ci');

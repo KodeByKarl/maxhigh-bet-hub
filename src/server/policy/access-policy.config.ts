@@ -27,7 +27,7 @@ export type AccessPolicy = {
 
 export const ACCESS_POLICY: AccessPolicy = {
   version: 1,
-  environment: "uat",
+  environment: "production",
   gameLocks: {
     enforcement: "on",
     lockedGames: [

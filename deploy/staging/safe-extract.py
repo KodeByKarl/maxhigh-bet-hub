@@ -68,7 +68,7 @@ def main():
         if (not re.fullmatch('[a-f0-9]{40}', manifest.get('sha', ''))
                 or manifest.get('platform') != 'linux' or manifest.get('arch') != 'x64'
                 or manifest.get('nodeMajor') != 24 or manifest.get('games') != 100
-                or manifest.get('publicAssets') != 3987 or manifest.get('artifactFormat') != 'portable-v1'):
+                or manifest.get('publicAssets') != 3989 or manifest.get('artifactFormat') != 'portable-v1'):
             raise ValueError('Artifact identity/inventory mismatch')
         target = args.destination / manifest['sha']
         if target.exists():

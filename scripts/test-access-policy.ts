@@ -29,6 +29,10 @@ const grant = (extra: object = {}) => JSON.stringify({ v: 1, kind: "unlock-games
   const fs = await import("node:fs");
   const alloc = JSON.parse(fs.readFileSync("deploy/handoff/PROPOSED_GAME_ALLOCATION.json", "utf8"));
   const p = getAccessPolicy();
+  assert.equal(p.environment, "production", "production release must disable UAT credit privileges");
+  for (const username of ["uat_owner", "client_owner"]) {
+    assert.equal(mod.ownerMayCreditSelf({ id: "production-owner", username, role: "superadmin" }, "production-owner"), false);
+  }
   assert.equal(p.gameLocks.enforcement, "on");
   assert.equal(p.clientAccounts.enforcement, "off", "the client account cap was removed by the owner");
   assert.deepEqual([...p.developerAccounts], ["uat_owner"], "the developer maintenance account is named in the compiled policy");

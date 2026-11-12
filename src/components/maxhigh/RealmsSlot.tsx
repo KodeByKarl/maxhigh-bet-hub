@@ -3,6 +3,7 @@ import "./realms/abyssal-pearls.css";
 import { CosmicControls } from "./comet-carnival/CosmicControls";
 import { CaptainConsole } from "./lighthouse-loot/CaptainConsole";
 import { MoonjellyPod } from "./moonjelly-bay/MoonjellyPod";
+import { ObservatoryConsole } from "./starfall-sanctum/ObservatoryConsole";
 import { CometIdentity } from "./comet-carnival/CometIdentity";
 import "./realms/illustrated-reels.css";
 /**
@@ -1059,7 +1060,9 @@ function RealmsTable({ def }: { def: RealmsGameDef }) {
         ? CaptainConsole
         : gameId === "moonjelly-bay"
           ? MoonjellyPod
-          : SlotControlDeck;
+          : gameId === "starfall-sanctum"
+            ? ObservatoryConsole
+            : SlotControlDeck;
 
   const displayWin = dropTotal > 0 ? dropTotal : inFree ? fsSessionWin : lastWin;
   const showTumbleBadge = tumbleStepWin > 0 && (phase === "glow" || phase === "popping");

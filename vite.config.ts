@@ -15,6 +15,13 @@ const nitroOptions = {
 
 export default defineConfig({
   vite: {
+    // Keep the app's optimized React modules separate from standalone previews.
+    cacheDir: "node_modules/.vite/maxhigh-app",
+    optimizeDeps: {
+      // Scan the application rather than generated audit/preview HTML files.
+      entries: ["src/router.tsx"],
+      include: ["@radix-ui/react-dropdown-menu"],
+    },
     resolve: {
       tsconfigPaths: true,
     },

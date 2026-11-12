@@ -11,7 +11,7 @@ if (!/^[a-f0-9]{64}$/.test(process.env.RELEASE_MANIFEST_SHA256 ?? '') ||
 const manifest = JSON.parse(fs.readFileSync(manifestFile));
 if (process.platform !== 'linux' || process.arch !== manifest.arch || manifest.platform !== 'linux' ||
     manifest.nodeVersion !== process.versions.node || manifest.artifactFormat !== 'portable-v1' ||
-    manifest.games !== 100 || manifest.publicAssets !== 3987)
+    manifest.games !== 100 || manifest.publicAssets !== 3989)
   throw Error('Linux runtime or game/asset inventory mismatch');
 const hash = createHash('sha256'), buffer = Buffer.allocUnsafe(65536);
 function visit(folder) {
@@ -40,4 +40,4 @@ for (const asset of JSON.parse(inventory)) {
   if (sha256(fs.readFileSync(path.join(release, '.output/public', asset.path))) !== asset.sha256)
     throw Error('Public asset mismatch');
 }
-console.log(JSON.stringify({ verified: true, sha: manifest.sha, games: 100, publicAssets: 3987, nodeVersion: manifest.nodeVersion, dependencies: 'Linux runtime dependencies are traced inside .output/server; no VPS npm install required' }));
+console.log(JSON.stringify({ verified: true, sha: manifest.sha, games: 100, publicAssets: 3989, nodeVersion: manifest.nodeVersion, dependencies: 'Linux runtime dependencies are traced inside .output/server; no VPS npm install required' }));

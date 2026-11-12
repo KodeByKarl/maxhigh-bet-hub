@@ -1,4 +1,4 @@
-import { SlotControlDeck } from "./SlotControlDeck";
+import { FloatingControls } from "./cleopatra-gold/FloatingControls";
 /**
  * Cleopatra Gold — 3×4 cluster-pay tumble slot (panther rectangle board).
  * Engine resolves spins instantly; this file plays back the animation script.
@@ -12,7 +12,8 @@ import { SlotControlDeck } from "./SlotControlDeck";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { FastForward, Info, RotateCcw, RotateCw, Square, Volume2, VolumeX } from "lucide-react";
-import { toast } from "sonner";
+import { CleopatraNotifications } from "./cleopatra-gold/notifications";
+import { cleopatraToast as toast } from "./cleopatra-gold/toast";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/lib/auth";
 import { formatMoney, formatMoneyCompact } from "@/lib/currency";
@@ -199,7 +200,7 @@ export function CleopatraGoldSlot({
       toast.custom(
         () => (
           <div
-            className="rounded-2xl border px-4 py-2.5 text-center shadow-[0_10px_28px_rgba(0,0,0,0.45)]"
+            className="cleo-cash-toast"
             style={{
               borderColor: "rgba(234,179,8,0.55)",
               background: "linear-gradient(135deg, rgba(17,24,39,0.96), rgba(82,36,2,0.92))",
@@ -220,7 +221,7 @@ export function CleopatraGoldSlot({
     toast.custom(
       () => (
         <div
-          className="rounded-2xl border px-4 py-2.5 text-center shadow-[0_10px_28px_rgba(0,0,0,0.45)]"
+          className="cleo-cash-toast"
           style={{
             borderColor: isWin ? "rgba(234,179,8,0.65)" : "rgba(234,179,8,0.55)",
             background: isWin
@@ -977,6 +978,7 @@ export function CleopatraGoldSlot({
       className="relative flex h-full min-h-0 w-full max-w-[100vw] flex-col overflow-hidden select-none"
       style={themeVars}
     >
+      <CleopatraNotifications />
       <img
         src={theme.assets.backdrop}
         alt=""
@@ -1002,9 +1004,9 @@ export function CleopatraGoldSlot({
 
       {/* Playfield — sit above Android 3-button nav (safe-area is often 0 there) */}
       <div className="relative z-10 flex min-h-0 flex-1 flex-col px-1.5 pt-[max(0.25rem,env(safe-area-inset-top))] pb-[max(3.25rem,env(safe-area-inset-bottom))] sm:items-center sm:justify-center sm:px-3 sm:py-2 sm:pb-2">
-        <div className="mx-auto flex h-full min-h-0 w-full max-w-[840px] flex-col">
+        <div className="cleo-playfield mx-auto flex h-full min-h-0 w-full max-w-[840px] flex-col justify-center">
           {/* Board well — hug the grid (no dual-grid temple layout) */}
-          <div className="relative flex min-h-0 w-full flex-1 items-center justify-center">
+          <div className="cleo-stage relative flex min-h-0 w-full flex-none items-center justify-center">
             <div
               className="relative flex max-h-full max-w-full flex-col overflow-hidden rounded-[1.25rem] p-1.5 sm:rounded-2xl sm:p-2"
               style={{
@@ -1057,10 +1059,8 @@ export function CleopatraGoldSlot({
             </div>
           </div>
 
-          {/* Buy feature — compact on phones so the spin row stays on-screen */}
-
-          {/* HUD — compact on Android so Spin sits above the system nav */}
-          <SlotControlDeck
+          {/* Floating controls — the backdrop remains visible between actions. */}
+          <FloatingControls
             gameId="cleopatra-gold"
             bet={totalBet}
             win={displayWin}
