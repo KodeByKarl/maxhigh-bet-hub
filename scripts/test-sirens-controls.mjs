@@ -63,8 +63,9 @@ const states = [
   { turbo: true },
 ];
 let comparisons = 0;
+// Tidecaller's separate renderer is covered by test-tide-controls.mjs.
 for (const gameId of Object.keys(before.SLOT_CONTROL_SKINS).filter(
-  (id) => id !== "sirens-lagoon",
+  (id) => !["sirens-lagoon", "tidecaller-hoard"].includes(id),
 )) {
   for (const state of states) {
     const render = (module) =>

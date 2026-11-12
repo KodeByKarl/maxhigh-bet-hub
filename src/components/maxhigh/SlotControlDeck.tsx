@@ -20,6 +20,7 @@ import { formatMoney } from "@/lib/currency";
 import "./slot-control-deck.css";
 import "./slot-control-realms.css";
 import { SirensConsole } from "@/games/sirens-lagoon/SirensConsole";
+import { TideNavigation } from "@/games/tidecaller-hoard/TideNavigation";
 
 export type SlotControlDeckProps = {
   gameId: string;
@@ -264,6 +265,7 @@ function StandardSlotControlDeck({
 
 /** Keep every other game's existing deck unchanged. Realms gameplay retains all callbacks. */
 export function SlotControlDeck(props: SlotControlDeckProps) {
+  if (props.gameId === "tidecaller-hoard") return <TideNavigation {...props} />;
   return props.gameId === "sirens-lagoon" ? (
     <SirensConsole {...props} />
   ) : (
