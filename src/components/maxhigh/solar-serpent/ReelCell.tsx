@@ -38,7 +38,7 @@ function reelCellPropsEqual(prev: ReelCellProps, next: ReelCellProps): boolean {
   return !cellPhaseRelevant(prev, prev.phase) && !cellPhaseRelevant(next, next.phase);
 }
 
-/** Soft rounded rect — gold / amber tile. */
+/** Solar relic tile. Playback and gameplay positions are unchanged. */
 export const ReelCell = memo(function ReelCell({
   index,
   cell,
@@ -66,6 +66,8 @@ export const ReelCell = memo(function ReelCell({
 
   return (
     <div
+      data-solar-tile
+      data-winning={isWinLit}
       className={cn(
         "relative min-h-0 min-w-0 overflow-hidden rounded-[1.35rem] isolate",
         "border-[2.5px] bg-[#1a1204]/95 shadow-[0_4px_14px_rgba(0,0,0,0.4),inset_0_0_14px_rgba(251,191,36,0.16)]",
@@ -136,7 +138,7 @@ export const ReelCell = memo(function ReelCell({
                   : { duration: 0.22, ease: [0.22, 1, 0.36, 1] }
           }
         >
-          <div className="absolute inset-[4%] flex items-center justify-center">
+          <div data-solar-art className="absolute inset-[4%] flex items-center justify-center">
             <PantherIcon
               kind={cell.sym.kind}
               mult={cell.mult}

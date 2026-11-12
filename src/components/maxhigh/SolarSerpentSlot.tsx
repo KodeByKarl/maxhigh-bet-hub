@@ -1,4 +1,4 @@
-import { SlotControlDeck } from "./SlotControlDeck";
+import { SolarAltar as SlotControlDeck } from "./solar-serpent/SolarAltar";
 /**
  * Panther Peak — Sweet Bonanza layout (cluster-pay tumble slot).
  * Engine resolves spins instantly; this file plays back the animation script.
