@@ -184,3 +184,4 @@ assert.equal((await getEffectiveLockedGames()).size, 50);
 ok("resetting the override restores the compiled configuration (50 locked)");
 
 console.log(`PASS ${checks} access-policy checks`);
+await (await import("../src/server/db/client")).closeDatabasePool();
