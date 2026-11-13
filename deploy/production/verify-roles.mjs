@@ -50,16 +50,20 @@ const report = { origin: ORIGIN, at: new Date().toISOString(), roles: {} };
 async function bodyText(page) { await page.waitForTimeout(1200); return (await page.innerText('body')).replace(/\s+/g, ' '); }
 const noOverflow = (page) => page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1);
 
+// Player UI helpers. The mobile navbar sign-in control is icon-only (text hidden below sm), so match by icon too.
+const signInControl = (page) => page.locator('header button:has(svg.lucide-log-in), button:visible:has-text("Sign in")').locator('visible=true').first();
+const playerSignedIn = async (page) => (await signInControl(page).count()) === 0;
+
 async function runRole(role, spec, vpName, vp) {
   const checks = {};
   const set = (k, v) => { checks[k] = v === true ? 'PASS' : v === false ? 'FAIL' : v; };
   const c = creds[role];
   if (!c) { for (const k of ['login', 'dashboard', 'permissions', 'unauthorized', 'refresh', 'mobile', 'session_expiry', 'logout']) set(k, 'PENDING'); return checks; }
   const ctx = await browser.newContext(vp);
-  let allowAuth = false; let blocked = 0;
+  let allowAuth = false; let blocked = 0; const blockedList = {};
   await ctx.route('**/*', (route) => {
     const r = route.request();
-    if (r.method() !== 'GET' && r.method() !== 'HEAD' && !allowAuth) { blocked++; return route.abort(); }
+    if (r.method() !== 'GET' && r.method() !== 'HEAD' && !allowAuth) { blocked++; const k = `${r.method()} ${new URL(r.url()).pathname.slice(0, 60)}`; blockedList[k] = (blockedList[k] ?? 0) + 1; return route.abort(); }
     return route.continue();
   });
   const page = await ctx.newPage();
@@ -77,15 +81,15 @@ async function runRole(role, spec, vpName, vp) {
     } else {
       // Player: sign-in control on the public site. Marked PENDING if the control cannot be driven.
       await page.goto(ORIGIN + '/', { waitUntil: 'networkidle' });
-      const btn = page.getByRole('button', { name: /sign in/i }).first();
+      const btn = signInControl(page);
       if (!(await btn.count())) { set('login', 'PENDING'); }
       else {
         await btn.click(); allowAuth = true;
-        await page.locator('input[type=password]').first().fill(c.pass).catch(() => {});
-        await page.locator('input[type=text], input[autocomplete=username]').first().fill(c.user).catch(() => {});
-        await page.locator('form button[type=submit]').first().click().catch(() => {});
+        await page.locator('input[type=password]').first().fill(c.pass);
+        await page.locator('input[type=text], input[autocomplete=username]').first().fill(c.user);
+        await page.locator('form button[type=submit]').first().click();
         await page.waitForTimeout(4000); allowAuth = false;
-        set('login', /Guest/.test(await bodyText(page)) ? false : true);
+        set('login', await playerSignedIn(page));
       }
     }
     await page.screenshot({ path: path.join(outDir, `${role}-${vpName}-after-login.png`) });
@@ -113,7 +117,7 @@ async function runRole(role, spec, vpName, vp) {
     set('mobile', vpName === 'mobile' ? await noOverflow(page) : 'N/A');
     // --- session expiry: dropping the session cookies must re-lock the page
     await ctx.clearCookies(); await page.reload({ waitUntil: 'networkidle' });
-    const expired = spec.login ? LOCKED.test(await bodyText(page)) : /Guest/.test(await bodyText(page));
+    const expired = spec.login ? LOCKED.test(await bodyText(page)) : !(await playerSignedIn(page));
     set('session_expiry', expired);
     // --- logout (fresh sign-in, then press Log out)
     if (spec.login) {
@@ -126,12 +130,25 @@ async function runRole(role, spec, vpName, vp) {
       await page.waitForTimeout(2500); allowAuth = false;
       await page.goto(ORIGIN + spec.home, { waitUntil: 'networkidle' });
       set('logout', LOCKED.test(await bodyText(page)));
-    } else set('logout', 'PENDING');
-    checks.blockedMutatingRequests = blocked;
+    } else {
+      // Player: sign in again, open the account menu, Log out, confirm the dialog, expect the signed-out state.
+      await page.goto(ORIGIN + '/', { waitUntil: 'networkidle' });
+      await signInControl(page).click(); allowAuth = true;
+      await page.locator('input[type=password]').first().fill(c.pass);
+      await page.locator('input[type=text], input[autocomplete=username]').first().fill(c.user);
+      await page.locator('form button[type=submit]').first().click();
+      await page.waitForTimeout(4000);
+      await page.locator('header button:has(div.rounded-full.bg-primary)').last().click();
+      await page.getByRole('button', { name: /^log out$/i }).click();
+      await page.getByRole('button', { name: /yes, log out/i }).click();
+      await page.waitForTimeout(2500); allowAuth = false;
+      set('logout', !(await playerSignedIn(page)));
+    }
+    checks.blockedMutatingRequests = blocked; checks.blockedRequestKinds = blockedList; // method + path only, never bodies/queries
   } catch (e) {
     // Never include page content; message may only name a selector/timeout.
     checks.error = String(e.message).split('\n')[0].replace(/password[^\s]*/gi, '[redacted]').slice(0, 160);
-    for (const k of ['login', 'dashboard', 'permissions', 'unauthorized', 'refresh', 'mobile', 'session_expiry', 'logout']) checks[k] ??= 'FAIL';
+    checks.failedStep = 'see error'; for (const k of ['login', 'dashboard', 'permissions', 'unauthorized', 'refresh', 'mobile', 'session_expiry', 'logout']) checks[k] ??= 'NOT RUN (runner error before this step)';
   } finally { await ctx.close(); }
   return checks;
 }
@@ -141,8 +158,8 @@ for (const [role, spec] of Object.entries(ROLES)) {
   for (const [vpName, vp] of Object.entries(VIEWPORTS)) {
     report.roles[role][vpName] = await runRole(role, spec, vpName, vp);
   }
-  const all = Object.values(report.roles[role]).flatMap((r) => Object.entries(r).filter(([k]) => !['navigationLabels', 'blockedMutatingRequests', 'error'].includes(k)).map(([, v]) => v));
-  report.roles[role].final = all.includes('FAIL') ? 'FAIL' : all.includes('PENDING') ? 'PENDING' : 'PASS';
+  const all = Object.values(report.roles[role]).flatMap((r) => Object.entries(r).filter(([k]) => !['navigationLabels', 'blockedMutatingRequests', 'blockedRequestKinds', 'error', 'failedStep'].includes(k)).map(([, v]) => v));
+  report.roles[role].final = all.includes('FAIL') ? 'FAIL' : all.some((v) => /^(PENDING|NOT RUN)/.test(v)) ? (Object.values(report.roles[role]).some((r) => r.error) ? 'ERROR (runner)' : 'PENDING') : 'PASS';
 }
 await browser.close();
 fs.writeFileSync(path.join(outDir, 'report.json'), JSON.stringify(report, null, 2));
