@@ -6,7 +6,8 @@
  *
  * Credentials file (tab-separated, one line per role, NEVER inside the repository):
  *     superadmin<TAB>username<TAB>password
- *     admin<TAB>...    agent<TAB>...    master_agent<TAB>...    player<TAB>...
+ *     agent<TAB>...    master_agent<TAB>...    player<TAB>...
+ * Operational roles: superadmin, master_agent, agent, player. The legacy backend "admin" role is not an operational role and is not tested.
  * Roles missing from the file are reported PENDING. Only EXISTING QA accounts are used.
  *
  * Safety: no account is created or funded. Every non-GET request is blocked except the sign-in and
@@ -36,7 +37,6 @@ fs.mkdirSync(outDir, { recursive: true });
 
 const ROLES = {
   superadmin: { login: '/superadmin/login', home: '/superadmin', allowed: ['/superadmin', '/superadmin/users', '/superadmin/games'], forbidden: [], lock: /Superadmin only/i },
-  admin: { login: '/admin/login', home: '/admin', allowed: ['/admin', '/admin/users'], forbidden: ['/superadmin', '/superadmin/games', '/superadmin/settings'], lock: /Superadmin only/i },
   master_agent: { login: '/admin/login', home: '/admin', allowed: ['/admin', '/admin/users'], forbidden: ['/superadmin', '/superadmin/games', '/superadmin/settings'], lock: /Superadmin only/i },
   agent: { login: '/admin/login', home: '/admin', allowed: ['/admin', '/admin/users'], forbidden: ['/superadmin', '/superadmin/games', '/superadmin/settings'], lock: /Superadmin only/i },
   player: { login: null, home: '/', allowed: ['/'], forbidden: ['/admin', '/admin/users', '/superadmin', '/superadmin/games'], lock: /(Superadmin only|Admin access required)/i },

@@ -11,7 +11,7 @@
 
   Step 2 (convert): name the username to use for each role. Roles you omit are reported PENDING by the test.
       pwsh deploy/production/New-RoleQaFile.ps1 `
-          -Superadmin client_owner -Admin <admin_user> -MasterAgent <ma_user> -Agent <agent_user> -Player uat_player5
+          -Superadmin client_owner -MasterAgent <ma_user> -Agent <agent_user> -Player uat_player5
 
   Only usernames YOU supply are copied, and only if found in the source files. The tool does not assume UAT accounts
   work on production: if a sign-in fails, verify-roles.mjs reports FAIL for that role (it never retries or creates accounts).
@@ -21,7 +21,7 @@
 [CmdletBinding()]
 param(
   [switch]$List,
-  [string]$Superadmin, [string]$Admin, [string]$MasterAgent, [string]$Agent, [string]$Player,
+  [string]$Superadmin, [string]$MasterAgent, [string]$Agent, [string]$Player,
   [string[]]$Source = @("$env:USERPROFILE\maxhigh-uat-secrets\uat-qa-credentials.txt", "$env:USERPROFILE\maxhigh-uat-secrets\uat-final-credentials.txt"),
   [string]$Output = "$env:USERPROFILE\maxhigh-uat-secrets\role-qa.tsv"
 )
@@ -46,7 +46,7 @@ if ($List) {
   return
 }
 
-$map = [ordered]@{ superadmin = $Superadmin; admin = $Admin; master_agent = $MasterAgent; agent = $Agent; player = $Player }
+$map = [ordered]@{ superadmin = $Superadmin; master_agent = $MasterAgent; agent = $Agent; player = $Player }
 if (-not ($map.Values | Where-Object { $_ })) { throw 'Name at least one role/username (or use -List to inspect).' }
 
 $outFull = [IO.Path]::GetFullPath($Output)

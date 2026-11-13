@@ -6,7 +6,7 @@
  *   node deploy/production/create-qa-staff.mjs            # DRY RUN (default): validates both forms independently; creates nothing
  *   node deploy/production/create-qa-staff.mjs --apply    # creates qa_master_agent, verifies it, then creates qa_agent under it
  *
- * Scope: qa_master_agent (master_agent) and qa_agent (agent, upline qa_master_agent). `qa_admin` is not creatable in the UI.
+ * Scope: qa_master_agent (master_agent) and qa_agent (agent, upline qa_master_agent). (Admin is not an operational role; no qa_admin is created.)
  *
  * Dry run: each form is validated on its own and nothing is submitted. The agent's upline (qa_master_agent) cannot be selectable
  * until it exists, so that single check is reported "PENDING UNTIL APPLY" (not a failure). Apply mode requires it to be selectable.

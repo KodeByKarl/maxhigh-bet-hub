@@ -118,7 +118,7 @@
     <li><a href="#start">0. Read this first</a>
       <ol><li><a href="#start-truth">What this manual is based on</a></li><li><a href="#start-access">Important: reaching the admin panel today</a></li><li><a href="#start-words">Words used in this manual</a></li></ol></li>
     <li><a href="#accounts">1. Accounts, roles and signing in</a>
-      <ol><li><a href="#acc-roles">The five account roles</a></li><li><a href="#acc-owner">Owner / Super Admin</a></li><li><a href="#acc-client">Client accounts (staff)</a></li><li><a href="#acc-player">Player accounts</a></li><li><a href="#acc-passwords">Changing and resetting passwords</a></li></ol></li>
+      <ol><li><a href="#acc-roles">The operational roles</a></li><li><a href="#acc-owner">Owner / Super Admin</a></li><li><a href="#acc-client">Client accounts (staff)</a></li><li><a href="#acc-player">Player accounts</a></li><li><a href="#acc-passwords">Changing and resetting passwords</a></li></ol></li>
     <li><a href="#panel">2. The Super Admin panel and the Games control page</a></li>
     <li><a href="#settings">3. Every game setting explained</a>
       <ol><li><a href="#set-live">Settings that change the game vs. labels only</a></li><li><a href="#set-common">Settings found in every game</a></li><li><a href="#set-families">Settings by game family</a></li><li><a href="#set-platform">Platform-wide controls</a></li></ol></li>
@@ -149,10 +149,10 @@
   <table>
     <tr><th>Who</th><th>Sign-in address</th></tr>
     <tr><td>Owner (Superadmin)</td><td><code>https://maxhigh.online/superadmin/login</code></td></tr>
-    <tr><td>Admin, Master agent, Agent</td><td><code>https://maxhigh.online/admin/login</code></td></tr>
+    <tr><td>Master agent, Agent</td><td><code>https://maxhigh.online/admin/login</code></td></tr>
     <tr><td>Player</td><td><code>https://maxhigh.online</code>, then the <b>Sign in</b> button</td></tr>
   </table>
-  <p>There is no <code>/agent</code> page: agents and master agents use the same <code>/admin/login</code> page as admins. If you type an address that does not exist, you will see "page not found" (404). That is normal. The health-check address <code>/api/health</code> is deliberately hidden from the public.</p>
+  <p>There is no <code>/agent</code> page: agents and master agents use the <code>/admin/login</code> page. If you type an address that does not exist, you will see "page not found" (404). That is normal. The health-check address <code>/api/health</code> is deliberately hidden from the public.</p>
   <div class="warn"><b>Do not use the UAT site for live changes</b>
   The test site <code>uat.maxhigh.online</code> runs an <b>older</b> software version, but it shares the <b>same database</b> as the live site. Settings saved there would change the live games too, possibly with screens that do not match this manual. Make live changes only through the production admin panel.</div>
   <div class="warn"><b>Passwords are never written in this manual</b>
@@ -181,27 +181,32 @@
 <section class="chapter" id="accounts">
   <h2>1. Accounts, roles and signing in</h2>
 
-  <h3 id="acc-roles">The five account roles</h3>
-  <p>Every MaxHigh account has exactly one role. The role decides which sign-in page works and what the account may do. The server checks the role on every action; a role cannot be faked from the browser, and refused attempts are written to the audit log.</p>
+  <h3 id="acc-roles">The operational roles</h3>
+  <p>MaxHigh runs on four operational roles: <b>Superadmin</b> (the owner), <b>Master agent</b>, <b>Agent</b> and <b>Player</b>. Master agents and Agents carry out the administrative work assigned to them. Every account has exactly one role. The role decides which sign-in page works and what the account may do. The server checks the role on every action; a role cannot be faked from the browser, and refused attempts are written to the audit log.</p>
   <table>
     <tr><th>Role</th><th>Who it is for</th><th>Sign-in page</th><th>Can change game settings?</th></tr>
     <tr><td><b>Superadmin</b></td><td>The owner (and the developer)</td><td><code>https://maxhigh.online/superadmin/login</code></td><td><b>Yes</b> (only this role)</td></tr>
-    <tr><td><b>Admin</b></td><td>Client staff who run day-to-day operations</td><td><code>https://maxhigh.online/admin/login</code></td><td>No</td></tr>
-    <tr><td><b>Master agent</b></td><td>Senior agent who manages agents and players</td><td><code>https://maxhigh.online/admin/login</code></td><td>No</td></tr>
-    <tr><td><b>Agent</b></td><td>Agent who manages their own players</td><td><code>https://maxhigh.online/admin/login</code></td><td>No</td></tr>
+    <tr><td><b>Master agent</b></td><td>Senior agent who manages the Agents they created and their Players</td><td><code>https://maxhigh.online/admin/login</code></td><td>No</td></tr>
+    <tr><td><b>Agent</b></td><td>Agent who manages the Players they created</td><td><code>https://maxhigh.online/admin/login</code></td><td>No</td></tr>
     <tr><td><b>Player</b></td><td>Customers who play the games</td><td><code>https://maxhigh.online</code>, then the sign-in button</td><td>No</td></tr>
   </table>
 
+  <div class="note"><b>No separate Admin role is used</b>
+  The system software also contains a legacy role named "Admin". MaxHigh does not use it: Master agents and Agents do the administrative work, and the owner (Superadmin) controls everything else. No Admin account exists and none is needed. Please do not create one.</div>
+
   <div class="note"><b>Creating staff accounts</b>
-  The Superadmin screen <b>Admins page</b> (<code>https://maxhigh.online/superadmin/admins</code>) button <b>+ Add Agent</b> creates Agent, Master Agent and Superadmin accounts (starting balance 0). It does not offer the Admin role. Staff accounts count toward your account limit; locking an unused staff account frees its place. Do not share staff passwords; ask your administrator for a reset instead.</div>
+  The Superadmin screen <b>Admins page</b> (<code>https://maxhigh.online/superadmin/admins</code>) button <b>+ Add Agent</b> creates Agent, Master Agent and Superadmin accounts (starting balance 0). Staff accounts count toward your account limit; locking an unused staff account frees its place. Do not share staff passwords; ask your administrator for a reset instead.</div>
 
   <h4>What each role may do</h4>
+  <p>Master agents and Agents are <b>not</b> identical: the server gives them the same kinds of action but limits each to a different part of the network. This table follows the permission rules in the software (checked in the program code on 13 November 2026). Whether each data-changing action works from start to finish was <b>not tested</b> (see "Production role testing" below).</p>
   <table>
-    <tr><th>Permission</th><th>Superadmin</th><th>Admin</th><th>Master agent / Agent</th></tr>
-    <tr><td>See dashboard, reports, transactions, audit log</td><td>✔</td><td>✔</td><td>✔</td></tr>
-    <tr><td>List and create player accounts, lock/unlock, reset failed sign-ins</td><td>✔</td><td>✔</td><td>✔</td></tr>
-    <tr><td>Adjust a player's balance (recorded in the ledger)</td><td>✔</td><td>✔</td><td>✔</td></tr>
-    <tr><td>Edit account details, force a user to sign out, review wallet requests</td><td>✔</td><td>✔</td><td>—</td></tr>
+    <tr><th>Action</th><th>Superadmin</th><th>Master agent</th><th>Agent</th></tr>
+    <tr><td>Open the dashboard, Player List and Reports</td><td>✔ everything</td><td>✔ own network only</td><td>✔ own network only</td></tr>
+    <tr><td>Accounts it can see</td><td>All</td><td>Its Agents, its Players, and the Players under those Agents</td><td>Players it created, and Agents under it</td></tr>
+    <tr><td>Create accounts</td><td>Agent, Master agent, Superadmin (Admins page) and Players</td><td>Players or Agents</td><td>Players or Agents. <b>Creating an Agent automatically promotes the creator to Master agent.</b></td></tr>
+    <tr><td>Add or withdraw chips (recorded in the ledger)</td><td>Master agents, Agents, Players (never its own account)</td><td>Its direct Agents and Players, and Players under its Agents</td><td>Only Players it created</td></tr>
+    <tr><td>Lock / unlock players, reset failed sign-ins, handle support chats</td><td>✔</td><td>✔</td><td>✔</td></tr>
+    <tr><td>Edit account credentials, force a user to sign out, review wallet requests</td><td>✔</td><td>—</td><td>—</td></tr>
     <tr><td>Change roles</td><td>✔</td><td>—</td><td>—</td></tr>
     <tr><td><b>Change game settings</b></td><td>✔</td><td>—</td><td>—</td></tr>
     <tr><td>Jackpot, promotions, risk limits, system settings</td><td>✔</td><td>—</td><td>—</td></tr>
@@ -232,8 +237,8 @@
     <li>You see the message "Welcome, Superadmin" and arrive at the <b class="ui">Command center</b>.</li>
   </ol>
 
-  <h3 id="acc-client">Client accounts (staff: Admin, Master agent, Agent)</h3>
-  <p>"Client accounts" are the staff accounts your business uses to run the casino: <b>Admin</b>, <b>Master agent</b> and <b>Agent</b>. They sign in on the staff portal and work under the owner's rules. They cannot change game settings, jackpots, promotions, risk limits or system settings. Those stay with the owner.</p>
+  <h3 id="acc-client">Client accounts (staff: Master agent, Agent)</h3>
+  <p>"Client accounts" are the staff accounts your business uses to run the casino: <b>Master agent</b> and <b>Agent</b>. They sign in on the staff portal and work under the owner's rules. They cannot change game settings, jackpots, promotions, risk limits or system settings. Those stay with the owner.</p>
   <figure>
     <img src="screenshots/04-admin-login.png" alt="Staff portal sign-in page">
     <figcaption><b>Screenshot: Staff portal sign-in page (production)</b>, at <code>https://maxhigh.online/admin/login</code>: "Sign in to the MaxHigh admin dashboard."</figcaption>
@@ -271,7 +276,7 @@
   <table>
     <tr><th style="width:30mm">Role</th><th>Sign-in page</th><th>Sign in, dashboard, refresh</th><th>Blocked from other roles' pages</th><th>Session expiry, sign out</th><th>Phone layout</th><th>Result</th></tr>
     <tr><td><b>Superadmin</b></td><td><code>/superadmin/login</code></td><td>Passed</td><td>Not applicable (full access)</td><td>Passed</td><td>Passed</td><td><b>PASS</b></td></tr>
-    <tr><td><b>Admin</b></td><td><code>/admin/login</code></td><td colspan="4">Not tested: no Admin account exists on production, and the Superadmin screen cannot create one (see below).</td><td><b>PENDING</b></td></tr>
+    <tr><td><b>Admin</b></td><td>-</td><td colspan="4">Not part of the operational role requirements (the legacy role is kept in the software but unused).</td><td><b>N/A</b></td></tr>
     <tr><td><b>Master agent</b></td><td><code>/admin/login</code></td><td>Passed</td><td>Passed (<code>/superadmin</code> pages show "Superadmin only")</td><td>Passed</td><td>Passed</td><td><b>PASS</b></td></tr>
     <tr><td><b>Agent</b></td><td><code>/admin/login</code></td><td>Passed</td><td>Passed</td><td>Passed</td><td>Passed</td><td><b>PASS</b></td></tr>
     <tr><td><b>Player</b></td><td><code>https://maxhigh.online</code> (Sign in button)</td><td>Passed</td><td>Passed (<code>/admin</code> and <code>/superadmin</code> show an access-required page)</td><td>Passed</td><td>Passed</td><td><b>PASS</b></td></tr>
@@ -279,7 +284,7 @@
   <p><b>What is different between the roles (as seen in the menus):</b></p>
   <ul>
     <li><b>Superadmin</b>: Command center, Player List, Admins, Games control, Promotions, Risk Control, System Settings, Jackpot, Report, Staff actions.</li>
-    <li><b>Master agent and Agent</b>: Dashboard, Player List, Reports, Live Support only. No game, jackpot, promotion, risk or system settings.</li>
+    <li><b>Master agent and Agent</b>: both menus show Dashboard, Player List, Reports and Live Support, and neither has game, jackpot, promotion, risk or system settings. What each may do inside those pages differs (see the permission table above).</li>
     <li><b>Player</b>: the casino lobby only. Staff pages are refused.</li>
   </ul>
   <figure>
@@ -302,8 +307,15 @@
     <img src="screenshots/10-player-home-desktop.png" alt="Player lobby (balance covered)">
     <figcaption><b>Screenshot: Player lobby after signing in</b> (balance covered). The Player signs in from the casino home page.</figcaption>
   </figure>
-  <div class="warn"><b>Not yet tested, so do not rely on it</b>
-  (1) The <b>Admin</b> role has not been tested. The Superadmin screen offers Agent, Master Agent and Superadmin only, so an Admin account cannot be created from it. (2) Staff actions that change data (creating players, adjusting balances, locking) were not exercised by the test. (3) Automatic sign-out after a period of inactivity was not tested. (4) The test tool blocked the browser's small background "still active" signal (it only updates the time the session was last used), so that signal was not exercised.</div>
+  <div class="warn"><b>NOT TESTED, so do not rely on it</b>
+  <ul>
+    <li><b>Inactivity timeout</b> (automatic sign-out after a period of no activity).</li>
+    <li><b>12-hour session expiry</b> (the absolute maximum sign-in length).</li>
+    <li><b>Data-changing workflows</b>: creating players or agents, adding or withdrawing chips, locking or unlocking, and the Superadmin game and settings changes. The test tool blocked everything that writes data.</li>
+    <li>The browser's small background "still active" signal (it only updates the time the session was last used) was blocked, so it was not exercised.</li>
+    <li>Behaviour when the account limit is reached.</li>
+  </ul>
+  The roles <b>passed authentication and page-access checks only</b>. This is not a statement that the whole system is fully accepted.</div>
 </section>
 
 <!-- ============================== 2 PANEL ============================== -->
@@ -651,7 +663,7 @@
   <h2>9. Troubleshooting</h2>
   <table>
     <tr><th style="width:42mm">Problem</th><th>Likely cause</th><th>What to do</th></tr>
-    <tr><td>The admin page shows "not found" (404)</td><td>The address is wrong (there is no <code>/agent</code> page), or the web server setting was reverted.</td><td>Use <code>https://maxhigh.online/superadmin/login</code> (owner) or <code>https://maxhigh.online/admin/login</code> (admin, master agent, agent). If those pages show 404, tell your technical administrator: the public Caddy staff rule may have been restored.</td></tr>
+    <tr><td>The admin page shows "not found" (404)</td><td>The address is wrong (there is no <code>/agent</code> page), or the web server setting was reverted.</td><td>Use <code>https://maxhigh.online/superadmin/login</code> (owner) or <code>https://maxhigh.online/admin/login</code> (master agent, agent). If those pages show 404, tell your technical administrator: the public Caddy staff rule may have been restored.</td></tr>
     <tr><td>"Superadmin account required" after signing in</td><td>The account is not a Superadmin.</td><td>Sign in with the owner (Superadmin) account named in your handover.</td></tr>
     <tr><td>Configuration not saving: red error message</td><td>Session expired, no permission for that game, or a server error.</td><td>Read the message. Sign out and in again, then retry. If it continues, note the time and message and contact support.</td></tr>
     <tr><td>"Game Locked. Please settle the remaining project payment…"</td><td>That game is commercially locked.</td><td>Contact your developer.</td></tr>
