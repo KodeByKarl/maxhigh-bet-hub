@@ -211,7 +211,7 @@
   <table>
     <tr><th style="width:42mm">Item</th><th>Details</th></tr>
     <tr><td>Sign-in page</td><td><code>https://maxhigh.online/superadmin/login</code>. See "Where to sign in" in Chapter 0.</td></tr>
-    <tr><td>Owner username</td><td><code>client_owner</code>. This is the account the system recognises as the <b>client owner</b>.</td></tr>
+    <tr><td>Owner username</td><td><code>client_owner</code> is the name the system reserves for the <b>client owner</b> (full access to all game settings, protected from other staff). <b>Checked on 13 November 2026: this account did not yet exist on production.</b> The only Superadmin then was the developer account <code>uat_owner</code>. Your administrator must create <code>client_owner</code> (Admins page, <b>+ Add Agent</b>, role <b>SuperAdmin</b>, signed in as a Superadmin) and give you its password through the encrypted handover. Until then, the steps below use whichever Superadmin username your handover names.</td></tr>
     <tr><td>Password</td><td>Not printed here. It is in the encrypted file <b>MAXHIGH_OWNER_CREDENTIALS.enc</b>, or must be set by a secure reset (see below).</td></tr>
     <tr><td>Special rights</td><td>The client owner account may view and edit the settings of <b>all</b> games. It is also protected: only the owner can change it.</td></tr>
     <tr><td>Developer account</td><td><code>uat_owner</code> belongs to the developer, for support and testing. It is not for daily use by the owner.</td></tr>
@@ -227,7 +227,7 @@
   </figure>
   <ol class="steps">
     <li>Open <code>https://maxhigh.online/superadmin/login</code>.</li>
-    <li>Type the username <code>client_owner</code> in <b class="ui">Username</b>.</li>
+    <li>Type your owner username (<code>client_owner</code> once it has been created) in <b class="ui">Username</b>.</li>
     <li>Type your password in <b class="ui">Password</b>, then press <b class="ui">Sign in</b>.</li>
     <li>You see the message "Welcome, Superadmin" and arrive at the <b class="ui">Command center</b>.</li>
   </ol>
@@ -265,6 +265,45 @@
     <li><b>Owner password:</b> the owner account is protected. If you have lost it, ask your developer to reset it with you present, then change it to one only you know.</li>
     <li>Never send passwords by chat or e-mail. Use the encrypted file, or say them in person or by phone.</li>
   </ul>
+
+  <h3 id="acc-verified">Production role testing (13 November 2026)</h3>
+  <p>Each role below was tested on <b>https://maxhigh.online</b> by an automated browser using dedicated test accounts, on a desktop and a phone-size screen. The tests only looked: every action that would change data was blocked by the test tool, so no balances, bets or game settings were changed. Screenshots are real; money amounts and balances are covered with black boxes.</p>
+  <table>
+    <tr><th style="width:30mm">Role</th><th>Sign-in page</th><th>Sign in, dashboard, refresh</th><th>Blocked from other roles' pages</th><th>Session expiry, sign out</th><th>Phone layout</th><th>Result</th></tr>
+    <tr><td><b>Superadmin</b></td><td><code>/superadmin/login</code></td><td>Passed</td><td>Not applicable (full access)</td><td>Passed</td><td>Passed</td><td><b>PASS</b></td></tr>
+    <tr><td><b>Admin</b></td><td><code>/admin/login</code></td><td colspan="4">Not tested: no Admin account exists on production, and the Superadmin screen cannot create one (see below).</td><td><b>PENDING</b></td></tr>
+    <tr><td><b>Master agent</b></td><td><code>/admin/login</code></td><td>Passed</td><td>Passed (<code>/superadmin</code> pages show "Superadmin only")</td><td>Passed</td><td>Passed</td><td><b>PASS</b></td></tr>
+    <tr><td><b>Agent</b></td><td><code>/admin/login</code></td><td>Passed</td><td>Passed</td><td>Passed</td><td>Passed</td><td><b>PASS</b></td></tr>
+    <tr><td><b>Player</b></td><td><code>https://maxhigh.online</code> (Sign in button)</td><td>Passed</td><td>Passed (<code>/admin</code> and <code>/superadmin</code> show an access-required page)</td><td>Passed</td><td>Passed</td><td><b>PASS</b></td></tr>
+  </table>
+  <p><b>What is different between the roles (as seen in the menus):</b></p>
+  <ul>
+    <li><b>Superadmin</b>: Command center, Player List, Admins, Games control, Promotions, Risk Control, System Settings, Jackpot, Report, Staff actions.</li>
+    <li><b>Master agent and Agent</b>: Dashboard, Player List, Reports, Live Support only. No game, jackpot, promotion, risk or system settings.</li>
+    <li><b>Player</b>: the casino lobby only. Staff pages are refused.</li>
+  </ul>
+  <figure>
+    <img src="screenshots/06-superadmin-command-center.png" alt="Superadmin command center (amounts covered)">
+    <figcaption><b>Screenshot: Superadmin Command center (production).</b> Money amounts are covered. The left menu lists every Superadmin area.</figcaption>
+  </figure>
+  <figure>
+    <img src="screenshots/07-superadmin-staff-list.png" alt="Admin and staff management list">
+    <figcaption><b>Screenshot: Admins page.</b> Staff accounts with their role, upline and balance. <b class="ui">+ Add Agent</b> opens the form that creates Agent, Master Agent and Superadmin accounts. The two <code>qa_</code> accounts are test accounts with zero balance.</figcaption>
+  </figure>
+  <figure>
+    <img src="screenshots/08-master-agent-dashboard.png" alt="Master agent dashboard">
+    <figcaption><b>Screenshot: Master agent dashboard (production).</b> The menu has only Dashboard, Player List, Reports and Live Support. Note: the small green percentage badges on the four cards are display decoration and do not reflect the figures.</figcaption>
+  </figure>
+  <figure>
+    <img src="screenshots/09-agent-dashboard-mobile.png" alt="Agent dashboard on a phone" style="max-width:62mm">
+    <figcaption><b>Screenshot: Agent dashboard on a phone.</b></figcaption>
+  </figure>
+  <figure>
+    <img src="screenshots/10-player-home-desktop.png" alt="Player lobby (balance covered)">
+    <figcaption><b>Screenshot: Player lobby after signing in</b> (balance covered). The Player signs in from the casino home page.</figcaption>
+  </figure>
+  <div class="warn"><b>Not yet tested, so do not rely on it</b>
+  (1) The <b>Admin</b> role has not been tested. The Superadmin screen offers Agent, Master Agent and Superadmin only, so an Admin account cannot be created from it. (2) Staff actions that change data (creating players, adjusting balances, locking) were not exercised by the test. (3) Automatic sign-out after a period of inactivity was not tested. (4) The test tool blocked the browser's small background "still active" signal (it only updates the time the session was last used), so that signal was not exercised.</div>
 </section>
 
 <!-- ============================== 2 PANEL ============================== -->
@@ -425,7 +464,7 @@
   <h2>4. Step-by-step: changing a game's settings</h2>
   <div class="flow"><span>Sign in</span><i>→</i><span>Games control</span><i>→</i><span>Pick game</span><i>→</i><span class="gold">Write down current values</span><i>→</i><span>Change</span><i>→</i><span>Save Config</span><i>→</i><span>Re-open &amp; check</span><i>→</i><span>Test with QA player</span><i>→</i><span class="gold">Watch reports</span></div>
   <ol class="steps">
-    <li><b>Sign in.</b> Open <code>https://maxhigh.online/superadmin/login</code>, enter <code>client_owner</code> and your password, press <b class="ui">Sign in</b>.</li>
+    <li><b>Sign in.</b> Open <code>https://maxhigh.online/superadmin/login</code>, enter your owner username and password, press <b class="ui">Sign in</b>.</li>
     <li><b>Open Games control.</b> Click <b class="ui">Games control</b> in the left menu (on a phone the menu item is called <b class="ui">Games</b>).</li>
     <li><b>Select the game.</b> Under "Per-Game Spot Overrides", type part of the name into <b class="ui">Search games…</b> and click the game's picture. The "… Engine Configuration" window opens and shows "Loading engine configuration…" for a moment.
       <div class="warn" style="margin-top:2mm"><b>If you see "Failed loading engine config — using defaults"</b>Close the window <b>without saving</b>. Saving now would replace the live settings with factory defaults. Try again later or contact support.</div></li>
@@ -613,7 +652,7 @@
   <table>
     <tr><th style="width:42mm">Problem</th><th>Likely cause</th><th>What to do</th></tr>
     <tr><td>The admin page shows "not found" (404)</td><td>The address is wrong (there is no <code>/agent</code> page), or the web server setting was reverted.</td><td>Use <code>https://maxhigh.online/superadmin/login</code> (owner) or <code>https://maxhigh.online/admin/login</code> (admin, master agent, agent). If those pages show 404, tell your technical administrator: the public Caddy staff rule may have been restored.</td></tr>
-    <tr><td>"Superadmin account required" after signing in</td><td>The account is not a Superadmin.</td><td>Sign in with <code>client_owner</code>.</td></tr>
+    <tr><td>"Superadmin account required" after signing in</td><td>The account is not a Superadmin.</td><td>Sign in with the owner (Superadmin) account named in your handover.</td></tr>
     <tr><td>Configuration not saving: red error message</td><td>Session expired, no permission for that game, or a server error.</td><td>Read the message. Sign out and in again, then retry. If it continues, note the time and message and contact support.</td></tr>
     <tr><td>"Game Locked. Please settle the remaining project payment…"</td><td>That game is commercially locked.</td><td>Contact your developer.</td></tr>
     <tr><td>Saved value is different from what I typed</td><td>The value was outside the allowed range and was adjusted.</td><td>Check the ranges in Chapter 3 and choose a value inside them.</td></tr>
