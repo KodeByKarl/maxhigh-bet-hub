@@ -8,10 +8,12 @@ www.maxhigh.online {
 maxhigh.online {
 	encode zstd gzip
 
-	# Staff consoles are NOT served on the public host. Administer via https://uat.maxhigh.online
-	# (Basic Auth + application login). Role checks still apply server-side on every request.
+	# Staff consoles (/admin* for admin/agent/master_agent, /superadmin* for owner) are served on the
+	# public host as of the production-routing fix. The previous edge `respond 404` made every staff
+	# login unreachable. Access is enforced by the application (session + role check on every request);
+	# the pages are noindex and never cached.
 	@staff path /superadmin /superadmin/* /admin /admin/*
-	respond @staff 404
+	header @staff Cache-Control "private, no-store"
 
 	@internal path /api/health /api/metrics
 	respond @internal 404

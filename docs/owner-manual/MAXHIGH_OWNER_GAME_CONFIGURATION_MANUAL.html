@@ -1,0 +1,661 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MaxHigh Owner's Manual</title>
+<!--
+  EDITABLE SOURCE of the MaxHigh Owner's Manual.
+  Edit text here, then rebuild the PDF from the repository root:
+      node docs/owner-manual/tools/build-pdf.mjs
+  Placeholders in double curly braces (reference table, release, read date, game counts) are filled in by the build.
+  Never put passwords in this file.
+-->
+<style>
+  :root {
+    --ink: #1d1a24; --muted: #5d5868; --line: #ddd7e6; --paper: #ffffff;
+    --brand: #6b2fd6; --brand-dark: #3d1690; --gold: #f2a20c; --gold-soft: #fff4dc;
+    --ok: #157a46; --ok-soft: #e5f6ec; --warn: #9a5b00; --warn-soft: #fff1d6; --bad: #a3172b; --bad-soft: #fde8eb;
+    --info-soft: #efe8fc;
+  }
+  @page { size: A4; margin: 18mm 16mm 20mm 16mm; }
+  * { box-sizing: border-box; }
+  html { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  body { margin: 0; background: var(--paper); color: var(--ink); font: 10.5pt/1.55 "Segoe UI", "Helvetica Neue", Arial, sans-serif; }
+  main { max-width: 178mm; margin: 0 auto; }
+  h1, h2, h3, h4 { line-height: 1.25; color: var(--brand-dark); }
+  h2 { font-size: 19pt; margin: 0 0 4mm; padding-bottom: 2mm; border-bottom: 2.5px solid var(--gold); break-after: avoid; }
+  h3 { font-size: 13pt; margin: 7mm 0 2mm; break-after: avoid; }
+  h4 { font-size: 11pt; margin: 5mm 0 1.5mm; color: var(--ink); break-after: avoid; }
+  p { margin: 0 0 2.6mm; }
+  ul, ol { margin: 0 0 3mm; padding-left: 6mm; }
+  li { margin-bottom: 1.2mm; }
+  section.chapter { break-before: page; }
+  .mono { font-family: Consolas, "Courier New", monospace; font-size: 9pt; color: var(--muted); }
+  code, kbd { font-family: Consolas, "Courier New", monospace; font-size: 9.2pt; background: #f3f0f7; border: 1px solid var(--line); border-radius: 3px; padding: 0 3px; }
+  b.ui { background: var(--info-soft); color: var(--brand-dark); padding: 0 4px; border-radius: 3px; font-weight: 700; }
+  table { width: 100%; border-collapse: collapse; margin: 2mm 0 4mm; font-size: 9.2pt; }
+  th, td { border: 1px solid var(--line); padding: 1.6mm 2mm; vertical-align: top; text-align: left; }
+  th { background: var(--brand-dark); color: #fff; font-weight: 700; }
+  tr { break-inside: avoid; }
+  tbody tr:nth-child(even) td { background: #faf8fd; }
+  table.ref { font-size: 8pt; }
+  table.ref td:first-child { width: 6mm; text-align: center; }
+  .note, .warn, .danger, .ok { border-radius: 6px; padding: 3mm 4mm; margin: 3mm 0; break-inside: avoid; border-left: 5px solid; }
+  .note { background: var(--info-soft); border-color: var(--brand); }
+  .warn { background: var(--warn-soft); border-color: var(--gold); }
+  .danger { background: var(--bad-soft); border-color: var(--bad); }
+  .ok { background: var(--ok-soft); border-color: var(--ok); }
+  .note > b:first-child, .warn > b:first-child, .danger > b:first-child, .ok > b:first-child { display: block; margin-bottom: 1mm; }
+  .tag { display: inline-block; font-size: 8pt; font-weight: 700; padding: 0 2mm; border-radius: 10px; }
+  .tag.live { background: var(--ok-soft); color: var(--ok); }
+  .tag.label { background: #eee; color: #555; }
+  .tag.hypo { background: var(--warn-soft); color: var(--warn); }
+  figure { margin: 3mm 0 5mm; break-inside: avoid; }
+  figure img { width: 100%; border: 1px solid var(--line); border-radius: 6px; display: block; }
+  figcaption { font-size: 8.8pt; color: var(--muted); margin-top: 1.5mm; }
+  .shot { position: relative; }
+  .pin { position: absolute; width: 7mm; height: 7mm; border-radius: 50%; background: var(--bad); color: #fff; font-weight: 800; font-size: 9pt; display: flex; align-items: center; justify-content: center; box-shadow: 0 0 0 2px #fff; }
+  .steps { counter-reset: s; list-style: none; padding: 0; }
+  .steps > li { counter-increment: s; position: relative; padding: 2mm 0 2mm 11mm; border-bottom: 1px dashed var(--line); break-inside: avoid; }
+  .steps > li::before { content: counter(s); position: absolute; left: 0; top: 2mm; width: 7.5mm; height: 7.5mm; border-radius: 50%; background: var(--brand); color: #fff; font-weight: 800; display: flex; align-items: center; justify-content: center; font-size: 9.5pt; }
+  .flow { display: flex; flex-wrap: wrap; gap: 2mm; align-items: center; margin: 3mm 0 5mm; break-inside: avoid; }
+  .flow span { background: var(--brand-dark); color: #fff; border-radius: 5px; padding: 1.8mm 3mm; font-size: 8.8pt; font-weight: 700; }
+  .flow span.gold { background: var(--gold); color: #2b1d00; }
+  .flow i { color: var(--muted); font-style: normal; font-weight: 800; }
+  .diagram { border: 2px dashed #b9b0c9; border-radius: 8px; padding: 3mm; background: #fbfaff; break-inside: avoid; margin: 3mm 0 1.5mm; }
+  .diagram .label { font-size: 7.8pt; font-weight: 800; color: var(--bad); letter-spacing: .04em; text-transform: uppercase; }
+  .mock { background: #17141d; color: #e9e4f2; border-radius: 6px; padding: 3mm; font-size: 8.4pt; }
+  .mock .bar { display: flex; gap: 1.5mm; flex-wrap: wrap; margin: 2mm 0; }
+  .mock .bar span { border: 1px solid #4b3f63; border-radius: 4px; padding: .8mm 2mm; }
+  .mock .bar span.on { background: #5a3f0c; border-color: var(--gold); color: #ffd585; }
+  .mock .btn { display: inline-block; background: var(--gold); color: #241700; font-weight: 800; border-radius: 4px; padding: .8mm 3mm; }
+  .mock .field { display: inline-block; border: 1px solid #4b3f63; border-radius: 4px; padding: .6mm 2mm; margin: .8mm 1.5mm .8mm 0; min-width: 26mm; }
+  .mock .muted { color: #9d93ad; }
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 4mm; }
+  .cover { height: 257mm; display: flex; flex-direction: column; justify-content: space-between; background: linear-gradient(160deg, #241046 0%, #3d1690 55%, #6b2fd6 100%); color: #fff; border-radius: 10px; padding: 18mm 16mm; break-after: page; }
+  .cover h1 { color: #fff; font-size: 30pt; margin: 0 0 3mm; letter-spacing: .01em; }
+  .cover .brand { font-weight: 900; font-size: 22pt; letter-spacing: .12em; }
+  .cover .brand em { color: var(--gold); font-style: normal; }
+  .cover .sub { font-size: 14pt; color: #ffd585; font-weight: 700; }
+  .cover dl { display: grid; grid-template-columns: 38mm 1fr; gap: 1.5mm 4mm; font-size: 10pt; margin: 0; }
+  .cover dt { color: #cdbff0; } .cover dd { margin: 0; }
+  .toc ol { list-style: none; padding: 0; columns: 1; }
+  .toc > ol > li { margin: 0 0 2mm; padding: 2mm 3mm; border-left: 4px solid var(--gold); background: #faf8fd; break-inside: avoid; }
+  .toc a { color: var(--ink); text-decoration: none; font-weight: 700; }
+  .toc ol ol { padding-left: 5mm; margin-top: 1mm; }
+  .toc ol ol li { margin: 0; font-size: 9.3pt; } .toc ol ol a { font-weight: 400; color: var(--muted); }
+  a { color: var(--brand); }
+  @media screen { body { background: #ece8f2; } main { background: #fff; padding: 12mm; margin: 8mm auto; box-shadow: 0 2px 18px rgba(0,0,0,.12); } }
+</style>
+</head>
+<body>
+<main>
+
+<!-- ============================== COVER ============================== -->
+<div class="cover">
+  <div>
+    <div class="brand">MAX<em>HIGH</em></div>
+  </div>
+  <div>
+    <h1>Game Configuration &amp; Fine-Tuning Guide</h1>
+    <div class="sub">Owner's Manual: Accounts, Admin Panel and all 50 games</div>
+    <p style="margin-top:6mm;max-width:130mm;color:#e7defa">A step-by-step guide for the owner of MaxHigh: how to sign in, review and change the settings of every game, check that a change worked, and undo it safely.</p>
+  </div>
+  <dl>
+    <dt>Website</dt><dd>https://maxhigh.online</dd>
+    <dt>Software release</dt><dd>{{SHA_SHORT}} (deployed 12 November 2026)</dd>
+    <dt>Game settings read on</dt><dd>{{READ_AT}}</dd>
+    <dt>Games covered</dt><dd>50 games available to players</dd>
+    <dt>Contains passwords?</dt><dd>No. Passwords are delivered separately in an encrypted file.</dd>
+  </dl>
+</div>
+
+<!-- ============================== TOC ============================== -->
+<section class="toc">
+  <h2>Contents</h2>
+  <ol>
+    <li><a href="#start">0. Read this first</a>
+      <ol><li><a href="#start-truth">What this manual is based on</a></li><li><a href="#start-access">Important: reaching the admin panel today</a></li><li><a href="#start-words">Words used in this manual</a></li></ol></li>
+    <li><a href="#accounts">1. Accounts, roles and signing in</a>
+      <ol><li><a href="#acc-roles">The five account roles</a></li><li><a href="#acc-owner">Owner / Super Admin</a></li><li><a href="#acc-client">Client accounts (staff)</a></li><li><a href="#acc-player">Player accounts</a></li><li><a href="#acc-passwords">Changing and resetting passwords</a></li></ol></li>
+    <li><a href="#panel">2. The Super Admin panel and the Games control page</a></li>
+    <li><a href="#settings">3. Every game setting explained</a>
+      <ol><li><a href="#set-live">Settings that change the game vs. labels only</a></li><li><a href="#set-common">Settings found in every game</a></li><li><a href="#set-families">Settings by game family</a></li><li><a href="#set-platform">Platform-wide controls</a></li></ol></li>
+    <li><a href="#sequence">4. Step-by-step: changing a game's settings</a></li>
+    <li><a href="#tuning">5. Fine-tuning: how the settings work together</a></li>
+    <li><a href="#examples">6. Configuration examples</a></li>
+    <li><a href="#games">7. All 50 games: reference</a></li>
+    <li><a href="#safety">8. Safety and best practices</a></li>
+    <li><a href="#trouble">9. Troubleshooting</a></li>
+    <li><a href="#appendix">Appendix: record sheet and credential handover</a></li>
+  </ol>
+</section>
+
+<!-- ============================== 0 ============================== -->
+<section class="chapter" id="start">
+  <h2>0. Read this first</h2>
+
+  <h3 id="start-truth">What this manual is based on</h3>
+  <p>Everything in this manual was checked against the real MaxHigh system that is running on <b>https://maxhigh.online</b> (software release <b>{{SHA_SHORT}}</b>). The current values of each game were read directly from the live site, without changing anything. Where a screen could not be photographed, a clearly labelled <b>diagram</b> is shown instead. Diagrams copy the real screen layout, field names and buttons, but they are drawings, not photographs.</p>
+  <div class="note"><b>Two kinds of examples</b>
+  Values marked <span class="tag live">LIVE</span> are the real values running now. Values marked <span class="tag hypo">EXAMPLE</span> are made-up illustrations to explain an idea. Never copy an EXAMPLE value into the live system without testing it first (see Chapter 8).</div>
+  <div class="warn"><b>No guarantees</b>
+  Game settings change how often players win and how much they can win. They do not guarantee any profit. Results always vary from day to day, especially with small numbers of players. Use the reports to watch real results over time.</div>
+
+  <h3 id="start-access">Where to sign in (verified 13 November 2026)</h3>
+  <div class="note"><b>The staff sign-in pages are open on the public website</b>
+  The sign-in pages load from any phone or computer. The dashboards behind them stay locked: without a valid sign-in you only see an "access required" message, and the server checks your role on every action.</div>
+  <table>
+    <tr><th>Who</th><th>Sign-in address</th></tr>
+    <tr><td>Owner (Superadmin)</td><td><code>https://maxhigh.online/superadmin/login</code></td></tr>
+    <tr><td>Admin, Master agent, Agent</td><td><code>https://maxhigh.online/admin/login</code></td></tr>
+    <tr><td>Player</td><td><code>https://maxhigh.online</code>, then the <b>Sign in</b> button</td></tr>
+  </table>
+  <p>There is no <code>/agent</code> page: agents and master agents use the same <code>/admin/login</code> page as admins. If you type an address that does not exist, you will see "page not found" (404). That is normal. The health-check address <code>/api/health</code> is deliberately hidden from the public.</p>
+  <div class="warn"><b>Do not use the UAT site for live changes</b>
+  The test site <code>uat.maxhigh.online</code> runs an <b>older</b> software version, but it shares the <b>same database</b> as the live site. Settings saved there would change the live games too, possibly with screens that do not match this manual. Make live changes only through the production admin panel.</div>
+  <div class="warn"><b>Passwords are never written in this manual</b>
+  Your account passwords are handed over separately in an encrypted file (see the Appendix). If your password is marked "requires secure reset", ask your technical administrator to reset it before first use. Never share a Superadmin password.</div>
+  <p>In the rest of this manual, <b>&lt;admin address&gt;</b> means <code>https://maxhigh.online</code>.</p>
+
+  <h3 id="start-words">Words used in this manual</h3>
+  <table>
+    <tr><th style="width:32mm">Word</th><th>Simple meaning</th></tr>
+    <tr><td>Bet / stake</td><td>The amount a player puts on one round, in pesos (₱).</td></tr>
+    <tr><td>Round / spin</td><td>One play of a game: one spin, one hand of cards, or one shot.</td></tr>
+    <tr><td>Multiplier (×)</td><td>A win shown as "times the bet". A 5× win on a ₱2 bet pays ₱10.</td></tr>
+    <tr><td>RTP</td><td>Return to Player. Over a very large number of rounds, the share of all bets that goes back to players as wins. 96% RTP means about ₱96 back for every ₱100 bet, <i>on average, over a very long time</i>.</td></tr>
+    <tr><td>House edge</td><td>The part the house keeps on average: <b>House edge = 100% − RTP</b>. A 96% RTP is a 4% house edge.</td></tr>
+    <tr><td>Hit rate</td><td>How often a round pays something. A 25% hit rate means about 1 in 4 rounds wins.</td></tr>
+    <tr><td>Volatility</td><td>How "swingy" a game feels. Low volatility: many small wins. High volatility: long dry spells and rare big wins.</td></tr>
+    <tr><td>Dead spin</td><td>A spin that is set up to have no winning combination at the start.</td></tr>
+    <tr><td>Weight</td><td>A "how common" number. A symbol with weight 40 appears twice as often as one with weight 20. Weights are compared with each other; they are not percentages.</td></tr>
+    <tr><td>Free spins / bonus</td><td>Extra rounds the player gets without paying, usually started by scatter symbols.</td></tr>
+    <tr><td>Win cap</td><td>The most one round can pay, written as "bet × number". With a ₱5 bet and a 10,000× cap, one round can never pay more than ₱50,000.</td></tr>
+    <tr><td>Ledger</td><td>The permanent record of every bet, win and balance change.</td></tr>
+  </table>
+</section>
+
+<!-- ============================== 1 ACCOUNTS ============================== -->
+<section class="chapter" id="accounts">
+  <h2>1. Accounts, roles and signing in</h2>
+
+  <h3 id="acc-roles">The five account roles</h3>
+  <p>Every MaxHigh account has exactly one role. The role decides which sign-in page works and what the account may do. The server checks the role on every action; a role cannot be faked from the browser, and refused attempts are written to the audit log.</p>
+  <table>
+    <tr><th>Role</th><th>Who it is for</th><th>Sign-in page</th><th>Can change game settings?</th></tr>
+    <tr><td><b>Superadmin</b></td><td>The owner (and the developer)</td><td><code>https://maxhigh.online/superadmin/login</code></td><td><b>Yes</b> (only this role)</td></tr>
+    <tr><td><b>Admin</b></td><td>Client staff who run day-to-day operations</td><td><code>https://maxhigh.online/admin/login</code></td><td>No</td></tr>
+    <tr><td><b>Master agent</b></td><td>Senior agent who manages agents and players</td><td><code>https://maxhigh.online/admin/login</code></td><td>No</td></tr>
+    <tr><td><b>Agent</b></td><td>Agent who manages their own players</td><td><code>https://maxhigh.online/admin/login</code></td><td>No</td></tr>
+    <tr><td><b>Player</b></td><td>Customers who play the games</td><td><code>https://maxhigh.online</code>, then the sign-in button</td><td>No</td></tr>
+  </table>
+
+  <h4>What each role may do</h4>
+  <table>
+    <tr><th>Permission</th><th>Superadmin</th><th>Admin</th><th>Master agent / Agent</th></tr>
+    <tr><td>See dashboard, reports, transactions, audit log</td><td>✔</td><td>✔</td><td>✔</td></tr>
+    <tr><td>List and create player accounts, lock/unlock, reset failed sign-ins</td><td>✔</td><td>✔</td><td>✔</td></tr>
+    <tr><td>Adjust a player's balance (recorded in the ledger)</td><td>✔</td><td>✔</td><td>✔</td></tr>
+    <tr><td>Edit account details, force a user to sign out, review wallet requests</td><td>✔</td><td>✔</td><td>—</td></tr>
+    <tr><td>Change roles</td><td>✔</td><td>—</td><td>—</td></tr>
+    <tr><td><b>Change game settings</b></td><td>✔</td><td>—</td><td>—</td></tr>
+    <tr><td>Jackpot, promotions, risk limits, system settings</td><td>✔</td><td>—</td><td>—</td></tr>
+  </table>
+
+  <h3 id="acc-owner">Owner / Super Admin account</h3>
+  <table>
+    <tr><th style="width:42mm">Item</th><th>Details</th></tr>
+    <tr><td>Sign-in page</td><td><code>https://maxhigh.online/superadmin/login</code>. See "Where to sign in" in Chapter 0.</td></tr>
+    <tr><td>Owner username</td><td><code>client_owner</code>. This is the account the system recognises as the <b>client owner</b>.</td></tr>
+    <tr><td>Password</td><td>Not printed here. It is in the encrypted file <b>MAXHIGH_OWNER_CREDENTIALS.enc</b>, or must be set by a secure reset (see below).</td></tr>
+    <tr><td>Special rights</td><td>The client owner account may view and edit the settings of <b>all</b> games. It is also protected: only the owner can change it.</td></tr>
+    <tr><td>Developer account</td><td><code>uat_owner</code> belongs to the developer, for support and testing. It is not for daily use by the owner.</td></tr>
+  </table>
+  <figure>
+    <div class="shot">
+      <img src="screenshots/03-superadmin-login.png" alt="Superadmin sign-in page">
+      <div class="pin" style="left:54%;top:41%">1</div>
+      <div class="pin" style="left:54%;top:50%">2</div>
+      <div class="pin" style="left:54%;top:58.5%">3</div>
+    </div>
+    <figcaption><b>Screenshot: Superadmin sign-in page (production).</b> (1) <b class="ui">Username</b> (2) <b class="ui">Password</b> (the eye icon shows or hides what you typed) (3) <b class="ui">Sign in</b>. If the account is not a Superadmin, the system signs it out again and shows "Superadmin account required".</figcaption>
+  </figure>
+  <ol class="steps">
+    <li>Open <code>https://maxhigh.online/superadmin/login</code>.</li>
+    <li>Type the username <code>client_owner</code> in <b class="ui">Username</b>.</li>
+    <li>Type your password in <b class="ui">Password</b>, then press <b class="ui">Sign in</b>.</li>
+    <li>You see the message "Welcome, Superadmin" and arrive at the <b class="ui">Command center</b>.</li>
+  </ol>
+
+  <h3 id="acc-client">Client accounts (staff: Admin, Master agent, Agent)</h3>
+  <p>"Client accounts" are the staff accounts your business uses to run the casino: <b>Admin</b>, <b>Master agent</b> and <b>Agent</b>. They sign in on the staff portal and work under the owner's rules. They cannot change game settings, jackpots, promotions, risk limits or system settings. Those stay with the owner.</p>
+  <figure>
+    <img src="screenshots/04-admin-login.png" alt="Staff portal sign-in page">
+    <figcaption><b>Screenshot: Staff portal sign-in page (production)</b>, at <code>https://maxhigh.online/admin/login</code>: "Sign in to the MaxHigh admin dashboard."</figcaption>
+  </figure>
+  <ul>
+    <li><b>Creating staff accounts:</b> in the Super Admin panel, open <b class="ui">Admins</b>. A username must be 3–64 characters using letters, numbers or underscore. A password must be at least 6 characters. Email is optional.</li>
+    <li><b>Relationship to the owner:</b> the owner creates staff accounts, can change their role, and can see everything they do in the audit log.</li>
+  </ul>
+
+  <h3 id="acc-player">Player accounts</h3>
+  <table>
+    <tr><th style="width:42mm">Item</th><th>Details</th></tr>
+    <tr><td>Where players sign in</td><td><code>https://maxhigh.online</code>, using the sign-in button at the top of the page.</td></tr>
+    <tr><td>Username</td><td>Each player's own username. Staff can look players up in <b class="ui">Player List</b>.</td></tr>
+    <tr><td>How players play</td><td>Choose <b class="ui">Slots</b>, <b class="ui">Cards</b> or <b class="ui">Fishing</b> in the left menu, tap a game picture, then press <b class="ui">Play now</b>. Every bet and win is written to the ledger straight away.</td></tr>
+    <tr><td>Wallet</td><td>The balance shows at the top right. Players see their own transaction history. Staff can adjust a balance; every adjustment is recorded with who made it.</td></tr>
+    <tr><td>Test players</td><td>Designated QA test players (for example <code>uat_player5</code>) exist for safe testing with small stakes. Do not use real customers' accounts for testing.</td></tr>
+  </table>
+  <figure>
+    <img src="screenshots/02-slots-lobby.png" alt="Slots lobby">
+    <figcaption><b>Screenshot: the Slots lobby on maxhigh.online</b> as a visitor sees it. Players open a game by tapping its picture.</figcaption>
+  </figure>
+
+  <h3 id="acc-passwords">Changing and resetting passwords</h3>
+  <ul>
+    <li><b>There is no "forgot password" e-mail.</b> Passwords are reset by staff inside the admin panel.</li>
+    <li><b>As owner (Super Admin panel):</b> open the account in <b class="ui">Player List</b> or <b class="ui">Admins</b> and edit it. Type the new password in <b class="ui">New password</b> (at least 6 characters; leave it blank to keep the current one), then save.</li>
+    <li><b>As staff (staff portal):</b> open the player and choose <b class="ui">Reset Password</b>, type the new password twice ("Enter new password (min 6 chars)" and "Re-enter password"), and save.</li>
+    <li><b>Owner password:</b> the owner account is protected. If you have lost it, ask your developer to reset it with you present, then change it to one only you know.</li>
+    <li>Never send passwords by chat or e-mail. Use the encrypted file, or say them in person or by phone.</li>
+  </ul>
+</section>
+
+<!-- ============================== 2 PANEL ============================== -->
+<section class="chapter" id="panel">
+  <h2>2. The Super Admin panel and the Games control page</h2>
+  <p>After signing in you see the <b class="ui">Command center</b>. The menu on the left (on a phone, at the bottom) has these items:</p>
+  <table>
+    <tr><th style="width:40mm">Menu item</th><th>What it is for</th></tr>
+    <tr><td><b class="ui">Command center</b></td><td>Overview of the platform.</td></tr>
+    <tr><td><b class="ui">Player List</b></td><td>Find, create and manage players; balances; password resets.</td></tr>
+    <tr><td><b class="ui">Admins</b></td><td>Create and manage staff accounts.</td></tr>
+    <tr><td><b class="ui">Games control</b></td><td><b>All game settings.</b> This manual is mostly about this page.</td></tr>
+    <tr><td><b class="ui">Promotions</b></td><td>Player promotions.</td></tr>
+    <tr><td><b class="ui">Risk Control</b></td><td>Platform-wide bet and payout limits (see Chapter 3).</td></tr>
+    <tr><td><b class="ui">System Settings</b></td><td>Maintenance mode, header message, deposit and withdrawal limits.</td></tr>
+    <tr><td><b class="ui">Jackpot</b></td><td>Mega Jackpot amount and on/off switch; the "Ultra Mega Jackpot (Display Only)".</td></tr>
+    <tr><td><b class="ui">Staff actions</b></td><td>Audit log of what staff did.</td></tr>
+    <tr><td><b class="ui">Report</b></td><td>Win/Lose, Win/Lose By Product (per game), Win/Lose By Level, Transaction History, Chip Distribution Log.</td></tr>
+  </table>
+
+  <h3>The Games control page</h3>
+  <p>Open <b class="ui">Games control</b>. The page title is "Super Admin Game Control Panel". It has two parts:</p>
+  <div class="diagram">
+    <div class="label">Diagram: layout of Games control (not a screenshot)</div>
+    <div class="mock">
+      <div style="font-weight:800;font-size:10pt">Super Admin Game Control Panel</div>
+      <div class="muted">Bulk outcome controls for all casino titles…</div>
+      <div style="border:1px solid #4b3f63;border-radius:5px;padding:2mm;margin-top:2mm">
+        <b>A · Bulk panel</b> &nbsp; Scope: <span class="field">All / Slots / Cards / Fishing</span><br>
+        <span class="field">Dead Spin %</span><span class="field">Win Chance %</span><span class="field">Max Multiplier</span><span class="field">RTP % (80–98%)</span>
+        <span class="btn">Apply to All Games</span> <span class="muted">· change history table</span>
+      </div>
+      <div style="border:1px solid #4b3f63;border-radius:5px;padding:2mm;margin-top:2mm">
+        <b>B · Per-Game Spot Overrides</b> &nbsp; <span class="field">Search games…</span><br>
+        <span class="field">[game picture]</span><span class="field">[game picture]</span><span class="field">[game picture]</span><span class="muted">… click a game to open its settings</span>
+      </div>
+    </div>
+  </div>
+  <ul>
+    <li><b>A. Bulk panel:</b> changes a few settings for many games at once. Every bulk change is saved with a before/after record in a change-history table on the same page.</li>
+    <li><b>B. Per-Game Spot Overrides:</b> a picture card for every game. Type in <b class="ui">Search games…</b> to find one, then click its card to open that game's full settings window.</li>
+  </ul>
+  <div class="note"><b>Locked games</b>
+  A game card marked <b>Locked</b> cannot be opened or switched on. Clicking it shows "Game Locked. Please settle the remaining project payment to activate this game." All 50 games in this manual are currently unlocked.</div>
+
+  <h3>A game's settings window</h3>
+  <p>Clicking a game opens a large window titled "<i>Game name</i> Engine Configuration", with a row of tabs and a gold <b class="ui">Save Config</b> button at the top right.</p>
+  <div class="diagram">
+    <div class="label">Diagram: a game's settings window (Fortune Tiger shown; not a screenshot)</div>
+    <div class="mock">
+      <div style="display:flex;justify-content:space-between;align-items:center"><div><b style="color:#ffd585">FORTUNE TIGER ENGINE CONFIGURATION</b><br><span class="muted">Configure live RNG parameters, symbol weights, wild/bomb multipliers, and free spins.</span></div><span class="btn">💾 Save Config</span></div>
+      <div class="bar"><span class="on">Lobby</span><span>Dead spin</span><span>Symbols</span><span>Wilds/Bombs</span><span>Free spins</span></div>
+      <b>Lobby Settings</b><br><span class="field">Tag / Badge</span><span class="field">RTP %</span><span class="field">Volatility</span><br><span class="field">Min Bet (₱)</span><span class="field">Max Bet (₱)</span>
+    </div>
+  </div>
+  <div class="warn"><b>One Save button for the whole window</b>
+  Changes on any tab are kept while you move between tabs, but <b>nothing is saved until you press Save Config</b>. Closing the window without saving throws your changes away. After a successful save you see a green message such as "Fortune Tiger engine math &amp; lobby settings saved" and the window closes.</div>
+</section>
+
+<!-- ============================== 3 SETTINGS ============================== -->
+<section class="chapter" id="settings">
+  <h2>3. Every game setting explained</h2>
+
+  <h3 id="set-live">Settings that change the game vs. labels only</h3>
+  <p>This is the most important page in the manual. Some boxes really change how a game plays and pays. Others are only text shown to players. The system was checked to find out which is which:</p>
+  <table>
+    <tr><th>Setting</th><th>Where</th><th>Effect</th></tr>
+    <tr><td>Dead spin chance</td><td>Game window, all slots</td><td><span class="tag live">CHANGES THE GAME</span> fewer or more winning spins</td></tr>
+    <tr><td>Symbol weights and pay table</td><td>Symbols tab</td><td><span class="tag live">CHANGES THE GAME</span> which symbols appear and what they pay</td></tr>
+    <tr><td>Wild / bomb / orb chances and multiplier tables</td><td>Wilds/Bombs or Multipliers tab</td><td><span class="tag live">CHANGES THE GAME</span></td></tr>
+    <tr><td>Free-spin trigger, number of spins, retrigger, buy price</td><td>Free spins tab</td><td><span class="tag live">CHANGES THE GAME</span></td></tr>
+    <tr><td>Max win multiplier (win cap)</td><td>Game window and Bulk panel</td><td><span class="tag live">CHANGES THE GAME</span> limits the biggest possible win</td></tr>
+    <tr><td>Active RTP profile (Fire Spike, Coin Volcano)</td><td>RTP / Weights tab</td><td><span class="tag live">CHANGES THE GAME</span> switches to a different set of reel weights</td></tr>
+    <tr><td>Card payouts, fishing tiers, weapons, boss</td><td>Card and fishing tabs</td><td><span class="tag live">CHANGES THE GAME</span></td></tr>
+    <tr><td>Min bet / Max bet</td><td>Lobby tab (slots); Limits tab (cards, fishing)</td><td><span class="tag live">ENFORCED</span> bets outside the range are refused with "Bet must be between …"</td></tr>
+    <tr><td>Enabled / Disabled</td><td>Game card</td><td><span class="tag live">ENFORCED</span> a disabled game refuses new bets: "Game is currently disabled"</td></tr>
+    <tr><td><b>RTP %</b> box (Lobby tab), RTP target on card and fishing games</td><td>Lobby / Risk-RTP tab</td><td><span class="tag label">LABEL ONLY</span> shown to players; <b>does not change payouts</b></td></tr>
+    <tr><td><b>RTP %</b> in the Bulk panel</td><td>Bulk panel</td><td><span class="tag label">LABEL / TARGET ONLY</span> stored as a target number; no game engine uses it to change payouts</td></tr>
+    <tr><td><b>Win Chance %</b> in the Bulk panel</td><td>Bulk panel</td><td><span class="tag label">NO EFFECT</span> stored, but no game currently reads it</td></tr>
+    <tr><td>Volatility, Tag / Badge, Featured, Sort order, Notes</td><td>Lobby tab / game card</td><td><span class="tag label">LABEL ONLY</span> display and ordering</td></tr>
+  </table>
+  <div class="danger"><b>Typing a new "RTP %" does not change the real RTP</b>
+  The real return comes from the math settings: dead spin, weights, pay tables, multipliers, free spins and caps. If you want a game to pay back less or more, you must change those settings. Afterwards, check real results in <b class="ui">Report</b> → <b class="ui">Win/Lose By Product</b>. The admin panel does <b>not</b> calculate the real RTP of your settings for you.</div>
+
+  <h3 id="set-common">Settings found in every game: the Lobby tab</h3>
+  <table>
+    <tr><th style="width:34mm">Field</th><th>Meaning</th><th style="width:44mm">Rules</th></tr>
+    <tr><td><b class="ui">Tag / Badge</b></td><td>Small label on the game picture, e.g. NEW or HOT.</td><td>Up to 32 characters.</td></tr>
+    <tr><td><b class="ui">RTP %</b></td><td>The RTP number shown to players. Display text only.</td><td>Keep it honest: match the game's real long-term results.</td></tr>
+    <tr><td><b class="ui">Volatility</b></td><td>Word shown to players, e.g. Low, Medium, High. Display only.</td><td>Up to 32 characters.</td></tr>
+    <tr><td><b class="ui">Min Bet (₱)</b> / <b class="ui">Max Bet (₱)</b></td><td>Smallest and largest bet accepted for one round. <b>Enforced</b> for all 41 slot games.</td><td>Min must be lower than Max. Also capped by the platform-wide Max Single Bet (see below).</td></tr>
+  </table>
+
+  <h3 id="set-families">Settings by game family</h3>
+  <p>The 50 games use six kinds of settings window ("families"). Games in the same family have the same tabs and fields, but their own values.</p>
+
+  <h4>Family 1: Cluster slots ({{COUNT_CLUSTER}} games). Tabs: Lobby · Dead spin · Symbols · Wilds/Bombs · Free spins</h4>
+  <table>
+    <tr><th style="width:44mm">Field (screen name)</th><th>What it does</th><th style="width:34mm">Allowed range</th></tr>
+    <tr><td><b class="ui">Dead Spin Chance</b> (slider)</td><td>Chance that a spin starts with <b>no</b> winning cluster. Higher = fewer wins.</td><td>0–100%</td></tr>
+    <tr><td>Seed bias (e.g. "Seed Q (Melon) Bias")</td><td>When the game places a starting cluster, how often it uses the main low symbol.</td><td>0–100%</td></tr>
+    <tr><td>Seed cluster min / max</td><td>Size of a placed starting cluster.</td><td>3–20 symbols</td></tr>
+    <tr><td><b class="ui">Max win multiplier</b></td><td>Win cap: one round never pays more than bet × this number.</td><td>0–100,000×</td></tr>
+    <tr><td>Symbol <b class="ui">Weight</b></td><td>How common each symbol is. The screen shows each symbol's "% spawn".</td><td>0–10,000</td></tr>
+    <tr><td>Symbol pay table (3 values)</td><td>What a winning cluster of that symbol pays, by cluster size.</td><td>0–1,000,000</td></tr>
+    <tr><td>Wild/Bomb probabilities</td><td>Chance of a bomb (multiplier) symbol in the base game and in free spins, plus the table of bomb values (2×, 3×, 4×, 5×) and their weights.</td><td>Chance 0–100%; free-spin bomb total capped at 5×</td></tr>
+    <tr><td><b class="ui">Trigger Scatters</b> / <b class="ui">Base Free Spins</b></td><td>How many scatters start the bonus, and how many free spins it gives.</td><td>Free spins 1–100</td></tr>
+    <tr><td><b class="ui">Retrigger Scatters</b> / <b class="ui">Retrigger Spins</b></td><td>How many scatters add extra spins during the bonus, and how many.</td><td>Extra spins 0–100</td></tr>
+    <tr><td>Buy feature / super buy price</td><td>Price to buy the bonus directly, as "bet × number".</td><td>1–10,000×</td></tr>
+    <tr><td>Ante bet multiplier</td><td>Cost of the optional "ante" bet (raises scatter chance).</td><td>1–5× bet</td></tr>
+    <tr><td>Max free-spin session spins</td><td>Safety limit on how long one bonus can last.</td><td>0–200 spins</td></tr>
+  </table>
+
+  <h4>Family 2: Realms slots ({{COUNT_REALMS}} games). Tabs: Lobby · Hit rate · Symbols · Multipliers · Free spins &amp; buy</h4>
+  <p>The same ideas as cluster slots, with friendlier screen text. The <b class="ui">Lobby</b> tab ("Game card") says plainly: "Display text only. None of this changes how the game plays or pays", except for <b class="ui">Bet range</b>, which "The server checks every wager against". The <b class="ui">Hit rate</b> tab holds <b class="ui">Dead spin chance</b>, <b class="ui">Seed bias toward Q</b>, <b class="ui">Seed cluster min/max</b> and <b class="ui">Max win multiplier</b> ("A round's payout is cut down to bet × this number"). The <b class="ui">Multipliers</b> tab holds the orb chances (<b class="ui">Base game chance</b>, <b class="ui">Free spins chance</b>), the caps (<b class="ui">Base multiplier cap</b>, <b class="ui">Free spins multiplier cap</b>) and <b class="ui">Multiplier values</b> with weights. An "Unsaved changes in this tab" notice shows which tabs you have edited.</p>
+
+  <h4>Family 3: Lines slots with RTP profiles ({{COUNT_VOLCANO}} games: Fire Spike, Coin Volcano). Tabs: Lobby · Symbols · Mix / Jackpot · RTP / Weights · Risk / Cap</h4>
+  <p>These are classic 5-reel, 3-row slots with 10 paylines. Their special feature is the <b class="ui">Active RTP profile</b>, a choice between three ready-made sets of reel weights: <b>96.5%</b>, <b>95.5%</b> and <b>94.5%</b>. The lower profiles make the high-paying symbols, wilds and scatters a little rarer. Changing the profile <b>does</b> change the game. The percentages are the designer's targets, not measured results. <b class="ui">Mix / Jackpot</b> controls the instant-prize mix and the grand jackpot multiplier. <b class="ui">Risk / Cap</b> holds the win cap.</p>
+
+  <h4>Family 4: Fishing games ({{COUNT_FISHING}} games). Tabs: Lobby · Fish Tiers · Weapons · Boss · Risk / RTP</h4>
+  <table>
+    <tr><th style="width:44mm">Field</th><th>What it does</th></tr>
+    <tr><td>Fish tier: <b class="ui">Payout min/max</b>, <b class="ui">Hits min/max</b>, <b class="ui">Hit chance</b>, <b class="ui">Spawn weight</b></td><td>For each kind of fish: the range of what it pays, how many hits it takes, the chance a hit counts, and how common it is.</td></tr>
+    <tr><td>Weapon: <b class="ui">Bet cost (₱)</b>, <b class="ui">Hit modifier</b></td><td>The price of one shot for each weapon (this is the player's bet), and that weapon's adjustment to the hit chance.</td></tr>
+    <tr><td>Boss: <b class="ui">Spawn chance / tick</b> (0–0.25), <b class="ui">Cooldown (sec)</b>, <b class="ui">Duration (sec)</b>, <b class="ui">Finisher share</b>, <b class="ui">Contributor share</b></td><td>How often the boss appears, how long it stays, and how its prize pot is split between the finishing shot and other contributors.</td></tr>
+    <tr><td><b class="ui">Max hit chance cap</b></td><td>Upper limit on any hit chance after modifiers. Lower = harder to catch fish.</td></tr>
+    <tr><td><b class="ui">Max fish on screen</b>, <b class="ui">Spawn interval (sec)</b></td><td>How busy the screen is.</td></tr>
+    <tr><td><b class="ui">Target RTP %</b></td><td>Label/target only (allowed 80–99.5).</td></tr>
+  </table>
+  <div class="note"><b>Fishing bet limits</b>
+  For fishing, the real price of a shot is the weapon's <b>Bet cost</b>, limited by the engine's min/max bet. The "Min bet / Max bet" boxes on the fishing <b>Lobby</b> tab are display text.</div>
+
+  <h4>Family 5: Card tables ({{COUNT_CARDS}} games: Ace High, Baccarat, Lucky 9, Three Card Poker)</h4>
+  <p>Tabs are similar for all four: <b class="ui">Lobby</b>, <b class="ui">Payouts</b> (or <b class="ui">Payouts / Draw</b>, <b class="ui">Payouts / Bonus</b>), <b class="ui">Limits / Shoe</b> (Ace High: <b class="ui">War / Shoe</b>) and <b class="ui">Risk / RTP</b>.</p>
+  <ul>
+    <li><b>Payouts:</b> what each bet pays, e.g. Baccarat Player 1:1, Banker 0.95:1 (5% commission), Tie 8:1, Pairs 11:1. Ace High: "Base payout mult" (2 = even money), "Tie side-bet mult", "Ace Bonus".</li>
+    <li><b>Limits:</b> a separate min/max for each bet type (e.g. Player, Banker, Tie, Pairs), plus "Quick-bet steps (₱)" for the chips. <b>These limits are enforced.</b> The Lobby min/max boxes on card tables are display text.</li>
+    <li><b>Shoe:</b> number of decks and when the shoe is reshuffled ("Reshuffle below fraction"; 0.25 = when a quarter is left).</li>
+    <li><b>Risk / RTP:</b> "Max win mult" caps the total win of one round (Ace High). "Target RTP %" is a label.</li>
+  </ul>
+
+  <h4>Family 6: Color Game ({{COUNT_COLOR}} game). Tabs: Lobby · Colors / Pays · Limits</h4>
+  <p><b class="ui">Colors / Pays</b> lists the six colours with a <b class="ui">Weight</b> (how often each colour lands) and its display colour (<b class="ui">Hex</b>). <b class="ui">Limits</b> has <b class="ui">Min spot bet</b>, <b class="ui">Max total bet</b>, <b class="ui">Max per spot</b> and <b class="ui">Chip steps</b> (comma-separated chip values). "RTP target % (display)" is a label.</p>
+
+  <h3 id="set-platform">Platform-wide controls (affect every game)</h3>
+  <table>
+    <tr><th style="width:46mm">Control (page)</th><th>Effect</th></tr>
+    <tr><td><b class="ui">Max Single Bet Limit (₱)</b> (Risk Control)</td><td>No single bet in any game can be larger than this, whatever the game's own Max Bet says.</td></tr>
+    <tr><td><b class="ui">Max Daily Payout Limit (₱)</b>, <b class="ui">Weekly Limit Setting (₱)</b>, <b class="ui">Auto-Flag Large Wins</b> (Risk Control)</td><td>Payout limits and automatic flagging of large wins for review.</td></tr>
+    <tr><td><b class="ui">Maintenance Mode</b> (System Settings)</td><td>Stops all new bets on every game: "Platform is currently under scheduled maintenance. Betting is locked."</td></tr>
+    <tr><td><b class="ui">Mega Jackpot</b> (Jackpot)</td><td>Set the jackpot amount and switch it on or off (<b class="ui">Toggle Mega Jackpot</b>). <b class="ui">Assign Jackpot Win to Specific Player</b> awards it manually.</td></tr>
+    <tr><td><b class="ui">Ultra Mega Jackpot (Display Only)</b> (Jackpot)</td><td>A display amount. The site labels it "Display only · Not winnable".</td></tr>
+  </table>
+</section>
+
+<!-- ============================== 4 SEQUENCE ============================== -->
+<section class="chapter" id="sequence">
+  <h2>4. Step-by-step: changing a game's settings</h2>
+  <div class="flow"><span>Sign in</span><i>→</i><span>Games control</span><i>→</i><span>Pick game</span><i>→</i><span class="gold">Write down current values</span><i>→</i><span>Change</span><i>→</i><span>Save Config</span><i>→</i><span>Re-open &amp; check</span><i>→</i><span>Test with QA player</span><i>→</i><span class="gold">Watch reports</span></div>
+  <ol class="steps">
+    <li><b>Sign in.</b> Open <code>https://maxhigh.online/superadmin/login</code>, enter <code>client_owner</code> and your password, press <b class="ui">Sign in</b>.</li>
+    <li><b>Open Games control.</b> Click <b class="ui">Games control</b> in the left menu (on a phone the menu item is called <b class="ui">Games</b>).</li>
+    <li><b>Select the game.</b> Under "Per-Game Spot Overrides", type part of the name into <b class="ui">Search games…</b> and click the game's picture. The "… Engine Configuration" window opens and shows "Loading engine configuration…" for a moment.
+      <div class="warn" style="margin-top:2mm"><b>If you see "Failed loading engine config — using defaults"</b>Close the window <b>without saving</b>. Saving now would replace the live settings with factory defaults. Try again later or contact support.</div></li>
+    <li><b>Review and record the current settings.</b> Go through every tab. Write the values you plan to change on the record sheet in the Appendix, or take a photo of the screen. <b>This is your way back:</b> there is no "undo" or "restore defaults" button.</li>
+    <li><b>Adjust the settings.</b> Change one or two values at a time, never many at once. Use the tables in Chapters 3 and 5 to understand each one.</li>
+    <li><b>Understand the effect before saving.</b> Ask yourself: will this make wins more or less frequent? Bigger or smaller? Does it raise or lower the most a round can pay? (See Chapter 5.)</li>
+    <li><b>Save.</b> Press <b class="ui">Save Config</b> at the top right. Wait for the green "… settings saved" message. The window closes.</li>
+    <li><b>Verify the change was applied.</b> Open the same game again and check that your new values are shown. The server may <b>quietly adjust</b> a value that is out of range to the nearest allowed value (for example 150% becomes 100%), so check the actual numbers. The save is also recorded in the audit log (<b class="ui">Staff actions</b>), with your username and the main values.</li>
+    <li><b>Test the game safely.</b> Sign in on <code>https://maxhigh.online</code> with a designated QA test player, open the game, and play a few rounds at the <b>minimum bet</b>. Check that it loads, spins and pays normally, and that the balance changes match the transaction history. Never test with a real customer's account.</li>
+    <li><b>Restore the previous settings if necessary.</b> Open the game again, type the values from your record sheet back in, and press <b class="ui">Save Config</b>. For bulk changes, the change-history table on the Games control page shows the earlier values.</li>
+  </ol>
+  <div class="ok"><b>Changes are live immediately</b>
+  The next round any player starts uses the new settings. Rounds already paid for (for example free spins in progress) finish normally. Changing settings never changes existing balances or past transactions.</div>
+
+  <h3>Using the Bulk panel</h3>
+  <ol class="steps">
+    <li>On <b class="ui">Games control</b>, choose the <b>Scope</b>: all games, slots, cards or fishing.</li>
+    <li>Set <b class="ui">Dead Spin %</b> (0–100), <b class="ui">Max Multiplier</b> (at least 1×), and if you wish <b class="ui">Win Chance %</b> and <b class="ui">RTP % (80–98%)</b>. Remember that the last two are labels only.</li>
+    <li>Press <b class="ui">Apply to All Games</b> (or, for a smaller scope, "Apply to slots" etc.). If you have unsaved changes it reads <b class="ui">Save &amp; apply to …</b>. The message shows how many games were updated: "Bulk updated N games! …".</li>
+    <li>Check the new row in the change-history table (time, who, scope, number of games, values).</li>
+  </ol>
+  <div class="danger"><b>Bulk changes overwrite every game in the scope</b>
+  A bulk apply sets the dead spin chance and win cap of <b>every game in the scope</b> to the same value, replacing each game's own tuning (its symbols and free spins are kept). Your draft values are kept in the browser until you apply them ("unsaved changes"). Prefer per-game changes unless you really want all games the same.</div>
+</section>
+
+<!-- ============================== 5 TUNING ============================== -->
+<section class="chapter" id="tuning">
+  <h2>5. Fine-tuning: how the settings work together</h2>
+
+  <h3>The basic relationship</h3>
+  <p>Over a very long run, the money paid back depends on two things: <b>how often</b> a round pays, and <b>how much</b> it pays on average when it does:</p>
+  <div class="note" style="font-size:11.5pt;text-align:center"><b>RTP ≈ hit rate × average win (in bets)</b> &nbsp;&nbsp;·&nbsp;&nbsp; <b>House edge = 100% − RTP</b></div>
+  <p><span class="tag hypo">EXAMPLE</span> If 25% of rounds win, and the average win is 3.84× the bet, then RTP ≈ 0.25 × 3.84 = 0.96 = <b>96%</b>, a house edge of 4%. To keep the same RTP with fewer wins (say 20%), the average win must be bigger: 0.96 ÷ 0.20 = <b>4.8×</b>.</p>
+  <p>Bonus features count too. Free spins, multipliers and jackpots are part of the "average win". A game with a strong bonus can have a low base-game hit rate and still return a normal RTP.</p>
+
+  <h3>What each setting moves</h3>
+  <table>
+    <tr><th>If you…</th><th>Hit rate</th><th>Average win</th><th>Volatility</th><th>Return (RTP)</th></tr>
+    <tr><td>Raise <b>Dead spin chance</b></td><td>▼ lower</td><td>—</td><td>▲ higher</td><td>▼ lower</td></tr>
+    <tr><td>Raise <b>weights of low-paying symbols</b></td><td>▲ higher</td><td>▼ smaller</td><td>▼ lower</td><td>depends</td></tr>
+    <tr><td>Raise <b>weights of high-paying symbols</b></td><td>small ▲</td><td>▲ bigger</td><td>▲ higher</td><td>▲ higher</td></tr>
+    <tr><td>Raise <b>pay table values</b></td><td>—</td><td>▲ bigger</td><td>—</td><td>▲ higher</td></tr>
+    <tr><td>Raise <b>bomb/orb chance</b> or bigger multiplier values</td><td>—</td><td>▲ bigger</td><td>▲ higher</td><td>▲ higher</td></tr>
+    <tr><td>Give <b>more free spins</b> / easier trigger</td><td>—</td><td>▲ bigger</td><td>▲ higher</td><td>▲ higher</td></tr>
+    <tr><td>Lower the <b>win cap</b></td><td>—</td><td>▼ slightly</td><td>▼ lower</td><td>▼ slightly</td></tr>
+    <tr><td>Choose a lower <b>RTP profile</b> (Fire Spike / Coin Volcano)</td><td>▼ slightly</td><td>▼</td><td>—</td><td>▼ (≈1% per step)</td></tr>
+    <tr><td>Lower a card <b>payout</b> (e.g. Tie 8:1 → 7:1)</td><td>—</td><td>▼</td><td>—</td><td>▼</td></tr>
+    <tr><td>Lower fishing <b>hit chance</b> or <b>Max hit chance cap</b></td><td>▼</td><td>—</td><td>▲</td><td>▼</td></tr>
+  </table>
+  <div class="warn"><b>Effects are estimates, not calculations</b>
+  The arrows show the direction of the change. The exact size depends on all settings together, and the panel does not compute it. After any change, watch <b class="ui">Report</b> → <b class="ui">Win/Lose By Product</b> over many rounds, ideally thousands, before judging it.</div>
+
+  <h3>Designing the feel of a game <span class="tag hypo">EXAMPLES</span></h3>
+  <table>
+    <tr><th style="width:30mm">Intended feel</th><th>What to adjust (cluster / Realms slots)</th><th>What players notice</th></tr>
+    <tr><td><b>Low volatility</b><br>(steady, relaxed)</td><td>Lower dead spin chance (e.g. 82% → 75%); slightly raise weights of low symbols; lower the pay of the top symbol; keep bombs rare; moderate win cap.</td><td>Frequent small wins, balance moves slowly, few big moments.</td></tr>
+    <tr><td><b>Medium volatility</b><br>(balanced)</td><td>Keep the current values (most games are tuned here).</td><td>A mix of small wins and occasional bonuses.</td></tr>
+    <tr><td><b>High volatility</b><br>(thrilling)</td><td>Raise dead spin chance (e.g. 82% → 86%); raise bomb chance in free spins or the multiplier values; keep or raise the win cap.</td><td>Long dry spells, rare big wins. Losing streaks can upset casual players.</td></tr>
+    <tr><td><b>More frequent payouts</b></td><td>Lower dead spin chance <b>and</b> lower pay values a little to balance it.</td><td>"Always something happening."</td></tr>
+    <tr><td><b>Bigger but rarer payouts</b></td><td>Raise dead spin chance <b>and</b> raise top-symbol pay or multipliers.</td><td>Fewer, more exciting wins.</td></tr>
+    <tr><td><b>Different bet range</b></td><td>Change <b class="ui">Min Bet</b> / <b class="ui">Max Bet</b> (Lobby tab for slots; Limits tab for cards and fishing). Stay under the platform <b class="ui">Max Single Bet Limit</b>.</td><td>Who the game suits: small-stake players or high rollers. Bet range does not change RTP.</td></tr>
+    <tr><td><b>Bonus behaviour</b></td><td>Free spins tab: trigger scatters, base free spins, retrigger. Buy price on the same tab.</td><td>How often the bonus starts and how long it lasts.</td></tr>
+    <tr><td><b>Jackpot behaviour</b></td><td>Jackpot page (Mega Jackpot amount and on/off); Fire Spike / Coin Volcano: grand jackpot multiplier on the Mix / Jackpot tab.</td><td>Size and availability of jackpots.</td></tr>
+  </table>
+  <div class="danger"><b>Keep the buy price fair</b>
+  The buy-feature price should match what the bonus is worth on average. If you make the bonus richer (more free spins, bigger multipliers) without raising the buy price, buying the bonus can become more valuable than it costs, and players can exploit it. Change buy prices only together with your developer.</div>
+</section>
+
+<!-- ============================== 6 EXAMPLES ============================== -->
+<section class="chapter" id="examples">
+  <h2>6. Configuration examples</h2>
+  <p>"Current" values are <span class="tag live">LIVE</span> values read from the production site on {{READ_AT}}. "Example adjustment" values are <span class="tag hypo">EXAMPLE</span> values for illustration. Test any change before relying on it.</p>
+
+  <h3>Cluster slot: Fortune Tiger</h3>
+  <table>
+    <tr><th>Setting</th><th>Current</th><th>Example adjustment</th><th>Expected effect</th><th>Precautions</th></tr>
+    <tr><td>Dead Spin Chance</td><td>82%</td><td>78%</td><td>More spins with a win; higher return</td><td>Change in steps of 1–2%; watch Win/Lose By Product</td></tr>
+    <tr><td>Max win multiplier</td><td>10,000×</td><td>5,000×</td><td>Biggest possible win halves (₱5 bet: ₱25,000 instead of ₱50,000)</td><td>Players who know the game may notice</td></tr>
+    <tr><td>Base Free Spins</td><td>10</td><td>12</td><td>Longer bonus; higher return</td><td>Raise buy price to match</td></tr>
+    <tr><td>Trigger Scatters</td><td>4</td><td>5</td><td>Bonus starts much less often</td><td>Big effect: test carefully</td></tr>
+    <tr><td>Bomb chance (base / free spins)</td><td>1.5% / 3%</td><td>1.5% / 4%</td><td>More multipliers in the bonus; higher volatility</td><td>Free-spin total multiplier stays capped at 5×</td></tr>
+    <tr><td>Min / Max Bet</td><td>₱0.10 / ₱100 (catalog)</td><td>₱0.20 / ₱50</td><td>Narrower range; no effect on RTP</td><td>Min must stay below Max</td></tr>
+  </table>
+
+  <h3>Lines slot: Fire Spike</h3>
+  <table>
+    <tr><th>Setting</th><th>Current</th><th>Example adjustment</th><th>Expected effect</th><th>Precautions</th></tr>
+    <tr><td>Active RTP profile</td><td>96.5%</td><td>95.5%</td><td>Slightly rarer top symbols, wilds and scatters; about 1% lower long-term return (designer's target)</td><td>The safest way to tune these two games</td></tr>
+    <tr><td>Max win multiplier</td><td>25,000×</td><td>10,000×</td><td>Lower ceiling</td><td>Grand jackpot is also 25,000×; keep them consistent</td></tr>
+  </table>
+
+  <h3>Fishing: Deep Bass</h3>
+  <table>
+    <tr><th>Setting</th><th>Current</th><th>Example adjustment</th><th>Expected effect</th><th>Precautions</th></tr>
+    <tr><td>Max hit chance cap</td><td>0.92</td><td>0.88</td><td>Fish slightly harder to catch; lower return</td><td>Too low feels unfair</td></tr>
+    <tr><td>Spawn interval</td><td>1.4 s</td><td>1.2 s</td><td>Busier screen; does not change return per shot</td><td>Busier screens can feel laggy on old phones</td></tr>
+    <tr><td>Engine min / max bet</td><td>₱0.10 / ₱25</td><td>₱1 / ₱25</td><td>Cheapest shot costs more</td><td>Weapon bet costs must fall inside this range</td></tr>
+  </table>
+
+  <h3>Card table: Baccarat</h3>
+  <table>
+    <tr><th>Setting</th><th>Current</th><th>Example adjustment</th><th>Expected effect</th><th>Precautions</th></tr>
+    <tr><td>Tie payout</td><td>8:1</td><td>9:1</td><td>Tie bet pays more; higher return on ties</td><td>Standard tables pay 8:1</td></tr>
+    <tr><td>Banker payout</td><td>0.95:1 (5% commission)</td><td>(keep)</td><td>—</td><td>Changing this has a big effect on the house edge</td></tr>
+    <tr><td>Player / Banker limits</td><td>₱1 – ₱500</td><td>₱5 – ₱1,000</td><td>Higher-stakes table</td><td>Max must stay within Max Single Bet Limit</td></tr>
+    <tr><td>Decks</td><td>8</td><td>6</td><td>Very small effect</td><td>—</td></tr>
+  </table>
+  <p class="mono">Live values of all 50 games are in Chapter 7 and in the file MAXHIGH_50_GAMES_CONFIGURATION_REFERENCE.csv.</p>
+</section>
+
+<!-- ============================== 7 GAMES ============================== -->
+<section class="chapter" id="games">
+  <h2>7. All 50 games: reference</h2>
+  <p>How to configure any game: <b class="ui">Games control</b> → search for the game → click its picture → use the tabs for its family (Chapter 3) → <b class="ui">Save Config</b>. Games in the same family have identical controls. The table shows each game's family, how its bets are limited, and its <b>current live key settings</b> ({{READ_AT}}).</p>
+  <table>
+    <tr><th>Family</th><th>Games</th><th>Tabs</th></tr>
+    <tr><td>Cluster slot</td><td>{{COUNT_CLUSTER}}</td><td>Lobby · Dead spin · Symbols · Wilds/Bombs · Free spins</td></tr>
+    <tr><td>Realms slot</td><td>{{COUNT_REALMS}}</td><td>Lobby · Hit rate · Symbols · Multipliers · Free spins &amp; buy</td></tr>
+    <tr><td>Lines slot (RTP profiles)</td><td>{{COUNT_VOLCANO}}</td><td>Lobby · Symbols · Mix / Jackpot · RTP / Weights · Risk / Cap</td></tr>
+    <tr><td>Fishing</td><td>{{COUNT_FISHING}}</td><td>Lobby · Fish Tiers · Weapons · Boss · Risk / RTP</td></tr>
+    <tr><td>Card table</td><td>{{COUNT_CARDS}}</td><td>Lobby · Payouts · Limits / Shoe · Risk / RTP</td></tr>
+    <tr><td>Color Game</td><td>{{COUNT_COLOR}}</td><td>Lobby · Colors / Pays · Limits</td></tr>
+  </table>
+  <div class="note"><b>Game-specific differences</b>
+  Cluster slots differ in their symbols, pictures and some default values (for example Golden Panther's starting cluster size is 12–13 symbols). Fire Spike and Coin Volcano are the only games with selectable RTP profiles. Ace High is the only card table with a per-round win cap. Baccarat, Lucky 9 and Three Card Poker have a separate limit for each bet type. Three Card Poker's dealer qualifies with Queen-high.</div>
+  {{REFERENCE_TABLE}}
+  <p class="mono">Slot bet limits shown are catalog defaults; the Lobby tab shows any override saved by the owner. "RTP label" values are display text, not measured results.</p>
+</section>
+
+<!-- ============================== 8 SAFETY ============================== -->
+<section class="chapter" id="safety">
+  <h2>8. Safety and best practices</h2>
+
+  <h3>Avoiding invalid settings</h3>
+  <ul>
+    <li><b>The server never accepts impossible values.</b> Out-of-range numbers are quietly moved to the nearest allowed value when you save. That is why you must <b>re-open the game after saving</b> and check the real numbers (Chapter 4, step 8).</li>
+    <li>Min bet must be lower than max bet, and both must stay under the platform <b class="ui">Max Single Bet Limit</b>. Otherwise players see "Bet must be between …" or "Max bet is ₱…".</li>
+    <li>Do not set all symbol weights to 0, a dead spin chance of 100%, or a win cap of 0. These make a game pay nothing or almost nothing.</li>
+    <li>Change one or two values at a time, in small steps.</li>
+  </ul>
+
+  <h3>Protecting player balances and transactions</h3>
+  <ul>
+    <li>Changing a game's settings <b>never</b> changes any balance or past transaction. Settings only affect future rounds.</li>
+    <li>Every bet, win and balance adjustment is written to the ledger inside a database transaction, so balances cannot go below zero or get out of step.</li>
+    <li>Balance adjustments by staff are separate actions, are recorded with the staff member's name, and on the Super Admin side require your password to confirm.</li>
+  </ul>
+
+  <h3>How changes affect games that are being played</h3>
+  <ul>
+    <li>New settings apply to the next round a player starts.</li>
+    <li>Rounds already paid for, such as free spins in progress or an open card hand, finish normally.</li>
+    <li>Switching a game to <b>Disabled</b> stops new bets in that game. <b class="ui">Maintenance Mode</b> stops new bets in all games.</li>
+  </ul>
+
+  <h3>Testing before relying on a change</h3>
+  <ol>
+    <li>Make the change in a quiet period.</li>
+    <li>Test with a designated QA test player at the minimum bet (Chapter 4, step 9).</li>
+    <li>Watch <b class="ui">Report</b> → <b class="ui">Win/Lose By Product</b> for that game over the following days.</li>
+    <li>If the results are not what you wanted, restore the recorded values.</li>
+  </ol>
+  <div class="note"><b>There is no separate "test copy" of the live games</b>
+  The UAT test site shares the live database (see Chapter 0), so it is not a safe place to try settings. Testing means a careful, small, recorded change on the live system.</div>
+
+  <h3>Restoring previous settings</h3>
+  <ul>
+    <li><b>Per-game:</b> no automatic undo and no "restore defaults" button. Type your recorded values back in and press <b class="ui">Save Config</b>.</li>
+    <li><b>Bulk panel:</b> the change-history table shows earlier values (the system also stores a full before/after snapshot). Re-apply the earlier values.</li>
+    <li><b>Serious problem:</b> your technical administrator has database backups (a verified backup was taken on 12 November 2026 before the latest release). Restoring a database backup would also undo real players' activity since then, so it is a last resort decided with your developer.</li>
+  </ul>
+
+  <h3>Preventing unintended changes</h3>
+  <ul>
+    <li>Only <b>Superadmin</b> accounts can change game settings. Keep the number of Superadmin accounts as small as possible.</li>
+    <li>Use a strong owner password that only you know. Sign out when you finish.</li>
+    <li>Every game settings save, every bulk change and every refused attempt is recorded. Check <b class="ui">Staff actions</b> regularly.</li>
+    <li>Keep the record sheet (Appendix) for every change: date, game, old value, new value, reason.</li>
+  </ul>
+</section>
+
+<!-- ============================== 9 TROUBLE ============================== -->
+<section class="chapter" id="trouble">
+  <h2>9. Troubleshooting</h2>
+  <table>
+    <tr><th style="width:42mm">Problem</th><th>Likely cause</th><th>What to do</th></tr>
+    <tr><td>The admin page shows "not found" (404)</td><td>The address is wrong (there is no <code>/agent</code> page), or the web server setting was reverted.</td><td>Use <code>https://maxhigh.online/superadmin/login</code> (owner) or <code>https://maxhigh.online/admin/login</code> (admin, master agent, agent). If those pages show 404, tell your technical administrator: the public Caddy staff rule may have been restored.</td></tr>
+    <tr><td>"Superadmin account required" after signing in</td><td>The account is not a Superadmin.</td><td>Sign in with <code>client_owner</code>.</td></tr>
+    <tr><td>Configuration not saving: red error message</td><td>Session expired, no permission for that game, or a server error.</td><td>Read the message. Sign out and in again, then retry. If it continues, note the time and message and contact support.</td></tr>
+    <tr><td>"Game Locked. Please settle the remaining project payment…"</td><td>That game is commercially locked.</td><td>Contact your developer.</td></tr>
+    <tr><td>Saved value is different from what I typed</td><td>The value was outside the allowed range and was adjusted.</td><td>Check the ranges in Chapter 3 and choose a value inside them.</td></tr>
+    <tr><td>Changes are not reflected in gameplay</td><td>(1) The change was not saved (window closed without Save Config). (2) You changed a label-only box such as RTP % or Volatility. (3) A player is finishing an earlier paid round.</td><td>Re-open the game and check the values. Remember label-only fields (Chapter 3). Start a new round to test.</td></tr>
+    <tr><td>"Failed loading engine config — using defaults"</td><td>The live settings could not be loaded.</td><td><b>Do not save.</b> Close the window and try again later.</td></tr>
+    <tr><td>Players see "Bet must be between X and Y"</td><td>The bet is outside the game's Min/Max Bet.</td><td>Check the Lobby tab (slots) or Limits tab (cards/fishing).</td></tr>
+    <tr><td>Players see "Max bet is ₱…"</td><td>Bet is above the platform Max Single Bet Limit.</td><td>Raise the limit on Risk Control, or lower the game's Max Bet.</td></tr>
+    <tr><td>Players see "Game is currently disabled"</td><td>The game is switched off.</td><td>Switch it to Enabled on its game card.</td></tr>
+    <tr><td>Players see "…under scheduled maintenance. Betting is locked."</td><td>Maintenance Mode is on.</td><td>Switch it off in System Settings.</td></tr>
+    <tr><td>Unexpected payouts (too many or too few wins)</td><td>Normal short-term luck, a recent change, or a bulk change that overwrote a game.</td><td>Check the change history and Staff actions. Compare with your record sheet. Judge only over many rounds.</td></tr>
+    <tr><td>A setting I expected is missing</td><td>That game's family does not have it (e.g. RTP profiles exist only for Fire Spike and Coin Volcano).</td><td>See Chapter 3 for each family's controls.</td></tr>
+    <tr><td>A game does not load after a change</td><td>Rare: a browser problem or an extreme setting.</td><td>Reload the page. If it persists, restore the recorded values. If it still fails, disable the game and contact support.</td></tr>
+  </table>
+
+  <h3 id="rollback">Rollback procedures</h3>
+  <table>
+    <tr><th style="width:42mm">What went wrong</th><th>How to undo it</th><th>Who</th></tr>
+    <tr><td>A game setting change gave bad results</td><td>Open the game's configuration, type the old values from your record sheet, and press Save Config. Player balances and past bets are never changed by this.</td><td>Owner</td></tr>
+    <tr><td>A new software release misbehaves</td><td>The administrator runs the release's pinned rollback command (<code>operate.py rollback</code>). It restores the previous application only. It does not restore the database over live records and never deletes accounts or money records.</td><td>Technical administrator</td></tr>
+    <tr><td>The staff sign-in pages need to be hidden again</td><td>Restore the saved Caddy backup (<code>/etc/caddy/Caddyfile.bak-&lt;date&gt;</code>), validate it, and reload Caddy. Procedure: <code>deploy/production/CADDY_STAFF_ROUTES_FIX.md</code>.</td><td>Technical administrator</td></tr>
+  </table>
+</section>
+
+<!-- ============================== APPENDIX ============================== -->
+<section class="chapter" id="appendix">
+  <h2>Appendix: record sheet and credential handover</h2>
+  <h3>Change record sheet (print and copy)</h3>
+  <table>
+    <tr><th style="width:22mm">Date / time</th><th style="width:30mm">Game</th><th style="width:30mm">Setting</th><th style="width:20mm">Old value</th><th style="width:20mm">New value</th><th>Reason / result</th></tr>
+    <tr><td>&nbsp;</td><td></td><td></td><td></td><td></td><td></td></tr><tr><td>&nbsp;</td><td></td><td></td><td></td><td></td><td></td></tr>
+    <tr><td>&nbsp;</td><td></td><td></td><td></td><td></td><td></td></tr><tr><td>&nbsp;</td><td></td><td></td><td></td><td></td><td></td></tr>
+    <tr><td>&nbsp;</td><td></td><td></td><td></td><td></td><td></td></tr><tr><td>&nbsp;</td><td></td><td></td><td></td><td></td><td></td></tr>
+    <tr><td>&nbsp;</td><td></td><td></td><td></td><td></td><td></td></tr><tr><td>&nbsp;</td><td></td><td></td><td></td><td></td><td></td></tr>
+  </table>
+
+  <h3>Credential handover</h3>
+  <p>Passwords are <b>never</b> printed in this manual. They are handed over in the separate encrypted file <b>MAXHIGH_OWNER_CREDENTIALS.enc</b>. The password that opens that file is given to you separately, in person or by phone, never in the same message as the file.</p>
+  <ul>
+    <li>Open it on your own computer with the <code>Unprotect-MaxHighCredentials.ps1</code> tool that comes with it.</li>
+    <li>Any account listed as <b>"requires secure reset"</b> has no known password on record. Reset it inside the admin panel (Chapter 1), with your developer if it is the owner account.</li>
+    <li>After you receive them, change the passwords to new ones only you know.</li>
+  </ul>
+  <p class="mono" style="margin-top:8mm">MaxHigh Owner's Manual · release {{SHA_SHORT}} · built {{BUILT_AT}}</p>
+</section>
+
+</main>
+</body>
+</html>
