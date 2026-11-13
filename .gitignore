@@ -54,3 +54,7 @@ output/
 maxhigh-keys/
 maxhigh-uat-*.key
 *.key.age
+
+# Local QA credential files must never be committed
+role-qa*.tsv
+*qa-credentials*.txt
