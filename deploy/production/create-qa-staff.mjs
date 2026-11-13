@@ -3,21 +3,21 @@
  * Administrator-run: create the approved QA staff accounts THROUGH the Super Admin web interface on https://maxhigh.online.
  *
  *   $env:ROLE_QA_CREDENTIALS_FILE = "$env:USERPROFILE\maxhigh-uat-secrets\role-qa.tsv"   # must contain the superadmin line
- *   node deploy/production/create-qa-staff.mjs            # DRY RUN (default): signs in, checks names are free, checks the form; creates nothing
- *   node deploy/production/create-qa-staff.mjs --apply    # creates qa_master_agent, then qa_agent (upline: qa_master_agent)
+ *   node deploy/production/create-qa-staff.mjs            # DRY RUN (default): validates both forms independently; creates nothing
+ *   node deploy/production/create-qa-staff.mjs --apply    # creates qa_master_agent, verifies it, then creates qa_agent under it
  *
- * Approved scope: qa_master_agent (master_agent) and qa_agent (agent). `qa_admin` is NOT created here: the Super Admin interface
- * offers no "admin" role (agent / master agent / superadmin only), and accounts must not be inserted directly into the database.
+ * Scope: qa_master_agent (master_agent) and qa_agent (agent, upline qa_master_agent). `qa_admin` is not creatable in the UI.
  *
- * Safety: starting balance is the form's fixed 0 (no chips are added); no existing account is edited, locked, reset or deleted;
- * the owner password is never changed; passwords are generated here (crypto RNG), appended to the same local credentials file
- * after creation succeeds, and never printed or logged. Only the two create actions may POST besides sign-in/sign-out.
- * A record without passwords is written to output/production-role-acceptance/created-qa-accounts.json (git-ignored).
+ * Dry run: each form is validated on its own and nothing is submitted. The agent's upline (qa_master_agent) cannot be selectable
+ * until it exists, so that single check is reported "PENDING UNTIL APPLY" (not a failure). Apply mode requires it to be selectable.
+ * Safety: starting balance is not a field on this form (the app fixes it at 0) and is verified as zero after creation; an existing
+ * account is never created over, edited, locked, reset or deleted; an account cap notice stops the run (never bypassed); passwords are
+ * generated locally, appended to the credentials file only after creation is verified, and never printed or logged.
  */
 import fs from 'node:fs';
 import path from 'node:path';
-import crypto from 'node:crypto';
 import { pathToFileURL } from 'node:url';
+import { PLAN, hasUsername, checkRoleOptions, uplineStatus, decideAccount, verifyCreatedRow, newPassword } from './qa-staff-plan.mjs';
 
 const ORIGIN = 'https://maxhigh.online';
 const apply = process.argv.includes('--apply');
@@ -26,36 +26,42 @@ if (!file) throw Error('Set ROLE_QA_CREDENTIALS_FILE (outside the repository).')
 const real = fs.realpathSync(file);
 const rel = path.relative(path.resolve('.'), real);
 if (rel === '' || (!rel.startsWith('..') && !path.isAbsolute(rel))) throw Error('Credentials file must be outside the repository.');
-const rows = fs.readFileSync(real, 'utf8').split(/\r?\n/).map((l) => l.split('\t')).filter((c) => c.length >= 3 && c[0]);
-const owner = rows.find((c) => c[0].trim() === 'superadmin');
+const credRows = () => fs.readFileSync(real, 'utf8').split(/\r?\n/).map((l) => l.split('\t')).filter((c) => c.length >= 3 && c[0]);
+const owner = credRows().find((c) => c[0].trim() === 'superadmin');
 if (!owner) throw Error('The credentials file has no superadmin line.');
 
-const PLAN = [
-  { username: 'qa_master_agent', role: 'master_agent', label: 'master_agent' },
-  { username: 'qa_agent', role: 'agent', label: 'agent', upline: 'qa_master_agent' },
-];
-for (const p of PLAN) if (rows.some((c) => c[0].trim() === p.label)) throw Error(`${p.label} already has a line in the credentials file; remove it first if it should be recreated.`);
-
-const newPassword = () => { for (;;) { const p = crypto.randomBytes(18).toString('base64url').slice(0, 22); if (/[a-z]/.test(p) && /[A-Z]/.test(p) && /\d/.test(p)) return p; } };
+const outDir = path.resolve('output/production-role-acceptance'); fs.mkdirSync(outDir, { recursive: true });
+const recordFile = path.join(outDir, 'created-qa-accounts.json');
+const record = () => (fs.existsSync(recordFile) ? JSON.parse(fs.readFileSync(recordFile, 'utf8')) : []);
 
 const { chromium } = await import(pathToFileURL(path.resolve('output/production-browser-tools/node_modules/playwright/index.mjs')));
-const outDir = path.resolve('output/production-role-acceptance'); fs.mkdirSync(outDir, { recursive: true });
 const browser = await chromium.launch();
 const ctx = await browser.newContext({ viewport: { width: 1366, height: 900 } });
 let allowPost = false;
 await ctx.route('**/*', (route) => {
-  const r = route.request();
-  const sameHost = new URL(r.url()).origin === ORIGIN;
-  if (!sameHost && !/^(data|blob):/.test(r.url()) && !/fonts\.(googleapis|gstatic)\.com$/.test(new URL(r.url()).hostname)) return route.abort();
+  const r = route.request(); const u = new URL(r.url());
+  const okHost = u.origin === ORIGIN || /^(data|blob):/.test(r.url()) || /fonts\.(googleapis|gstatic)\.com$/.test(u.hostname);
+  if (!okHost) return route.abort();
   if (r.method() !== 'GET' && r.method() !== 'HEAD' && !allowPost) return route.abort();
   return route.continue();
 });
 const page = await ctx.newPage();
 const text = async () => { await page.waitForTimeout(1200); return (await page.innerText('body')).replace(/\s+/g, ' '); };
+const results = []; // validation summary (no secrets)
 const created = [];
 let exitCode = 0;
+
+async function openForm() {
+  await page.getByRole('button', { name: /\+ Add Agent/ }).first().click();
+  const form = page.locator('form').filter({ has: page.getByRole('button', { name: /^(Create Agent|Creating…)$/ }) });
+  await form.waitFor({ timeout: 10000 });
+  return form;
+}
+async function closeForm() { await page.getByRole('button', { name: /^Cancel$/ }).click(); }
+async function loadList() { await page.goto(`${ORIGIN}/superadmin/admins`, { waitUntil: 'networkidle' }); return text(); }
+
 try {
-  // ---- sign in as the owner
+  // ---- owner sign-in (single attempt, no retry)
   await page.goto(`${ORIGIN}/superadmin/login`, { waitUntil: 'networkidle' });
   allowPost = true;
   await page.locator('input[type=text], input[autocomplete=username]').first().fill(owner[1].trim());
@@ -63,29 +69,59 @@ try {
   await page.locator('button[type=submit]').first().click();
   await page.waitForURL((u) => u.pathname === '/superadmin', { timeout: 20000 }).catch(() => {});
   allowPost = false;
-  if (new URL(page.url()).pathname !== '/superadmin' || /Superadmin only/i.test(await text())) throw Error('Superadmin sign-in failed (wrong/unknown password, lock, or not a superadmin). Nothing was created.');
-  console.log('Superadmin sign-in: OK');
+  if (new URL(page.url()).pathname !== '/superadmin' || /Superadmin only/i.test(await text())) throw Error('Superadmin sign-in failed. Nothing was created.');
+  console.log(`Host: ${ORIGIN}  |  Superadmin sign-in: OK  |  Mode: ${apply ? 'APPLY' : 'DRY RUN (nothing is submitted)'}`);
 
-  await page.goto(`${ORIGIN}/superadmin/admins`, { waitUntil: 'networkidle' });
-  const listText = await text();
-  for (const p of PLAN) if (listText.toLowerCase().includes('@' + p.username)) throw Error(`@${p.username} already exists. Nothing was created.`);
-  console.log('Names free in the staff list:', PLAN.map((p) => p.username).join(', '));
+  let listText = await loadList();
+  const rec = record();
+  const plannedUplines = PLAN.map((p) => p.username);
 
   for (const p of PLAN) {
-    await page.getByRole('button', { name: /\+ Add Agent/ }).first().click();
-    const form = page.locator('form').filter({ has: page.getByRole('button', { name: /^(Create Agent|Creating…)$/ }) });
-    await form.waitFor({ timeout: 10000 });
+    const r = { username: p.username, role: p.role, checks: {} };
+    results.push(r);
+    const decision = decideAccount({
+      existsInApp: hasUsername(listText, p.username),
+      inRecord: rec.some((x) => x.username === p.username),
+      hasCredLine: credRows().some((c) => c[0].trim() === p.label && c[1].trim() === p.username),
+    });
+    if (decision.action === 'ABORT') throw Error(`@${p.username}: ${decision.reason}.`);
+    r.checks.username = decision.action === 'REUSE' ? 'exists (created earlier by this tool; reused)' : 'available';
+    if (decision.action === 'REUSE') { r.checks.creation = 'SKIPPED (already created)'; continue; }
+
+    const form = await openForm();
+    // account-cap notice: the app shows a role=status banner inside the form when no more accounts can be added
+    const capNotice = (await form.locator('[role=status]').allInnerTexts()).join(' ').replace(/\s+/g, ' ').trim();
+    if (capNotice) throw Error(`Account cap/restriction notice shown by the app: "${capNotice.slice(0, 160)}". Not bypassed; nothing created for @${p.username}.`);
+    r.checks.accountCap = 'no restriction notice (the server still enforces the cap on submit)';
+
     const selects = form.locator('select');
+    const roleValues = await selects.nth(0).locator('option').evaluateAll((os) => os.map((o) => o.value));
+    const ro = checkRoleOptions(roleValues, p.role);
+    if (!ro.ok) throw Error(`@${p.username}: ${ro.reason}`);
     await selects.nth(0).selectOption(p.role);
-    if (p.upline) {
-      const val = await selects.nth(1).locator('option').filter({ hasText: '@' + p.upline }).first().getAttribute('value').catch(() => null);
-      if (!val) throw Error(`Upline @${p.upline} is not selectable (was it created?).`);
-      await selects.nth(1).selectOption(val);
-    }
+    r.checks.role = `"${p.role}" offered; offered values: ${roleValues.join(', ')}`;
+
+    const numberFields = await form.locator('input[type=number]').count();
+    r.checks.startingBalance = numberFields === 0 ? 'no balance field on this form (the app creates staff at 0); verified after creation' : `UNEXPECTED: ${numberFields} numeric field(s)`;
+    if (numberFields !== 0) throw Error(`@${p.username}: the form has an unexpected numeric (balance) field; stopping.`);
+
     await form.locator('input').first().fill(p.username);
     if (/already taken/i.test(await text())) throw Error(`@${p.username} is already taken.`);
-    if (!apply) { console.log(`DRY RUN @${p.username} (${p.role}): form reachable, name free. Not submitted.`); await page.getByRole('button', { name: /^Cancel$/ }).click(); continue; }
 
+    if (p.upline) {
+      const optionTexts = await selects.nth(1).locator('option').allInnerTexts();
+      const status = uplineStatus({ apply, upline: p.upline, optionTexts, plannedUplines });
+      r.checks.upline = status === 'OK' ? `@${p.upline} selectable` : status === 'PENDING UNTIL APPLY' ? `PENDING UNTIL APPLY (@${p.upline} does not exist yet; it is created first in apply mode)` : 'FAIL';
+      if (status === 'FAIL') throw Error(`Upline @${p.upline} is not selectable. Not creating @${p.username}.`);
+      if (status === 'OK') {
+        const val = await selects.nth(1).locator('option').filter({ hasText: '@' + p.upline }).first().getAttribute('value');
+        await selects.nth(1).selectOption(val);
+      }
+    }
+
+    if (!apply) { r.checks.creation = 'NOT SUBMITTED (dry run)'; await closeForm(); continue; }
+
+    // ---- apply: submit
     const pw = newPassword();
     const pending = real + '.pending';
     fs.writeFileSync(pending, `${p.label}\t${p.username}\t${pw}\n`, { flag: 'a' }); // survives a crash between create and save
@@ -94,17 +130,27 @@ try {
     allowPost = true;
     await form.getByRole('button', { name: /^Create Agent$/ }).click();
     await page.waitForTimeout(3500); allowPost = false;
-    const after = await text();
-    if (!(await page.locator('form').filter({ has: page.getByRole('button', { name: /^Create Agent$/ }) }).count()) && after.toLowerCase().includes('@' + p.username)) {
-      fs.appendFileSync(real, `${p.label}\t${p.username}\t${pw}\n`);
-      fs.rmSync(pending, { force: true });
-      created.push({ username: p.username, role: p.role, upline: p.upline ?? null, at: new Date().toISOString() });
-      console.log(`CREATED @${p.username} (${p.role}); password saved to the local credentials file only.`);
-    } else {
+    const stillOpen = await page.locator('form').filter({ has: page.getByRole('button', { name: /^Create Agent$/ }) }).count();
+    listText = await loadList();
+    if (stillOpen || !hasUsername(listText, p.username)) {
       const toast = (await page.locator('[data-sonner-toast]').allInnerTexts()).join(' | ').replace(/\s+/g, ' ').slice(0, 200);
-      // Keep the pending line: the account may exist even though the page state was unclear.
-      throw Error(`Creating @${p.username} did not complete. App message: ${toast || '(none)'}. The generated password was kept in ${path.basename(pending)} (outside the repo) in case the account exists; delete that file if the app reported a clear failure.`);
+      throw Error(`Creating @${p.username} did not complete (${toast || 'no message'}). The generated password is kept in ${path.basename(pending)} outside the repo in case the account exists; delete it if the app reported a clear failure.`);
     }
+    // ---- verify role + zero balance (+ upline) on the list row before anything depends on it
+    const row = page.locator('tbody tr').filter({ hasText: '@' + p.username }).first();
+    const problems = verifyCreatedRow({
+      expectedRole: p.role, expectedUpline: p.upline,
+      role: await row.locator('select').first().inputValue(),
+      balanceText: await row.locator('td.tabular-nums').first().innerText(),
+      rowText: (await row.innerText()).replace(/\s+/g, ' '),
+    });
+    fs.appendFileSync(real, `${p.label}\t${p.username}\t${pw}\n`); // account exists: keep its password even if verification complains
+    fs.rmSync(pending, { force: true });
+    created.push({ username: p.username, role: p.role, upline: p.upline ?? null, at: new Date().toISOString() });
+    fs.writeFileSync(recordFile, JSON.stringify([...record().filter((x) => x.username !== p.username), ...created.filter((x) => x.username === p.username)], null, 2));
+    if (problems.length) throw Error(`@${p.username} was created but verification found: ${problems.join('; ')}. Stopping; nothing further is created.`);
+    r.checks.creation = 'CREATED and verified (role, zero balance' + (p.upline ? ', upline' : '') + ')';
+    console.log(`CREATED @${p.username} (${p.role}); password saved to the local credentials file only.`);
   }
   await page.screenshot({ path: path.join(outDir, 'superadmin-admins-list.png') });
 } catch (e) {
@@ -112,12 +158,8 @@ try {
 } finally {
   try { allowPost = true; await page.getByRole('button', { name: /log out/i }).first().click({ timeout: 4000 }); await page.waitForTimeout(1500); } catch {}
   await browser.close();
-  if (created.length) {
-    const rec = path.join(outDir, 'created-qa-accounts.json');
-    const prev = fs.existsSync(rec) ? JSON.parse(fs.readFileSync(rec, 'utf8')) : [];
-    fs.writeFileSync(rec, JSON.stringify([...prev, ...created], null, 2));
-    console.log('Recorded (no passwords):', rec);
-  }
-  if (fs.existsSync(real + '.pending')) console.error('NOTE: a pending credentials file remains at', real + '.pending', '(account may exist; owner to review).');
+  for (const r of results) { console.log(`\n@${r.username} (${r.role})`); for (const [k, v] of Object.entries(r.checks)) console.log(`  ${k.padEnd(16)} ${v}`); }
+  if (!apply && !exitCode) console.log('\nDRY RUN PASSED. Items marked PENDING UNTIL APPLY are expected dependencies, not failures. Re-run with --apply after review.');
+  if (fs.existsSync(real + '.pending')) console.error('NOTE: a pending credentials file remains at', real + '.pending', '(an account may exist; owner to review).');
 }
 process.exit(exitCode);
