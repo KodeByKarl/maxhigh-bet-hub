@@ -35,11 +35,17 @@ then checks dashboard access, direct URL + refresh, forbidden pages (admin roles
 mobile overflow (390px), session expiry (cookies dropped) and logout. It is read-only: every non-GET request is blocked except the
 sign-in/sign-out calls, and no account is created or funded. Passwords, cookies and request bodies are never printed or saved.
 
-1. Create a TSV **outside the repository** (e.g. `C:\Users\<you>\maxhigh-secrets\role-qa.tsv`), one line per existing QA account:
-   `role<TAB>username<TAB>password` where role is `superadmin|admin|master_agent|agent|player`. A missing role is reported PENDING.
+1. Build the credentials file locally with `deploy/production/New-RoleQaFile.ps1` (writes outside the repo, current-user-only ACL, prints no passwords):
+   ```powershell
+   pwsh deploy/production/New-RoleQaFile.ps1 -List        # usernames only, so you can choose accounts
+   pwsh deploy/production/New-RoleQaFile.ps1 -Superadmin client_owner -Admin <admin_user> -MasterAgent <ma_user> -Agent <agent_user> -Player uat_player5
+   ```
+   Default sources: `%USERPROFILE%\maxhigh-uat-secrets\uat-qa-credentials.txt` and `uat-final-credentials.txt` (username = column 1, password = column 3).
+   Default output: `%USERPROFILE%\maxhigh-uat-secrets\role-qa.tsv`. Omitted or unmatched roles are reported PENDING. UAT accounts are not assumed
+   valid on production: a failed sign-in reports FAIL (repeated wrong passwords may lock an account; reset it in /admin).
 2. From the repo root (Playwright is in `output/production-browser-tools`, as for `verify-browser.mjs`):
    ```powershell
-   $env:ROLE_QA_CREDENTIALS_FILE = "C:\Users\<you>\maxhigh-secrets\role-qa.tsv"
+   $env:ROLE_QA_CREDENTIALS_FILE = "$env:USERPROFILE\maxhigh-uat-secrets\role-qa.tsv"
    node deploy/production/verify-roles.mjs
    Remove-Item Env:ROLE_QA_CREDENTIALS_FILE
    ```
