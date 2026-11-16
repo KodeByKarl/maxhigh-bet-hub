@@ -1,0 +1,181 @@
+/* Presentation adapter: existing native buttons retain all events, labels and state.
+   The themed wrapper scopes standard decks and dedicated console Spin buttons.
+   Container sizing and grid placement stay owned by the layouts; hit targets are at least 44px. */
+[data-game-view][data-spin-treatment] :is(.slot-deck__spin, button[class$="-spin"]) {
+  position: relative;
+  isolation: isolate;
+  min-width: 44px;
+  min-height: 44px;
+  padding: 8px;
+  /* Legacy skin-material.css uses !important on these four properties. */
+  border: 0 !important;
+  border-radius: var(--spin-radius);
+  clip-path: none;
+  overflow: visible;
+  background: var(--spin-frame) center / 100% 100% no-repeat !important;
+  color: #f8fafc !important;
+  box-shadow: none !important;
+  text-shadow: 0 1px 3px #000;
+  filter: drop-shadow(0 3px 2px #0007);
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  cursor: pointer;
+  animation: none;
+  transition:
+    filter 140ms ease,
+    translate 100ms ease;
+}
+
+/* Finish is deliberately independent from the crest and silhouette. */
+[data-game-view][data-spin-treatment] :is(.slot-deck__spin, button[class$="-spin"])::before {
+  content: "";
+  position: absolute;
+  inset: 14%;
+  border-radius: var(--spin-radius);
+  background: linear-gradient(var(--spin-angle), #ffffff16, transparent 42%, #0003);
+  pointer-events: none;
+  z-index: -1;
+}
+[data-spin-finish="metal"][data-spin-treatment]
+  :is(.slot-deck__spin, button[class$="-spin"])::before {
+  background:
+    repeating-linear-gradient(var(--spin-angle), #fff1 0 1px, transparent 1px 5px),
+    linear-gradient(135deg, #fff2, transparent 50%);
+}
+[data-spin-finish="wood"][data-spin-treatment]
+  :is(.slot-deck__spin, button[class$="-spin"])::before {
+  background: repeating-linear-gradient(var(--spin-angle), #ffffff0c 0 2px, transparent 2px 8px);
+}
+[data-spin-finish="glass"][data-spin-treatment]
+  :is(.slot-deck__spin, button[class$="-spin"])::before {
+  background: linear-gradient(145deg, #fff3, transparent 43%, #fff1 44%, transparent 47%);
+}
+[data-spin-finish="stone"][data-spin-treatment]
+  :is(.slot-deck__spin, button[class$="-spin"])::before {
+  background: repeating-conic-gradient(#fff1 0% 12%, transparent 12% 25%) 0 0 / 13px 19px;
+}
+
+/* Original symbol artwork replaces the generic idle glyph without changing its metrics. */
+[data-game-view][data-spin-treatment] :is(.slot-deck__spin, button[class$="-spin"])::after {
+  content: "";
+  position: absolute;
+  top: 17%;
+  left: 30%;
+  width: 40%;
+  height: 36%;
+  background: var(--spin-crest) center / contain no-repeat;
+  pointer-events: none;
+}
+[data-game-view][data-spin-treatment] :is(.slot-deck__spin, button[class$="-spin"]) > svg,
+[data-game-view][data-spin-treatment] .slot-deck__spin-face > svg,
+[data-game-view][data-spin-treatment] :is(.gg-spin__face, .ls-spin__face) > svg {
+  opacity: 0;
+}
+[data-game-view][data-spin-treatment] :is(.ls-spin__shield, .hb-spin__petals) {
+  display: none;
+}
+
+[data-game-view][data-spin-treatment] :is(.slot-deck__spin-face, .gg-spin__face, .ls-spin__face) {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  padding: 0;
+  background: none;
+  border: 0;
+  color: inherit;
+}
+[data-game-view][data-spin-treatment]
+  :is(.slot-deck__spin, button[class$="-spin"])
+  :is(span, small) {
+  color: inherit;
+  text-shadow: inherit;
+}
+[data-game-view][data-spin-treatment]
+  :is(.slot-deck__spin, button[class$="-spin"])
+  > span:not([class]),
+[data-game-view][data-spin-treatment] .slot-deck__spin-face > span {
+  position: relative;
+  z-index: 1;
+  font-size: clamp(11px, 1.4vw, 14px);
+  line-height: 1.15;
+  font-weight: 800;
+  letter-spacing: 0.025em;
+}
+[data-game-view][data-spin-treatment] :is(.slot-deck__spin, button[class$="-spin"]) small {
+  font-size: 9px;
+  line-height: 1.15;
+}
+
+[data-game-view][data-spin-treatment]
+  :is(.slot-deck__spin, button[class$="-spin"]):hover:not(:disabled) {
+  filter: brightness(1.14) drop-shadow(0 3px 3px #0008);
+}
+[data-game-view][data-spin-treatment]
+  :is(.slot-deck__spin, button[class$="-spin"]):active:not(:disabled) {
+  translate: 0 2px;
+  transform: none;
+}
+[data-game-view][data-spin-treatment] :is(.slot-deck__spin, button[class$="-spin"]):focus-visible {
+  outline: 3px solid #fff;
+  outline-offset: 3px;
+  filter: drop-shadow(0 0 3px #000);
+}
+[data-game-view][data-spin-treatment] :is(.slot-deck__spin, button[class$="-spin"]):disabled {
+  opacity: 0.55;
+  filter: grayscale(0.8);
+  cursor: not-allowed;
+}
+
+/* Existing state attributes drive feedback. This never changes whether Spin means
+   spin, skip or stop; no event listener, timer or second action is introduced. */
+[data-game-view][data-spin-treatment]
+  :is(.slot-deck__spin, button[class$="-spin"]):is(
+    [data-active="true"],
+    [data-state="busy"],
+    [data-state="auto"],
+    [aria-busy="true"]
+  )::after {
+  opacity: 0.18;
+}
+[data-game-view][data-spin-treatment]
+  [data-busy="true"]
+  :is(.slot-deck__spin, button[class$="-spin"])::before {
+  border: 2px solid transparent;
+  border-top-color: var(--spin-soft);
+  animation: game-spin-feedback 1.6s linear infinite;
+}
+[data-game-view][data-spin-treatment]
+  :is(.slot-deck__spin, button[class$="-spin"]):is(
+    [data-active="true"],
+    [data-state="busy"],
+    [data-state="auto"]
+  )
+  svg {
+  opacity: 1;
+}
+@keyframes game-spin-feedback {
+  to {
+    rotate: 360deg;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  [data-game-view][data-spin-treatment] :is(.slot-deck__spin, button[class$="-spin"]),
+  [data-game-view][data-spin-treatment] :is(.slot-deck__spin, button[class$="-spin"]) *,
+  [data-game-view][data-spin-treatment] :is(.slot-deck__spin, button[class$="-spin"])::before,
+  [data-game-view][data-spin-treatment] :is(.slot-deck__spin, button[class$="-spin"])::after {
+    animation: none !important;
+    transition: none !important;
+  }
+}
+@media (forced-colors: active) {
+  [data-game-view][data-spin-treatment] :is(.slot-deck__spin, button[class$="-spin"]) {
+    border: 2px solid ButtonText;
+    background: ButtonFace;
+    color: ButtonText;
+    text-shadow: none;
+    filter: none;
+  }
+}
