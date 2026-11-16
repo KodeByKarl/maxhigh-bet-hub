@@ -163,7 +163,14 @@ export function BaccaratTable({
   const [playerPairBet, setPlayerPairBet] = useState(0);
   const [bankerPairBet, setBankerPairBet] = useState(0);
   const [activeSpot, setActiveSpot] = useState<BcBetSpot>("banker");
-  const [busy, setBusy] = useState(false);
+  const [busy, setBusyState] = useState(false);
+  // Synchronous in-flight lock: `busy` state lags a render behind, so rapid double-taps on Deal would otherwise
+  // pass the guard several times and place several wagers.
+  const busyRef = useRef(false);
+  const setBusy = useCallback((value: boolean) => {
+    busyRef.current = value;
+    setBusyState(value);
+  }, []);
   const [playerCards, setPlayerCards] = useState<(PlayingCard | null)[]>([null, null]);
   const [bankerCards, setBankerCards] = useState<(PlayingCard | null)[]>([null, null]);
   const [faceDown, setFaceDown] = useState<Record<FaceKeys, boolean>>({
@@ -303,7 +310,7 @@ export function BaccaratTable({
   }
 
   async function onDeal() {
-    if (busy) return;
+    if (busyRef.current) return;
     const total = playerBet + bankerBet + tieBet + playerPairBet + bankerPairBet;
     if (total <= 0) {
       toast.error("Place at least one bet");

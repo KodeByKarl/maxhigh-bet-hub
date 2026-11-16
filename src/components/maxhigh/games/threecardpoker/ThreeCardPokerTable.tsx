@@ -136,7 +136,14 @@ export function ThreeCardPokerTable({
   const [ante, setAnte] = useState(DEFAULT_THREE_CARD_POKER_CONFIG.minAnteBet);
   const [pairPlus, setPairPlus] = useState(0);
   const [activeSpot, setActiveSpot] = useState<TcpBetSpot>("ante");
-  const [busy, setBusy] = useState(false);
+  const [busy, setBusyState] = useState(false);
+  // Synchronous in-flight lock: `busy` state lags a render behind, so rapid double-taps on Deal would otherwise
+  // pass the guard several times and place several wagers.
+  const busyRef = useRef(false);
+  const setBusy = useCallback((value: boolean) => {
+    busyRef.current = value;
+    setBusyState(value);
+  }, []);
   const [phase, setPhase] = useState<Phase>("betting");
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [lockedAnte, setLockedAnte] = useState(0);
@@ -233,7 +240,7 @@ export function ThreeCardPokerTable({
   }, []);
 
   function placeChip(spot: TcpBetSpot, value: number) {
-    if (busy || phase !== "betting") return;
+    if (busyRef.current || phase !== "betting") return;
     const max = spot === "ante" ? cfg.maxAnteBet : cfg.maxPairPlusBet;
     const current = spot === "ante" ? ante : pairPlus;
     const next = +Math.min(max, current + value).toFixed(2);
@@ -249,7 +256,7 @@ export function ThreeCardPokerTable({
   }
 
   function undoChip() {
-    if (busy || phase !== "betting") return;
+    if (busyRef.current || phase !== "betting") return;
     const last = betHistory[betHistory.length - 1];
     if (!last) return;
     if (last.spot === "ante") setAnte((n) => Math.max(0, +(n - last.value).toFixed(2)));
@@ -258,7 +265,7 @@ export function ThreeCardPokerTable({
   }
 
   function clearAll() {
-    if (busy || phase !== "betting") return;
+    if (busyRef.current || phase !== "betting") return;
     setAnte(0);
     setPairPlus(0);
     setBetHistory([]);
@@ -390,7 +397,7 @@ export function ThreeCardPokerTable({
   }
 
   async function onDeal() {
-    if (busy || phase === "decision") return;
+    if (busyRef.current || phase === "decision") return;
     if (ante <= 0) {
       toast.error("Ante bet is required");
       return;
@@ -423,7 +430,7 @@ export function ThreeCardPokerTable({
   }
 
   async function onPlay() {
-    if (busy || !sessionId || phase !== "decision") return;
+    if (busyRef.current || !sessionId || phase !== "decision") return;
     unlockThreeCardPokerAudio();
     playThreeCardPokerSound("play");
     setBusy(true);
@@ -439,7 +446,7 @@ export function ThreeCardPokerTable({
   }
 
   async function onFold() {
-    if (busy || !sessionId || phase !== "decision") return;
+    if (busyRef.current || !sessionId || phase !== "decision") return;
     unlockThreeCardPokerAudio();
     setBusy(true);
     try {

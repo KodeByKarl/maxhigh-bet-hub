@@ -45,7 +45,14 @@ export function AceHighSlot({
   const [tieBet, setTieBet] = useState(0);
   const [aceBonusBet, setAceBonusBet] = useState(0);
   const [activeSpot, setActiveSpot] = useState<AhBetSpot>("base");
-  const [busy, setBusy] = useState(false);
+  const [busy, setBusyState] = useState(false);
+  // Synchronous in-flight lock: `busy` state lags a render behind, so rapid double-taps on Deal would otherwise
+  // pass the guard several times and place several wagers.
+  const busyRef = useRef(false);
+  const setBusy = useCallback((value: boolean) => {
+    busyRef.current = value;
+    setBusyState(value);
+  }, []);
   const [playerCards, setPlayerCards] = useState<[PlayingCard | null, PlayingCard | null]>([
     null,
     null,
@@ -213,7 +220,7 @@ export function AceHighSlot({
   }
 
   async function onDeal() {
-    if (busy) return;
+    if (busyRef.current) return;
     if (baseBet < cfg.minBet) {
       toast.error(`Minimum base bet ₱${cfg.minBet}`);
       return;

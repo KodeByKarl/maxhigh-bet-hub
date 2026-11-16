@@ -79,7 +79,14 @@ export function ColorGameProTable({
   const [bets, setBets] = useState<Bets>(emptyBets);
   const [lastBets, setLastBets] = useState<Bets | null>(null);
   const [activeSpot, setActiveSpot] = useState<ColorSpotId>("red");
-  const [busy, setBusy] = useState(false);
+  const [busy, setBusyState] = useState(false);
+  // Synchronous in-flight lock: `busy` state lags a render behind, so rapid double-taps on Deal would otherwise
+  // pass the guard several times and place several wagers.
+  const busyRef = useRef(false);
+  const setBusy = useCallback((value: boolean) => {
+    busyRef.current = value;
+    setBusyState(value);
+  }, []);
   const [spinning, setSpinning] = useState(false);
   const [winning, setWinning] = useState<ColorSpotId | null>(null);
   const [banner, setBanner] = useState(IDLE_BANNER);
@@ -286,6 +293,7 @@ export function ColorGameProTable({
   }
 
   async function onDeal() {
+    if (busyRef.current) return;
     const total = +cfg.spots.reduce((s, sp) => s + (bets[sp.id] ?? 0), 0).toFixed(2);
     if (total < cfg.minBet) {
       toast.error(`Min total bet ₱${cfg.minBet}`);

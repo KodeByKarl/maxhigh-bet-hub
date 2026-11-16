@@ -100,7 +100,14 @@ export function LuckyNinePlusTable({
   const [dealerBet, setDealerBet] = useState(DEFAULT_LUCKY_NINE_PLUS_CONFIG.minDealerBet);
   const [tieBet, setTieBet] = useState(0);
   const [activeSpot, setActiveSpot] = useState<L9BetSpot>("player");
-  const [busy, setBusy] = useState(false);
+  const [busy, setBusyState] = useState(false);
+  // Synchronous in-flight lock: `busy` state lags a render behind, so rapid double-taps on Deal would otherwise
+  // pass the guard several times and place several wagers.
+  const busyRef = useRef(false);
+  const setBusy = useCallback((value: boolean) => {
+    busyRef.current = value;
+    setBusyState(value);
+  }, []);
   const [playerCards, setPlayerCards] = useState<(PlayingCard | null)[]>([null, null]);
   const [dealerCards, setDealerCards] = useState<(PlayingCard | null)[]>([null, null]);
   const [faceDown, setFaceDown] = useState<Record<FaceKeys, boolean>>({
@@ -157,7 +164,7 @@ export function LuckyNinePlusTable({
   }
 
   function clearAll() {
-    if (busy) return;
+    if (busyRef.current) return;
     setPlayerBet(0);
     setDealerBet(0);
     setTieBet(0);
@@ -247,7 +254,7 @@ export function LuckyNinePlusTable({
   }
 
   async function onDeal() {
-    if (busy) return;
+    if (busyRef.current) return;
     const total = playerBet + dealerBet + tieBet;
     if (total <= 0) {
       toast.error("Place at least one bet on the felt");
