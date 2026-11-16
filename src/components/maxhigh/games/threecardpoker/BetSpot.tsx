@@ -98,7 +98,12 @@ export function BetSpot({
       ) : null}
 
       <span
-        className="pointer-events-none z-[1] text-center font-black uppercase leading-none"
+        className={cn(
+          "pointer-events-none z-[1] text-center font-black uppercase leading-none",
+          // With chips down the stack fills the lower half of the spot, so lift the label above it
+          // instead of letting the chip cover the text.
+          amount > 0 && "absolute inset-x-0 top-[16%]",
+        )}
         style={{
           color: t.text,
           fontSize: shape === "circle" ? "0.7rem" : "0.75rem",
@@ -110,7 +115,7 @@ export function BetSpot({
       >
         {label}
       </span>
-      {sublabel ? (
+      {sublabel && amount <= 0 ? (
         <span
           className="pointer-events-none z-[1] mt-1 text-center text-[10px] font-semibold uppercase leading-none short-h:mt-[2px] short-h:text-[7px]"
           style={{ color: t.text, opacity: 0.55, letterSpacing: "0.08em" }}

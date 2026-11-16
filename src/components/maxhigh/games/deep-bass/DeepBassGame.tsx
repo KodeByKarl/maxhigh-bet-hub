@@ -896,7 +896,8 @@ export function DeepBassGame({
           data-native-controls="deep-bass"
         >
           {/* Weapons — stretch across full width */}
-          <div className="grid w-full grid-cols-5 gap-1 sm:gap-1.5">
+          {/* 4 columns on phones so the full weapon names fit (they wrap to two lines instead of truncating) */}
+          <div className="grid w-full grid-cols-4 gap-1 sm:grid-cols-5 sm:gap-1.5">
             {cfg.weapons.map((w) => (
               <button
                 key={w.id}
@@ -911,7 +912,7 @@ export function DeepBassGame({
                 data-control-action="weapon"
                 aria-pressed={weaponId === w.id}
               >
-                <div className="truncate text-[9px] font-bold leading-tight sm:text-[11px]">
+                <div className="wrap-break-word text-[9px] font-bold leading-tight sm:truncate sm:text-[11px]">
                   {w.id === "master" ? "Master Rig" : w.label}
                 </div>
                 <div className="mt-0.5 truncate text-[8px] tabular-nums text-teal-300/85 sm:text-[10px]">
@@ -942,7 +943,7 @@ export function DeepBassGame({
               {autoFire ? "AUTO ON" : "AUTO FIRE"}
             </button>
 
-            <div className="flex min-w-0 flex-1 gap-1.5 overflow-x-auto sm:gap-2">
+            <div className="flex min-w-0 flex-1 flex-wrap gap-1.5 sm:flex-nowrap sm:gap-2 sm:overflow-x-auto">
               {cfg.powerUps.map((p) => (
                 <button
                   key={p.id}

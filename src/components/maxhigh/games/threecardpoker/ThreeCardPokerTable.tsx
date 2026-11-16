@@ -505,7 +505,7 @@ export function ThreeCardPokerTable({
         />
       </div>
 
-      <header className="relative z-20 flex shrink-0 items-center justify-between gap-2.5 px-3 pt-[max(0.45rem,env(safe-area-inset-top))] pr-14 short-h:pt-1 sm:pr-4 sm:pt-2">
+      <header className="relative z-20 flex shrink-0 items-center justify-between gap-2.5 px-3 pt-[max(0.45rem,env(safe-area-inset-top))] pr-14 short-h:pt-1 sm:pr-16 sm:pt-2">
         <div className="min-w-0">
           <div
             className="truncate text-[1.1rem] font-black tracking-[0.1em] text-[#e8c96a] uppercase short-h:text-[0.85rem]"
