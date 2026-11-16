@@ -16,6 +16,7 @@ import { Sidebar, MobileSidebar } from "../components/maxhigh/Sidebar";
 import { LiveWinsTicker } from "../components/maxhigh/LiveWinsTicker";
 import { LoginModal } from "../components/maxhigh/LoginModal";
 import { Toaster } from "../components/ui/sonner";
+import { GameSoundBootstrap } from "../components/maxhigh/GameSoundBootstrap";
 import { ViewportKeyboardSync } from "../components/maxhigh/ViewportKeyboardSync";
 
 function NotFoundComponent() {
@@ -201,6 +202,7 @@ function RootComponent() {
       </div>
       <LoginModal />
       <ViewportKeyboardSync />
+      <GameSoundBootstrap />
       <Toaster />
     </div>
   );

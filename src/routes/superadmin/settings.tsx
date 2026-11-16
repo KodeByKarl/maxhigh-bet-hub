@@ -12,6 +12,7 @@ import { saGlass } from "@/components/superadmin/ui/glass";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import { DatabaseZap, Save, Settings, ShieldAlert } from "lucide-react";
+import { GameSoundSettingsCard } from "@/components/superadmin/GameSoundSettingsCard";
 
 export const Route = createFileRoute("/superadmin/settings")({
   component: SuperSettingsPage,
@@ -221,6 +222,10 @@ function SuperSettingsPage() {
           {saving ? "Saving…" : "Save Platform Settings"}
         </button>
       </form>
+
+      <div className="max-w-3xl">
+        <GameSoundSettingsCard />
+      </div>
 
       <div className={`${saGlass} p-6 space-y-4 max-w-3xl`}>
         <div className="flex items-center gap-3">
