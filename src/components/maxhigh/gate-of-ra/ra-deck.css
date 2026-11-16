@@ -6,6 +6,8 @@
   --ra-sand: #e9d6a8;
   --ra-sun: clamp(104px, 30vw, 124px);
   position: relative;
+  /* Above the reel board (z-10) so the More menu is not painted underneath it. */
+  z-index: 20;
   display: grid;
   gap: 8px;
   margin-top: 4px;
