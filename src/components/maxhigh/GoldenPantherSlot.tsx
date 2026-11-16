@@ -776,6 +776,8 @@ export function GoldenPantherSlot({
         return;
       }
 
+      // Claim synchronously: the purchase below is awaited, so a rapid double-tap on Buy would otherwise buy twice.
+      busyRef.current = true;
       setBuyOpen(false);
 
       setBuyPresenting(true);
@@ -809,6 +811,7 @@ export function GoldenPantherSlot({
         }
         // First free spin starts via the auto-chain once the modal closes.
       } catch (err) {
+        busyRef.current = false;
         toast.error(err instanceof Error ? err.message : "Buy feature failed");
         setBuyPresenting(false);
       }

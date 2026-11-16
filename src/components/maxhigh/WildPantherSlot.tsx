@@ -698,6 +698,8 @@ export function WildPantherSlot({
       return;
     }
 
+    // Claim synchronously: the purchase below is awaited, so a rapid double-tap on Buy would otherwise buy twice.
+    busyRef.current = true;
     setBuyOpen(false);
     setBuyPresenting(true);
     let awardedSpins = getFreeSpinsBase();
@@ -711,6 +713,7 @@ export function WildPantherSlot({
       if (buyMode === "super") setAnte(true);
       awardedSpins = bought.session.freeSpinsLeft || getFreeSpinsBase();
     } catch (err) {
+      busyRef.current = false;
       toast.error(err instanceof Error ? err.message : "Buy feature failed");
       setBuyPresenting(false);
       return;
