@@ -16,6 +16,7 @@ import { Sidebar, MobileSidebar } from "../components/maxhigh/Sidebar";
 import { LiveWinsTicker } from "../components/maxhigh/LiveWinsTicker";
 import { LoginModal } from "../components/maxhigh/LoginModal";
 import { Toaster } from "../components/ui/sonner";
+import { ViewportKeyboardSync } from "../components/maxhigh/ViewportKeyboardSync";
 
 function NotFoundComponent() {
   return (
@@ -174,7 +175,12 @@ function RootComponent() {
   }, [pathname]);
 
   if (isStaffPortal) {
-    return <Outlet />;
+    return (
+      <>
+        <ViewportKeyboardSync />
+        <Outlet />
+      </>
+    );
   }
 
   return (
@@ -194,6 +200,7 @@ function RootComponent() {
         </div>
       </div>
       <LoginModal />
+      <ViewportKeyboardSync />
       <Toaster />
     </div>
   );

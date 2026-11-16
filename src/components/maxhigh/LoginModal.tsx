@@ -59,55 +59,57 @@ export function LoginModal() {
             </div>
           </div>
 
-          <div className="relative flex h-full min-w-0 flex-col justify-center overflow-y-auto bg-panel px-5 py-8 sm:px-12 sm:py-10 lg:px-14">
-            <DialogTitle className="text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
-              Sign in
-            </DialogTitle>
-            <DialogDescription className="sr-only">
-              Sign in to your MaxHigh account to play games.
-            </DialogDescription>
+          <div className="relative flex h-full min-w-0 flex-col overflow-y-auto overscroll-contain bg-panel px-5 py-8 sm:px-12 sm:py-10 lg:px-14">
+            <div className="my-auto">
+              <DialogTitle className="text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
+                Sign in
+              </DialogTitle>
+              <DialogDescription className="sr-only">
+                Sign in to your MaxHigh account to play games.
+              </DialogDescription>
 
-            <form onSubmit={onSubmit} className="mt-8 space-y-4">
-              <Input
-                id="mh-username"
-                type="text"
-                autoComplete="username"
-                required
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
-                placeholder="Username"
-                className="h-14 rounded-xl border-border bg-muted px-4 text-sm text-foreground placeholder:text-muted-foreground focus-visible:ring-primary"
-              />
-
-              <div className="relative">
+              <form onSubmit={onSubmit} className="mt-8 space-y-4">
                 <Input
-                  id="mh-password"
-                  type={showPassword ? "text" : "password"}
-                  autoComplete="current-password"
+                  id="mh-username"
+                  type="text"
+                  autoComplete="username"
                   required
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  placeholder="Password"
-                  className="h-14 rounded-xl border-border bg-muted px-4 pr-12 text-sm text-foreground placeholder:text-muted-foreground focus-visible:ring-primary"
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
+                  placeholder="Username"
+                  className="h-14 rounded-xl border-border bg-muted px-4 text-sm text-foreground placeholder:text-muted-foreground focus-visible:ring-primary"
                 />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword((v) => !v)}
-                  className="absolute right-3 top-1/2 grid h-9 w-9 -translate-y-1/2 place-items-center rounded-lg text-muted-foreground transition-colors hover:bg-panel-hover hover:text-foreground"
-                  aria-label={showPassword ? "Hide password" : "Show password"}
-                >
-                  {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-                </button>
-              </div>
 
-              <button
-                type="submit"
-                disabled={busy}
-                className="mt-1 flex h-14 w-full items-center justify-center rounded-xl bg-primary text-base font-semibold text-primary-foreground shadow-[0_0_24px_rgba(124,58,237,0.35)] transition-colors hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-60"
-              >
-                {busy ? "Signing in…" : "Sign in"}
-              </button>
-            </form>
+                <div className="relative">
+                  <Input
+                    id="mh-password"
+                    type={showPassword ? "text" : "password"}
+                    autoComplete="current-password"
+                    required
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    placeholder="Password"
+                    className="h-14 rounded-xl border-border bg-muted px-4 pr-12 text-sm text-foreground placeholder:text-muted-foreground focus-visible:ring-primary"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword((v) => !v)}
+                    className="absolute right-3 top-1/2 grid h-9 w-9 -translate-y-1/2 place-items-center rounded-lg text-muted-foreground transition-colors hover:bg-panel-hover hover:text-foreground"
+                    aria-label={showPassword ? "Hide password" : "Show password"}
+                  >
+                    {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                  </button>
+                </div>
+
+                <button
+                  type="submit"
+                  disabled={busy}
+                  className="mt-1 flex h-14 w-full items-center justify-center rounded-xl bg-primary text-base font-semibold text-primary-foreground shadow-[0_0_24px_rgba(124,58,237,0.35)] transition-colors hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  {busy ? "Signing in…" : "Sign in"}
+                </button>
+              </form>
+            </div>
           </div>
         </div>
       </DialogContent>

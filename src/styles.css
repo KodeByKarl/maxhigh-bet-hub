@@ -636,4 +636,20 @@ iframe[src*="lovable"] {
   }
 }
 
+/* ---- Mobile keyboard / zoom hardening (touch devices only; desktop is unchanged) ----------------------------------
+   iOS Safari zooms the whole page when a field with font-size < 16px gets focus, which is what made the login screen
+   look "incorrectly scaled". Keep fields at >= 16px on touch devices instead of disabling zoom (pinch-zoom stays on). */
+@media (pointer: coarse) {
+  input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="color"]):not([type="file"]),
+  textarea,
+  select {
+    font-size: max(16px, 1em) !important;
+  }
+}
 
+/* When the on-screen keyboard is open (set by ViewportKeyboardSync), centre dialogs in the visible area instead of the
+   full layout viewport so inputs are not hidden behind the keyboard. */
+html[data-kb-open="true"] [role="dialog"].fixed {
+  top: calc(var(--vv-top, 0px) + var(--vv-h, 100dvh) / 2) !important;
+  max-height: calc(var(--vv-h, 100dvh) - 1rem) !important;
+}
