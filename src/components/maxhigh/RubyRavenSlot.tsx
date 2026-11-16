@@ -597,6 +597,9 @@ export function RubyRavenSlot({
   const spin = useCallback(
     async (asFree = false) => {
       if (busyRef.current) return;
+      // Claim the spin synchronously. The session lookup below is async; without this claim a rapid double-tap
+      // passes the guard more than once and places several wagers.
+      busyRef.current = true;
 
       // Prefer free-spin path whenever local OR server still has FS left.
       // (inFree state can desync after HMR / modal / skip — freeSpinsRef is source of truth.)
@@ -636,6 +639,7 @@ export function RubyRavenSlot({
         freeSpinsRef.current = 0;
         playSessionIdRef.current = null;
         setAutoSpin(false);
+        busyRef.current = false;
         return;
       }
 
@@ -644,6 +648,7 @@ export function RubyRavenSlot({
       if (!isFree && balance < cost) {
         toast.error("Insufficient balance");
         setAutoSpin(false);
+        busyRef.current = false;
         return;
       }
 
