@@ -39,14 +39,10 @@ const grant = (extra: object = {}) => JSON.stringify({ v: 1, kind: "unlock-games
   assert.deepEqual([...p.clientOwnerAccounts], ["client_owner"], "the client's primary owner account is named in the compiled policy");
   assert.ok(![...p.clientOwnerAccounts].some((n) => p.developerAccounts.includes(n)), "client owner and developer are different identities");
   assert.equal(p.grantKeys.length, 0, "no signing key for this handover: unlocking requires a new verified release");
-  assert.equal(p.gameLocks.lockedGames.length, 50);
-  assert.equal(new Set(p.gameLocks.lockedGames).size, 50);
-  assert.deepEqual([...p.gameLocks.lockedGames].sort(), [...alloc.locked].sort(), "compiled locks equal the approved allocation");
-  assert.ok(!p.gameLocks.lockedGames.includes("wild-panther"), "Wild Panther stays playable");
-  assert.ok(p.gameLocks.lockedGames.includes("color-game-pro"), "Color Game Pro stays locked");
-  for (const g of alloc.available) assert.ok(!p.gameLocks.lockedGames.includes(g), g);
+  assert.equal(p.gameLocks.lockedGames.length, 0, "full-catalog release: no game is locked");
+  assert.ok(alloc.available.length > 0 && alloc.locked.length > 0); // approved allocation file still parses; it is historical now
 }
-ok("shipped policy is the approved configuration: 50 locked, 50 playable, NO account cap, client owner and developer identities named, no grant keys");
+ok("shipped policy is the full-catalog configuration: 0 locked, NO account cap, client owner and developer identities named, no grant keys");
 
 // ---- override is refused outside a disposable environment
 process.env.MAXHIGH_POLICY_TEST_OVERRIDE = "";
@@ -180,8 +176,8 @@ assert.equal(verifyGrant(cap, signPayload(cap), "dev-1").kind, "lift-client-cap"
 ok("exempt-account and lift-cap grants verify");
 
 overridePolicyForDisposableTests(null);
-assert.equal((await getEffectiveLockedGames()).size, 50);
-ok("resetting the override restores the compiled configuration (50 locked)");
+assert.equal((await getEffectiveLockedGames()).size, 0);
+ok("resetting the override restores the compiled configuration (0 locked)");
 
 console.log(`PASS ${checks} access-policy checks`);
 await (await import("../src/server/db/client")).closeDatabasePool();

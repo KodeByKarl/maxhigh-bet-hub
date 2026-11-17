@@ -6,7 +6,7 @@ import { useAuth } from "@/lib/auth";
 import { recordGameSessionFn } from "@/functions/api";
 import { cn } from "@/lib/utils";
 import { resolveLazyGame } from "./gamePlayRegistry";
-import { FAMILY_NAME, findRealmsGame, isRealmsGameId } from "@/lib/realms";
+import { findRealmsGame, isRealmsGameId } from "@/lib/realms";
 import { REALMS_WORLDS } from "@/lib/realms/worlds";
 import { realmsAssets } from "./realms/theme";
 import { GameLoadingScreen } from "./GameLoadingScreen";
@@ -395,7 +395,8 @@ function getGameThemeConfig(gameId: string, category: string, thumb: string) {
       badgeGradient: "from-white/70 via-white/40 to-transparent",
       renderType: "standard" as const,
       imageParticles: [assets.icons.scatter, assets.icons.bomb, assets.icons.p3],
-      badgeText: `${FAMILY_NAME} · ${REALMS_WORLDS[realm.world].label}`.toUpperCase(),
+      // FAMILY_NAME is still the "[NEW_FAMILY]" placeholder; never show it to players.
+      badgeText: REALMS_WORLDS[realm.world].label.toUpperCase(),
       chargeText: "TUMBLE READY",
       accent: realm.palette[0],
       lines: [
