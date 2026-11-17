@@ -14,7 +14,7 @@ export function CreateUserForm({ onCreated }: { onCreated: () => void }) {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
-  const [balance, setBalance] = useState("1000");
+  const [balance, setBalance] = useState("0");
   const [role, setRole] = useState<"player" | "admin">("player");
 
   async function onSubmit(e: React.FormEvent) {
@@ -41,7 +41,7 @@ export function CreateUserForm({ onCreated }: { onCreated: () => void }) {
       setUsername("");
       setPassword("");
       setConfirmPassword("");
-      setBalance("1000");
+      setBalance("0");
       setRole("player");
       onCreated();
     } catch (err) {

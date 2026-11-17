@@ -826,7 +826,7 @@ function PlayerActionModal({
   const [winLimitInput, setWinLimitInput] = useState("20000");
   const [securityCode, setSecurityCode] = useState("");
   const [loading, setLoading] = useState(false);
-  const [chipAmount, setChipAmount] = useState("1000");
+  const [chipAmount, setChipAmount] = useState("");
   const [chipNote, setChipNote] = useState("");
   const [chipMode, setChipMode] = useState<"add" | "withdraw">("add");
   const [confirmPassword, setConfirmPassword] = useState("");
