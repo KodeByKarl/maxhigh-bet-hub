@@ -147,7 +147,7 @@ body:has(.bb-close) [data-game-modal="magma-anvil"] [data-realms-game] > button 
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
   grid-template-rows: 56px 48px 76px 52px;
-  grid-template-areas: "ledger ledger ledger ledger" "bet bet bet bet" "spin spin spin spin" "turbo auto bonus info";
+  grid-template-areas: "ledger ledger ledger ledger" "bet bet bet bet" "spin spin spin spin" "turbo autospin bonus info";
   gap: 12px;
   padding: 14px;
   width: 100%;
@@ -250,6 +250,7 @@ body:has(.bb-close) [data-game-modal="magma-anvil"] [data-realms-game] > button 
 .ma-step {
   display: grid;
   place-items: center;
+  min-height: 44px;
   color: var(--ui-accent);
 }
 .ma-bet__value {
@@ -258,6 +259,7 @@ body:has(.bb-close) [data-game-modal="magma-anvil"] [data-realms-game] > button 
   align-items: center;
   justify-content: center;
   gap: 3px;
+  min-height: 44px;
 }
 .ma-bet__value strong {
   font:
@@ -271,7 +273,7 @@ body:has(.bb-close) [data-game-modal="magma-anvil"] [data-realms-game] > button 
   grid-area: turbo;
 }
 .ma-auto {
-  grid-area: auto;
+  grid-area: autospin;
 }
 .ma-bonus {
   grid-area: bonus;

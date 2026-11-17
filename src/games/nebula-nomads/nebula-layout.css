@@ -147,7 +147,7 @@ body:has(.bb-close) [data-game-modal="nebula-nomads"] [data-realms-game] > butto
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
   grid-template-rows: 58px 80px 48px 48px;
-  grid-template-areas: "ledger ledger ledger ledger" "spin spin spin spin" "bet bet bet bet" "auto turbo info bonus";
+  grid-template-areas: "ledger ledger ledger ledger" "spin spin spin spin" "bet bet bet bet" "autospin turbo info bonus";
   gap: 12px;
   padding: 14px;
   width: 100%;
@@ -273,7 +273,7 @@ body:has(.bb-close) [data-game-modal="nebula-nomads"] [data-realms-game] > butto
   grid-area: turbo;
 }
 .nn-auto {
-  grid-area: auto;
+  grid-area: autospin;
 }
 .nn-bonus {
   grid-area: bonus;

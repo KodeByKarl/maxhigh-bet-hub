@@ -149,7 +149,7 @@ body:has(.bb-close) [data-game-modal="moonwell-mysteries"] [data-realms-game] > 
   display: grid;
   grid-template-columns: minmax(0, 1fr) 112px minmax(0, 1fr);
   grid-template-rows: 58px 52px 52px 48px;
-  grid-template-areas: "ledger ledger ledger" "turbo spin bonus" "auto spin info" "bet bet bet";
+  grid-template-areas: "ledger ledger ledger" "turbo spin bonus" "autospin spin info" "bet bet bet";
   gap: 12px;
   padding: 14px;
   width: 100%;
@@ -275,7 +275,7 @@ body:has(.bb-close) [data-game-modal="moonwell-mysteries"] [data-realms-game] > 
   grid-area: turbo;
 }
 .mw-auto {
-  grid-area: auto;
+  grid-area: autospin;
 }
 .mw-bonus {
   grid-area: bonus;

@@ -80,12 +80,12 @@ User requirement: distinct containers, spin enclosures and button treatments for
 | 10 | moonwell-mysteries | VERIFIED | Lunar shrine: twin silver readouts above a central moonwell surrounded by four independent arcane tablets; wager beneath. |
 | 11 | nebula-nomads | VERIFIED | Survey cockpit: two instrument windows, full-width launch dock, wager rail, segmented flight controls. |
 | 12 | northwind-narwhal | VERIFIED | Nautical bridge: chart-like ledger, wide arctic navigation dial on the right, two stacked port controls and a separate bonus rail. |
-| 13 | obsidian-oracle | IN PROGRESS |  |
-| 14 | orchid-oasis | NOT STARTED |  |
-| 15 | persian-peacock | NOT STARTED |  |
-| 16 | polar-prism | NOT STARTED |  |
-| 17 | potion-parlor | NOT STARTED |  |
-| 18 | rocket-rendezvous | NOT STARTED |  |
+| 13 | obsidian-oracle | VERIFIED | Oracle altar: a tall obsidian scrying seal at left, right-aligned account and wager tablets, three ritual switches and a full-width information footer. |
+| 14 | orchid-oasis | VERIFIED | Spa pavilion: floating ivory account plaques, a quiet full-width wager, central orchid capsule flanked by bonus and rules, two broad poolside switches. |
+| 15 | persian-peacock | VERIFIED | Palace throne: a domed jewel spin alcove crowns the panel, with flanking court actions, a gold ledger balcony and mosaic wager/footer rails. |
+| 16 | polar-prism | VERIFIED | Prism instrument: a slim vertical refractor spin well, offset wager and three crystal switches, and a full-width aurora bonus strip. |
+| 17 | potion-parlor | VERIFIED | Apothecary bench: bottle-label account windows, a tall bubbling flask spin chamber between four shelf cards, with a separate dosage rail. |
+| 18 | rocket-rendezvous | VERIFIED | Retro mission console: telemetry ledger, fuel wager beside a turbo switch, long illuminated launch key with a separate auto key, and paired mission cards. |
 | 19 | salamander-sun | NOT STARTED |  |
 | 20 | saturn-rings | NOT STARTED |  |
 | 21 | shogun-sakura | NOT STARTED |  |
@@ -156,3 +156,63 @@ Modified files: `src/games/northwind-narwhal/NarwhalConsole.tsx`, `src/games/nor
 Responsive and functional QA: 12 viewports, 27 checks, zero page errors. Includes portrait, landscape, tablet, desktop; all targets >=43px, no overlaps, overflow, broken images or offscreen controls. Touch and mouse: bet +/-/select, manual spin, last win/balance display, double activation (one request, concurrency one), turbo, auto start/stop, bonus cancel/quantity/single purchase, sound toggle, info, close/reopen. RPCs stubbed; no real wagers or database writes. Audible playback not manually assessed.
 
 Evidence: [screenshots/results](../output/northwind-mobile/), [design and original sources](../output/realms-overhaul/northwind-narwhal/). Before: `before-*.png`; after: `after-*.png`; result: `after-results.json`.
+
+### obsidian-oracle
+
+Oracle altar: a tall obsidian scrying seal at left, right-aligned account and wager tablets, three ritual switches and a full-width information footer.
+
+Modified files: `src/games/obsidian-oracle/OracleConsole.tsx`, `src/games/obsidian-oracle/oracle-layout.css`, `src/games/obsidian-oracle/GameView.tsx`.
+
+Responsive and functional QA: 12 viewports, 27 checks, zero page errors. Includes portrait, landscape, tablet, desktop; all targets >=43px, no overlaps, overflow, broken images or offscreen controls. Touch and mouse: bet +/-/select, manual spin, last win/balance display, double activation (one request, concurrency one), turbo, auto start/stop, bonus cancel/quantity/single purchase, sound toggle, info, close/reopen. RPCs stubbed; no real wagers or database writes. Audible playback not manually assessed.
+
+Evidence: [screenshots/results](../output/obsidian-mobile/), [design and original sources](../output/realms-overhaul/obsidian-oracle/). Before: `before-*.png`; after: `after-*.png`; result: `after-results.json`.
+
+### orchid-oasis
+
+Spa pavilion: floating ivory account plaques, a quiet full-width wager, central orchid capsule flanked by bonus and rules, two broad poolside switches.
+
+Modified files: `src/games/orchid-oasis/OrchidConsole.tsx`, `src/games/orchid-oasis/orchid-layout.css`, `src/games/orchid-oasis/GameView.tsx`.
+
+Responsive and functional QA: 12 viewports, 27 checks, zero page errors. Includes portrait, landscape, tablet, desktop; all targets >=43px, no overlaps, overflow, broken images or offscreen controls. Touch and mouse: bet +/-/select, manual spin, last win/balance display, double activation (one request, concurrency one), turbo, auto start/stop, bonus cancel/quantity/single purchase, sound toggle, info, close/reopen. RPCs stubbed; no real wagers or database writes. Audible playback not manually assessed.
+
+Evidence: [screenshots/results](../output/orchid-mobile/), [design and original sources](../output/realms-overhaul/orchid-oasis/). Before: `before-*.png`; after: `after-*.png`; result: `after-results.json`.
+
+### persian-peacock
+
+Palace throne: a domed jewel spin alcove crowns the panel, with flanking court actions, a gold ledger balcony and mosaic wager/footer rails.
+
+Modified files: `src/games/persian-peacock/PeacockConsole.tsx`, `src/games/persian-peacock/peacock-layout.css`, `src/games/persian-peacock/GameView.tsx`.
+
+Responsive and functional QA: 12 viewports, 27 checks, zero page errors. Includes portrait, landscape, tablet, desktop; all targets >=43px, no overlaps, overflow, broken images or offscreen controls. Touch and mouse: bet +/-/select, manual spin, last win/balance display, double activation (one request, concurrency one), turbo, auto start/stop, bonus cancel/quantity/single purchase, sound toggle, info, close/reopen. RPCs stubbed; no real wagers or database writes. Audible playback not manually assessed.
+
+Evidence: [screenshots/results](../output/persian-mobile/), [design and original sources](../output/realms-overhaul/persian-peacock/). Before: `before-*.png`; after: `after-*.png`; result: `after-results.json`.
+
+### polar-prism
+
+Prism instrument: a slim vertical refractor spin well, offset wager and three crystal switches, and a full-width aurora bonus strip.
+
+Modified files: `src/games/polar-prism/PrismConsole.tsx`, `src/games/polar-prism/prism-layout.css`, `src/games/polar-prism/GameView.tsx`.
+
+Responsive and functional QA: 12 viewports, 27 checks, zero page errors. Includes portrait, landscape, tablet, desktop; all targets >=43px, no overlaps, overflow, broken images or offscreen controls. Touch and mouse: bet +/-/select, manual spin, last win/balance display, double activation (one request, concurrency one), turbo, auto start/stop, bonus cancel/quantity/single purchase, sound toggle, info, close/reopen. RPCs stubbed; no real wagers or database writes. Audible playback not manually assessed.
+
+Evidence: [screenshots/results](../output/polar-mobile/), [design and original sources](../output/realms-overhaul/polar-prism/). Before: `before-*.png`; after: `after-*.png`; result: `after-results.json`.
+
+### potion-parlor
+
+Apothecary bench: bottle-label account windows, a tall bubbling flask spin chamber between four shelf cards, with a separate dosage rail.
+
+Modified files: `src/games/potion-parlor/ParlorConsole.tsx`, `src/games/potion-parlor/parlor-layout.css`, `src/games/potion-parlor/GameView.tsx`.
+
+Responsive and functional QA: 12 viewports, 27 checks, zero page errors. Includes portrait, landscape, tablet, desktop; all targets >=43px, no overlaps, overflow, broken images or offscreen controls. Touch and mouse: bet +/-/select, manual spin, last win/balance display, double activation (one request, concurrency one), turbo, auto start/stop, bonus cancel/quantity/single purchase, sound toggle, info, close/reopen. RPCs stubbed; no real wagers or database writes. Audible playback not manually assessed.
+
+Evidence: [screenshots/results](../output/potion-mobile/), [design and original sources](../output/realms-overhaul/potion-parlor/). Before: `before-*.png`; after: `after-*.png`; result: `after-results.json`.
+
+### rocket-rendezvous
+
+Retro mission console: telemetry ledger, fuel wager beside a turbo switch, long illuminated launch key with a separate auto key, and paired mission cards.
+
+Modified files: `src/games/rocket-rendezvous/RocketConsole.tsx`, `src/games/rocket-rendezvous/rocket-layout.css`, `src/games/rocket-rendezvous/GameView.tsx`.
+
+Responsive and functional QA: 12 viewports, 27 checks, zero page errors. Includes portrait, landscape, tablet, desktop; all targets >=43px, no overlaps, overflow, broken images or offscreen controls. Touch and mouse: bet +/-/select, manual spin, last win/balance display, double activation (one request, concurrency one), turbo, auto start/stop, bonus cancel/quantity/single purchase, sound toggle, info, close/reopen. RPCs stubbed; no real wagers or database writes. Audible playback not manually assessed.
+
+Evidence: [screenshots/results](../output/rocket-mobile/), [design and original sources](../output/realms-overhaul/rocket-rendezvous/). Before: `before-*.png`; after: `after-*.png`; result: `after-results.json`.

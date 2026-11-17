@@ -148,7 +148,7 @@ body:has(.bb-close) [data-game-modal="monarch-meadow"] [data-realms-game] > butt
   display: grid;
   grid-template-columns: minmax(0, 1.2fr) minmax(0, 1.2fr) minmax(0, 0.8fr) minmax(0, 0.8fr);
   grid-template-rows: 60px 48px 52px 48px;
-  grid-template-areas: "ledger ledger ledger ledger" "bet bet spin spin" "turbo auto spin spin" "bonus bonus info info";
+  grid-template-areas: "ledger ledger ledger ledger" "bet bet spin spin" "turbo autospin spin spin" "bonus bonus info info";
   gap: 12px;
   padding: 14px;
   width: 100%;
@@ -251,6 +251,7 @@ body:has(.bb-close) [data-game-modal="monarch-meadow"] [data-realms-game] > butt
 .mm-step {
   display: grid;
   place-items: center;
+  min-height: 44px;
   color: var(--ui-accent);
 }
 .mm-bet__value {
@@ -259,6 +260,7 @@ body:has(.bb-close) [data-game-modal="monarch-meadow"] [data-realms-game] > butt
   align-items: center;
   justify-content: center;
   gap: 3px;
+  min-height: 44px;
 }
 .mm-bet__value strong {
   font:
@@ -272,7 +274,7 @@ body:has(.bb-close) [data-game-modal="monarch-meadow"] [data-realms-game] > butt
   grid-area: turbo;
 }
 .mm-auto {
-  grid-area: auto;
+  grid-area: autospin;
 }
 .mm-bonus {
   grid-area: bonus;

@@ -149,7 +149,7 @@ body:has(.bb-close) [data-game-modal="northwind-narwhal"] [data-realms-game] > b
   display: grid;
   grid-template-columns: minmax(0, 1.2fr) minmax(0, 1.2fr) minmax(0, 0.8fr) minmax(0, 0.8fr);
   grid-template-rows: 58px 48px 52px 48px;
-  grid-template-areas: "ledger ledger ledger ledger" "bet bet spin spin" "auto info spin spin" "turbo turbo bonus bonus";
+  grid-template-areas: "ledger ledger ledger ledger" "bet bet spin spin" "autospin info spin spin" "turbo turbo bonus bonus";
   gap: 12px;
   padding: 14px;
   width: 100%;
@@ -275,7 +275,7 @@ body:has(.bb-close) [data-game-modal="northwind-narwhal"] [data-realms-game] > b
   grid-area: turbo;
 }
 .nw-auto {
-  grid-area: auto;
+  grid-area: autospin;
 }
 .nw-bonus {
   grid-area: bonus;

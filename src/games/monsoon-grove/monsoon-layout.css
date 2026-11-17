@@ -147,7 +147,7 @@ body:has(.bb-close) [data-game-modal="monsoon-grove"] [data-realms-game] > butto
   display: grid;
   grid-template-columns: minmax(0, 0.8fr) minmax(0, 0.8fr) minmax(0, 1.2fr) minmax(0, 1.2fr);
   grid-template-rows: 56px 48px 52px 48px;
-  grid-template-areas: "ledger ledger ledger ledger" "spin spin bet bet" "spin spin turbo auto" "bonus bonus bonus info";
+  grid-template-areas: "ledger ledger ledger ledger" "spin spin bet bet" "spin spin turbo autospin" "bonus bonus bonus info";
   gap: 12px;
   padding: 14px;
   width: 100%;
@@ -250,6 +250,7 @@ body:has(.bb-close) [data-game-modal="monsoon-grove"] [data-realms-game] > butto
 .mg-step {
   display: grid;
   place-items: center;
+  min-height: 44px;
   color: var(--ui-accent);
 }
 .mg-bet__value {
@@ -258,6 +259,7 @@ body:has(.bb-close) [data-game-modal="monsoon-grove"] [data-realms-game] > butto
   align-items: center;
   justify-content: center;
   gap: 3px;
+  min-height: 44px;
 }
 .mg-bet__value strong {
   font:
@@ -271,7 +273,7 @@ body:has(.bb-close) [data-game-modal="monsoon-grove"] [data-realms-game] > butto
   grid-area: turbo;
 }
 .mg-auto {
-  grid-area: auto;
+  grid-area: autospin;
 }
 .mg-bonus {
   grid-area: bonus;

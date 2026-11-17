@@ -1,0 +1,636 @@
+/* Orchid Oasis: Spa pavilion: floating ivory account plaques, a quiet full-width wager, central orchid capsule flanked by bonus and rules, two broad poolside switches. Presentation only; original assets and engine retained. */
+[data-game-view="orchid-oasis"] {
+  --ui-accent: #f3b8db;
+  --ui-soft: #fff1f8;
+  --ui-bg: #271b2a;
+  --ui-face: #51344b;
+  --ui-hud: 302px;
+  container-type: size;
+  overflow: clip;
+  color: var(--ui-soft);
+  font-family: Georgia, serif;
+}
+.oc-identity {
+  position: absolute;
+  top: max(18px, env(safe-area-inset-top));
+  left: 18px;
+  right: 124px;
+  z-index: 25;
+  display: grid;
+  gap: 5px;
+  pointer-events: none;
+}
+.oc-identity__brand {
+  font:
+    600 8px/1.3 "Segoe UI",
+    sans-serif;
+  letter-spacing: 0.18em;
+  color: var(--ui-soft);
+  opacity: 0.8;
+  text-shadow: 0 2px 8px #000;
+}
+.oc-identity h1 {
+  margin: 0;
+  font-size: clamp(19px, 5.6cqw, 30px);
+  line-height: 1.05;
+  letter-spacing: 0.025em;
+  color: var(--ui-soft);
+  text-shadow: 0 2px 10px #000;
+  white-space: normal;
+}
+.oc-identity h1 span {
+  display: block;
+  color: var(--ui-accent);
+}
+[data-game-view="orchid-oasis"] [data-realms-game] > button {
+  top: max(18px, env(safe-area-inset-top));
+  right: 66px;
+  width: 44px;
+  height: 44px;
+  border-radius: 24px;
+  border: 1px solid color-mix(in srgb, var(--ui-accent) 45%, transparent);
+  background: color-mix(in srgb, var(--ui-bg) 90%, transparent);
+}
+[data-game-modal="orchid-oasis"] > div:has(> button[aria-label="Close game"]) {
+  top: max(18px, env(safe-area-inset-top));
+  right: 12px;
+}
+[data-game-modal="orchid-oasis"] button[aria-label="Close game"] {
+  width: 44px;
+  height: 44px;
+  border-radius: 24px;
+  border: 1px solid color-mix(in srgb, #f3b8db 45%, transparent);
+  background: #271b2ae6;
+}
+body:has(.bb-close) [data-game-modal="orchid-oasis"] > div:has(> button[aria-label="Close game"]),
+body:has(.bb-close) [data-game-modal="orchid-oasis"] [data-realms-game] > button {
+  visibility: hidden;
+  pointer-events: none;
+}
+[data-game-view="orchid-oasis"] .realms-playfield {
+  padding: 100px 16px max(20px, env(safe-area-inset-bottom));
+  align-items: center;
+  justify-content: center;
+}
+[data-game-view="orchid-oasis"] .realms-playfield > div {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: auto auto;
+  align-content: center;
+  justify-items: center;
+  gap: 22px;
+  width: 100%;
+  max-width: 800px;
+  height: 100%;
+  margin-inline: auto;
+}
+[data-game-view="orchid-oasis"] .realms-stage {
+  flex: none;
+  height: auto;
+  min-height: 0;
+  width: 100%;
+}
+[data-game-view="orchid-oasis"] .realms-well {
+  padding: 12px !important;
+  margin-inline: auto;
+  border: 1px solid color-mix(in srgb, var(--ui-accent) 50%, transparent);
+  border-radius: 38px !important;
+  clip-path: none !important;
+  mask: none !important;
+  background: linear-gradient(145deg, #51344bf2, #271b2af5) !important;
+  box-shadow:
+    inset 0 1px 0 #fff2,
+    0 14px 36px #0009 !important;
+}
+[data-game-view="orchid-oasis"] .realms-well::before,
+[data-game-view="orchid-oasis"] .realms-well::after {
+  display: none !important;
+}
+[data-game-view="orchid-oasis"] .realms-reel-grid {
+  width: min(
+    calc(100cqw - 58px),
+    640px,
+    calc(
+      (100cqh - 100px - var(--ui-hud) - 22px - max(20px, env(safe-area-inset-bottom)) - 26px) * 1.2
+    )
+  ) !important;
+  max-height: none !important;
+  border: 0 !important;
+  background: none !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+  gap: clamp(4px, 1.3cqw, 9px) !important;
+}
+[data-game-view="orchid-oasis"] .realms-reel-cell {
+  border-radius: 45% 45% 16% 16% !important;
+  clip-path: none !important;
+  mask: none !important;
+  border: 1px solid color-mix(in srgb, var(--ui-accent) 22%, transparent) !important;
+  background-color: color-mix(in srgb, var(--ui-face) 70%, var(--ui-bg)) !important;
+  background-image: radial-gradient(at 35% 20%, #fff1, transparent 75%) !important;
+  box-shadow: inset 0 1px 0 #fff1 !important;
+}
+[data-game-view="orchid-oasis"] .realms-reel-cell[data-winning="true"] {
+  border-color: var(--ui-soft) !important;
+  box-shadow:
+    inset 0 0 12px color-mix(in srgb, var(--ui-accent) 40%, transparent),
+    0 0 12px var(--ui-accent) !important;
+}
+[data-game-view="orchid-oasis"] .realms-reel-art {
+  inset: 5%;
+}
+[data-game-view="orchid-oasis"] .realms-reel-grid img {
+  scale: 0.95;
+}
+.oc-console {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr);
+  grid-template-rows: 58px 48px 84px 48px;
+  grid-template-areas: "ledger ledger ledger ledger" "bet bet bet bet" "bonus spin spin info" "turbo turbo autospin autospin";
+  gap: 12px;
+  padding: 14px;
+  width: 100%;
+  max-width: 440px;
+  justify-self: center;
+  isolation: isolate;
+  border: 1px solid color-mix(in srgb, var(--ui-accent) 30%, transparent);
+  border-radius: 24px;
+  background: #271b2aeb;
+  box-shadow: 0 14px 30px #0006;
+}
+.oc-console::before,
+.oc-console::after {
+  display: none !important;
+}
+.oc-console button {
+  min-width: 0;
+  cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  transition:
+    filter 0.15s,
+    transform 0.15s;
+  font-family: inherit;
+}
+.oc-console button:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+.oc-console button:not(:disabled):active {
+  transform: scale(0.97);
+}
+.oc-console button:focus-visible {
+  outline: 2px solid var(--ui-soft);
+  outline-offset: 3px;
+}
+.oc-console strong,
+.oc-console em {
+  font-variant-numeric: tabular-nums;
+  font-style: normal;
+  white-space: nowrap;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.oc-ledger {
+  grid-area: ledger;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+.oc-ledger > i {
+  display: none;
+}
+.oc-meter {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+.oc-meter[data-meter="win"] {
+  text-align: right;
+}
+.oc-meter > span,
+.oc-bet__value > span {
+  font:
+    600 9px/1.2 "Segoe UI",
+    sans-serif;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--ui-soft);
+  opacity: 0.8;
+}
+.oc-meter strong {
+  font:
+    700 clamp(15px, 4.5cqw, 21px)/1.2 "Segoe UI",
+    sans-serif;
+  color: var(--ui-soft);
+}
+.oc-meter[data-winning="true"] strong {
+  color: var(--ui-accent);
+}
+.oc-bet {
+  grid-area: bet;
+  display: grid;
+  grid-template-columns: 48px minmax(0, 1fr) 48px;
+  gap: 8px;
+  min-width: 0;
+}
+.oc-step,
+.oc-bet__value,
+.oc-chip {
+  border: 1px solid color-mix(in srgb, var(--ui-accent) 35%, transparent);
+  border-radius: 24px;
+  background: linear-gradient(145deg, var(--ui-face), var(--ui-bg));
+  color: var(--ui-soft);
+  box-shadow: inset 0 1px 0 #fff1;
+}
+.oc-step {
+  display: grid;
+  place-items: center;
+  min-height: 44px;
+  color: var(--ui-accent);
+}
+.oc-bet__value {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  min-height: 44px;
+}
+.oc-bet__value strong {
+  font:
+    700 16px/1 "Segoe UI",
+    sans-serif;
+}
+.oc-side {
+  display: contents;
+}
+.oc-turbo {
+  grid-area: turbo;
+}
+.oc-auto {
+  grid-area: autospin;
+}
+.oc-bonus {
+  grid-area: bonus;
+}
+.oc-info {
+  grid-area: info;
+}
+.oc-chip {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  padding: 4px;
+  min-height: 44px;
+}
+.oc-chip > svg {
+  width: 16px;
+  height: 16px;
+  color: var(--ui-accent);
+}
+.oc-chip > span {
+  font:
+    700 8px/1.1 "Segoe UI",
+    sans-serif;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+}
+.oc-chip > em {
+  font:
+    600 10px/1.1 "Segoe UI",
+    sans-serif;
+}
+.oc-turbo[aria-pressed="true"],
+.oc-auto[aria-pressed="true"] {
+  outline: 1px solid var(--ui-accent);
+  background: color-mix(in srgb, var(--ui-accent) 25%, var(--ui-bg));
+}
+.oc-spin-mount {
+  grid-area: spin;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 0;
+  min-height: 0;
+}
+.oc-spin {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  width: 100%;
+  height: 100%;
+  min-width: 44px;
+  min-height: 44px;
+  border: 1px solid var(--ui-accent);
+  border-radius: 24px;
+  background: linear-gradient(140deg, var(--ui-soft), var(--ui-accent));
+  color: var(--ui-bg);
+  clip-path: none;
+  padding: 4px;
+  isolation: isolate;
+}
+.oc-spin::before,
+.oc-spin::after {
+  display: none !important;
+}
+.oc-spin > i {
+  display: none;
+}
+.oc-spin > svg {
+  width: 17px;
+  height: 17px;
+}
+.oc-spin > span {
+  font:
+    800 11px/1 "Segoe UI",
+    sans-serif;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+}
+.oc-spin__art {
+  width: 44px;
+  height: 44px;
+  object-fit: contain;
+  pointer-events: none;
+}
+.oc-spin[data-state="busy"] .oc-spin__art {
+  animation: oc-ui-turn 3s linear infinite;
+}
+.oc-spin[data-state="auto"] {
+  box-shadow: 0 0 0 2px var(--ui-soft);
+}
+.oc-spin[data-state="free"] {
+  filter: hue-rotate(15deg);
+}
+@keyframes oc-ui-turn {
+  to {
+    rotate: 360deg;
+  }
+}
+.oc-console {
+  border: 0;
+  background: linear-gradient(180deg, #35263b99, #251727e8);
+  border-radius: 32px;
+  padding: 14px;
+}
+.oc-ledger {
+  gap: 14px;
+}
+.oc-meter {
+  padding: 8px 12px;
+  border-radius: 18px;
+  background: #fff0f014;
+  color: #ffe8f2;
+  border: 1px solid #f3b8db33;
+}
+.oc-bet {
+  border-bottom: 1px solid #f3b8db33;
+  padding-bottom: 2px;
+}
+.oc-step {
+  border: 0;
+  border-radius: 50%;
+  background: #ecd8d51f;
+}
+.oc-bet__value {
+  border: 0;
+  background: transparent;
+}
+.oc-spin-mount {
+  border-radius: 50px;
+  padding: 5px;
+  border: 1px solid #f8d5e988;
+  background: linear-gradient(135deg, #e8cad666, #51334c);
+}
+.oc-spin {
+  border-radius: 50px;
+  background: linear-gradient(150deg, #ffe5ed, #c986ad);
+  color: #3b2033;
+  border: 0;
+  flex-direction: row;
+  gap: 8px;
+}
+.oc-spin__art {
+  width: 42px;
+  height: 42px;
+}
+.oc-spin > svg {
+  display: none;
+}
+.oc-chip {
+  background: #3e2c3b99;
+  border-color: #f3b8db33;
+}
+.oc-turbo,
+.oc-auto {
+  flex-direction: row;
+  gap: 8px;
+  border-radius: 24px;
+}
+.oc-info,
+.oc-bonus {
+  border-radius: 18px;
+}
+[data-game-view="orchid-oasis"] .realms-well {
+  border-color: #eac6cf77 !important;
+  box-shadow:
+    inset 0 2px 0 #ffe9f422,
+    0 14px 34px #0008 !important;
+}
+[data-sonner-toast].oc-toast {
+  display: flex !important;
+  justify-content: center;
+  width: auto !important;
+  padding: 0 !important;
+  border: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  pointer-events: none;
+}
+.oc-toast__pill {
+  padding: 4px 12px;
+  border: 1px solid #f3b8db66;
+  border-radius: 20px;
+  background: #271b2aee;
+  color: #fff1f8;
+  font:
+    600 11px/1.3 "Segoe UI",
+    sans-serif;
+  white-space: nowrap;
+}
+[data-sonner-toaster]:has(.oc-toast) {
+  --offset-top: 92px !important;
+  --mobile-offset-top: 92px !important;
+}
+@container (max-width:350px) {
+  .oc-console {
+    gap: 8px;
+    padding: 10px;
+  }
+  .oc-chip > span {
+    font-size: 8px;
+  }
+  .oc-spin-mount {
+    padding: 4px;
+  }
+  .oc-bet {
+    grid-template-columns: 44px minmax(0, 1fr) 44px;
+    gap: 4px;
+  }
+}
+@container (orientation:portrait) and (max-height:680px) {
+  [data-game-view="orchid-oasis"] .realms-playfield {
+    padding: 88px 16px max(12px, env(safe-area-inset-bottom));
+  }
+  [data-game-view="orchid-oasis"] .realms-playfield > div {
+    gap: 14px;
+  }
+  [data-game-view="orchid-oasis"] .realms-reel-grid {
+    width: min(
+      calc(100cqw - 58px),
+      calc((100cqh - 88px - 278px - 14px - max(12px, env(safe-area-inset-bottom)) - 26px) * 1.2)
+    ) !important;
+  }
+  .oc-console {
+    gap: 8px;
+    padding: 8px;
+    grid-template-rows: 54px 44px 80px 44px;
+  }
+  .oc-spin {
+    max-width: 100%;
+    max-height: 100%;
+  }
+  .oc-meter strong {
+    font-size: 16px;
+  }
+}
+@container (orientation:landscape) and (max-height:600px) {
+  [data-game-view="orchid-oasis"] .realms-playfield {
+    padding: 58px 16px max(10px, env(safe-area-inset-bottom));
+  }
+  [data-game-view="orchid-oasis"] .realms-playfield > div {
+    grid-template-columns: minmax(0, 1fr) 300px;
+    grid-template-rows: auto;
+    gap: 16px;
+    max-width: 1100px;
+  }
+  .oc-identity {
+    top: 12px;
+  }
+  .oc-identity h1 {
+    font-size: 20px;
+  }
+  .oc-identity h1 span {
+    display: inline;
+  }
+  .oc-console {
+    padding: 8px;
+    gap: 6px;
+    grid-template-rows: 44px 44px 70px 44px;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr);
+  }
+  .oc-meter {
+    gap: 2px;
+  }
+  .oc-meter strong {
+    font-size: 16px;
+  }
+  .oc-meter > span {
+    font-size: 8px;
+  }
+  .oc-chip {
+    padding: 2px;
+    gap: 1px;
+  }
+  .oc-bet {
+    grid-template-columns: 44px minmax(0, 1fr) 44px;
+    gap: 4px;
+  }
+  .oc-spin {
+    max-width: 100%;
+    max-height: 100%;
+  }
+  .oc-spin__art {
+    width: 38px;
+    height: 38px;
+  }
+  .oc-spin-mount {
+    padding: 4px;
+  }
+  [data-game-view="orchid-oasis"] .realms-reel-grid {
+    width: min(
+      calc(100cqw - 32px - 300px - 16px - 26px),
+      calc((100cqh - 58px - max(10px, env(safe-area-inset-bottom)) - 26px) * 1.2)
+    ) !important;
+  }
+}
+@container (orientation:landscape) and (max-height:360px) {
+  [data-game-view="orchid-oasis"] .realms-playfield > div {
+    grid-template-columns: minmax(0, 1fr) 280px;
+  }
+  [data-game-view="orchid-oasis"] .realms-reel-grid {
+    width: min(
+      calc(100cqw - 32px - 280px - 16px - 26px),
+      calc((100cqh - 58px - 10px - 26px) * 1.2)
+    ) !important;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .oc-spin[data-state="busy"] .oc-spin__art {
+    animation: none;
+  }
+  .oc-console button {
+    transition: none;
+  }
+}
+/* Shared dialogs keep their handlers; keep content scrollable on short screens and Close tappable. */
+[data-game-view="orchid-oasis"] [aria-label="Auto Spin Configuration"] > div {
+  display: flex;
+  flex-direction: column;
+  max-height: calc(100% - 12px);
+}
+[data-game-view="orchid-oasis"] [aria-label="Auto Spin Configuration"] > div > div:nth-child(2) {
+  min-height: 0;
+  flex: 1 1 auto;
+  max-height: none;
+}
+[data-game-view="orchid-oasis"] [aria-label="Auto Spin Configuration"] > div > div:first-child,
+[data-game-view="orchid-oasis"] [aria-label="Auto Spin Configuration"] > div > div:last-child {
+  flex-shrink: 0;
+}
+[data-game-view="orchid-oasis"] div:has(> h3):has(> .grid.grid-cols-4) {
+  display: flex;
+  flex-direction: column;
+  max-height: calc(100dvh - 32px);
+  padding: 20px;
+}
+[data-game-view="orchid-oasis"] div:has(> h3) > .grid.grid-cols-4 {
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 4px;
+}
+[data-game-view="orchid-oasis"] div:has(> .grid.grid-cols-4) > h3 {
+  padding-right: 40px;
+  font-size: 16px;
+  text-align: left;
+}
+[data-game-view="orchid-oasis"] [aria-label="Paytable"] button[aria-label="Close"],
+[data-game-view="orchid-oasis"] div:has(> h3) > button[aria-label="Close"] {
+  min-width: 44px;
+  min-height: 44px;
+  flex-shrink: 0;
+}
+[data-game-view="orchid-oasis"] div:has(> h3) > button[aria-label="Close"] {
+  z-index: 1;
+}

@@ -1,3 +1,9 @@
+import { RocketConsole } from "@/games/rocket-rendezvous/RocketConsole";
+import { ParlorConsole } from "@/games/potion-parlor/ParlorConsole";
+import { PrismConsole } from "@/games/polar-prism/PrismConsole";
+import { PeacockConsole } from "@/games/persian-peacock/PeacockConsole";
+import { OrchidConsole } from "@/games/orchid-oasis/OrchidConsole";
+import { OracleConsole } from "@/games/obsidian-oracle/OracleConsole";
 import { NarwhalConsole } from "@/games/northwind-narwhal/NarwhalConsole";
 import { NebulaConsole } from "@/games/nebula-nomads/NebulaConsole";
 import { MoonwellConsole } from "@/games/moonwell-mysteries/MoonwellConsole";
@@ -271,6 +277,12 @@ function StandardSlotControlDeck({
 
 /** Keep every other game's existing deck unchanged. Realms gameplay retains all callbacks. */
 export function SlotControlDeck(props: SlotControlDeckProps) {
+  if (props.gameId === "rocket-rendezvous") return <RocketConsole {...props} />;
+  if (props.gameId === "potion-parlor") return <ParlorConsole {...props} />;
+  if (props.gameId === "polar-prism") return <PrismConsole {...props} />;
+  if (props.gameId === "persian-peacock") return <PeacockConsole {...props} />;
+  if (props.gameId === "orchid-oasis") return <OrchidConsole {...props} />;
+  if (props.gameId === "obsidian-oracle") return <OracleConsole {...props} />;
   if (props.gameId === "northwind-narwhal") return <NarwhalConsole {...props} />;
   if (props.gameId === "nebula-nomads") return <NebulaConsole {...props} />;
   if (props.gameId === "moonwell-mysteries") return <MoonwellConsole {...props} />;

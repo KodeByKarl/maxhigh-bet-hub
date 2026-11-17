@@ -268,7 +268,7 @@ try {
     }
     await context.close();
   }
-  if (phase !== "before") {
+  if (phase === "after") {
     for (const mobile of [true, false]) {
       const context = await browser.newContext({
         viewport: mobile ? { width: 390, height: 844 } : { width: 1440, height: 900 },

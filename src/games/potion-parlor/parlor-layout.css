@@ -1,0 +1,626 @@
+/* Potion Parlor: Apothecary bench: bottle-label account windows, a tall bubbling flask spin chamber between four shelf cards, with a separate dosage rail. Presentation only; original assets and engine retained. */
+[data-game-view="potion-parlor"] {
+  --ui-accent: #d4a5fa;
+  --ui-soft: #faf0ff;
+  --ui-bg: #24162c;
+  --ui-face: #473055;
+  --ui-hud: 276px;
+  container-type: size;
+  overflow: clip;
+  color: var(--ui-soft);
+  font-family: "Trebuchet MS", sans-serif;
+}
+.pz-identity {
+  position: absolute;
+  top: max(18px, env(safe-area-inset-top));
+  left: 18px;
+  right: 124px;
+  z-index: 25;
+  display: grid;
+  gap: 5px;
+  pointer-events: none;
+}
+.pz-identity__brand {
+  font:
+    600 8px/1.3 "Segoe UI",
+    sans-serif;
+  letter-spacing: 0.18em;
+  color: var(--ui-soft);
+  opacity: 0.8;
+  text-shadow: 0 2px 8px #000;
+}
+.pz-identity h1 {
+  margin: 0;
+  font-size: clamp(19px, 5.6cqw, 30px);
+  line-height: 1.05;
+  letter-spacing: 0.025em;
+  color: var(--ui-soft);
+  text-shadow: 0 2px 10px #000;
+  white-space: normal;
+}
+.pz-identity h1 span {
+  display: block;
+  color: var(--ui-accent);
+}
+[data-game-view="potion-parlor"] [data-realms-game] > button {
+  top: max(18px, env(safe-area-inset-top));
+  right: 66px;
+  width: 44px;
+  height: 44px;
+  border-radius: 12px 12px 22px 22px;
+  border: 1px solid color-mix(in srgb, var(--ui-accent) 45%, transparent);
+  background: color-mix(in srgb, var(--ui-bg) 90%, transparent);
+}
+[data-game-modal="potion-parlor"] > div:has(> button[aria-label="Close game"]) {
+  top: max(18px, env(safe-area-inset-top));
+  right: 12px;
+}
+[data-game-modal="potion-parlor"] button[aria-label="Close game"] {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px 12px 22px 22px;
+  border: 1px solid color-mix(in srgb, #d4a5fa 45%, transparent);
+  background: #24162ce6;
+}
+body:has(.bb-close) [data-game-modal="potion-parlor"] > div:has(> button[aria-label="Close game"]),
+body:has(.bb-close) [data-game-modal="potion-parlor"] [data-realms-game] > button {
+  visibility: hidden;
+  pointer-events: none;
+}
+[data-game-view="potion-parlor"] .realms-playfield {
+  padding: 100px 16px max(20px, env(safe-area-inset-bottom));
+  align-items: center;
+  justify-content: center;
+}
+[data-game-view="potion-parlor"] .realms-playfield > div {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: auto auto;
+  align-content: center;
+  justify-items: center;
+  gap: 22px;
+  width: 100%;
+  max-width: 800px;
+  height: 100%;
+  margin-inline: auto;
+}
+[data-game-view="potion-parlor"] .realms-stage {
+  flex: none;
+  height: auto;
+  min-height: 0;
+  width: 100%;
+}
+[data-game-view="potion-parlor"] .realms-well {
+  padding: 12px !important;
+  margin-inline: auto;
+  border: 1px solid color-mix(in srgb, var(--ui-accent) 50%, transparent);
+  border-radius: 20px 20px 34px 34px !important;
+  clip-path: none !important;
+  mask: none !important;
+  background: linear-gradient(145deg, #473055f2, #24162cf5) !important;
+  box-shadow:
+    inset 0 1px 0 #fff2,
+    0 14px 36px #0009 !important;
+}
+[data-game-view="potion-parlor"] .realms-well::before,
+[data-game-view="potion-parlor"] .realms-well::after {
+  display: none !important;
+}
+[data-game-view="potion-parlor"] .realms-reel-grid {
+  width: min(
+    calc(100cqw - 58px),
+    640px,
+    calc(
+      (100cqh - 100px - var(--ui-hud) - 22px - max(20px, env(safe-area-inset-bottom)) - 26px) * 1
+    )
+  ) !important;
+  max-height: none !important;
+  border: 0 !important;
+  background: none !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+  gap: clamp(4px, 1.3cqw, 9px) !important;
+}
+[data-game-view="potion-parlor"] .realms-reel-cell {
+  border-radius: 32% !important;
+  clip-path: none !important;
+  mask: none !important;
+  border: 1px solid color-mix(in srgb, var(--ui-accent) 22%, transparent) !important;
+  background-color: color-mix(in srgb, var(--ui-face) 70%, var(--ui-bg)) !important;
+  background-image: radial-gradient(at 35% 20%, #fff1, transparent 75%) !important;
+  box-shadow: inset 0 1px 0 #fff1 !important;
+}
+[data-game-view="potion-parlor"] .realms-reel-cell[data-winning="true"] {
+  border-color: var(--ui-soft) !important;
+  box-shadow:
+    inset 0 0 12px color-mix(in srgb, var(--ui-accent) 40%, transparent),
+    0 0 12px var(--ui-accent) !important;
+}
+[data-game-view="potion-parlor"] .realms-reel-art {
+  inset: 5%;
+}
+[data-game-view="potion-parlor"] .realms-reel-grid img {
+  scale: 0.95;
+}
+.pz-console {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 104px minmax(0, 1fr);
+  grid-template-rows: 60px 48px 52px 52px;
+  grid-template-areas: "ledger ledger ledger" "bet bet bet" "turbo spin autospin" "bonus spin info";
+  gap: 12px;
+  padding: 14px;
+  width: 100%;
+  max-width: 440px;
+  justify-self: center;
+  isolation: isolate;
+  border: 1px solid color-mix(in srgb, var(--ui-accent) 30%, transparent);
+  border-radius: 12px 12px 22px 22px;
+  background: #24162ceb;
+  box-shadow: 0 14px 30px #0006;
+}
+.pz-console::before,
+.pz-console::after {
+  display: none !important;
+}
+.pz-console button {
+  min-width: 0;
+  cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  transition:
+    filter 0.15s,
+    transform 0.15s;
+  font-family: inherit;
+}
+.pz-console button:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+.pz-console button:not(:disabled):active {
+  transform: scale(0.97);
+}
+.pz-console button:focus-visible {
+  outline: 2px solid var(--ui-soft);
+  outline-offset: 3px;
+}
+.pz-console strong,
+.pz-console em {
+  font-variant-numeric: tabular-nums;
+  font-style: normal;
+  white-space: nowrap;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.pz-ledger {
+  grid-area: ledger;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+.pz-ledger > i {
+  display: none;
+}
+.pz-meter {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+.pz-meter[data-meter="win"] {
+  text-align: right;
+}
+.pz-meter > span,
+.pz-bet__value > span {
+  font:
+    600 9px/1.2 "Segoe UI",
+    sans-serif;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--ui-soft);
+  opacity: 0.8;
+}
+.pz-meter strong {
+  font:
+    700 clamp(15px, 4.5cqw, 21px)/1.2 "Segoe UI",
+    sans-serif;
+  color: var(--ui-soft);
+}
+.pz-meter[data-winning="true"] strong {
+  color: var(--ui-accent);
+}
+.pz-bet {
+  grid-area: bet;
+  display: grid;
+  grid-template-columns: 48px minmax(0, 1fr) 48px;
+  gap: 8px;
+  min-width: 0;
+}
+.pz-step,
+.pz-bet__value,
+.pz-chip {
+  border: 1px solid color-mix(in srgb, var(--ui-accent) 35%, transparent);
+  border-radius: 12px 12px 22px 22px;
+  background: linear-gradient(145deg, var(--ui-face), var(--ui-bg));
+  color: var(--ui-soft);
+  box-shadow: inset 0 1px 0 #fff1;
+}
+.pz-step {
+  display: grid;
+  place-items: center;
+  min-height: 44px;
+  color: var(--ui-accent);
+}
+.pz-bet__value {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  min-height: 44px;
+}
+.pz-bet__value strong {
+  font:
+    700 16px/1 "Segoe UI",
+    sans-serif;
+}
+.pz-side {
+  display: contents;
+}
+.pz-turbo {
+  grid-area: turbo;
+}
+.pz-auto {
+  grid-area: autospin;
+}
+.pz-bonus {
+  grid-area: bonus;
+}
+.pz-info {
+  grid-area: info;
+}
+.pz-chip {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  padding: 4px;
+  min-height: 44px;
+}
+.pz-chip > svg {
+  width: 16px;
+  height: 16px;
+  color: var(--ui-accent);
+}
+.pz-chip > span {
+  font:
+    700 8px/1.1 "Segoe UI",
+    sans-serif;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+}
+.pz-chip > em {
+  font:
+    600 10px/1.1 "Segoe UI",
+    sans-serif;
+}
+.pz-turbo[aria-pressed="true"],
+.pz-auto[aria-pressed="true"] {
+  outline: 1px solid var(--ui-accent);
+  background: color-mix(in srgb, var(--ui-accent) 25%, var(--ui-bg));
+}
+.pz-spin-mount {
+  grid-area: spin;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 0;
+  min-height: 0;
+}
+.pz-spin {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  width: 100%;
+  height: 100%;
+  min-width: 44px;
+  min-height: 44px;
+  border: 1px solid var(--ui-accent);
+  border-radius: 12px 12px 22px 22px;
+  background: linear-gradient(140deg, var(--ui-soft), var(--ui-accent));
+  color: var(--ui-bg);
+  clip-path: none;
+  padding: 4px;
+  isolation: isolate;
+}
+.pz-spin::before,
+.pz-spin::after {
+  display: none !important;
+}
+.pz-spin > i {
+  display: none;
+}
+.pz-spin > svg {
+  width: 17px;
+  height: 17px;
+}
+.pz-spin > span {
+  font:
+    800 11px/1 "Segoe UI",
+    sans-serif;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+}
+.pz-spin__art {
+  width: 44px;
+  height: 44px;
+  object-fit: contain;
+  pointer-events: none;
+}
+.pz-spin[data-state="busy"] .pz-spin__art {
+  animation: pz-ui-turn 3s linear infinite;
+}
+.pz-spin[data-state="auto"] {
+  box-shadow: 0 0 0 2px var(--ui-soft);
+}
+.pz-spin[data-state="free"] {
+  filter: hue-rotate(15deg);
+}
+@keyframes pz-ui-turn {
+  to {
+    rotate: 360deg;
+  }
+}
+.pz-console {
+  border: 1px solid #b386c855;
+  border-radius: 10px 10px 28px 28px;
+  background: linear-gradient(#483043ee, #24172df2);
+  border-bottom: 5px solid #7d5768;
+}
+.pz-ledger {
+  gap: 16px;
+}
+.pz-meter {
+  background: #f6e7e5;
+  color: #492a43;
+  padding: 8px 10px;
+  border-radius: 5px 5px 12px 12px;
+  box-shadow: inset 0 0 0 3px #c6a2b622;
+}
+.pz-meter > span,
+.pz-meter strong {
+  color: #492a43;
+}
+.pz-meter > span {
+  font-size: 8px;
+}
+.pz-spin-mount {
+  border-radius: 12px 12px 38px 38px;
+  padding: 6px;
+  border: 1px solid #e7cafa99;
+  background: linear-gradient(90deg, #e7cafa55, #24162c33, #e7cafa55);
+}
+.pz-spin {
+  border-radius: 8px 8px 32px 32px;
+  background: linear-gradient(180deg, #bde4da33 15%, #d4a5fa99 40%, #a05ad7 80%);
+  color: #fff0ff;
+  border-color: #e9d5ff88;
+  box-shadow: inset 5px 0 0 #fff1;
+}
+.pz-spin__art {
+  width: 48px;
+  height: 48px;
+}
+.pz-spin > svg {
+  display: none;
+}
+.pz-chip {
+  border-radius: 6px 6px 16px 16px;
+  background: #302039;
+}
+.pz-bet__value {
+  border-radius: 8px;
+  background: #201429;
+}
+.pz-step {
+  border-radius: 50%;
+  background: #614b64;
+}
+[data-game-view="potion-parlor"] .realms-well {
+  box-shadow:
+    inset 0 -4px 0 #72526477,
+    0 16px 38px #0008 !important;
+}
+[data-sonner-toast].pz-toast {
+  display: flex !important;
+  justify-content: center;
+  width: auto !important;
+  padding: 0 !important;
+  border: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  pointer-events: none;
+}
+.pz-toast__pill {
+  padding: 4px 12px;
+  border: 1px solid #d4a5fa66;
+  border-radius: 20px;
+  background: #24162cee;
+  color: #faf0ff;
+  font:
+    600 11px/1.3 "Segoe UI",
+    sans-serif;
+  white-space: nowrap;
+}
+[data-sonner-toaster]:has(.pz-toast) {
+  --offset-top: 92px !important;
+  --mobile-offset-top: 92px !important;
+}
+@container (max-width:350px) {
+  .pz-console {
+    gap: 8px;
+    padding: 10px;
+  }
+  .pz-chip > span {
+    font-size: 8px;
+  }
+  .pz-spin-mount {
+    padding: 4px;
+  }
+  .pz-bet {
+    grid-template-columns: 44px minmax(0, 1fr) 44px;
+    gap: 4px;
+  }
+}
+@container (orientation:portrait) and (max-height:680px) {
+  [data-game-view="potion-parlor"] .realms-playfield {
+    padding: 88px 16px max(12px, env(safe-area-inset-bottom));
+  }
+  [data-game-view="potion-parlor"] .realms-playfield > div {
+    gap: 14px;
+  }
+  [data-game-view="potion-parlor"] .realms-reel-grid {
+    width: min(
+      calc(100cqw - 58px),
+      calc((100cqh - 88px - 252px - 14px - max(12px, env(safe-area-inset-bottom)) - 26px) * 1)
+    ) !important;
+  }
+  .pz-console {
+    gap: 8px;
+    padding: 8px;
+    grid-template-rows: 56px 44px 48px 48px;
+  }
+  .pz-spin {
+    max-width: 100%;
+    max-height: 100%;
+  }
+  .pz-meter strong {
+    font-size: 16px;
+  }
+}
+@container (orientation:landscape) and (max-height:600px) {
+  [data-game-view="potion-parlor"] .realms-playfield {
+    padding: 58px 16px max(10px, env(safe-area-inset-bottom));
+  }
+  [data-game-view="potion-parlor"] .realms-playfield > div {
+    grid-template-columns: minmax(0, 1fr) 300px;
+    grid-template-rows: auto;
+    gap: 16px;
+    max-width: 1100px;
+  }
+  .pz-identity {
+    top: 12px;
+  }
+  .pz-identity h1 {
+    font-size: 20px;
+  }
+  .pz-identity h1 span {
+    display: inline;
+  }
+  .pz-console {
+    padding: 8px;
+    gap: 6px;
+    grid-template-rows: 46px 44px 44px 44px;
+    grid-template-columns: minmax(0, 1fr) 104px minmax(0, 1fr);
+  }
+  .pz-meter {
+    gap: 2px;
+  }
+  .pz-meter strong {
+    font-size: 16px;
+  }
+  .pz-meter > span {
+    font-size: 8px;
+  }
+  .pz-chip {
+    padding: 2px;
+    gap: 1px;
+  }
+  .pz-bet {
+    grid-template-columns: 44px minmax(0, 1fr) 44px;
+    gap: 4px;
+  }
+  .pz-spin {
+    max-width: 100%;
+    max-height: 100%;
+  }
+  .pz-spin__art {
+    width: 38px;
+    height: 38px;
+  }
+  .pz-spin-mount {
+    padding: 4px;
+  }
+  [data-game-view="potion-parlor"] .realms-reel-grid {
+    width: min(
+      calc(100cqw - 32px - 300px - 16px - 26px),
+      calc((100cqh - 58px - max(10px, env(safe-area-inset-bottom)) - 26px) * 1)
+    ) !important;
+  }
+}
+@container (orientation:landscape) and (max-height:360px) {
+  [data-game-view="potion-parlor"] .realms-playfield > div {
+    grid-template-columns: minmax(0, 1fr) 280px;
+  }
+  [data-game-view="potion-parlor"] .realms-reel-grid {
+    width: min(
+      calc(100cqw - 32px - 280px - 16px - 26px),
+      calc((100cqh - 58px - 10px - 26px) * 1)
+    ) !important;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .pz-spin[data-state="busy"] .pz-spin__art {
+    animation: none;
+  }
+  .pz-console button {
+    transition: none;
+  }
+}
+/* Shared dialogs keep their handlers; keep content scrollable on short screens and Close tappable. */
+[data-game-view="potion-parlor"] [aria-label="Auto Spin Configuration"] > div {
+  display: flex;
+  flex-direction: column;
+  max-height: calc(100% - 12px);
+}
+[data-game-view="potion-parlor"] [aria-label="Auto Spin Configuration"] > div > div:nth-child(2) {
+  min-height: 0;
+  flex: 1 1 auto;
+  max-height: none;
+}
+[data-game-view="potion-parlor"] [aria-label="Auto Spin Configuration"] > div > div:first-child,
+[data-game-view="potion-parlor"] [aria-label="Auto Spin Configuration"] > div > div:last-child {
+  flex-shrink: 0;
+}
+[data-game-view="potion-parlor"] div:has(> h3):has(> .grid.grid-cols-4) {
+  display: flex;
+  flex-direction: column;
+  max-height: calc(100dvh - 32px);
+  padding: 20px;
+}
+[data-game-view="potion-parlor"] div:has(> h3) > .grid.grid-cols-4 {
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 4px;
+}
+[data-game-view="potion-parlor"] div:has(> .grid.grid-cols-4) > h3 {
+  padding-right: 40px;
+  font-size: 16px;
+  text-align: left;
+}
+[data-game-view="potion-parlor"] [aria-label="Paytable"] button[aria-label="Close"],
+[data-game-view="potion-parlor"] div:has(> h3) > button[aria-label="Close"] {
+  min-width: 44px;
+  min-height: 44px;
+  flex-shrink: 0;
+}
+[data-game-view="potion-parlor"] div:has(> h3) > button[aria-label="Close"] {
+  z-index: 1;
+}
