@@ -1,4 +1,4 @@
-/* Enchanted Grove only. The original 27 cells, mapping and hexagonal geometry remain intact. */
+/* Enchanted Grove presentation. The original 27 cells and mapping remain intact. */
 [data-game-view="enchanted-grove"] {
   container-type: size;
 }
@@ -36,7 +36,7 @@
   width: min(calc(100cqw - 36px), calc((100cqh - 306px) * 3), 900px) !important;
   max-height: none !important;
   aspect-ratio: 3 / 1;
-  /* The existing nine-column, three-row template and hexagonal clip paths are untouched. */
+  /* Preserve the nine-column, three-row board mapping. */
   gap: clamp(2px, 0.6cqw, 5px) !important;
 }
 [data-game-view="enchanted-grove"] [data-gs-board] img {
@@ -278,4 +278,255 @@
   gap: 12px;
   align-self: center;
   min-width: 0;
+}
+/* Spellbook composition: crest, tall reel window, ledger, casting bar. */
+[data-game-view="enchanted-grove"] > div > .relative.z-10 {
+  overflow-y: auto;
+  padding: max(54px, env(safe-area-inset-top)) 8px max(20px, env(safe-area-inset-bottom));
+}
+[data-game-view="enchanted-grove"] [data-gs-col] {
+  justify-content: center;
+  gap: 18px;
+  max-width: 760px;
+  height: auto;
+  min-height: 100%;
+}
+.grove-heading {
+  flex: none;
+  text-align: center;
+  color: #f2e3b4;
+  text-shadow: 0 3px 18px #10152d;
+}
+.grove-heading__eyebrow {
+  font-size: 8px;
+  letter-spacing: 0.32em;
+  color: #c7b7e2;
+}
+.grove-heading h1 {
+  margin: 5px 0 0;
+  font-family: Georgia, serif;
+  font-weight: 400;
+  font-size: clamp(28px, 7cqw, 46px);
+  line-height: 1.1;
+}
+.grove-heading h1 em {
+  color: #bde9c6;
+}
+.grove-heading__flourish {
+  display: block;
+  margin-top: 8px;
+  color: #b7a575;
+  font-size: 15px;
+}
+[data-game-view="enchanted-grove"] [data-gs-col] > :has([data-gs-well]) {
+  flex: none;
+  width: 100%;
+  filter: none;
+}
+[data-game-view="enchanted-grove"] [data-gs-well] {
+  width: 100% !important;
+  padding: 18px 5px;
+  border: 1px solid #bea773aa;
+  border-radius: 46% 46% 16px 16px / 14% 14% 16px 16px !important;
+  background:
+    radial-gradient(ellipse at 50% 0, #53725c70, transparent 65%),
+    linear-gradient(#172c2ce8, #0d1c26ed) !important;
+  box-shadow:
+    inset 0 0 0 4px #101d25,
+    inset 0 0 0 5px #bea77355,
+    0 16px 40px #070e2266 !important;
+}
+[data-game-view="enchanted-grove"] [data-gs-well]::before,
+[data-game-view="enchanted-grove"] [data-gs-well]::after {
+  display: none;
+}
+[data-game-view="enchanted-grove"] [data-gs-board] {
+  width: 100% !important;
+  aspect-ratio: 1.35;
+  gap: 2px !important;
+  max-height: none !important;
+}
+[data-game-view="enchanted-grove"] [data-gs-board] > * {
+  clip-path: none;
+  border-radius: 10px !important;
+  border: 1px solid #bbd9b312 !important;
+  background: linear-gradient(160deg, #bbd9b308, #25334918) !important;
+  box-shadow: none !important;
+}
+[data-game-view="enchanted-grove"] [data-gs-board] > .scale-\[1\.04\] {
+  border-color: #d7eab2aa !important;
+  background: radial-gradient(ellipse, #a7cf7833, #25334918) !important;
+  box-shadow: inset 0 0 16px #a7cf7822 !important;
+}
+[data-game-view="enchanted-grove"] [data-gs-board] img {
+  scale: 1;
+  padding: 0;
+}
+[data-game-view="enchanted-grove"] .grove-console {
+  max-width: none;
+  padding: 0 4px;
+}
+[data-game-view="enchanted-grove"] .grove-console__status-strip {
+  grid-template-columns: 1fr 1fr;
+  gap: 0;
+  border-top: 1px solid #cfb87966;
+  border-bottom: 1px solid #cfb87966;
+  padding: 9px 0;
+  margin-bottom: 12px;
+}
+[data-game-view="enchanted-grove"] .grove-console__meter {
+  background: none;
+  border: 0;
+  border-radius: 0;
+  padding: 0 12px;
+  text-align: center;
+}
+[data-game-view="enchanted-grove"] .grove-console__meter + .grove-console__meter {
+  border-left: 1px solid #cfb87944;
+}
+[data-game-view="enchanted-grove"] .grove-console__bonus {
+  grid-column: 1 / -1;
+  justify-self: center;
+  min-height: 36px;
+  padding: 4px 16px;
+  margin-top: 10px;
+  border: 0;
+  border-radius: 0;
+  background: none;
+  color: #ead5a5;
+}
+[data-game-view="enchanted-grove"] .grove-console__bonus strong {
+  display: inline;
+  margin-left: 8px;
+}
+[data-game-view="enchanted-grove"] .grove-console__actions {
+  display: flex;
+  flex-direction: column;
+  padding: 0;
+  gap: 12px;
+}
+[data-game-view="enchanted-grove"] .grove-console__branch {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-rows: auto;
+  gap: 10px;
+  width: 100%;
+}
+[data-game-view="enchanted-grove"] .grove-console__bet {
+  border: 1px solid #b4a18466;
+  border-radius: 8px;
+  background: #131e2bd9;
+  box-shadow: none;
+}
+[data-game-view="enchanted-grove"] .grove-console__tools {
+  gap: 4px;
+}
+[data-game-view="enchanted-grove"] .grove-console__tools button {
+  border: 0;
+  background: #20293fd9;
+  border-radius: 8px;
+  min-width: 42px;
+  color: #d3cbe8;
+}
+[data-game-view="enchanted-grove"] .grove-console .grove-console__spin {
+  width: 100%;
+  min-height: 60px;
+  aspect-ratio: auto;
+  flex-direction: row;
+  gap: 12px;
+  border-radius: 8px 8px 24px 24px;
+  border: 1px solid #dfcc94;
+  background: linear-gradient(110deg, #183f38, #3e7456 50%, #183f38);
+  box-shadow:
+    inset 0 1px 0 #f6e8b84d,
+    inset 0 -4px 0 #0a211c70,
+    0 8px 24px #080d214d;
+  font-family: Georgia, serif;
+  font-size: 20px;
+  font-weight: 400;
+  letter-spacing: 0.12em;
+}
+[data-game-view="enchanted-grove"] .grove-console__spin::before {
+  inset: 4px;
+  border-radius: 4px 4px 20px 20px;
+  border-color: #dfcc9433;
+}
+[data-game-view="enchanted-grove"] .grove-console__status {
+  position: static;
+  width: auto;
+  height: auto;
+  margin: 10px 0 0;
+  clip-path: none;
+  white-space: normal;
+  color: #d0c6df;
+  font-size: 10px;
+  text-align: center;
+}
+.grove-notice {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  width: fit-content;
+  max-width: 100%;
+  margin-inline: auto;
+  padding: 7px 14px;
+  border: 1px solid #bda77799;
+  border-radius: 8px;
+  background: linear-gradient(120deg, #182337f5, #193a31f5);
+  color: #eee0ba;
+  box-shadow: 0 4px 14px #080d2140;
+  text-align: center;
+}
+.grove-notice > span {
+  color: #abbf94;
+  font-size: 17px;
+}
+.grove-notice > span:last-child {
+  display: none;
+}
+.grove-notice > div {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.grove-notice small {
+  font-size: 9px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+.grove-notice strong {
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+}
+@container (min-width: 620px) and (max-height: 500px) {
+  [data-game-view="enchanted-grove"] [data-gs-col] {
+    grid-template-columns: minmax(0, 1fr) 300px;
+    gap: 12px 22px;
+  }
+  .grove-heading {
+    grid-column: 1 / -1;
+  }
+  .grove-heading h1 {
+    font-size: 26px;
+  }
+  .grove-heading__flourish {
+    display: none;
+  }
+}
+@container (max-height: 660px) {
+  [data-game-view="enchanted-grove"] [data-gs-col] {
+    gap: 10px;
+  }
+  .grove-heading h1 {
+    font-size: 26px;
+  }
+  .grove-heading__flourish {
+    display: none;
+  }
+}
+
+/* Keep the original reel DOM order for shared skin hooks; display the crest first. */
+.grove-heading {
+  order: -1;
 }

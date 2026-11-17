@@ -60,7 +60,7 @@ export function GroveControls({
         </dl>
         <dl className="grove-console__meter" data-winning={win > 0}>
           <dt>{busy ? "Round win" : "Last win"}</dt>
-          <dd title={formatMoney(win)}>{win > 0 ? formatMoney(win) : "�"}</dd>
+          <dd title={formatMoney(win)}>{win > 0 ? formatMoney(win) : "—"}</dd>
         </dl>
         {buyFeature ? (
           <button
@@ -155,7 +155,7 @@ export function GroveControls({
           ) : (
             <RotateCw size={30} aria-hidden="true" />
           )}
-          <span>{label}</span>
+          <span>{label === "Spin" ? "Cast / Spin" : label}</span>
           {autoSpin && autoRemaining !== undefined && (
             <small>{autoRemaining === "infinity" ? "∞" : autoRemaining} left</small>
           )}

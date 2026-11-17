@@ -4,6 +4,7 @@ import type { GamePlayProps } from "../shared/types";
 import { SkinnedGame } from "../shared/layouts/SkinnedGame";
 import { skin } from "./game.theme";
 import "./buffalo-ui.css";
+import "./buffalo-layout.css";
 
 const RIPPLE_MS = 500;
 

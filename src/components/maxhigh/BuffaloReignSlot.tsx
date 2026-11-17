@@ -1,4 +1,4 @@
-import { SlotControlDeck } from "./SlotControlDeck";
+import { BuffaloControls } from "./buffalo-reign/BuffaloControls";
 /**
  * Buffalo Reign — 6×4 cluster-pay tumble slot (panther rectangle board).
  * Engine resolves spins instantly; this file plays back the animation script.
@@ -1035,7 +1035,7 @@ export function BuffaloReignSlot({
           {/* Buy feature — compact on phones so the spin row stays on-screen */}
 
           {/* HUD — compact on Android so Spin sits above the system nav */}
-          <SlotControlDeck
+          <BuffaloControls
             gameId="buffalo-reign"
             bet={totalBet}
             win={displayWin}
