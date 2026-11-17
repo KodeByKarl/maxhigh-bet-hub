@@ -1,6 +1,10 @@
 import { useRef, type CSSProperties, type ReactNode } from "react";
 import type { GameSkin } from "../themes/skin";
 import { useSkinHooks } from "../hooks/useSkinHooks";
+import {
+  gameSpinThemeStyle,
+  gameSpinTreatment,
+} from "@/components/maxhigh/spin-button/game-spin-themes";
 import "./skin-frames.css";
 import "./skin-deck.css";
 import "./skin-mobile.css";
@@ -8,6 +12,7 @@ import "./skin-board.css";
 import "./skin-atmosphere.css";
 import "./skin-material.css";
 import "../effects/skin-fx.css";
+import "@/components/maxhigh/spin-button/game-spin-button.css";
 
 /**
  * Presentation wrapper every slot game folder renders around its (unchanged) game engine component. It only sets data attributes and
@@ -24,7 +29,9 @@ export function SkinnedGame({
 }) {
   const ref = useRef<HTMLDivElement>(null);
   useSkinHooks(ref, skin.motif);
+  const spinTreatment = gameSpinTreatment(gameId);
   const style = {
+    ...gameSpinThemeStyle(gameId),
     "--gs-corner": `${skin.tune.corner}px`,
     "--gs-orn": skin.tune.ornament,
     "--gs-spin": `${skin.tune.spin}px`,
@@ -34,6 +41,8 @@ export function SkinnedGame({
       ref={ref}
       className="h-full min-h-0 w-full"
       data-game-view={gameId}
+      data-spin-treatment={spinTreatment?.title}
+      data-spin-finish={spinTreatment?.finish}
       data-frame={skin.frame}
       data-deck={skin.deck}
       data-voice={skin.voice}

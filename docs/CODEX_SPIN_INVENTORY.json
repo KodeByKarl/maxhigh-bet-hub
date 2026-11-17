@@ -1,0 +1,4030 @@
+{
+  "checkedAt": "2026-11-16T18:22:23.330Z",
+  "source": "D:\\Porjects\\maxhigh-bet-hub",
+  "policySha256": "11d197c17e883072fdcd8789931d6ba0c26522493947408f8a114b84beec8136",
+  "database": "local maxhigh_demo",
+  "controls": [],
+  "semantics": "Client-active = admin-listed AND enabled(default yes) AND not policy-locked. Developer maintenance sees locked games as enabled too. Lobby visibility alone does not enforce policy locks.",
+  "counts": {
+    "total": 100,
+    "active": 50,
+    "activeSlots": 41,
+    "activeNonSlots": 9
+  },
+  "games": [
+    {
+      "name": "Golden Panther",
+      "slug": "golden-panther",
+      "category": "slot",
+      "engine": "GoldenPantherSlot",
+      "active": false,
+      "locked": true,
+      "databaseEnabled": "yes (catalog default)",
+      "lobbyVisible": true,
+      "view": "src/games/golden-panther/GameView.tsx",
+      "existingControl": "src/components/maxhigh/SlotControlDeck.tsx",
+      "definition": null,
+      "thumbnail": "/games/home-v20261101/golden-panther.webp",
+      "filesToModify": []
+    },
+    {
+      "name": "Godly Gates",
+      "slug": "godly-gates",
+      "category": "slot",
+      "engine": "GodlyGatesSlot",
+      "active": false,
+      "locked": true,
+      "databaseEnabled": "yes (catalog default)",
+      "lobbyVisible": true,
+      "view": "src/games/godly-gates/GameView.tsx",
+      "existingControl": "src/components/maxhigh/SlotControlDeck.tsx",
+      "definition": null,
+      "thumbnail": "/games/home-v20261101/godly-gates.webp",
+      "filesToModify": []
+    },
+    {
+      "name": "Olympus Wrath",
+      "slug": "olympus-wrath",
+      "category": "slot",
+      "engine": "OlympusWrathSlot",
+      "active": false,
+      "locked": true,
+      "databaseEnabled": "yes (catalog default)",
+      "lobbyVisible": true,
+      "view": "src/games/olympus-wrath/GameView.tsx",
+      "existingControl": "src/components/maxhigh/SlotControlDeck.tsx",
+      "definition": null,
+      "thumbnail": "/games/home-v20261101/olympus-wrath.webp",
+      "filesToModify": []
+    },
+    {
+      "name": "Enchanted Grove",
+      "slug": "enchanted-grove",
+      "category": "slot",
+      "engine": "EnchantedGroveSlot",
+      "active": false,
+      "locked": true,
+      "databaseEnabled": "yes (catalog default)",
+      "lobbyVisible": true,
+      "view": "src/games/enchanted-grove/GameView.tsx",
+      "existingControl": "src/components/maxhigh/SlotControlDeck.tsx",
+      "definition": null,
+      "thumbnail": "/games/home-v20261101/enchanted-grove.webp",
+      "filesToModify": []
+    },
+    {
+      "name": "Buffalo Reign",
+      "slug": "buffalo-reign",
+      "category": "slot",
+      "engine": "BuffaloReignSlot",
+      "active": false,
+      "locked": true,
+      "databaseEnabled": "yes (catalog default)",
+      "lobbyVisible": true,
+      "view": "src/games/buffalo-reign/GameView.tsx",
+      "existingControl": "src/components/maxhigh/SlotControlDeck.tsx",
+      "definition": null,
+      "thumbnail": "/games/home-v20261101/buffalo-reign.webp",
+      "filesToModify": []
+    },
+    {
+      "name": "Fire Spike",
+      "slug": "fire-spike",
+      "category": "slot",
+      "engine": "FireSpikeSlot",
+      "active": false,
+      "locked": true,
+      "databaseEnabled": "yes (catalog default)",
+      "lobbyVisible": true,
+      "view": "src/games/fire-spike/GameView.tsx",
+      "existingControl": "src/components/maxhigh/SlotControlDeck.tsx",
+      "definition": null,
+      "thumbnail": "/games/home-v20261101/fire-spike.webp",
+      "filesToModify": []
+    },
+    {
+      "name": "Fortune Ox",
+      "slug": "fortune-ox",
+      "category": "slot",
+      "engine": "FortuneOxSlot",
+      "active": false,
+      "locked": true,
+      "databaseEnabled": "yes (catalog default)",
+      "lobbyVisible": true,
+      "view": "src/games/fortune-ox/GameView.tsx",
+      "existingControl": "src/components/maxhigh/SlotControlDeck.tsx",
+      "definition": null,
+      "thumbnail": "/games/home-v20261101/fortune-ox.webp",
+      "filesToModify": []
+    },
+    {
+      "name": "Fortune Tiger",
+      "slug": "fortune-tiger",
+      "category": "slot",
+      "engine": "FortuneTigerSlot",
+      "active": false,
+      "locked": true,
+      "databaseEnabled": "yes (catalog default)",
+      "lobbyVisible": true,
+      "view": "src/games/fortune-tiger/GameView.tsx",
+      "existingControl": "src/components/maxhigh/SlotControlDeck.tsx",
+      "definition": null,
+      "thumbnail": "/games/home-v20261101/fortune-tiger.webp",
+      "filesToModify": []
+    },
+    {
+      "name": "Fortune Rabbit",
+      "slug": "fortune-rabbit",
+      "category": "slot",
+      "engine": "FortuneRabbitSlot",
+      "active": false,
+      "locked": true,
+      "databaseEnabled": "yes (catalog default)",
+      "lobbyVisible": true,
+      "view": "src/games/fortune-rabbit/GameView.tsx",
+      "existingControl": "src/components/maxhigh/SlotControlDeck.tsx",
+      "definition": null,
+      "thumbnail": "/games/home-v20261101/fortune-rabbit.webp",
+      "filesToModify": []
+    },
+    {
+      "name": "Cleopatra Gold",
+      "slug": "cleopatra-gold",
+      "category": "slot",
+      "engine": "CleopatraGoldSlot",
+      "active": false,
+      "locked": true,
+      "databaseEnabled": "yes (catalog default)",
+      "lobbyVisible": true,
+      "view": "src/games/cleopatra-gold/GameView.tsx",
+      "existingControl": "src/components/maxhigh/SlotControlDeck.tsx",
+      "definition": null,
+      "thumbnail": "/games/home-v20261101/cleopatra-gold.webp",
+      "filesToModify": []
+    },
+    {
+      "name": "Lucky Neko",
+      "slug": "lucky-neko",
+      "category": "slot",
+      "engine": "LuckyNekoSlot",
+      "active": false,
+      "locked": true,
+      "databaseEnabled": "yes (catalog default)",
+      "lobbyVisible": true,
+      "view": "src/games/lucky-neko/GameView.tsx",
+      "existingControl": "src/components/maxhigh/SlotControlDeck.tsx",
+      "definition": null,
+      "thumbnail": "/games/home-v20261101/lucky-neko.webp",
+      "filesToModify": []
+    },
+    {
+      "name": "Fortune Mouse",
+      "slug": "fortune-mouse",
+      "category": "slot",
+      "engine": "FortuneMouseSlot",
+      "active": false,
+      "locked": true,
+      "databaseEnabled": "yes (catalog default)",
+      "lobbyVisible": true,
+      "view": "src/games/fortune-mouse/GameView.tsx",
+      "existingControl": "src/components/maxhigh/SlotControlDeck.tsx",
+      "definition": null,
+      "thumbnail": "/games/home-v20261101/fortune-mouse.webp",
+      "filesToModify": []
+    },
+    {
+      "name": "Prosperity Lion",
+      "slug": "prosperity-lion",
+      "category": "slot",
+      "engine": "ProsperityLionSlot",
+      "active": false,
+      "locked": true,
+      "databaseEnabled": "yes (catalog default)",
+      "lobbyVisible": true,
+      "view": "src/games/prosperity-lion/GameView.tsx",
+      "existingControl": "src/components/maxhigh/SlotControlDeck.tsx",
+      "definition": null,
+      "thumbnail": "/games/home-v20261101/prosperity-lion.webp",
+      "filesToModify": []
+    },
+    {
+      "name": "Coin Volcano",
+      "slug": "coin-volcano",
+      "category": "slot",
+      "engine": "CoinVolcanoSlot",
+      "active": false,
+      "locked": true,
+      "databaseEnabled": "yes (catalog default)",
+      "lobbyVisible": true,
+      "view": "src/games/coin-volcano/GameView.tsx",
+      "existingControl": "src/components/maxhigh/SlotControlDeck.tsx",
+      "definition": null,
+      "thumbnail": "/games/home-v20261101/coin-volcano.webp",
+      "filesToModify": []
+    },
+    {
+      "name": "Zeus Strike",
+      "slug": "zeus-strike",
+      "category": "slot",
+      "engine": "ZeusStrikeSlot",
+      "active": false,
+      "locked": true,
+      "databaseEnabled": "yes (catalog default)",
+      "lobbyVisible": true,
+      "view": "src/games/zeus-strike/GameView.tsx",
+      "existingControl": "src/components/maxhigh/SlotControlDeck.tsx",
+      "definition": null,
+      "thumbnail": "/games/home-v20261101/zeus-strike.webp",
+      "filesToModify": []
+    },
+    {
+      "name": "Thor Thunder",
+      "slug": "thor-thunder",
+      "category": "slot",
+      "engine": "ThorThunderSlot",
+      "active": false,
+      "locked": true,
+      "databaseEnabled": "yes (catalog default)",
+      "lobbyVisible": true,
+      "view": "src/games/thor-thunder/GameView.tsx",
+      "existingControl": "src/components/maxhigh/SlotControlDeck.tsx",
+      "definition": null,
+      "thumbnail": "/games/home-v20261101/thor-thunder.webp",
+      "filesToModify": []
+    },
+    {
+      "name": "Maya Gold",
+      "slug": "maya-gold",
+      "category": "slot",
+      "engine": "MayaGoldSlot",
+      "active": false,
+      "locked": true,
+      "databaseEnabled": "yes (catalog default)",
+      "lobbyVisible": true,
+      "view": "src/games/maya-gold/GameView.tsx",
+      "existingControl": "src/components/maxhigh/SlotControlDeck.tsx",
+      "definition": null,
+      "thumbnail": "/games/home-v20261101/maya-gold.webp",
+      "filesToModify": []
+    },
+    {
+      "name": "Temple Rush",
+      "slug": "temple-rush",
+      "category": "slot",
+      "engine": "TempleRushSlot",
+      "active": false,
+      "locked": true,
+      "databaseEnabled": "yes (catalog default)",
+      "lobbyVisible": true,
+      "view": "src/games/temple-rush/GameView.tsx",
+      "existingControl": "src/components/maxhigh/SlotControlDeck.tsx",
+      "definition": null,
+      "thumbnail": "/games/home-v20261101/temple-rush.webp",
+      "filesToModify": []
+    },
+    {
+      "name": "Safari Gold",
+      "slug": "safari-gold",
+      "category": "slot",
+      "engine": "SafariGoldSlot",
+      "active": false,
+      "locked": true,
+      "databaseEnabled": "yes (catalog default)",
+      "lobbyVisible": true,
+      "view": "src/games/safari-gold/GameView.tsx",
+      "existingControl": "src/components/maxhigh/SlotControlDeck.tsx",
+      "definition": null,
+      "thumbnail": "/games/home-v20261101/safari-gold.webp",
+      "filesToModify": []
+    },
+    {
+      "name": "Pharaoh Fire",
+      "slug": "pharaoh-fire",
+      "category": "slot",
+      "engine": "PharaohFireSlot",
+      "active": false,
+      "locked": true,
+      "databaseEnabled": "yes (catalog default)",
+      "lobbyVisible": true,
+      "view": "src/games/pharaoh-fire/GameView.tsx",
+      "existingControl": "src/components/maxhigh/SlotControlDeck.tsx",
+      "definition": null,
+      "thumbnail": "/games/home-v20261101/pharaoh-fire.webp",
+      "filesToModify": []
+    },
+    {
+      "name": "Desert Riches",
+      "slug": "desert-riches",
+      "category": "slot",
+      "engine": "DesertRichesSlot",
+      "active": false,
+      "locked": true,
+      "databaseEnabled": "yes (catalog default)",
+      "lobbyVisible": true,
+      "view": "src/games/desert-riches/GameView.tsx",
+      "existingControl": "src/components/maxhigh/SlotControlDeck.tsx",
+      "definition": null,
+      "thumbnail": "/games/home-v20261101/desert-riches.webp",
+      "filesToModify": []
+    },
+    {
+      "name": "Gate of Ra",
+      "slug": "gate-of-ra",
+      "category": "slot",
+      "engine": "GateOfRaSlot",
+      "active": false,
+      "locked": true,
+      "databaseEnabled": "yes (catalog default)",
+      "lobbyVisible": true,
+      "view": "src/games/gate-of-ra/GameView.tsx",
+      "existingControl": "src/components/maxhigh/SlotControlDeck.tsx",
+      "definition": null,
+      "thumbnail": "/games/home-v20261101/gate-of-ra.webp",
+      "filesToModify": []
+    },
+    {
+      "name": "Wild Panther",
+      "slug": "wild-panther",
+      "category": "slot",
+      "engine": "WildPantherSlot",
+      "active": false,
+      "locked": true,
+      "databaseEnabled": "yes (catalog default)",
+      "lobbyVisible": true,
+      "view": "src/games/wild-panther/GameView.tsx",
+      "existingControl": "src/components/maxhigh/SlotControlDeck.tsx",
+      "definition": null,
+      "thumbnail": "/games/home-v20261101/wild-panther.webp",
+      "filesToModify": []
+    },
+    {
+      "name": "Jade Jaguar",
+      "slug": "jade-jaguar",
+      "category": "slot",
+      "engine": "JadeJaguarSlot",
+      "active": false,
+      "locked": true,
+      "databaseEnabled": "yes (catalog default)",
+      "lobbyVisible": true,
+      "view": "src/games/jade-jaguar/GameView.tsx",
+      "existingControl": "src/components/maxhigh/SlotControlDeck.tsx",
+      "definition": null,
+      "thumbnail": "/games/home-v20261101/jade-jaguar.webp",
+      "filesToModify": []
+    },
+    {
+      "name": "Ember Tiger",
+      "slug": "ember-tiger",
+      "category": "slot",
+      "engine": "EmberTigerSlot",
+      "active": false,
+      "locked": true,
+      "databaseEnabled": "yes (catalog default)",
+      "lobbyVisible": true,
+      "view": "src/games/ember-tiger/GameView.tsx",
+      "existingControl": "src/components/maxhigh/SlotControlDeck.tsx",
+      "definition": null,
+      "thumbnail": "/games/home-v20261101/ember-tiger.webp",
+      "filesToModify": []
+    },
+    {
+      "name": "Lotus Lynx",
+      "slug": "lotus-lynx",
+      "category": "slot",
+      "engine": "LotusLynxSlot",
+      "active": false,
+      "locked": true,
+      "databaseEnabled": "yes (catalog default)",
+      "lobbyVisible": true,
+      "view": "src/games/lotus-lynx/GameView.tsx",
+      "existingControl": "src/components/maxhigh/SlotControlDeck.tsx",
+      "definition": null,
+      "thumbnail": "/games/home-v20261101/lotus-lynx.webp",
+      "filesToModify": []
+    },
+    {
+      "name": "Coral Cobra",
+      "slug": "coral-cobra",
+      "category": "slot",
+      "engine": "CoralCobraSlot",
+      "active": false,
+      "locked": true,
+      "databaseEnabled": "yes (catalog default)",
+      "lobbyVisible": true,
+      "view": "src/games/coral-cobra/GameView.tsx",
+      "existingControl": "src/components/maxhigh/SlotControlDeck.tsx",
+      "definition": null,
+      "thumbnail": "/games/home-v20261101/coral-cobra.webp",
+      "filesToModify": []
+    },
+    {
+      "name": "Frost Fox",
+      "slug": "frost-fox",
+      "category": "slot",
+      "engine": "FrostFoxSlot",
+      "active": false,
+      "locked": true,
+      "databaseEnabled": "yes (catalog default)",
+      "lobbyVisible": true,
+      "view": "src/games/frost-fox/GameView.tsx",
+      "existingControl": "src/components/maxhigh/SlotControlDeck.tsx",
+      "definition": null,
+      "thumbnail": "/games/home-v20261101/frost-fox.webp",
+      "filesToModify": []
+    },
+    {
+      "name": "Solar Serpent",
+      "slug": "solar-serpent",
+      "category": "slot",
+      "engine": "SolarSerpentSlot",
+      "active": false,
+      "locked": true,
+      "databaseEnabled": "yes (catalog default)",
+      "lobbyVisible": true,
+      "view": "src/games/solar-serpent/GameView.tsx",
+      "existingControl": "src/components/maxhigh/SlotControlDeck.tsx",
+      "definition": null,
+      "thumbnail": "/games/home-v20261101/solar-serpent.webp",
+      "filesToModify": []
+    },
+    {
+      "name": "Honey Hive",
+      "slug": "honey-hive",
+      "category": "slot",
+      "engine": "HoneyHiveSlot",
+      "active": false,
+      "locked": true,
+      "databaseEnabled": "yes (catalog default)",
+      "lobbyVisible": true,
+      "view": "src/games/honey-hive/GameView.tsx",
+      "existingControl": "src/components/maxhigh/SlotControlDeck.tsx",
+      "definition": null,
+      "thumbnail": "/games/home-v20261101/honey-hive.webp",
+      "filesToModify": []
+    },
+    {
+      "name": "Midnight Owl",
+      "slug": "midnight-owl",
+      "category": "slot",
+      "engine": "MidnightOwlSlot",
+      "active": false,
+      "locked": true,
+      "databaseEnabled": "yes (catalog default)",
+      "lobbyVisible": true,
+      "view": "src/games/midnight-owl/GameView.tsx",
+      "existingControl": "src/components/maxhigh/SlotControlDeck.tsx",
+      "definition": null,
+      "thumbnail": "/games/home-v20261101/midnight-owl.webp",
+      "filesToModify": []
+    },
+    {
+      "name": "Ruby Raven",
+      "slug": "ruby-raven",
+      "category": "slot",
+      "engine": "RubyRavenSlot",
+      "active": false,
+      "locked": true,
+      "databaseEnabled": "yes (catalog default)",
+      "lobbyVisible": true,
+      "view": "src/games/ruby-raven/GameView.tsx",
+      "existingControl": "src/components/maxhigh/SlotControlDeck.tsx",
+      "definition": null,
+      "thumbnail": "/games/home-v20261101/ruby-raven.webp",
+      "filesToModify": []
+    },
+    {
+      "name": "Deep Bass",
+      "slug": "deep-bass",
+      "category": "fishing",
+      "engine": "DeepBassGame",
+      "active": false,
+      "locked": true,
+      "databaseEnabled": "yes (catalog default)",
+      "lobbyVisible": true,
+      "view": "src/games/deep-bass/GameView.tsx",
+      "existingControl": "src/components/maxhigh/SlotControlDeck.tsx",
+      "definition": null,
+      "thumbnail": "/games/home-v20261101/deep-bass.webp",
+      "filesToModify": []
+    },
+    {
+      "name": "Dragon Fisher",
+      "slug": "dragon-fisher",
+      "category": "fishing",
+      "engine": "DragonFisherGame",
+      "active": false,
+      "locked": true,
+      "databaseEnabled": "yes (catalog default)",
+      "lobbyVisible": true,
+      "view": "src/games/dragon-fisher/GameView.tsx",
+      "existingControl": "src/components/maxhigh/SlotControlDeck.tsx",
+      "definition": null,
+      "thumbnail": "/games/home-v20261101/dragon-fisher.webp",
+      "filesToModify": []
+    },
+    {
+      "name": "Crab Cannon",
+      "slug": "crab-cannon",
+      "category": "fishing",
+      "engine": "CrabCannonGame",
+      "active": false,
+      "locked": true,
+      "databaseEnabled": "yes (catalog default)",
+      "lobbyVisible": true,
+      "view": "src/games/crab-cannon/GameView.tsx",
+      "existingControl": "src/components/maxhigh/SlotControlDeck.tsx",
+      "definition": null,
+      "thumbnail": "/games/home-v20261101/crab-cannon.webp",
+      "filesToModify": []
+    },
+    {
+      "name": "Shark Hunter",
+      "slug": "shark-hunter",
+      "category": "fishing",
+      "engine": "SharkHunterGame",
+      "active": false,
+      "locked": true,
+      "databaseEnabled": "yes (catalog default)",
+      "lobbyVisible": true,
+      "view": "src/games/shark-hunter/GameView.tsx",
+      "existingControl": "src/components/maxhigh/SlotControlDeck.tsx",
+      "definition": null,
+      "thumbnail": "/games/home-v20261101/shark-hunter.webp",
+      "filesToModify": []
+    },
+    {
+      "name": "Octopus Armada",
+      "slug": "octopus-armada",
+      "category": "fishing",
+      "engine": "OctopusArmadaGame",
+      "active": true,
+      "locked": false,
+      "databaseEnabled": "yes (catalog default)",
+      "lobbyVisible": true,
+      "view": "src/games/octopus-armada/GameView.tsx",
+      "existingControl": "src/components/maxhigh/SlotControlDeck.tsx",
+      "definition": null,
+      "thumbnail": "/games/home-v20261101/octopus-armada.webp",
+      "filesToModify": []
+    },
+    {
+      "name": "Turtle Tide",
+      "slug": "turtle-tide",
+      "category": "fishing",
+      "engine": "TurtleTideGame",
+      "active": true,
+      "locked": false,
+      "databaseEnabled": "yes (catalog default)",
+      "lobbyVisible": true,
+      "view": "src/games/turtle-tide/GameView.tsx",
+      "existingControl": "src/components/maxhigh/SlotControlDeck.tsx",
+      "definition": null,
+      "thumbnail": "/games/home-v20261101/turtle-tide.webp",
+      "filesToModify": []
+    },
+    {
+      "name": "Whale War",
+      "slug": "whale-war",
+      "category": "fishing",
+      "engine": "WhaleWarGame",
+      "active": true,
+      "locked": false,
+      "databaseEnabled": "yes (catalog default)",
+      "lobbyVisible": true,
+      "view": "src/games/whale-war/GameView.tsx",
+      "existingControl": "src/components/maxhigh/SlotControlDeck.tsx",
+      "definition": null,
+      "thumbnail": "/games/home-v20261101/whale-war.webp",
+      "filesToModify": []
+    },
+    {
+      "name": "Ace High",
+      "slug": "ace-high",
+      "category": "cards",
+      "engine": "AceHighSlot",
+      "active": false,
+      "locked": true,
+      "databaseEnabled": "yes (catalog default)",
+      "lobbyVisible": true,
+      "view": "src/games/ace-high/GameView.tsx",
+      "existingControl": "src/components/maxhigh/SlotControlDeck.tsx",
+      "definition": null,
+      "thumbnail": "/games/home-v20261101/ace-high.webp",
+      "filesToModify": []
+    },
+    {
+      "name": "Baccarat",
+      "slug": "baccarat",
+      "category": "cards",
+      "engine": "See GameView",
+      "active": false,
+      "locked": true,
+      "databaseEnabled": "yes (catalog default)",
+      "lobbyVisible": true,
+      "view": "src/games/baccarat/GameView.tsx",
+      "existingControl": "src/components/maxhigh/SlotControlDeck.tsx",
+      "definition": null,
+      "thumbnail": "/games/home-v20261101/baccarat.webp",
+      "filesToModify": []
+    },
+    {
+      "name": "Lucky 9",
+      "slug": "lucky9",
+      "category": "cards",
+      "engine": "See GameView",
+      "active": false,
+      "locked": true,
+      "databaseEnabled": "yes (catalog default)",
+      "lobbyVisible": true,
+      "view": "src/games/lucky9/GameView.tsx",
+      "existingControl": "src/components/maxhigh/SlotControlDeck.tsx",
+      "definition": null,
+      "thumbnail": "/games/home-v20261101/lucky9.webp",
+      "filesToModify": []
+    },
+    {
+      "name": "Three Card Poker",
+      "slug": "threecardpoker",
+      "category": "cards",
+      "engine": "See GameView",
+      "active": false,
+      "locked": true,
+      "databaseEnabled": "yes (catalog default)",
+      "lobbyVisible": true,
+      "view": "src/games/threecardpoker/GameView.tsx",
+      "existingControl": "src/components/maxhigh/SlotControlDeck.tsx",
+      "definition": null,
+      "thumbnail": "/games/home-v20261101/threecardpoker.webp",
+      "filesToModify": []
+    },
+    {
+      "name": "Color Game",
+      "slug": "color-game",
+      "category": "cards",
+      "engine": "See GameView",
+      "active": false,
+      "locked": true,
+      "databaseEnabled": "yes (catalog default)",
+      "lobbyVisible": true,
+      "view": "src/games/color-game/GameView.tsx",
+      "existingControl": "src/components/maxhigh/SlotControlDeck.tsx",
+      "definition": null,
+      "thumbnail": "/games/home-v20261101/color-game.webp",
+      "filesToModify": []
+    },
+    {
+      "name": "Tongits Arena",
+      "slug": "tongits-arena",
+      "category": "cards",
+      "engine": "See GameView",
+      "active": true,
+      "locked": false,
+      "databaseEnabled": "yes (catalog default)",
+      "lobbyVisible": true,
+      "view": "src/games/tongits-arena/GameView.tsx",
+      "existingControl": "src/components/maxhigh/SlotControlDeck.tsx",
+      "definition": null,
+      "thumbnail": "/games/home-v20261101/tongits-arena.webp",
+      "filesToModify": []
+    },
+    {
+      "name": "Royal Climb",
+      "slug": "lucky-drop",
+      "category": "cards",
+      "engine": "See GameView",
+      "active": true,
+      "locked": false,
+      "databaseEnabled": "yes (catalog default)",
+      "lobbyVisible": true,
+      "view": "src/games/lucky-drop/GameView.tsx",
+      "existingControl": "src/components/maxhigh/SlotControlDeck.tsx",
+      "definition": null,
+      "thumbnail": "/games/home-v20261101/lucky-drop.webp",
+      "filesToModify": []
+    },
+    {
+      "name": "Color Game Pro",
+      "slug": "color-game-pro",
+      "category": "cards",
+      "engine": "See GameView",
+      "active": true,
+      "locked": false,
+      "databaseEnabled": "yes (catalog default)",
+      "lobbyVisible": true,
+      "view": "src/games/color-game-pro/GameView.tsx",
+      "existingControl": "src/components/maxhigh/SlotControlDeck.tsx",
+      "definition": null,
+      "thumbnail": "/games/home-v20261101/color-game-pro.webp",
+      "filesToModify": []
+    },
+    {
+      "name": "Lucky Nine Plus",
+      "slug": "lucky-nine-plus",
+      "category": "cards",
+      "engine": "See GameView",
+      "active": true,
+      "locked": false,
+      "databaseEnabled": "yes (catalog default)",
+      "lobbyVisible": true,
+      "view": "src/games/lucky-nine-plus/GameView.tsx",
+      "existingControl": "src/components/maxhigh/SlotControlDeck.tsx",
+      "definition": null,
+      "thumbnail": "/games/home-v20261101/lucky-nine-plus.webp",
+      "filesToModify": []
+    },
+    {
+      "name": "Deluxe Draw",
+      "slug": "drop-deluxe",
+      "category": "cards",
+      "engine": "See GameView",
+      "active": true,
+      "locked": false,
+      "databaseEnabled": "yes (catalog default)",
+      "lobbyVisible": true,
+      "view": "src/games/drop-deluxe/GameView.tsx",
+      "existingControl": "src/components/maxhigh/SlotControlDeck.tsx",
+      "definition": null,
+      "thumbnail": "/games/home-v20261101/drop-deluxe.webp",
+      "filesToModify": []
+    },
+    {
+      "name": "Poker Showdown",
+      "slug": "poker-showdown",
+      "category": "cards",
+      "engine": "See GameView",
+      "active": true,
+      "locked": false,
+      "databaseEnabled": "yes (catalog default)",
+      "lobbyVisible": true,
+      "view": "src/games/poker-showdown/GameView.tsx",
+      "existingControl": "src/components/maxhigh/SlotControlDeck.tsx",
+      "definition": null,
+      "thumbnail": "/games/home-v20261101/poker-showdown.webp",
+      "filesToModify": []
+    },
+    {
+      "name": "Abyssal Pearls",
+      "slug": "abyssal-pearls",
+      "category": "slot",
+      "engine": "RealmsSlot",
+      "active": false,
+      "locked": true,
+      "databaseEnabled": "yes (catalog default)",
+      "lobbyVisible": true,
+      "view": "src/games/abyssal-pearls/GameView.tsx",
+      "existingControl": "src/components/maxhigh/SlotControlDeck.tsx",
+      "definition": {
+        "no": 1,
+        "id": "abyssal-pearls",
+        "name": "Abyssal Pearls",
+        "world": "ocean",
+        "description": "Dive below the twilight zone where giant oysters guard glowing pearls. Anglerfish and kraken eyes tumble on a 6×5 board, Pressure Orbs multiply wins up to 5×, and Abyss Pearls open free spins.",
+        "board": {
+          "cols": 6,
+          "rows": 5
+        },
+        "volatility": "High",
+        "freeSpins": 10,
+        "palette": [
+          "#2DD4BF",
+          "#0F766E",
+          "#5EEAD4",
+          "#022C22"
+        ],
+        "premiums": [
+          {
+            "name": "Giant Oyster",
+            "icon": "shell"
+          },
+          {
+            "name": "Anglerfish",
+            "icon": "fish"
+          },
+          {
+            "name": "Kraken Eye",
+            "icon": "eye"
+          }
+        ],
+        "scatter": {
+          "name": "Abyss Pearl",
+          "icon": "gem"
+        },
+        "bomb": {
+          "name": "Pressure Orb",
+          "icon": "droplet"
+        },
+        "voice": {
+          "instrument": "glass",
+          "spin": "bubbles",
+          "root": 330,
+          "scale": "aeolian",
+          "tempo": 0.95
+        }
+      },
+      "thumbnail": "/games/home-v20261101/abyssal-pearls.webp",
+      "filesToModify": []
+    },
+    {
+      "name": "Siren's Lagoon",
+      "slug": "sirens-lagoon",
+      "category": "slot",
+      "engine": "RealmsSlot",
+      "active": false,
+      "locked": true,
+      "databaseEnabled": "yes (catalog default)",
+      "lobbyVisible": true,
+      "view": "src/games/sirens-lagoon/GameView.tsx",
+      "existingControl": "src/games/sirens-lagoon/SirensConsole.tsx",
+      "definition": {
+        "no": 2,
+        "id": "sirens-lagoon",
+        "name": "Siren's Lagoon",
+        "world": "ocean",
+        "description": "Follow the siren's song into a moonlit lagoon. Conch horns and mermaid hearts tumble on a 5×5 board, Tide Orbs multiply wins, and Lagoon Moons bring free spins.",
+        "board": {
+          "cols": 5,
+          "rows": 5
+        },
+        "volatility": "Medium",
+        "freeSpins": 12,
+        "palette": [
+          "#F472B6",
+          "#9D174D",
+          "#F9A8D4",
+          "#2A0A1C"
+        ],
+        "premiums": [
+          {
+            "name": "Siren's Song",
+            "icon": "music"
+          },
+          {
+            "name": "Conch Horn",
+            "icon": "shell"
+          },
+          {
+            "name": "Mermaid's Heart",
+            "icon": "heart"
+          }
+        ],
+        "scatter": {
+          "name": "Lagoon Moon",
+          "icon": "moon"
+        },
+        "bomb": {
+          "name": "Tide Orb",
+          "icon": "droplets"
+        },
+        "voice": {
+          "instrument": "harp",
+          "spin": "rain",
+          "root": 392,
+          "scale": "lydian",
+          "tempo": 1
+        }
+      },
+      "thumbnail": "/games/home-v20261101/sirens-lagoon.webp",
+      "filesToModify": []
+    },
+    {
+      "name": "Tidecaller Hoard",
+      "slug": "tidecaller-hoard",
+      "category": "slot",
+      "engine": "RealmsSlot",
+      "active": false,
+      "locked": true,
+      "databaseEnabled": "yes (catalog default)",
+      "lobbyVisible": true,
+      "view": "src/games/tidecaller-hoard/GameView.tsx",
+      "existingControl": "src/games/tidecaller-hoard/TideNavigation.tsx",
+      "definition": {
+        "no": 3,
+        "id": "tidecaller-hoard",
+        "name": "Tidecaller Hoard",
+        "world": "ocean",
+        "description": "Raise the hoard of the Tidecaller from a storm-wracked sea. A wide 7×5 board of galleons and storm anchors, Rogue Wave multipliers, and Tide Compass free spins for big swings.",
+        "board": {
+          "cols": 7,
+          "rows": 5
+        },
+        "volatility": "Very High",
+        "freeSpins": 10,
+        "palette": [
+          "#60A5FA",
+          "#1E3A8A",
+          "#93C5FD",
+          "#0B1226"
+        ],
+        "premiums": [
+          {
+            "name": "Storm Anchor",
+            "icon": "anchor"
+          },
+          {
+            "name": "Captain's Wheel",
+            "icon": "ship-wheel"
+          },
+          {
+            "name": "Tidecaller Galleon",
+            "icon": "ship"
+          }
+        ],
+        "scatter": {
+          "name": "Tide Compass",
+          "icon": "compass"
+        },
+        "bomb": {
+          "name": "Rogue Wave",
+          "icon": "waves"
+        },
+        "voice": {
+          "instrument": "gong",
+          "spin": "thunder",
+          "root": 262,
+          "scale": "dorian",
+          "tempo": 0.9
+        }
+      },
+      "thumbnail": "/games/home-v20261101/tidecaller-hoard.webp",
+      "filesToModify": []
+    },
+    {
+      "name": "Lighthouse Loot",
+      "slug": "lighthouse-loot",
+      "category": "slot",
+      "engine": "RealmsSlot",
+      "active": false,
+      "locked": true,
+      "databaseEnabled": "yes (catalog default)",
+      "lobbyVisible": true,
+      "view": "src/games/lighthouse-loot/GameView.tsx",
+      "existingControl": "src/components/maxhigh/SlotControlDeck.tsx",
+      "definition": {
+        "no": 4,
+        "id": "lighthouse-loot",
+        "name": "Lighthouse Loot",
+        "world": "ocean",
+        "description": "Keep the beacon burning and the harbor's loot rolls in. Ship's bells and harbor skiffs tumble on a 6×4 board, Golden Hook multipliers boost wins, and Beacon Flares light up free spins.",
+        "board": {
+          "cols": 6,
+          "rows": 4
+        },
+        "volatility": "Medium",
+        "freeSpins": 12,
+        "palette": [
+          "#FBBF24",
+          "#B45309",
+          "#FDE68A",
+          "#1C1206"
+        ],
+        "premiums": [
+          {
+            "name": "Beacon Lamp",
+            "icon": "lamp"
+          },
+          {
+            "name": "Harbor Skiff",
+            "icon": "sailboat"
+          },
+          {
+            "name": "Ship's Bell",
+            "icon": "bell"
+          }
+        ],
+        "scatter": {
+          "name": "Beacon Flare",
+          "icon": "sun"
+        },
+        "bomb": {
+          "name": "Golden Hook",
+          "icon": "fishing-hook"
+        },
+        "voice": {
+          "instrument": "bell",
+          "spin": "chimes",
+          "root": 440,
+          "scale": "majorPent",
+          "tempo": 1.05
+        }
+      },
+      "thumbnail": "/games/home-v20261101/lighthouse-loot.webp",
+      "filesToModify": []
+    },
+    {
+      "name": "Moonjelly Bay",
+      "slug": "moonjelly-bay",
+      "category": "slot",
+      "engine": "RealmsSlot",
+      "active": false,
+      "locked": true,
+      "databaseEnabled": "yes (catalog default)",
+      "lobbyVisible": true,
+      "view": "src/games/moonjelly-bay/GameView.tsx",
+      "existingControl": "src/components/maxhigh/SlotControlDeck.tsx",
+      "definition": {
+        "no": 5,
+        "id": "moonjelly-bay",
+        "name": "Moonjelly Bay",
+        "world": "ocean",
+        "description": "Bioluminescent jellies drift through a glowing bay. Sea turtles and lantern shrimp tumble on a tall 5×6 board, Glow Spores multiply wins, and Jelly Moons bring free spins.",
+        "board": {
+          "cols": 5,
+          "rows": 6
+        },
+        "volatility": "High",
+        "freeSpins": 10,
+        "palette": [
+          "#A78BFA",
+          "#5B21B6",
+          "#C4B5FD",
+          "#160B2E"
+        ],
+        "premiums": [
+          {
+            "name": "Moon Snail",
+            "icon": "snail"
+          },
+          {
+            "name": "Lantern Shrimp",
+            "icon": "shrimp"
+          },
+          {
+            "name": "Sea Turtle",
+            "icon": "turtle"
+          }
+        ],
+        "scatter": {
+          "name": "Jelly Moon",
+          "icon": "moon-star"
+        },
+        "bomb": {
+          "name": "Glow Spore",
+          "icon": "sparkle"
+        },
+        "voice": {
+          "instrument": "celesta",
+          "spin": "drip",
+          "root": 349,
+          "scale": "wholeTone",
+          "tempo": 0.9
+        }
+      },
+      "thumbnail": "/games/home-v20261101/moonjelly-bay.webp",
+      "filesToModify": []
+    },
+    {
+      "name": "Starfall Sanctum",
+      "slug": "starfall-sanctum",
+      "category": "slot",
+      "engine": "RealmsSlot",
+      "active": false,
+      "locked": true,
+      "databaseEnabled": "yes (catalog default)",
+      "lobbyVisible": true,
+      "view": "src/games/starfall-sanctum/GameView.tsx",
+      "existingControl": "src/components/maxhigh/SlotControlDeck.tsx",
+      "definition": {
+        "no": 6,
+        "id": "starfall-sanctum",
+        "name": "Starfall Sanctum",
+        "world": "celestial",
+        "description": "Fallen stars gather in a hidden sanctum. A square 6×6 board of astrolabes and sanctum crowns, Nova Orb multipliers, and Starfall scatters that open free spins.",
+        "board": {
+          "cols": 6,
+          "rows": 6
+        },
+        "volatility": "High",
+        "freeSpins": 10,
+        "palette": [
+          "#FDE047",
+          "#A16207",
+          "#FEF08A",
+          "#1A1405"
+        ],
+        "premiums": [
+          {
+            "name": "Fallen Star",
+            "icon": "star"
+          },
+          {
+            "name": "Astrolabe Scope",
+            "icon": "telescope"
+          },
+          {
+            "name": "Sanctum Crown",
+            "icon": "crown"
+          }
+        ],
+        "scatter": {
+          "name": "Starfall",
+          "icon": "sparkles"
+        },
+        "bomb": {
+          "name": "Nova Orb",
+          "icon": "circle-star"
+        },
+        "voice": {
+          "instrument": "celesta",
+          "spin": "chimes",
+          "root": 523,
+          "scale": "lydian",
+          "tempo": 1
+        }
+      },
+      "thumbnail": "/games/home-v20261101/starfall-sanctum.webp",
+      "filesToModify": []
+    },
+    {
+      "name": "Aurora Spire",
+      "slug": "aurora-spire",
+      "category": "slot",
+      "engine": "RealmsSlot",
+      "active": false,
+      "locked": true,
+      "databaseEnabled": "yes (catalog default)",
+      "lobbyVisible": true,
+      "view": "src/games/aurora-spire/GameView.tsx",
+      "existingControl": "src/components/maxhigh/SlotControlDeck.tsx",
+      "definition": {
+        "no": 7,
+        "id": "aurora-spire",
+        "name": "Aurora Spire",
+        "world": "celestial",
+        "description": "Climb the spire where the northern lights are born. Aurora ribbons and polar winds tumble on a tall 4×6 board, Spark Prisms multiply wins, and Twin Lights trigger free spins.",
+        "board": {
+          "cols": 4,
+          "rows": 6
+        },
+        "volatility": "Medium",
+        "freeSpins": 12,
+        "palette": [
+          "#34D399",
+          "#047857",
+          "#A7F3D0",
+          "#04201A"
+        ],
+        "premiums": [
+          {
+            "name": "Spire Peak",
+            "icon": "mountain-snow"
+          },
+          {
+            "name": "Polar Wind",
+            "icon": "wind"
+          },
+          {
+            "name": "Aurora Ribbon",
+            "icon": "rainbow"
+          }
+        ],
+        "scatter": {
+          "name": "Twin Lights",
+          "icon": "sun-moon"
+        },
+        "bomb": {
+          "name": "Spark Prism",
+          "icon": "zap"
+        },
+        "voice": {
+          "instrument": "glass",
+          "spin": "wind",
+          "root": 392,
+          "scale": "lydian",
+          "tempo": 0.85
+        }
+      },
+      "thumbnail": "/games/home-v20261101/aurora-spire.webp",
+      "filesToModify": []
+    },
+    {
+      "name": "Comet Carnival",
+      "slug": "comet-carnival",
+      "category": "slot",
+      "engine": "RealmsSlot",
+      "active": false,
+      "locked": true,
+      "databaseEnabled": "yes (catalog default)",
+      "lobbyVisible": true,
+      "view": "src/games/comet-carnival/GameView.tsx",
+      "existingControl": "src/components/maxhigh/SlotControlDeck.tsx",
+      "definition": {
+        "no": 8,
+        "id": "comet-carnival",
+        "name": "Comet Carnival",
+        "world": "celestial",
+        "description": "The carnival rides in on a comet's tail. Star balloons and carnival drums tumble across a 7×4 midway, Carnival Dice multiply wins, and Comet Rings send you into free spins.",
+        "board": {
+          "cols": 7,
+          "rows": 4
+        },
+        "volatility": "Medium",
+        "freeSpins": 12,
+        "palette": [
+          "#FB7185",
+          "#BE123C",
+          "#FDA4AF",
+          "#26070F"
+        ],
+        "premiums": [
+          {
+            "name": "Star Balloon",
+            "icon": "balloon"
+          },
+          {
+            "name": "Carnival Drum",
+            "icon": "drum"
+          },
+          {
+            "name": "Comet Rocket",
+            "icon": "rocket"
+          }
+        ],
+        "scatter": {
+          "name": "Comet Ring",
+          "icon": "orbit"
+        },
+        "bomb": {
+          "name": "Carnival Dice",
+          "icon": "dices"
+        },
+        "voice": {
+          "instrument": "pizzicato",
+          "spin": "roulette",
+          "root": 440,
+          "scale": "major",
+          "tempo": 1.15
+        }
+      },
+      "thumbnail": "/games/home-v20261101/comet-carnival.webp",
+      "filesToModify": []
+    },
+    {
+      "name": "Moonwell Mysteries",
+      "slug": "moonwell-mysteries",
+      "category": "slot",
+      "engine": "RealmsSlot",
+      "active": false,
+      "locked": true,
+      "databaseEnabled": "yes (catalog default)",
+      "lobbyVisible": true,
+      "view": "src/games/moonwell-mysteries/GameView.tsx",
+      "existingControl": "src/components/maxhigh/SlotControlDeck.tsx",
+      "definition": {
+        "no": 9,
+        "id": "moonwell-mysteries",
+        "name": "Moonwell Mysteries",
+        "world": "celestial",
+        "description": "Draw silver water from the moonwell and unlock its mysteries. Crescent idols and silver keys tumble on a 5×5 board, Moonstones multiply wins, and Moonwell Sigils grant free spins.",
+        "board": {
+          "cols": 5,
+          "rows": 5
+        },
+        "volatility": "High",
+        "freeSpins": 10,
+        "palette": [
+          "#CBD5E1",
+          "#475569",
+          "#E2E8F0",
+          "#0B1120"
+        ],
+        "premiums": [
+          {
+            "name": "Moonwell Water",
+            "icon": "droplets"
+          },
+          {
+            "name": "Silver Key",
+            "icon": "key-round"
+          },
+          {
+            "name": "Crescent Idol",
+            "icon": "moon"
+          }
+        ],
+        "scatter": {
+          "name": "Moonwell Sigil",
+          "icon": "moon-star"
+        },
+        "bomb": {
+          "name": "Moonstone",
+          "icon": "gem"
+        },
+        "voice": {
+          "instrument": "vibes",
+          "spin": "drip",
+          "root": 311,
+          "scale": "harmonicMinor",
+          "tempo": 0.9
+        }
+      },
+      "thumbnail": "/games/home-v20261101/moonwell-mysteries.webp",
+      "filesToModify": []
+    },
+    {
+      "name": "Constellation Keep",
+      "slug": "constellation-keep",
+      "category": "slot",
+      "engine": "RealmsSlot",
+      "active": true,
+      "locked": false,
+      "databaseEnabled": "yes (catalog default)",
+      "lobbyVisible": true,
+      "view": "src/games/constellation-keep/GameView.tsx",
+      "existingControl": "src/games/constellation-keep/ConstellationConsole.tsx",
+      "definition": {
+        "no": 10,
+        "id": "constellation-keep",
+        "name": "Constellation Keep",
+        "world": "celestial",
+        "description": "Storm the keep where the constellations stand guard. Orion shields and Gemini blades tumble on a wide 8×4 board, Pole Star multipliers hit hard, and Constellation scatters bring free spins.",
+        "board": {
+          "cols": 8,
+          "rows": 4
+        },
+        "volatility": "Very High",
+        "freeSpins": 8,
+        "palette": [
+          "#818CF8",
+          "#3730A3",
+          "#C7D2FE",
+          "#0E0F2E"
+        ],
+        "premiums": [
+          {
+            "name": "Orion Shield",
+            "icon": "shield"
+          },
+          {
+            "name": "Gemini Blades",
+            "icon": "swords"
+          },
+          {
+            "name": "Star Keep",
+            "icon": "castle"
+          }
+        ],
+        "scatter": {
+          "name": "Constellation",
+          "icon": "circle-star"
+        },
+        "bomb": {
+          "name": "Pole Star",
+          "icon": "star"
+        },
+        "voice": {
+          "instrument": "vibes",
+          "spin": "arp",
+          "root": 330,
+          "scale": "dorian",
+          "tempo": 1
+        }
+      },
+      "thumbnail": "/games/home-v20261101/constellation-keep.webp",
+      "filesToModify": [
+        "src/games/shared/layouts/SkinnedGame.tsx",
+        "src/components/maxhigh/spin-button/game-spin-themes.ts",
+        "src/components/maxhigh/spin-button/game-spin-button.css"
+      ]
+    },
+    {
+      "name": "Cinder Crown",
+      "slug": "cinder-crown",
+      "category": "slot",
+      "engine": "RealmsSlot",
+      "active": true,
+      "locked": false,
+      "databaseEnabled": "yes (catalog default)",
+      "lobbyVisible": true,
+      "view": "src/games/cinder-crown/GameView.tsx",
+      "existingControl": "src/games/cinder-crown/CinderConsole.tsx",
+      "definition": {
+        "no": 11,
+        "id": "cinder-crown",
+        "name": "Cinder Crown",
+        "world": "volcanic",
+        "description": "Claim the crown forged in a volcano's heart. Living flames and magma rubies tumble on a 6×5 board, Ember Bursts multiply wins, and Cinder Pyres ignite free spins.",
+        "board": {
+          "cols": 6,
+          "rows": 5
+        },
+        "volatility": "High",
+        "freeSpins": 10,
+        "palette": [
+          "#F97316",
+          "#9A3412",
+          "#FDBA74",
+          "#1F0A03"
+        ],
+        "premiums": [
+          {
+            "name": "Magma Ruby",
+            "icon": "gem"
+          },
+          {
+            "name": "Living Flame",
+            "icon": "flame"
+          },
+          {
+            "name": "Cinder Crown",
+            "icon": "crown"
+          }
+        ],
+        "scatter": {
+          "name": "Cinder Pyre",
+          "icon": "flame-kindling"
+        },
+        "bomb": {
+          "name": "Ember Burst",
+          "icon": "zap"
+        },
+        "voice": {
+          "instrument": "gong",
+          "spin": "crackle",
+          "root": 262,
+          "scale": "phrygianDom",
+          "tempo": 1
+        }
+      },
+      "thumbnail": "/games/home-v20261101/cinder-crown.webp",
+      "filesToModify": [
+        "src/games/shared/layouts/SkinnedGame.tsx",
+        "src/components/maxhigh/spin-button/game-spin-themes.ts",
+        "src/components/maxhigh/spin-button/game-spin-button.css"
+      ]
+    },
+    {
+      "name": "Magma Anvil",
+      "slug": "magma-anvil",
+      "category": "slot",
+      "engine": "RealmsSlot",
+      "active": true,
+      "locked": false,
+      "databaseEnabled": "yes (catalog default)",
+      "lobbyVisible": true,
+      "view": "src/games/magma-anvil/GameView.tsx",
+      "existingControl": "src/games/magma-anvil/MagmaConsole.tsx",
+      "definition": {
+        "no": 12,
+        "id": "magma-anvil",
+        "name": "Magma Anvil",
+        "world": "volcanic",
+        "description": "Strike while the iron glows. Forge hammers and obsidian picks tumble across a 7×5 forge, Molten Rivets multiply wins, and Forge Fire scatters stoke big free-spin rounds.",
+        "board": {
+          "cols": 7,
+          "rows": 5
+        },
+        "volatility": "Very High",
+        "freeSpins": 8,
+        "palette": [
+          "#EF4444",
+          "#7F1D1D",
+          "#FCA5A5",
+          "#1C0505"
+        ],
+        "premiums": [
+          {
+            "name": "Obsidian Pick",
+            "icon": "pickaxe"
+          },
+          {
+            "name": "Forge Hammer",
+            "icon": "hammer"
+          },
+          {
+            "name": "Magma Anvil",
+            "icon": "anvil"
+          }
+        ],
+        "scatter": {
+          "name": "Forge Fire",
+          "icon": "flame"
+        },
+        "bomb": {
+          "name": "Molten Rivet",
+          "icon": "bolt"
+        },
+        "voice": {
+          "instrument": "bell",
+          "spin": "taiko",
+          "root": 294,
+          "scale": "harmonicMinor",
+          "tempo": 1.05
+        }
+      },
+      "thumbnail": "/games/home-v20261101/magma-anvil.webp",
+      "filesToModify": [
+        "src/games/shared/layouts/SkinnedGame.tsx",
+        "src/components/maxhigh/spin-button/game-spin-themes.ts",
+        "src/components/maxhigh/spin-button/game-spin-button.css"
+      ]
+    },
+    {
+      "name": "Obsidian Oracle",
+      "slug": "obsidian-oracle",
+      "category": "slot",
+      "engine": "RealmsSlot",
+      "active": true,
+      "locked": false,
+      "databaseEnabled": "yes (catalog default)",
+      "lobbyVisible": true,
+      "view": "src/games/obsidian-oracle/GameView.tsx",
+      "existingControl": "src/components/maxhigh/SlotControlDeck.tsx",
+      "definition": {
+        "no": 13,
+        "id": "obsidian-oracle",
+        "name": "Obsidian Oracle",
+        "world": "volcanic",
+        "description": "Ask the oracle of black glass what fate holds. Ash hourglasses and obsidian skulls tumble on a 5×5 board, Obsidian Shards multiply wins, and Oracle Visions reveal free spins.",
+        "board": {
+          "cols": 5,
+          "rows": 5
+        },
+        "volatility": "High",
+        "freeSpins": 10,
+        "palette": [
+          "#C084FC",
+          "#581C87",
+          "#E9D5FF",
+          "#12051F"
+        ],
+        "premiums": [
+          {
+            "name": "Ash Hourglass",
+            "icon": "hourglass"
+          },
+          {
+            "name": "Obsidian Skull",
+            "icon": "skull"
+          },
+          {
+            "name": "Oracle Eye",
+            "icon": "eye"
+          }
+        ],
+        "scatter": {
+          "name": "Oracle Vision",
+          "icon": "scan-eye"
+        },
+        "bomb": {
+          "name": "Obsidian Shard",
+          "icon": "diamond"
+        },
+        "voice": {
+          "instrument": "glass",
+          "spin": "drip",
+          "root": 311,
+          "scale": "inSen",
+          "tempo": 0.9
+        }
+      },
+      "thumbnail": "/games/home-v20261101/obsidian-oracle.webp",
+      "filesToModify": [
+        "src/games/shared/layouts/SkinnedGame.tsx",
+        "src/components/maxhigh/spin-button/game-spin-themes.ts",
+        "src/components/maxhigh/spin-button/game-spin-button.css"
+      ]
+    },
+    {
+      "name": "Salamander Sun",
+      "slug": "salamander-sun",
+      "category": "slot",
+      "engine": "RealmsSlot",
+      "active": true,
+      "locked": false,
+      "databaseEnabled": "yes (catalog default)",
+      "lobbyVisible": true,
+      "view": "src/games/salamander-sun/GameView.tsx",
+      "existingControl": "src/components/maxhigh/SlotControlDeck.tsx",
+      "definition": {
+        "no": 14,
+        "id": "salamander-sun",
+        "name": "Salamander Sun",
+        "world": "volcanic",
+        "description": "Fire salamanders bask under a blazing sun. Phoenix plumes and solar discs tumble on a 6×4 board, Solar Flares multiply wins, and Sunrise Altars start free spins.",
+        "board": {
+          "cols": 6,
+          "rows": 4
+        },
+        "volatility": "Medium",
+        "freeSpins": 12,
+        "palette": [
+          "#FACC15",
+          "#CA8A04",
+          "#FEF08A",
+          "#1F1503"
+        ],
+        "premiums": [
+          {
+            "name": "Fire Salamander",
+            "icon": "worm"
+          },
+          {
+            "name": "Phoenix Plume",
+            "icon": "feather"
+          },
+          {
+            "name": "Solar Disc",
+            "icon": "sun"
+          }
+        ],
+        "scatter": {
+          "name": "Sunrise Altar",
+          "icon": "sunrise"
+        },
+        "bomb": {
+          "name": "Solar Flare",
+          "icon": "sun-medium"
+        },
+        "voice": {
+          "instrument": "marimba",
+          "spin": "shaker",
+          "root": 349,
+          "scale": "mixolydian",
+          "tempo": 1.15
+        }
+      },
+      "thumbnail": "/games/home-v20261101/salamander-sun.webp",
+      "filesToModify": [
+        "src/games/shared/layouts/SkinnedGame.tsx",
+        "src/components/maxhigh/spin-button/game-spin-themes.ts",
+        "src/components/maxhigh/spin-button/game-spin-button.css"
+      ]
+    },
+    {
+      "name": "Ashfall Citadel",
+      "slug": "ashfall-citadel",
+      "category": "slot",
+      "engine": "RealmsSlot",
+      "active": true,
+      "locked": false,
+      "databaseEnabled": "yes (catalog default)",
+      "lobbyVisible": true,
+      "view": "src/games/ashfall-citadel/GameView.tsx",
+      "existingControl": "src/games/ashfall-citadel/AshfallConsole.tsx",
+      "definition": {
+        "no": 15,
+        "id": "ashfall-citadel",
+        "name": "Ashfall Citadel",
+        "world": "volcanic",
+        "description": "A citadel stands defiant under a sky of falling ash. Basalt shields and lava blades tumble on a huge 7×6 board, Pyroclast multipliers erupt, and Ashfall Peaks trigger free spins.",
+        "board": {
+          "cols": 7,
+          "rows": 6
+        },
+        "volatility": "Very High",
+        "freeSpins": 8,
+        "palette": [
+          "#FB923C",
+          "#7C2D12",
+          "#FED7AA",
+          "#1A0B04"
+        ],
+        "premiums": [
+          {
+            "name": "Basalt Shield",
+            "icon": "shield-half"
+          },
+          {
+            "name": "Lava Blade",
+            "icon": "sword"
+          },
+          {
+            "name": "Ash Citadel",
+            "icon": "castle"
+          }
+        ],
+        "scatter": {
+          "name": "Ashfall Peak",
+          "icon": "mountain"
+        },
+        "bomb": {
+          "name": "Pyroclast",
+          "icon": "flame"
+        },
+        "voice": {
+          "instrument": "gong",
+          "spin": "thunder",
+          "root": 247,
+          "scale": "aeolian",
+          "tempo": 0.85
+        }
+      },
+      "thumbnail": "/games/home-v20261101/ashfall-citadel.webp",
+      "filesToModify": [
+        "src/games/shared/layouts/SkinnedGame.tsx",
+        "src/components/maxhigh/spin-button/game-spin-themes.ts",
+        "src/components/maxhigh/spin-button/game-spin-button.css"
+      ]
+    },
+    {
+      "name": "Glacier Glyphs",
+      "slug": "glacier-glyphs",
+      "category": "slot",
+      "engine": "RealmsSlot",
+      "active": true,
+      "locked": false,
+      "databaseEnabled": "yes (catalog default)",
+      "lobbyVisible": true,
+      "view": "src/games/glacier-glyphs/GameView.tsx",
+      "existingControl": "src/games/glacier-glyphs/GlyphConsole.tsx",
+      "definition": {
+        "no": 16,
+        "id": "glacier-glyphs",
+        "name": "Glacier Glyphs",
+        "world": "frost",
+        "description": "Ancient glyphs are frozen deep in the glacier wall. Frozen scrolls and glyph flakes tumble on a 6×5 board, Frost Gems multiply wins, and Ice Glyphs crack open free spins.",
+        "board": {
+          "cols": 6,
+          "rows": 5
+        },
+        "volatility": "High",
+        "freeSpins": 10,
+        "palette": [
+          "#7DD3FC",
+          "#0369A1",
+          "#BAE6FD",
+          "#03141F"
+        ],
+        "premiums": [
+          {
+            "name": "Frozen Scroll",
+            "icon": "scroll-text"
+          },
+          {
+            "name": "Glyph Flake",
+            "icon": "snowflake"
+          },
+          {
+            "name": "Glacier Wall",
+            "icon": "mountain-snow"
+          }
+        ],
+        "scatter": {
+          "name": "Ice Glyph",
+          "icon": "hexagon"
+        },
+        "bomb": {
+          "name": "Frost Gem",
+          "icon": "gem"
+        },
+        "voice": {
+          "instrument": "glass",
+          "spin": "chimes",
+          "root": 466,
+          "scale": "majorPent",
+          "tempo": 0.9
+        }
+      },
+      "thumbnail": "/games/home-v20261101/glacier-glyphs.webp",
+      "filesToModify": [
+        "src/games/shared/layouts/SkinnedGame.tsx",
+        "src/components/maxhigh/spin-button/game-spin-themes.ts",
+        "src/components/maxhigh/spin-button/game-spin-button.css"
+      ]
+    },
+    {
+      "name": "Northwind Narwhal",
+      "slug": "northwind-narwhal",
+      "category": "slot",
+      "engine": "RealmsSlot",
+      "active": true,
+      "locked": false,
+      "databaseEnabled": "yes (catalog default)",
+      "lobbyVisible": true,
+      "view": "src/games/northwind-narwhal/GameView.tsx",
+      "existingControl": "src/components/maxhigh/SlotControlDeck.tsx",
+      "definition": {
+        "no": 17,
+        "id": "northwind-narwhal",
+        "name": "Northwind Narwhal",
+        "world": "frost",
+        "description": "Ride the north wind with the narwhal pod. Polar compasses and ice anchors tumble on a 7×4 board, Hail Orbs multiply wins, and North Wind scatters blow in free spins.",
+        "board": {
+          "cols": 7,
+          "rows": 4
+        },
+        "volatility": "Medium",
+        "freeSpins": 12,
+        "palette": [
+          "#38BDF8",
+          "#075985",
+          "#7DD3FC",
+          "#04121C"
+        ],
+        "premiums": [
+          {
+            "name": "Ice Anchor",
+            "icon": "anchor"
+          },
+          {
+            "name": "Polar Compass",
+            "icon": "compass"
+          },
+          {
+            "name": "Northwind Narwhal",
+            "icon": "fish"
+          }
+        ],
+        "scatter": {
+          "name": "North Wind",
+          "icon": "wind"
+        },
+        "bomb": {
+          "name": "Hail Orb",
+          "icon": "snowflake"
+        },
+        "voice": {
+          "instrument": "flute",
+          "spin": "wind",
+          "root": 392,
+          "scale": "dorian",
+          "tempo": 1
+        }
+      },
+      "thumbnail": "/games/home-v20261101/northwind-narwhal.webp",
+      "filesToModify": [
+        "src/games/shared/layouts/SkinnedGame.tsx",
+        "src/components/maxhigh/spin-button/game-spin-themes.ts",
+        "src/components/maxhigh/spin-button/game-spin-button.css"
+      ]
+    },
+    {
+      "name": "Snowglobe Sorcery",
+      "slug": "snowglobe-sorcery",
+      "category": "slot",
+      "engine": "RealmsSlot",
+      "active": true,
+      "locked": false,
+      "databaseEnabled": "yes (catalog default)",
+      "lobbyVisible": true,
+      "view": "src/games/snowglobe-sorcery/GameView.tsx",
+      "existingControl": "src/components/maxhigh/SlotControlDeck.tsx",
+      "definition": {
+        "no": 18,
+        "id": "snowglobe-sorcery",
+        "name": "Snowglobe Sorcery",
+        "world": "frost",
+        "description": "Shake the globe and the winter spell begins. Frost wands and silver pines tumble on a 5×5 board, Snow Squall multipliers swirl in, and Globe Shimmers grant free spins.",
+        "board": {
+          "cols": 5,
+          "rows": 5
+        },
+        "volatility": "Medium",
+        "freeSpins": 12,
+        "palette": [
+          "#E0E7FF",
+          "#6366F1",
+          "#C7D2FE",
+          "#0D0F24"
+        ],
+        "premiums": [
+          {
+            "name": "Winter Gift",
+            "icon": "gift"
+          },
+          {
+            "name": "Silver Pine",
+            "icon": "tree-pine"
+          },
+          {
+            "name": "Frost Wand",
+            "icon": "wand-sparkles"
+          }
+        ],
+        "scatter": {
+          "name": "Globe Shimmer",
+          "icon": "sparkles"
+        },
+        "bomb": {
+          "name": "Snow Squall",
+          "icon": "cloud-snow"
+        },
+        "voice": {
+          "instrument": "musicbox",
+          "spin": "chimes",
+          "root": 523,
+          "scale": "major",
+          "tempo": 1
+        }
+      },
+      "thumbnail": "/games/home-v20261101/snowglobe-sorcery.webp",
+      "filesToModify": [
+        "src/games/shared/layouts/SkinnedGame.tsx",
+        "src/components/maxhigh/spin-button/game-spin-themes.ts",
+        "src/components/maxhigh/spin-button/game-spin-button.css"
+      ]
+    },
+    {
+      "name": "Frostbound Fjord",
+      "slug": "frostbound-fjord",
+      "category": "slot",
+      "engine": "RealmsSlot",
+      "active": true,
+      "locked": false,
+      "databaseEnabled": "yes (catalog default)",
+      "lobbyVisible": true,
+      "view": "src/games/frostbound-fjord/GameView.tsx",
+      "existingControl": "src/games/frostbound-fjord/FrostConsole.tsx",
+      "definition": {
+        "no": 19,
+        "id": "frostbound-fjord",
+        "name": "Frostbound Fjord",
+        "world": "frost",
+        "description": "Drakkars sail out of a fjord locked in ice. Frost axes and rime shields tumble on a wide 8×4 board, Rime Sparks multiply wins, and Fjord Peaks lead to free spins.",
+        "board": {
+          "cols": 8,
+          "rows": 4
+        },
+        "volatility": "Very High",
+        "freeSpins": 8,
+        "palette": [
+          "#5EEAD4",
+          "#115E59",
+          "#99F6E4",
+          "#021A17"
+        ],
+        "premiums": [
+          {
+            "name": "Rime Shield",
+            "icon": "shield"
+          },
+          {
+            "name": "Frost Axe",
+            "icon": "axe"
+          },
+          {
+            "name": "Fjord Drakkar",
+            "icon": "ship"
+          }
+        ],
+        "scatter": {
+          "name": "Fjord Peaks",
+          "icon": "mountain-snow"
+        },
+        "bomb": {
+          "name": "Rime Spark",
+          "icon": "sparkles"
+        },
+        "voice": {
+          "instrument": "gong",
+          "spin": "wind",
+          "root": 220,
+          "scale": "aeolian",
+          "tempo": 0.85
+        }
+      },
+      "thumbnail": "/games/home-v20261101/frostbound-fjord.webp",
+      "filesToModify": [
+        "src/games/shared/layouts/SkinnedGame.tsx",
+        "src/components/maxhigh/spin-button/game-spin-themes.ts",
+        "src/components/maxhigh/spin-button/game-spin-button.css"
+      ]
+    },
+    {
+      "name": "Polar Prism",
+      "slug": "polar-prism",
+      "category": "slot",
+      "engine": "RealmsSlot",
+      "active": true,
+      "locked": false,
+      "databaseEnabled": "yes (catalog default)",
+      "lobbyVisible": true,
+      "view": "src/games/polar-prism/GameView.tsx",
+      "existingControl": "src/components/maxhigh/SlotControlDeck.tsx",
+      "definition": {
+        "no": 20,
+        "id": "polar-prism",
+        "name": "Polar Prism",
+        "world": "frost",
+        "description": "Polar light splits into a thousand colors. Light shards and ice crystals tumble on a square 6×6 board, Refraction multipliers boost wins, and Prism Light opens free spins.",
+        "board": {
+          "cols": 6,
+          "rows": 6
+        },
+        "volatility": "High",
+        "freeSpins": 10,
+        "palette": [
+          "#A5F3FC",
+          "#0E7490",
+          "#CFFAFE",
+          "#04161B"
+        ],
+        "premiums": [
+          {
+            "name": "Light Shard",
+            "icon": "triangle"
+          },
+          {
+            "name": "Ice Crystal",
+            "icon": "gem"
+          },
+          {
+            "name": "Polar Prism",
+            "icon": "diamond"
+          }
+        ],
+        "scatter": {
+          "name": "Prism Light",
+          "icon": "rainbow"
+        },
+        "bomb": {
+          "name": "Refraction",
+          "icon": "sparkle"
+        },
+        "voice": {
+          "instrument": "glass",
+          "spin": "arp",
+          "root": 440,
+          "scale": "lydian",
+          "tempo": 1.1
+        }
+      },
+      "thumbnail": "/games/home-v20261101/polar-prism.webp",
+      "filesToModify": [
+        "src/games/shared/layouts/SkinnedGame.tsx",
+        "src/components/maxhigh/spin-button/game-spin-themes.ts",
+        "src/components/maxhigh/spin-button/game-spin-button.css"
+      ]
+    },
+    {
+      "name": "Orchid Oasis",
+      "slug": "orchid-oasis",
+      "category": "slot",
+      "engine": "RealmsSlot",
+      "active": true,
+      "locked": false,
+      "databaseEnabled": "yes (catalog default)",
+      "lobbyVisible": true,
+      "view": "src/games/orchid-oasis/GameView.tsx",
+      "existingControl": "src/components/maxhigh/SlotControlDeck.tsx",
+      "definition": {
+        "no": 21,
+        "id": "orchid-oasis",
+        "name": "Orchid Oasis",
+        "world": "jungle",
+        "description": "Rare orchids bloom around a hidden desert spring. Oasis palms and sun orchids tumble on a 6×5 board, Bloom Buds multiply wins, and Oasis Springs refresh with free spins.",
+        "board": {
+          "cols": 6,
+          "rows": 5
+        },
+        "volatility": "Medium",
+        "freeSpins": 12,
+        "palette": [
+          "#E879F9",
+          "#86198F",
+          "#F5D0FE",
+          "#1E0622"
+        ],
+        "premiums": [
+          {
+            "name": "Sun Orchid",
+            "icon": "flower-2"
+          },
+          {
+            "name": "Oasis Palm",
+            "icon": "tree-palm"
+          },
+          {
+            "name": "Moon Orchid",
+            "icon": "flower"
+          }
+        ],
+        "scatter": {
+          "name": "Oasis Spring",
+          "icon": "droplets"
+        },
+        "bomb": {
+          "name": "Bloom Bud",
+          "icon": "sprout"
+        },
+        "voice": {
+          "instrument": "kalimba",
+          "spin": "rain",
+          "root": 349,
+          "scale": "majorPent",
+          "tempo": 1.05
+        }
+      },
+      "thumbnail": "/games/home-v20261101/orchid-oasis.webp",
+      "filesToModify": [
+        "src/games/shared/layouts/SkinnedGame.tsx",
+        "src/components/maxhigh/spin-button/game-spin-themes.ts",
+        "src/components/maxhigh/spin-button/game-spin-button.css"
+      ]
+    },
+    {
+      "name": "Firefly Hollow",
+      "slug": "firefly-hollow",
+      "category": "slot",
+      "engine": "RealmsSlot",
+      "active": true,
+      "locked": false,
+      "databaseEnabled": "yes (catalog default)",
+      "lobbyVisible": true,
+      "view": "src/games/firefly-hollow/GameView.tsx",
+      "existingControl": "src/games/firefly-hollow/FireflyConsole.tsx",
+      "definition": {
+        "no": 22,
+        "id": "firefly-hollow",
+        "name": "Firefly Hollow",
+        "world": "jungle",
+        "description": "At dusk the hollow fills with fireflies. Hollow lanterns and elder trees tumble on a tall 5×6 board, Glow Swarms multiply wins, and the Hollow Moon brings free spins.",
+        "board": {
+          "cols": 5,
+          "rows": 6
+        },
+        "volatility": "High",
+        "freeSpins": 10,
+        "palette": [
+          "#BEF264",
+          "#4D7C0F",
+          "#D9F99D",
+          "#0D1A04"
+        ],
+        "premiums": [
+          {
+            "name": "Elder Hollow",
+            "icon": "trees"
+          },
+          {
+            "name": "Hollow Lantern",
+            "icon": "lamp"
+          },
+          {
+            "name": "Firefly",
+            "icon": "bug"
+          }
+        ],
+        "scatter": {
+          "name": "Hollow Moon",
+          "icon": "moon"
+        },
+        "bomb": {
+          "name": "Glow Swarm",
+          "icon": "sparkles"
+        },
+        "voice": {
+          "instrument": "celesta",
+          "spin": "flutter",
+          "root": 392,
+          "scale": "hirajoshi",
+          "tempo": 1
+        }
+      },
+      "thumbnail": "/games/home-v20261101/firefly-hollow.webp",
+      "filesToModify": [
+        "src/games/shared/layouts/SkinnedGame.tsx",
+        "src/components/maxhigh/spin-button/game-spin-themes.ts",
+        "src/components/maxhigh/spin-button/game-spin-button.css"
+      ]
+    },
+    {
+      "name": "Canopy Kingdom",
+      "slug": "canopy-kingdom",
+      "category": "slot",
+      "engine": "RealmsSlot",
+      "active": true,
+      "locked": false,
+      "databaseEnabled": "yes (catalog default)",
+      "lobbyVisible": true,
+      "view": "src/games/canopy-kingdom/GameView.tsx",
+      "existingControl": "src/games/canopy-kingdom/CanopyConsole.tsx",
+      "definition": {
+        "no": 23,
+        "id": "canopy-kingdom",
+        "name": "Canopy Kingdom",
+        "world": "jungle",
+        "description": "High above the rainforest floor lies a kingdom in the treetops. Toucan heralds and great kapoks tumble on a 7×5 board, Fruit Burst multipliers hit big, and Golden Leaves start free spins.",
+        "board": {
+          "cols": 7,
+          "rows": 5
+        },
+        "volatility": "Very High",
+        "freeSpins": 8,
+        "palette": [
+          "#4ADE80",
+          "#166534",
+          "#BBF7D0",
+          "#03190A"
+        ],
+        "premiums": [
+          {
+            "name": "Great Kapok",
+            "icon": "tree-deciduous"
+          },
+          {
+            "name": "Toucan Herald",
+            "icon": "bird"
+          },
+          {
+            "name": "Canopy Crown",
+            "icon": "crown"
+          }
+        ],
+        "scatter": {
+          "name": "Golden Leaf",
+          "icon": "leaf"
+        },
+        "bomb": {
+          "name": "Fruit Burst",
+          "icon": "banana"
+        },
+        "voice": {
+          "instrument": "marimba",
+          "spin": "gallop",
+          "root": 294,
+          "scale": "mixolydian",
+          "tempo": 1.1
+        }
+      },
+      "thumbnail": "/games/home-v20261101/canopy-kingdom.webp",
+      "filesToModify": [
+        "src/games/shared/layouts/SkinnedGame.tsx",
+        "src/components/maxhigh/spin-button/game-spin-themes.ts",
+        "src/components/maxhigh/spin-button/game-spin-button.css"
+      ]
+    },
+    {
+      "name": "Monsoon Grove",
+      "slug": "monsoon-grove",
+      "category": "slot",
+      "engine": "RealmsSlot",
+      "active": true,
+      "locked": false,
+      "databaseEnabled": "yes (catalog default)",
+      "lobbyVisible": true,
+      "view": "src/games/monsoon-grove/GameView.tsx",
+      "existingControl": "src/components/maxhigh/SlotControlDeck.tsx",
+      "definition": {
+        "no": 24,
+        "id": "monsoon-grove",
+        "name": "Monsoon Grove",
+        "world": "jungle",
+        "description": "The monsoon rolls over terraced tea groves. Silk parasols and monsoon clouds tumble on a 6×4 board, Rain Pearls multiply wins, and Thunderheads bring a downpour of free spins.",
+        "board": {
+          "cols": 6,
+          "rows": 4
+        },
+        "volatility": "Medium",
+        "freeSpins": 12,
+        "palette": [
+          "#2DD4BF",
+          "#115E59",
+          "#99F6E4",
+          "#03201C"
+        ],
+        "premiums": [
+          {
+            "name": "Tea Leaf",
+            "icon": "leafy-green"
+          },
+          {
+            "name": "Silk Parasol",
+            "icon": "umbrella"
+          },
+          {
+            "name": "Monsoon Cloud",
+            "icon": "cloud-rain"
+          }
+        ],
+        "scatter": {
+          "name": "Thunderhead",
+          "icon": "cloud-lightning"
+        },
+        "bomb": {
+          "name": "Rain Pearl",
+          "icon": "droplet"
+        },
+        "voice": {
+          "instrument": "koto",
+          "spin": "rain",
+          "root": 330,
+          "scale": "inSen",
+          "tempo": 0.95
+        }
+      },
+      "thumbnail": "/games/home-v20261101/monsoon-grove.webp",
+      "filesToModify": [
+        "src/games/shared/layouts/SkinnedGame.tsx",
+        "src/components/maxhigh/spin-button/game-spin-themes.ts",
+        "src/components/maxhigh/spin-button/game-spin-button.css"
+      ]
+    },
+    {
+      "name": "Hummingbird Haven",
+      "slug": "hummingbird-haven",
+      "category": "slot",
+      "engine": "RealmsSlot",
+      "active": true,
+      "locked": false,
+      "databaseEnabled": "yes (catalog default)",
+      "lobbyVisible": true,
+      "view": "src/games/hummingbird-haven/GameView.tsx",
+      "existingControl": "src/games/hummingbird-haven/HummingbirdConsole.tsx",
+      "definition": {
+        "no": 25,
+        "id": "hummingbird-haven",
+        "name": "Hummingbird Haven",
+        "world": "jungle",
+        "description": "Hummingbirds dart between trumpet blooms in a sunlit haven. Wild cherries and hummingbirds tumble on a 5×5 board, Nectar Hearts multiply wins, and the Haven Sun triggers free spins.",
+        "board": {
+          "cols": 5,
+          "rows": 5
+        },
+        "volatility": "High",
+        "freeSpins": 10,
+        "palette": [
+          "#F43F5E",
+          "#9F1239",
+          "#FDA4AF",
+          "#24050C"
+        ],
+        "premiums": [
+          {
+            "name": "Wild Cherry",
+            "icon": "cherry"
+          },
+          {
+            "name": "Trumpet Bloom",
+            "icon": "flower-2"
+          },
+          {
+            "name": "Hummingbird",
+            "icon": "bird"
+          }
+        ],
+        "scatter": {
+          "name": "Haven Sun",
+          "icon": "sun"
+        },
+        "bomb": {
+          "name": "Nectar Heart",
+          "icon": "heart"
+        },
+        "voice": {
+          "instrument": "flute",
+          "spin": "flutter",
+          "root": 523,
+          "scale": "majorPent",
+          "tempo": 1.2
+        }
+      },
+      "thumbnail": "/games/home-v20261101/hummingbird-haven.webp",
+      "filesToModify": [
+        "src/games/shared/layouts/SkinnedGame.tsx",
+        "src/components/maxhigh/spin-button/game-spin-themes.ts",
+        "src/components/maxhigh/spin-button/game-spin-button.css"
+      ]
+    },
+    {
+      "name": "Babylon Gardens",
+      "slug": "babylon-gardens",
+      "category": "slot",
+      "engine": "RealmsSlot",
+      "active": true,
+      "locked": false,
+      "databaseEnabled": "yes (catalog default)",
+      "lobbyVisible": true,
+      "view": "src/games/babylon-gardens/GameView.tsx",
+      "existingControl": "src/games/babylon-gardens/BabylonConsole.tsx",
+      "definition": {
+        "no": 26,
+        "id": "babylon-gardens",
+        "name": "Babylon Gardens",
+        "world": "ancient",
+        "description": "Walk the terraces of the hanging gardens. Royal amphorae and ziggurats tumble on a square 6×6 board, Ishtar Sun multipliers shine, and the Hanging Gardens grant free spins.",
+        "board": {
+          "cols": 6,
+          "rows": 6
+        },
+        "volatility": "High",
+        "freeSpins": 10,
+        "palette": [
+          "#84CC16",
+          "#3F6212",
+          "#D9F99D",
+          "#121A03"
+        ],
+        "premiums": [
+          {
+            "name": "Royal Amphora",
+            "icon": "amphora"
+          },
+          {
+            "name": "Hanging Bloom",
+            "icon": "flower-2"
+          },
+          {
+            "name": "Ziggurat",
+            "icon": "landmark"
+          }
+        ],
+        "scatter": {
+          "name": "Hanging Gardens",
+          "icon": "trees"
+        },
+        "bomb": {
+          "name": "Ishtar Sun",
+          "icon": "sun"
+        },
+        "voice": {
+          "instrument": "harp",
+          "spin": "harp",
+          "root": 294,
+          "scale": "phrygianDom",
+          "tempo": 0.95
+        }
+      },
+      "thumbnail": "/games/home-v20261101/babylon-gardens.webp",
+      "filesToModify": [
+        "src/games/shared/layouts/SkinnedGame.tsx",
+        "src/components/maxhigh/spin-button/game-spin-themes.ts",
+        "src/components/maxhigh/spin-button/game-spin-button.css"
+      ]
+    },
+    {
+      "name": "Persian Peacock",
+      "slug": "persian-peacock",
+      "category": "slot",
+      "engine": "RealmsSlot",
+      "active": true,
+      "locked": false,
+      "databaseEnabled": "yes (catalog default)",
+      "lobbyVisible": true,
+      "view": "src/games/persian-peacock/GameView.tsx",
+      "existingControl": "src/components/maxhigh/SlotControlDeck.tsx",
+      "definition": {
+        "no": 27,
+        "id": "persian-peacock",
+        "name": "Persian Peacock",
+        "world": "ancient",
+        "description": "A jewelled peacock struts through the shah's palace. Palace keys and turquoise stones tumble on a 5×5 board, Jewel Bursts multiply wins, and Peacock Eyes unfold free spins.",
+        "board": {
+          "cols": 5,
+          "rows": 5
+        },
+        "volatility": "Medium",
+        "freeSpins": 12,
+        "palette": [
+          "#14B8A6",
+          "#134E4A",
+          "#5EEAD4",
+          "#031716"
+        ],
+        "premiums": [
+          {
+            "name": "Palace Key",
+            "icon": "key"
+          },
+          {
+            "name": "Shah's Turquoise",
+            "icon": "gem"
+          },
+          {
+            "name": "Peacock Plume",
+            "icon": "feather"
+          }
+        ],
+        "scatter": {
+          "name": "Peacock Eye",
+          "icon": "eye"
+        },
+        "bomb": {
+          "name": "Jewel Burst",
+          "icon": "sparkles"
+        },
+        "voice": {
+          "instrument": "pluck",
+          "spin": "shaker",
+          "root": 311,
+          "scale": "doubleHarmonic",
+          "tempo": 1
+        }
+      },
+      "thumbnail": "/games/home-v20261101/persian-peacock.webp",
+      "filesToModify": [
+        "src/games/shared/layouts/SkinnedGame.tsx",
+        "src/components/maxhigh/spin-button/game-spin-themes.ts",
+        "src/components/maxhigh/spin-button/game-spin-button.css"
+      ]
+    },
+    {
+      "name": "Celtic Clover Court",
+      "slug": "celtic-clover-court",
+      "category": "slot",
+      "engine": "RealmsSlot",
+      "active": true,
+      "locked": false,
+      "databaseEnabled": "yes (catalog default)",
+      "lobbyVisible": true,
+      "view": "src/games/celtic-clover-court/GameView.tsx",
+      "existingControl": "src/games/celtic-clover-court/CelticConsole.tsx",
+      "definition": {
+        "no": 28,
+        "id": "celtic-clover-court",
+        "name": "Celtic Clover Court",
+        "world": "ancient",
+        "description": "The fae hold court beneath an ancient oak. Court harps and druid shields tumble on a 7×4 board, Fae Sparks multiply wins, and Crocks of Coins open free spins.",
+        "board": {
+          "cols": 7,
+          "rows": 4
+        },
+        "volatility": "Medium",
+        "freeSpins": 12,
+        "palette": [
+          "#22C55E",
+          "#14532D",
+          "#86EFAC",
+          "#04150A"
+        ],
+        "premiums": [
+          {
+            "name": "Druid Shield",
+            "icon": "shield"
+          },
+          {
+            "name": "Court Harp",
+            "icon": "music"
+          },
+          {
+            "name": "Four-Leaf Clover",
+            "icon": "clover"
+          }
+        ],
+        "scatter": {
+          "name": "Crock of Coins",
+          "icon": "coins"
+        },
+        "bomb": {
+          "name": "Fae Spark",
+          "icon": "sparkle"
+        },
+        "voice": {
+          "instrument": "harp",
+          "spin": "roll",
+          "root": 392,
+          "scale": "mixolydian",
+          "tempo": 1.15
+        }
+      },
+      "thumbnail": "/games/home-v20261101/celtic-clover-court.webp",
+      "filesToModify": [
+        "src/games/shared/layouts/SkinnedGame.tsx",
+        "src/components/maxhigh/spin-button/game-spin-themes.ts",
+        "src/components/maxhigh/spin-button/game-spin-button.css"
+      ]
+    },
+    {
+      "name": "Shogun Sakura",
+      "slug": "shogun-sakura",
+      "category": "slot",
+      "engine": "RealmsSlot",
+      "active": true,
+      "locked": false,
+      "databaseEnabled": "yes (catalog default)",
+      "lobbyVisible": true,
+      "view": "src/games/shogun-sakura/GameView.tsx",
+      "existingControl": "src/components/maxhigh/SlotControlDeck.tsx",
+      "definition": {
+        "no": 29,
+        "id": "shogun-sakura",
+        "name": "Shogun Sakura",
+        "world": "ancient",
+        "description": "Cherry blossoms fall over the shogun's war camp. War fans and twin katana tumble on a 6×5 board, Taiko Strikes multiply wins, and the Shogun Keep calls free spins.",
+        "board": {
+          "cols": 6,
+          "rows": 5
+        },
+        "volatility": "Very High",
+        "freeSpins": 8,
+        "palette": [
+          "#FB7185",
+          "#881337",
+          "#FECDD3",
+          "#200510"
+        ],
+        "premiums": [
+          {
+            "name": "Sakura Blossom",
+            "icon": "flower"
+          },
+          {
+            "name": "War Fan",
+            "icon": "fan"
+          },
+          {
+            "name": "Twin Katana",
+            "icon": "swords"
+          }
+        ],
+        "scatter": {
+          "name": "Shogun Keep",
+          "icon": "castle"
+        },
+        "bomb": {
+          "name": "Taiko Strike",
+          "icon": "drum"
+        },
+        "voice": {
+          "instrument": "koto",
+          "spin": "taiko",
+          "root": 330,
+          "scale": "hirajoshi",
+          "tempo": 1
+        }
+      },
+      "thumbnail": "/games/home-v20261101/shogun-sakura.webp",
+      "filesToModify": [
+        "src/games/shared/layouts/SkinnedGame.tsx",
+        "src/components/maxhigh/spin-button/game-spin-themes.ts",
+        "src/components/maxhigh/spin-button/game-spin-button.css"
+      ]
+    },
+    {
+      "name": "Longship Raiders",
+      "slug": "longship-raiders",
+      "category": "slot",
+      "engine": "RealmsSlot",
+      "active": true,
+      "locked": false,
+      "databaseEnabled": "yes (catalog default)",
+      "lobbyVisible": true,
+      "view": "src/games/longship-raiders/GameView.tsx",
+      "existingControl": "src/games/longship-raiders/LongshipConsole.tsx",
+      "definition": {
+        "no": 30,
+        "id": "longship-raiders",
+        "name": "Longship Raiders",
+        "world": "ancient",
+        "description": "Raiders beach their longships on a distant shore. Round shields and raider axes tumble on a wide 8×4 board, War Hammer multipliers smash in, and Sunstones guide free spins.",
+        "board": {
+          "cols": 8,
+          "rows": 4
+        },
+        "volatility": "High",
+        "freeSpins": 10,
+        "palette": [
+          "#F59E0B",
+          "#78350F",
+          "#FCD34D",
+          "#1A0F03"
+        ],
+        "premiums": [
+          {
+            "name": "Round Shield",
+            "icon": "shield-half"
+          },
+          {
+            "name": "Raider Axe",
+            "icon": "axe"
+          },
+          {
+            "name": "Dragon Longship",
+            "icon": "ship"
+          }
+        ],
+        "scatter": {
+          "name": "Sunstone",
+          "icon": "sun-dim"
+        },
+        "bomb": {
+          "name": "War Hammer",
+          "icon": "hammer"
+        },
+        "voice": {
+          "instrument": "gong",
+          "spin": "gallop",
+          "root": 247,
+          "scale": "dorian",
+          "tempo": 1
+        }
+      },
+      "thumbnail": "/games/home-v20261101/longship-raiders.webp",
+      "filesToModify": [
+        "src/games/shared/layouts/SkinnedGame.tsx",
+        "src/components/maxhigh/spin-button/game-spin-themes.ts",
+        "src/components/maxhigh/spin-button/game-spin-button.css"
+      ]
+    },
+    {
+      "name": "Clockwork Cache",
+      "slug": "clockwork-cache",
+      "category": "slot",
+      "engine": "RealmsSlot",
+      "active": true,
+      "locked": false,
+      "databaseEnabled": "yes (catalog default)",
+      "lobbyVisible": true,
+      "view": "src/games/clockwork-cache/GameView.tsx",
+      "existingControl": "src/games/clockwork-cache/ClockworkConsole.tsx",
+      "definition": {
+        "no": 31,
+        "id": "clockwork-cache",
+        "name": "Clockwork Cache",
+        "world": "clockwork",
+        "description": "Crack the inventor's clockwork cache. Wind-up keys and brass clocks tumble on a 6×5 board, Spring Bolts multiply wins, and the Master Cog winds up free spins.",
+        "board": {
+          "cols": 6,
+          "rows": 5
+        },
+        "volatility": "High",
+        "freeSpins": 10,
+        "palette": [
+          "#D4A373",
+          "#7C5A2B",
+          "#F1D3A8",
+          "#1A1208"
+        ],
+        "premiums": [
+          {
+            "name": "Cache Lock",
+            "icon": "lock"
+          },
+          {
+            "name": "Wind-up Key",
+            "icon": "key-round"
+          },
+          {
+            "name": "Brass Clock",
+            "icon": "clock"
+          }
+        ],
+        "scatter": {
+          "name": "Master Cog",
+          "icon": "cog"
+        },
+        "bomb": {
+          "name": "Spring Bolt",
+          "icon": "bolt"
+        },
+        "voice": {
+          "instrument": "musicbox",
+          "spin": "clock",
+          "root": 440,
+          "scale": "major",
+          "tempo": 1
+        }
+      },
+      "thumbnail": "/games/home-v20261101/clockwork-cache.webp",
+      "filesToModify": [
+        "src/games/shared/layouts/SkinnedGame.tsx",
+        "src/components/maxhigh/spin-button/game-spin-themes.ts",
+        "src/components/maxhigh/spin-button/game-spin-button.css"
+      ]
+    },
+    {
+      "name": "Brass Zeppelin",
+      "slug": "brass-zeppelin",
+      "category": "slot",
+      "engine": "RealmsSlot",
+      "active": true,
+      "locked": false,
+      "databaseEnabled": "yes (catalog default)",
+      "lobbyVisible": true,
+      "view": "src/games/brass-zeppelin/GameView.tsx",
+      "existingControl": "src/games/brass-zeppelin/BrassConsole.tsx",
+      "definition": {
+        "no": 32,
+        "id": "brass-zeppelin",
+        "name": "Brass Zeppelin",
+        "world": "clockwork",
+        "description": "Board a brass zeppelin bound for the jet stream. Spyglasses and sky compasses tumble on a 7×5 board, Pressure Gauge multipliers rise, and Jet Stream scatters carry you into free spins.",
+        "board": {
+          "cols": 7,
+          "rows": 5
+        },
+        "volatility": "Very High",
+        "freeSpins": 8,
+        "palette": [
+          "#FCD34D",
+          "#92400E",
+          "#FDE68A",
+          "#1C1104"
+        ],
+        "premiums": [
+          {
+            "name": "Spyglass",
+            "icon": "telescope"
+          },
+          {
+            "name": "Sky Compass",
+            "icon": "compass"
+          },
+          {
+            "name": "Brass Zeppelin",
+            "icon": "balloon"
+          }
+        ],
+        "scatter": {
+          "name": "Jet Stream",
+          "icon": "wind"
+        },
+        "bomb": {
+          "name": "Pressure Gauge",
+          "icon": "gauge"
+        },
+        "voice": {
+          "instrument": "vibes",
+          "spin": "wind",
+          "root": 349,
+          "scale": "lydian",
+          "tempo": 0.95
+        }
+      },
+      "thumbnail": "/games/home-v20261101/brass-zeppelin.webp",
+      "filesToModify": [
+        "src/games/shared/layouts/SkinnedGame.tsx",
+        "src/components/maxhigh/spin-button/game-spin-themes.ts",
+        "src/components/maxhigh/spin-button/game-spin-button.css"
+      ]
+    },
+    {
+      "name": "Tesla Tower",
+      "slug": "tesla-tower",
+      "category": "slot",
+      "engine": "RealmsSlot",
+      "active": true,
+      "locked": false,
+      "databaseEnabled": "yes (catalog default)",
+      "lobbyVisible": true,
+      "view": "src/games/tesla-tower/GameView.tsx",
+      "existingControl": "src/components/maxhigh/SlotControlDeck.tsx",
+      "definition": {
+        "no": 33,
+        "id": "tesla-tower",
+        "name": "Tesla Tower",
+        "world": "clockwork",
+        "description": "Power surges through the inventor's tower. Arc bulbs and wireless sets tumble on a 5×5 board, Plasma Orbs multiply wins, and the Tesla Tower charges up free spins.",
+        "board": {
+          "cols": 5,
+          "rows": 5
+        },
+        "volatility": "High",
+        "freeSpins": 10,
+        "palette": [
+          "#60A5FA",
+          "#1D4ED8",
+          "#BFDBFE",
+          "#05102A"
+        ],
+        "premiums": [
+          {
+            "name": "Wireless Set",
+            "icon": "radio"
+          },
+          {
+            "name": "Arc Bulb",
+            "icon": "lightbulb"
+          },
+          {
+            "name": "Tesla Coil",
+            "icon": "zap"
+          }
+        ],
+        "scatter": {
+          "name": "Tesla Tower",
+          "icon": "radio-tower"
+        },
+        "bomb": {
+          "name": "Plasma Orb",
+          "icon": "atom"
+        },
+        "voice": {
+          "instrument": "glass",
+          "spin": "thunder",
+          "root": 466,
+          "scale": "wholeTone",
+          "tempo": 1.1
+        }
+      },
+      "thumbnail": "/games/home-v20261101/tesla-tower.webp",
+      "filesToModify": [
+        "src/games/shared/layouts/SkinnedGame.tsx",
+        "src/components/maxhigh/spin-button/game-spin-themes.ts",
+        "src/components/maxhigh/spin-button/game-spin-button.css"
+      ]
+    },
+    {
+      "name": "Gearspring Gala",
+      "slug": "gearspring-gala",
+      "category": "slot",
+      "engine": "RealmsSlot",
+      "active": true,
+      "locked": false,
+      "databaseEnabled": "yes (catalog default)",
+      "lobbyVisible": true,
+      "view": "src/games/gearspring-gala/GameView.tsx",
+      "existingControl": "src/games/gearspring-gala/GearspringConsole.tsx",
+      "definition": {
+        "no": 34,
+        "id": "gearspring-gala",
+        "name": "Gearspring Gala",
+        "world": "clockwork",
+        "description": "An automaton ball where every guest is wound by hand. Pocket watches and gala boxes tumble on a 6×4 board, Confetti Bursts multiply wins, and Gala Gears start free spins.",
+        "board": {
+          "cols": 6,
+          "rows": 4
+        },
+        "volatility": "Medium",
+        "freeSpins": 12,
+        "palette": [
+          "#F472B6",
+          "#831843",
+          "#FBCFE8",
+          "#1F0613"
+        ],
+        "premiums": [
+          {
+            "name": "Gala Box",
+            "icon": "gift"
+          },
+          {
+            "name": "Clockwork Drum",
+            "icon": "drum"
+          },
+          {
+            "name": "Pocket Watch",
+            "icon": "watch"
+          }
+        ],
+        "scatter": {
+          "name": "Gala Gears",
+          "icon": "settings"
+        },
+        "bomb": {
+          "name": "Confetti Burst",
+          "icon": "sparkles"
+        },
+        "voice": {
+          "instrument": "pizzicato",
+          "spin": "clock",
+          "root": 392,
+          "scale": "major",
+          "tempo": 1.2
+        }
+      },
+      "thumbnail": "/games/home-v20261101/gearspring-gala.webp",
+      "filesToModify": [
+        "src/games/shared/layouts/SkinnedGame.tsx",
+        "src/components/maxhigh/spin-button/game-spin-themes.ts",
+        "src/components/maxhigh/spin-button/game-spin-button.css"
+      ]
+    },
+    {
+      "name": "Steamforge Express",
+      "slug": "steamforge-express",
+      "category": "slot",
+      "engine": "RealmsSlot",
+      "active": true,
+      "locked": false,
+      "databaseEnabled": "yes (catalog default)",
+      "lobbyVisible": true,
+      "view": "src/games/steamforge-express/GameView.tsx",
+      "existingControl": "src/components/maxhigh/SlotControlDeck.tsx",
+      "definition": {
+        "no": 35,
+        "id": "steamforge-express",
+        "name": "Steamforge Express",
+        "world": "clockwork",
+        "description": "All aboard the express out of the steamforge. Engineer wrenches and steam engines tumble on a 7×4 board, Boiler Blasts multiply wins, and the Golden Rail runs free spins.",
+        "board": {
+          "cols": 7,
+          "rows": 4
+        },
+        "volatility": "High",
+        "freeSpins": 10,
+        "palette": [
+          "#FB923C",
+          "#9A3412",
+          "#FED7AA",
+          "#1C0B03"
+        ],
+        "premiums": [
+          {
+            "name": "Engineer Wrench",
+            "icon": "wrench"
+          },
+          {
+            "name": "Steamforge",
+            "icon": "factory"
+          },
+          {
+            "name": "Steam Express",
+            "icon": "train-front"
+          }
+        ],
+        "scatter": {
+          "name": "Golden Rail",
+          "icon": "train-track"
+        },
+        "bomb": {
+          "name": "Boiler Blast",
+          "icon": "flame"
+        },
+        "voice": {
+          "instrument": "steelpan",
+          "spin": "roll",
+          "root": 294,
+          "scale": "mixolydian",
+          "tempo": 1.15
+        }
+      },
+      "thumbnail": "/games/home-v20261101/steamforge-express.webp",
+      "filesToModify": [
+        "src/games/shared/layouts/SkinnedGame.tsx",
+        "src/components/maxhigh/spin-button/game-spin-themes.ts",
+        "src/components/maxhigh/spin-button/game-spin-button.css"
+      ]
+    },
+    {
+      "name": "Alchemist Atelier",
+      "slug": "alchemist-atelier",
+      "category": "slot",
+      "engine": "RealmsSlot",
+      "active": true,
+      "locked": false,
+      "databaseEnabled": "yes (catalog default)",
+      "lobbyVisible": true,
+      "view": "src/games/alchemist-atelier/GameView.tsx",
+      "existingControl": "src/games/alchemist-atelier/AtelierConsole.tsx",
+      "definition": {
+        "no": 36,
+        "id": "alchemist-atelier",
+        "name": "Alchemist Atelier",
+        "world": "arcane",
+        "description": "Bubbling flasks fill the alchemist's workshop. Mercury beakers and alchemy tomes tumble on a 6×5 board, Transmute Flames multiply wins, and the Prime Element unlocks free spins.",
+        "board": {
+          "cols": 6,
+          "rows": 5
+        },
+        "volatility": "High",
+        "freeSpins": 10,
+        "palette": [
+          "#A3E635",
+          "#3F6212",
+          "#D9F99D",
+          "#0F1703"
+        ],
+        "premiums": [
+          {
+            "name": "Mercury Beaker",
+            "icon": "beaker"
+          },
+          {
+            "name": "Alchemy Tome",
+            "icon": "book-open"
+          },
+          {
+            "name": "Elixir Flask",
+            "icon": "flask-conical"
+          }
+        ],
+        "scatter": {
+          "name": "Prime Element",
+          "icon": "atom"
+        },
+        "bomb": {
+          "name": "Transmute Flame",
+          "icon": "flame"
+        },
+        "voice": {
+          "instrument": "kalimba",
+          "spin": "bubbles",
+          "root": 349,
+          "scale": "dorian",
+          "tempo": 1
+        }
+      },
+      "thumbnail": "/games/home-v20261101/alchemist-atelier.webp",
+      "filesToModify": [
+        "src/games/shared/layouts/SkinnedGame.tsx",
+        "src/components/maxhigh/spin-button/game-spin-themes.ts",
+        "src/components/maxhigh/spin-button/game-spin-button.css"
+      ]
+    },
+    {
+      "name": "Crystal Grimoire",
+      "slug": "crystal-grimoire",
+      "category": "slot",
+      "engine": "RealmsSlot",
+      "active": true,
+      "locked": false,
+      "databaseEnabled": "yes (catalog default)",
+      "lobbyVisible": true,
+      "view": "src/games/crystal-grimoire/GameView.tsx",
+      "existingControl": "src/components/maxhigh/SlotControlDeck.tsx",
+      "definition": {
+        "no": 37,
+        "id": "crystal-grimoire",
+        "name": "Crystal Grimoire",
+        "world": "arcane",
+        "description": "A spellbook bound in living crystal. Rune wands and spell crystals tumble on a tall 5×6 board, Mana Shards multiply wins, and Arcane Sigils open free spins.",
+        "board": {
+          "cols": 5,
+          "rows": 6
+        },
+        "volatility": "Very High",
+        "freeSpins": 8,
+        "palette": [
+          "#A78BFA",
+          "#4C1D95",
+          "#DDD6FE",
+          "#120822"
+        ],
+        "premiums": [
+          {
+            "name": "Rune Wand",
+            "icon": "wand"
+          },
+          {
+            "name": "Spell Crystal",
+            "icon": "gem"
+          },
+          {
+            "name": "Crystal Grimoire",
+            "icon": "book"
+          }
+        ],
+        "scatter": {
+          "name": "Arcane Sigil",
+          "icon": "sparkles"
+        },
+        "bomb": {
+          "name": "Mana Shard",
+          "icon": "diamond"
+        },
+        "voice": {
+          "instrument": "celesta",
+          "spin": "chimes",
+          "root": 494,
+          "scale": "harmonicMinor",
+          "tempo": 0.95
+        }
+      },
+      "thumbnail": "/games/home-v20261101/crystal-grimoire.webp",
+      "filesToModify": [
+        "src/games/shared/layouts/SkinnedGame.tsx",
+        "src/components/maxhigh/spin-button/game-spin-themes.ts",
+        "src/components/maxhigh/spin-button/game-spin-button.css"
+      ]
+    },
+    {
+      "name": "Tarot Twilight",
+      "slug": "tarot-twilight",
+      "category": "slot",
+      "engine": "RealmsSlot",
+      "active": true,
+      "locked": false,
+      "databaseEnabled": "yes (catalog default)",
+      "lobbyVisible": true,
+      "view": "src/games/tarot-twilight/GameView.tsx",
+      "existingControl": "src/components/maxhigh/SlotControlDeck.tsx",
+      "definition": {
+        "no": 38,
+        "id": "tarot-twilight",
+        "name": "Tarot Twilight",
+        "world": "arcane",
+        "description": "Turn the cards at twilight and read your fortune. The Star, the Moon and the Sun tumble on a 6×4 board, Fate Loops multiply wins, and the All-Seeing Card deals free spins.",
+        "board": {
+          "cols": 6,
+          "rows": 4
+        },
+        "volatility": "Medium",
+        "freeSpins": 12,
+        "palette": [
+          "#C084FC",
+          "#6B21A8",
+          "#E9D5FF",
+          "#170828"
+        ],
+        "premiums": [
+          {
+            "name": "The Star",
+            "icon": "star"
+          },
+          {
+            "name": "The Moon",
+            "icon": "moon"
+          },
+          {
+            "name": "The Sun",
+            "icon": "sun"
+          }
+        ],
+        "scatter": {
+          "name": "All-Seeing Card",
+          "icon": "eye"
+        },
+        "bomb": {
+          "name": "Fate Loop",
+          "icon": "infinity"
+        },
+        "voice": {
+          "instrument": "harp",
+          "spin": "arp",
+          "root": 330,
+          "scale": "aeolian",
+          "tempo": 0.9
+        }
+      },
+      "thumbnail": "/games/home-v20261101/tarot-twilight.webp",
+      "filesToModify": [
+        "src/games/shared/layouts/SkinnedGame.tsx",
+        "src/components/maxhigh/spin-button/game-spin-themes.ts",
+        "src/components/maxhigh/spin-button/game-spin-button.css"
+      ]
+    },
+    {
+      "name": "Potion Parlor",
+      "slug": "potion-parlor",
+      "category": "slot",
+      "engine": "RealmsSlot",
+      "active": true,
+      "locked": false,
+      "databaseEnabled": "yes (catalog default)",
+      "lobbyVisible": true,
+      "view": "src/games/potion-parlor/GameView.tsx",
+      "existingControl": "src/components/maxhigh/SlotControlDeck.tsx",
+      "definition": {
+        "no": 39,
+        "id": "potion-parlor",
+        "name": "Potion Parlor",
+        "world": "arcane",
+        "description": "Step into a parlor of fizzing tonics. Love potions and moon wine tumble on a 5×5 board, Potion Drops multiply wins, and the Parlor Hourglass turns over free spins.",
+        "board": {
+          "cols": 5,
+          "rows": 5
+        },
+        "volatility": "Medium",
+        "freeSpins": 12,
+        "palette": [
+          "#F472B6",
+          "#9D174D",
+          "#FBCFE8",
+          "#22071A"
+        ],
+        "premiums": [
+          {
+            "name": "Swift Tonic",
+            "icon": "test-tube-diagonal"
+          },
+          {
+            "name": "Moon Wine",
+            "icon": "wine"
+          },
+          {
+            "name": "Love Potion",
+            "icon": "flask-round"
+          }
+        ],
+        "scatter": {
+          "name": "Parlor Hourglass",
+          "icon": "hourglass"
+        },
+        "bomb": {
+          "name": "Potion Drop",
+          "icon": "droplet"
+        },
+        "voice": {
+          "instrument": "musicbox",
+          "spin": "bubbles",
+          "root": 466,
+          "scale": "majorPent",
+          "tempo": 1.1
+        }
+      },
+      "thumbnail": "/games/home-v20261101/potion-parlor.webp",
+      "filesToModify": [
+        "src/games/shared/layouts/SkinnedGame.tsx",
+        "src/components/maxhigh/spin-button/game-spin-themes.ts",
+        "src/components/maxhigh/spin-button/game-spin-button.css"
+      ]
+    },
+    {
+      "name": "Hexbound Library",
+      "slug": "hexbound-library",
+      "category": "slot",
+      "engine": "RealmsSlot",
+      "active": true,
+      "locked": false,
+      "databaseEnabled": "yes (catalog default)",
+      "lobbyVisible": true,
+      "view": "src/games/hexbound-library/GameView.tsx",
+      "existingControl": "src/games/hexbound-library/HexConsole.tsx",
+      "definition": {
+        "no": 40,
+        "id": "hexbound-library",
+        "name": "Hexbound Library",
+        "world": "arcane",
+        "description": "Every book in this library is sealed by a hex. Archive keys and sealed scrolls tumble on a 7×5 board, Watcher Eyes multiply wins, and the Hexbound Tome opens free spins.",
+        "board": {
+          "cols": 7,
+          "rows": 5
+        },
+        "volatility": "High",
+        "freeSpins": 10,
+        "palette": [
+          "#FBBF24",
+          "#78350F",
+          "#FDE68A",
+          "#170F04"
+        ],
+        "premiums": [
+          {
+            "name": "Archive Key",
+            "icon": "key"
+          },
+          {
+            "name": "Sealed Scroll",
+            "icon": "scroll"
+          },
+          {
+            "name": "Hexbound Shelf",
+            "icon": "library"
+          }
+        ],
+        "scatter": {
+          "name": "Hexbound Tome",
+          "icon": "book-key"
+        },
+        "bomb": {
+          "name": "Watcher Eye",
+          "icon": "eye"
+        },
+        "voice": {
+          "instrument": "pluck",
+          "spin": "flutter",
+          "root": 294,
+          "scale": "phrygianDom",
+          "tempo": 0.95
+        }
+      },
+      "thumbnail": "/games/home-v20261101/hexbound-library.webp",
+      "filesToModify": [
+        "src/games/shared/layouts/SkinnedGame.tsx",
+        "src/components/maxhigh/spin-button/game-spin-themes.ts",
+        "src/components/maxhigh/spin-button/game-spin-button.css"
+      ]
+    },
+    {
+      "name": "Cosmic Koi",
+      "slug": "cosmic-koi",
+      "category": "slot",
+      "engine": "RealmsSlot",
+      "active": true,
+      "locked": false,
+      "databaseEnabled": "yes (catalog default)",
+      "lobbyVisible": true,
+      "view": "src/games/cosmic-koi/GameView.tsx",
+      "existingControl": "src/games/cosmic-koi/KoiConsole.tsx",
+      "definition": {
+        "no": 41,
+        "id": "cosmic-koi",
+        "name": "Cosmic Koi",
+        "world": "cosmos",
+        "description": "Koi swim through a river of stars. Nebula lotuses and star streams tumble on a 6×5 board, Stardust multiplies wins, and the Koi Orbit pulls you into free spins.",
+        "board": {
+          "cols": 6,
+          "rows": 5
+        },
+        "volatility": "High",
+        "freeSpins": 10,
+        "palette": [
+          "#F97316",
+          "#7C2D12",
+          "#FDBA74",
+          "#170A03"
+        ],
+        "premiums": [
+          {
+            "name": "Star Stream",
+            "icon": "waves"
+          },
+          {
+            "name": "Nebula Lotus",
+            "icon": "flower"
+          },
+          {
+            "name": "Cosmic Koi",
+            "icon": "fish"
+          }
+        ],
+        "scatter": {
+          "name": "Koi Orbit",
+          "icon": "orbit"
+        },
+        "bomb": {
+          "name": "Stardust",
+          "icon": "sparkle"
+        },
+        "voice": {
+          "instrument": "koto",
+          "spin": "bubbles",
+          "root": 349,
+          "scale": "hirajoshi",
+          "tempo": 1
+        }
+      },
+      "thumbnail": "/games/home-v20261101/cosmic-koi.webp",
+      "filesToModify": [
+        "src/games/shared/layouts/SkinnedGame.tsx",
+        "src/components/maxhigh/spin-button/game-spin-themes.ts",
+        "src/components/maxhigh/spin-button/game-spin-button.css"
+      ]
+    },
+    {
+      "name": "Saturn Rings",
+      "slug": "saturn-rings",
+      "category": "slot",
+      "engine": "RealmsSlot",
+      "active": true,
+      "locked": false,
+      "databaseEnabled": "yes (catalog default)",
+      "lobbyVisible": true,
+      "view": "src/games/saturn-rings/GameView.tsx",
+      "existingControl": "src/components/maxhigh/SlotControlDeck.tsx",
+      "definition": {
+        "no": 42,
+        "id": "saturn-rings",
+        "name": "Saturn Rings",
+        "world": "cosmos",
+        "description": "Cruise the rings of the giant planet. Ring probes and Titan moons tumble on a 7×4 board, Ring Dust multiplies wins, and the Blue Planet calls you home with free spins.",
+        "board": {
+          "cols": 7,
+          "rows": 4
+        },
+        "volatility": "Medium",
+        "freeSpins": 12,
+        "palette": [
+          "#EAB308",
+          "#713F12",
+          "#FEF08A",
+          "#161004"
+        ],
+        "premiums": [
+          {
+            "name": "Titan Moon",
+            "icon": "moon"
+          },
+          {
+            "name": "Ring Probe",
+            "icon": "satellite"
+          },
+          {
+            "name": "Saturn",
+            "icon": "orbit"
+          }
+        ],
+        "scatter": {
+          "name": "Blue Planet",
+          "icon": "globe"
+        },
+        "bomb": {
+          "name": "Ring Dust",
+          "icon": "sparkles"
+        },
+        "voice": {
+          "instrument": "vibes",
+          "spin": "roll",
+          "root": 392,
+          "scale": "lydian",
+          "tempo": 0.95
+        }
+      },
+      "thumbnail": "/games/home-v20261101/saturn-rings.webp",
+      "filesToModify": [
+        "src/games/shared/layouts/SkinnedGame.tsx",
+        "src/components/maxhigh/spin-button/game-spin-themes.ts",
+        "src/components/maxhigh/spin-button/game-spin-button.css"
+      ]
+    },
+    {
+      "name": "Rocket Rendezvous",
+      "slug": "rocket-rendezvous",
+      "category": "slot",
+      "engine": "RealmsSlot",
+      "active": true,
+      "locked": false,
+      "databaseEnabled": "yes (catalog default)",
+      "lobbyVisible": true,
+      "view": "src/games/rocket-rendezvous/GameView.tsx",
+      "existingControl": "src/components/maxhigh/SlotControlDeck.tsx",
+      "definition": {
+        "no": 43,
+        "id": "rocket-rendezvous",
+        "name": "Rocket Rendezvous",
+        "world": "cosmos",
+        "description": "Two ships, one docking window. Deep-space dishes and shuttles tumble on a 5×5 board, Thruster Bursts multiply wins, and the Home Planet scatter launches free spins.",
+        "board": {
+          "cols": 5,
+          "rows": 5
+        },
+        "volatility": "High",
+        "freeSpins": 10,
+        "palette": [
+          "#F43F5E",
+          "#881337",
+          "#FDA4AF",
+          "#1F050B"
+        ],
+        "premiums": [
+          {
+            "name": "Deep Dish",
+            "icon": "satellite-dish"
+          },
+          {
+            "name": "Shuttle",
+            "icon": "plane"
+          },
+          {
+            "name": "Rendezvous Rocket",
+            "icon": "rocket"
+          }
+        ],
+        "scatter": {
+          "name": "Home Planet",
+          "icon": "earth"
+        },
+        "bomb": {
+          "name": "Thruster Burst",
+          "icon": "zap"
+        },
+        "voice": {
+          "instrument": "steelpan",
+          "spin": "arp",
+          "root": 440,
+          "scale": "mixolydian",
+          "tempo": 1.2
+        }
+      },
+      "thumbnail": "/games/home-v20261101/rocket-rendezvous.webp",
+      "filesToModify": [
+        "src/games/shared/layouts/SkinnedGame.tsx",
+        "src/components/maxhigh/spin-button/game-spin-themes.ts",
+        "src/components/maxhigh/spin-button/game-spin-button.css"
+      ]
+    },
+    {
+      "name": "Asteroid Miners",
+      "slug": "asteroid-miners",
+      "category": "slot",
+      "engine": "RealmsSlot",
+      "active": true,
+      "locked": false,
+      "databaseEnabled": "yes (catalog default)",
+      "lobbyVisible": true,
+      "view": "src/games/asteroid-miners/GameView.tsx",
+      "existingControl": "src/games/asteroid-miners/AsteroidConsole.tsx",
+      "definition": {
+        "no": 44,
+        "id": "asteroid-miners",
+        "name": "Asteroid Miners",
+        "world": "cosmos",
+        "description": "Strike it rich in the belt. Astro picks and star ore tumble on a wide 8×4 board, Charge Bolts multiply wins hard, and Mining Beacons signal free spins.",
+        "board": {
+          "cols": 8,
+          "rows": 4
+        },
+        "volatility": "Very High",
+        "freeSpins": 8,
+        "palette": [
+          "#94A3B8",
+          "#334155",
+          "#E2E8F0",
+          "#0B1018"
+        ],
+        "premiums": [
+          {
+            "name": "Miner Helmet",
+            "icon": "hard-hat"
+          },
+          {
+            "name": "Star Ore",
+            "icon": "gem"
+          },
+          {
+            "name": "Astro Pick",
+            "icon": "pickaxe"
+          }
+        ],
+        "scatter": {
+          "name": "Mining Beacon",
+          "icon": "satellite"
+        },
+        "bomb": {
+          "name": "Charge Bolt",
+          "icon": "bolt"
+        },
+        "voice": {
+          "instrument": "bell",
+          "spin": "coins",
+          "root": 330,
+          "scale": "dorian",
+          "tempo": 1.05
+        }
+      },
+      "thumbnail": "/games/home-v20261101/asteroid-miners.webp",
+      "filesToModify": [
+        "src/games/shared/layouts/SkinnedGame.tsx",
+        "src/components/maxhigh/spin-button/game-spin-themes.ts",
+        "src/components/maxhigh/spin-button/game-spin-button.css"
+      ]
+    },
+    {
+      "name": "Nebula Nomads",
+      "slug": "nebula-nomads",
+      "category": "slot",
+      "engine": "RealmsSlot",
+      "active": true,
+      "locked": false,
+      "databaseEnabled": "yes (catalog default)",
+      "lobbyVisible": true,
+      "view": "src/games/nebula-nomads/GameView.tsx",
+      "existingControl": "src/components/maxhigh/SlotControlDeck.tsx",
+      "definition": {
+        "no": 45,
+        "id": "nebula-nomads",
+        "name": "Nebula Nomads",
+        "world": "cosmos",
+        "description": "Wanderers camp at the edge of a glowing nebula. Star compasses and nebula scopes tumble on a square 6×6 board, Ion Cores multiply wins, and the Nebula scatter opens free spins.",
+        "board": {
+          "cols": 6,
+          "rows": 6
+        },
+        "volatility": "High",
+        "freeSpins": 10,
+        "palette": [
+          "#E879F9",
+          "#701A75",
+          "#F5D0FE",
+          "#1A0520"
+        ],
+        "premiums": [
+          {
+            "name": "Nomad Camp",
+            "icon": "tent"
+          },
+          {
+            "name": "Star Compass",
+            "icon": "compass"
+          },
+          {
+            "name": "Nebula Scope",
+            "icon": "telescope"
+          }
+        ],
+        "scatter": {
+          "name": "Nebula",
+          "icon": "cloud-moon"
+        },
+        "bomb": {
+          "name": "Ion Core",
+          "icon": "atom"
+        },
+        "voice": {
+          "instrument": "flute",
+          "spin": "wind",
+          "root": 311,
+          "scale": "doubleHarmonic",
+          "tempo": 0.9
+        }
+      },
+      "thumbnail": "/games/home-v20261101/nebula-nomads.webp",
+      "filesToModify": [
+        "src/games/shared/layouts/SkinnedGame.tsx",
+        "src/components/maxhigh/spin-button/game-spin-themes.ts",
+        "src/components/maxhigh/spin-button/game-spin-button.css"
+      ]
+    },
+    {
+      "name": "Stag Spirit Glade",
+      "slug": "stag-spirit-glade",
+      "category": "slot",
+      "engine": "RealmsSlot",
+      "active": true,
+      "locked": false,
+      "databaseEnabled": "yes (catalog default)",
+      "lobbyVisible": true,
+      "view": "src/games/stag-spirit-glade/GameView.tsx",
+      "existingControl": "src/components/maxhigh/SlotControlDeck.tsx",
+      "definition": {
+        "no": 46,
+        "id": "stag-spirit-glade",
+        "name": "Stag Spirit Glade",
+        "world": "spirit",
+        "description": "A spirit stag walks the moonlit glade. Glade leaves and stag tracks tumble on a 6×5 board, Wisp Lights multiply wins, and the Spirit Moon reveals free spins.",
+        "board": {
+          "cols": 6,
+          "rows": 5
+        },
+        "volatility": "High",
+        "freeSpins": 10,
+        "palette": [
+          "#4ADE80",
+          "#14532D",
+          "#BBF7D0",
+          "#03140A"
+        ],
+        "premiums": [
+          {
+            "name": "Glade Leaf",
+            "icon": "leaf"
+          },
+          {
+            "name": "Stag Tracks",
+            "icon": "paw-print"
+          },
+          {
+            "name": "Spirit Grove",
+            "icon": "trees"
+          }
+        ],
+        "scatter": {
+          "name": "Spirit Moon",
+          "icon": "moon-star"
+        },
+        "bomb": {
+          "name": "Wisp Light",
+          "icon": "sparkles"
+        },
+        "voice": {
+          "instrument": "kalimba",
+          "spin": "flutter",
+          "root": 330,
+          "scale": "minorPent",
+          "tempo": 0.95
+        }
+      },
+      "thumbnail": "/games/home-v20261101/stag-spirit-glade.webp",
+      "filesToModify": [
+        "src/games/shared/layouts/SkinnedGame.tsx",
+        "src/components/maxhigh/spin-button/game-spin-themes.ts",
+        "src/components/maxhigh/spin-button/game-spin-button.css"
+      ]
+    },
+    {
+      "name": "Tortoise Treasury",
+      "slug": "tortoise-treasury",
+      "category": "slot",
+      "engine": "RealmsSlot",
+      "active": true,
+      "locked": false,
+      "databaseEnabled": "yes (catalog default)",
+      "lobbyVisible": true,
+      "view": "src/games/tortoise-treasury/GameView.tsx",
+      "existingControl": "src/components/maxhigh/SlotControlDeck.tsx",
+      "definition": {
+        "no": 47,
+        "id": "tortoise-treasury",
+        "name": "Tortoise Treasury",
+        "world": "spirit",
+        "description": "An ancient tortoise carries a treasury on its shell. Jade coins and shell vaults tumble on a 5×5 board, Shell Plates multiply wins, and Treasury Jade grants free spins.",
+        "board": {
+          "cols": 5,
+          "rows": 5
+        },
+        "volatility": "Medium",
+        "freeSpins": 12,
+        "palette": [
+          "#10B981",
+          "#065F46",
+          "#A7F3D0",
+          "#021A12"
+        ],
+        "premiums": [
+          {
+            "name": "Jade Coins",
+            "icon": "coins"
+          },
+          {
+            "name": "Shell Vault",
+            "icon": "shell"
+          },
+          {
+            "name": "Ancient Tortoise",
+            "icon": "turtle"
+          }
+        ],
+        "scatter": {
+          "name": "Treasury Jade",
+          "icon": "gem"
+        },
+        "bomb": {
+          "name": "Shell Plate",
+          "icon": "hexagon"
+        },
+        "voice": {
+          "instrument": "marimba",
+          "spin": "coins",
+          "root": 294,
+          "scale": "majorPent",
+          "tempo": 0.9
+        }
+      },
+      "thumbnail": "/games/home-v20261101/tortoise-treasury.webp",
+      "filesToModify": [
+        "src/games/shared/layouts/SkinnedGame.tsx",
+        "src/components/maxhigh/spin-button/game-spin-themes.ts",
+        "src/components/maxhigh/spin-button/game-spin-button.css"
+      ]
+    },
+    {
+      "name": "Crane Pavilion",
+      "slug": "crane-pavilion",
+      "category": "slot",
+      "engine": "RealmsSlot",
+      "active": true,
+      "locked": false,
+      "databaseEnabled": "yes (catalog default)",
+      "lobbyVisible": true,
+      "view": "src/games/crane-pavilion/GameView.tsx",
+      "existingControl": "src/games/crane-pavilion/CraneConsole.tsx",
+      "definition": {
+        "no": 48,
+        "id": "crane-pavilion",
+        "name": "Crane Pavilion",
+        "world": "spirit",
+        "description": "Red-crowned cranes dance beside the lake pavilion. Paper cranes and pavilion fans tumble on a 7×4 board, Plum Blossoms multiply wins, and the Rising Sun brings free spins.",
+        "board": {
+          "cols": 7,
+          "rows": 4
+        },
+        "volatility": "Medium",
+        "freeSpins": 12,
+        "palette": [
+          "#F87171",
+          "#7F1D1D",
+          "#FECACA",
+          "#1F0606"
+        ],
+        "premiums": [
+          {
+            "name": "Pavilion Fan",
+            "icon": "fan"
+          },
+          {
+            "name": "Paper Crane",
+            "icon": "origami"
+          },
+          {
+            "name": "Red-Crowned Crane",
+            "icon": "bird"
+          }
+        ],
+        "scatter": {
+          "name": "Rising Sun",
+          "icon": "sunrise"
+        },
+        "bomb": {
+          "name": "Plum Blossom",
+          "icon": "flower"
+        },
+        "voice": {
+          "instrument": "koto",
+          "spin": "chimes",
+          "root": 392,
+          "scale": "inSen",
+          "tempo": 0.95
+        }
+      },
+      "thumbnail": "/games/home-v20261101/crane-pavilion.webp",
+      "filesToModify": [
+        "src/games/shared/layouts/SkinnedGame.tsx",
+        "src/components/maxhigh/spin-button/game-spin-themes.ts",
+        "src/components/maxhigh/spin-button/game-spin-button.css"
+      ]
+    },
+    {
+      "name": "Thunderbird Totem",
+      "slug": "thunderbird-totem",
+      "category": "slot",
+      "engine": "RealmsSlot",
+      "active": true,
+      "locked": false,
+      "databaseEnabled": "yes (catalog default)",
+      "lobbyVisible": true,
+      "view": "src/games/thunderbird-totem/GameView.tsx",
+      "existingControl": "src/components/maxhigh/SlotControlDeck.tsx",
+      "definition": {
+        "no": 49,
+        "id": "thunderbird-totem",
+        "name": "Thunderbird Totem",
+        "world": "spirit",
+        "description": "The thunderbird wakes above the totem. Storm feathers and totem drums tumble on a square 6×6 board, Thunderclaps multiply wins, and Storm Totems call down free spins.",
+        "board": {
+          "cols": 6,
+          "rows": 6
+        },
+        "volatility": "Very High",
+        "freeSpins": 8,
+        "palette": [
+          "#38BDF8",
+          "#0C4A6E",
+          "#BAE6FD",
+          "#03111C"
+        ],
+        "premiums": [
+          {
+            "name": "Totem Drum",
+            "icon": "drum"
+          },
+          {
+            "name": "Storm Feather",
+            "icon": "feather"
+          },
+          {
+            "name": "Thunderbird",
+            "icon": "bird"
+          }
+        ],
+        "scatter": {
+          "name": "Storm Totem",
+          "icon": "cloud-lightning"
+        },
+        "bomb": {
+          "name": "Thunderclap",
+          "icon": "zap"
+        },
+        "voice": {
+          "instrument": "gong",
+          "spin": "thunder",
+          "root": 262,
+          "scale": "minorPent",
+          "tempo": 1
+        }
+      },
+      "thumbnail": "/games/home-v20261101/thunderbird-totem.webp",
+      "filesToModify": [
+        "src/games/shared/layouts/SkinnedGame.tsx",
+        "src/components/maxhigh/spin-button/game-spin-themes.ts",
+        "src/components/maxhigh/spin-button/game-spin-button.css"
+      ]
+    },
+    {
+      "name": "Monarch Meadow",
+      "slug": "monarch-meadow",
+      "category": "slot",
+      "engine": "RealmsSlot",
+      "active": true,
+      "locked": false,
+      "databaseEnabled": "yes (catalog default)",
+      "lobbyVisible": true,
+      "view": "src/games/monarch-meadow/GameView.tsx",
+      "existingControl": "src/components/maxhigh/SlotControlDeck.tsx",
+      "definition": {
+        "no": 50,
+        "id": "monarch-meadow",
+        "name": "Monarch Meadow",
+        "world": "spirit",
+        "description": "Monarchs gather in a meadow of wildflowers. Milkweed blooms and meadow sprouts tumble on a tall 5×6 board, Morning Dew multiplies wins, and the Monarch Flower opens free spins.",
+        "board": {
+          "cols": 5,
+          "rows": 6
+        },
+        "volatility": "Medium",
+        "freeSpins": 12,
+        "palette": [
+          "#FB923C",
+          "#9A3412",
+          "#FED7AA",
+          "#1F0B03"
+        ],
+        "premiums": [
+          {
+            "name": "Meadow Sprout",
+            "icon": "sprout"
+          },
+          {
+            "name": "Milkweed Bloom",
+            "icon": "flower-2"
+          },
+          {
+            "name": "Meadow Sun",
+            "icon": "sun"
+          }
+        ],
+        "scatter": {
+          "name": "Monarch Flower",
+          "icon": "flower"
+        },
+        "bomb": {
+          "name": "Morning Dew",
+          "icon": "droplet"
+        },
+        "voice": {
+          "instrument": "celesta",
+          "spin": "flutter",
+          "root": 440,
+          "scale": "major",
+          "tempo": 1.1
+        }
+      },
+      "thumbnail": "/games/home-v20261101/monarch-meadow.webp",
+      "filesToModify": [
+        "src/games/shared/layouts/SkinnedGame.tsx",
+        "src/components/maxhigh/spin-button/game-spin-themes.ts",
+        "src/components/maxhigh/spin-button/game-spin-button.css"
+      ]
+    }
+  ]
+}
