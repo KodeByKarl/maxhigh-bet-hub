@@ -1,0 +1,629 @@
+/* Saturn Rings: Orbital salon: a split observatory ledger, slim wager bridge, elliptical ringed spin cradle between auto and bonus towers, two broad navigation tabs. Presentation only; original assets and engine retained. */
+[data-game-view="saturn-rings"] {
+  --ui-accent: #debfa3;
+  --ui-soft: #fff2e3;
+  --ui-bg: #18182e;
+  --ui-face: #3e354d;
+  --ui-hud: 322px;
+  container-type: size;
+  overflow: clip;
+  color: var(--ui-soft);
+  font-family: "Segoe UI", sans-serif;
+}
+.sn-identity {
+  position: absolute;
+  top: max(18px, env(safe-area-inset-top));
+  left: 18px;
+  right: 124px;
+  z-index: 25;
+  display: grid;
+  gap: 5px;
+  pointer-events: none;
+}
+.sn-identity__brand {
+  font:
+    600 8px/1.3 "Segoe UI",
+    sans-serif;
+  letter-spacing: 0.18em;
+  color: var(--ui-soft);
+  opacity: 0.8;
+  text-shadow: 0 2px 8px #000;
+}
+.sn-identity h1 {
+  margin: 0;
+  font-size: clamp(19px, 5.6cqw, 30px);
+  line-height: 1.05;
+  letter-spacing: 0.025em;
+  color: var(--ui-soft);
+  text-shadow: 0 2px 10px #000;
+  white-space: normal;
+}
+.sn-identity h1 span {
+  display: block;
+  color: var(--ui-accent);
+}
+[data-game-view="saturn-rings"] [data-realms-game] > button {
+  top: max(18px, env(safe-area-inset-top));
+  right: 66px;
+  width: 44px;
+  height: 44px;
+  border-radius: 28px;
+  border: 1px solid color-mix(in srgb, var(--ui-accent) 45%, transparent);
+  background: color-mix(in srgb, var(--ui-bg) 90%, transparent);
+}
+[data-game-modal="saturn-rings"] > div:has(> button[aria-label="Close game"]) {
+  top: max(18px, env(safe-area-inset-top));
+  right: 12px;
+}
+[data-game-modal="saturn-rings"] button[aria-label="Close game"] {
+  width: 44px;
+  height: 44px;
+  border-radius: 28px;
+  border: 1px solid color-mix(in srgb, #debfa3 45%, transparent);
+  background: #18182ee6;
+}
+body:has(.bb-close) [data-game-modal="saturn-rings"] > div:has(> button[aria-label="Close game"]),
+body:has(.bb-close) [data-game-modal="saturn-rings"] [data-realms-game] > button {
+  visibility: hidden;
+  pointer-events: none;
+}
+[data-game-view="saturn-rings"] .realms-playfield {
+  padding: 100px 16px max(20px, env(safe-area-inset-bottom));
+  align-items: center;
+  justify-content: center;
+}
+[data-game-view="saturn-rings"] .realms-playfield > div {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: auto auto;
+  align-content: center;
+  justify-items: center;
+  gap: 22px;
+  width: 100%;
+  max-width: 800px;
+  height: 100%;
+  margin-inline: auto;
+}
+[data-game-view="saturn-rings"] .realms-stage {
+  flex: none;
+  height: auto;
+  min-height: 0;
+  width: 100%;
+}
+[data-game-view="saturn-rings"] .realms-well {
+  padding: 12px !important;
+  margin-inline: auto;
+  border: 1px solid color-mix(in srgb, var(--ui-accent) 50%, transparent);
+  border-radius: 32px !important;
+  clip-path: none !important;
+  mask: none !important;
+  background: linear-gradient(145deg, #3e354df2, #18182ef5) !important;
+  box-shadow:
+    inset 0 1px 0 #fff2,
+    0 14px 36px #0009 !important;
+}
+[data-game-view="saturn-rings"] .realms-well::before,
+[data-game-view="saturn-rings"] .realms-well::after {
+  display: none !important;
+}
+[data-game-view="saturn-rings"] .realms-reel-grid {
+  width: min(
+    calc(100cqw - 58px),
+    640px,
+    calc(
+      (100cqh - 100px - var(--ui-hud) - 22px - max(20px, env(safe-area-inset-bottom)) - 26px) * 1.75
+    )
+  ) !important;
+  max-height: none !important;
+  border: 0 !important;
+  background: none !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+  gap: clamp(4px, 1.3cqw, 9px) !important;
+}
+[data-game-view="saturn-rings"] .realms-reel-cell {
+  border-radius: 35% !important;
+  clip-path: none !important;
+  mask: none !important;
+  border: 1px solid color-mix(in srgb, var(--ui-accent) 22%, transparent) !important;
+  background-color: color-mix(in srgb, var(--ui-face) 70%, var(--ui-bg)) !important;
+  background-image: radial-gradient(at 35% 20%, #fff1, transparent 75%) !important;
+  box-shadow: inset 0 1px 0 #fff1 !important;
+}
+[data-game-view="saturn-rings"] .realms-reel-cell[data-winning="true"] {
+  border-color: var(--ui-soft) !important;
+  box-shadow:
+    inset 0 0 12px color-mix(in srgb, var(--ui-accent) 40%, transparent),
+    0 0 12px var(--ui-accent) !important;
+}
+[data-game-view="saturn-rings"] .realms-reel-art {
+  inset: 5%;
+}
+[data-game-view="saturn-rings"] .realms-reel-grid img {
+  scale: 0.95;
+}
+.sn-console {
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-rows: 58px 48px 104px 48px;
+  grid-template-areas: "ledger ledger ledger ledger" "bet bet bet bet" "autospin spin spin bonus" "turbo turbo info info";
+  gap: 12px;
+  padding: 14px;
+  width: 100%;
+  max-width: 440px;
+  justify-self: center;
+  isolation: isolate;
+  border: 1px solid color-mix(in srgb, var(--ui-accent) 30%, transparent);
+  border-radius: 28px;
+  background: #18182eeb;
+  box-shadow: 0 14px 30px #0006;
+}
+.sn-console::before,
+.sn-console::after {
+  display: none !important;
+}
+.sn-console button {
+  min-width: 0;
+  cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  transition:
+    filter 0.15s,
+    transform 0.15s;
+  font-family: inherit;
+}
+.sn-console button:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+.sn-console button:not(:disabled):active {
+  transform: scale(0.97);
+}
+.sn-console button:focus-visible {
+  outline: 2px solid var(--ui-soft);
+  outline-offset: 3px;
+}
+.sn-console strong,
+.sn-console em {
+  font-variant-numeric: tabular-nums;
+  font-style: normal;
+  white-space: nowrap;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.sn-ledger {
+  grid-area: ledger;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+.sn-ledger > i {
+  display: none;
+}
+.sn-meter {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+.sn-meter[data-meter="win"] {
+  text-align: right;
+}
+.sn-meter > span,
+.sn-bet__value > span {
+  font:
+    600 9px/1.2 "Segoe UI",
+    sans-serif;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--ui-soft);
+  opacity: 0.8;
+}
+.sn-meter strong {
+  font:
+    700 clamp(15px, 4.5cqw, 21px)/1.2 "Segoe UI",
+    sans-serif;
+  color: var(--ui-soft);
+}
+.sn-meter[data-winning="true"] strong {
+  color: var(--ui-accent);
+}
+.sn-bet {
+  grid-area: bet;
+  display: grid;
+  grid-template-columns: 48px minmax(0, 1fr) 48px;
+  gap: 8px;
+  min-width: 0;
+}
+.sn-step,
+.sn-bet__value,
+.sn-chip {
+  border: 1px solid color-mix(in srgb, var(--ui-accent) 35%, transparent);
+  border-radius: 28px;
+  background: linear-gradient(145deg, var(--ui-face), var(--ui-bg));
+  color: var(--ui-soft);
+  box-shadow: inset 0 1px 0 #fff1;
+}
+.sn-step {
+  display: grid;
+  place-items: center;
+  min-height: 44px;
+  color: var(--ui-accent);
+}
+.sn-bet__value {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  min-height: 44px;
+}
+.sn-bet__value strong {
+  font:
+    700 16px/1 "Segoe UI",
+    sans-serif;
+}
+.sn-side {
+  display: contents;
+}
+.sn-turbo {
+  grid-area: turbo;
+}
+.sn-auto {
+  grid-area: autospin;
+}
+.sn-bonus {
+  grid-area: bonus;
+}
+.sn-info {
+  grid-area: info;
+}
+.sn-chip {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  padding: 4px;
+  min-height: 44px;
+}
+.sn-chip > svg {
+  width: 16px;
+  height: 16px;
+  color: var(--ui-accent);
+}
+.sn-chip > span {
+  font:
+    700 8px/1.1 "Segoe UI",
+    sans-serif;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+}
+.sn-chip > em {
+  font:
+    600 10px/1.1 "Segoe UI",
+    sans-serif;
+}
+.sn-turbo[aria-pressed="true"],
+.sn-auto[aria-pressed="true"] {
+  outline: 1px solid var(--ui-accent);
+  background: color-mix(in srgb, var(--ui-accent) 25%, var(--ui-bg));
+}
+.sn-spin-mount {
+  grid-area: spin;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 0;
+  min-height: 0;
+}
+.sn-spin {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  width: 100%;
+  height: 100%;
+  min-width: 44px;
+  min-height: 44px;
+  border: 1px solid var(--ui-accent);
+  border-radius: 28px;
+  background: linear-gradient(140deg, var(--ui-soft), var(--ui-accent));
+  color: var(--ui-bg);
+  clip-path: none;
+  padding: 4px;
+  isolation: isolate;
+}
+.sn-spin::before,
+.sn-spin::after {
+  display: none !important;
+}
+.sn-spin > i {
+  display: none;
+}
+.sn-spin > svg {
+  width: 17px;
+  height: 17px;
+}
+.sn-spin > span {
+  font:
+    800 11px/1 "Segoe UI",
+    sans-serif;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+}
+.sn-spin__art {
+  width: 44px;
+  height: 44px;
+  object-fit: contain;
+  pointer-events: none;
+}
+.sn-spin[data-state="busy"] .sn-spin__art {
+  animation: sn-ui-turn 3s linear infinite;
+}
+.sn-spin[data-state="auto"] {
+  box-shadow: 0 0 0 2px var(--ui-soft);
+}
+.sn-spin[data-state="free"] {
+  filter: hue-rotate(15deg);
+}
+@keyframes sn-ui-turn {
+  to {
+    rotate: 360deg;
+  }
+}
+.sn-console {
+  border: 0;
+  border-radius: 32px;
+  background: linear-gradient(125deg, #514050aa, #18182ef2);
+}
+.sn-ledger {
+  gap: 16px;
+}
+.sn-meter {
+  border-bottom: 1px solid #debfa366;
+  padding: 8px 10px;
+}
+.sn-bet__value {
+  border: 0;
+  background: transparent;
+}
+.sn-step {
+  border-radius: 50%;
+  background: #debfa31a;
+}
+.sn-spin-mount {
+  position: relative;
+  border: 2px solid #debfa388;
+  border-radius: 50%;
+  background: linear-gradient(160deg, #debfa322, transparent 60%, #b6a8d333);
+  padding: 5px 16px;
+  box-shadow: inset 0 0 0 5px #18182e77;
+}
+.sn-spin {
+  width: 88px;
+  height: 88px;
+  border-radius: 50%;
+  background: radial-gradient(at 35% 20%, #fff0d5, #b89a89 45%, #5e5071 90%);
+  color: #241f35;
+  border-color: #f1d3b8;
+}
+.sn-spin__art {
+  width: 44px;
+  height: 44px;
+}
+.sn-spin > svg {
+  display: none;
+}
+.sn-auto,
+.sn-bonus {
+  background: #211f37;
+  border-radius: 32px;
+  align-self: center;
+  height: 76px;
+}
+.sn-turbo,
+.sn-info {
+  flex-direction: row;
+  gap: 10px;
+  background: #332c44;
+  border: 0;
+}
+[data-game-view="saturn-rings"] .realms-well {
+  border-color: #debfa377 !important;
+  box-shadow:
+    inset 0 0 0 4px #18182e88,
+    0 16px 38px #0008 !important;
+}
+[data-sonner-toast].sn-toast {
+  display: flex !important;
+  justify-content: center;
+  width: auto !important;
+  padding: 0 !important;
+  border: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  pointer-events: none;
+}
+.sn-toast__pill {
+  padding: 4px 12px;
+  border: 1px solid #debfa366;
+  border-radius: 20px;
+  background: #18182eee;
+  color: #fff2e3;
+  font:
+    600 11px/1.3 "Segoe UI",
+    sans-serif;
+  white-space: nowrap;
+}
+[data-sonner-toaster]:has(.sn-toast) {
+  --offset-top: 92px !important;
+  --mobile-offset-top: 92px !important;
+}
+@container (max-width:350px) {
+  .sn-console {
+    gap: 8px;
+    padding: 10px;
+  }
+  .sn-chip > span {
+    font-size: 8px;
+  }
+  .sn-spin-mount {
+    padding: 4px;
+  }
+  .sn-bet {
+    grid-template-columns: 44px minmax(0, 1fr) 44px;
+    gap: 4px;
+  }
+}
+@container (orientation:portrait) and (max-height:680px) {
+  [data-game-view="saturn-rings"] .realms-playfield {
+    padding: 88px 16px max(12px, env(safe-area-inset-bottom));
+  }
+  [data-game-view="saturn-rings"] .realms-playfield > div {
+    gap: 14px;
+  }
+  [data-game-view="saturn-rings"] .realms-reel-grid {
+    width: min(
+      calc(100cqw - 58px),
+      calc((100cqh - 88px - 298px - 14px - max(12px, env(safe-area-inset-bottom)) - 26px) * 1.75)
+    ) !important;
+  }
+  .sn-console {
+    gap: 8px;
+    padding: 8px;
+    grid-template-rows: 54px 44px 100px 44px;
+  }
+  .sn-spin {
+    max-width: 100%;
+    max-height: 100%;
+  }
+  .sn-meter strong {
+    font-size: 16px;
+  }
+}
+@container (orientation:landscape) and (max-height:600px) {
+  [data-game-view="saturn-rings"] .realms-playfield {
+    padding: 58px 16px max(10px, env(safe-area-inset-bottom));
+  }
+  [data-game-view="saturn-rings"] .realms-playfield > div {
+    grid-template-columns: minmax(0, 1fr) 300px;
+    grid-template-rows: auto;
+    gap: 16px;
+    max-width: 1100px;
+  }
+  .sn-identity {
+    top: 12px;
+  }
+  .sn-identity h1 {
+    font-size: 20px;
+  }
+  .sn-identity h1 span {
+    display: inline;
+  }
+  .sn-console {
+    padding: 8px;
+    gap: 6px;
+    grid-template-rows: 44px 44px 90px 44px;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+  .sn-meter {
+    gap: 2px;
+  }
+  .sn-meter strong {
+    font-size: 16px;
+  }
+  .sn-meter > span {
+    font-size: 8px;
+  }
+  .sn-chip {
+    padding: 2px;
+    gap: 1px;
+  }
+  .sn-bet {
+    grid-template-columns: 44px minmax(0, 1fr) 44px;
+    gap: 4px;
+  }
+  .sn-spin {
+    max-width: 100%;
+    max-height: 100%;
+  }
+  .sn-spin__art {
+    width: 38px;
+    height: 38px;
+  }
+  .sn-spin-mount {
+    padding: 4px;
+  }
+  [data-game-view="saturn-rings"] .realms-reel-grid {
+    width: min(
+      calc(100cqw - 32px - 300px - 16px - 26px),
+      calc((100cqh - 58px - max(10px, env(safe-area-inset-bottom)) - 26px) * 1.75)
+    ) !important;
+  }
+}
+@container (orientation:landscape) and (max-height:360px) {
+  [data-game-view="saturn-rings"] .realms-playfield > div {
+    grid-template-columns: minmax(0, 1fr) 280px;
+  }
+  [data-game-view="saturn-rings"] .realms-reel-grid {
+    width: min(
+      calc(100cqw - 32px - 280px - 16px - 26px),
+      calc((100cqh - 58px - 10px - 26px) * 1.75)
+    ) !important;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .sn-spin[data-state="busy"] .sn-spin__art {
+    animation: none;
+  }
+  .sn-console button {
+    transition: none;
+  }
+}
+/* Shared dialogs keep their handlers; keep content scrollable on short screens and Close tappable. */
+[data-game-view="saturn-rings"] [aria-label="Auto Spin Configuration"] > div {
+  display: flex;
+  flex-direction: column;
+  max-height: calc(100% - 12px);
+}
+[data-game-view="saturn-rings"] [aria-label="Auto Spin Configuration"] > div > div:nth-child(2) {
+  min-height: 0;
+  flex: 1 1 auto;
+  max-height: none;
+}
+[data-game-view="saturn-rings"] [aria-label="Auto Spin Configuration"] > div > div:first-child,
+[data-game-view="saturn-rings"] [aria-label="Auto Spin Configuration"] > div > div:last-child {
+  flex-shrink: 0;
+}
+[data-game-view="saturn-rings"] div:has(> h3):has(> .grid.grid-cols-4) {
+  display: flex;
+  flex-direction: column;
+  max-height: calc(100dvh - 32px);
+  padding: 20px;
+}
+[data-game-view="saturn-rings"] div:has(> h3) > .grid.grid-cols-4 {
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 4px;
+}
+[data-game-view="saturn-rings"] div:has(> .grid.grid-cols-4) > h3 {
+  padding-right: 40px;
+  font-size: 16px;
+  text-align: left;
+}
+[data-game-view="saturn-rings"] [aria-label="Paytable"] button[aria-label="Close"],
+[data-game-view="saturn-rings"] div:has(> h3) > button[aria-label="Close"] {
+  min-width: 44px;
+  min-height: 44px;
+  flex-shrink: 0;
+}
+[data-game-view="saturn-rings"] div:has(> h3) > button[aria-label="Close"] {
+  z-index: 1;
+}

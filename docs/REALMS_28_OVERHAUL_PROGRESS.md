@@ -86,11 +86,11 @@ User requirement: distinct containers, spin enclosures and button treatments for
 | 16 | polar-prism | VERIFIED | Prism instrument: a slim vertical refractor spin well, offset wager and three crystal switches, and a full-width aurora bonus strip. |
 | 17 | potion-parlor | VERIFIED | Apothecary bench: bottle-label account windows, a tall bubbling flask spin chamber between four shelf cards, with a separate dosage rail. |
 | 18 | rocket-rendezvous | VERIFIED | Retro mission console: telemetry ledger, fuel wager beside a turbo switch, long illuminated launch key with a separate auto key, and paired mission cards. |
-| 19 | salamander-sun | NOT STARTED |  |
-| 20 | saturn-rings | NOT STARTED |  |
-| 21 | shogun-sakura | NOT STARTED |  |
-| 22 | snowglobe-sorcery | NOT STARTED |  |
-| 23 | stag-spirit-glade | NOT STARTED |  |
+| 19 | salamander-sun | VERIFIED | Sunrise dais: account horizon, four solar tablets, a round sun disc inside a wide radiant cradle, and a bottom heat wager rail. |
+| 20 | saturn-rings | VERIFIED | Orbital salon: a split observatory ledger, slim wager bridge, elliptical ringed spin cradle between auto and bonus towers, two broad navigation tabs. |
+| 21 | shogun-sakura | VERIFIED | Sakura courtyard: paper-screen account panel, lacquer wager beam, a vertical red seal inside a torii-like spin enclosure, four flanking wooden plaques. |
+| 22 | snowglobe-sorcery | VERIFIED | Winter music box: frosted account windows, a glass globe spin above its wager pedestal, flanking auto/bonus snowbanks and paired lower switches. |
+| 23 | stag-spirit-glade | VERIFIED | Spirit clearing: carved account tablets and a separate wager, tall antler-grove spin alcove on the left, four mossy stone actions on the right. |
 | 24 | steamforge-express | NOT STARTED |  |
 | 25 | tarot-twilight | NOT STARTED |  |
 | 26 | tesla-tower | NOT STARTED |  |
@@ -216,3 +216,53 @@ Modified files: `src/games/rocket-rendezvous/RocketConsole.tsx`, `src/games/rock
 Responsive and functional QA: 12 viewports, 27 checks, zero page errors. Includes portrait, landscape, tablet, desktop; all targets >=43px, no overlaps, overflow, broken images or offscreen controls. Touch and mouse: bet +/-/select, manual spin, last win/balance display, double activation (one request, concurrency one), turbo, auto start/stop, bonus cancel/quantity/single purchase, sound toggle, info, close/reopen. RPCs stubbed; no real wagers or database writes. Audible playback not manually assessed.
 
 Evidence: [screenshots/results](../output/rocket-mobile/), [design and original sources](../output/realms-overhaul/rocket-rendezvous/). Before: `before-*.png`; after: `after-*.png`; result: `after-results.json`.
+
+### salamander-sun
+
+Sunrise dais: account horizon, four solar tablets, a round sun disc inside a wide radiant cradle, and a bottom heat wager rail.
+
+Modified files: `src/games/salamander-sun/SalamanderConsole.tsx`, `src/games/salamander-sun/salamander-layout.css`, `src/games/salamander-sun/GameView.tsx`.
+
+Responsive and functional QA: 12 viewports, 27 checks, zero page errors. Includes portrait, landscape, tablet, desktop; all targets >=43px, no overlaps, overflow, broken images or offscreen controls. Touch and mouse: bet +/-/select, manual spin, last win/balance display, double activation (one request, concurrency one), turbo, auto start/stop, bonus cancel/quantity/single purchase, sound toggle, info, close/reopen. RPCs stubbed; no real wagers or database writes. Audible playback not manually assessed.
+
+Evidence: [screenshots/results](../output/salamander-mobile/), [design and original sources](../output/realms-overhaul/salamander-sun/). Before: `before-*.png`; after: `after-*.png`; result: `after-results.json`.
+
+### saturn-rings
+
+Orbital salon: a split observatory ledger, slim wager bridge, elliptical ringed spin cradle between auto and bonus towers, two broad navigation tabs.
+
+Modified files: `src/games/saturn-rings/SaturnConsole.tsx`, `src/games/saturn-rings/saturn-layout.css`, `src/games/saturn-rings/GameView.tsx`.
+
+Responsive and functional QA: 12 viewports, 27 checks, zero page errors. Includes portrait, landscape, tablet, desktop; all targets >=43px, no overlaps, overflow, broken images or offscreen controls. Touch and mouse: bet +/-/select, manual spin, last win/balance display, double activation (one request, concurrency one), turbo, auto start/stop, bonus cancel/quantity/single purchase, sound toggle, info, close/reopen. RPCs stubbed; no real wagers or database writes. Audible playback not manually assessed.
+
+Evidence: [screenshots/results](../output/saturn-mobile/), [design and original sources](../output/realms-overhaul/saturn-rings/). Before: `before-*.png`; after: `after-*.png`; result: `after-results.json`.
+
+### shogun-sakura
+
+Sakura courtyard: paper-screen account panel, lacquer wager beam, a vertical red seal inside a torii-like spin enclosure, four flanking wooden plaques.
+
+Modified files: `src/games/shogun-sakura/ShogunConsole.tsx`, `src/games/shogun-sakura/shogun-layout.css`, `src/games/shogun-sakura/GameView.tsx`.
+
+Responsive and functional QA: 12 viewports, 27 checks, zero page errors. Includes portrait, landscape, tablet, desktop; all targets >=43px, no overlaps, overflow, broken images or offscreen controls. Touch and mouse: bet +/-/select, manual spin, last win/balance display, double activation (one request, concurrency one), turbo, auto start/stop, bonus cancel/quantity/single purchase, sound toggle, info, close/reopen. RPCs stubbed; no real wagers or database writes. Audible playback not manually assessed.
+
+Evidence: [screenshots/results](../output/shogun-mobile/), [design and original sources](../output/realms-overhaul/shogun-sakura/). Before: `before-*.png`; after: `after-*.png`; result: `after-results.json`.
+
+### snowglobe-sorcery
+
+Winter music box: frosted account windows, a glass globe spin above its wager pedestal, flanking auto/bonus snowbanks and paired lower switches.
+
+Modified files: `src/games/snowglobe-sorcery/SnowglobeConsole.tsx`, `src/games/snowglobe-sorcery/snowglobe-layout.css`, `src/games/snowglobe-sorcery/GameView.tsx`.
+
+Responsive and functional QA: 12 viewports, 27 checks, zero page errors. Includes portrait, landscape, tablet, desktop; all targets >=43px, no overlaps, overflow, broken images or offscreen controls. Touch and mouse: bet +/-/select, manual spin, last win/balance display, double activation (one request, concurrency one), turbo, auto start/stop, bonus cancel/quantity/single purchase, sound toggle, info, close/reopen. RPCs stubbed; no real wagers or database writes. Audible playback not manually assessed.
+
+Evidence: [screenshots/results](../output/snowglobe-mobile/), [design and original sources](../output/realms-overhaul/snowglobe-sorcery/). Before: `before-*.png`; after: `after-*.png`; result: `after-results.json`.
+
+### stag-spirit-glade
+
+Spirit clearing: carved account tablets and a separate wager, tall antler-grove spin alcove on the left, four mossy stone actions on the right.
+
+Modified files: `src/games/stag-spirit-glade/StagConsole.tsx`, `src/games/stag-spirit-glade/stag-layout.css`, `src/games/stag-spirit-glade/GameView.tsx`.
+
+Responsive and functional QA: 12 viewports, 27 checks, zero page errors. Includes portrait, landscape, tablet, desktop; all targets >=43px, no overlaps, overflow, broken images or offscreen controls. Touch and mouse: bet +/-/select, manual spin, last win/balance display, double activation (one request, concurrency one), turbo, auto start/stop, bonus cancel/quantity/single purchase, sound toggle, info, close/reopen. RPCs stubbed; no real wagers or database writes. Audible playback not manually assessed.
+
+Evidence: [screenshots/results](../output/stag-mobile/), [design and original sources](../output/realms-overhaul/stag-spirit-glade/). Before: `before-*.png`; after: `after-*.png`; result: `after-results.json`.

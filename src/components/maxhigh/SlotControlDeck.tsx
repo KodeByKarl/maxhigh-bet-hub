@@ -1,3 +1,8 @@
+import { StagConsole } from "@/games/stag-spirit-glade/StagConsole";
+import { SnowglobeConsole } from "@/games/snowglobe-sorcery/SnowglobeConsole";
+import { ShogunConsole } from "@/games/shogun-sakura/ShogunConsole";
+import { SaturnConsole } from "@/games/saturn-rings/SaturnConsole";
+import { SalamanderConsole } from "@/games/salamander-sun/SalamanderConsole";
 import { RocketConsole } from "@/games/rocket-rendezvous/RocketConsole";
 import { ParlorConsole } from "@/games/potion-parlor/ParlorConsole";
 import { PrismConsole } from "@/games/polar-prism/PrismConsole";
@@ -277,6 +282,11 @@ function StandardSlotControlDeck({
 
 /** Keep every other game's existing deck unchanged. Realms gameplay retains all callbacks. */
 export function SlotControlDeck(props: SlotControlDeckProps) {
+  if (props.gameId === "stag-spirit-glade") return <StagConsole {...props} />;
+  if (props.gameId === "snowglobe-sorcery") return <SnowglobeConsole {...props} />;
+  if (props.gameId === "shogun-sakura") return <ShogunConsole {...props} />;
+  if (props.gameId === "saturn-rings") return <SaturnConsole {...props} />;
+  if (props.gameId === "salamander-sun") return <SalamanderConsole {...props} />;
   if (props.gameId === "rocket-rendezvous") return <RocketConsole {...props} />;
   if (props.gameId === "potion-parlor") return <ParlorConsole {...props} />;
   if (props.gameId === "polar-prism") return <PrismConsole {...props} />;

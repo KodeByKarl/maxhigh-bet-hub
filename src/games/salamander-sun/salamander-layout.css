@@ -1,0 +1,614 @@
+/* Salamander Sun: Sunrise dais: account horizon, four solar tablets, a round sun disc inside a wide radiant cradle, and a bottom heat wager rail. Presentation only; original assets and engine retained. */
+[data-game-view="salamander-sun"] {
+  --ui-accent: #fbbf5a;
+  --ui-soft: #fff2cd;
+  --ui-bg: #2a140f;
+  --ui-face: #593224;
+  --ui-hud: 308px;
+  container-type: size;
+  overflow: clip;
+  color: var(--ui-soft);
+  font-family: Bahnschrift, sans-serif;
+}
+.ss-identity {
+  position: absolute;
+  top: max(18px, env(safe-area-inset-top));
+  left: 18px;
+  right: 124px;
+  z-index: 25;
+  display: grid;
+  gap: 5px;
+  pointer-events: none;
+}
+.ss-identity__brand {
+  font:
+    600 8px/1.3 "Segoe UI",
+    sans-serif;
+  letter-spacing: 0.18em;
+  color: var(--ui-soft);
+  opacity: 0.8;
+  text-shadow: 0 2px 8px #000;
+}
+.ss-identity h1 {
+  margin: 0;
+  font-size: clamp(19px, 5.6cqw, 30px);
+  line-height: 1.05;
+  letter-spacing: 0.025em;
+  color: var(--ui-soft);
+  text-shadow: 0 2px 10px #000;
+  white-space: normal;
+}
+.ss-identity h1 span {
+  display: block;
+  color: var(--ui-accent);
+}
+[data-game-view="salamander-sun"] [data-realms-game] > button {
+  top: max(18px, env(safe-area-inset-top));
+  right: 66px;
+  width: 44px;
+  height: 44px;
+  border-radius: 18px;
+  border: 1px solid color-mix(in srgb, var(--ui-accent) 45%, transparent);
+  background: color-mix(in srgb, var(--ui-bg) 90%, transparent);
+}
+[data-game-modal="salamander-sun"] > div:has(> button[aria-label="Close game"]) {
+  top: max(18px, env(safe-area-inset-top));
+  right: 12px;
+}
+[data-game-modal="salamander-sun"] button[aria-label="Close game"] {
+  width: 44px;
+  height: 44px;
+  border-radius: 18px;
+  border: 1px solid color-mix(in srgb, #fbbf5a 45%, transparent);
+  background: #2a140fe6;
+}
+body:has(.bb-close) [data-game-modal="salamander-sun"] > div:has(> button[aria-label="Close game"]),
+body:has(.bb-close) [data-game-modal="salamander-sun"] [data-realms-game] > button {
+  visibility: hidden;
+  pointer-events: none;
+}
+[data-game-view="salamander-sun"] .realms-playfield {
+  padding: 100px 16px max(20px, env(safe-area-inset-bottom));
+  align-items: center;
+  justify-content: center;
+}
+[data-game-view="salamander-sun"] .realms-playfield > div {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: auto auto;
+  align-content: center;
+  justify-items: center;
+  gap: 22px;
+  width: 100%;
+  max-width: 800px;
+  height: 100%;
+  margin-inline: auto;
+}
+[data-game-view="salamander-sun"] .realms-stage {
+  flex: none;
+  height: auto;
+  min-height: 0;
+  width: 100%;
+}
+[data-game-view="salamander-sun"] .realms-well {
+  padding: 12px !important;
+  margin-inline: auto;
+  border: 1px solid color-mix(in srgb, var(--ui-accent) 50%, transparent);
+  border-radius: 38px 38px 12px 12px !important;
+  clip-path: none !important;
+  mask: none !important;
+  background: linear-gradient(145deg, #593224f2, #2a140ff5) !important;
+  box-shadow:
+    inset 0 1px 0 #fff2,
+    0 14px 36px #0009 !important;
+}
+[data-game-view="salamander-sun"] .realms-well::before,
+[data-game-view="salamander-sun"] .realms-well::after {
+  display: none !important;
+}
+[data-game-view="salamander-sun"] .realms-reel-grid {
+  width: min(
+    calc(100cqw - 58px),
+    640px,
+    calc(
+      (100cqh - 100px - var(--ui-hud) - 22px - max(20px, env(safe-area-inset-bottom)) - 26px) * 1.5
+    )
+  ) !important;
+  max-height: none !important;
+  border: 0 !important;
+  background: none !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+  gap: clamp(4px, 1.3cqw, 9px) !important;
+}
+[data-game-view="salamander-sun"] .realms-reel-cell {
+  border-radius: 50% !important;
+  clip-path: none !important;
+  mask: none !important;
+  border: 1px solid color-mix(in srgb, var(--ui-accent) 22%, transparent) !important;
+  background-color: color-mix(in srgb, var(--ui-face) 70%, var(--ui-bg)) !important;
+  background-image: radial-gradient(at 35% 20%, #fff1, transparent 75%) !important;
+  box-shadow: inset 0 1px 0 #fff1 !important;
+}
+[data-game-view="salamander-sun"] .realms-reel-cell[data-winning="true"] {
+  border-color: var(--ui-soft) !important;
+  box-shadow:
+    inset 0 0 12px color-mix(in srgb, var(--ui-accent) 40%, transparent),
+    0 0 12px var(--ui-accent) !important;
+}
+[data-game-view="salamander-sun"] .realms-reel-art {
+  inset: 5%;
+}
+[data-game-view="salamander-sun"] .realms-reel-grid img {
+  scale: 0.95;
+}
+.ss-console {
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-rows: 56px 48px 92px 48px;
+  grid-template-areas: "ledger ledger ledger ledger" "turbo autospin bonus info" "spin spin spin spin" "bet bet bet bet";
+  gap: 12px;
+  padding: 14px;
+  width: 100%;
+  max-width: 440px;
+  justify-self: center;
+  isolation: isolate;
+  border: 1px solid color-mix(in srgb, var(--ui-accent) 30%, transparent);
+  border-radius: 18px;
+  background: #2a140feb;
+  box-shadow: 0 14px 30px #0006;
+}
+.ss-console::before,
+.ss-console::after {
+  display: none !important;
+}
+.ss-console button {
+  min-width: 0;
+  cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  transition:
+    filter 0.15s,
+    transform 0.15s;
+  font-family: inherit;
+}
+.ss-console button:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+.ss-console button:not(:disabled):active {
+  transform: scale(0.97);
+}
+.ss-console button:focus-visible {
+  outline: 2px solid var(--ui-soft);
+  outline-offset: 3px;
+}
+.ss-console strong,
+.ss-console em {
+  font-variant-numeric: tabular-nums;
+  font-style: normal;
+  white-space: nowrap;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.ss-ledger {
+  grid-area: ledger;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+.ss-ledger > i {
+  display: none;
+}
+.ss-meter {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+.ss-meter[data-meter="win"] {
+  text-align: right;
+}
+.ss-meter > span,
+.ss-bet__value > span {
+  font:
+    600 9px/1.2 "Segoe UI",
+    sans-serif;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--ui-soft);
+  opacity: 0.8;
+}
+.ss-meter strong {
+  font:
+    700 clamp(15px, 4.5cqw, 21px)/1.2 "Segoe UI",
+    sans-serif;
+  color: var(--ui-soft);
+}
+.ss-meter[data-winning="true"] strong {
+  color: var(--ui-accent);
+}
+.ss-bet {
+  grid-area: bet;
+  display: grid;
+  grid-template-columns: 48px minmax(0, 1fr) 48px;
+  gap: 8px;
+  min-width: 0;
+}
+.ss-step,
+.ss-bet__value,
+.ss-chip {
+  border: 1px solid color-mix(in srgb, var(--ui-accent) 35%, transparent);
+  border-radius: 18px;
+  background: linear-gradient(145deg, var(--ui-face), var(--ui-bg));
+  color: var(--ui-soft);
+  box-shadow: inset 0 1px 0 #fff1;
+}
+.ss-step {
+  display: grid;
+  place-items: center;
+  min-height: 44px;
+  color: var(--ui-accent);
+}
+.ss-bet__value {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  min-height: 44px;
+}
+.ss-bet__value strong {
+  font:
+    700 16px/1 "Segoe UI",
+    sans-serif;
+}
+.ss-side {
+  display: contents;
+}
+.ss-turbo {
+  grid-area: turbo;
+}
+.ss-auto {
+  grid-area: autospin;
+}
+.ss-bonus {
+  grid-area: bonus;
+}
+.ss-info {
+  grid-area: info;
+}
+.ss-chip {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  padding: 4px;
+  min-height: 44px;
+}
+.ss-chip > svg {
+  width: 16px;
+  height: 16px;
+  color: var(--ui-accent);
+}
+.ss-chip > span {
+  font:
+    700 8px/1.1 "Segoe UI",
+    sans-serif;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+}
+.ss-chip > em {
+  font:
+    600 10px/1.1 "Segoe UI",
+    sans-serif;
+}
+.ss-turbo[aria-pressed="true"],
+.ss-auto[aria-pressed="true"] {
+  outline: 1px solid var(--ui-accent);
+  background: color-mix(in srgb, var(--ui-accent) 25%, var(--ui-bg));
+}
+.ss-spin-mount {
+  grid-area: spin;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 0;
+  min-height: 0;
+}
+.ss-spin {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  width: 100%;
+  height: 100%;
+  min-width: 44px;
+  min-height: 44px;
+  border: 1px solid var(--ui-accent);
+  border-radius: 18px;
+  background: linear-gradient(140deg, var(--ui-soft), var(--ui-accent));
+  color: var(--ui-bg);
+  clip-path: none;
+  padding: 4px;
+  isolation: isolate;
+}
+.ss-spin::before,
+.ss-spin::after {
+  display: none !important;
+}
+.ss-spin > i {
+  display: none;
+}
+.ss-spin > svg {
+  width: 17px;
+  height: 17px;
+}
+.ss-spin > span {
+  font:
+    800 11px/1 "Segoe UI",
+    sans-serif;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+}
+.ss-spin__art {
+  width: 44px;
+  height: 44px;
+  object-fit: contain;
+  pointer-events: none;
+}
+.ss-spin[data-state="busy"] .ss-spin__art {
+  animation: ss-ui-turn 3s linear infinite;
+}
+.ss-spin[data-state="auto"] {
+  box-shadow: 0 0 0 2px var(--ui-soft);
+}
+.ss-spin[data-state="free"] {
+  filter: hue-rotate(15deg);
+}
+@keyframes ss-ui-turn {
+  to {
+    rotate: 360deg;
+  }
+}
+.ss-console {
+  border-radius: 44px 44px 14px 14px;
+  background: linear-gradient(#673820cc, #25110ef2);
+  border: 1px solid #fbbf5a66;
+}
+.ss-ledger {
+  padding: 8px 12px;
+  border-bottom: 1px solid #fbbf5a44;
+}
+.ss-chip {
+  border-radius: 22px 22px 8px 8px;
+  background: #371b14;
+}
+.ss-spin-mount {
+  background: radial-gradient(ellipse at 50% 100%, #ffb34744, transparent 70%);
+  border-bottom: 1px solid #fbbf5a66;
+  border-radius: 45% 45% 0 0;
+  padding: 0;
+}
+.ss-spin {
+  width: 88px;
+  height: 88px;
+  border-radius: 50%;
+  background: radial-gradient(at 35% 20%, #fff3a4, #ffc34f 45%, #bb5a22);
+  border: 3px solid #edbb63;
+  box-shadow:
+    0 0 0 5px #fbbf5a22,
+    inset 0 0 0 1px #fff6;
+  color: #5c290d;
+}
+.ss-spin__art {
+  width: 44px;
+  height: 44px;
+}
+.ss-spin > svg {
+  display: none;
+}
+.ss-bet__value {
+  border-radius: 8px 8px 24px 24px;
+  border-color: #fbbf5a66;
+}
+.ss-step {
+  border-radius: 50%;
+}
+[data-game-view="salamander-sun"] .realms-well {
+  border-top: 3px solid #fbbf5a88 !important;
+  background: radial-gradient(at 50% 0, #683e23ef, #24110ff5) !important;
+}
+[data-sonner-toast].ss-toast {
+  display: flex !important;
+  justify-content: center;
+  width: auto !important;
+  padding: 0 !important;
+  border: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  pointer-events: none;
+}
+.ss-toast__pill {
+  padding: 4px 12px;
+  border: 1px solid #fbbf5a66;
+  border-radius: 20px;
+  background: #2a140fee;
+  color: #fff2cd;
+  font:
+    600 11px/1.3 "Segoe UI",
+    sans-serif;
+  white-space: nowrap;
+}
+[data-sonner-toaster]:has(.ss-toast) {
+  --offset-top: 92px !important;
+  --mobile-offset-top: 92px !important;
+}
+@container (max-width:350px) {
+  .ss-console {
+    gap: 8px;
+    padding: 10px;
+  }
+  .ss-chip > span {
+    font-size: 8px;
+  }
+  .ss-spin-mount {
+    padding: 4px;
+  }
+  .ss-bet {
+    grid-template-columns: 44px minmax(0, 1fr) 44px;
+    gap: 4px;
+  }
+}
+@container (orientation:portrait) and (max-height:680px) {
+  [data-game-view="salamander-sun"] .realms-playfield {
+    padding: 88px 16px max(12px, env(safe-area-inset-bottom));
+  }
+  [data-game-view="salamander-sun"] .realms-playfield > div {
+    gap: 14px;
+  }
+  [data-game-view="salamander-sun"] .realms-reel-grid {
+    width: min(
+      calc(100cqw - 58px),
+      calc((100cqh - 88px - 284px - 14px - max(12px, env(safe-area-inset-bottom)) - 26px) * 1.5)
+    ) !important;
+  }
+  .ss-console {
+    gap: 8px;
+    padding: 8px;
+    grid-template-rows: 52px 44px 88px 44px;
+  }
+  .ss-spin {
+    max-width: 100%;
+    max-height: 100%;
+  }
+  .ss-meter strong {
+    font-size: 16px;
+  }
+}
+@container (orientation:landscape) and (max-height:600px) {
+  [data-game-view="salamander-sun"] .realms-playfield {
+    padding: 58px 16px max(10px, env(safe-area-inset-bottom));
+  }
+  [data-game-view="salamander-sun"] .realms-playfield > div {
+    grid-template-columns: minmax(0, 1fr) 300px;
+    grid-template-rows: auto;
+    gap: 16px;
+    max-width: 1100px;
+  }
+  .ss-identity {
+    top: 12px;
+  }
+  .ss-identity h1 {
+    font-size: 20px;
+  }
+  .ss-identity h1 span {
+    display: inline;
+  }
+  .ss-console {
+    padding: 8px;
+    gap: 6px;
+    grid-template-rows: 44px 44px 78px 44px;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+  .ss-meter {
+    gap: 2px;
+  }
+  .ss-meter strong {
+    font-size: 16px;
+  }
+  .ss-meter > span {
+    font-size: 8px;
+  }
+  .ss-chip {
+    padding: 2px;
+    gap: 1px;
+  }
+  .ss-bet {
+    grid-template-columns: 44px minmax(0, 1fr) 44px;
+    gap: 4px;
+  }
+  .ss-spin {
+    max-width: 100%;
+    max-height: 100%;
+  }
+  .ss-spin__art {
+    width: 38px;
+    height: 38px;
+  }
+  .ss-spin-mount {
+    padding: 4px;
+  }
+  [data-game-view="salamander-sun"] .realms-reel-grid {
+    width: min(
+      calc(100cqw - 32px - 300px - 16px - 26px),
+      calc((100cqh - 58px - max(10px, env(safe-area-inset-bottom)) - 26px) * 1.5)
+    ) !important;
+  }
+}
+@container (orientation:landscape) and (max-height:360px) {
+  [data-game-view="salamander-sun"] .realms-playfield > div {
+    grid-template-columns: minmax(0, 1fr) 280px;
+  }
+  [data-game-view="salamander-sun"] .realms-reel-grid {
+    width: min(
+      calc(100cqw - 32px - 280px - 16px - 26px),
+      calc((100cqh - 58px - 10px - 26px) * 1.5)
+    ) !important;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .ss-spin[data-state="busy"] .ss-spin__art {
+    animation: none;
+  }
+  .ss-console button {
+    transition: none;
+  }
+}
+/* Shared dialogs keep their handlers; keep content scrollable on short screens and Close tappable. */
+[data-game-view="salamander-sun"] [aria-label="Auto Spin Configuration"] > div {
+  display: flex;
+  flex-direction: column;
+  max-height: calc(100% - 12px);
+}
+[data-game-view="salamander-sun"] [aria-label="Auto Spin Configuration"] > div > div:nth-child(2) {
+  min-height: 0;
+  flex: 1 1 auto;
+  max-height: none;
+}
+[data-game-view="salamander-sun"] [aria-label="Auto Spin Configuration"] > div > div:first-child,
+[data-game-view="salamander-sun"] [aria-label="Auto Spin Configuration"] > div > div:last-child {
+  flex-shrink: 0;
+}
+[data-game-view="salamander-sun"] div:has(> h3):has(> .grid.grid-cols-4) {
+  display: flex;
+  flex-direction: column;
+  max-height: calc(100dvh - 32px);
+  padding: 20px;
+}
+[data-game-view="salamander-sun"] div:has(> h3) > .grid.grid-cols-4 {
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 4px;
+}
+[data-game-view="salamander-sun"] div:has(> .grid.grid-cols-4) > h3 {
+  padding-right: 40px;
+  font-size: 16px;
+  text-align: left;
+}
+[data-game-view="salamander-sun"] [aria-label="Paytable"] button[aria-label="Close"],
+[data-game-view="salamander-sun"] div:has(> h3) > button[aria-label="Close"] {
+  min-width: 44px;
+  min-height: 44px;
+  flex-shrink: 0;
+}
+[data-game-view="salamander-sun"] div:has(> h3) > button[aria-label="Close"] {
+  z-index: 1;
+}
