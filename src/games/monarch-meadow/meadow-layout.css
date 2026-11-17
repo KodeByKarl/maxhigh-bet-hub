@@ -584,6 +584,34 @@ body:has(.bb-close) [data-game-modal="monarch-meadow"] [data-realms-game] > butt
     ) !important;
   }
 }
+@container (min-width:1000px) and (min-height:650px) {
+  [data-game-view="monarch-meadow"] .realms-playfield {
+    padding-inline: 24px;
+  }
+  [data-game-view="monarch-meadow"] .realms-playfield > div {
+    grid-template-columns: 400px minmax(0, 1fr);
+    grid-template-rows: auto;
+    align-items: center;
+    gap: 32px;
+    max-width: 1200px;
+  }
+  [data-game-view="monarch-meadow"] .realms-stage {
+    grid-row: 1;
+    grid-column: 2;
+  }
+  .mm-console {
+    grid-row: 1;
+    grid-column: 1;
+    max-width: 400px;
+  }
+  [data-game-view="monarch-meadow"] .realms-reel-grid {
+    width: min(
+      calc(100cqw - 48px - 400px - 32px - 26px),
+      640px,
+      calc((100cqh - 100px - max(20px, env(safe-area-inset-bottom)) - 26px) * 0.8333333333333334)
+    ) !important;
+  }
+}
 @media (prefers-reduced-motion: reduce) {
   .mm-spin[data-state="busy"] .mm-spin__art {
     animation: none;

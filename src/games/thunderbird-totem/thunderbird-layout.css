@@ -1,0 +1,654 @@
+/* Thunderbird Totem: Storm totem: stacked carved account lintel, central thunder seal crowning a wager beam, four independently carved totem switches along the base. Presentation only; original assets and engine retained. */
+[data-game-view="thunderbird-totem"] {
+  --ui-accent: #e7c179;
+  --ui-soft: #fff3d1;
+  --ui-bg: #242226;
+  --ui-face: #4a4548;
+  --ui-hud: 306px;
+  container-type: size;
+  overflow: clip;
+  color: var(--ui-soft);
+  font-family: Bahnschrift, sans-serif;
+}
+.tb-identity {
+  position: absolute;
+  top: max(18px, env(safe-area-inset-top));
+  left: 18px;
+  right: 124px;
+  z-index: 25;
+  display: grid;
+  gap: 5px;
+  pointer-events: none;
+}
+.tb-identity__brand {
+  font:
+    600 8px/1.3 "Segoe UI",
+    sans-serif;
+  letter-spacing: 0.18em;
+  color: var(--ui-soft);
+  opacity: 0.8;
+  text-shadow: 0 2px 8px #000;
+}
+.tb-identity h1 {
+  margin: 0;
+  font-size: clamp(19px, 5.6cqw, 30px);
+  line-height: 1.05;
+  letter-spacing: 0.025em;
+  color: var(--ui-soft);
+  text-shadow: 0 2px 10px #000;
+  white-space: normal;
+}
+.tb-identity h1 span {
+  display: block;
+  color: var(--ui-accent);
+}
+[data-game-view="thunderbird-totem"] [data-realms-game] > button {
+  top: max(18px, env(safe-area-inset-top));
+  right: 66px;
+  width: 44px;
+  height: 44px;
+  border-radius: 4px 14px 4px 14px;
+  border: 1px solid color-mix(in srgb, var(--ui-accent) 45%, transparent);
+  background: color-mix(in srgb, var(--ui-bg) 90%, transparent);
+}
+[data-game-modal="thunderbird-totem"] > div:has(> button[aria-label="Close game"]) {
+  top: max(18px, env(safe-area-inset-top));
+  right: 12px;
+}
+[data-game-modal="thunderbird-totem"] button[aria-label="Close game"] {
+  width: 44px;
+  height: 44px;
+  border-radius: 4px 14px 4px 14px;
+  border: 1px solid color-mix(in srgb, #e7c179 45%, transparent);
+  background: #242226e6;
+}
+body:has(.bb-close)
+  [data-game-modal="thunderbird-totem"]
+  > div:has(> button[aria-label="Close game"]),
+body:has(.bb-close) [data-game-modal="thunderbird-totem"] [data-realms-game] > button {
+  visibility: hidden;
+  pointer-events: none;
+}
+[data-game-view="thunderbird-totem"] .realms-playfield {
+  padding: 100px 16px max(20px, env(safe-area-inset-bottom));
+  align-items: center;
+  justify-content: center;
+}
+[data-game-view="thunderbird-totem"] .realms-playfield > div {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: auto auto;
+  align-content: center;
+  justify-items: center;
+  gap: 22px;
+  width: 100%;
+  max-width: 800px;
+  height: 100%;
+  margin-inline: auto;
+}
+[data-game-view="thunderbird-totem"] .realms-stage {
+  flex: none;
+  height: auto;
+  min-height: 0;
+  width: 100%;
+}
+[data-game-view="thunderbird-totem"] .realms-well {
+  padding: 12px !important;
+  margin-inline: auto;
+  border: 1px solid color-mix(in srgb, var(--ui-accent) 50%, transparent);
+  border-radius: 8px 28px 8px 28px !important;
+  clip-path: none !important;
+  mask: none !important;
+  background: linear-gradient(145deg, #4a4548f2, #242226f5) !important;
+  box-shadow:
+    inset 0 1px 0 #fff2,
+    0 14px 36px #0009 !important;
+}
+[data-game-view="thunderbird-totem"] .realms-well::before,
+[data-game-view="thunderbird-totem"] .realms-well::after {
+  display: none !important;
+}
+[data-game-view="thunderbird-totem"] .realms-reel-grid {
+  width: min(
+    calc(100cqw - 58px),
+    640px,
+    calc(
+      (100cqh - 100px - var(--ui-hud) - 22px - max(20px, env(safe-area-inset-bottom)) - 26px) * 1
+    )
+  ) !important;
+  max-height: none !important;
+  border: 0 !important;
+  background: none !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+  gap: clamp(4px, 1.3cqw, 9px) !important;
+}
+[data-game-view="thunderbird-totem"] .realms-reel-cell {
+  border-radius: 18% !important;
+  clip-path: none !important;
+  mask: none !important;
+  border: 1px solid color-mix(in srgb, var(--ui-accent) 22%, transparent) !important;
+  background-color: color-mix(in srgb, var(--ui-face) 70%, var(--ui-bg)) !important;
+  background-image: radial-gradient(at 35% 20%, #fff1, transparent 75%) !important;
+  box-shadow: inset 0 1px 0 #fff1 !important;
+}
+[data-game-view="thunderbird-totem"] .realms-reel-cell[data-winning="true"] {
+  border-color: var(--ui-soft) !important;
+  box-shadow:
+    inset 0 0 12px color-mix(in srgb, var(--ui-accent) 40%, transparent),
+    0 0 12px var(--ui-accent) !important;
+}
+[data-game-view="thunderbird-totem"] .realms-reel-art {
+  inset: 5%;
+}
+[data-game-view="thunderbird-totem"] .realms-reel-grid img {
+  scale: 0.95;
+}
+.tb-console {
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-rows: 58px 88px 48px 48px;
+  grid-template-areas: "ledger ledger ledger ledger" "spin spin spin spin" "bet bet bet bet" "bonus info turbo autospin";
+  gap: 12px;
+  padding: 14px;
+  width: 100%;
+  max-width: 440px;
+  justify-self: center;
+  isolation: isolate;
+  border: 1px solid color-mix(in srgb, var(--ui-accent) 30%, transparent);
+  border-radius: 4px 14px 4px 14px;
+  background: #242226eb;
+  box-shadow: 0 14px 30px #0006;
+}
+.tb-console::before,
+.tb-console::after {
+  display: none !important;
+}
+.tb-console button {
+  min-width: 0;
+  cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  transition:
+    filter 0.15s,
+    transform 0.15s;
+  font-family: inherit;
+}
+.tb-console button:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+.tb-console button:not(:disabled):active {
+  transform: scale(0.97);
+}
+.tb-console button:focus-visible {
+  outline: 2px solid var(--ui-soft);
+  outline-offset: 3px;
+}
+.tb-console strong,
+.tb-console em {
+  font-variant-numeric: tabular-nums;
+  font-style: normal;
+  white-space: nowrap;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.tb-ledger {
+  grid-area: ledger;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+.tb-ledger > i {
+  display: none;
+}
+.tb-meter {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+.tb-meter[data-meter="win"] {
+  text-align: right;
+}
+.tb-meter > span,
+.tb-bet__value > span {
+  font:
+    600 9px/1.2 "Segoe UI",
+    sans-serif;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--ui-soft);
+  opacity: 0.8;
+}
+.tb-meter strong {
+  font:
+    700 clamp(15px, 4.5cqw, 21px)/1.2 "Segoe UI",
+    sans-serif;
+  color: var(--ui-soft);
+}
+.tb-meter[data-winning="true"] strong {
+  color: var(--ui-accent);
+}
+.tb-bet {
+  grid-area: bet;
+  display: grid;
+  grid-template-columns: 48px minmax(0, 1fr) 48px;
+  gap: 8px;
+  min-width: 0;
+}
+.tb-step,
+.tb-bet__value,
+.tb-chip {
+  border: 1px solid color-mix(in srgb, var(--ui-accent) 35%, transparent);
+  border-radius: 4px 14px 4px 14px;
+  background: linear-gradient(145deg, var(--ui-face), var(--ui-bg));
+  color: var(--ui-soft);
+  box-shadow: inset 0 1px 0 #fff1;
+}
+.tb-step {
+  display: grid;
+  place-items: center;
+  min-height: 44px;
+  color: var(--ui-accent);
+}
+.tb-bet__value {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  min-height: 44px;
+}
+.tb-bet__value strong {
+  font:
+    700 16px/1 "Segoe UI",
+    sans-serif;
+}
+.tb-side {
+  display: contents;
+}
+.tb-turbo {
+  grid-area: turbo;
+}
+.tb-auto {
+  grid-area: autospin;
+}
+.tb-bonus {
+  grid-area: bonus;
+}
+.tb-info {
+  grid-area: info;
+}
+.tb-chip {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  padding: 4px;
+  min-height: 44px;
+}
+.tb-chip > svg {
+  width: 16px;
+  height: 16px;
+  color: var(--ui-accent);
+}
+.tb-chip > span {
+  font:
+    700 8px/1.1 "Segoe UI",
+    sans-serif;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+}
+.tb-chip > em {
+  font:
+    600 10px/1.1 "Segoe UI",
+    sans-serif;
+}
+.tb-turbo[aria-pressed="true"],
+.tb-auto[aria-pressed="true"] {
+  outline: 1px solid var(--ui-accent);
+  background: color-mix(in srgb, var(--ui-accent) 25%, var(--ui-bg));
+}
+.tb-spin-mount {
+  grid-area: spin;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 0;
+  min-height: 0;
+}
+.tb-spin {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  width: 100%;
+  height: 100%;
+  min-width: 44px;
+  min-height: 44px;
+  border: 1px solid var(--ui-accent);
+  border-radius: 4px 14px 4px 14px;
+  background: linear-gradient(140deg, var(--ui-soft), var(--ui-accent));
+  color: var(--ui-bg);
+  clip-path: none;
+  padding: 4px;
+  isolation: isolate;
+}
+.tb-spin::before,
+.tb-spin::after {
+  display: none !important;
+}
+.tb-spin > i {
+  display: none;
+}
+.tb-spin > svg {
+  width: 17px;
+  height: 17px;
+}
+.tb-spin > span {
+  font:
+    800 11px/1 "Segoe UI",
+    sans-serif;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+}
+.tb-spin__art {
+  width: 44px;
+  height: 44px;
+  object-fit: contain;
+  pointer-events: none;
+}
+.tb-spin[data-state="busy"] .tb-spin__art {
+  animation: tb-ui-turn 3s linear infinite;
+}
+.tb-spin[data-state="auto"] {
+  box-shadow: 0 0 0 2px var(--ui-soft);
+}
+.tb-spin[data-state="free"] {
+  filter: hue-rotate(15deg);
+}
+@keyframes tb-ui-turn {
+  to {
+    rotate: 360deg;
+  }
+}
+.tb-console {
+  border: 0;
+  border-inline: 4px solid #8c7050;
+  background: linear-gradient(140deg, #514745ed, #1f2027f5);
+  border-radius: 4px 18px 4px 18px;
+}
+.tb-ledger {
+  padding: 8px 12px;
+  border-block: 2px solid #9b805666;
+  background: #28262b;
+}
+.tb-spin-mount {
+  padding: 4px 12px;
+  border-radius: 8px 28px 8px 28px;
+  background: linear-gradient(90deg, #42536799, #23232d, #42536799);
+  border: 1px solid #e7c17977;
+}
+.tb-spin {
+  width: 100%;
+  height: 100%;
+  border-radius: 6px 24px 6px 24px;
+  flex-direction: row;
+  gap: 18px;
+  background: linear-gradient(105deg, #3f526e, #7992ad 50%, #3f526e);
+  border: 1px solid #d8eaff88;
+  color: #ffedc7;
+}
+.tb-spin__art {
+  width: 52px;
+  height: 52px;
+}
+.tb-spin > svg {
+  display: none;
+}
+.tb-spin > span {
+  font-size: 17px;
+  letter-spacing: 0.2em;
+}
+.tb-chip {
+  background: #3e3430;
+  border: 1px solid #c29b6066;
+  border-top: 3px solid #e7c17977;
+  border-radius: 3px 10px 3px 10px;
+}
+.tb-bet__value {
+  background: #1c222c;
+  border-color: #a9bfce66;
+}
+.tb-step {
+  background: #4d4740;
+}
+[data-game-view="thunderbird-totem"] .realms-well {
+  border-inline: 4px solid #8c7050 !important;
+  border-block: 1px solid #d8b97a77 !important;
+}
+[data-sonner-toast].tb-toast {
+  display: flex !important;
+  justify-content: center;
+  width: auto !important;
+  padding: 0 !important;
+  border: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  pointer-events: none;
+}
+.tb-toast__pill {
+  padding: 4px 12px;
+  border: 1px solid #e7c17966;
+  border-radius: 20px;
+  background: #242226ee;
+  color: #fff3d1;
+  font:
+    600 11px/1.3 "Segoe UI",
+    sans-serif;
+  white-space: nowrap;
+}
+[data-sonner-toaster]:has(.tb-toast) {
+  --offset-top: 92px !important;
+  --mobile-offset-top: 92px !important;
+}
+@container (max-width:350px) {
+  .tb-console {
+    gap: 8px;
+    padding: 10px;
+  }
+  .tb-chip > span {
+    font-size: 8px;
+  }
+  .tb-spin-mount {
+    padding: 4px;
+  }
+  .tb-bet {
+    grid-template-columns: 44px minmax(0, 1fr) 44px;
+    gap: 4px;
+  }
+}
+@container (orientation:portrait) and (max-height:680px) {
+  [data-game-view="thunderbird-totem"] .realms-playfield {
+    padding: 88px 16px max(12px, env(safe-area-inset-bottom));
+  }
+  [data-game-view="thunderbird-totem"] .realms-playfield > div {
+    gap: 14px;
+  }
+  [data-game-view="thunderbird-totem"] .realms-reel-grid {
+    width: min(
+      calc(100cqw - 58px),
+      calc((100cqh - 88px - 282px - 14px - max(12px, env(safe-area-inset-bottom)) - 26px) * 1)
+    ) !important;
+  }
+  .tb-console {
+    gap: 8px;
+    padding: 8px;
+    grid-template-rows: 54px 84px 44px 44px;
+  }
+  .tb-spin {
+    max-width: 100%;
+    max-height: 100%;
+  }
+  .tb-meter strong {
+    font-size: 16px;
+  }
+}
+@container (orientation:landscape) and (max-height:600px) {
+  [data-game-view="thunderbird-totem"] .realms-playfield {
+    padding: 58px 16px max(10px, env(safe-area-inset-bottom));
+  }
+  [data-game-view="thunderbird-totem"] .realms-playfield > div {
+    grid-template-columns: minmax(0, 1fr) 300px;
+    grid-template-rows: auto;
+    gap: 16px;
+    max-width: 1100px;
+  }
+  .tb-identity {
+    top: 12px;
+  }
+  .tb-identity h1 {
+    font-size: 20px;
+  }
+  .tb-identity h1 span {
+    display: inline;
+  }
+  .tb-console {
+    padding: 8px;
+    gap: 6px;
+    grid-template-rows: 44px 74px 44px 44px;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+  .tb-meter {
+    gap: 2px;
+  }
+  .tb-meter strong {
+    font-size: 16px;
+  }
+  .tb-meter > span {
+    font-size: 8px;
+  }
+  .tb-chip {
+    padding: 2px;
+    gap: 1px;
+  }
+  .tb-bet {
+    grid-template-columns: 44px minmax(0, 1fr) 44px;
+    gap: 4px;
+  }
+  .tb-spin {
+    max-width: 100%;
+    max-height: 100%;
+  }
+  .tb-spin__art {
+    width: 38px;
+    height: 38px;
+  }
+  .tb-spin-mount {
+    padding: 4px;
+  }
+  [data-game-view="thunderbird-totem"] .realms-reel-grid {
+    width: min(
+      calc(100cqw - 32px - 300px - 16px - 26px),
+      calc((100cqh - 58px - max(10px, env(safe-area-inset-bottom)) - 26px) * 1)
+    ) !important;
+  }
+}
+@container (orientation:landscape) and (max-height:360px) {
+  [data-game-view="thunderbird-totem"] .realms-playfield > div {
+    grid-template-columns: minmax(0, 1fr) 280px;
+  }
+  [data-game-view="thunderbird-totem"] .realms-reel-grid {
+    width: min(
+      calc(100cqw - 32px - 280px - 16px - 26px),
+      calc((100cqh - 58px - 10px - 26px) * 1)
+    ) !important;
+  }
+}
+@container (min-width:1000px) and (min-height:650px) {
+  [data-game-view="thunderbird-totem"] .realms-playfield {
+    padding-inline: 24px;
+  }
+  [data-game-view="thunderbird-totem"] .realms-playfield > div {
+    grid-template-columns: minmax(0, 1fr) 400px;
+    grid-template-rows: auto;
+    align-items: center;
+    gap: 32px;
+    max-width: 1200px;
+  }
+  [data-game-view="thunderbird-totem"] .realms-stage {
+    grid-row: 1;
+    grid-column: 1;
+  }
+  .tb-console {
+    grid-row: 1;
+    grid-column: 2;
+    max-width: 400px;
+  }
+  [data-game-view="thunderbird-totem"] .realms-reel-grid {
+    width: min(
+      calc(100cqw - 48px - 400px - 32px - 26px),
+      640px,
+      calc((100cqh - 100px - max(20px, env(safe-area-inset-bottom)) - 26px) * 1)
+    ) !important;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .tb-spin[data-state="busy"] .tb-spin__art {
+    animation: none;
+  }
+  .tb-console button {
+    transition: none;
+  }
+}
+/* Shared dialogs keep their handlers; keep content scrollable on short screens and Close tappable. */
+[data-game-view="thunderbird-totem"] [aria-label="Auto Spin Configuration"] > div {
+  display: flex;
+  flex-direction: column;
+  max-height: calc(100% - 12px);
+}
+[data-game-view="thunderbird-totem"]
+  [aria-label="Auto Spin Configuration"]
+  > div
+  > div:nth-child(2) {
+  min-height: 0;
+  flex: 1 1 auto;
+  max-height: none;
+}
+[data-game-view="thunderbird-totem"] [aria-label="Auto Spin Configuration"] > div > div:first-child,
+[data-game-view="thunderbird-totem"] [aria-label="Auto Spin Configuration"] > div > div:last-child {
+  flex-shrink: 0;
+}
+[data-game-view="thunderbird-totem"] div:has(> h3):has(> .grid.grid-cols-4) {
+  display: flex;
+  flex-direction: column;
+  max-height: calc(100dvh - 32px);
+  padding: 20px;
+}
+[data-game-view="thunderbird-totem"] div:has(> h3) > .grid.grid-cols-4 {
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 4px;
+}
+[data-game-view="thunderbird-totem"] div:has(> .grid.grid-cols-4) > h3 {
+  padding-right: 40px;
+  font-size: 16px;
+  text-align: left;
+}
+[data-game-view="thunderbird-totem"] [aria-label="Paytable"] button[aria-label="Close"],
+[data-game-view="thunderbird-totem"] div:has(> h3) > button[aria-label="Close"] {
+  min-width: 44px;
+  min-height: 44px;
+  flex-shrink: 0;
+}
+[data-game-view="thunderbird-totem"] div:has(> h3) > button[aria-label="Close"] {
+  z-index: 1;
+}

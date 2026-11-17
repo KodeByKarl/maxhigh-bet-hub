@@ -104,6 +104,32 @@ function preloadAssets(urls: string[]) {
   }
 }
 
+/** Compact presentation notifications for the redesigned Realms cabinets. */
+const MINI_TOAST_PREFIX: Record<string, string | undefined> = {
+  "magma-anvil": "ma",
+  "monarch-meadow": "mm",
+  "monsoon-grove": "mg",
+  "moonwell-mysteries": "mw",
+  "nebula-nomads": "nn",
+  "northwind-narwhal": "nw",
+  "obsidian-oracle": "oo",
+  "orchid-oasis": "oc",
+  "persian-peacock": "pp",
+  "polar-prism": "pr",
+  "potion-parlor": "pz",
+  "rocket-rendezvous": "rv",
+  "salamander-sun": "ss",
+  "saturn-rings": "sn",
+  "shogun-sakura": "sk",
+  "snowglobe-sorcery": "sg",
+  "stag-spirit-glade": "stg",
+  "steamforge-express": "se",
+  "tarot-twilight": "tt",
+  "tesla-tower": "ts",
+  "thunderbird-totem": "tb",
+  "tortoise-treasury": "tr",
+};
+
 export function RealmsSlot({ gameId }: { gameId?: string; gameName?: string }) {
   const def = gameId ? findRealmsGame(gameId) : undefined;
   if (!def) {
@@ -272,6 +298,23 @@ function RealmsTable({ def }: { def: RealmsGameDef }) {
             </div>
           ),
           { duration: isWin ? 1500 : 1000, position: "top-center", className: "cc-toast" },
+        );
+        return;
+      }
+      const toastPrefix = MINI_TOAST_PREFIX[gameId];
+      if (toastPrefix) {
+        const tp = toastPrefix;
+        // Mini toast games: the smallest possible readout, one line, transparent wrapper (see .ashfall-toast in ashfall-layout.css).
+        const isWin = label !== "bet";
+        const sign = label === "bet" || delta < 0 ? "−" : "+";
+        toast.custom(
+          () => (
+            <div className={`${tp}-toast__pill`} data-kind={isWin ? "win" : "bet"} role="status">
+              {sign}
+              {abs}
+            </div>
+          ),
+          { duration: isWin ? 1200 : 700, position: "top-center", className: `${tp}-toast` },
         );
         return;
       }

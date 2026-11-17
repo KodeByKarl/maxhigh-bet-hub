@@ -568,6 +568,34 @@ body:has(.bb-close) [data-game-modal="moonwell-mysteries"] [data-realms-game] > 
     ) !important;
   }
 }
+@container (min-width:1000px) and (min-height:650px) {
+  [data-game-view="moonwell-mysteries"] .realms-playfield {
+    padding-inline: 24px;
+  }
+  [data-game-view="moonwell-mysteries"] .realms-playfield > div {
+    grid-template-columns: 400px minmax(0, 1fr);
+    grid-template-rows: auto;
+    align-items: center;
+    gap: 32px;
+    max-width: 1200px;
+  }
+  [data-game-view="moonwell-mysteries"] .realms-stage {
+    grid-row: 1;
+    grid-column: 2;
+  }
+  .mw-console {
+    grid-row: 1;
+    grid-column: 1;
+    max-width: 400px;
+  }
+  [data-game-view="moonwell-mysteries"] .realms-reel-grid {
+    width: min(
+      calc(100cqw - 48px - 400px - 32px - 26px),
+      640px,
+      calc((100cqh - 100px - max(20px, env(safe-area-inset-bottom)) - 26px) * 1)
+    ) !important;
+  }
+}
 @media (prefers-reduced-motion: reduce) {
   .mw-spin[data-state="busy"] .mw-spin__art {
     animation: none;

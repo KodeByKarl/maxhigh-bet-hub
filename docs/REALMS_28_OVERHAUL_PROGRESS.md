@@ -91,11 +91,11 @@ User requirement: distinct containers, spin enclosures and button treatments for
 | 21 | shogun-sakura | VERIFIED | Sakura courtyard: paper-screen account panel, lacquer wager beam, a vertical red seal inside a torii-like spin enclosure, four flanking wooden plaques. |
 | 22 | snowglobe-sorcery | VERIFIED | Winter music box: frosted account windows, a glass globe spin above its wager pedestal, flanking auto/bonus snowbanks and paired lower switches. |
 | 23 | stag-spirit-glade | VERIFIED | Spirit clearing: carved account tablets and a separate wager, tall antler-grove spin alcove on the left, four mossy stone actions on the right. |
-| 24 | steamforge-express | NOT STARTED |  |
-| 25 | tarot-twilight | NOT STARTED |  |
-| 26 | tesla-tower | NOT STARTED |  |
-| 27 | thunderbird-totem | NOT STARTED |  |
-| 28 | tortoise-treasury | NOT STARTED |  |
+| 24 | steamforge-express | VERIFIED | Locomotive cab: brass-rimmed pressure readouts, a black enamel wager bar, central flywheel spin control between two valve keys, broad auto and ticket levers. |
+| 25 | tarot-twilight | VERIFIED | Velvet reading table: two card-shaped account plaques, a tall gilded spin card between four ritual cards, and a bottom wager ribbon. |
+| 26 | tesla-tower | VERIFIED | Electrical laboratory: twin voltmeter windows, an offset power wager, horizontal glass coil spin chamber beside the info switch, two copper circuit levers. |
+| 27 | thunderbird-totem | VERIFIED | Storm totem: stacked carved account lintel, central thunder seal crowning a wager beam, four independently carved totem switches along the base. |
+| 28 | tortoise-treasury | VERIFIED | Jade treasury: inset gold account cartouches, a shell-shaped spin vault on the right of four jade keys, and a broad bottom coin wager trough. |
 
 ### magma-anvil
 
@@ -266,3 +266,53 @@ Modified files: `src/games/stag-spirit-glade/StagConsole.tsx`, `src/games/stag-s
 Responsive and functional QA: 12 viewports, 27 checks, zero page errors. Includes portrait, landscape, tablet, desktop; all targets >=43px, no overlaps, overflow, broken images or offscreen controls. Touch and mouse: bet +/-/select, manual spin, last win/balance display, double activation (one request, concurrency one), turbo, auto start/stop, bonus cancel/quantity/single purchase, sound toggle, info, close/reopen. RPCs stubbed; no real wagers or database writes. Audible playback not manually assessed.
 
 Evidence: [screenshots/results](../output/stag-mobile/), [design and original sources](../output/realms-overhaul/stag-spirit-glade/). Before: `before-*.png`; after: `after-*.png`; result: `after-results.json`.
+
+### steamforge-express
+
+Locomotive cab: brass-rimmed pressure readouts, a black enamel wager bar, central flywheel spin control between two valve keys, broad auto and ticket levers.
+
+Modified files: `src/games/steamforge-express/SteamforgeConsole.tsx`, `src/games/steamforge-express/steamforge-layout.css`, `src/games/steamforge-express/GameView.tsx`.
+
+Responsive and functional QA: 12 viewports, 27 checks, zero page errors. Includes portrait, landscape, tablet, desktop; all targets >=43px, no overlaps, overflow, broken images or offscreen controls. Touch and mouse: bet +/-/select, manual spin, last win/balance display, double activation (one request, concurrency one), turbo, auto start/stop, bonus cancel/quantity/single purchase, sound toggle, info, close/reopen. RPCs stubbed; no real wagers or database writes. Audible playback not manually assessed.
+
+Evidence: [screenshots/results](../output/steamforge-mobile/), [design and original sources](../output/realms-overhaul/steamforge-express/). Before: `before-*.png`; after: `after-*.png`; result: `after-results.json`.
+
+### tarot-twilight
+
+Velvet reading table: two card-shaped account plaques, a tall gilded spin card between four ritual cards, and a bottom wager ribbon.
+
+Modified files: `src/games/tarot-twilight/TarotConsole.tsx`, `src/games/tarot-twilight/tarot-layout.css`, `src/games/tarot-twilight/GameView.tsx`.
+
+Responsive and functional QA: 12 viewports, 27 checks, zero page errors. Includes portrait, landscape, tablet, desktop; all targets >=43px, no overlaps, overflow, broken images or offscreen controls. Touch and mouse: bet +/-/select, manual spin, last win/balance display, double activation (one request, concurrency one), turbo, auto start/stop, bonus cancel/quantity/single purchase, sound toggle, info, close/reopen. RPCs stubbed; no real wagers or database writes. Audible playback not manually assessed.
+
+Evidence: [screenshots/results](../output/tarot-mobile/), [design and original sources](../output/realms-overhaul/tarot-twilight/). Before: `before-*.png`; after: `after-*.png`; result: `after-results.json`.
+
+### tesla-tower
+
+Electrical laboratory: twin voltmeter windows, an offset power wager, horizontal glass coil spin chamber beside the info switch, two copper circuit levers.
+
+Modified files: `src/games/tesla-tower/TeslaConsole.tsx`, `src/games/tesla-tower/tesla-layout.css`, `src/games/tesla-tower/GameView.tsx`.
+
+Responsive and functional QA: 12 viewports, 27 checks, zero page errors. Includes portrait, landscape, tablet, desktop; all targets >=43px, no overlaps, overflow, broken images or offscreen controls. Touch and mouse: bet +/-/select, manual spin, last win/balance display, double activation (one request, concurrency one), turbo, auto start/stop, bonus cancel/quantity/single purchase, sound toggle, info, close/reopen. RPCs stubbed; no real wagers or database writes. Audible playback not manually assessed.
+
+Evidence: [screenshots/results](../output/tesla-mobile/), [design and original sources](../output/realms-overhaul/tesla-tower/). Before: `before-*.png`; after: `after-*.png`; result: `after-results.json`.
+
+### thunderbird-totem
+
+Storm totem: stacked carved account lintel, central thunder seal crowning a wager beam, four independently carved totem switches along the base.
+
+Modified files: `src/games/thunderbird-totem/ThunderbirdConsole.tsx`, `src/games/thunderbird-totem/thunderbird-layout.css`, `src/games/thunderbird-totem/GameView.tsx`.
+
+Responsive and functional QA: 12 viewports, 27 checks, zero page errors. Includes portrait, landscape, tablet, desktop; all targets >=43px, no overlaps, overflow, broken images or offscreen controls. Touch and mouse: bet +/-/select, manual spin, last win/balance display, double activation (one request, concurrency one), turbo, auto start/stop, bonus cancel/quantity/single purchase, sound toggle, info, close/reopen. RPCs stubbed; no real wagers or database writes. Audible playback not manually assessed.
+
+Evidence: [screenshots/results](../output/thunderbird-mobile/), [design and original sources](../output/realms-overhaul/thunderbird-totem/). Before: `before-*.png`; after: `after-*.png`; result: `after-results.json`.
+
+### tortoise-treasury
+
+Jade treasury: inset gold account cartouches, a shell-shaped spin vault on the right of four jade keys, and a broad bottom coin wager trough.
+
+Modified files: `src/games/tortoise-treasury/TortoiseConsole.tsx`, `src/games/tortoise-treasury/tortoise-layout.css`, `src/games/tortoise-treasury/GameView.tsx`.
+
+Responsive and functional QA: 12 viewports, 27 checks, zero page errors. Includes portrait, landscape, tablet, desktop; all targets >=43px, no overlaps, overflow, broken images or offscreen controls. Touch and mouse: bet +/-/select, manual spin, last win/balance display, double activation (one request, concurrency one), turbo, auto start/stop, bonus cancel/quantity/single purchase, sound toggle, info, close/reopen. RPCs stubbed; no real wagers or database writes. Audible playback not manually assessed.
+
+Evidence: [screenshots/results](../output/tortoise-mobile/), [design and original sources](../output/realms-overhaul/tortoise-treasury/). Before: `before-*.png`; after: `after-*.png`; result: `after-results.json`.

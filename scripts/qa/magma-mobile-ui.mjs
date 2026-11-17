@@ -216,7 +216,8 @@ try {
             `${name}: small target ${b.label} ${JSON.stringify(b.box)}`,
           );
         assert.ok(
-          geometry.board.right <= geometry.deck.x + 1 ||
+          geometry.deck.right <= geometry.board.x + 1 ||
+            geometry.board.right <= geometry.deck.x + 1 ||
             geometry.board.bottom <= geometry.deck.y + 1,
           `${name}: board/deck overlap`,
         );

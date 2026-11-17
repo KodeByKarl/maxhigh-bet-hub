@@ -577,6 +577,34 @@ body:has(.bb-close) [data-game-modal="nebula-nomads"] [data-realms-game] > butto
     ) !important;
   }
 }
+@container (min-width:1000px) and (min-height:650px) {
+  [data-game-view="nebula-nomads"] .realms-playfield {
+    padding-inline: 24px;
+  }
+  [data-game-view="nebula-nomads"] .realms-playfield > div {
+    grid-template-columns: minmax(0, 1fr) 400px;
+    grid-template-rows: auto;
+    align-items: center;
+    gap: 32px;
+    max-width: 1200px;
+  }
+  [data-game-view="nebula-nomads"] .realms-stage {
+    grid-row: 1;
+    grid-column: 1;
+  }
+  .nn-console {
+    grid-row: 1;
+    grid-column: 2;
+    max-width: 400px;
+  }
+  [data-game-view="nebula-nomads"] .realms-reel-grid {
+    width: min(
+      calc(100cqw - 48px - 400px - 32px - 26px),
+      640px,
+      calc((100cqh - 100px - max(20px, env(safe-area-inset-bottom)) - 26px) * 1)
+    ) !important;
+  }
+}
 @media (prefers-reduced-motion: reduce) {
   .nn-spin[data-state="busy"] .nn-spin__art {
     animation: none;

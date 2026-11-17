@@ -1,0 +1,653 @@
+/* Tarot Twilight: Velvet reading table: two card-shaped account plaques, a tall gilded spin card between four ritual cards, and a bottom wager ribbon. Presentation only; original assets and engine retained. */
+[data-game-view="tarot-twilight"] {
+  --ui-accent: #e4bde9;
+  --ui-soft: #fff1f9;
+  --ui-bg: #291b37;
+  --ui-face: #51365d;
+  --ui-hud: 274px;
+  container-type: size;
+  overflow: clip;
+  color: var(--ui-soft);
+  font-family: Georgia, serif;
+}
+.tt-identity {
+  position: absolute;
+  top: max(18px, env(safe-area-inset-top));
+  left: 18px;
+  right: 124px;
+  z-index: 25;
+  display: grid;
+  gap: 5px;
+  pointer-events: none;
+}
+.tt-identity__brand {
+  font:
+    600 8px/1.3 "Segoe UI",
+    sans-serif;
+  letter-spacing: 0.18em;
+  color: var(--ui-soft);
+  opacity: 0.8;
+  text-shadow: 0 2px 8px #000;
+}
+.tt-identity h1 {
+  margin: 0;
+  font-size: clamp(19px, 5.6cqw, 30px);
+  line-height: 1.05;
+  letter-spacing: 0.025em;
+  color: var(--ui-soft);
+  text-shadow: 0 2px 10px #000;
+  white-space: normal;
+}
+.tt-identity h1 span {
+  display: block;
+  color: var(--ui-accent);
+}
+[data-game-view="tarot-twilight"] [data-realms-game] > button {
+  top: max(18px, env(safe-area-inset-top));
+  right: 66px;
+  width: 44px;
+  height: 44px;
+  border-radius: 10px;
+  border: 1px solid color-mix(in srgb, var(--ui-accent) 45%, transparent);
+  background: color-mix(in srgb, var(--ui-bg) 90%, transparent);
+}
+[data-game-modal="tarot-twilight"] > div:has(> button[aria-label="Close game"]) {
+  top: max(18px, env(safe-area-inset-top));
+  right: 12px;
+}
+[data-game-modal="tarot-twilight"] button[aria-label="Close game"] {
+  width: 44px;
+  height: 44px;
+  border-radius: 10px;
+  border: 1px solid color-mix(in srgb, #e4bde9 45%, transparent);
+  background: #291b37e6;
+}
+body:has(.bb-close) [data-game-modal="tarot-twilight"] > div:has(> button[aria-label="Close game"]),
+body:has(.bb-close) [data-game-modal="tarot-twilight"] [data-realms-game] > button {
+  visibility: hidden;
+  pointer-events: none;
+}
+[data-game-view="tarot-twilight"] .realms-playfield {
+  padding: 100px 16px max(20px, env(safe-area-inset-bottom));
+  align-items: center;
+  justify-content: center;
+}
+[data-game-view="tarot-twilight"] .realms-playfield > div {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: auto auto;
+  align-content: center;
+  justify-items: center;
+  gap: 22px;
+  width: 100%;
+  max-width: 800px;
+  height: 100%;
+  margin-inline: auto;
+}
+[data-game-view="tarot-twilight"] .realms-stage {
+  flex: none;
+  height: auto;
+  min-height: 0;
+  width: 100%;
+}
+[data-game-view="tarot-twilight"] .realms-well {
+  padding: 12px !important;
+  margin-inline: auto;
+  border: 1px solid color-mix(in srgb, var(--ui-accent) 50%, transparent);
+  border-radius: 24px 24px 8px 8px !important;
+  clip-path: none !important;
+  mask: none !important;
+  background: linear-gradient(145deg, #51365df2, #291b37f5) !important;
+  box-shadow:
+    inset 0 1px 0 #fff2,
+    0 14px 36px #0009 !important;
+}
+[data-game-view="tarot-twilight"] .realms-well::before,
+[data-game-view="tarot-twilight"] .realms-well::after {
+  display: none !important;
+}
+[data-game-view="tarot-twilight"] .realms-reel-grid {
+  width: min(
+    calc(100cqw - 58px),
+    640px,
+    calc(
+      (100cqh - 100px - var(--ui-hud) - 22px - max(20px, env(safe-area-inset-bottom)) - 26px) * 1.5
+    )
+  ) !important;
+  max-height: none !important;
+  border: 0 !important;
+  background: none !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+  gap: clamp(4px, 1.3cqw, 9px) !important;
+}
+[data-game-view="tarot-twilight"] .realms-reel-cell {
+  border-radius: 12% !important;
+  clip-path: none !important;
+  mask: none !important;
+  border: 1px solid color-mix(in srgb, var(--ui-accent) 22%, transparent) !important;
+  background-color: color-mix(in srgb, var(--ui-face) 70%, var(--ui-bg)) !important;
+  background-image: radial-gradient(at 35% 20%, #fff1, transparent 75%) !important;
+  box-shadow: inset 0 1px 0 #fff1 !important;
+}
+[data-game-view="tarot-twilight"] .realms-reel-cell[data-winning="true"] {
+  border-color: var(--ui-soft) !important;
+  box-shadow:
+    inset 0 0 12px color-mix(in srgb, var(--ui-accent) 40%, transparent),
+    0 0 12px var(--ui-accent) !important;
+}
+[data-game-view="tarot-twilight"] .realms-reel-art {
+  inset: 5%;
+}
+[data-game-view="tarot-twilight"] .realms-reel-grid img {
+  scale: 0.95;
+}
+.tt-console {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 108px minmax(0, 1fr);
+  grid-template-rows: 58px 52px 52px 48px;
+  grid-template-areas: "ledger ledger ledger" "info spin autospin" "bonus spin turbo" "bet bet bet";
+  gap: 12px;
+  padding: 14px;
+  width: 100%;
+  max-width: 440px;
+  justify-self: center;
+  isolation: isolate;
+  border: 1px solid color-mix(in srgb, var(--ui-accent) 30%, transparent);
+  border-radius: 10px;
+  background: #291b37eb;
+  box-shadow: 0 14px 30px #0006;
+}
+.tt-console::before,
+.tt-console::after {
+  display: none !important;
+}
+.tt-console button {
+  min-width: 0;
+  cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  transition:
+    filter 0.15s,
+    transform 0.15s;
+  font-family: inherit;
+}
+.tt-console button:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+.tt-console button:not(:disabled):active {
+  transform: scale(0.97);
+}
+.tt-console button:focus-visible {
+  outline: 2px solid var(--ui-soft);
+  outline-offset: 3px;
+}
+.tt-console strong,
+.tt-console em {
+  font-variant-numeric: tabular-nums;
+  font-style: normal;
+  white-space: nowrap;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.tt-ledger {
+  grid-area: ledger;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+.tt-ledger > i {
+  display: none;
+}
+.tt-meter {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+.tt-meter[data-meter="win"] {
+  text-align: right;
+}
+.tt-meter > span,
+.tt-bet__value > span {
+  font:
+    600 9px/1.2 "Segoe UI",
+    sans-serif;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--ui-soft);
+  opacity: 0.8;
+}
+.tt-meter strong {
+  font:
+    700 clamp(15px, 4.5cqw, 21px)/1.2 "Segoe UI",
+    sans-serif;
+  color: var(--ui-soft);
+}
+.tt-meter[data-winning="true"] strong {
+  color: var(--ui-accent);
+}
+.tt-bet {
+  grid-area: bet;
+  display: grid;
+  grid-template-columns: 48px minmax(0, 1fr) 48px;
+  gap: 8px;
+  min-width: 0;
+}
+.tt-step,
+.tt-bet__value,
+.tt-chip {
+  border: 1px solid color-mix(in srgb, var(--ui-accent) 35%, transparent);
+  border-radius: 10px;
+  background: linear-gradient(145deg, var(--ui-face), var(--ui-bg));
+  color: var(--ui-soft);
+  box-shadow: inset 0 1px 0 #fff1;
+}
+.tt-step {
+  display: grid;
+  place-items: center;
+  min-height: 44px;
+  color: var(--ui-accent);
+}
+.tt-bet__value {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  min-height: 44px;
+}
+.tt-bet__value strong {
+  font:
+    700 16px/1 "Segoe UI",
+    sans-serif;
+}
+.tt-side {
+  display: contents;
+}
+.tt-turbo {
+  grid-area: turbo;
+}
+.tt-auto {
+  grid-area: autospin;
+}
+.tt-bonus {
+  grid-area: bonus;
+}
+.tt-info {
+  grid-area: info;
+}
+.tt-chip {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  padding: 4px;
+  min-height: 44px;
+}
+.tt-chip > svg {
+  width: 16px;
+  height: 16px;
+  color: var(--ui-accent);
+}
+.tt-chip > span {
+  font:
+    700 8px/1.1 "Segoe UI",
+    sans-serif;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+}
+.tt-chip > em {
+  font:
+    600 10px/1.1 "Segoe UI",
+    sans-serif;
+}
+.tt-turbo[aria-pressed="true"],
+.tt-auto[aria-pressed="true"] {
+  outline: 1px solid var(--ui-accent);
+  background: color-mix(in srgb, var(--ui-accent) 25%, var(--ui-bg));
+}
+.tt-spin-mount {
+  grid-area: spin;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 0;
+  min-height: 0;
+}
+.tt-spin {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  width: 100%;
+  height: 100%;
+  min-width: 44px;
+  min-height: 44px;
+  border: 1px solid var(--ui-accent);
+  border-radius: 10px;
+  background: linear-gradient(140deg, var(--ui-soft), var(--ui-accent));
+  color: var(--ui-bg);
+  clip-path: none;
+  padding: 4px;
+  isolation: isolate;
+}
+.tt-spin::before,
+.tt-spin::after {
+  display: none !important;
+}
+.tt-spin > i {
+  display: none;
+}
+.tt-spin > svg {
+  width: 17px;
+  height: 17px;
+}
+.tt-spin > span {
+  font:
+    800 11px/1 "Segoe UI",
+    sans-serif;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+}
+.tt-spin__art {
+  width: 44px;
+  height: 44px;
+  object-fit: contain;
+  pointer-events: none;
+}
+.tt-spin[data-state="busy"] .tt-spin__art {
+  animation: tt-ui-turn 3s linear infinite;
+}
+.tt-spin[data-state="auto"] {
+  box-shadow: 0 0 0 2px var(--ui-soft);
+}
+.tt-spin[data-state="free"] {
+  filter: hue-rotate(15deg);
+}
+@keyframes tt-ui-turn {
+  to {
+    rotate: 360deg;
+  }
+}
+.tt-console {
+  border: 1px solid #d1a2d477;
+  border-radius: 18px;
+  background: radial-gradient(ellipse at center, #51365ddd, #24172ff2);
+  box-shadow:
+    inset 0 0 0 4px #24172f,
+    inset 0 0 0 5px #b481ba33,
+    0 16px 36px #0009;
+}
+.tt-ledger {
+  gap: 16px;
+}
+.tt-meter {
+  padding: 8px 12px;
+  border: 1px solid #e4bde955;
+  background: #38243f;
+  border-radius: 5px;
+  box-shadow: inset 0 0 0 3px #24172f33;
+}
+.tt-spin-mount {
+  padding: 5px;
+  border: 1px solid #e8c58e;
+  border-radius: 8px;
+  background: #261931;
+  box-shadow: 0 5px 12px #0006;
+}
+.tt-spin {
+  border-radius: 4px;
+  background: radial-gradient(at 50% 20%, #9c76ab, #4d2f65 70%);
+  border: 1px solid #e8c58e99;
+  color: #fff0d1;
+  box-shadow: inset 0 0 0 3px #291b3744;
+}
+.tt-spin__art {
+  width: 50px;
+  height: 50px;
+}
+.tt-spin > svg {
+  display: none;
+}
+.tt-chip {
+  border: 1px solid #ccaccd66;
+  background: #37233f;
+  border-radius: 5px;
+  box-shadow: inset 0 0 0 3px #291b3733;
+}
+.tt-bet__value {
+  background: transparent;
+  border: 0;
+  border-bottom: 1px solid #e8c58e66;
+}
+.tt-step {
+  background: #64436c;
+  border-radius: 50%;
+}
+[data-game-view="tarot-twilight"] .realms-well {
+  border-color: #e8c58e88 !important;
+  background: radial-gradient(ellipse at top, #54365ff0, #261a33f5) !important;
+}
+[data-sonner-toast].tt-toast {
+  display: flex !important;
+  justify-content: center;
+  width: auto !important;
+  padding: 0 !important;
+  border: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  pointer-events: none;
+}
+.tt-toast__pill {
+  padding: 4px 12px;
+  border: 1px solid #e4bde966;
+  border-radius: 20px;
+  background: #291b37ee;
+  color: #fff1f9;
+  font:
+    600 11px/1.3 "Segoe UI",
+    sans-serif;
+  white-space: nowrap;
+}
+[data-sonner-toaster]:has(.tt-toast) {
+  --offset-top: 92px !important;
+  --mobile-offset-top: 92px !important;
+}
+@container (max-width:350px) {
+  .tt-console {
+    gap: 8px;
+    padding: 10px;
+  }
+  .tt-chip > span {
+    font-size: 8px;
+  }
+  .tt-spin-mount {
+    padding: 4px;
+  }
+  .tt-bet {
+    grid-template-columns: 44px minmax(0, 1fr) 44px;
+    gap: 4px;
+  }
+}
+@container (orientation:portrait) and (max-height:680px) {
+  [data-game-view="tarot-twilight"] .realms-playfield {
+    padding: 88px 16px max(12px, env(safe-area-inset-bottom));
+  }
+  [data-game-view="tarot-twilight"] .realms-playfield > div {
+    gap: 14px;
+  }
+  [data-game-view="tarot-twilight"] .realms-reel-grid {
+    width: min(
+      calc(100cqw - 58px),
+      calc((100cqh - 88px - 250px - 14px - max(12px, env(safe-area-inset-bottom)) - 26px) * 1.5)
+    ) !important;
+  }
+  .tt-console {
+    gap: 8px;
+    padding: 8px;
+    grid-template-rows: 54px 48px 48px 44px;
+  }
+  .tt-spin {
+    max-width: 100%;
+    max-height: 100%;
+  }
+  .tt-meter strong {
+    font-size: 16px;
+  }
+}
+@container (orientation:landscape) and (max-height:600px) {
+  [data-game-view="tarot-twilight"] .realms-playfield {
+    padding: 58px 16px max(10px, env(safe-area-inset-bottom));
+  }
+  [data-game-view="tarot-twilight"] .realms-playfield > div {
+    grid-template-columns: minmax(0, 1fr) 300px;
+    grid-template-rows: auto;
+    gap: 16px;
+    max-width: 1100px;
+  }
+  .tt-identity {
+    top: 12px;
+  }
+  .tt-identity h1 {
+    font-size: 20px;
+  }
+  .tt-identity h1 span {
+    display: inline;
+  }
+  .tt-console {
+    padding: 8px;
+    gap: 6px;
+    grid-template-rows: 44px 44px 44px 44px;
+    grid-template-columns: minmax(0, 1fr) 108px minmax(0, 1fr);
+  }
+  .tt-meter {
+    gap: 2px;
+  }
+  .tt-meter strong {
+    font-size: 16px;
+  }
+  .tt-meter > span {
+    font-size: 8px;
+  }
+  .tt-chip {
+    padding: 2px;
+    gap: 1px;
+  }
+  .tt-bet {
+    grid-template-columns: 44px minmax(0, 1fr) 44px;
+    gap: 4px;
+  }
+  .tt-spin {
+    max-width: 100%;
+    max-height: 100%;
+  }
+  .tt-spin__art {
+    width: 38px;
+    height: 38px;
+  }
+  .tt-spin-mount {
+    padding: 4px;
+  }
+  [data-game-view="tarot-twilight"] .realms-reel-grid {
+    width: min(
+      calc(100cqw - 32px - 300px - 16px - 26px),
+      calc((100cqh - 58px - max(10px, env(safe-area-inset-bottom)) - 26px) * 1.5)
+    ) !important;
+  }
+}
+@container (orientation:landscape) and (max-height:360px) {
+  [data-game-view="tarot-twilight"] .realms-playfield > div {
+    grid-template-columns: minmax(0, 1fr) 280px;
+  }
+  [data-game-view="tarot-twilight"] .realms-reel-grid {
+    width: min(
+      calc(100cqw - 32px - 280px - 16px - 26px),
+      calc((100cqh - 58px - 10px - 26px) * 1.5)
+    ) !important;
+  }
+}
+@container (min-width:1000px) and (min-height:650px) {
+  [data-game-view="tarot-twilight"] .realms-playfield {
+    padding-inline: 24px;
+  }
+  [data-game-view="tarot-twilight"] .realms-playfield > div {
+    grid-template-columns: 400px minmax(0, 1fr);
+    grid-template-rows: auto;
+    align-items: center;
+    gap: 32px;
+    max-width: 1200px;
+  }
+  [data-game-view="tarot-twilight"] .realms-stage {
+    grid-row: 1;
+    grid-column: 2;
+  }
+  .tt-console {
+    grid-row: 1;
+    grid-column: 1;
+    max-width: 400px;
+  }
+  [data-game-view="tarot-twilight"] .realms-reel-grid {
+    width: min(
+      calc(100cqw - 48px - 400px - 32px - 26px),
+      640px,
+      calc((100cqh - 100px - max(20px, env(safe-area-inset-bottom)) - 26px) * 1.5)
+    ) !important;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .tt-spin[data-state="busy"] .tt-spin__art {
+    animation: none;
+  }
+  .tt-console button {
+    transition: none;
+  }
+}
+/* Shared dialogs keep their handlers; keep content scrollable on short screens and Close tappable. */
+[data-game-view="tarot-twilight"] [aria-label="Auto Spin Configuration"] > div {
+  display: flex;
+  flex-direction: column;
+  max-height: calc(100% - 12px);
+}
+[data-game-view="tarot-twilight"] [aria-label="Auto Spin Configuration"] > div > div:nth-child(2) {
+  min-height: 0;
+  flex: 1 1 auto;
+  max-height: none;
+}
+[data-game-view="tarot-twilight"] [aria-label="Auto Spin Configuration"] > div > div:first-child,
+[data-game-view="tarot-twilight"] [aria-label="Auto Spin Configuration"] > div > div:last-child {
+  flex-shrink: 0;
+}
+[data-game-view="tarot-twilight"] div:has(> h3):has(> .grid.grid-cols-4) {
+  display: flex;
+  flex-direction: column;
+  max-height: calc(100dvh - 32px);
+  padding: 20px;
+}
+[data-game-view="tarot-twilight"] div:has(> h3) > .grid.grid-cols-4 {
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 4px;
+}
+[data-game-view="tarot-twilight"] div:has(> .grid.grid-cols-4) > h3 {
+  padding-right: 40px;
+  font-size: 16px;
+  text-align: left;
+}
+[data-game-view="tarot-twilight"] [aria-label="Paytable"] button[aria-label="Close"],
+[data-game-view="tarot-twilight"] div:has(> h3) > button[aria-label="Close"] {
+  min-width: 44px;
+  min-height: 44px;
+  flex-shrink: 0;
+}
+[data-game-view="tarot-twilight"] div:has(> h3) > button[aria-label="Close"] {
+  z-index: 1;
+}

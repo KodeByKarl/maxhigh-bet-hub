@@ -1,3 +1,8 @@
+import { TortoiseConsole } from "@/games/tortoise-treasury/TortoiseConsole";
+import { ThunderbirdConsole } from "@/games/thunderbird-totem/ThunderbirdConsole";
+import { TeslaConsole } from "@/games/tesla-tower/TeslaConsole";
+import { TarotConsole } from "@/games/tarot-twilight/TarotConsole";
+import { SteamforgeConsole } from "@/games/steamforge-express/SteamforgeConsole";
 import { StagConsole } from "@/games/stag-spirit-glade/StagConsole";
 import { SnowglobeConsole } from "@/games/snowglobe-sorcery/SnowglobeConsole";
 import { ShogunConsole } from "@/games/shogun-sakura/ShogunConsole";
@@ -282,6 +287,11 @@ function StandardSlotControlDeck({
 
 /** Keep every other game's existing deck unchanged. Realms gameplay retains all callbacks. */
 export function SlotControlDeck(props: SlotControlDeckProps) {
+  if (props.gameId === "tortoise-treasury") return <TortoiseConsole {...props} />;
+  if (props.gameId === "thunderbird-totem") return <ThunderbirdConsole {...props} />;
+  if (props.gameId === "tesla-tower") return <TeslaConsole {...props} />;
+  if (props.gameId === "tarot-twilight") return <TarotConsole {...props} />;
+  if (props.gameId === "steamforge-express") return <SteamforgeConsole {...props} />;
   if (props.gameId === "stag-spirit-glade") return <StagConsole {...props} />;
   if (props.gameId === "snowglobe-sorcery") return <SnowglobeConsole {...props} />;
   if (props.gameId === "shogun-sakura") return <ShogunConsole {...props} />;
