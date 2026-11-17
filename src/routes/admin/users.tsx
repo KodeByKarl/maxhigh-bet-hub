@@ -472,7 +472,7 @@ function AddChipsModal({
   onSuccess: () => void;
 }) {
   const [mode, setMode] = useState<"add" | "withdraw">("add");
-  const [amount, setAmount] = useState("1000");
+  const [amount, setAmount] = useState("");
   const [note, setNote] = useState("");
   const [busy, setBusy] = useState(false);
   const unlimited = actorRole === "superadmin";

@@ -380,6 +380,11 @@ export async function superCreateUser(data: {
   // Account class is decided here, never by the caller: always 'client' unless a developer-signed grant names this username.
   const accountClass = await resolveNewAccountClass(username);
   const passwordHash = await hash(data.password, 10);
+  const openingBalance = data.balance ?? 0;
+  if (!Number.isFinite(openingBalance) || openingBalance < 0) {
+    throw new Error("Invalid initial balance");
+  }
+  const { writeLedgerDelta } = await import("../wallet.server");
   try {
     await db.transaction(async (tx) => {
       if (countsTowardCap(data.role, accountClass))
@@ -387,18 +392,29 @@ export async function superCreateUser(data: {
           actor,
           attempt: `superCreateUser @${username} (${data.role})`,
         });
+      // Always start at 0; any opening chips are an explicit, ledgered credit.
       await tx.insert(users).values({
         id,
         publicUserId,
         email,
         username,
         passwordHash,
-        balance: money(data.balance ?? 0),
+        balance: money(0),
         role: data.role,
         accountClass,
         displayName: data.displayName?.trim() || null,
         parentAgentId,
       });
+      if (openingBalance > 0) {
+        await writeLedgerDelta(tx, {
+          userId: id,
+          username,
+          delta: openingBalance,
+          type: "adjust",
+          game: "ChipTransfer",
+          note: `Opening balance from @${actor.username}`,
+        });
+      }
     });
   } catch (e) {
     if (e instanceof ClientLimitError) {
@@ -410,7 +426,16 @@ export async function superCreateUser(data: {
       await auditClientLimitRejection(actor, limit, "database");
       throw limit;
     }
-    throw new Error("Username or User ID already exists");
+    // Only a unique-key collision is reported as "already exists"; any other failure
+    // (e.g. the opening-balance ledger write) is surfaced as-is. The transaction has
+    // already rolled back, so no partial account or credit remains.
+    const dbErr = e as { code?: string; message?: string; cause?: { code?: string } };
+    const isDuplicate =
+      dbErr?.code === "ER_DUP_ENTRY" ||
+      dbErr?.cause?.code === "ER_DUP_ENTRY" ||
+      String(dbErr?.message ?? "").includes("Duplicate");
+    if (isDuplicate) throw new Error("Username or User ID already exists");
+    throw e instanceof Error ? e : new Error("Account creation failed");
   }
 
   const rows = await db.select().from(users).where(eq(users.id, id)).limit(1);
