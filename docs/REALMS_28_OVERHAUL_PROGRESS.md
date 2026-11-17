@@ -1,0 +1,158 @@
+# Realms 28 overhaul — progress
+
+Each game gets a dedicated console + layout stylesheet (pattern: Frostbound Fjord, Gearspring Gala, Hexbound Library)
+instead of the generic Realms deck. Presentation only: Realms owns state, wager guards and every callback.
+
+| # | Game | Status |
+|---|------|--------|
+| 25 | Hummingbird Haven | VERIFIED (local, 2026-11-17) |
+| — | Longship Raiders | NEXT |
+
+## Hummingbird Haven (`hummingbird-haven`)
+
+**Design:** enchanted garden. Deep forest-glass board plate with a slim gold filigree rim, emerald/turquoise controls,
+gold labels. Hex tiles keep their shape and artwork; only the tile fill shifts to garden green. Blossom Spin medallion
+(emerald dome + gold petal ring) with idle / busy(skip) / auto(stop) / free / disabled states. Portrait: board over a
+compact dock. Landscape (phone, tablet, desktop): board left, dock right, centred as one group.
+
+**Modified / added files**
+- `src/games/hummingbird-haven/HummingbirdConsole.tsx` (new) — dedicated deck, same props/callbacks as the shared deck
+- `src/games/hummingbird-haven/hb-layout.css` (new) — cabinet, board frame, dock, Spin states, toast, dialogs
+- `src/games/hummingbird-haven/GameView.tsx` — identity header, imports stylesheet
+- `src/components/maxhigh/SlotControlDeck.tsx` — one dispatch line + import
+- `src/components/maxhigh/RealmsSlot.tsx` — one `MINI_TOAST_PREFIX` entry (`hb`)
+- `scripts/qa/hummingbird-mobile-ui.mjs` (new) — local fixture QA (RPCs stubbed in the bundle; no wallet/DB writes)
+
+**Not touched:** `game.theme.ts`, every file under `public/` (symbols, backgrounds, sounds), engine/RNG/RTP/paylines/
+betting limits/wallet/ledger/server wager functions.
+
+**Responsive QA** (`node scripts/qa/hummingbird-mobile-ui.mjs after`): 360x800, 390x844, 412x915, 844x390, 768x1024,
+1366x768 plus 320x568, 667x375, 390x667, 360x640, 568x320, 600x600. Asserted per viewport: no horizontal scroll, no
+broken images, no button overlap, everything in bounds, targets >= 43px, board/deck not overlapping. Auto, Bet and Buy
+Bonus dialogs verified on small portrait and landscape. All passed.
+
+**Functional QA** (touch + mouse): bet +/-/select, Sound mute/unmute, Paytable open/close, manual spin with balance and
+Last Win update, rapid double-activation (exactly 1 wager, max concurrency 1), Turbo on, Auto start/Stop (no further
+wagers after Stop), Buy Bonus cancel / quantity / single purchase, Close/reopen with no wager on mount. All passed.
+
+**Fix found during QA:** a transient absolutely-positioned win element extended the view's scroll area and shifted the
+whole cabinet up ~90px after a win. Cabinet root is now `overflow: clip`.
+
+**Screenshots** (gitignored, local): `output/hummingbird-mobile/before-*.png` and `after-*.png`, plus `auto-*`, `bet-*`,
+`bonus-*`, `paytable-*`, `win-*`.
+
+**Remaining issues:** none for this game. Pre-existing, unrelated: `tsc` reports 2 errors in the untracked
+`src/games/shared/realms-preset/PresetGame.tsx` (bad relative imports); ESLint warning (exhaustive-deps) in
+`RealmsSlot.tsx:1085`.
+
+## Hexbound Library
+
+Dedicated enchanted-library cabinet: mahogany board with a double gold rim, violet inner glow and gilt corner studs (7x5 hex grid unchanged); ink-plaque ledger with a rune sigil; Georgia/small-caps typography; hexagonal gold SPIN seal inside a violet/gold rune ring. Spin states: idle (slow glow), busy/Skip (violet, flipping book), Auto (crimson Stop square, pulsing), Free spin (violet), disabled (desaturated). Buy Bonus is shown as "Tome".
+
+Modified / added files (UI only):
+- `src/games/hexbound-library/HexConsole.tsx` (new; presentation only, reuses every Realms callback and guard)
+- `src/games/hexbound-library/hex-layout.css` (new; scoped to `[data-game-view="hexbound-library"]` and `.hx-*`)
+- `src/games/hexbound-library/GameView.tsx` (identity header, stylesheet import)
+- `src/components/maxhigh/SlotControlDeck.tsx`, `RealmsSlot.tsx` (routing and mini-toast prefix, one line each)
+- `scripts/qa/hexbound-mobile-ui.mjs` (new; local fixture, stubbed RPCs, GET-to-localhost only, no wallet or DB writes)
+
+Screenshots: `output/hexbound-mobile/before-*.png` (6 viewports) and `after-*.png` (12 viewports), plus `auto-*`, `bet-*`, `bonus-*`, `paytable-*`, `win-*`.
+
+Responsive QA (all PASS: no overlaps, no clipped controls, no Sound/Close collision, no horizontal scroll, targets >= 44px, board never overlaps dock): 360x800, 390x844, 412x915, 844x390, 768x1024, 1366x768, plus 320x568, 667x375, 390x667, 360x640, 568x320, 600x600. Auto/Bet/Buy dialogs checked on the short viewports.
+
+Functional QA (touch and mouse, 27 checks, 0 failures, 0 page errors): bet adjust/select, sound mute/unmute, paytable open/close, manual spin with balance and Last Win, rapid double activation (1 wager, max concurrency 1), Turbo, Auto start/stop, Buy Bonus cancel/quantity/single purchase, close and reopen with no wager on mount.
+
+Checks: eslint on touched files has 0 errors (1 pre-existing hook-deps warning in RealmsSlot.tsx); `npm run test:unit` all suites pass; `npm run build` exits 0; `tsc --noEmit` reports only the same 2 errors in untracked `PresetGame.tsx`.
+
+Assets and logic: no asset, `game.theme.ts`, RNG, payout, RTP, bet limit, wallet or server code touched.
+
+Outstanding: QA used the stubbed fixture, not the live demo database through the lobby, and sound was only checked via the mute toggle. A manual demo-account pass is still advisable.
+
+## Continuous queue — games 07–28 (2026-11-17)
+
+User requirement: distinct containers, spin enclosures and button treatments for every game. Existing symbols, backgrounds, icons, music and engine are retained. Earlier entries above describe previous versions.
+
+| # | Game | Status | Design |
+|---|---|---|---|
+| 07 | magma-anvil | VERIFIED | Forged workbench: riveted iron ledger, inset wager rail, full-width molten strike bar, four independent tool switches. |
+| 08 | monarch-meadow | VERIFIED | Botanical crown: separate oval account plaques, butterfly flight pad beside the wager, paired garden actions below. |
+| 09 | monsoon-grove | VERIFIED | Rain shelter: canopy-edged ledger, droplet action well at left, wager and weather switches at right, wide bonus basin. |
+| 10 | moonwell-mysteries | VERIFIED | Lunar shrine: twin silver readouts above a central moonwell surrounded by four independent arcane tablets; wager beneath. |
+| 11 | nebula-nomads | VERIFIED | Survey cockpit: two instrument windows, full-width launch dock, wager rail, segmented flight controls. |
+| 12 | northwind-narwhal | VERIFIED | Nautical bridge: chart-like ledger, wide arctic navigation dial on the right, two stacked port controls and a separate bonus rail. |
+| 13 | obsidian-oracle | IN PROGRESS |  |
+| 14 | orchid-oasis | NOT STARTED |  |
+| 15 | persian-peacock | NOT STARTED |  |
+| 16 | polar-prism | NOT STARTED |  |
+| 17 | potion-parlor | NOT STARTED |  |
+| 18 | rocket-rendezvous | NOT STARTED |  |
+| 19 | salamander-sun | NOT STARTED |  |
+| 20 | saturn-rings | NOT STARTED |  |
+| 21 | shogun-sakura | NOT STARTED |  |
+| 22 | snowglobe-sorcery | NOT STARTED |  |
+| 23 | stag-spirit-glade | NOT STARTED |  |
+| 24 | steamforge-express | NOT STARTED |  |
+| 25 | tarot-twilight | NOT STARTED |  |
+| 26 | tesla-tower | NOT STARTED |  |
+| 27 | thunderbird-totem | NOT STARTED |  |
+| 28 | tortoise-treasury | NOT STARTED |  |
+
+### magma-anvil
+
+Forged workbench: riveted iron ledger, inset wager rail, full-width molten strike bar, four independent tool switches.
+
+Modified files: `src/games/magma-anvil/MagmaConsole.tsx`, `src/games/magma-anvil/magma-layout.css`, `src/games/magma-anvil/GameView.tsx`.
+
+Responsive and functional QA: 12 viewports, 27 checks, zero page errors. Includes portrait, landscape, tablet, desktop; all targets >=43px, no overlaps, overflow, broken images or offscreen controls. Touch and mouse: bet +/-/select, manual spin, last win/balance display, double activation (one request, concurrency one), turbo, auto start/stop, bonus cancel/quantity/single purchase, sound toggle, info, close/reopen. RPCs stubbed; no real wagers or database writes. Audible playback not manually assessed.
+
+Evidence: [screenshots/results](../output/magma-mobile/), [design and original sources](../output/realms-overhaul/magma-anvil/). Before: `before-*.png`; after: `after-*.png`; result: `after-results.json`.
+
+### monarch-meadow
+
+Botanical crown: separate oval account plaques, butterfly flight pad beside the wager, paired garden actions below.
+
+Modified files: `src/games/monarch-meadow/MeadowConsole.tsx`, `src/games/monarch-meadow/meadow-layout.css`, `src/games/monarch-meadow/GameView.tsx`.
+
+Responsive and functional QA: 12 viewports, 27 checks, zero page errors. Includes portrait, landscape, tablet, desktop; all targets >=43px, no overlaps, overflow, broken images or offscreen controls. Touch and mouse: bet +/-/select, manual spin, last win/balance display, double activation (one request, concurrency one), turbo, auto start/stop, bonus cancel/quantity/single purchase, sound toggle, info, close/reopen. RPCs stubbed; no real wagers or database writes. Audible playback not manually assessed.
+
+Evidence: [screenshots/results](../output/monarch-mobile/), [design and original sources](../output/realms-overhaul/monarch-meadow/). Before: `before-*.png`; after: `after-*.png`; result: `after-results.json`.
+
+### monsoon-grove
+
+Rain shelter: canopy-edged ledger, droplet action well at left, wager and weather switches at right, wide bonus basin.
+
+Modified files: `src/games/monsoon-grove/MonsoonConsole.tsx`, `src/games/monsoon-grove/monsoon-layout.css`, `src/games/monsoon-grove/GameView.tsx`.
+
+Responsive and functional QA: 12 viewports, 27 checks, zero page errors. Includes portrait, landscape, tablet, desktop; all targets >=43px, no overlaps, overflow, broken images or offscreen controls. Touch and mouse: bet +/-/select, manual spin, last win/balance display, double activation (one request, concurrency one), turbo, auto start/stop, bonus cancel/quantity/single purchase, sound toggle, info, close/reopen. RPCs stubbed; no real wagers or database writes. Audible playback not manually assessed.
+
+Evidence: [screenshots/results](../output/monsoon-mobile/), [design and original sources](../output/realms-overhaul/monsoon-grove/). Before: `before-*.png`; after: `after-*.png`; result: `after-results.json`.
+
+### moonwell-mysteries
+
+Lunar shrine: twin silver readouts above a central moonwell surrounded by four independent arcane tablets; wager beneath.
+
+Modified files: `src/games/moonwell-mysteries/MoonwellConsole.tsx`, `src/games/moonwell-mysteries/moonwell-layout.css`, `src/games/moonwell-mysteries/GameView.tsx`.
+
+Responsive and functional QA: 12 viewports, 27 checks, zero page errors. Includes portrait, landscape, tablet, desktop; all targets >=43px, no overlaps, overflow, broken images or offscreen controls. Touch and mouse: bet +/-/select, manual spin, last win/balance display, double activation (one request, concurrency one), turbo, auto start/stop, bonus cancel/quantity/single purchase, sound toggle, info, close/reopen. RPCs stubbed; no real wagers or database writes. Audible playback not manually assessed.
+
+Evidence: [screenshots/results](../output/moonwell-mobile/), [design and original sources](../output/realms-overhaul/moonwell-mysteries/). Before: `before-*.png`; after: `after-*.png`; result: `after-results.json`.
+
+### nebula-nomads
+
+Survey cockpit: two instrument windows, full-width launch dock, wager rail, segmented flight controls.
+
+Modified files: `src/games/nebula-nomads/NebulaConsole.tsx`, `src/games/nebula-nomads/nebula-layout.css`, `src/games/nebula-nomads/GameView.tsx`.
+
+Responsive and functional QA: 12 viewports, 27 checks, zero page errors. Includes portrait, landscape, tablet, desktop; all targets >=43px, no overlaps, overflow, broken images or offscreen controls. Touch and mouse: bet +/-/select, manual spin, last win/balance display, double activation (one request, concurrency one), turbo, auto start/stop, bonus cancel/quantity/single purchase, sound toggle, info, close/reopen. RPCs stubbed; no real wagers or database writes. Audible playback not manually assessed.
+
+Evidence: [screenshots/results](../output/nebula-mobile/), [design and original sources](../output/realms-overhaul/nebula-nomads/). Before: `before-*.png`; after: `after-*.png`; result: `after-results.json`.
+
+### northwind-narwhal
+
+Nautical bridge: chart-like ledger, wide arctic navigation dial on the right, two stacked port controls and a separate bonus rail.
+
+Modified files: `src/games/northwind-narwhal/NarwhalConsole.tsx`, `src/games/northwind-narwhal/narwhal-layout.css`, `src/games/northwind-narwhal/GameView.tsx`.
+
+Responsive and functional QA: 12 viewports, 27 checks, zero page errors. Includes portrait, landscape, tablet, desktop; all targets >=43px, no overlaps, overflow, broken images or offscreen controls. Touch and mouse: bet +/-/select, manual spin, last win/balance display, double activation (one request, concurrency one), turbo, auto start/stop, bonus cancel/quantity/single purchase, sound toggle, info, close/reopen. RPCs stubbed; no real wagers or database writes. Audible playback not manually assessed.
+
+Evidence: [screenshots/results](../output/northwind-mobile/), [design and original sources](../output/realms-overhaul/northwind-narwhal/). Before: `before-*.png`; after: `after-*.png`; result: `after-results.json`.

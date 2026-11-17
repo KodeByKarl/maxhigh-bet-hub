@@ -1,3 +1,9 @@
+import { NarwhalConsole } from "@/games/northwind-narwhal/NarwhalConsole";
+import { NebulaConsole } from "@/games/nebula-nomads/NebulaConsole";
+import { MoonwellConsole } from "@/games/moonwell-mysteries/MoonwellConsole";
+import { MonsoonConsole } from "@/games/monsoon-grove/MonsoonConsole";
+import { MeadowConsole } from "@/games/monarch-meadow/MeadowConsole";
+import { MagmaConsole } from "@/games/magma-anvil/MagmaConsole";
 import type { CSSProperties } from "react";
 import {
   Flower2,
@@ -265,6 +271,12 @@ function StandardSlotControlDeck({
 
 /** Keep every other game's existing deck unchanged. Realms gameplay retains all callbacks. */
 export function SlotControlDeck(props: SlotControlDeckProps) {
+  if (props.gameId === "northwind-narwhal") return <NarwhalConsole {...props} />;
+  if (props.gameId === "nebula-nomads") return <NebulaConsole {...props} />;
+  if (props.gameId === "moonwell-mysteries") return <MoonwellConsole {...props} />;
+  if (props.gameId === "monsoon-grove") return <MonsoonConsole {...props} />;
+  if (props.gameId === "monarch-meadow") return <MeadowConsole {...props} />;
+  if (props.gameId === "magma-anvil") return <MagmaConsole {...props} />;
   if (props.gameId === "tidecaller-hoard") return <TideNavigation {...props} />;
   return props.gameId === "sirens-lagoon" ? (
     <SirensConsole {...props} />

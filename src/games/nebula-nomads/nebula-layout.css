@@ -1,0 +1,628 @@
+/* Nebula Nomads: Survey cockpit: two instrument windows, full-width launch dock, wager rail, segmented flight controls. Presentation only; original assets and engine retained. */
+[data-game-view="nebula-nomads"] {
+  --ui-accent: #5ee7fa;
+  --ui-soft: #d6faff;
+  --ui-bg: #0b1129;
+  --ui-face: #20284a;
+  --ui-hud: 298px;
+  container-type: size;
+  overflow: clip;
+  color: var(--ui-soft);
+  font-family: Consolas, monospace;
+}
+.nn-identity {
+  position: absolute;
+  top: max(18px, env(safe-area-inset-top));
+  left: 18px;
+  right: 124px;
+  z-index: 25;
+  display: grid;
+  gap: 5px;
+  pointer-events: none;
+}
+.nn-identity__brand {
+  font:
+    600 8px/1.3 "Segoe UI",
+    sans-serif;
+  letter-spacing: 0.18em;
+  color: var(--ui-soft);
+  opacity: 0.8;
+  text-shadow: 0 2px 8px #000;
+}
+.nn-identity h1 {
+  margin: 0;
+  font-size: clamp(19px, 5.6cqw, 30px);
+  line-height: 1.05;
+  letter-spacing: 0.025em;
+  color: var(--ui-soft);
+  text-shadow: 0 2px 10px #000;
+  white-space: normal;
+}
+.nn-identity h1 span {
+  display: block;
+  color: var(--ui-accent);
+}
+[data-game-view="nebula-nomads"] [data-realms-game] > button {
+  top: max(18px, env(safe-area-inset-top));
+  right: 66px;
+  width: 44px;
+  height: 44px;
+  border-radius: 4px;
+  border: 1px solid color-mix(in srgb, var(--ui-accent) 45%, transparent);
+  background: color-mix(in srgb, var(--ui-bg) 90%, transparent);
+}
+[data-game-modal="nebula-nomads"] > div:has(> button[aria-label="Close game"]) {
+  top: max(18px, env(safe-area-inset-top));
+  right: 12px;
+}
+[data-game-modal="nebula-nomads"] button[aria-label="Close game"] {
+  width: 44px;
+  height: 44px;
+  border-radius: 4px;
+  border: 1px solid color-mix(in srgb, #5ee7fa 45%, transparent);
+  background: #0b1129e6;
+}
+body:has(.bb-close) [data-game-modal="nebula-nomads"] > div:has(> button[aria-label="Close game"]),
+body:has(.bb-close) [data-game-modal="nebula-nomads"] [data-realms-game] > button {
+  visibility: hidden;
+  pointer-events: none;
+}
+[data-game-view="nebula-nomads"] .realms-playfield {
+  padding: 100px 16px max(20px, env(safe-area-inset-bottom));
+  align-items: center;
+  justify-content: center;
+}
+[data-game-view="nebula-nomads"] .realms-playfield > div {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: auto auto;
+  align-content: center;
+  justify-items: center;
+  gap: 22px;
+  width: 100%;
+  max-width: 800px;
+  height: 100%;
+  margin-inline: auto;
+}
+[data-game-view="nebula-nomads"] .realms-stage {
+  flex: none;
+  height: auto;
+  min-height: 0;
+  width: 100%;
+}
+[data-game-view="nebula-nomads"] .realms-well {
+  padding: 12px !important;
+  margin-inline: auto;
+  border: 1px solid color-mix(in srgb, var(--ui-accent) 50%, transparent);
+  border-radius: 16px 4px 16px 4px !important;
+  clip-path: none !important;
+  mask: none !important;
+  background: linear-gradient(145deg, #20284af2, #0b1129f5) !important;
+  box-shadow:
+    inset 0 1px 0 #fff2,
+    0 14px 36px #0009 !important;
+}
+[data-game-view="nebula-nomads"] .realms-well::before,
+[data-game-view="nebula-nomads"] .realms-well::after {
+  display: none !important;
+}
+[data-game-view="nebula-nomads"] .realms-reel-grid {
+  width: min(
+    calc(100cqw - 58px),
+    640px,
+    calc(
+      (100cqh - 100px - var(--ui-hud) - 22px - max(20px, env(safe-area-inset-bottom)) - 26px) * 1
+    )
+  ) !important;
+  max-height: none !important;
+  border: 0 !important;
+  background: none !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+  gap: clamp(4px, 1.3cqw, 9px) !important;
+}
+[data-game-view="nebula-nomads"] .realms-reel-cell {
+  border-radius: 12% !important;
+  clip-path: none !important;
+  mask: none !important;
+  border: 1px solid color-mix(in srgb, var(--ui-accent) 22%, transparent) !important;
+  background-color: color-mix(in srgb, var(--ui-face) 70%, var(--ui-bg)) !important;
+  background-image: radial-gradient(at 35% 20%, #fff1, transparent 75%) !important;
+  box-shadow: inset 0 1px 0 #fff1 !important;
+}
+[data-game-view="nebula-nomads"] .realms-reel-cell[data-winning="true"] {
+  border-color: var(--ui-soft) !important;
+  box-shadow:
+    inset 0 0 12px color-mix(in srgb, var(--ui-accent) 40%, transparent),
+    0 0 12px var(--ui-accent) !important;
+}
+[data-game-view="nebula-nomads"] .realms-reel-art {
+  inset: 5%;
+}
+[data-game-view="nebula-nomads"] .realms-reel-grid img {
+  scale: 0.95;
+}
+.nn-console {
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-rows: 58px 80px 48px 48px;
+  grid-template-areas: "ledger ledger ledger ledger" "spin spin spin spin" "bet bet bet bet" "auto turbo info bonus";
+  gap: 12px;
+  padding: 14px;
+  width: 100%;
+  max-width: 440px;
+  justify-self: center;
+  isolation: isolate;
+  border: 1px solid color-mix(in srgb, var(--ui-accent) 30%, transparent);
+  border-radius: 4px;
+  background: #0b1129eb;
+  box-shadow: 0 14px 30px #0006;
+}
+.nn-console::before,
+.nn-console::after {
+  display: none !important;
+}
+.nn-console button {
+  min-width: 0;
+  cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  transition:
+    filter 0.15s,
+    transform 0.15s;
+  font-family: inherit;
+}
+.nn-console button:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+.nn-console button:not(:disabled):active {
+  transform: scale(0.97);
+}
+.nn-console button:focus-visible {
+  outline: 2px solid var(--ui-soft);
+  outline-offset: 3px;
+}
+.nn-console strong,
+.nn-console em {
+  font-variant-numeric: tabular-nums;
+  font-style: normal;
+  white-space: nowrap;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.nn-ledger {
+  grid-area: ledger;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+.nn-ledger > i {
+  display: none;
+}
+.nn-meter {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+.nn-meter[data-meter="win"] {
+  text-align: right;
+}
+.nn-meter > span,
+.nn-bet__value > span {
+  font:
+    600 9px/1.2 "Segoe UI",
+    sans-serif;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--ui-soft);
+  opacity: 0.8;
+}
+.nn-meter strong {
+  font:
+    700 clamp(15px, 4.5cqw, 21px)/1.2 "Segoe UI",
+    sans-serif;
+  color: var(--ui-soft);
+}
+.nn-meter[data-winning="true"] strong {
+  color: var(--ui-accent);
+}
+.nn-bet {
+  grid-area: bet;
+  display: grid;
+  grid-template-columns: 48px minmax(0, 1fr) 48px;
+  gap: 8px;
+  min-width: 0;
+}
+.nn-step,
+.nn-bet__value,
+.nn-chip {
+  border: 1px solid color-mix(in srgb, var(--ui-accent) 35%, transparent);
+  border-radius: 4px;
+  background: linear-gradient(145deg, var(--ui-face), var(--ui-bg));
+  color: var(--ui-soft);
+  box-shadow: inset 0 1px 0 #fff1;
+}
+.nn-step {
+  display: grid;
+  place-items: center;
+  min-height: 44px;
+  color: var(--ui-accent);
+}
+.nn-bet__value {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  min-height: 44px;
+}
+.nn-bet__value strong {
+  font:
+    700 16px/1 "Segoe UI",
+    sans-serif;
+}
+.nn-side {
+  display: contents;
+}
+.nn-turbo {
+  grid-area: turbo;
+}
+.nn-auto {
+  grid-area: auto;
+}
+.nn-bonus {
+  grid-area: bonus;
+}
+.nn-info {
+  grid-area: info;
+}
+.nn-chip {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  padding: 4px;
+  min-height: 44px;
+}
+.nn-chip > svg {
+  width: 16px;
+  height: 16px;
+  color: var(--ui-accent);
+}
+.nn-chip > span {
+  font:
+    700 8px/1.1 "Segoe UI",
+    sans-serif;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+}
+.nn-chip > em {
+  font:
+    600 10px/1.1 "Segoe UI",
+    sans-serif;
+}
+.nn-turbo[aria-pressed="true"],
+.nn-auto[aria-pressed="true"] {
+  outline: 1px solid var(--ui-accent);
+  background: color-mix(in srgb, var(--ui-accent) 25%, var(--ui-bg));
+}
+.nn-spin-mount {
+  grid-area: spin;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 0;
+  min-height: 0;
+}
+.nn-spin {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  width: 100%;
+  height: 100%;
+  min-width: 44px;
+  min-height: 44px;
+  border: 1px solid var(--ui-accent);
+  border-radius: 4px;
+  background: linear-gradient(140deg, var(--ui-soft), var(--ui-accent));
+  color: var(--ui-bg);
+  clip-path: none;
+  padding: 4px;
+  isolation: isolate;
+}
+.nn-spin::before,
+.nn-spin::after {
+  display: none !important;
+}
+.nn-spin > i {
+  display: none;
+}
+.nn-spin > svg {
+  width: 17px;
+  height: 17px;
+}
+.nn-spin > span {
+  font:
+    800 11px/1 "Segoe UI",
+    sans-serif;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+}
+.nn-spin__art {
+  width: 44px;
+  height: 44px;
+  object-fit: contain;
+  pointer-events: none;
+}
+.nn-spin[data-state="busy"] .nn-spin__art {
+  animation: nn-ui-turn 3s linear infinite;
+}
+.nn-spin[data-state="auto"] {
+  box-shadow: 0 0 0 2px var(--ui-soft);
+}
+.nn-spin[data-state="free"] {
+  filter: hue-rotate(15deg);
+}
+@keyframes nn-ui-turn {
+  to {
+    rotate: 360deg;
+  }
+}
+.nn-console {
+  border: 1px solid #5ee7fa55;
+  border-left: 4px solid #5ee7fa88;
+  background: linear-gradient(110deg, #172441ee, #0c112af5);
+  border-radius: 12px 3px 12px 3px;
+}
+.nn-ledger {
+  gap: 12px;
+  padding: 0;
+  background: transparent;
+}
+.nn-meter {
+  background: #040b20;
+  border: 1px solid #5ee7fa33;
+  padding: 7px 10px;
+  border-radius: 3px;
+}
+.nn-meter > span {
+  font-size: 8px;
+}
+.nn-meter strong {
+  color: #ccf7ff;
+}
+.nn-spin-mount {
+  border: 1px solid #5ee7fa66;
+  padding: 6px 12px;
+  background: repeating-linear-gradient(90deg, #5ee7fa11 0 1px, transparent 1px 14px);
+  border-radius: 40px 6px 40px 6px;
+}
+.nn-spin {
+  width: 100%;
+  height: 100%;
+  border-radius: 32px 4px 32px 4px;
+  flex-direction: row;
+  gap: 20px;
+  background: linear-gradient(105deg, #214785, #24b5ce);
+  color: #ecfeff;
+}
+.nn-spin__art {
+  width: 48px;
+  height: 48px;
+}
+.nn-spin > svg {
+  width: 20px;
+  height: 20px;
+}
+.nn-spin > span {
+  font-size: 16px;
+  letter-spacing: 0.2em;
+}
+.nn-chip {
+  border-radius: 3px;
+  border-bottom: 2px solid #5ee7fa88;
+}
+.nn-bet__value {
+  border-color: #5ee7fa88;
+  background: #060e23;
+}
+[data-game-view="nebula-nomads"] .realms-well {
+  border: 1px solid #5ee7fa77 !important;
+  border-left: 4px solid #a78bfa99 !important;
+}
+[data-sonner-toast].nn-toast {
+  display: flex !important;
+  justify-content: center;
+  width: auto !important;
+  padding: 0 !important;
+  border: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  pointer-events: none;
+}
+.nn-toast__pill {
+  padding: 4px 12px;
+  border: 1px solid #5ee7fa66;
+  border-radius: 20px;
+  background: #0b1129ee;
+  color: #d6faff;
+  font:
+    600 11px/1.3 "Segoe UI",
+    sans-serif;
+  white-space: nowrap;
+}
+[data-sonner-toaster]:has(.nn-toast) {
+  --offset-top: 92px !important;
+  --mobile-offset-top: 92px !important;
+}
+@container (max-width:350px) {
+  .nn-console {
+    gap: 8px;
+    padding: 10px;
+  }
+  .nn-chip > span {
+    font-size: 8px;
+  }
+  .nn-spin-mount {
+    padding: 4px;
+  }
+  .nn-bet {
+    grid-template-columns: 44px minmax(0, 1fr) 44px;
+    gap: 4px;
+  }
+}
+@container (orientation:portrait) and (max-height:680px) {
+  [data-game-view="nebula-nomads"] .realms-playfield {
+    padding: 88px 16px max(12px, env(safe-area-inset-bottom));
+  }
+  [data-game-view="nebula-nomads"] .realms-playfield > div {
+    gap: 14px;
+  }
+  [data-game-view="nebula-nomads"] .realms-reel-grid {
+    width: min(
+      calc(100cqw - 58px),
+      calc((100cqh - 88px - 274px - 14px - max(12px, env(safe-area-inset-bottom)) - 26px) * 1)
+    ) !important;
+  }
+  .nn-console {
+    gap: 8px;
+    padding: 8px;
+    grid-template-rows: 54px 76px 44px 44px;
+  }
+  .nn-spin {
+    max-width: 100%;
+    max-height: 100%;
+  }
+  .nn-meter strong {
+    font-size: 16px;
+  }
+}
+@container (orientation:landscape) and (max-height:600px) {
+  [data-game-view="nebula-nomads"] .realms-playfield {
+    padding: 58px 16px max(10px, env(safe-area-inset-bottom));
+  }
+  [data-game-view="nebula-nomads"] .realms-playfield > div {
+    grid-template-columns: minmax(0, 1fr) 300px;
+    grid-template-rows: auto;
+    gap: 16px;
+    max-width: 1100px;
+  }
+  .nn-identity {
+    top: 12px;
+  }
+  .nn-identity h1 {
+    font-size: 20px;
+  }
+  .nn-identity h1 span {
+    display: inline;
+  }
+  .nn-console {
+    padding: 8px;
+    gap: 6px;
+    grid-template-rows: 44px 66px 44px 44px;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+  .nn-meter {
+    gap: 2px;
+  }
+  .nn-meter strong {
+    font-size: 16px;
+  }
+  .nn-meter > span {
+    font-size: 8px;
+  }
+  .nn-chip {
+    padding: 2px;
+    gap: 1px;
+  }
+  .nn-bet {
+    grid-template-columns: 44px minmax(0, 1fr) 44px;
+    gap: 4px;
+  }
+  .nn-spin {
+    max-width: 100%;
+    max-height: 100%;
+  }
+  .nn-spin__art {
+    width: 38px;
+    height: 38px;
+  }
+  .nn-spin-mount {
+    padding: 4px;
+  }
+  [data-game-view="nebula-nomads"] .realms-reel-grid {
+    width: min(
+      calc(100cqw - 32px - 300px - 16px - 26px),
+      calc((100cqh - 58px - max(10px, env(safe-area-inset-bottom)) - 26px) * 1)
+    ) !important;
+  }
+}
+@container (orientation:landscape) and (max-height:360px) {
+  [data-game-view="nebula-nomads"] .realms-playfield > div {
+    grid-template-columns: minmax(0, 1fr) 280px;
+  }
+  [data-game-view="nebula-nomads"] .realms-reel-grid {
+    width: min(
+      calc(100cqw - 32px - 280px - 16px - 26px),
+      calc((100cqh - 58px - 10px - 26px) * 1)
+    ) !important;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .nn-spin[data-state="busy"] .nn-spin__art {
+    animation: none;
+  }
+  .nn-console button {
+    transition: none;
+  }
+}
+/* Shared dialogs keep their handlers; keep content scrollable on short screens and Close tappable. */
+[data-game-view="nebula-nomads"] [aria-label="Auto Spin Configuration"] > div {
+  display: flex;
+  flex-direction: column;
+  max-height: calc(100% - 12px);
+}
+[data-game-view="nebula-nomads"] [aria-label="Auto Spin Configuration"] > div > div:nth-child(2) {
+  min-height: 0;
+  flex: 1 1 auto;
+  max-height: none;
+}
+[data-game-view="nebula-nomads"] [aria-label="Auto Spin Configuration"] > div > div:first-child,
+[data-game-view="nebula-nomads"] [aria-label="Auto Spin Configuration"] > div > div:last-child {
+  flex-shrink: 0;
+}
+[data-game-view="nebula-nomads"] div:has(> h3):has(> .grid.grid-cols-4) {
+  display: flex;
+  flex-direction: column;
+  max-height: calc(100dvh - 32px);
+  padding: 20px;
+}
+[data-game-view="nebula-nomads"] div:has(> h3) > .grid.grid-cols-4 {
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 4px;
+}
+[data-game-view="nebula-nomads"] div:has(> .grid.grid-cols-4) > h3 {
+  padding-right: 40px;
+  font-size: 16px;
+  text-align: left;
+}
+[data-game-view="nebula-nomads"] [aria-label="Paytable"] button[aria-label="Close"],
+[data-game-view="nebula-nomads"] div:has(> h3) > button[aria-label="Close"] {
+  min-width: 44px;
+  min-height: 44px;
+  flex-shrink: 0;
+}
+[data-game-view="nebula-nomads"] div:has(> h3) > button[aria-label="Close"] {
+  z-index: 1;
+}

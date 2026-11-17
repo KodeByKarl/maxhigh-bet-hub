@@ -1,0 +1,623 @@
+/* Magma Anvil: Forged workbench: riveted iron ledger, inset wager rail, full-width molten strike bar, four independent tool switches. Presentation only; original assets and engine retained. */
+[data-game-view="magma-anvil"] {
+  --ui-accent: #fb923c;
+  --ui-soft: #ffedd5;
+  --ui-bg: #170b09;
+  --ui-face: #3c201a;
+  --ui-hud: 296px;
+  container-type: size;
+  overflow: clip;
+  color: var(--ui-soft);
+  font-family: Bahnschrift, "Segoe UI", sans-serif;
+}
+.ma-identity {
+  position: absolute;
+  top: max(18px, env(safe-area-inset-top));
+  left: 18px;
+  right: 124px;
+  z-index: 25;
+  display: grid;
+  gap: 5px;
+  pointer-events: none;
+}
+.ma-identity__brand {
+  font:
+    600 8px/1.3 "Segoe UI",
+    sans-serif;
+  letter-spacing: 0.18em;
+  color: var(--ui-soft);
+  opacity: 0.8;
+  text-shadow: 0 2px 8px #000;
+}
+.ma-identity h1 {
+  margin: 0;
+  font-size: clamp(19px, 5.6cqw, 30px);
+  line-height: 1.05;
+  letter-spacing: 0.025em;
+  color: var(--ui-soft);
+  text-shadow: 0 2px 10px #000;
+  white-space: normal;
+}
+.ma-identity h1 span {
+  display: block;
+  color: var(--ui-accent);
+}
+[data-game-view="magma-anvil"] [data-realms-game] > button {
+  top: max(18px, env(safe-area-inset-top));
+  right: 66px;
+  width: 44px;
+  height: 44px;
+  border-radius: 8px;
+  border: 1px solid color-mix(in srgb, var(--ui-accent) 45%, transparent);
+  background: color-mix(in srgb, var(--ui-bg) 90%, transparent);
+}
+[data-game-modal="magma-anvil"] > div:has(> button[aria-label="Close game"]) {
+  top: max(18px, env(safe-area-inset-top));
+  right: 12px;
+}
+[data-game-modal="magma-anvil"] button[aria-label="Close game"] {
+  width: 44px;
+  height: 44px;
+  border-radius: 8px;
+  border: 1px solid color-mix(in srgb, #fb923c 45%, transparent);
+  background: #170b09e6;
+}
+body:has(.bb-close) [data-game-modal="magma-anvil"] > div:has(> button[aria-label="Close game"]),
+body:has(.bb-close) [data-game-modal="magma-anvil"] [data-realms-game] > button {
+  visibility: hidden;
+  pointer-events: none;
+}
+[data-game-view="magma-anvil"] .realms-playfield {
+  padding: 100px 16px max(20px, env(safe-area-inset-bottom));
+  align-items: center;
+  justify-content: center;
+}
+[data-game-view="magma-anvil"] .realms-playfield > div {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: auto auto;
+  align-content: center;
+  justify-items: center;
+  gap: 22px;
+  width: 100%;
+  max-width: 800px;
+  height: 100%;
+  margin-inline: auto;
+}
+[data-game-view="magma-anvil"] .realms-stage {
+  flex: none;
+  height: auto;
+  min-height: 0;
+  width: 100%;
+}
+[data-game-view="magma-anvil"] .realms-well {
+  padding: 12px !important;
+  margin-inline: auto;
+  border: 1px solid color-mix(in srgb, var(--ui-accent) 50%, transparent);
+  border-radius: 10px !important;
+  clip-path: none !important;
+  mask: none !important;
+  background: linear-gradient(145deg, #3c201af2, #170b09f5) !important;
+  box-shadow:
+    inset 0 1px 0 #fff2,
+    0 14px 36px #0009 !important;
+}
+[data-game-view="magma-anvil"] .realms-well::before,
+[data-game-view="magma-anvil"] .realms-well::after {
+  display: none !important;
+}
+[data-game-view="magma-anvil"] .realms-reel-grid {
+  width: min(
+    calc(100cqw - 58px),
+    640px,
+    calc(
+      (100cqh - 100px - var(--ui-hud) - 22px - max(20px, env(safe-area-inset-bottom)) - 26px) * 1.4
+    )
+  ) !important;
+  max-height: none !important;
+  border: 0 !important;
+  background: none !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+  gap: clamp(4px, 1.3cqw, 9px) !important;
+}
+[data-game-view="magma-anvil"] .realms-reel-cell {
+  border-radius: 18% !important;
+  clip-path: none !important;
+  mask: none !important;
+  border: 1px solid color-mix(in srgb, var(--ui-accent) 22%, transparent) !important;
+  background-color: color-mix(in srgb, var(--ui-face) 70%, var(--ui-bg)) !important;
+  background-image: radial-gradient(at 35% 20%, #fff1, transparent 75%) !important;
+  box-shadow: inset 0 1px 0 #fff1 !important;
+}
+[data-game-view="magma-anvil"] .realms-reel-cell[data-winning="true"] {
+  border-color: var(--ui-soft) !important;
+  box-shadow:
+    inset 0 0 12px color-mix(in srgb, var(--ui-accent) 40%, transparent),
+    0 0 12px var(--ui-accent) !important;
+}
+[data-game-view="magma-anvil"] .realms-reel-art {
+  inset: 5%;
+}
+[data-game-view="magma-anvil"] .realms-reel-grid img {
+  scale: 0.95;
+}
+.ma-console {
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-rows: 56px 48px 76px 52px;
+  grid-template-areas: "ledger ledger ledger ledger" "bet bet bet bet" "spin spin spin spin" "turbo auto bonus info";
+  gap: 12px;
+  padding: 14px;
+  width: 100%;
+  max-width: 440px;
+  justify-self: center;
+  isolation: isolate;
+  border: 1px solid color-mix(in srgb, var(--ui-accent) 30%, transparent);
+  border-radius: 8px;
+  background: #170b09eb;
+  box-shadow: 0 14px 30px #0006;
+}
+.ma-console::before,
+.ma-console::after {
+  display: none !important;
+}
+.ma-console button {
+  min-width: 0;
+  cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  transition:
+    filter 0.15s,
+    transform 0.15s;
+  font-family: inherit;
+}
+.ma-console button:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+.ma-console button:not(:disabled):active {
+  transform: scale(0.97);
+}
+.ma-console button:focus-visible {
+  outline: 2px solid var(--ui-soft);
+  outline-offset: 3px;
+}
+.ma-console strong,
+.ma-console em {
+  font-variant-numeric: tabular-nums;
+  font-style: normal;
+  white-space: nowrap;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.ma-ledger {
+  grid-area: ledger;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+.ma-ledger > i {
+  display: none;
+}
+.ma-meter {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+.ma-meter[data-meter="win"] {
+  text-align: right;
+}
+.ma-meter > span,
+.ma-bet__value > span {
+  font:
+    600 9px/1.2 "Segoe UI",
+    sans-serif;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--ui-soft);
+  opacity: 0.8;
+}
+.ma-meter strong {
+  font:
+    700 clamp(15px, 4.5cqw, 21px)/1.2 "Segoe UI",
+    sans-serif;
+  color: var(--ui-soft);
+}
+.ma-meter[data-winning="true"] strong {
+  color: var(--ui-accent);
+}
+.ma-bet {
+  grid-area: bet;
+  display: grid;
+  grid-template-columns: 48px minmax(0, 1fr) 48px;
+  gap: 8px;
+  min-width: 0;
+}
+.ma-step,
+.ma-bet__value,
+.ma-chip {
+  border: 1px solid color-mix(in srgb, var(--ui-accent) 35%, transparent);
+  border-radius: 8px;
+  background: linear-gradient(145deg, var(--ui-face), var(--ui-bg));
+  color: var(--ui-soft);
+  box-shadow: inset 0 1px 0 #fff1;
+}
+.ma-step {
+  display: grid;
+  place-items: center;
+  color: var(--ui-accent);
+}
+.ma-bet__value {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+}
+.ma-bet__value strong {
+  font:
+    700 16px/1 "Segoe UI",
+    sans-serif;
+}
+.ma-side {
+  display: contents;
+}
+.ma-turbo {
+  grid-area: turbo;
+}
+.ma-auto {
+  grid-area: auto;
+}
+.ma-bonus {
+  grid-area: bonus;
+}
+.ma-info {
+  grid-area: info;
+}
+.ma-chip {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  padding: 4px;
+  min-height: 44px;
+}
+.ma-chip > svg {
+  width: 16px;
+  height: 16px;
+  color: var(--ui-accent);
+}
+.ma-chip > span {
+  font:
+    700 8px/1.1 "Segoe UI",
+    sans-serif;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+}
+.ma-chip > em {
+  font:
+    600 10px/1.1 "Segoe UI",
+    sans-serif;
+}
+.ma-turbo[aria-pressed="true"],
+.ma-auto[aria-pressed="true"] {
+  outline: 1px solid var(--ui-accent);
+  background: color-mix(in srgb, var(--ui-accent) 25%, var(--ui-bg));
+}
+.ma-spin-mount {
+  grid-area: spin;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 0;
+  min-height: 0;
+}
+.ma-spin {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  width: 100%;
+  height: 100%;
+  min-width: 44px;
+  min-height: 44px;
+  border: 1px solid var(--ui-accent);
+  border-radius: 8px;
+  background: linear-gradient(140deg, var(--ui-soft), var(--ui-accent));
+  color: var(--ui-bg);
+  clip-path: none;
+  padding: 4px;
+  isolation: isolate;
+}
+.ma-spin::before,
+.ma-spin::after {
+  display: none !important;
+}
+.ma-spin > i {
+  display: none;
+}
+.ma-spin > svg {
+  width: 17px;
+  height: 17px;
+}
+.ma-spin > span {
+  font:
+    800 11px/1 "Segoe UI",
+    sans-serif;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+}
+.ma-spin__art {
+  width: 44px;
+  height: 44px;
+  object-fit: contain;
+  pointer-events: none;
+}
+.ma-spin[data-state="busy"] .ma-spin__art {
+  animation: ma-ui-turn 3s linear infinite;
+}
+.ma-spin[data-state="auto"] {
+  box-shadow: 0 0 0 2px var(--ui-soft);
+}
+.ma-spin[data-state="free"] {
+  filter: hue-rotate(15deg);
+}
+@keyframes ma-ui-turn {
+  to {
+    rotate: 360deg;
+  }
+}
+.ma-console {
+  border-top: 3px solid var(--ui-accent);
+  background: linear-gradient(135deg, #35221fee, #140d0df5);
+  box-shadow:
+    inset 0 0 0 4px #130c0b,
+    0 16px 36px #0009;
+}
+.ma-ledger {
+  border: 1px solid #a0897544;
+  background: #0d0909;
+  border-radius: 3px;
+  padding: 8px 12px;
+  box-shadow: inset 0 2px 8px #0009;
+}
+.ma-spin-mount {
+  padding: 5px;
+  border: 1px solid #945132;
+  border-radius: 8px;
+  background: repeating-linear-gradient(135deg, #f9731619 0 5px, #09060566 5px 10px);
+}
+.ma-spin {
+  width: 100%;
+  height: 100%;
+  border-radius: 5px;
+  background: linear-gradient(#ffb65d, #c2410c 65%, #7c2d12);
+  box-shadow:
+    inset 0 2px 0 #fff5,
+    inset 0 -4px 0 #461604;
+  flex-direction: row;
+  gap: 16px;
+  color: #250b02;
+}
+.ma-spin__art {
+  width: 48px;
+  height: 48px;
+}
+.ma-spin > svg {
+  width: 22px;
+  height: 22px;
+}
+.ma-spin > span {
+  font-size: 17px;
+  letter-spacing: 0.2em;
+}
+.ma-chip {
+  border-bottom: 3px solid #8d4725;
+}
+.ma-step {
+  border-radius: 5px;
+}
+.ma-bet__value {
+  border-radius: 4px;
+}
+[data-game-view="magma-anvil"] .realms-well {
+  border-top: 3px solid #c47744 !important;
+  box-shadow:
+    inset 0 0 0 3px #0b0707,
+    0 16px 40px #0009 !important;
+}
+[data-sonner-toast].ma-toast {
+  display: flex !important;
+  justify-content: center;
+  width: auto !important;
+  padding: 0 !important;
+  border: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  pointer-events: none;
+}
+.ma-toast__pill {
+  padding: 4px 12px;
+  border: 1px solid #fb923c66;
+  border-radius: 20px;
+  background: #170b09ee;
+  color: #ffedd5;
+  font:
+    600 11px/1.3 "Segoe UI",
+    sans-serif;
+  white-space: nowrap;
+}
+[data-sonner-toaster]:has(.ma-toast) {
+  --offset-top: 92px !important;
+  --mobile-offset-top: 92px !important;
+}
+@container (max-width:350px) {
+  .ma-console {
+    gap: 8px;
+    padding: 10px;
+  }
+  .ma-chip > span {
+    font-size: 8px;
+  }
+  .ma-spin-mount {
+    padding: 4px;
+  }
+  .ma-bet {
+    grid-template-columns: 44px minmax(0, 1fr) 44px;
+    gap: 4px;
+  }
+}
+@container (orientation:portrait) and (max-height:680px) {
+  [data-game-view="magma-anvil"] .realms-playfield {
+    padding: 88px 16px max(12px, env(safe-area-inset-bottom));
+  }
+  [data-game-view="magma-anvil"] .realms-playfield > div {
+    gap: 14px;
+  }
+  [data-game-view="magma-anvil"] .realms-reel-grid {
+    width: min(
+      calc(100cqw - 58px),
+      calc((100cqh - 88px - 272px - 14px - max(12px, env(safe-area-inset-bottom)) - 26px) * 1.4)
+    ) !important;
+  }
+  .ma-console {
+    gap: 8px;
+    padding: 8px;
+    grid-template-rows: 52px 44px 72px 48px;
+  }
+  .ma-spin {
+    max-width: 100%;
+    max-height: 100%;
+  }
+  .ma-meter strong {
+    font-size: 16px;
+  }
+}
+@container (orientation:landscape) and (max-height:600px) {
+  [data-game-view="magma-anvil"] .realms-playfield {
+    padding: 58px 16px max(10px, env(safe-area-inset-bottom));
+  }
+  [data-game-view="magma-anvil"] .realms-playfield > div {
+    grid-template-columns: minmax(0, 1fr) 300px;
+    grid-template-rows: auto;
+    gap: 16px;
+    max-width: 1100px;
+  }
+  .ma-identity {
+    top: 12px;
+  }
+  .ma-identity h1 {
+    font-size: 20px;
+  }
+  .ma-identity h1 span {
+    display: inline;
+  }
+  .ma-console {
+    padding: 8px;
+    gap: 6px;
+    grid-template-rows: 44px 44px 62px 44px;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+  .ma-meter {
+    gap: 2px;
+  }
+  .ma-meter strong {
+    font-size: 16px;
+  }
+  .ma-meter > span {
+    font-size: 8px;
+  }
+  .ma-chip {
+    padding: 2px;
+    gap: 1px;
+  }
+  .ma-bet {
+    grid-template-columns: 44px minmax(0, 1fr) 44px;
+    gap: 4px;
+  }
+  .ma-spin {
+    max-width: 100%;
+    max-height: 100%;
+  }
+  .ma-spin__art {
+    width: 38px;
+    height: 38px;
+  }
+  .ma-spin-mount {
+    padding: 4px;
+  }
+  [data-game-view="magma-anvil"] .realms-reel-grid {
+    width: min(
+      calc(100cqw - 32px - 300px - 16px - 26px),
+      calc((100cqh - 58px - max(10px, env(safe-area-inset-bottom)) - 26px) * 1.4)
+    ) !important;
+  }
+}
+@container (orientation:landscape) and (max-height:360px) {
+  [data-game-view="magma-anvil"] .realms-playfield > div {
+    grid-template-columns: minmax(0, 1fr) 280px;
+  }
+  [data-game-view="magma-anvil"] .realms-reel-grid {
+    width: min(
+      calc(100cqw - 32px - 280px - 16px - 26px),
+      calc((100cqh - 58px - 10px - 26px) * 1.4)
+    ) !important;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .ma-spin[data-state="busy"] .ma-spin__art {
+    animation: none;
+  }
+  .ma-console button {
+    transition: none;
+  }
+}
+/* Shared dialogs keep their handlers; keep content scrollable on short screens and Close tappable. */
+[data-game-view="magma-anvil"] [aria-label="Auto Spin Configuration"] > div {
+  display: flex;
+  flex-direction: column;
+  max-height: calc(100% - 12px);
+}
+[data-game-view="magma-anvil"] [aria-label="Auto Spin Configuration"] > div > div:nth-child(2) {
+  min-height: 0;
+  flex: 1 1 auto;
+  max-height: none;
+}
+[data-game-view="magma-anvil"] [aria-label="Auto Spin Configuration"] > div > div:first-child,
+[data-game-view="magma-anvil"] [aria-label="Auto Spin Configuration"] > div > div:last-child {
+  flex-shrink: 0;
+}
+[data-game-view="magma-anvil"] div:has(> h3):has(> .grid.grid-cols-4) {
+  display: flex;
+  flex-direction: column;
+  max-height: calc(100dvh - 32px);
+  padding: 20px;
+}
+[data-game-view="magma-anvil"] div:has(> h3) > .grid.grid-cols-4 {
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 4px;
+}
+[data-game-view="magma-anvil"] div:has(> .grid.grid-cols-4) > h3 {
+  padding-right: 40px;
+  font-size: 16px;
+  text-align: left;
+}
+[data-game-view="magma-anvil"] [aria-label="Paytable"] button[aria-label="Close"],
+[data-game-view="magma-anvil"] div:has(> h3) > button[aria-label="Close"] {
+  min-width: 44px;
+  min-height: 44px;
+  flex-shrink: 0;
+}
+[data-game-view="magma-anvil"] div:has(> h3) > button[aria-label="Close"] {
+  z-index: 1;
+}

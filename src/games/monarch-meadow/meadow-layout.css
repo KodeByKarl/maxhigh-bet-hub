@@ -1,0 +1,633 @@
+/* Monarch Meadow: Botanical crown: separate oval account plaques, butterfly flight pad beside the wager, paired garden actions below. Presentation only; original assets and engine retained. */
+[data-game-view="monarch-meadow"] {
+  --ui-accent: #e8c777;
+  --ui-soft: #fff7d6;
+  --ui-bg: #14291d;
+  --ui-face: #294733;
+  --ui-hud: 272px;
+  container-type: size;
+  overflow: clip;
+  color: var(--ui-soft);
+  font-family: "Trebuchet MS", sans-serif;
+}
+.mm-identity {
+  position: absolute;
+  top: max(18px, env(safe-area-inset-top));
+  left: 18px;
+  right: 124px;
+  z-index: 25;
+  display: grid;
+  gap: 5px;
+  pointer-events: none;
+}
+.mm-identity__brand {
+  font:
+    600 8px/1.3 "Segoe UI",
+    sans-serif;
+  letter-spacing: 0.18em;
+  color: var(--ui-soft);
+  opacity: 0.8;
+  text-shadow: 0 2px 8px #000;
+}
+.mm-identity h1 {
+  margin: 0;
+  font-size: clamp(19px, 5.6cqw, 30px);
+  line-height: 1.05;
+  letter-spacing: 0.025em;
+  color: var(--ui-soft);
+  text-shadow: 0 2px 10px #000;
+  white-space: normal;
+}
+.mm-identity h1 span {
+  display: block;
+  color: var(--ui-accent);
+}
+[data-game-view="monarch-meadow"] [data-realms-game] > button {
+  top: max(18px, env(safe-area-inset-top));
+  right: 66px;
+  width: 44px;
+  height: 44px;
+  border-radius: 24px;
+  border: 1px solid color-mix(in srgb, var(--ui-accent) 45%, transparent);
+  background: color-mix(in srgb, var(--ui-bg) 90%, transparent);
+}
+[data-game-modal="monarch-meadow"] > div:has(> button[aria-label="Close game"]) {
+  top: max(18px, env(safe-area-inset-top));
+  right: 12px;
+}
+[data-game-modal="monarch-meadow"] button[aria-label="Close game"] {
+  width: 44px;
+  height: 44px;
+  border-radius: 24px;
+  border: 1px solid color-mix(in srgb, #e8c777 45%, transparent);
+  background: #14291de6;
+}
+body:has(.bb-close) [data-game-modal="monarch-meadow"] > div:has(> button[aria-label="Close game"]),
+body:has(.bb-close) [data-game-modal="monarch-meadow"] [data-realms-game] > button {
+  visibility: hidden;
+  pointer-events: none;
+}
+[data-game-view="monarch-meadow"] .realms-playfield {
+  padding: 100px 16px max(20px, env(safe-area-inset-bottom));
+  align-items: center;
+  justify-content: center;
+}
+[data-game-view="monarch-meadow"] .realms-playfield > div {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: auto auto;
+  align-content: center;
+  justify-items: center;
+  gap: 22px;
+  width: 100%;
+  max-width: 800px;
+  height: 100%;
+  margin-inline: auto;
+}
+[data-game-view="monarch-meadow"] .realms-stage {
+  flex: none;
+  height: auto;
+  min-height: 0;
+  width: 100%;
+}
+[data-game-view="monarch-meadow"] .realms-well {
+  padding: 12px !important;
+  margin-inline: auto;
+  border: 1px solid color-mix(in srgb, var(--ui-accent) 50%, transparent);
+  border-radius: 34px 34px 18px 18px !important;
+  clip-path: none !important;
+  mask: none !important;
+  background: linear-gradient(145deg, #294733f2, #14291df5) !important;
+  box-shadow:
+    inset 0 1px 0 #fff2,
+    0 14px 36px #0009 !important;
+}
+[data-game-view="monarch-meadow"] .realms-well::before,
+[data-game-view="monarch-meadow"] .realms-well::after {
+  display: none !important;
+}
+[data-game-view="monarch-meadow"] .realms-reel-grid {
+  width: min(
+    calc(100cqw - 58px),
+    640px,
+    calc(
+      (100cqh - 100px - var(--ui-hud) - 22px - max(20px, env(safe-area-inset-bottom)) - 26px) *
+        0.8333333333333334
+    )
+  ) !important;
+  max-height: none !important;
+  border: 0 !important;
+  background: none !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+  gap: clamp(4px, 1.3cqw, 9px) !important;
+}
+[data-game-view="monarch-meadow"] .realms-reel-cell {
+  border-radius: 50% 50% 22% 22% !important;
+  clip-path: none !important;
+  mask: none !important;
+  border: 1px solid color-mix(in srgb, var(--ui-accent) 22%, transparent) !important;
+  background-color: color-mix(in srgb, var(--ui-face) 70%, var(--ui-bg)) !important;
+  background-image: radial-gradient(at 35% 20%, #fff1, transparent 75%) !important;
+  box-shadow: inset 0 1px 0 #fff1 !important;
+}
+[data-game-view="monarch-meadow"] .realms-reel-cell[data-winning="true"] {
+  border-color: var(--ui-soft) !important;
+  box-shadow:
+    inset 0 0 12px color-mix(in srgb, var(--ui-accent) 40%, transparent),
+    0 0 12px var(--ui-accent) !important;
+}
+[data-game-view="monarch-meadow"] .realms-reel-art {
+  inset: 5%;
+}
+[data-game-view="monarch-meadow"] .realms-reel-grid img {
+  scale: 0.95;
+}
+.mm-console {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 1.2fr) minmax(0, 1.2fr) minmax(0, 0.8fr) minmax(0, 0.8fr);
+  grid-template-rows: 60px 48px 52px 48px;
+  grid-template-areas: "ledger ledger ledger ledger" "bet bet spin spin" "turbo auto spin spin" "bonus bonus info info";
+  gap: 12px;
+  padding: 14px;
+  width: 100%;
+  max-width: 440px;
+  justify-self: center;
+  isolation: isolate;
+  border: 1px solid color-mix(in srgb, var(--ui-accent) 30%, transparent);
+  border-radius: 24px;
+  background: #14291deb;
+  box-shadow: 0 14px 30px #0006;
+}
+.mm-console::before,
+.mm-console::after {
+  display: none !important;
+}
+.mm-console button {
+  min-width: 0;
+  cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  transition:
+    filter 0.15s,
+    transform 0.15s;
+  font-family: inherit;
+}
+.mm-console button:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+.mm-console button:not(:disabled):active {
+  transform: scale(0.97);
+}
+.mm-console button:focus-visible {
+  outline: 2px solid var(--ui-soft);
+  outline-offset: 3px;
+}
+.mm-console strong,
+.mm-console em {
+  font-variant-numeric: tabular-nums;
+  font-style: normal;
+  white-space: nowrap;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.mm-ledger {
+  grid-area: ledger;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+.mm-ledger > i {
+  display: none;
+}
+.mm-meter {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+.mm-meter[data-meter="win"] {
+  text-align: right;
+}
+.mm-meter > span,
+.mm-bet__value > span {
+  font:
+    600 9px/1.2 "Segoe UI",
+    sans-serif;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--ui-soft);
+  opacity: 0.8;
+}
+.mm-meter strong {
+  font:
+    700 clamp(15px, 4.5cqw, 21px)/1.2 "Segoe UI",
+    sans-serif;
+  color: var(--ui-soft);
+}
+.mm-meter[data-winning="true"] strong {
+  color: var(--ui-accent);
+}
+.mm-bet {
+  grid-area: bet;
+  display: grid;
+  grid-template-columns: 48px minmax(0, 1fr) 48px;
+  gap: 8px;
+  min-width: 0;
+}
+.mm-step,
+.mm-bet__value,
+.mm-chip {
+  border: 1px solid color-mix(in srgb, var(--ui-accent) 35%, transparent);
+  border-radius: 24px;
+  background: linear-gradient(145deg, var(--ui-face), var(--ui-bg));
+  color: var(--ui-soft);
+  box-shadow: inset 0 1px 0 #fff1;
+}
+.mm-step {
+  display: grid;
+  place-items: center;
+  color: var(--ui-accent);
+}
+.mm-bet__value {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+}
+.mm-bet__value strong {
+  font:
+    700 16px/1 "Segoe UI",
+    sans-serif;
+}
+.mm-side {
+  display: contents;
+}
+.mm-turbo {
+  grid-area: turbo;
+}
+.mm-auto {
+  grid-area: auto;
+}
+.mm-bonus {
+  grid-area: bonus;
+}
+.mm-info {
+  grid-area: info;
+}
+.mm-chip {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  padding: 4px;
+  min-height: 44px;
+}
+.mm-chip > svg {
+  width: 16px;
+  height: 16px;
+  color: var(--ui-accent);
+}
+.mm-chip > span {
+  font:
+    700 8px/1.1 "Segoe UI",
+    sans-serif;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+}
+.mm-chip > em {
+  font:
+    600 10px/1.1 "Segoe UI",
+    sans-serif;
+}
+.mm-turbo[aria-pressed="true"],
+.mm-auto[aria-pressed="true"] {
+  outline: 1px solid var(--ui-accent);
+  background: color-mix(in srgb, var(--ui-accent) 25%, var(--ui-bg));
+}
+.mm-spin-mount {
+  grid-area: spin;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 0;
+  min-height: 0;
+}
+.mm-spin {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  width: 100%;
+  height: 100%;
+  min-width: 44px;
+  min-height: 44px;
+  border: 1px solid var(--ui-accent);
+  border-radius: 24px;
+  background: linear-gradient(140deg, var(--ui-soft), var(--ui-accent));
+  color: var(--ui-bg);
+  clip-path: none;
+  padding: 4px;
+  isolation: isolate;
+}
+.mm-spin::before,
+.mm-spin::after {
+  display: none !important;
+}
+.mm-spin > i {
+  display: none;
+}
+.mm-spin > svg {
+  width: 17px;
+  height: 17px;
+}
+.mm-spin > span {
+  font:
+    800 11px/1 "Segoe UI",
+    sans-serif;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+}
+.mm-spin__art {
+  width: 44px;
+  height: 44px;
+  object-fit: contain;
+  pointer-events: none;
+}
+.mm-spin[data-state="busy"] .mm-spin__art {
+  animation: mm-ui-turn 3s linear infinite;
+}
+.mm-spin[data-state="auto"] {
+  box-shadow: 0 0 0 2px var(--ui-soft);
+}
+.mm-spin[data-state="free"] {
+  filter: hue-rotate(15deg);
+}
+@keyframes mm-ui-turn {
+  to {
+    rotate: 360deg;
+  }
+}
+.mm-console {
+  background: none;
+  border: 0;
+  padding: 8px;
+  box-shadow: none;
+}
+.mm-ledger {
+  gap: 16px;
+  background: none;
+  border: 0;
+  padding: 0;
+}
+.mm-meter {
+  padding: 10px 14px;
+  border: 1px solid #e8c77766;
+  border-radius: 22px 22px 10px 22px;
+  background: #11291ded;
+}
+.mm-meter[data-meter="win"] {
+  border-radius: 22px 22px 22px 10px;
+}
+.mm-bet {
+  grid-template-columns: 44px minmax(0, 1fr) 44px;
+  gap: 4px;
+}
+.mm-bet__value {
+  border: 0;
+  background: #162e21;
+}
+.mm-step {
+  border-radius: 50%;
+  background: #314b32;
+  color: #ffe8a4;
+}
+.mm-spin-mount {
+  border: 1px solid #e8c77788;
+  border-radius: 50% 50% 30% 30%;
+  padding: 6px;
+  background: linear-gradient(140deg, #8ca75855, #122b1c);
+  box-shadow: 0 8px 22px #0006;
+}
+.mm-spin {
+  width: 100%;
+  height: 100%;
+  border-radius: 50% 50% 30% 30%;
+  background: radial-gradient(ellipse at top, #f9e8af, #b8913a 70%, #5d5327);
+  color: #25351c;
+}
+.mm-spin__art {
+  width: 48px;
+  height: 48px;
+}
+.mm-spin > svg {
+  display: none;
+}
+.mm-chip {
+  border-radius: 20px 6px 20px 6px;
+}
+.mm-bonus {
+  background: linear-gradient(100deg, #455c31, #1b3525);
+}
+[data-game-view="monarch-meadow"] .realms-well {
+  border-color: #e8c77777 !important;
+  background: linear-gradient(135deg, #314931f0, #122a1ef5) !important;
+}
+[data-sonner-toast].mm-toast {
+  display: flex !important;
+  justify-content: center;
+  width: auto !important;
+  padding: 0 !important;
+  border: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  pointer-events: none;
+}
+.mm-toast__pill {
+  padding: 4px 12px;
+  border: 1px solid #e8c77766;
+  border-radius: 20px;
+  background: #14291dee;
+  color: #fff7d6;
+  font:
+    600 11px/1.3 "Segoe UI",
+    sans-serif;
+  white-space: nowrap;
+}
+[data-sonner-toaster]:has(.mm-toast) {
+  --offset-top: 92px !important;
+  --mobile-offset-top: 92px !important;
+}
+@container (max-width:350px) {
+  .mm-console {
+    gap: 8px;
+    padding: 10px;
+  }
+  .mm-chip > span {
+    font-size: 8px;
+  }
+  .mm-spin-mount {
+    padding: 4px;
+  }
+  .mm-bet {
+    grid-template-columns: 44px minmax(0, 1fr) 44px;
+    gap: 4px;
+  }
+}
+@container (orientation:portrait) and (max-height:680px) {
+  [data-game-view="monarch-meadow"] .realms-playfield {
+    padding: 88px 16px max(12px, env(safe-area-inset-bottom));
+  }
+  [data-game-view="monarch-meadow"] .realms-playfield > div {
+    gap: 14px;
+  }
+  [data-game-view="monarch-meadow"] .realms-reel-grid {
+    width: min(
+      calc(100cqw - 58px),
+      calc(
+        (100cqh - 88px - 248px - 14px - max(12px, env(safe-area-inset-bottom)) - 26px) *
+          0.8333333333333334
+      )
+    ) !important;
+  }
+  .mm-console {
+    gap: 8px;
+    padding: 8px;
+    grid-template-rows: 56px 44px 48px 44px;
+  }
+  .mm-spin {
+    max-width: 100%;
+    max-height: 100%;
+  }
+  .mm-meter strong {
+    font-size: 16px;
+  }
+}
+@container (orientation:landscape) and (max-height:600px) {
+  [data-game-view="monarch-meadow"] .realms-playfield {
+    padding: 58px 16px max(10px, env(safe-area-inset-bottom));
+  }
+  [data-game-view="monarch-meadow"] .realms-playfield > div {
+    grid-template-columns: minmax(0, 1fr) 300px;
+    grid-template-rows: auto;
+    gap: 16px;
+    max-width: 1100px;
+  }
+  .mm-identity {
+    top: 12px;
+  }
+  .mm-identity h1 {
+    font-size: 20px;
+  }
+  .mm-identity h1 span {
+    display: inline;
+  }
+  .mm-console {
+    padding: 8px;
+    gap: 6px;
+    grid-template-rows: 46px 44px 44px 44px;
+    grid-template-columns: minmax(0, 1.2fr) minmax(0, 1.2fr) minmax(0, 0.8fr) minmax(0, 0.8fr);
+  }
+  .mm-meter {
+    gap: 2px;
+  }
+  .mm-meter strong {
+    font-size: 16px;
+  }
+  .mm-meter > span {
+    font-size: 8px;
+  }
+  .mm-chip {
+    padding: 2px;
+    gap: 1px;
+  }
+  .mm-bet {
+    grid-template-columns: 44px minmax(0, 1fr) 44px;
+    gap: 4px;
+  }
+  .mm-spin {
+    max-width: 100%;
+    max-height: 100%;
+  }
+  .mm-spin__art {
+    width: 38px;
+    height: 38px;
+  }
+  .mm-spin-mount {
+    padding: 4px;
+  }
+  [data-game-view="monarch-meadow"] .realms-reel-grid {
+    width: min(
+      calc(100cqw - 32px - 300px - 16px - 26px),
+      calc((100cqh - 58px - max(10px, env(safe-area-inset-bottom)) - 26px) * 0.8333333333333334)
+    ) !important;
+  }
+}
+@container (orientation:landscape) and (max-height:360px) {
+  [data-game-view="monarch-meadow"] .realms-playfield > div {
+    grid-template-columns: minmax(0, 1fr) 280px;
+  }
+  [data-game-view="monarch-meadow"] .realms-reel-grid {
+    width: min(
+      calc(100cqw - 32px - 280px - 16px - 26px),
+      calc((100cqh - 58px - 10px - 26px) * 0.8333333333333334)
+    ) !important;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .mm-spin[data-state="busy"] .mm-spin__art {
+    animation: none;
+  }
+  .mm-console button {
+    transition: none;
+  }
+}
+/* Shared dialogs keep their handlers; keep content scrollable on short screens and Close tappable. */
+[data-game-view="monarch-meadow"] [aria-label="Auto Spin Configuration"] > div {
+  display: flex;
+  flex-direction: column;
+  max-height: calc(100% - 12px);
+}
+[data-game-view="monarch-meadow"] [aria-label="Auto Spin Configuration"] > div > div:nth-child(2) {
+  min-height: 0;
+  flex: 1 1 auto;
+  max-height: none;
+}
+[data-game-view="monarch-meadow"] [aria-label="Auto Spin Configuration"] > div > div:first-child,
+[data-game-view="monarch-meadow"] [aria-label="Auto Spin Configuration"] > div > div:last-child {
+  flex-shrink: 0;
+}
+[data-game-view="monarch-meadow"] div:has(> h3):has(> .grid.grid-cols-4) {
+  display: flex;
+  flex-direction: column;
+  max-height: calc(100dvh - 32px);
+  padding: 20px;
+}
+[data-game-view="monarch-meadow"] div:has(> h3) > .grid.grid-cols-4 {
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 4px;
+}
+[data-game-view="monarch-meadow"] div:has(> .grid.grid-cols-4) > h3 {
+  padding-right: 40px;
+  font-size: 16px;
+  text-align: left;
+}
+[data-game-view="monarch-meadow"] [aria-label="Paytable"] button[aria-label="Close"],
+[data-game-view="monarch-meadow"] div:has(> h3) > button[aria-label="Close"] {
+  min-width: 44px;
+  min-height: 44px;
+  flex-shrink: 0;
+}
+[data-game-view="monarch-meadow"] div:has(> h3) > button[aria-label="Close"] {
+  z-index: 1;
+}
