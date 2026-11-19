@@ -182,3 +182,46 @@ and an authorised QA round (`verify-games.mjs --run`).
 | 98 | `crane-pavilion` | Crane Pavilion | slot (Realms) | RealmsSlot (family) | realmsSpinFn (gameId) | ok | LOCKED (compiled policy) | locked | - | static PASS · live NOT TESTED |
 | 99 | `thunderbird-totem` | Thunderbird Totem | slot (Realms) | RealmsSlot (family) | realmsSpinFn (gameId) | ok | LOCKED (compiled policy) | locked | - | static PASS · live NOT TESTED |
 | 100 | `monarch-meadow` | Monarch Meadow | slot (Realms) | RealmsSlot (family) | realmsSpinFn (gameId) | ok | LOCKED (compiled policy) | locked | - | static PASS · live NOT TESTED |
+
+## Update — corrective release prepared (2026-11-19, later)
+
+### Why the "a2f50aa was activated on Nov 17" record conflicts with what is served
+
+Confirmed facts:
+- GitHub Actions run 43999804055 for `a2f50aa` (branch `ci/staging-artifact-rc-20261117`): validation **passed**, the
+  "Immutable Linux artifact" upload step **failed**, and the run has **0 artifacts**. No CI-validated `a2f50aa` artifact exists.
+- The installed production kit (`maxhigh-production-29656ce/operate.py`) is pinned to `29656ce`; its `plan` requires
+  port 18080 to report `8066092` and its `stage` refuses when `/var/www/maxhigh/production` exists. It cannot deploy `a2f50aa`.
+- `/api/health` reports `RELEASE_SHA` copied from `target.json`, so a health check can name a release that is not what
+  the public site serves. Public entry assets are byte-identical to `29656ce` (33/33).
+
+Hypotheses (need `inspect-readonly.py` output from the VPS to confirm or reject): `a2f50aa` was deployed to UAT
+(`maxhigh-uat2`, 18082) rather than production; or it was started from an unvalidated local build on another port / the
+18780 probe; or it was activated and later rolled back. Until the inspection JSON is reviewed, treat production as `29656ce`.
+
+### Candidate artifact
+
+- Commit `d22dfd99ef47afdf26d60eaf69ab1244adab910f` (branch `fix/full-catalog-access-20261119`).
+- GitHub CI cannot build it: `validate.yml` runs only when the repository is private (`if: github.event.repository.private == true`)
+  and the repository is currently **public** (run 44507624558 = skipped).
+- Reproducible Linux build instead (`release-kit/linux-build.sh`): fresh clone of the pushed commit, `ubuntu:24.04`, Node
+  24.22.2 (tarball checked against nodejs.org SHASUMS256), CI's digest-pinned MariaDB, Playwright 1.65.0. All CI gates
+  passed: typecheck, lint, test:unit (incl. catalog-access), build, deployment security, migrations, integration, browser.
+- `release.tgz` SHA-256 `c1688bb59ae047e451764026790218068113f556dc6f337af80c6ddd5fc2ce36`;
+  `release-validation.json` SHA-256 `ede157e35651497eac0bcc972b2d362b75a202658c67653b81d1d8ec707570c9`;
+  publicAssets 3989; games 100.
+
+### Isolated acceptance (`release-kit/isolated-acceptance.mjs`)
+
+Exact artifact, fresh migrated MariaDB, synthetic demo accounts, loopback only — no production/UAT/shared data involved.
+
+| Check | Result |
+|---|---|
+| Lobby access status: anonymous, player, agent, master agent, client admin | 0 locked games for every identity; none on the developer QA path |
+| One minimum-stake round per game as non-developer player `slotmaster`, ledger-reconciled | 100/100 (Royal Climb passed on a re-run after fixing the test's settlement step) |
+| Real-browser launch from the lobby category page, desktop 1366×900 | 100/100 mounted, no locked card/text, no page errors |
+| Real-browser launch, phone 400×860 (sample: every 10th slot + all cards + all fishing) | 27/27, no horizontal overflow |
+
+Previously locked titles included in the above: 41 Realms slots, 6 card games (Color Game Pro, Deluxe Draw, Royal Climb,
+Lucky Nine Plus, Poker Showdown, Tongits Arena), 3 fishing games (Octopus Armada, Turtle Tide, Whale War).
+**This is not production evidence.** Production remains `29656ce` with 50 locked games until activation and live verification.
